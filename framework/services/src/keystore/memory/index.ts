@@ -22,7 +22,7 @@ import {
 } from '../index.js';
 import { applyCapability } from './capability.js';
 
-if (typeof process !== 'undefined' && process.env?.['NODE_ENV'] === 'production') {
+if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') {
   throw new KeystoreError({
     code: 'services/keystore/unsupported',
     message: '@cfxdevkit/services/keystore-memory must not be loaded in production',

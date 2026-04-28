@@ -8,6 +8,8 @@ export default defineConfig({
         index: 'src/index.ts',
         'keystore/index': 'src/keystore/index.ts',
         'keystore/memory/index': 'src/keystore/memory/index.ts',
+        'keystore/file/index': 'src/keystore/file/index.ts',
+        'crypto/index': 'src/crypto/index.ts',
       },
       formats: ['es'],
       fileName: (_format, entry) => `${entry}.js`,
