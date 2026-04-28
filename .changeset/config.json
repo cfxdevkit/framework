@@ -1,0 +1,20 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.4/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": [
+    "@cfxdevkit/tsconfig",
+    "@cfxdevkit/biome-config",
+    "@cfxdevkit/moon-config",
+    "@cfxdevkit/mcp-server",
+    "@cfxdevkit/create",
+    "@cfxdevkit/game-engine",
+    "@cfxdevkit/automation",
+    "@cfxdevkit/hardware-bridge"
+  ]
+}
