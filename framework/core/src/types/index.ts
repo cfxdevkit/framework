@@ -45,3 +45,34 @@ export type TxReceipt = ViemTxReceipt;
 
 /** Raw, undecoded log emitted by a transaction. */
 export type RawLog = ViemLog;
+
+/**
+ * Conflux Core-Space epoch selector.
+ *
+ * - `latest_state` — last executed epoch (recommended for reads)
+ * - `latest_mined` — head of the chain
+ * - `latest_finalized` — last finalized by PoS
+ * - `latest_checkpoint` — most recent checkpoint
+ * - `earliest` — genesis
+ */
+export type EpochTag =
+  | 'earliest'
+  | 'latest_checkpoint'
+  | 'latest_finalized'
+  | 'latest_mined'
+  | 'latest_state';
+
+/** Conflux Core-Space node status snapshot returned by `cfx_getStatus`. */
+export interface NodeStatus {
+  bestHash: Hash;
+  blockNumber: bigint;
+  chainId: number;
+  networkId: number;
+  ethereumSpaceChainId: number;
+  epochNumber: bigint;
+  latestCheckpoint: bigint;
+  latestConfirmed: bigint;
+  latestFinalized: bigint;
+  latestState: bigint;
+  pendingTxNumber: number;
+}

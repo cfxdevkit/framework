@@ -1,17 +1,33 @@
 /**
  * `@cfxdevkit/core/client` — chain-aware RPC client factory.
  *
- * The factory returns an opaque {@link Client} object. The client has
- * **no signer**, **no chain switching**, and **no caching** — those concerns
- * live in `framework/wallet`, the consumer, and `framework/react` respectively.
+ * The factory returns an opaque {@link Client} object — a discriminated union
+ * of {@link EspaceClient} and {@link CoreSpaceClient} keyed by `family`.
+ * The client has **no signer**, **no chain switching**, and **no caching** —
+ * those concerns live in `framework/wallet`, the consumer, and
+ * `framework/react` respectively.
  *
  * ### eSpace
- * Backed by `viem`. Full support in Phase I.
+ * Backed by `viem`. EVM-compatible: hex addresses, monotonic block numbers.
  *
  * ### Core Space
- * Backed by `cive`. Phase I exposes the surface but throws
- * `RpcError code=core/client/unsupported-family` until Phase II.
+ * Backed by `cive`. Conflux-native: base32 (`cfx:` / `cfxtest:`) addresses,
+ * epoch numbers, GHAST DAG semantics.
  */
+import {
+  type Client as CiveClient,
+  type Transport as CiveTransport,
+  fallback as civeFallback,
+  http as civeHttp,
+  webSocket as civeWebSocket,
+  createPublicClient as createCivePublicClient,
+} from 'cive';
+import {
+  getBalance as civeGetBalance,
+  getEpochNumber as civeGetEpochNumber,
+  getStatus as civeGetStatus,
+} from 'cive/actions';
+import { defineChain as civeDefineChain } from 'cive/utils';
 import {
   createPublicClient,
   type Chain as ViemChain,
@@ -23,7 +39,17 @@ import {
 } from 'viem';
 import type { ChainConfig } from '../chains/index.js';
 import { CfxError, RpcError } from '../errors/index.js';
-import type { Address, Block, BlockTag, Hash, TxReceipt, TxRequest, Wei } from '../types/index.js';
+import type {
+  Address,
+  Block,
+  BlockTag,
+  EpochTag,
+  Hash,
+  NodeStatus,
+  TxReceipt,
+  TxRequest,
+  Wei,
+} from '../types/index.js';
 
 // ── Transport ────────────────────────────────────────────────────────────────
 
@@ -31,13 +57,15 @@ import type { Address, Block, BlockTag, Hash, TxReceipt, TxRequest, Wei } from '
  * Opaque transport descriptor. Created via {@link http}, {@link ws}, or
  * {@link fallback}; consumed by {@link createClient}.
  *
- * The internal handle is only used by the client implementation; callers
- * must treat it as opaque.
+ * The internal handles work for both viem (eSpace) and cive (Core Space)
+ * because cive re-exports viem's transport primitives.
  */
 export interface Transport {
   readonly kind: 'http' | 'ws' | 'fallback';
   /** @internal */
   readonly _viem: ViemTransport;
+  /** @internal */
+  readonly _cive: CiveTransport;
 }
 
 export interface HttpTransportOptions {
@@ -64,7 +92,11 @@ export function http(opts: HttpTransportOptions = {}): Transport {
   if (retries !== undefined) {
     viemOpts.retryCount = retries;
   }
-  return { kind: 'http', _viem: viemHttp(url, viemOpts) };
+  return {
+    kind: 'http',
+    _viem: viemHttp(url, viemOpts),
+    _cive: civeHttp(url, viemOpts),
+  };
 }
 
 export interface WsTransportOptions {
@@ -83,7 +115,11 @@ export function ws(opts: WsTransportOptions = {}): Transport {
   if (timeoutMs !== undefined) {
     viemOpts.timeout = timeoutMs;
   }
-  return { kind: 'ws', _viem: viemWebSocket(url, viemOpts) };
+  return {
+    kind: 'ws',
+    _viem: viemWebSocket(url, viemOpts),
+    _cive: civeWebSocket(url, viemOpts),
+  };
 }
 
 /** Fallback combinator: tries each transport in order until one succeeds. */
@@ -97,6 +133,7 @@ export function fallback(transports: readonly Transport[]): Transport {
   return {
     kind: 'fallback',
     _viem: viemFallback(transports.map((t) => t._viem)),
+    _cive: civeFallback(transports.map((t) => t._cive)),
   };
 }
 
@@ -113,23 +150,27 @@ export interface CallOptions {
   signal?: AbortSignal;
 }
 
-/** Options for `getBalance`. */
+/** Options for eSpace `getBalance`. */
 export interface GetBalanceOptions extends CallOptions {
   blockTag?: BlockTag;
 }
 
-/**
- * Opaque chain client. The interface is intentionally narrow: low-level
- * everything-you-need methods plus a generic `request` escape hatch. Higher
- * verbs (`readContract`, `writeContract`, etc.) live in `core/contract` and
- * take a `Client` as input — they are NOT methods on `Client`.
- */
-export interface Client {
+/** Options for Core Space epoch-scoped reads. */
+export interface CoreCallOptions extends CallOptions {
+  epochTag?: Exclude<EpochTag, 'latest_confirmed'>;
+}
+
+/** Common members of every {@link Client}. */
+interface ClientBase {
   readonly chain: ChainConfig;
   readonly transport: Transport;
-
-  /** Generic JSON-RPC request. Prefer the typed methods below when available. */
+  /** Generic JSON-RPC request. Prefer the typed methods when available. */
   request<T = unknown>(req: RpcRequest, opts?: CallOptions): Promise<T>;
+}
+
+/** eSpace (EVM) chain client. Discriminated by `family === 'espace'`. */
+export interface EspaceClient extends ClientBase {
+  readonly family: 'espace';
 
   /** Latest block number. */
   getBlockNumber(opts?: CallOptions): Promise<bigint>;
@@ -137,15 +178,36 @@ export interface Client {
   /** Block by tag (`'latest'`, `'pending'`, hex hash, or bigint number). */
   getBlock(tag: BlockTag, opts?: CallOptions): Promise<Block>;
 
-  /** Native-token balance of an address, in wei. */
+  /** Native-token balance (in wei) for a 0x-prefixed hex address. */
   getBalance(address: Address, opts?: GetBalanceOptions): Promise<Wei>;
 
-  /** Receipt for a mined transaction; `null` if not yet mined / unknown. */
+  /** Receipt for a mined transaction; `null` if unknown. */
   getTransactionReceipt(hash: Hash, opts?: CallOptions): Promise<TxReceipt | null>;
 
   /** Estimate gas for an unsigned transaction request. */
   estimateGas(input: TxRequest, opts?: CallOptions): Promise<bigint>;
 }
+
+/**
+ * Core Space (Conflux-native) chain client. Discriminated by
+ * `family === 'core'`. Addresses are base32 strings (`cfx:…` /
+ * `cfxtest:…`); progress is measured in epochs, not blocks.
+ */
+export interface CoreSpaceClient extends ClientBase {
+  readonly family: 'core';
+
+  /** Latest epoch number for the given tag (default `'latest_state'`). */
+  getEpochNumber(opts?: CoreCallOptions): Promise<bigint>;
+
+  /** Full chain status snapshot (chain id, epoch number, best hash, …). */
+  getStatus(opts?: CallOptions): Promise<NodeStatus>;
+
+  /** Native-token balance (in drip) for a base32 Core Space address. */
+  getBalance(address: string, opts?: CoreCallOptions): Promise<Wei>;
+}
+
+/** Discriminated union of all chain clients. Narrow with `client.family`. */
+export type Client = EspaceClient | CoreSpaceClient;
 
 export interface CreateClientInput {
   chain: ChainConfig;
@@ -153,21 +215,29 @@ export interface CreateClientInput {
 }
 
 /**
- * Build a {@link Client} for the given chain + transport.
- *
- * @throws {RpcError} `core/client/unsupported-family` when called with a
- * Core Space chain in Phase I (Core Space support arrives in Phase II).
+ * Build a {@link Client} for the given chain + transport. The returned
+ * client's static type is the union {@link Client}; narrow it with
+ * `client.family` to access family-specific methods.
  */
 export function createClient(input: CreateClientInput): Client {
   const { chain, transport } = input;
-  if (chain.family === 'core') {
+  return chain.family === 'core'
+    ? createCoreClient(chain, transport)
+    : createEspaceClient(chain, transport);
+}
+
+// ── Shared error wrapping ────────────────────────────────────────────────────
+
+function wrapRpc<T>(promise: Promise<T>, code: string, meta?: Record<string, unknown>): Promise<T> {
+  return promise.catch((cause) => {
+    if (cause instanceof CfxError) throw cause;
     throw new RpcError({
-      code: 'core/client/unsupported-family',
-      message: `Core Space client is not yet implemented (chain=${chain.name}). Phase II will add cive-backed support.`,
-      meta: { chainId: chain.id, family: chain.family },
+      code,
+      message: cause instanceof Error ? cause.message : String(cause),
+      cause,
+      ...(meta ? { meta } : {}),
     });
-  }
-  return createEspaceClient(chain, transport);
+  });
 }
 
 // ── eSpace (viem-backed) implementation ──────────────────────────────────────
@@ -197,19 +267,7 @@ function toViemChain(chain: ChainConfig): ViemChain {
   });
 }
 
-function wrapRpc<T>(promise: Promise<T>, code: string, meta?: Record<string, unknown>): Promise<T> {
-  return promise.catch((cause) => {
-    if (cause instanceof CfxError) throw cause;
-    throw new RpcError({
-      code,
-      message: cause instanceof Error ? cause.message : String(cause),
-      cause,
-      ...(meta ? { meta } : {}),
-    });
-  });
-}
-
-function createEspaceClient(chain: ChainConfig, transport: Transport): Client {
+function createEspaceClient(chain: ChainConfig, transport: Transport): EspaceClient {
   const viemChain = toViemChain(chain);
   const publicClient = createPublicClient({
     chain: viemChain,
@@ -217,12 +275,11 @@ function createEspaceClient(chain: ChainConfig, transport: Transport): Client {
   });
 
   return {
+    family: 'espace',
     chain,
     transport,
 
     request<T = unknown>(req: RpcRequest, _opts?: CallOptions): Promise<T> {
-      // viem typings expect a `Method` literal. Casting at the boundary keeps
-      // the public surface generic while letting viem forward to the transport.
       return wrapRpc(
         publicClient.request({
           method: req.method as never,
@@ -248,8 +305,6 @@ function createEspaceClient(chain: ChainConfig, transport: Transport): Client {
               tag === 'safe'
             ? { blockTag: tag }
             : { blockHash: tag };
-      // viem's overloaded `getBlock` accepts these shapes; cast through `never`
-      // to satisfy the union without losing the runtime semantics.
       return wrapRpc(publicClient.getBlock(arg as never) as Promise<Block>, 'core/rpc/get-block', {
         tag: typeof tag === 'bigint' ? tag.toString() : String(tag),
       });
@@ -276,7 +331,6 @@ function createEspaceClient(chain: ChainConfig, transport: Transport): Client {
     getTransactionReceipt(hash: Hash, _opts?: CallOptions): Promise<TxReceipt | null> {
       return wrapRpc(
         publicClient.getTransactionReceipt({ hash }).catch((err: unknown) => {
-          // viem throws when the hash is unknown; surface as null per docs.
           if (err && typeof err === 'object' && 'name' in err) {
             const name = (err as { name?: string }).name;
             if (name === 'TransactionReceiptNotFoundError') return null;
@@ -293,6 +347,81 @@ function createEspaceClient(chain: ChainConfig, transport: Transport): Client {
         publicClient.estimateGas(input as Parameters<typeof publicClient.estimateGas>[0]),
         'core/rpc/estimate-gas',
       );
+    },
+  };
+}
+
+// ── Core Space (cive-backed) implementation ──────────────────────────────────
+
+function toCiveChain(chain: ChainConfig): Parameters<typeof civeDefineChain>[0] {
+  return {
+    id: chain.id,
+    name: chain.displayName,
+    nativeCurrency: {
+      name: chain.nativeToken.symbol,
+      symbol: chain.nativeToken.symbol,
+      decimals: chain.nativeToken.decimals,
+    },
+    rpcUrls: {
+      default: {
+        http: [...chain.rpc.http],
+        ...(chain.rpc.ws ? { webSocket: [...chain.rpc.ws] } : {}),
+      },
+    },
+    ...(chain.explorer
+      ? {
+          blockExplorers: {
+            default: { name: chain.explorer.name, url: chain.explorer.url },
+          },
+        }
+      : {}),
+  };
+}
+
+function createCoreClient(chain: ChainConfig, transport: Transport): CoreSpaceClient {
+  const civeChain = civeDefineChain(toCiveChain(chain));
+  const publicClient = createCivePublicClient({
+    chain: civeChain,
+    transport: transport._cive,
+  });
+
+  // cive's free-function actions are typed against the broad `Client` shape;
+  // alias once to avoid repeating the cast at every call site.
+  const c = publicClient as unknown as CiveClient;
+
+  return {
+    family: 'core',
+    chain,
+    transport,
+
+    request<T = unknown>(req: RpcRequest, _opts?: CallOptions): Promise<T> {
+      return wrapRpc(
+        publicClient.request({
+          method: req.method as never,
+          params: req.params as never,
+        }) as Promise<T>,
+        'core/rpc/request',
+        { method: req.method },
+      );
+    },
+
+    getEpochNumber(opts?: CoreCallOptions): Promise<bigint> {
+      return wrapRpc(
+        civeGetEpochNumber(c, opts?.epochTag ? { epochTag: opts.epochTag } : {}),
+        'core/rpc/get-epoch-number',
+      );
+    },
+
+    getStatus(_opts?: CallOptions): Promise<NodeStatus> {
+      return wrapRpc(civeGetStatus(c) as Promise<NodeStatus>, 'core/rpc/get-status');
+    },
+
+    getBalance(address: string, opts?: CoreCallOptions): Promise<Wei> {
+      const params = { address: address as never } as Parameters<typeof civeGetBalance>[1];
+      if (opts?.epochTag) {
+        (params as { epochTag?: EpochTag }).epochTag = opts.epochTag;
+      }
+      return wrapRpc(civeGetBalance(c, params), 'core/rpc/get-balance', { address });
     },
   };
 }

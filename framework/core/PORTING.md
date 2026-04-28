@@ -230,14 +230,16 @@ Out of scope for Phase I:
 Tick boxes as items land. The PR that closes Phase I should tick every box in the Phase I block.
 
 ### Phase I — Foundation
-- [x] `core/types`: `Address`, `Hash`, `Hex`, `Wei`, `ChainId`, `BlockTag`, `Block`, `TxRequest`, `TxReceipt`, `RawLog`
+- [x] `core/types`: `Address`, `Hash`, `Hex`, `Wei`, `ChainId`, `BlockTag`, `Block`, `TxRequest`, `TxReceipt`, `RawLog`, `EpochTag`, `NodeStatus`
 - [x] `core/errors`: `CfxError`, `RpcError`, `ContractError`, `WalletError`, `isCfxError`
 - [x] `core/chains`: `ChainConfig`, 6 chain consts, `getChain`, `listChains`, `defineChain`
 - [x] `core/units`: `formatUnits`, `parseUnits`, `formatToken`, `stringifyBigInt`, `formatCFX`, `parseCFX`
-- [x] `core/client`: `Transport`, `http`, `ws`, `fallback`, `createClient`, opaque `Client` with `getBlockNumber`/`getBlock`/`getBalance`/`getTransactionReceipt`/`estimateGas`/`request` (eSpace; Core Space throws `core/client/unsupported-family` until Phase II)
+- [x] `core/client`: `Transport`, `http`, `ws`, `fallback`, `createClient`, discriminated `Client = EspaceClient | CoreSpaceClient`
+  - `EspaceClient` (viem-backed): `getBlockNumber`, `getBlock`, `getBalance`, `getTransactionReceipt`, `estimateGas`, `request`
+  - `CoreSpaceClient` (cive-backed): `getEpochNumber`, `getStatus`, `getBalance`, `request`
 - [x] Sub-path exports declared in `package.json`
 - [x] Multi-entry `vite.config.ts`
-- [x] Smoke test passes against eSpace testnet (gated by `RUN_NETWORK_TESTS=1`)
+- [x] Smoke tests pass against eSpace testnet AND Core Space testnet (gated by `RUN_NETWORK_TESTS=1`)
 
 ### Phase II — Contract I/O
 - [ ] `core/abi`: `erc20Abi`, `erc721Abi`, `erc1155Abi`, `multicall3Abi`

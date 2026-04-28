@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { coreSpaceMainnet, espaceTestnet } from '../chains/index.js';
-import { RpcError } from '../errors/index.js';
+import { coreSpaceTestnet, espaceTestnet } from '../chains/index.js';
 import { createClient, fallback, http, ws } from './index.js';
 
 const RUN_NETWORK = process.env.RUN_NETWORK_TESTS === '1';
@@ -25,27 +24,29 @@ describe('client / offline', () => {
     expect(t.kind).toBe('fallback');
   });
 
-  it('createClient throws RpcError for Core Space (Phase II)', () => {
-    let caught: unknown;
-    try {
-      createClient({ chain: coreSpaceMainnet, transport: http() });
-    } catch (e) {
-      caught = e;
+  it('createClient produces an eSpace client without performing I/O', () => {
+    const client = createClient({ chain: espaceTestnet, transport: http() });
+    expect(client.family).toBe('espace');
+    expect(client.chain).toBe(espaceTestnet);
+    if (client.family === 'espace') {
+      expect(typeof client.getBlockNumber).toBe('function');
     }
-    expect(caught).toBeInstanceOf(RpcError);
-    expect((caught as RpcError).code).toBe('core/client/unsupported-family');
   });
 
-  it('createClient produces a Client for eSpace without performing I/O', () => {
-    const client = createClient({ chain: espaceTestnet, transport: http() });
-    expect(client.chain).toBe(espaceTestnet);
-    expect(typeof client.getBlockNumber).toBe('function');
-    expect(typeof client.request).toBe('function');
+  it('createClient produces a Core Space client without performing I/O', () => {
+    const client = createClient({ chain: coreSpaceTestnet, transport: http() });
+    expect(client.family).toBe('core');
+    expect(client.chain).toBe(coreSpaceTestnet);
+    if (client.family === 'core') {
+      expect(typeof client.getEpochNumber).toBe('function');
+      expect(typeof client.getStatus).toBe('function');
+    }
   });
 });
 
 describe.skipIf(!RUN_NETWORK)('client / network smoke (eSpace testnet)', () => {
   const client = createClient({ chain: espaceTestnet, transport: http() });
+  if (client.family !== 'espace') throw new Error('expected eSpace client');
   const ZERO = '0x0000000000000000000000000000000000000000' as const;
 
   it('getBlockNumber returns a positive bigint', async () => {
@@ -64,5 +65,32 @@ describe.skipIf(!RUN_NETWORK)('client / network smoke (eSpace testnet)', () => {
     const block = await client.getBlock('latest');
     expect(block).toBeTruthy();
     expect(typeof block.number).toBe('bigint');
+  }, 30_000);
+});
+
+describe.skipIf(!RUN_NETWORK)('client / network smoke (Core Space testnet)', () => {
+  const client = createClient({ chain: coreSpaceTestnet, transport: http() });
+  if (client.family !== 'core') throw new Error('expected Core Space client');
+
+  it('getEpochNumber returns a positive bigint', async () => {
+    const n = await client.getEpochNumber();
+    expect(typeof n).toBe('bigint');
+    expect(n).toBeGreaterThan(0n);
+  }, 30_000);
+
+  it('getStatus returns a populated NodeStatus', async () => {
+    const status = await client.getStatus();
+    expect(status.chainId).toBe(coreSpaceTestnet.id);
+    expect(typeof status.epochNumber).toBe('bigint');
+    expect(status.epochNumber).toBeGreaterThan(0n);
+    expect(status.bestHash).toMatch(/^0x[0-9a-f]{64}$/i);
+  }, 30_000);
+
+  it('getEpochNumber("latest_finalized") <= getEpochNumber("latest_state")', async () => {
+    const [finalized, state] = await Promise.all([
+      client.getEpochNumber({ epochTag: 'latest_finalized' }),
+      client.getEpochNumber({ epochTag: 'latest_state' }),
+    ]);
+    expect(finalized).toBeLessThanOrEqual(state);
   }, 30_000);
 });
