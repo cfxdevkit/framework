@@ -1,0 +1,34 @@
+$schema: 'https://moonrepo.dev/schemas/workspace.json'
+
+# Explicit list — avoids false-positive matches of README.md / STRUCTURE.md
+# at tier-root level (those are documentation, not projects).
+projects:
+  - 'tools/tsconfig'
+  - 'tools/biome-config'
+  - 'tools/moon-config'
+  - 'framework/core'
+  - 'framework/services'
+  - 'framework/wallet'
+  - 'framework/compiler'
+  - 'framework/devnode'
+  - 'framework/contracts'
+  - 'framework/protocol'
+  - 'framework/executor'
+  - 'framework/react'
+  - 'framework/wallet-connect'
+  - 'framework/defi-react'
+  - 'framework/theme'
+  - 'framework/testing'
+  - 'domains/game-engine'
+  - 'domains/automation'
+  - 'domains/hardware-bridge'
+  - 'platform/mcp-server'
+  - 'platform/scaffold-cli'
+
+vcs:
+  manager: 'git'
+  defaultBranch: 'main'
+
+runner:
+  archivableTargets: []
+  inheritColorsForPipedTasks: true

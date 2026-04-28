@@ -1,0 +1,6 @@
+$schema: 'https://moonrepo.dev/schemas/template.json'
+
+# Library project moon.yml — copy to `moon.yml` in any framework/domain library.
+type: 'library'
+language: 'typescript'
+platform: 'node'

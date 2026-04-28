@@ -1,0 +1,6 @@
+# platform/docs-site
+
+**Scope:** Public documentation website, built from `root/docs/`.
+
+Contains site configuration, theme, deployment workflow. Source content lives in
+[../../docs/](../../docs/) so it can be edited without rebuilding the site infra.

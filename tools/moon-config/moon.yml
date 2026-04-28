@@ -1,0 +1,27 @@
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+type: 'configuration'
+language: 'typescript'
+platform: 'node'
+
+tasks:
+  build:
+    command: 'noop'
+    options:
+      cache: false
+  test:
+    command: 'noop'
+    options:
+      cache: false
+  typecheck:
+    command: 'noop'
+    options:
+      cache: false
+  lint:
+    command: 'noop'
+    options:
+      cache: false
+  clean:
+    command: 'noop'
+    options:
+      cache: false

@@ -1,0 +1,66 @@
+$schema: 'https://moonrepo.dev/schemas/tasks.json'
+
+# Shared task definitions inherited by every project unless overridden.
+
+fileGroups:
+  sources:
+    - 'src/**/*'
+    - 'package.json'
+    - 'tsconfig*.json'
+  tests:
+    - 'src/**/*.test.*'
+    - 'test/**/*'
+    - 'vitest.config.*'
+  configs:
+    - '*.config.*'
+    - 'tsconfig*.json'
+
+tasks:
+  build:
+    command: 'pnpm exec vite build'
+    inputs:
+      - '@group(sources)'
+      - '@group(configs)'
+    outputs:
+      - 'dist'
+    options:
+      cache: true
+      runDepsInParallel: true
+
+  typecheck:
+    command: 'pnpm exec tsc --noEmit'
+    inputs:
+      - '@group(sources)'
+      - '@group(configs)'
+    options:
+      cache: true
+
+  test:
+    command: 'pnpm exec vitest run'
+    inputs:
+      - '@group(sources)'
+      - '@group(tests)'
+      - '@group(configs)'
+    options:
+      cache: true
+
+  lint:
+    command: 'pnpm exec biome check src'
+    inputs:
+      - '@group(sources)'
+      - '/biome.json'
+    options:
+      cache: true
+
+  check:
+    deps:
+      - '~:lint'
+      - '~:typecheck'
+      - '~:test'
+    options:
+      runDepsInParallel: true
+
+  clean:
+    command: 'rm -rf dist .vitest coverage'
+    options:
+      cache: false

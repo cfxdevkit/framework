@@ -1,0 +1,10 @@
+packages:
+  - "tools/*"
+  - "framework/*"
+  - "domains/*"
+  - "platform/*"
+  - "platform/templates/*"
+  - "platform/devtools/*"
+  - "projects/*/apps/*"
+  - "projects/*/packages/*"
+  - "projects/*/contracts"
