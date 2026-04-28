@@ -15,7 +15,6 @@
  * epoch numbers, GHAST DAG semantics.
  */
 import {
-  type Client as CiveClient,
   type Transport as CiveTransport,
   fallback as civeFallback,
   http as civeHttp,
@@ -385,10 +384,6 @@ function createCoreClient(chain: ChainConfig, transport: Transport): CoreSpaceCl
     transport: transport._cive,
   });
 
-  // cive's free-function actions are typed against the broad `Client` shape;
-  // alias once to avoid repeating the cast at every call site.
-  const c = publicClient as unknown as CiveClient;
-
   return {
     family: 'core',
     chain,
@@ -407,13 +402,13 @@ function createCoreClient(chain: ChainConfig, transport: Transport): CoreSpaceCl
 
     getEpochNumber(opts?: CoreCallOptions): Promise<bigint> {
       return wrapRpc(
-        civeGetEpochNumber(c, opts?.epochTag ? { epochTag: opts.epochTag } : {}),
+        civeGetEpochNumber(publicClient, opts?.epochTag ? { epochTag: opts.epochTag } : {}),
         'core/rpc/get-epoch-number',
       );
     },
 
     getStatus(_opts?: CallOptions): Promise<NodeStatus> {
-      return wrapRpc(civeGetStatus(c) as Promise<NodeStatus>, 'core/rpc/get-status');
+      return wrapRpc(civeGetStatus(publicClient) as Promise<NodeStatus>, 'core/rpc/get-status');
     },
 
     getBalance(address: string, opts?: CoreCallOptions): Promise<Wei> {
@@ -421,7 +416,7 @@ function createCoreClient(chain: ChainConfig, transport: Transport): CoreSpaceCl
       if (opts?.epochTag) {
         (params as { epochTag?: EpochTag }).epochTag = opts.epochTag;
       }
-      return wrapRpc(civeGetBalance(c, params), 'core/rpc/get-balance', { address });
+      return wrapRpc(civeGetBalance(publicClient, params), 'core/rpc/get-balance', { address });
     },
   };
 }

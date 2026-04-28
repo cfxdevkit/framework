@@ -14,6 +14,7 @@ import type {
   Log as ViemLog,
   TransactionReceipt as ViemTxReceipt,
   TransactionRequest as ViemTxRequest,
+  TypedDataDefinition as ViemTypedDataDefinition,
 } from 'viem';
 
 /** Hex-encoded 0x-prefixed EVM address (20 bytes, EIP-55 checksum recommended). */
@@ -42,6 +43,9 @@ export type TxRequest = ViemTxRequest;
 
 /** Receipt returned by `eth_getTransactionReceipt`. */
 export type TxReceipt = ViemTxReceipt;
+
+/** EIP-712 typed-data definition (`{ domain, types, primaryType, message }`). */
+export type TypedData = ViemTypedDataDefinition;
 
 /** Raw, undecoded log emitted by a transaction. */
 export type RawLog = ViemLog;

@@ -248,7 +248,7 @@ Tick boxes as items land. The PR that closes Phase I should tick every box in th
 - [ ] `core/batch`: `multicall`, `multisend`, `createBatcher`
 
 ### Phase III — Wallet
-- [ ] `core/wallet`: `generateMnemonic`, `validateMnemonic`, `deriveAccount`, `deriveAccounts`, `Account`, `Signer`, `SignableTx`, `signerFromPrivateKey` (internal)
+- [x] `core/wallet`: `generateMnemonic`, `validateMnemonic`, `deriveAccount`, `deriveAccounts`, `Account`, `Signer`, `SignableTx`, `signerFromPrivateKey` (internal)
 - [ ] **Relocated** to `framework/wallet`: `session-key/*`, `signers/*`, `batched/*`, `policies/*`
 
 ### Phase IV — High-level helpers

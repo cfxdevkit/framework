@@ -32,6 +32,10 @@
       "types": "./dist/units/index.d.ts",
       "import": "./dist/units/index.js"
     },
+    "./wallet": {
+      "types": "./dist/wallet/index.d.ts",
+      "import": "./dist/wallet/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": ["dist", "README.md", "API.md", "STRUCTURE.md", "PORTING.md"],
@@ -45,6 +49,8 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
+    "@scure/bip32": "^1.5.0",
+    "@scure/bip39": "^1.4.0",
     "cive": "^0.8.1",
     "viem": "^2.21.0"
   },

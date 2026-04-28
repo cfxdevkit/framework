@@ -11,6 +11,7 @@ export default defineConfig({
         'errors/index': 'src/errors/index.ts',
         'types/index': 'src/types/index.ts',
         'units/index': 'src/units/index.ts',
+        'wallet/index': 'src/wallet/index.ts',
       },
       formats: ['es'],
     },
