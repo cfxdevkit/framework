@@ -6,6 +6,7 @@ projects:
   - 'tools/tsconfig'
   - 'tools/biome-config'
   - 'tools/moon-config'
+  - 'tools/codegen/contracts-extract'
   - 'framework/core'
   - 'framework/services'
   - 'framework/wallet'
