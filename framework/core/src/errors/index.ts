@@ -59,6 +59,13 @@ export class ContractError extends CfxError {}
 /** Wallet / signing failures (derivation, user rejection, invalid mnemonic). */
 export class WalletError extends CfxError {}
 
+/**
+ * Keystore-backend failures (locked vault, missing secret, bad passphrase,
+ * unavailable backend, unsupported operation). Codes follow
+ * `services/keystore/{locked,not-found,bad-passphrase,backend-unavailable,unsupported}`.
+ */
+export class KeystoreError extends CfxError {}
+
 /** Type-guard for `CfxError` and any subclass. */
 export function isCfxError(value: unknown): value is CfxError {
   return value instanceof CfxError;

@@ -12,6 +12,14 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./keystore": {
+      "types": "./dist/keystore/index.d.ts",
+      "import": "./dist/keystore/index.js"
+    },
+    "./keystore-memory": {
+      "types": "./dist/keystore/memory/index.d.ts",
+      "import": "./dist/keystore/memory/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
