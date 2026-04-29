@@ -12,6 +12,26 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./solc": {
+      "types": "./dist/solc/index.d.ts",
+      "import": "./dist/solc/index.js"
+    },
+    "./resolver": {
+      "types": "./dist/resolver/index.d.ts",
+      "import": "./dist/resolver/index.js"
+    },
+    "./templates": {
+      "types": "./dist/templates/index.d.ts",
+      "import": "./dist/templates/index.js"
+    },
+    "./artifacts": {
+      "types": "./dist/artifacts.d.ts",
+      "import": "./dist/artifacts.js"
+    },
+    "./errors": {
+      "types": "./dist/errors.d.ts",
+      "import": "./dist/errors.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -31,6 +51,8 @@
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
     "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/contracts": "workspace:*",
+    "@cfxdevkit/devnode": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0",
@@ -39,6 +61,8 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
-    "@cfxdevkit/core": "workspace:^"
+    "@cfxdevkit/core": "workspace:^",
+    "solc": "^0.8.26",
+    "viem": "^2.21.0"
   }
 }
