@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatCFX,
+  formatDrip,
+  formatGDrip,
   formatToken,
   formatUnits,
   parseCFX,
+  parseDrip,
+  parseGDrip,
   parseUnits,
   stringifyBigInt,
 } from './index.js';
@@ -23,6 +27,17 @@ describe('units', () => {
   it('formatCFX / parseCFX are 18-decimal helpers', () => {
     expect(parseCFX('0.001')).toBe(1_000_000_000_000_000n);
     expect(formatCFX(1_000_000_000_000_000n)).toBe('0.001');
+  });
+
+  it('formatDrip / parseDrip are 18-decimal aliases for CFX', () => {
+    expect(parseDrip('1')).toBe(10n ** 18n);
+    expect(formatDrip(10n ** 18n)).toBe('1');
+  });
+
+  it('formatGDrip / parseGDrip are 9-decimal helpers (gas-price unit)', () => {
+    // 1 Gdrip = 1e9 drip
+    expect(parseGDrip('1')).toBe(1_000_000_000n);
+    expect(formatGDrip(20_000_000_000n)).toBe('20');
   });
 
   it('stringifyBigInt serialises bigint as decimal string', () => {

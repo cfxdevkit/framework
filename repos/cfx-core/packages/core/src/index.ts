@@ -9,6 +9,7 @@
  *
  * This barrel exists for convenience (e.g. quick scripts and tests).
  */
+export * from './address/index.js';
 export * from './chains/index.js';
 export * from './client/index.js';
 export * from './errors/index.js';

@@ -3,6 +3,11 @@
  *
  * No `Number` arithmetic. Float-to-BigInt conversions go through
  * {@link parseUnits} which validates input as a decimal string.
+ *
+ * Conflux uses **drip** (1 CFX = 10^18 drip) as the smallest unit and
+ * **Gdrip** (1 Gdrip = 10^9 drip) as the conventional gas-price unit. The
+ * helpers below are 1:1 wrappers over `viem`'s decimal math, named to match
+ * Conflux conventions.
  */
 export { formatUnits, parseUnits } from 'viem';
 
@@ -22,6 +27,26 @@ export function formatCFX(value: Wei): string {
 /** Parse a decimal CFX string into a wei-scale BigInt. */
 export function parseCFX(value: string): Wei {
   return parseUnits(value, 18);
+}
+
+/** Format a drip amount as CFX (alias of {@link formatCFX}; semantic clarity in Core code). */
+export function formatDrip(value: Wei): string {
+  return formatUnits(value, 18);
+}
+
+/** Parse a decimal CFX string into drip (alias of {@link parseCFX}). */
+export function parseDrip(value: string): Wei {
+  return parseUnits(value, 18);
+}
+
+/** Format a drip amount in Gdrip (gas-price unit; 1 Gdrip = 1e9 drip). */
+export function formatGDrip(value: Wei): string {
+  return formatUnits(value, 9);
+}
+
+/** Parse a decimal Gdrip string into drip. */
+export function parseGDrip(value: string): Wei {
+  return parseUnits(value, 9);
 }
 
 /**
