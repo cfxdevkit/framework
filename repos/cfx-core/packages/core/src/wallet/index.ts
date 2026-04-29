@@ -10,9 +10,9 @@
  * as a low-level building block (it requires plaintext private material).
  *
  * ### Address format
- * Derived `Account.address` is always the **20-byte 0x-hex** form (the public
- * point hashed via Keccak-256, EIP-55 checksum). Conversion to Conflux Core
- * Space base32 (`cfx:` / `cfxtest:`) lives in `core/address` (Phase II); the
+ * Derived `Account.address` is always the **20-byte 0x-hex** form. Conversion
+ * to Conflux Core Space base32 (`cfx:` / `cfxtest:`) is done via
+ * {@link coreAddressFromPrivateKey} / {@link deriveDualAccount}; the
  * underlying secp256k1 key material is identical for both spaces.
  */
 import { HDKey } from '@scure/bip32';
@@ -22,7 +22,10 @@ import {
   validateMnemonic as scureValidateMnemonic,
 } from '@scure/bip39';
 import { wordlist as english } from '@scure/bip39/wordlists/english';
-import { privateKeyToAccount as civePrivateKeyToAccount } from 'cive/accounts';
+import {
+  privateKeyToAccount as civePrivateKeyToAccount,
+  signTransaction as civeSignTransaction,
+} from 'cive/accounts';
 import {
   privateKeyToAccount,
   signMessage as viemSignMessage,
@@ -45,18 +48,41 @@ export const DEFAULT_ESPACE_PATH = "m/44'/60'/0'/0/0" as const;
 export interface Account {
   readonly address: Address;
   readonly publicKey: Hex;
+  /** Optional Core Space base32 address; populated by dual-address signers. */
+  readonly coreAddress?: string;
 }
 
-/** Unsigned transaction payload accepted by {@link Signer.signTransaction}. */
+/**
+ * Unsigned transaction payload accepted by {@link Signer.signTransaction}.
+ *
+ * Tagged with `family` so a single {@link Signer} can produce raw
+ * transactions for either eSpace (EIP-1559) or Conflux Core Space
+ * (legacy / cip2930 / cip1559 with `storageLimit` + `epochHeight`).
+ *
+ * `to` accepts a `0x…` hex address for eSpace and a `cfx:…` / `cfxtest:…`
+ * base32 address for Core Space.
+ */
 export interface SignableTx {
+  /** Defaults to `'espace'` when omitted (back-compat). */
+  family?: 'espace' | 'core';
   chainId: ChainId;
-  to?: Address;
+  to?: Address | string;
   value?: Wei;
   data?: Hex;
   nonce?: number;
   gas?: bigint;
+  // ── eSpace (EIP-1559) ──
   maxFeePerGas?: bigint;
   maxPriorityFeePerGas?: bigint;
+  // ── Core Space ──
+  /** Per-byte gas price (drip). Required for Core legacy/cip2930. */
+  gasPrice?: bigint;
+  /** Conflux storage collateral budget (in 1/1024 CFX units). */
+  storageLimit?: bigint;
+  /** Epoch number after which the tx expires; required for Core. */
+  epochHeight?: bigint;
+  /** Conflux Core Space tx flavor. Defaults to `'cip2930'`. */
+  coreType?: 'legacy' | 'cip2930' | 'cip1559';
 }
 
 /** Per-signing-call options. */
@@ -77,26 +103,17 @@ export interface Signer {
 
 // ── HD derivation ────────────────────────────────────────────────────────────
 
-/**
- * Generate a fresh BIP-39 mnemonic.
- *
- * @param strength - Entropy in bits. 128 → 12 words (default), 256 → 24 words.
- * Anything other than 128/160/192/224/256 throws.
- */
 export function generateMnemonic(strength: 128 | 160 | 192 | 224 | 256 = 128): string {
   return scureGenerateMnemonic(english, strength);
 }
 
-/** Validate a BIP-39 mnemonic against the English wordlist. */
 export function validateMnemonic(mnemonic: string): boolean {
   return scureValidateMnemonic(mnemonic.trim(), english);
 }
 
 export interface DeriveAccountInput {
   mnemonic: string;
-  /** BIP-32 derivation path. Defaults to {@link DEFAULT_CORE_PATH}. */
   path?: string;
-  /** BIP-39 passphrase (the "25th word"). */
   passphrase?: string;
 }
 
@@ -105,7 +122,6 @@ export interface DerivedAccount {
   privateKey: Hex;
 }
 
-/** Derive a single account from a mnemonic. */
 export function deriveAccount(input: DeriveAccountInput): DerivedAccount {
   const { mnemonic, path = DEFAULT_CORE_PATH, passphrase } = input;
   if (!validateMnemonic(mnemonic)) {
@@ -134,16 +150,11 @@ export function deriveAccount(input: DeriveAccountInput): DerivedAccount {
 
 export interface DeriveAccountsInput {
   mnemonic: string;
-  /**
-   * Base path; the address-index segment is appended. Default
-   * `m/44'/503'/0'/0` — produces `…/0`, `…/1`, … up to `count - 1`.
-   */
   basePath?: string;
   count: number;
   passphrase?: string;
 }
 
-/** Derive a contiguous range of accounts from a mnemonic. */
 export function deriveAccounts(input: DeriveAccountsInput): DerivedAccount[] {
   const { mnemonic, basePath = "m/44'/503'/0'/0", count, passphrase } = input;
   if (!Number.isInteger(count) || count <= 0) {
@@ -168,21 +179,8 @@ export function deriveAccounts(input: DeriveAccountsInput): DerivedAccount[] {
 
 // ── Conflux Core Space address ───────────────────────────────────────────────
 
-/**
- * Conflux Core Space network ids used by `cive` for base32 encoding.
- *
- * - `1029` — mainnet (`cfx:…`)
- * - `1`    — testnet (`cfxtest:…`)
- * - `2029` — local devnet (`net2029:…`)
- */
 export type CoreNetworkId = 1029 | 1 | 2029 | (number & {});
 
-/**
- * Encode a private key as a Conflux Core Space base32 address (`cfx:…` /
- * `cfxtest:…` / `net<id>:…`). The same secp256k1 key produces both the
- * EVM 0x-hex address (`signerFromPrivateKey(...).account.address`) and a
- * Core Space base32 address — only the encoding differs.
- */
 export function coreAddressFromPrivateKey(
   privateKey: Hex,
   networkId: CoreNetworkId = 1029,
@@ -206,43 +204,23 @@ export function coreAddressFromPrivateKey(
   }
 }
 
-/** Derived account exposing both the EVM hex address and the Core base32 address. */
 export interface DualAddressAccount {
   index: number;
-  /** EIP-55 0x-hex address. */
   evmAddress: Address;
-  /** Core Space base32 address (`cfx:…` / `cfxtest:…` / `net<id>:…`). */
   coreAddress: string;
-  /** secp256k1 public key (uncompressed, 0x-hex). */
   publicKey: Hex;
-  /** 32-byte private key (0x-hex). */
   privateKey: Hex;
-  /** Derivation paths used. */
   paths: { evm: string; core: string };
 }
 
 export interface DeriveDualAccountInput {
   mnemonic: string;
-  /** Address-index in the BIP-44 path. */
   index?: number;
-  /**
-   * Account-type segment of the BIP-44 path:
-   * `'standard'` → `0'` (default), `'mining'` → `1'`.
-   */
   accountType?: 'standard' | 'mining';
-  /** Network id for the Core Space base32 encoding. Default mainnet (1029). */
   coreNetworkId?: CoreNetworkId;
-  /** BIP-39 passphrase (the "25th word"). */
   passphrase?: string;
 }
 
-/**
- * Derive one dual-space account: secp256k1 key once, both encodings.
- *
- * Conflux uses BIP-44 coin type `503`; eSpace mirrors Ethereum at coin type
- * `60`. The two encodings are produced from independent derivation paths
- * (this matches the convention of the original `@cfxdevkit/core-core` POC).
- */
 export function deriveDualAccount(input: DeriveDualAccountInput): DualAddressAccount {
   const { mnemonic, index = 0, accountType = 'standard', coreNetworkId = 1029, passphrase } = input;
 
@@ -279,7 +257,6 @@ export function deriveDualAccount(input: DeriveDualAccountInput): DualAddressAcc
   };
 }
 
-/** Derive a contiguous range of dual-space accounts. */
 export function deriveDualAccounts(
   input: DeriveDualAccountInput & { count: number; startIndex?: number },
 ): DualAddressAccount[] {
@@ -303,11 +280,10 @@ export function deriveDualAccounts(
 /**
  * Build a {@link Signer} from a raw private key.
  *
- * @internal Production code should use `services/keystore` →
- * `wallet/signers.signerFromKeystore`. This factory exists for tests, scripts
- * and as the implementation primitive other signer factories build on.
+ * @param coreNetworkId - When provided, the signer's `account.coreAddress` is
+ *   populated with the matching base32 encoding, enabling Core Space writes.
  */
-export function signerFromPrivateKey(privateKey: Hex): Signer {
+export function signerFromPrivateKey(privateKey: Hex, coreNetworkId?: CoreNetworkId): Signer {
   if (!/^0x[0-9a-fA-F]{64}$/.test(privateKey)) {
     throw new WalletError({
       code: 'core/wallet/derivation',
@@ -315,14 +291,22 @@ export function signerFromPrivateKey(privateKey: Hex): Signer {
     });
   }
   const local = privateKeyToAccount(privateKey);
-  const account: Account = { address: local.address, publicKey: local.publicKey };
+  const account: Account = {
+    address: local.address,
+    publicKey: local.publicKey,
+    ...(coreNetworkId !== undefined
+      ? { coreAddress: coreAddressFromPrivateKey(privateKey, coreNetworkId) }
+      : {}),
+  };
 
   return {
     account,
 
     async signTransaction(tx: SignableTx, _opts?: SignOptions): Promise<Hex> {
       try {
-        // viem expects EIP-1559 fields plus an explicit type tag for ergonomic typing.
+        if (tx.family === 'core') {
+          return (await signCoreTransaction(privateKey, tx)) as Hex;
+        }
         const tx1559 = {
           chainId: tx.chainId,
           to: tx.to,
@@ -380,6 +364,80 @@ export function signerFromPrivateKey(privateKey: Hex): Signer {
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
+
+/** Sign a Core Space transaction using cive's RLP serializer. */
+async function signCoreTransaction(privateKey: Hex, tx: SignableTx): Promise<string> {
+  if (tx.epochHeight === undefined) {
+    throw new WalletError({
+      code: 'core/wallet/sign-rejected',
+      message: 'Core Space transactions require `epochHeight`',
+    });
+  }
+  if (tx.nonce === undefined) {
+    throw new WalletError({
+      code: 'core/wallet/sign-rejected',
+      message: 'Core Space transactions require `nonce`',
+    });
+  }
+  if (tx.gas === undefined) {
+    throw new WalletError({
+      code: 'core/wallet/sign-rejected',
+      message: 'Core Space transactions require `gas`',
+    });
+  }
+  if (tx.storageLimit === undefined) {
+    throw new WalletError({
+      code: 'core/wallet/sign-rejected',
+      message: 'Core Space transactions require `storageLimit`',
+    });
+  }
+
+  const coreType = tx.coreType ?? 'cip2930';
+  const base: Record<string, unknown> = {
+    chainId: tx.chainId,
+    nonce: tx.nonce,
+    gas: tx.gas,
+    to: tx.to,
+    value: tx.value,
+    data: tx.data,
+    storageLimit: tx.storageLimit,
+    epochHeight: tx.epochHeight,
+  };
+
+  let transaction: Record<string, unknown>;
+  if (coreType === 'cip1559') {
+    if (tx.maxFeePerGas === undefined || tx.maxPriorityFeePerGas === undefined) {
+      throw new WalletError({
+        code: 'core/wallet/sign-rejected',
+        message: 'cip1559 Core Space tx requires maxFeePerGas + maxPriorityFeePerGas',
+      });
+    }
+    transaction = {
+      ...base,
+      type: 'eip1559',
+      maxFeePerGas: tx.maxFeePerGas,
+      maxPriorityFeePerGas: tx.maxPriorityFeePerGas,
+    };
+  } else {
+    if (tx.gasPrice === undefined) {
+      throw new WalletError({
+        code: 'core/wallet/sign-rejected',
+        message: `${coreType} Core Space tx requires gasPrice`,
+      });
+    }
+    transaction = {
+      ...base,
+      type: coreType === 'cip2930' ? 'eip2930' : 'legacy',
+      gasPrice: tx.gasPrice,
+      ...(coreType === 'cip2930' ? { accessList: [] } : {}),
+    };
+  }
+
+  return (await civeSignTransaction({
+    privateKey,
+    transaction: transaction as never,
+  })) as string;
+}
 
 function bytesToHex(bytes: Uint8Array): string {
   let s = '';

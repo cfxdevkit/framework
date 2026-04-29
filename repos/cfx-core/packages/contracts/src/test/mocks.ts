@@ -108,6 +108,8 @@ export function getRecordedCalls(client: Client): RpcRequest[] {
 
 export interface MockSignerOptions {
   address?: Address;
+  /** Core Space base32 address; required for Core writes. */
+  coreAddress?: string;
   /** What to return from signTransaction. */
   rawTx?: Hex;
   /** Capture each signed tx for assertions. */
@@ -120,6 +122,7 @@ export function makeMockSigner(opts: MockSignerOptions = {}): Signer & { history
     account: {
       address: opts.address ?? '0x0000000000000000000000000000000000001234',
       publicKey: '0x',
+      ...(opts.coreAddress !== undefined ? { coreAddress: opts.coreAddress } : {}),
     },
     history,
     async signTransaction(tx: SignableTx) {

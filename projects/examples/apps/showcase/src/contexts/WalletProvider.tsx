@@ -68,7 +68,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const active = activeIndex !== null ? (accounts[activeIndex] ?? null) : null;
   const signer = useMemo<Signer | null>(
-    () => (active ? signerFromPrivateKey(active.privateKey) : null),
+    // Pass Conflux Core testnet networkId (1) so the signer also exposes a
+    // base32 coreAddress; required for Core Space writes.
+    () => (active ? signerFromPrivateKey(active.privateKey, 1) : null),
     [active],
   );
 

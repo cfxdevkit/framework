@@ -126,19 +126,72 @@ describe('sendWrite', () => {
     ).rejects.toMatchObject({ code: 'contracts/reverted' });
   });
 
-  it('throws contracts/unsupported-family on Core Space', async () => {
-    const client = makeMockClient({ family: 'core' });
-    const signer = makeMockSigner();
+  it('dispatches cfx_sendRawTransaction for Core Space clients', async () => {
+    const client = makeMockClient({
+      family: 'core',
+      rpc: {
+        cfx_getNextNonce: '0x07',
+        cfx_estimateGasAndCollateral: { gasLimit: '0xc350', storageCollateralized: '0x40' },
+        cfx_gasPrice: '0x3b9aca00',
+        cfx_epochNumber: '0x1234',
+        cfx_sendRawTransaction: '0xfeed',
+      },
+    });
+    const signer = makeMockSigner({
+      coreAddress: 'cfxtest:aamf3p4yc14ksszgnsv94wb96ymzn4z6gpebhfu5ne',
+      rawTx: '0xcafe',
+    });
+
+    const result = await sendWrite({
+      client,
+      signer,
+      address: 'cfxtest:acg158kvr8zanb1bs048ryb6rtrhr283ma70vz70tx',
+      abi: ERC20_ABI,
+      functionName: 'transfer',
+      args: [RECIPIENT, 1n],
+    });
+
+    expect(result.hash).toBe('0xfeed');
+    expect(result.request.family).toBe('core');
+    expect(result.request.gas).toBe(0xc350n);
+    expect(result.request.storageLimit).toBe(0x40n);
+    expect(result.request.epochHeight).toBe(0x1234n);
+    expect(result.request.gasPrice).toBe(0x3b9aca00n);
+    expect(result.request.nonce).toBe(7);
+
+    const methods = (client as unknown as { __calls: { method: string }[] }).__calls.map(
+      (c) => c.method,
+    );
+    expect(methods).toContain('cfx_sendRawTransaction');
+  });
+
+  it('rejects 0x addresses on Core Space and base32 on eSpace', async () => {
+    const core = makeMockClient({ family: 'core' });
+    const signer = makeMockSigner({
+      coreAddress: 'cfxtest:aamf3p4yc14ksszgnsv94wb96ymzn4z6gpebhfu5ne',
+    });
     await expect(
       sendWrite({
-        client,
+        client: core,
         signer,
         address: TOKEN,
         abi: ERC20_ABI,
         functionName: 'approve',
         args: [RECIPIENT, 1n],
       }),
-    ).rejects.toMatchObject({ code: 'contracts/unsupported-family' });
+    ).rejects.toMatchObject({ code: 'contracts/invalid-argument' });
+
+    const espace = makeMockClient();
+    await expect(
+      sendWrite({
+        client: espace,
+        signer: makeMockSigner(),
+        address: 'cfxtest:acg158kvr8zanb1bs048ryb6rtrhr283ma70vz70tx',
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [RECIPIENT, 1n],
+      }),
+    ).rejects.toMatchObject({ code: 'contracts/invalid-argument' });
   });
 
   // Sanity: ensure encodeAbiParameters/toHex remain importable for downstream tests.

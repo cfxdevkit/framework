@@ -4,10 +4,10 @@
 > framework-native `read` / `write` / `deploy` surface that consumes
 > `@cfxdevkit/core`'s `Client` and `Signer`.
 >
-> **Status:** `read` works for both eSpace and Core Space. `write` and `deploy`
-> are still eSpace-only in this revision — Core Space transaction support
-> arrives in the next phase. Calling those entry points with a `family: 'core'`
-> client throws `ContractsError({ code: 'contracts/unsupported-family' })`.
+> **Status:** `read`, `write`, and `erc20` work for both eSpace and Core
+> Space. `deploy` is still eSpace-only — Core Space contract creation arrives
+> in the next iteration. Calling `deploy` with a `family: 'core'` client
+> throws `ContractsError({ code: 'contracts/unsupported-family' })`.
 
 ## Sub-paths
 
@@ -169,8 +169,8 @@ class ContractsError extends CfxError { /* .code: ContractsErrorCode */ }
 The following land in subsequent ports and are intentionally absent from this
 revision:
 
-- Core Space (`family: 'core'`) **writes/deploys** via `cfx_sendRawTransaction`
-  and the Conflux tx serializer
+- Core Space (`family: 'core'`) **contract deployment** via
+  `cfx_sendRawTransaction` (the same path as `sendWrite`, with `to` omitted)
 - ERC-721 / ERC-1155 typed convenience helpers (ABIs are exported today)
 - Multicall3 batching helper (`multicall({ client, calls })`)
 - Conflux internal contracts (Sponsor, Staking, Cross-space)

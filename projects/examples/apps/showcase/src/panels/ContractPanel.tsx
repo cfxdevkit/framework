@@ -88,10 +88,6 @@ export function ContractPanel() {
       setTxErr('Connect a wallet, fetch metadata, and enter a recipient.');
       return;
     }
-    if (isCore) {
-      setTxErr('Core Space transfers are not yet implemented (next phase).');
-      return;
-    }
     let amount: bigint;
     try {
       amount = parseUnits(transferAmount, meta.decimals);
@@ -111,7 +107,7 @@ export function ContractPanel() {
     } finally {
       setSending(false);
     }
-  }, [chain, signer, meta, address, transferTo, transferAmount, isCore]);
+  }, [chain, signer, meta, address, transferTo, transferAmount]);
 
   return (
     <section className="panel">
@@ -121,7 +117,9 @@ export function ContractPanel() {
         token address. Reads use{' '}
         <code className="mono">erc20.name/symbol/decimals/totalSupply/balanceOf</code> and work on
         both eSpace (<code className="mono">eth_call</code>) and Core Space (
-        <code className="mono">cfx_call</code>). Transfers are eSpace-only in this revision.
+        <code className="mono">cfx_call</code>). Transfers dispatch{' '}
+        <code className="mono">eth_sendRawTransaction</code> /{' '}
+        <code className="mono">cfx_sendRawTransaction</code> based on the bound chain.
       </p>
 
       <div className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
@@ -193,11 +191,6 @@ export function ContractPanel() {
               Connect a wallet on the <strong>Wallet</strong> tab to enable transfers.
             </p>
           )}
-          {isCore && (
-            <p className="muted">
-              Core Space transfers land in the next phase (Phase 2 — Conflux tx serializer).
-            </p>
-          )}
           <div className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
             <label style={{ flex: 1 }}>
               <span>To</span>
@@ -224,7 +217,7 @@ export function ContractPanel() {
               type="button"
               className="primary"
               onClick={sendTransfer}
-              disabled={sending || !signer || isCore || !transferTo || !transferAmount}
+              disabled={sending || !signer || !transferTo || !transferAmount}
             >
               {sending ? 'Sending…' : 'Transfer'}
             </button>

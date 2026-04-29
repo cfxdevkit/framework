@@ -10,11 +10,13 @@
  *    from the client, payload signed with the supplied {@link Signer}, raw
  *    transaction broadcast, and (optionally) the receipt awaited.
  *
- * eSpace only in this revision.
+ * Supports both eSpace (`eth_*` + EIP-1559) and Core Space (`cfx_*` + legacy
+ * fees with `storageLimit` + `epochHeight`).
  */
 import type {
-  Address,
   Client,
+  CoreSpaceClient,
+  EspaceClient,
   Hex,
   SignableTx,
   Signer,
@@ -29,18 +31,26 @@ export interface PrepareWriteInput<
   TAbi extends Abi,
   TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>,
 > {
-  address: Address;
+  /** eSpace `0x…` hex; Core Space `cfx:…` / `cfxtest:…` base32. */
+  address: string;
   abi: TAbi;
   functionName: TName;
   args?: ContractFunctionArgs<TAbi, 'nonpayable' | 'payable', TName>;
-  /** Native value (wei) to send with the call. Required for `payable`. */
+  /** Native value (wei / drip) to send with the call. */
   value?: bigint;
-  /** Caller address (used to encode the chainId-aware tx). */
   chainId: number;
+  /** Tags the resulting `SignableTx` with the target family. Default `'espace'`. */
+  family?: 'espace' | 'core';
   nonce?: number;
   gas?: bigint;
+  // eSpace
   maxFeePerGas?: bigint;
   maxPriorityFeePerGas?: bigint;
+  // Core Space
+  gasPrice?: bigint;
+  storageLimit?: bigint;
+  epochHeight?: bigint;
+  coreType?: 'legacy' | 'cip2930' | 'cip1559';
 }
 
 /** Pure helper — encodes the call into a `SignableTx` for an external signer. */
@@ -58,6 +68,7 @@ export function prepareWrite<
     chainId: input.chainId,
     to: input.address,
     data,
+    ...(input.family ? { family: input.family } : {}),
   };
   if (input.value !== undefined) tx.value = input.value;
   if (input.nonce !== undefined) tx.nonce = input.nonce;
@@ -65,13 +76,17 @@ export function prepareWrite<
   if (input.maxFeePerGas !== undefined) tx.maxFeePerGas = input.maxFeePerGas;
   if (input.maxPriorityFeePerGas !== undefined)
     tx.maxPriorityFeePerGas = input.maxPriorityFeePerGas;
+  if (input.gasPrice !== undefined) tx.gasPrice = input.gasPrice;
+  if (input.storageLimit !== undefined) tx.storageLimit = input.storageLimit;
+  if (input.epochHeight !== undefined) tx.epochHeight = input.epochHeight;
+  if (input.coreType !== undefined) tx.coreType = input.coreType;
   return tx;
 }
 
 export interface SendWriteInput<
   TAbi extends Abi,
   TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>,
-> extends Omit<PrepareWriteInput<TAbi, TName>, 'chainId' | 'nonce' | 'gas'> {
+> extends Omit<PrepareWriteInput<TAbi, TName>, 'chainId' | 'family'> {
   client: Client;
   signer: Signer;
   /** Wait for the receipt before resolving (default: false). */
@@ -92,69 +107,82 @@ export interface SendWriteResult {
 
 /**
  * Sign + broadcast a write. Fills missing `nonce`, `gas`, fee fields by
- * querying the client; throws `contracts/unsupported-family` for non-eSpace.
+ * querying the client; dispatches `eth_sendRawTransaction` (eSpace) or
+ * `cfx_sendRawTransaction` (Core Space) based on `client.family`.
  */
 export async function sendWrite<
   TAbi extends Abi,
   TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>,
 >(input: SendWriteInput<TAbi, TName>): Promise<SendWriteResult> {
-  if (input.client.family !== 'espace') {
+  return input.client.family === 'core'
+    ? sendCoreWrite(input, input.client)
+    : sendEspaceWrite(input, input.client);
+}
+
+// ── eSpace path ──────────────────────────────────────────────────────────────
+
+async function sendEspaceWrite<
+  TAbi extends Abi,
+  TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>,
+>(input: SendWriteInput<TAbi, TName>, client: EspaceClient): Promise<SendWriteResult> {
+  if (!/^0x[0-9a-fA-F]{40}$/.test(input.address)) {
     throw new ContractsError({
-      code: 'contracts/unsupported-family',
-      message: `sendWrite currently supports eSpace only (got family="${input.client.family}")`,
-      meta: { family: input.client.family },
+      code: 'contracts/invalid-argument',
+      message: `Expected 0x-prefixed 20-byte hex address for eSpace, got: ${input.address}`,
+      meta: { address: input.address, family: 'espace' },
     });
   }
-
-  const chainId = input.client.chain.id;
+  const chainId = client.chain.id;
   const from = input.signer.account.address;
-
-  // Encode the call data (no fees yet) so estimateGas has something to chew on.
   const baseData = encodeFunctionData({
     abi: input.abi,
     functionName: input.functionName,
     ...(input.args !== undefined ? { args: input.args } : {}),
   } as Parameters<typeof encodeFunctionData>[0]) as Hex;
 
-  const callObject: Record<string, unknown> = { from, to: input.address, data: baseData };
-  if (input.value !== undefined) callObject.value = toHex(input.value);
-
   const [nonceHex, gasEstimate, feeHistoryBaseFee] = await Promise.all([
-    input.client.request<Hex>({ method: 'eth_getTransactionCount', params: [from, 'pending'] }),
-    input.value !== undefined
-      ? input.client.estimateGas({
-          from,
-          to: input.address,
-          data: baseData,
-          value: input.value,
-        } as never)
-      : input.client.estimateGas({ from, to: input.address, data: baseData } as never),
-    fetchBaseFee(input.client),
+    client.request<Hex>({ method: 'eth_getTransactionCount', params: [from, 'pending'] }),
+    input.gas !== undefined
+      ? Promise.resolve(input.gas)
+      : input.value !== undefined
+        ? client.estimateGas({
+            from,
+            to: input.address as `0x${string}`,
+            data: baseData,
+            value: input.value,
+          } as never)
+        : client.estimateGas({
+            from,
+            to: input.address as `0x${string}`,
+            data: baseData,
+          } as never),
+    fetchEspaceBaseFee(client),
   ]);
 
-  const maxPriorityFeePerGas = input.maxPriorityFeePerGas ?? 1_000_000_000n; // 1 gwei
+  const maxPriorityFeePerGas = input.maxPriorityFeePerGas ?? 1_000_000_000n;
   const maxFeePerGas = input.maxFeePerGas ?? feeHistoryBaseFee * 2n + maxPriorityFeePerGas;
 
   const tx: SignableTx = {
+    family: 'espace',
     chainId,
     to: input.address,
     data: baseData,
-    nonce: Number(hexToBigInt(nonceHex)),
+    nonce: input.nonce ?? Number(hexToBigInt(nonceHex)),
     gas: gasEstimate,
     maxFeePerGas,
     maxPriorityFeePerGas,
   };
   if (input.value !== undefined) tx.value = input.value;
 
-  const rawTransaction = await input.signer.signTransaction(tx, input.signOptions ?? {});
-  const hash = await input.client.request<Hex>({
+  const rawTransaction = (await input.signer.signTransaction(tx, input.signOptions ?? {})) as Hex;
+  const hash = await client.request<Hex>({
     method: 'eth_sendRawTransaction',
     params: [rawTransaction],
   });
 
   const out: SendWriteResult = { hash, request: tx, rawTransaction };
   if (input.waitForReceipt) {
-    out.receipt = await waitForReceipt(input.client, hash, {
+    out.receipt = await waitForReceipt(client, hash, {
       pollIntervalMs: input.pollIntervalMs ?? 1500,
       timeoutMs: input.receiptTimeoutMs ?? 60_000,
     });
@@ -162,10 +190,9 @@ export async function sendWrite<
   return out;
 }
 
-/** Best-effort `eth_baseFee` lookup; falls back to 1 gwei when unsupported. */
-async function fetchBaseFee(client: Client): Promise<bigint> {
+async function fetchEspaceBaseFee(client: EspaceClient): Promise<bigint> {
   try {
-    const block = await (client as Extract<Client, { family: 'espace' }>).getBlock('latest');
+    const block = await client.getBlock('latest');
     const baseFee = (block as unknown as { baseFeePerGas?: bigint }).baseFeePerGas;
     return baseFee ?? 1_000_000_000n;
   } catch {
@@ -173,26 +200,132 @@ async function fetchBaseFee(client: Client): Promise<bigint> {
   }
 }
 
+// ── Core Space path ──────────────────────────────────────────────────────────
+
+interface CoreEstimate {
+  gasLimit: Hex;
+  storageCollateralized: Hex;
+}
+
+async function sendCoreWrite<
+  TAbi extends Abi,
+  TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>,
+>(input: SendWriteInput<TAbi, TName>, client: CoreSpaceClient): Promise<SendWriteResult> {
+  if (/^0x[0-9a-fA-F]+$/.test(input.address)) {
+    throw new ContractsError({
+      code: 'contracts/invalid-argument',
+      message: `Expected base32 address for Core Space, got 0x-hex: ${input.address}`,
+      meta: { address: input.address, family: 'core' },
+    });
+  }
+
+  const chainId = client.chain.id;
+  // Core signers expose both 0x evm and base32 core addresses; sender must be base32.
+  const fromBase32 = (input.signer.account as unknown as { coreAddress?: string }).coreAddress;
+  if (!fromBase32) {
+    throw new ContractsError({
+      code: 'contracts/invalid-argument',
+      message:
+        'Signer.account.coreAddress is required for Core Space writes (use a dual-address account).',
+      meta: { family: 'core' },
+    });
+  }
+
+  const baseData = encodeFunctionData({
+    abi: input.abi,
+    functionName: input.functionName,
+    ...(input.args !== undefined ? { args: input.args } : {}),
+  } as Parameters<typeof encodeFunctionData>[0]) as Hex;
+
+  const callObject: Record<string, unknown> = {
+    from: fromBase32,
+    to: input.address,
+    data: baseData,
+  };
+  if (input.value !== undefined) callObject.value = toHex(input.value);
+
+  const [nonceHex, estimate, gasPriceHex, epochHex] = await Promise.all([
+    input.nonce !== undefined
+      ? Promise.resolve(toHex(input.nonce) as Hex)
+      : client.request<Hex>({ method: 'cfx_getNextNonce', params: [fromBase32, 'latest_state'] }),
+    input.gas !== undefined && input.storageLimit !== undefined
+      ? Promise.resolve({
+          gasLimit: toHex(input.gas) as Hex,
+          storageCollateralized: toHex(input.storageLimit) as Hex,
+        } satisfies CoreEstimate)
+      : client.request<CoreEstimate>({
+          method: 'cfx_estimateGasAndCollateral',
+          params: [callObject, 'latest_state'],
+        }),
+    input.gasPrice !== undefined
+      ? Promise.resolve(toHex(input.gasPrice) as Hex)
+      : client.request<Hex>({ method: 'cfx_gasPrice' }),
+    input.epochHeight !== undefined
+      ? Promise.resolve(toHex(input.epochHeight) as Hex)
+      : client.request<Hex>({ method: 'cfx_epochNumber', params: ['latest_state'] }),
+  ]);
+
+  const tx: SignableTx = {
+    family: 'core',
+    chainId,
+    to: input.address,
+    data: baseData,
+    nonce: Number(hexToBigInt(nonceHex)),
+    gas: input.gas ?? hexToBigInt(estimate.gasLimit),
+    storageLimit: input.storageLimit ?? hexToBigInt(estimate.storageCollateralized),
+    epochHeight: hexToBigInt(epochHex),
+    gasPrice: hexToBigInt(gasPriceHex),
+    coreType: input.coreType ?? 'cip2930',
+  };
+  if (input.value !== undefined) tx.value = input.value;
+
+  const rawTransaction = (await input.signer.signTransaction(tx, input.signOptions ?? {})) as Hex;
+  const hash = await client.request<Hex>({
+    method: 'cfx_sendRawTransaction',
+    params: [rawTransaction],
+  });
+
+  const out: SendWriteResult = { hash, request: tx, rawTransaction };
+  if (input.waitForReceipt) {
+    out.receipt = await waitForReceipt(client, hash, {
+      pollIntervalMs: input.pollIntervalMs ?? 1500,
+      timeoutMs: input.receiptTimeoutMs ?? 60_000,
+    });
+  }
+  return out;
+}
+
+// ── Receipt polling ──────────────────────────────────────────────────────────
+
 export async function waitForReceipt(
   client: Client,
   hash: Hex,
   opts: { pollIntervalMs: number; timeoutMs: number },
 ): Promise<TxReceipt> {
-  if (client.family !== 'espace') {
-    throw new ContractsError({
-      code: 'contracts/unsupported-family',
-      message: 'waitForReceipt currently supports eSpace only',
-    });
-  }
   const deadline = Date.now() + opts.timeoutMs;
   while (Date.now() < deadline) {
-    const receipt = await client.getTransactionReceipt(hash);
+    const receipt =
+      client.family === 'espace'
+        ? await client.getTransactionReceipt(hash)
+        : await client.request<TxReceipt | null>({
+            method: 'cfx_getTransactionReceipt',
+            params: [hash],
+          });
     if (receipt) {
-      if (receipt.status === 'reverted') {
+      // Both spaces report a status; eSpace as 'reverted'/'success', Core as
+      // 0/1 (success) or 2 (skipped). Treat anything non-success as a revert.
+      const status = (receipt as unknown as { status?: unknown }).status;
+      const ok =
+        status === 'success' ||
+        status === 1 ||
+        status === '0x0' ||
+        status === 0n ||
+        status === undefined;
+      if (!ok) {
         throw new ContractsError({
           code: 'contracts/reverted',
-          message: `transaction ${hash} reverted`,
-          meta: { hash, blockNumber: receipt.blockNumber.toString() },
+          message: `transaction ${hash} reverted (status=${String(status)})`,
+          meta: { hash, status: String(status) },
         });
       }
       return receipt;
