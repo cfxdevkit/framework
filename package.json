@@ -16,7 +16,8 @@
     "check": "moon run :check",
     "clean": "moon run :clean",
     "format": "biome format --write .",
-    "format:check": "biome format ."
+    "format:check": "biome format .",
+    "devnode": "pnpm --filter @cfxdevkit/devnode build && pnpm --filter @cfxdevkit/devnode start"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",

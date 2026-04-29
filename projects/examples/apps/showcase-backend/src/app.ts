@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express, { type Express } from 'express';
 import { authRouter } from './auth/router.js';
+import { devNodeRouter } from './devnode/router.js';
 import { sessionKeyRouter } from './session-key/router.js';
 
 export interface CreateAppOptions {
@@ -25,6 +26,7 @@ export function createApp(opts: CreateAppOptions = {}): Express {
 
   app.use('/auth', authRouter());
   app.use('/session-key', sessionKeyRouter());
+  app.use('/devnode', devNodeRouter());
 
   return app;
 }

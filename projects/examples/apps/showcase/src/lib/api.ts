@@ -93,4 +93,65 @@ export const api = {
       { method: 'POST', body: JSON.stringify(payload) },
       signal,
     ),
+
+  // ── /devnode ───────────────────────────────────────────────────────────────
+  // Backend-managed local Conflux node (`@cfxdevkit/devnode`). Dev only \u2014
+  // the `/start` response includes genesis private keys so the showcase
+  // wallet can pre-fund itself without manual copy/paste.
+  devnodeStatus: (signal?: AbortSignal) =>
+    call<DevNodeStatusResponse>('/devnode/status', {}, signal),
+  devnodeStart: (
+    body: {
+      mnemonic?: string;
+      accounts?: number;
+      miningIntervalMs?: number;
+      logging?: boolean;
+    } = {},
+    signal?: AbortSignal,
+  ) =>
+    call<DevNodeStatusResponse>(
+      '/devnode/start',
+      { method: 'POST', body: JSON.stringify(body) },
+      signal,
+    ),
+  devnodeStop: (signal?: AbortSignal) =>
+    call<DevNodeStatusResponse>('/devnode/stop', { method: 'POST' }, signal),
+  devnodeRestart: (signal?: AbortSignal) =>
+    call<DevNodeStatusResponse>('/devnode/restart', { method: 'POST' }, signal),
+  devnodeWipe: (signal?: AbortSignal) =>
+    call<DevNodeStatusResponse>('/devnode/wipe', { method: 'POST' }, signal),
+  devnodeMine: (body: { blocks?: number; pack?: boolean } = {}, signal?: AbortSignal) =>
+    call<DevNodeStatusResponse>(
+      '/devnode/mine',
+      { method: 'POST', body: JSON.stringify(body) },
+      signal,
+    ),
 };
+
+export interface DevNodeAccountResponse {
+  index: number;
+  evmAddress: string;
+  coreAddress: string;
+  privateKey: string;
+  initialBalanceCfx: string;
+}
+
+export interface DevNodeStatusResponse {
+  status: 'stopped' | 'starting' | 'running' | 'stopping' | 'error';
+  running: boolean;
+  urls?: { core: string; espace: string; coreWs: string; espaceWs: string };
+  config?: {
+    chainId: number;
+    evmChainId: number;
+    coreRpcPort: number;
+    evmRpcPort: number;
+    accounts: number;
+    balanceCfx: string;
+    miningIntervalMs: number;
+    dataDir: string;
+    mnemonic: string;
+  };
+  mining?: { enabled: boolean; intervalMs: number; ticks: number; startedAt?: string };
+  accounts?: DevNodeAccountResponse[];
+  faucet?: DevNodeAccountResponse;
+}
