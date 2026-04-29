@@ -2,7 +2,7 @@
   "name": "@cfxdevkit/contracts",
   "version": "0.0.0",
   "private": false,
-  "description": "Standard contract bindings (ERC-20/721/1155, multicall3, internal).",
+  "description": "Standard contract bindings (ERC-20/721/1155, multicall3) and a thin read/write/deploy surface for @cfxdevkit/core.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -11,6 +11,30 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./abis": {
+      "types": "./dist/abis/index.d.ts",
+      "import": "./dist/abis/index.js"
+    },
+    "./read": {
+      "types": "./dist/read/index.d.ts",
+      "import": "./dist/read/index.js"
+    },
+    "./write": {
+      "types": "./dist/write/index.d.ts",
+      "import": "./dist/write/index.js"
+    },
+    "./deploy": {
+      "types": "./dist/deploy/index.d.ts",
+      "import": "./dist/deploy/index.js"
+    },
+    "./erc20": {
+      "types": "./dist/erc20/index.d.ts",
+      "import": "./dist/erc20/index.js"
+    },
+    "./errors": {
+      "types": "./dist/errors/index.d.ts",
+      "import": "./dist/errors/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -39,6 +63,7 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
-    "@cfxdevkit/core": "workspace:^"
+    "@cfxdevkit/core": "workspace:^",
+    "viem": "^2.21.0"
   }
 }

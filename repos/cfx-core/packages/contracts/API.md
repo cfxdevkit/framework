@@ -1,81 +1,173 @@
-# framework/contracts — Public API
+# `@cfxdevkit/contracts` — Public API
 
-> Standard Conflux/eSpace contract bindings. Generated, but the public surface is
-> hand-curated and stable.
+> Standard contract bindings (ERC-20 / 721 / 1155, Multicall3) plus a thin,
+> framework-native `read` / `write` / `deploy` surface that consumes
+> `@cfxdevkit/core`'s `Client` and `Signer`.
+>
+> **Status:** eSpace-only in this revision. Core Space contract calls land in a
+> follow-up — calling any of the read/write/deploy entry points with a
+> `family: 'core'` client throws `ContractsError({ code: 'contracts/unsupported-family' })`.
 
 ## Sub-paths
 
 | Sub-path | Concern |
 |----------|---------|
-| `@cfxdevkit/contracts/erc20` | ERC-20 read/write helpers |
-| `@cfxdevkit/contracts/erc721` | ERC-721 helpers |
-| `@cfxdevkit/contracts/erc1155` | ERC-1155 helpers |
-| `@cfxdevkit/contracts/multicall3` | Multicall3 ABI + address per chain |
-| `@cfxdevkit/contracts/internal-contracts` | Conflux Core space precompiles (Sponsor, Staking, …) |
-| `@cfxdevkit/contracts/registry` | named-deployment lookup |
+| `@cfxdevkit/contracts/abis` | Standard ABIs as `as const` arrays |
+| `@cfxdevkit/contracts/read` | `readContract({ client, address, abi, functionName, args })` |
+| `@cfxdevkit/contracts/write` | `prepareWrite()` / `sendWrite()` / `waitForReceipt()` |
+| `@cfxdevkit/contracts/deploy` | `deployContract({ client, signer, abi, bytecode, args })` |
+| `@cfxdevkit/contracts/erc20` | Typed ERC-20 helpers (`balanceOf`, `transfer`, …) |
+| `@cfxdevkit/contracts/errors` | `ContractsError` + `ContractsErrorCode` |
 
-Each helper module follows the same shape:
-
----
-
-## Standard helper shape (illustrated for `erc20`)
-
-```
-const erc20Abi: Abi          // re-exported from core/abi for convenience
-
-// Reads
-function balanceOf(input: { client: Client; token: Address; owner: Address; blockTag?: BlockTag; signal?: AbortSignal }): Promise<Wei>
-function allowance(input: { client: Client; token: Address; owner: Address; spender: Address; signal?: AbortSignal }): Promise<Wei>
-function totalSupply(input: { client: Client; token: Address; signal?: AbortSignal }): Promise<Wei>
-function metadata(input: { client: Client; token: Address; signal?: AbortSignal }): Promise<{ symbol: string; name: string; decimals: number }>
-
-// Writes
-function transfer(input: { client: Client; signer: Signer; token: Address; to: Address; amount: Wei; signal?: AbortSignal }): Promise<{ hash: Hash }>
-function approve(input: { client: Client; signer: Signer; token: Address; spender: Address; amount: Wei; signal?: AbortSignal }): Promise<{ hash: Hash }>
-
-// Events
-function watchTransfers(input: { client: Client; token: Address; from?: Address; to?: Address; signal?: AbortSignal }): AsyncIterable<{ from: Address; to: Address; value: Wei; log: RawLog }>
-```
-
-Same layout for ERC-721 / ERC-1155 — one verb per function, `input` object, async,
-takes `signal`, throws `ContractError`.
+Importing the sub-paths instead of the barrel keeps tree-shaking sharp.
 
 ---
 
-## `contracts/multicall3`
+## `./abis`
 
-```
-const multicall3Address: Record<ChainId, Address>      // chain → address
-const multicall3Abi: Abi
+```ts
+export const ERC20_ABI: typeof viem.erc20Abi;
+export const ERC721_ABI: typeof viem.erc721Abi;
+export const ERC1155_ABI: typeof viem.erc1155Abi;
+export const MULTICALL3_ABI: typeof viem.multicall3Abi;
+export const MULTICALL3_ADDRESS = '0xcA11bde05977b3631167028862bE2a173976CA11';
 ```
 
-Pure data.
+Sourced from `viem` (which tracks the canonical interfaces) and re-exported under
+framework-stable aliases, so consumers don't pin a viem version of their own.
 
 ---
 
-## `contracts/internal-contracts`
+## `./read`
 
-Conflux Core space precompiles. Each module is feature-scoped:
+```ts
+function readContract<TAbi, TName>(input: {
+  client: Client;                                  // espace only
+  address: `0x${string}`;
+  abi: TAbi;
+  functionName: TName;                             // 'view' | 'pure'
+  args?: ContractFunctionArgs<TAbi, 'view' | 'pure', TName>;
+  blockTag?: 'latest' | 'pending' | 'earliest' | 'finalized' | 'safe' | bigint;
+  from?: `0x${string}`;
+  signal?: AbortSignal;
+}): Promise<DecodedReturn>;
+```
 
-- `sponsor` — set/clear/view sponsor data
-- `staking` — deposit, withdraw, vote-power
-- `cross-space` — eSpace ↔ Core asset bridge calls
-- `params-control` — DAO-style parameter governance reads
-
-Each module follows the `erc20` shape: small functions, one verb each.
+Encodes the call with viem's pure helpers, dispatches `eth_call` through
+`client.request()`, decodes the response. Decode failures raise
+`ContractsError({ code: 'contracts/decode-failure' })`.
 
 ---
 
-## `contracts/registry`
+## `./write`
 
+```ts
+// Pure helper — encode only. Hand off the SignableTx to any external signer.
+function prepareWrite<TAbi, TName>(input: {
+  address: Address;
+  abi: TAbi;
+  functionName: TName;                             // 'nonpayable' | 'payable'
+  args?: ContractFunctionArgs<TAbi, 'nonpayable' | 'payable', TName>;
+  value?: bigint;
+  chainId: number;
+  nonce?: number; gas?: bigint;
+  maxFeePerGas?: bigint; maxPriorityFeePerGas?: bigint;
+}): SignableTx;
+
+// Full pipeline — fills nonce/gas/fees, signs with `signer`, broadcasts.
+function sendWrite<TAbi, TName>(input: {
+  client: Client; signer: Signer;
+  address: Address; abi: TAbi; functionName: TName;
+  args?: ...; value?: bigint;
+  maxFeePerGas?: bigint; maxPriorityFeePerGas?: bigint;
+  waitForReceipt?: boolean;
+  pollIntervalMs?: number;        // default 1500
+  receiptTimeoutMs?: number;      // default 60_000
+  signOptions?: SignOptions;
+}): Promise<{
+  hash: Hex;
+  request: SignableTx;
+  rawTransaction: Hex;
+  receipt?: TxReceipt;
+}>;
+
+function waitForReceipt(
+  client: Client,
+  hash: Hex,
+  opts: { pollIntervalMs: number; timeoutMs: number },
+): Promise<TxReceipt>;
 ```
-type Deployment = { chainId: ChainId; name: string; address: Address; deployedAt: Timestamp; deployer?: Address }
 
-function createRegistry(opts: { source: 'file' | 'memory'; path?: string }): {
-  get(input: { chainId: ChainId; name: string }): Deployment | null
-  list(chainId?: ChainId): readonly Deployment[]
-  upsert(d: Deployment): Promise<void>             // file source only
-}
+Defaults: `maxPriorityFeePerGas = 1 gwei`, `maxFeePerGas = baseFee*2 + tip`.
+A reverted receipt raises `ContractsError({ code: 'contracts/reverted' })`;
+timing out raises `'contracts/receipt-timeout'`.
+
+---
+
+## `./deploy`
+
+```ts
+function deployContract<TAbi>(input: {
+  client: Client; signer: Signer;
+  abi: TAbi; bytecode: Hex;
+  args?: ContractConstructorArgs<TAbi>;
+  value?: bigint;
+  gas?: bigint; maxFeePerGas?: bigint; maxPriorityFeePerGas?: bigint;
+  waitForReceipt?: boolean;
+  pollIntervalMs?: number; receiptTimeoutMs?: number;
+  signOptions?: SignOptions;
+}): Promise<{
+  hash: Hex;
+  request: SignableTx;
+  rawTransaction: Hex;
+  address?: Address;             // populated when waitForReceipt: true
+  receipt?: TxReceipt;
+}>;
 ```
 
-Replaces ad-hoc `deployments.json` patterns from the legacy repos.
+---
+
+## `./erc20`
+
+Pre-bound, typed ERC-20 helpers. `Erc20Bind = { client; address }`; write helpers
+also take `signer`.
+
+```ts
+erc20.name({ client, address }): Promise<string>
+erc20.symbol({ client, address }): Promise<string>
+erc20.decimals({ client, address }): Promise<number>
+erc20.totalSupply({ client, address }): Promise<bigint>
+erc20.balanceOf({ client, address }, owner): Promise<bigint>
+erc20.allowance({ client, address }, owner, spender): Promise<bigint>
+erc20.transfer({ client, address, signer }, to, amount, opts?): Promise<SendWriteResult>
+erc20.approve({ client, address, signer }, spender, amount, opts?): Promise<SendWriteResult>
+```
+
+---
+
+## `./errors`
+
+```ts
+type ContractsErrorCode =
+  | 'contracts/unsupported-family'
+  | 'contracts/decode-failure'
+  | 'contracts/receipt-timeout'
+  | 'contracts/reverted'
+  | 'contracts/invalid-argument';
+
+class ContractsError extends CfxError { /* .code: ContractsErrorCode */ }
+```
+
+---
+
+## Deferred
+
+The following land in subsequent ports and are intentionally absent from this
+revision:
+
+- Core Space (`family: 'core'`) reads/writes via `cfx_call` + base32 addresses
+- ERC-721 / ERC-1155 typed convenience helpers (ABIs are exported today)
+- Multicall3 batching helper (`multicall({ client, calls })`)
+- Conflux internal contracts (Sponsor, Staking, Cross-space)
+- Address registry (`createRegistry({ source: 'file' | 'memory' })`)
+- Event subscription helpers (`watchTransfers`, etc.)

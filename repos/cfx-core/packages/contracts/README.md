@@ -1,11 +1,18 @@
-# framework/contracts
+# @cfxdevkit/contracts
 
-**Scope:** Generated, versioned artifacts for well-known contracts.
+Standard contract bindings (ERC-20 / 721 / 1155 / Multicall3) and a thin,
+framework-native `read` / `write` / `deploy` surface for `@cfxdevkit/core`.
 
-**Contents**
-- ABIs (typed)
-- Bytecode (where redistribution is permitted)
-- Canonical mainnet/testnet addresses
+```ts
+import { erc20 } from '@cfxdevkit/contracts/erc20';
+import { createClient, http } from '@cfxdevkit/core';
+import { espaceTestnet } from '@cfxdevkit/core';
 
-Source contracts live in their owning project (`projects/<p>/contracts/`). Artifacts are
-copied here only after audit/review. Versioning is independent of source contracts.
+const client = createClient({ chain: espaceTestnet, transport: http() });
+const symbol = await erc20.symbol({ client, address: '0xToken…' });
+```
+
+See [API.md](./API.md) for the full surface and [STRUCTURE.md](./STRUCTURE.md)
+for the layout.
+
+eSpace-only in this revision; Core Space support lands next.
