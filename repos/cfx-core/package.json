@@ -1,0 +1,11 @@
+{
+  "name": "@cfxdevkit/repo-cfx-core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tier 0a — chain primitives. Carve-out target per ADR-0003.",
+  "packageManager": "pnpm@10.6.0",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  }
+}

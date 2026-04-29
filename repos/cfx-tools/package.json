@@ -1,0 +1,11 @@
+{
+  "name": "@cfxdevkit/repo-cfx-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tier 1 — developer experience: scaffold-cli, mcp-server, vscode-extension, devcontainer. Carve-out target per ADR-0003.",
+  "packageManager": "pnpm@10.6.0",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  }
+}
