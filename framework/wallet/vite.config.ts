@@ -11,6 +11,7 @@ export default defineConfig({
         'hardware/index': 'src/hardware/index.ts',
         'hardware/onekey/index': 'src/hardware/onekey/index.ts',
         'hardware/satochip/index': 'src/hardware/satochip/index.ts',
+        'init/index': 'src/init/index.ts',
       },
       formats: ['es'],
       fileName: (_format, entry) => `${entry}.js`,

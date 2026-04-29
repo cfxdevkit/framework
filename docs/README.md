@@ -20,3 +20,8 @@ docs/
 - ADRs are append-only; superseded ADRs link forward to their replacement.
 - Generated API docs are produced by CI; the source-of-truth is JSDoc/TSDoc in code.
 - The public docs site (`platform/docs-site/`) builds from this folder.
+
+## Operational guides
+
+- [keystore-docker.md](keystore-docker.md) — Run a hardened local
+  encrypted keystore inside Docker (single-container and sidecar patterns).

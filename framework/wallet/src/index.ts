@@ -4,4 +4,5 @@ export const __packageName = '@cfxdevkit/wallet' as const;
 
 export * from './errors/index.js';
 export * from './hardware/index.js';
+export * from './init/index.js';
 export * from './signers/index.js';

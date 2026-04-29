@@ -32,6 +32,10 @@
       "types": "./dist/hardware/satochip/index.d.ts",
       "import": "./dist/hardware/satochip/index.js"
     },
+    "./init": {
+      "types": "./dist/init/index.d.ts",
+      "import": "./dist/init/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
