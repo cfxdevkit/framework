@@ -1,67 +1,36 @@
 /**
- * Chain context — owns the currently selected chain (across all panels) and
- * a memoised `Client` for it. Lifts what was previously per-panel chain
- * state (in `ContractPanel`) into a single source of truth.
+ * `useChain` shim — kept for backwards-compatibility with single-space
+ * panels (CorePanel, ContractPanel, StatusPanel) that were written against
+ * a one-chain-at-a-time model. Internally it now reads the *active space*
+ * from {@link useNetwork} and exposes the matching `ChainConfig` + client.
  *
- * The chain selector in `App.tsx` writes here; panels read via
- * {@link useChain} and never call `createClient` themselves.
+ * New panels should prefer `useNetwork()` directly so they can address
+ * Core and eSpace simultaneously (Conflux's distinguishing feature).
  */
-import { type ChainConfig, type Client, createClient, http, listChains } from '@cfxdevkit/core';
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import type { ChainConfig, Client } from '@cfxdevkit/core';
+import { type NetworkState, useNetwork } from './NetworkProvider.js';
 
 export interface ChainState {
-  /** All known chains (no filtering — panels filter by family if they care). */
+  /** All chains exposed at the active network (length 2 — Core + eSpace). */
   chains: ChainConfig[];
-  /** The currently selected chain. Always defined while children render. */
+  /** The chain matching the active space. */
   chain: ChainConfig;
   /** Memoised client bound to {@link chain}. */
   client: Client;
-  /** Switch active chain by `ChainConfig.name` (slug). */
+  /** Switch active *space* by chain slug. */
   setChainName: (name: string) => void;
 }
 
-const Ctx = createContext<ChainState | null>(null);
-
-export interface ChainProviderProps {
-  /** Initial chain slug. Defaults to the first non-local chain. */
-  defaultChainName?: string;
-  children: ReactNode;
-}
-
-export function ChainProvider({ defaultChainName, children }: ChainProviderProps) {
-  const chains = useMemo(() => listChains() as ChainConfig[], []);
-  const initial = useMemo(() => {
-    if (defaultChainName) {
-      const m = chains.find((c) => c.name === defaultChainName);
-      if (m) return m.name;
-    }
-    return (chains.find((c) => c.network !== 'local') ?? chains[0])?.name ?? '';
-  }, [chains, defaultChainName]);
-
-  const [chainName, setChainNameRaw] = useState<string>(initial);
-
-  const chain = useMemo(
-    () => chains.find((c) => c.name === chainName) ?? chains[0],
-    [chains, chainName],
-  );
-
-  const client = useMemo<Client | null>(
-    () => (chain ? createClient({ chain, transport: http({ timeoutMs: 10_000 }) }) : null),
-    [chain],
-  );
-
-  const setChainName = useCallback((name: string) => setChainNameRaw(name), []);
-
-  if (!chain || !client) {
-    return <p className="error">No chains registered in @cfxdevkit/core.</p>;
-  }
-
-  const value: ChainState = { chains, chain, client, setChainName };
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
-}
-
 export function useChain(): ChainState {
-  const v = useContext(Ctx);
-  if (!v) throw new Error('useChain must be called inside <ChainProvider>');
-  return v;
+  const n: NetworkState = useNetwork();
+  const chains: ChainConfig[] = [n.core, n.espace];
+  return {
+    chains,
+    chain: n.activeChain,
+    client: n.activeClient,
+    setChainName: (name) => {
+      if (name === n.core.name) n.setSpace('core');
+      else if (name === n.espace.name) n.setSpace('espace');
+    },
+  };
 }

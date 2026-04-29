@@ -13,6 +13,7 @@ import {
   validateMnemonic,
 } from '@cfxdevkit/core';
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import { useNetwork } from './NetworkProvider.js';
 
 export const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
 
@@ -33,6 +34,8 @@ export interface WalletState {
 const Ctx = createContext<WalletState | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
+  const { core } = useNetwork();
+  const coreNetworkId = core.id; // 1029 mainnet, 1 testnet, 2029 local
   const [mnemonic, setMnemonicRaw] = useState<string>(TEST_MNEMONIC);
   const [count, setCount] = useState<number>(5);
   const [activeIndex, setActive] = useState<number | null>(null);
@@ -40,14 +43,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const accounts = useMemo<DualAddressAccount[]>(() => {
     if (!validateMnemonic(mnemonic.trim())) return [];
     try {
-      // The showcase targets Conflux testnet; derive Core addresses with
-      // testnet networkId (1) so DualAddressAccount.coreAddress matches the
-      // address the signer broadcasts from.
-      return deriveDualAccounts({ mnemonic: mnemonic.trim(), count, coreNetworkId: 1 });
+      // Derive Core addresses with the *active network's* networkId so
+      // `account.coreAddress` matches what the signer broadcasts from. The
+      // base32 prefix changes per network (cfx: / cfxtest: / net2029:).
+      return deriveDualAccounts({ mnemonic: mnemonic.trim(), count, coreNetworkId });
     } catch {
       return [];
     }
-  }, [mnemonic, count]);
+  }, [mnemonic, count, coreNetworkId]);
 
   const setMnemonic = useCallback((m: string) => {
     setMnemonicRaw(m);
@@ -71,10 +74,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const active = activeIndex !== null ? (accounts[activeIndex] ?? null) : null;
   const signer = useMemo<Signer | null>(
-    // Pass Conflux Core testnet networkId (1) so the signer also exposes a
-    // base32 coreAddress; required for Core Space writes.
-    () => (active ? signerFromPrivateKey(active.privateKey, 1) : null),
-    [active],
+    // Signer's networkId tracks the active network so coreAddress + tx
+    // broadcasts agree.
+    () => (active ? signerFromPrivateKey(active.privateKey, coreNetworkId) : null),
+    [active, coreNetworkId],
   );
 
   const value: WalletState = {
