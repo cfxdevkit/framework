@@ -52,9 +52,13 @@ export function makeMockClient(opts: MockClientOptions = {}): Client {
       family: 'core',
       chain: { ...chain, family: 'core' } as ChainConfig,
       transport: { kind: 'http' } as never,
+      __calls: calls,
       request: async <T>(req: RpcRequest, _o?: CallOptions): Promise<T> => {
         calls.push(req);
-        return undefined as T;
+        const entry = opts.rpc?.[req.method];
+        if (typeof entry === 'function') return entry(req) as T;
+        if (entry !== undefined) return entry as T;
+        throw new Error(`mockClient: unhandled RPC method ${req.method}`);
       },
       getEpochNumber: async () => 0n,
       getStatus: async () =>

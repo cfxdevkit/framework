@@ -52,19 +52,47 @@ describe('readContract', () => {
     expect(blockTag).toBe('0x7b');
   });
 
-  it('throws contracts/unsupported-family on a Core Space client', async () => {
-    const client = makeMockClient({ family: 'core' });
+  it('uses cfx_call with epoch tag for Core Space clients', async () => {
+    const client = makeMockClient({
+      family: 'core',
+      rpc: { cfx_call: encodeAbiParameters([{ type: 'uint256' }], [7n]) },
+    });
+
+    const result = await readContract({
+      client,
+      address: 'cfxtest:acg158kvr8zanb1bs048ryb6rtrhr283ma70vz70tx',
+      abi: ERC20_ABI,
+      functionName: 'totalSupply',
+      epochTag: 'latest_state',
+    });
+    expect(result).toBe(7n);
+
+    const [call] = getRecordedCalls(client);
+    expect(call?.method).toBe('cfx_call');
+    const [, epoch] = call?.params as [unknown, string];
+    expect(epoch).toBe('latest_state');
+  });
+
+  it('rejects 0x addresses on Core Space and base32 on eSpace', async () => {
+    const core = makeMockClient({ family: 'core' });
     await expect(
       readContract({
-        client,
+        client: core,
         address: TOKEN,
         abi: ERC20_ABI,
         functionName: 'totalSupply',
       }),
-    ).rejects.toMatchObject({
-      name: 'ContractsError',
-      code: 'contracts/unsupported-family',
-    });
+    ).rejects.toMatchObject({ code: 'contracts/invalid-argument' });
+
+    const espace = makeMockClient();
+    await expect(
+      readContract({
+        client: espace,
+        address: 'cfxtest:acg158kvr8zanb1bs048ryb6rtrhr283ma70vz70tx',
+        abi: ERC20_ABI,
+        functionName: 'totalSupply',
+      }),
+    ).rejects.toMatchObject({ code: 'contracts/invalid-argument' });
   });
 
   it('wraps decode errors', async () => {

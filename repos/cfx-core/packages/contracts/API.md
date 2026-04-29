@@ -4,9 +4,10 @@
 > framework-native `read` / `write` / `deploy` surface that consumes
 > `@cfxdevkit/core`'s `Client` and `Signer`.
 >
-> **Status:** eSpace-only in this revision. Core Space contract calls land in a
-> follow-up — calling any of the read/write/deploy entry points with a
-> `family: 'core'` client throws `ContractsError({ code: 'contracts/unsupported-family' })`.
+> **Status:** `read` works for both eSpace and Core Space. `write` and `deploy`
+> are still eSpace-only in this revision — Core Space transaction support
+> arrives in the next phase. Calling those entry points with a `family: 'core'`
+> client throws `ContractsError({ code: 'contracts/unsupported-family' })`.
 
 ## Sub-paths
 
@@ -42,19 +43,22 @@ framework-stable aliases, so consumers don't pin a viem version of their own.
 
 ```ts
 function readContract<TAbi, TName>(input: {
-  client: Client;                                  // espace only
-  address: `0x${string}`;
+  client: Client;                                  // espace or core
+  address: string;                                 // 0x hex (espace) or base32 (core)
   abi: TAbi;
   functionName: TName;                             // 'view' | 'pure'
   args?: ContractFunctionArgs<TAbi, 'view' | 'pure', TName>;
   blockTag?: 'latest' | 'pending' | 'earliest' | 'finalized' | 'safe' | bigint;
-  from?: `0x${string}`;
+  epochTag?: 'latest_state' | 'latest_mined' | 'latest_finalized' | 'latest_checkpoint' | 'earliest';
+  from?: string;
   signal?: AbortSignal;
 }): Promise<DecodedReturn>;
 ```
 
-Encodes the call with viem's pure helpers, dispatches `eth_call` through
-`client.request()`, decodes the response. Decode failures raise
+Dispatches `eth_call` for eSpace and `cfx_call` (default `epochTag: 'latest_state'`)
+for Core Space. Address shape is validated per family: passing 0x hex to a
+Core client (or base32 to an eSpace client) raises
+`ContractsError({ code: 'contracts/invalid-argument' })`. Decode failures raise
 `ContractsError({ code: 'contracts/decode-failure' })`.
 
 ---
@@ -165,7 +169,8 @@ class ContractsError extends CfxError { /* .code: ContractsErrorCode */ }
 The following land in subsequent ports and are intentionally absent from this
 revision:
 
-- Core Space (`family: 'core'`) reads/writes via `cfx_call` + base32 addresses
+- Core Space (`family: 'core'`) **writes/deploys** via `cfx_sendRawTransaction`
+  and the Conflux tx serializer
 - ERC-721 / ERC-1155 typed convenience helpers (ABIs are exported today)
 - Multicall3 batching helper (`multicall({ client, calls })`)
 - Conflux internal contracts (Sponsor, Staking, Cross-space)

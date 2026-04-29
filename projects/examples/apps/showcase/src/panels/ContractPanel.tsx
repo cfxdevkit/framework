@@ -1,9 +1,14 @@
 /**
  * ContractPanel — exercises `@cfxdevkit/contracts/erc20` against a
- * user-provided ERC-20 address on the selected eSpace chain.
+ * user-provided ERC-20 address on the selected chain.
  *
- * Reads (`name/symbol/decimals/totalSupply/balanceOf`) require no signer.
- * Transfer requires a connected wallet (`useWallet().signer`).
+ * Reads (`name/symbol/decimals/totalSupply/balanceOf`) work for both eSpace
+ * (`0x…`) and Core Space (`cfx:…` / `cfxtest:…`) — they share the same
+ * `erc20.*` helper, which dispatches `eth_call` or `cfx_call` based on
+ * `client.family`.
+ *
+ * Transfers are eSpace-only in this revision; the next phase adds the
+ * Conflux tx serializer to the framework `Signer`.
  */
 
 import { erc20 } from '@cfxdevkit/contracts/erc20';
@@ -27,8 +32,8 @@ interface Metadata {
 
 export function ContractPanel() {
   const { active, signer } = useWallet();
-  const espaceChains = useMemo(() => listChains().filter((c) => c.family === 'espace'), []);
-  const [chainName, setChainName] = useState<string>(espaceChains[0]?.name ?? 'espace-testnet');
+  const chains = useMemo(() => listChains(), []);
+  const [chainName, setChainName] = useState<string>(chains[0]?.name ?? 'espace-testnet');
   const [address, setAddress] = useState<string>('');
   const [meta, setMeta] = useState<Metadata | null>(null);
   const [balance, setBalance] = useState<bigint | null>(null);
@@ -42,13 +47,15 @@ export function ContractPanel() {
   const [sending, setSending] = useState(false);
 
   const chain: ChainConfig | undefined = useMemo(
-    () => espaceChains.find((c) => c.name === chainName),
-    [espaceChains, chainName],
+    () => chains.find((c) => c.name === chainName),
+    [chains, chainName],
   );
+  const isCore = chain?.family === 'core';
+  const ownerAddress = isCore ? active?.coreAddress : active?.evmAddress;
 
   const fetchMetadata = useCallback(async () => {
-    if (!chain || !isHexAddress(address)) {
-      setErr('Enter a valid 0x ERC-20 address.');
+    if (!chain || !address) {
+      setErr('Pick a chain and enter a token address.');
       return;
     }
     setLoading(true);
@@ -57,7 +64,7 @@ export function ContractPanel() {
     setBalance(null);
     try {
       const client = createClient({ chain, transport: http({ timeoutMs: 10_000 }) });
-      const bind = { client, address: address as `0x${string}` };
+      const bind = { client, address };
       const [name, symbol, decimals, totalSupply] = await Promise.all([
         erc20.name(bind),
         erc20.symbol(bind),
@@ -65,8 +72,8 @@ export function ContractPanel() {
         erc20.totalSupply(bind),
       ]);
       setMeta({ name, symbol, decimals, totalSupply });
-      if (active?.evmAddress) {
-        const b = await erc20.balanceOf(bind, active.evmAddress);
+      if (ownerAddress) {
+        const b = await erc20.balanceOf(bind, ownerAddress);
         setBalance(b);
       }
     } catch (e) {
@@ -74,11 +81,15 @@ export function ContractPanel() {
     } finally {
       setLoading(false);
     }
-  }, [chain, address, active]);
+  }, [chain, address, ownerAddress]);
 
   const sendTransfer = useCallback(async () => {
-    if (!chain || !signer || !meta || !isHexAddress(address) || !isHexAddress(transferTo)) {
-      setTxErr('Connect a wallet, fetch metadata, and enter a valid recipient.');
+    if (!chain || !signer || !meta || !address || !transferTo) {
+      setTxErr('Connect a wallet, fetch metadata, and enter a recipient.');
+      return;
+    }
+    if (isCore) {
+      setTxErr('Core Space transfers are not yet implemented (next phase).');
       return;
     }
     let amount: bigint;
@@ -93,18 +104,14 @@ export function ContractPanel() {
     setTxHash(null);
     try {
       const client = createClient({ chain, transport: http({ timeoutMs: 10_000 }) });
-      const result = await erc20.transfer(
-        { client, address: address as `0x${string}`, signer },
-        transferTo as `0x${string}`,
-        amount,
-      );
+      const result = await erc20.transfer({ client, address, signer }, transferTo, amount);
       setTxHash(result.hash);
     } catch (e) {
       setTxErr(e instanceof Error ? e.message : String(e));
     } finally {
       setSending(false);
     }
-  }, [chain, signer, meta, address, transferTo, transferAmount]);
+  }, [chain, signer, meta, address, transferTo, transferAmount, isCore]);
 
   return (
     <section className="panel">
@@ -112,27 +119,27 @@ export function ContractPanel() {
       <p className="panel-desc">
         Drives <code className="mono">@cfxdevkit/contracts/erc20</code> against a user-supplied
         token address. Reads use{' '}
-        <code className="mono">erc20.name/symbol/decimals/totalSupply/balanceOf</code>; the transfer
-        button uses <code className="mono">erc20.transfer</code> with the active wallet's signer.
-        eSpace only in this revision.
+        <code className="mono">erc20.name/symbol/decimals/totalSupply/balanceOf</code> and work on
+        both eSpace (<code className="mono">eth_call</code>) and Core Space (
+        <code className="mono">cfx_call</code>). Transfers are eSpace-only in this revision.
       </p>
 
       <div className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
-        <label style={{ flex: '0 0 240px' }}>
+        <label style={{ flex: '0 0 280px' }}>
           <span>Chain</span>
           <select value={chainName} onChange={(e) => setChainName(e.target.value)}>
-            {espaceChains.map((c) => (
+            {chains.map((c) => (
               <option key={c.name} value={c.name}>
-                {c.displayName} ({c.id})
+                {c.displayName} · {c.family} ({c.id})
               </option>
             ))}
           </select>
         </label>
         <label style={{ flex: 1 }}>
-          <span>ERC-20 address</span>
+          <span>ERC-20 address ({isCore ? 'cfx:… / cfxtest:…' : '0x…'})</span>
           <input
             type="text"
-            placeholder="0x…"
+            placeholder={isCore ? 'cfxtest:…' : '0x…'}
             value={address}
             onChange={(e) => setAddress(e.target.value.trim())}
             spellCheck={false}
@@ -163,13 +170,13 @@ export function ContractPanel() {
             <dd>
               {formatUnits(meta.totalSupply, meta.decimals)} {meta.symbol}
             </dd>
-            {balance !== null && active && (
+            {balance !== null && ownerAddress && (
               <>
                 <dt>your balance</dt>
                 <dd>
                   {formatUnits(balance, meta.decimals)} {meta.symbol}
                   <div className="muted" style={{ fontSize: 11 }}>
-                    ({active.evmAddress})
+                    ({ownerAddress})
                   </div>
                 </dd>
               </>
@@ -186,12 +193,17 @@ export function ContractPanel() {
               Connect a wallet on the <strong>Wallet</strong> tab to enable transfers.
             </p>
           )}
+          {isCore && (
+            <p className="muted">
+              Core Space transfers land in the next phase (Phase 2 — Conflux tx serializer).
+            </p>
+          )}
           <div className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
             <label style={{ flex: 1 }}>
               <span>To</span>
               <input
                 type="text"
-                placeholder="0x…"
+                placeholder={isCore ? 'cfxtest:…' : '0x…'}
                 value={transferTo}
                 onChange={(e) => setTransferTo(e.target.value.trim())}
                 spellCheck={false}
@@ -212,7 +224,7 @@ export function ContractPanel() {
               type="button"
               className="primary"
               onClick={sendTransfer}
-              disabled={sending || !signer || !transferTo || !transferAmount}
+              disabled={sending || !signer || isCore || !transferTo || !transferAmount}
             >
               {sending ? 'Sending…' : 'Transfer'}
             </button>
@@ -227,8 +239,4 @@ export function ContractPanel() {
       )}
     </section>
   );
-}
-
-function isHexAddress(s: string): s is `0x${string}` {
-  return /^0x[0-9a-fA-F]{40}$/.test(s);
 }
