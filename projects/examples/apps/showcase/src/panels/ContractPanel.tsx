@@ -12,15 +12,9 @@
  */
 
 import { erc20 } from '@cfxdevkit/contracts/erc20';
-import {
-  type ChainConfig,
-  createClient,
-  formatUnits,
-  http,
-  listChains,
-  parseUnits,
-} from '@cfxdevkit/core';
-import { useCallback, useMemo, useState } from 'react';
+import { formatUnits, parseUnits } from '@cfxdevkit/core';
+import { useCallback, useState } from 'react';
+import { useChain } from '../contexts/ChainProvider.js';
 import { useWallet } from '../contexts/WalletProvider.js';
 
 interface Metadata {
@@ -32,8 +26,7 @@ interface Metadata {
 
 export function ContractPanel() {
   const { active, signer } = useWallet();
-  const chains = useMemo(() => listChains(), []);
-  const [chainName, setChainName] = useState<string>(chains[0]?.name ?? 'espace-testnet');
+  const { chain, client } = useChain();
   const [address, setAddress] = useState<string>('');
   const [meta, setMeta] = useState<Metadata | null>(null);
   const [balance, setBalance] = useState<bigint | null>(null);
@@ -46,16 +39,12 @@ export function ContractPanel() {
   const [txErr, setTxErr] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
-  const chain: ChainConfig | undefined = useMemo(
-    () => chains.find((c) => c.name === chainName),
-    [chains, chainName],
-  );
-  const isCore = chain?.family === 'core';
+  const isCore = chain.family === 'core';
   const ownerAddress = isCore ? active?.coreAddress : active?.evmAddress;
 
   const fetchMetadata = useCallback(async () => {
-    if (!chain || !address) {
-      setErr('Pick a chain and enter a token address.');
+    if (!address) {
+      setErr('Enter a token address.');
       return;
     }
     setLoading(true);
@@ -63,7 +52,6 @@ export function ContractPanel() {
     setMeta(null);
     setBalance(null);
     try {
-      const client = createClient({ chain, transport: http({ timeoutMs: 10_000 }) });
       const bind = { client, address };
       const [name, symbol, decimals, totalSupply] = await Promise.all([
         erc20.name(bind),
@@ -81,10 +69,10 @@ export function ContractPanel() {
     } finally {
       setLoading(false);
     }
-  }, [chain, address, ownerAddress]);
+  }, [client, address, ownerAddress]);
 
   const sendTransfer = useCallback(async () => {
-    if (!chain || !signer || !meta || !address || !transferTo) {
+    if (!signer || !meta || !address || !transferTo) {
       setTxErr('Connect a wallet, fetch metadata, and enter a recipient.');
       return;
     }
@@ -99,7 +87,6 @@ export function ContractPanel() {
     setTxErr(null);
     setTxHash(null);
     try {
-      const client = createClient({ chain, transport: http({ timeoutMs: 10_000 }) });
       const result = await erc20.transfer({ client, address, signer }, transferTo, amount);
       setTxHash(result.hash);
     } catch (e) {
@@ -107,7 +94,7 @@ export function ContractPanel() {
     } finally {
       setSending(false);
     }
-  }, [chain, signer, meta, address, transferTo, transferAmount]);
+  }, [client, signer, meta, address, transferTo, transferAmount]);
 
   return (
     <section className="panel">
@@ -123,16 +110,6 @@ export function ContractPanel() {
       </p>
 
       <div className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
-        <label style={{ flex: '0 0 280px' }}>
-          <span>Chain</span>
-          <select value={chainName} onChange={(e) => setChainName(e.target.value)}>
-            {chains.map((c) => (
-              <option key={c.name} value={c.name}>
-                {c.displayName} · {c.family} ({c.id})
-              </option>
-            ))}
-          </select>
-        </label>
         <label style={{ flex: 1 }}>
           <span>ERC-20 address ({isCore ? 'cfx:… / cfxtest:…' : '0x…'})</span>
           <input

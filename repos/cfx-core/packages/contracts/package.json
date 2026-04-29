@@ -32,6 +32,10 @@
       "types": "./dist/erc20/index.d.ts",
       "import": "./dist/erc20/index.js"
     },
+    "./bridge": {
+      "types": "./dist/bridge/index.d.ts",
+      "import": "./dist/bridge/index.js"
+    },
     "./errors": {
       "types": "./dist/errors/index.d.ts",
       "import": "./dist/errors/index.js"

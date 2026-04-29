@@ -6,6 +6,7 @@ export default defineConfig({
     lib: {
       entry: {
         index: 'src/index.ts',
+        'address/index': 'src/address/index.ts',
         'chains/index': 'src/chains/index.ts',
         'client/index': 'src/client/index.ts',
         'errors/index': 'src/errors/index.ts',

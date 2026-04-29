@@ -17,6 +17,7 @@
 | `@cfxdevkit/contracts/write` | `prepareWrite()` / `sendWrite()` / `waitForReceipt()` |
 | `@cfxdevkit/contracts/deploy` | `deployContract({ client, signer, abi, bytecode, args })` |
 | `@cfxdevkit/contracts/erc20` | Typed ERC-20 helpers (`balanceOf`, `transfer`, …) |
+| `@cfxdevkit/contracts/bridge` | CrossSpaceCall helpers (`transferToEspace`, `withdrawFromMapped`, mapped balance/address) |
 | `@cfxdevkit/contracts/errors` | `ContractsError` + `ContractsErrorCode` |
 
 Importing the sub-paths instead of the barrel keeps tree-shaking sharp.
@@ -148,6 +149,41 @@ erc20.approve({ client, address, signer }, spender, amount, opts?): Promise<Send
 
 ---
 
+## `./bridge`
+
+Wraps the Conflux **CrossSpaceCall** internal contract
+(`0x0888000000000000000000000000000000000006`, on Core Space). Every helper
+requires `client.family === 'core'` and a signer with `account.coreAddress` set.
+
+```ts
+export const CROSS_SPACE_CALL_HEX = '0x0888000000000000000000000000000000000006';
+export const CROSS_SPACE_CALL_ABI;
+
+// Core → eSpace
+function transferToEspace({ client, signer, to: '0x…', value: bigint, … }): Promise<SendWriteResult>;
+function callEspace({ client, signer, to: '0x…', data: Hex, value?: bigint, … }): Promise<SendWriteResult>;
+
+// eSpace → Core (recall from your mapped account)
+function withdrawFromMapped({ client, signer, value: bigint, … }): Promise<SendWriteResult>;
+
+// Reads
+function getMappedBalance({ client, coreHexAddress: Hex }): Promise<bigint>;
+function getMappedNonce({ client, coreHexAddress: Hex }): Promise<bigint>;
+
+// Helpers
+function mappedEspaceAddress(coreHexAddress: Hex): `0x${string}`;  // keccak256(coreHex)[12:32]
+function uint256Hex(n: bigint): Hex;
+function hexToUint256(hex: Hex): bigint;
+```
+
+The bridge surface mirrors how Conflux defines cross-space transfers in the
+spec: every operation is initiated from **Core Space** — there is no
+"eSpace→Core" RPC. To move CFX out of eSpace, top up your *mapped* eSpace
+account (the one returned by `mappedEspaceAddress(yourCoreHex)`), then call
+`withdrawFromMapped(amount)` from Core.
+
+---
+
 ## `./errors`
 
 ```ts
@@ -169,8 +205,7 @@ The following land in subsequent ports and are intentionally absent from this
 revision:
 
 - ERC-721 / ERC-1155 typed convenience helpers (ABIs are exported today)
-- Cross-space (eSpace ↔ Core) bridge helpers
 - Multicall3 batching helper (`multicall({ client, calls })`)
-- Conflux internal contracts (Sponsor, Staking, Cross-space)
+- Conflux internal contracts beyond CrossSpaceCall (Sponsor, Staking)
 - Address registry (`createRegistry({ source: 'file' | 'memory' })`)
 - Event subscription helpers (`watchTransfers`, etc.)

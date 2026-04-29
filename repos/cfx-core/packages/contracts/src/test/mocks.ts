@@ -76,6 +76,12 @@ export function makeMockClient(opts: MockClientOptions = {}): Client {
           pendingTxNumber: 0,
         }) as never,
       getBalance: async (_a: string, _o?: never) => 0n as Wei,
+      getTransactionReceipt: async (_h: Hash, _o?: CallOptions) =>
+        opts.receipt === undefined ? null : opts.receipt,
+      getTransaction: async (_h: Hash, _o?: CallOptions) => null,
+      getLogs: async (_f: never, _o?: CallOptions) => [] as never,
+      getSponsorInfo: async (_a: string, _o?: CallOptions) => null as never,
+      getAdmin: async (_a: string, _o?: CallOptions) => null as never,
     } as Client;
   }
 

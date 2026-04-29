@@ -5,6 +5,7 @@
  * `./errors`) over this barrel; importing them keeps tree-shaking sharp.
  */
 export * from './abis/index.js';
+export * as bridge from './bridge/index.js';
 export * from './deploy/index.js';
 export { type Erc20Bind, erc20 } from './erc20/index.js';
 export * from './errors/index.js';

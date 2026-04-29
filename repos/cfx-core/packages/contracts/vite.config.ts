@@ -12,6 +12,7 @@ export default defineConfig({
         'write/index': 'src/write/index.ts',
         'deploy/index': 'src/deploy/index.ts',
         'erc20/index': 'src/erc20/index.ts',
+        'bridge/index': 'src/bridge/index.ts',
       },
       formats: ['es'],
       fileName: (_format, entry) => `${entry}.js`,

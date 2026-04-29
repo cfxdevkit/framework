@@ -12,6 +12,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./address": {
+      "types": "./dist/address/index.d.ts",
+      "import": "./dist/address/index.js"
+    },
     "./chains": {
       "types": "./dist/chains/index.d.ts",
       "import": "./dist/chains/index.js"
