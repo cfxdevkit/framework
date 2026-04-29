@@ -5,11 +5,14 @@
  * Mirrors {@link sendWrite}'s contract: returns the tx hash and (when asked)
  * waits for the receipt to extract the deployed contract address.
  *
- * eSpace only in this revision.
+ * Supports both eSpace (`eth_sendRawTransaction`, EIP-1559 fees) and Core
+ * Space (`cfx_sendRawTransaction`, legacy fees with `storageLimit` +
+ * `epochHeight`). The right path is selected from `client.family`.
  */
 import type {
-  Address,
   Client,
+  CoreSpaceClient,
+  EspaceClient,
   Hex,
   SignableTx,
   Signer,
@@ -29,8 +32,14 @@ export interface DeployContractInput<TAbi extends Abi> {
   args?: ContractConstructorArgs<TAbi>;
   value?: bigint;
   gas?: bigint;
+  // eSpace
   maxFeePerGas?: bigint;
   maxPriorityFeePerGas?: bigint;
+  // Core Space
+  gasPrice?: bigint;
+  storageLimit?: bigint;
+  epochHeight?: bigint;
+  coreType?: 'legacy' | 'cip2930' | 'cip1559';
   waitForReceipt?: boolean;
   pollIntervalMs?: number;
   receiptTimeoutMs?: number;
@@ -42,46 +51,50 @@ export interface DeployContractResult {
   request: SignableTx;
   rawTransaction: Hex;
   /** Populated only when `waitForReceipt: true`. */
-  address?: Address;
+  address?: string;
   receipt?: TxReceipt;
 }
 
 export async function deployContract<TAbi extends Abi>(
   input: DeployContractInput<TAbi>,
 ): Promise<DeployContractResult> {
-  if (input.client.family !== 'espace') {
-    throw new ContractsError({
-      code: 'contracts/unsupported-family',
-      message: `deployContract currently supports eSpace only (got family="${input.client.family}")`,
-      meta: { family: input.client.family },
-    });
-  }
+  return input.client.family === 'core'
+    ? deployCoreContract(input, input.client)
+    : deployEspaceContract(input, input.client);
+}
 
+// ── eSpace path ──────────────────────────────────────────────────────────────
+
+async function deployEspaceContract<TAbi extends Abi>(
+  input: DeployContractInput<TAbi>,
+  client: EspaceClient,
+): Promise<DeployContractResult> {
   const data = encodeDeployData({
     abi: input.abi,
     bytecode: input.bytecode,
     ...(input.args !== undefined ? { args: input.args } : {}),
   } as Parameters<typeof encodeDeployData>[0]) as Hex;
 
-  const chainId = input.client.chain.id;
+  const chainId = client.chain.id;
   const from = input.signer.account.address;
 
   const [nonceHex, gasEstimate] = await Promise.all([
-    input.client.request<Hex>({ method: 'eth_getTransactionCount', params: [from, 'pending'] }),
+    client.request<Hex>({ method: 'eth_getTransactionCount', params: [from, 'pending'] }),
     input.gas !== undefined
       ? Promise.resolve(input.gas)
-      : input.client.estimateGas({
+      : client.estimateGas({
           from,
           data,
           ...(input.value !== undefined ? { value: input.value } : {}),
         } as never),
   ]);
 
-  const baseFee = await fetchBaseFee(input.client);
+  const baseFee = await fetchEspaceBaseFee(client);
   const maxPriorityFeePerGas = input.maxPriorityFeePerGas ?? 1_000_000_000n;
   const maxFeePerGas = input.maxFeePerGas ?? baseFee * 2n + maxPriorityFeePerGas;
 
   const tx: SignableTx = {
+    family: 'espace',
     chainId,
     data,
     nonce: Number(hexToBigInt(nonceHex)),
@@ -91,26 +104,27 @@ export async function deployContract<TAbi extends Abi>(
   };
   if (input.value !== undefined) tx.value = input.value;
 
-  const rawTransaction = await input.signer.signTransaction(tx, input.signOptions ?? {});
-  const hash = await input.client.request<Hex>({
+  const rawTransaction = (await input.signer.signTransaction(tx, input.signOptions ?? {})) as Hex;
+  const hash = await client.request<Hex>({
     method: 'eth_sendRawTransaction',
     params: [rawTransaction],
   });
 
   const out: DeployContractResult = { hash, request: tx, rawTransaction };
   if (input.waitForReceipt) {
-    const receipt = await waitForReceipt(input.client, hash, {
+    const receipt = await waitForReceipt(client, hash, {
       pollIntervalMs: input.pollIntervalMs ?? 1500,
       timeoutMs: input.receiptTimeoutMs ?? 60_000,
     });
     out.receipt = receipt;
-    if (receipt.contractAddress) out.address = receipt.contractAddress;
+    const created =
+      (receipt as unknown as { contractAddress?: string }).contractAddress ?? undefined;
+    if (created) out.address = created;
   }
   return out;
 }
 
-async function fetchBaseFee(client: Client): Promise<bigint> {
-  if (client.family !== 'espace') return 1_000_000_000n;
+async function fetchEspaceBaseFee(client: EspaceClient): Promise<bigint> {
   try {
     const block = await client.getBlock('latest');
     const baseFee = (block as unknown as { baseFeePerGas?: bigint }).baseFeePerGas;
@@ -120,6 +134,94 @@ async function fetchBaseFee(client: Client): Promise<bigint> {
   }
 }
 
-// Avoid a build-time complaint when toHex stays unused after edits — keep the
-// re-export so callers can import it conveniently from this module.
+// ── Core Space path ──────────────────────────────────────────────────────────
+
+interface CoreEstimate {
+  gasLimit: Hex;
+  storageCollateralized: Hex;
+}
+
+async function deployCoreContract<TAbi extends Abi>(
+  input: DeployContractInput<TAbi>,
+  client: CoreSpaceClient,
+): Promise<DeployContractResult> {
+  const fromBase32 = (input.signer.account as unknown as { coreAddress?: string }).coreAddress;
+  if (!fromBase32) {
+    throw new ContractsError({
+      code: 'contracts/invalid-argument',
+      message:
+        'Signer.account.coreAddress is required for Core Space deploys (use a dual-address account).',
+      meta: { family: 'core' },
+    });
+  }
+
+  const data = encodeDeployData({
+    abi: input.abi,
+    bytecode: input.bytecode,
+    ...(input.args !== undefined ? { args: input.args } : {}),
+  } as Parameters<typeof encodeDeployData>[0]) as Hex;
+
+  // Core estimateGasAndCollateral expects the same call shape as a normal tx
+  // but without `to` (contract creation).
+  const callObject: Record<string, unknown> = { from: fromBase32, data };
+  if (input.value !== undefined) callObject.value = toHex(input.value);
+
+  const [nonceHex, estimate, gasPriceHex, epochHex] = await Promise.all([
+    client.request<Hex>({ method: 'cfx_getNextNonce', params: [fromBase32, 'latest_state'] }),
+    input.gas !== undefined && input.storageLimit !== undefined
+      ? Promise.resolve({
+          gasLimit: toHex(input.gas) as Hex,
+          storageCollateralized: toHex(input.storageLimit) as Hex,
+        } satisfies CoreEstimate)
+      : client.request<CoreEstimate>({
+          method: 'cfx_estimateGasAndCollateral',
+          params: [callObject, 'latest_state'],
+        }),
+    input.gasPrice !== undefined
+      ? Promise.resolve(toHex(input.gasPrice) as Hex)
+      : client.request<Hex>({ method: 'cfx_gasPrice' }),
+    input.epochHeight !== undefined
+      ? Promise.resolve(toHex(input.epochHeight) as Hex)
+      : client.request<Hex>({ method: 'cfx_epochNumber', params: ['latest_state'] }),
+  ]);
+
+  const tx: SignableTx = {
+    family: 'core',
+    chainId: client.chain.id,
+    // `to` intentionally omitted → contract creation
+    data,
+    nonce: Number(hexToBigInt(nonceHex)),
+    gas: input.gas ?? hexToBigInt(estimate.gasLimit),
+    storageLimit: input.storageLimit ?? hexToBigInt(estimate.storageCollateralized),
+    epochHeight: hexToBigInt(epochHex),
+    gasPrice: hexToBigInt(gasPriceHex),
+    coreType: input.coreType ?? 'cip2930',
+  };
+  if (input.value !== undefined) tx.value = input.value;
+
+  const rawTransaction = (await input.signer.signTransaction(tx, input.signOptions ?? {})) as Hex;
+  const hash = await client.request<Hex>({
+    method: 'cfx_sendRawTransaction',
+    params: [rawTransaction],
+  });
+
+  const out: DeployContractResult = { hash, request: tx, rawTransaction };
+  if (input.waitForReceipt) {
+    const receipt = await waitForReceipt(client, hash, {
+      pollIntervalMs: input.pollIntervalMs ?? 1500,
+      timeoutMs: input.receiptTimeoutMs ?? 60_000,
+    });
+    out.receipt = receipt;
+    // Core receipts expose the deployed address as `contractCreated` (base32).
+    const created = receipt as unknown as {
+      contractCreated?: string;
+      contractAddress?: string;
+    };
+    const addr = created.contractCreated ?? created.contractAddress;
+    if (addr) out.address = addr;
+  }
+  return out;
+}
+
+// Keep `toHex` re-exported so callers can build raw txs without re-importing viem.
 export { toHex };
