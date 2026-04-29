@@ -450,6 +450,37 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)
 
+  repos/cfx-tools/packages/cli:
+    dependencies:
+      '@cfxdevkit/core':
+        specifier: workspace:*
+        version: link:../../../cfx-core/packages/core
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.0.0
+        version: 2.4.13
+      '@cfxdevkit/biome-config':
+        specifier: workspace:*
+        version: link:../../../../tools/biome-config
+      '@cfxdevkit/tsconfig':
+        specifier: workspace:*
+        version: link:../../../../tools/tsconfig
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.17
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vite:
+        specifier: ^7.0.0
+        version: 7.3.2(@types/node@22.19.17)
+      vite-plugin-dts:
+        specifier: ^4.3.0
+        version: 4.5.4(@types/node@22.19.17)(rollup@4.60.2)(typescript@5.9.3)(vite@7.3.2(@types/node@22.19.17))
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)
+
   repos/cfx-tools/packages/mcp-server:
     dependencies:
       '@cfxdevkit/compiler':

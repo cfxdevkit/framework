@@ -22,6 +22,7 @@ import {
   validateMnemonic as scureValidateMnemonic,
 } from '@scure/bip39';
 import { wordlist as english } from '@scure/bip39/wordlists/english';
+import { privateKeyToAccount as civePrivateKeyToAccount } from 'cive/accounts';
 import {
   privateKeyToAccount,
   signMessage as viemSignMessage,
@@ -161,6 +162,138 @@ export function deriveAccounts(input: DeriveAccountsInput): DerivedAccount[] {
         ...(passphrase !== undefined ? { passphrase } : {}),
       }),
     );
+  }
+  return out;
+}
+
+// ── Conflux Core Space address ───────────────────────────────────────────────
+
+/**
+ * Conflux Core Space network ids used by `cive` for base32 encoding.
+ *
+ * - `1029` — mainnet (`cfx:…`)
+ * - `1`    — testnet (`cfxtest:…`)
+ * - `2029` — local devnet (`net2029:…`)
+ */
+export type CoreNetworkId = 1029 | 1 | 2029 | (number & {});
+
+/**
+ * Encode a private key as a Conflux Core Space base32 address (`cfx:…` /
+ * `cfxtest:…` / `net<id>:…`). The same secp256k1 key produces both the
+ * EVM 0x-hex address (`signerFromPrivateKey(...).account.address`) and a
+ * Core Space base32 address — only the encoding differs.
+ */
+export function coreAddressFromPrivateKey(
+  privateKey: Hex,
+  networkId: CoreNetworkId = 1029,
+): string {
+  if (!/^0x[0-9a-fA-F]{64}$/.test(privateKey)) {
+    throw new WalletError({
+      code: 'core/wallet/derivation',
+      message: 'privateKey must be a 0x-prefixed 32-byte hex string',
+    });
+  }
+  try {
+    const account = civePrivateKeyToAccount(privateKey, { networkId });
+    return account.address;
+  } catch (cause) {
+    throw new WalletError({
+      code: 'core/wallet/derivation',
+      message: cause instanceof Error ? cause.message : String(cause),
+      cause,
+      meta: { networkId },
+    });
+  }
+}
+
+/** Derived account exposing both the EVM hex address and the Core base32 address. */
+export interface DualAddressAccount {
+  index: number;
+  /** EIP-55 0x-hex address. */
+  evmAddress: Address;
+  /** Core Space base32 address (`cfx:…` / `cfxtest:…` / `net<id>:…`). */
+  coreAddress: string;
+  /** secp256k1 public key (uncompressed, 0x-hex). */
+  publicKey: Hex;
+  /** 32-byte private key (0x-hex). */
+  privateKey: Hex;
+  /** Derivation paths used. */
+  paths: { evm: string; core: string };
+}
+
+export interface DeriveDualAccountInput {
+  mnemonic: string;
+  /** Address-index in the BIP-44 path. */
+  index?: number;
+  /**
+   * Account-type segment of the BIP-44 path:
+   * `'standard'` → `0'` (default), `'mining'` → `1'`.
+   */
+  accountType?: 'standard' | 'mining';
+  /** Network id for the Core Space base32 encoding. Default mainnet (1029). */
+  coreNetworkId?: CoreNetworkId;
+  /** BIP-39 passphrase (the "25th word"). */
+  passphrase?: string;
+}
+
+/**
+ * Derive one dual-space account: secp256k1 key once, both encodings.
+ *
+ * Conflux uses BIP-44 coin type `503`; eSpace mirrors Ethereum at coin type
+ * `60`. The two encodings are produced from independent derivation paths
+ * (this matches the convention of the original `@cfxdevkit/core-core` POC).
+ */
+export function deriveDualAccount(input: DeriveDualAccountInput): DualAddressAccount {
+  const { mnemonic, index = 0, accountType = 'standard', coreNetworkId = 1029, passphrase } = input;
+
+  if (!Number.isInteger(index) || index < 0) {
+    throw new WalletError({
+      code: 'core/wallet/derivation',
+      message: 'index must be a non-negative integer',
+      meta: { index },
+    });
+  }
+
+  const acctSeg = accountType === 'standard' ? 0 : 1;
+  const evmPath = `m/44'/60'/${acctSeg}'/0/${index}`;
+  const corePath = `m/44'/503'/${acctSeg}'/0/${index}`;
+
+  const evm = deriveAccount({
+    mnemonic,
+    path: evmPath,
+    ...(passphrase !== undefined ? { passphrase } : {}),
+  });
+  const core = deriveAccount({
+    mnemonic,
+    path: corePath,
+    ...(passphrase !== undefined ? { passphrase } : {}),
+  });
+
+  return {
+    index,
+    evmAddress: evm.account.address,
+    coreAddress: coreAddressFromPrivateKey(core.privateKey, coreNetworkId),
+    publicKey: evm.account.publicKey,
+    privateKey: evm.privateKey,
+    paths: { evm: evmPath, core: corePath },
+  };
+}
+
+/** Derive a contiguous range of dual-space accounts. */
+export function deriveDualAccounts(
+  input: DeriveDualAccountInput & { count: number; startIndex?: number },
+): DualAddressAccount[] {
+  const { count, startIndex = 0, ...rest } = input;
+  if (!Number.isInteger(count) || count <= 0) {
+    throw new WalletError({
+      code: 'core/wallet/derivation',
+      message: 'count must be a positive integer',
+      meta: { count },
+    });
+  }
+  const out: DualAddressAccount[] = [];
+  for (let i = 0; i < count; i++) {
+    out.push(deriveDualAccount({ ...rest, index: startIndex + i }));
   }
   return out;
 }

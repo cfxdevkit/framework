@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { WalletError } from '../errors/index.js';
 import {
+  coreAddressFromPrivateKey,
   DEFAULT_CORE_PATH,
   DEFAULT_ESPACE_PATH,
   deriveAccount,
   deriveAccounts,
+  deriveDualAccount,
+  deriveDualAccounts,
   generateMnemonic,
   signerFromPrivateKey,
   validateMnemonic,
@@ -140,5 +143,79 @@ describe('signerFromPrivateKey', () => {
 
   it('rejects malformed private key with WalletError', () => {
     expect(() => signerFromPrivateKey('0xnope' as `0x${string}`)).toThrow(WalletError);
+  });
+});
+
+describe('coreAddressFromPrivateKey', () => {
+  const { privateKey } = deriveAccount({
+    mnemonic: TEST_MNEMONIC,
+    path: DEFAULT_CORE_PATH,
+  });
+
+  it('encodes mainnet as cfx:…', () => {
+    const addr = coreAddressFromPrivateKey(privateKey, 1029);
+    expect(addr.startsWith('cfx:')).toBe(true);
+  });
+
+  it('encodes testnet as cfxtest:…', () => {
+    const addr = coreAddressFromPrivateKey(privateKey, 1);
+    expect(addr.startsWith('cfxtest:')).toBe(true);
+  });
+
+  it('encodes local devnet (2029) as net2029:…', () => {
+    const addr = coreAddressFromPrivateKey(privateKey, 2029);
+    expect(addr.startsWith('net2029:')).toBe(true);
+  });
+
+  it('rejects malformed private key', () => {
+    expect(() => coreAddressFromPrivateKey('0xnotahex' as `0x${string}`, 1029)).toThrow(
+      WalletError,
+    );
+  });
+});
+
+describe('deriveDualAccount / deriveDualAccounts', () => {
+  it('derives matching evm + core addresses for the same index', () => {
+    const a = deriveDualAccount({
+      mnemonic: TEST_MNEMONIC,
+      index: 0,
+      coreNetworkId: 2029,
+    });
+    expect(a.evmAddress).toMatch(/^0x[0-9a-fA-F]{40}$/);
+    expect(a.coreAddress.startsWith('net2029:')).toBe(true);
+    expect(a.paths.evm).toBe("m/44'/60'/0'/0/0");
+    expect(a.paths.core).toBe("m/44'/503'/0'/0/0");
+  });
+
+  it("mining accountType uses 1' segment", () => {
+    const a = deriveDualAccount({
+      mnemonic: TEST_MNEMONIC,
+      index: 0,
+      accountType: 'mining',
+    });
+    expect(a.paths.evm).toBe("m/44'/60'/1'/0/0");
+    expect(a.paths.core).toBe("m/44'/503'/1'/0/0");
+  });
+
+  it('deriveDualAccounts returns count entries with sequential indices', () => {
+    const accs = deriveDualAccounts({
+      mnemonic: TEST_MNEMONIC,
+      count: 3,
+      startIndex: 5,
+      coreNetworkId: 1,
+    });
+    expect(accs).toHaveLength(3);
+    expect(accs.map((a) => a.index)).toEqual([5, 6, 7]);
+    for (const a of accs) {
+      expect(a.coreAddress.startsWith('cfxtest:')).toBe(true);
+    }
+  });
+
+  it('rejects negative index', () => {
+    expect(() => deriveDualAccount({ mnemonic: TEST_MNEMONIC, index: -1 })).toThrow(WalletError);
+  });
+
+  it('rejects zero count', () => {
+    expect(() => deriveDualAccounts({ mnemonic: TEST_MNEMONIC, count: 0 })).toThrow(WalletError);
   });
 });

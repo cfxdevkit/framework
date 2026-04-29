@@ -25,6 +25,7 @@ projects:
   - 'repos/cfx-domain/packages/hardware-bridge'
   - 'repos/cfx-tools/packages/mcp-server'
   - 'repos/cfx-tools/packages/scaffold-cli'
+  - 'repos/cfx-tools/packages/cli'
 
 vcs:
   manager: 'git'
