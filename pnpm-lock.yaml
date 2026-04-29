@@ -35,6 +35,9 @@ importers:
 
   projects/examples/apps/showcase:
     dependencies:
+      '@cfxdevkit/contracts':
+        specifier: workspace:*
+        version: link:../../../../repos/cfx-core/packages/contracts
       '@cfxdevkit/core':
         specifier: workspace:*
         version: link:../../../../repos/cfx-core/packages/core

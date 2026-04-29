@@ -14,6 +14,7 @@
     "clean": "rm -rf dist .vite"
   },
   "dependencies": {
+    "@cfxdevkit/contracts": "workspace:*",
     "@cfxdevkit/core": "workspace:*",
     "@cfxdevkit/services": "workspace:*",
     "@cfxdevkit/wallet": "workspace:*",

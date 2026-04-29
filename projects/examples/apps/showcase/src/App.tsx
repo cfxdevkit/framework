@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { WalletProvider } from './contexts/WalletProvider.js';
 import { AboutPanel } from './panels/AboutPanel.js';
+import { ContractPanel } from './panels/ContractPanel.js';
 import { DerivePanel } from './panels/DerivePanel.js';
 import { KeystorePanel } from './panels/KeystorePanel.js';
 import { MnemonicPanel } from './panels/MnemonicPanel.js';
@@ -16,6 +17,7 @@ type Tab =
   | 'keystore'
   | 'siwe'
   | 'session-key'
+  | 'contract'
   | 'status'
   | 'about';
 
@@ -26,6 +28,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'keystore', label: 'Keystore' },
   { id: 'siwe', label: 'SIWE' },
   { id: 'session-key', label: 'Session Key' },
+  { id: 'contract', label: 'Contract' },
   { id: 'status', label: 'Network' },
   { id: 'about', label: 'About' },
 ];
@@ -59,6 +62,7 @@ export function App() {
         {tab === 'keystore' && <KeystorePanel />}
         {tab === 'siwe' && <SiwePanel />}
         {tab === 'session-key' && <SessionKeyPanel />}
+        {tab === 'contract' && <ContractPanel />}
         {tab === 'status' && <StatusPanel />}
         {tab === 'about' && <AboutPanel />}
       </div>
