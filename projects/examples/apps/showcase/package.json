@@ -15,8 +15,12 @@
   },
   "dependencies": {
     "@cfxdevkit/core": "workspace:*",
+    "@cfxdevkit/services": "workspace:*",
+    "@cfxdevkit/wallet": "workspace:*",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react-dom": "^18.3.0",
+    "siwe": "^2.3.2",
+    "viem": "^2.21.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",

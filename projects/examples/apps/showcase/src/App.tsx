@@ -1,44 +1,67 @@
 import { useState } from 'react';
+import { WalletProvider } from './contexts/WalletProvider.js';
 import { AboutPanel } from './panels/AboutPanel.js';
 import { DerivePanel } from './panels/DerivePanel.js';
+import { KeystorePanel } from './panels/KeystorePanel.js';
 import { MnemonicPanel } from './panels/MnemonicPanel.js';
+import { SessionKeyPanel } from './panels/SessionKeyPanel.js';
+import { SiwePanel } from './panels/SiwePanel.js';
 import { StatusPanel } from './panels/StatusPanel.js';
+import { WalletPanel } from './panels/WalletPanel.js';
 
-type Tab = 'mnemonic' | 'derive' | 'status' | 'about';
+type Tab =
+  | 'wallet'
+  | 'mnemonic'
+  | 'derive'
+  | 'keystore'
+  | 'siwe'
+  | 'session-key'
+  | 'status'
+  | 'about';
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'wallet', label: 'Wallet' },
   { id: 'mnemonic', label: 'Mnemonic' },
   { id: 'derive', label: 'Derive' },
-  { id: 'status', label: 'Network Status' },
+  { id: 'keystore', label: 'Keystore' },
+  { id: 'siwe', label: 'SIWE' },
+  { id: 'session-key', label: 'Session Key' },
+  { id: 'status', label: 'Network' },
   { id: 'about', label: 'About' },
 ];
 
 export function App() {
-  const [tab, setTab] = useState<Tab>('mnemonic');
+  const [tab, setTab] = useState<Tab>('wallet');
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>cfxdevkit · showcase</h1>
-        <span className="sub">@cfxdevkit/core live demo</span>
-      </header>
+    <WalletProvider>
+      <div className="app">
+        <header className="app-header">
+          <h1>cfxdevkit · showcase</h1>
+          <span className="sub">@cfxdevkit/* live demo + integration harness</span>
+        </header>
 
-      <nav className="tabs">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={tab === t.id ? 'active' : ''}
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
+        <nav className="tabs">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={tab === t.id ? 'active' : ''}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
 
-      {tab === 'mnemonic' && <MnemonicPanel />}
-      {tab === 'derive' && <DerivePanel />}
-      {tab === 'status' && <StatusPanel />}
-      {tab === 'about' && <AboutPanel />}
-    </div>
+        {tab === 'wallet' && <WalletPanel />}
+        {tab === 'mnemonic' && <MnemonicPanel />}
+        {tab === 'derive' && <DerivePanel />}
+        {tab === 'keystore' && <KeystorePanel />}
+        {tab === 'siwe' && <SiwePanel />}
+        {tab === 'session-key' && <SessionKeyPanel />}
+        {tab === 'status' && <StatusPanel />}
+        {tab === 'about' && <AboutPanel />}
+      </div>
+    </WalletProvider>
   );
 }
