@@ -26,6 +26,7 @@ projects:
   - 'repos/cfx-tools/packages/mcp-server'
   - 'repos/cfx-tools/packages/scaffold-cli'
   - 'repos/cfx-tools/packages/cli'
+  - 'projects/examples/apps/showcase'
 
 vcs:
   manager: 'git'
