@@ -40,6 +40,11 @@ describe('client / offline', () => {
     if (client.family === 'core') {
       expect(typeof client.getEpochNumber).toBe('function');
       expect(typeof client.getStatus).toBe('function');
+      expect(typeof client.getTransactionReceipt).toBe('function');
+      expect(typeof client.getTransaction).toBe('function');
+      expect(typeof client.getLogs).toBe('function');
+      expect(typeof client.getSponsorInfo).toBe('function');
+      expect(typeof client.getAdmin).toBe('function');
     }
   });
 });

@@ -22,9 +22,14 @@ import {
   createPublicClient as createCivePublicClient,
 } from 'cive';
 import {
+  getAdmin as civeGetAdmin,
   getBalance as civeGetBalance,
   getEpochNumber as civeGetEpochNumber,
+  getLogs as civeGetLogs,
+  GetSponsorInfo as civeGetSponsorInfo,
   getStatus as civeGetStatus,
+  getTransaction as civeGetTransaction,
+  getTransactionReceipt as civeGetTransactionReceipt,
 } from 'cive/actions';
 import { defineChain as civeDefineChain } from 'cive/utils';
 import {
@@ -42,9 +47,13 @@ import type {
   Address,
   Block,
   BlockTag,
+  CoreLog,
+  CoreLogFilter,
   EpochTag,
   Hash,
+  Hex,
   NodeStatus,
+  SponsorInfo,
   TxReceipt,
   TxRequest,
   Wei,
@@ -203,6 +212,24 @@ export interface CoreSpaceClient extends ClientBase {
 
   /** Native-token balance (in drip) for a base32 Core Space address. */
   getBalance(address: string, opts?: CoreCallOptions): Promise<Wei>;
+
+  /** Receipt for a mined Core Space transaction; `null` if unknown. */
+  getTransactionReceipt(hash: Hash, opts?: CallOptions): Promise<TxReceipt | null>;
+
+  /** Mined transaction body; `null` if unknown. */
+  getTransaction(hash: Hash, opts?: CallOptions): Promise<unknown | null>;
+
+  /**
+   * Logs matching the supplied filter. Mirrors `cfx_getLogs` shape:
+   * window by epoch range, block-number range, or block hashes.
+   */
+  getLogs(filter: CoreLogFilter, opts?: CallOptions): Promise<CoreLog[]>;
+
+  /** Sponsor-pool snapshot for a contract (`cfx_getSponsorInfo`). */
+  getSponsorInfo(address: string, opts?: CoreCallOptions): Promise<SponsorInfo>;
+
+  /** Contract admin (`cfx_getAdmin`); `null` for non-contract or no admin. */
+  getAdmin(address: string, opts?: CoreCallOptions): Promise<string | null>;
 }
 
 /** Discriminated union of all chain clients. Narrow with `client.family`. */
@@ -417,6 +444,70 @@ function createCoreClient(chain: ChainConfig, transport: Transport): CoreSpaceCl
         (params as { epochTag?: EpochTag }).epochTag = opts.epochTag;
       }
       return wrapRpc(civeGetBalance(publicClient, params), 'core/rpc/get-balance', { address });
+    },
+
+    getTransactionReceipt(hash: Hash, _opts?: CallOptions): Promise<TxReceipt | null> {
+      return wrapRpc(
+        civeGetTransactionReceipt(publicClient, { hash })
+          .then((r) => r as unknown as TxReceipt)
+          .catch((err: unknown) => {
+            if (err && typeof err === 'object' && 'name' in err) {
+              const name = (err as { name?: string }).name;
+              if (name === 'TransactionReceiptNotFoundError') return null;
+            }
+            throw err;
+          }),
+        'core/rpc/get-receipt',
+        { hash },
+      );
+    },
+
+    getTransaction(hash: Hash, _opts?: CallOptions): Promise<unknown | null> {
+      return wrapRpc(
+        civeGetTransaction(publicClient, { hash }).catch((err: unknown) => {
+          if (err && typeof err === 'object' && 'name' in err) {
+            const name = (err as { name?: string }).name;
+            if (name === 'TransactionNotFoundError') return null;
+          }
+          throw err;
+        }),
+        'core/rpc/get-transaction',
+        { hash },
+      );
+    },
+
+    getLogs(filter: CoreLogFilter, _opts?: CallOptions): Promise<CoreLog[]> {
+      // cive's getLogs accepts the same filter shape as cfx_getLogs but with
+      // mutually-exclusive windowing modes. Pass through verbatim.
+      const params = filter as unknown as Parameters<typeof civeGetLogs>[1];
+      return wrapRpc(
+        civeGetLogs(publicClient, params) as unknown as Promise<CoreLog[]>,
+        'core/rpc/get-logs',
+      );
+    },
+
+    getSponsorInfo(address: string, opts?: CoreCallOptions): Promise<SponsorInfo> {
+      const params = { address: address as never } as Parameters<typeof civeGetSponsorInfo>[1];
+      if (opts?.epochTag) {
+        (params as { epochTag?: EpochTag }).epochTag = opts.epochTag;
+      }
+      return wrapRpc(
+        civeGetSponsorInfo(publicClient, params) as unknown as Promise<SponsorInfo>,
+        'core/rpc/get-sponsor-info',
+        { address },
+      );
+    },
+
+    getAdmin(address: string, opts?: CoreCallOptions): Promise<string | null> {
+      const params = { address: address as never } as Parameters<typeof civeGetAdmin>[1];
+      if (opts?.epochTag) {
+        (params as { epochTag?: EpochTag }).epochTag = opts.epochTag;
+      }
+      return wrapRpc(
+        civeGetAdmin(publicClient, params) as unknown as Promise<string | null>,
+        'core/rpc/get-admin',
+        { address },
+      );
     },
   };
 }

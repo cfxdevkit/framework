@@ -80,3 +80,44 @@ export interface NodeStatus {
   latestState: bigint;
   pendingTxNumber: number;
 }
+
+/**
+ * Filter accepted by Core-Space `cfx_getLogs`. Either an epoch range,
+ * a block-number range, or a list of block hashes — the three windowing
+ * modes are mutually exclusive at runtime.
+ */
+export interface CoreLogFilter {
+  /** Base32 contract address(es). */
+  address?: string | readonly string[];
+  /** Topic filter; same shape as `eth_getLogs` (positional, supports null wildcards). */
+  topics?: readonly (Hex | readonly Hex[] | null)[];
+  fromEpoch?: bigint | Exclude<EpochTag, 'latest_finalized' | 'latest_mined'>;
+  toEpoch?: bigint | Exclude<EpochTag, 'latest_finalized' | 'latest_mined'>;
+  fromBlock?: bigint;
+  toBlock?: bigint;
+  blockHashes?: readonly Hash[];
+}
+
+/** Decoded log entry as returned by Conflux `cfx_getLogs`. */
+export interface CoreLog {
+  address: string;
+  topics: readonly Hex[];
+  data: Hex;
+  blockHash: Hash;
+  epochNumber: bigint;
+  transactionHash: Hash;
+  transactionIndex: bigint;
+  logIndex: bigint;
+  transactionLogIndex: bigint;
+}
+
+/** Sponsor-pool snapshot for a Conflux contract (`cfx_getSponsorInfo`). */
+export interface SponsorInfo {
+  sponsorBalanceForCollateral: bigint;
+  sponsorBalanceForGas: bigint;
+  sponsorGasBound: bigint;
+  sponsorForCollateral: string;
+  sponsorForGas: string;
+  usedStoragePoints: bigint;
+  availableStoragePoints: bigint;
+}
