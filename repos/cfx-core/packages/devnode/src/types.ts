@@ -2,7 +2,10 @@ import type { DualAddressAccount } from '@cfxdevkit/core';
 
 /** A genesis account exposed by the dev node. */
 export interface DevNodeAccount extends DualAddressAccount {
-  /** Initial balance funded by the node, expressed in CFX (decimal string). */
+  /**
+   * Initial balance funded by the node, in CFX (decimal string).
+   * Display-only — see {@link DevNodeConfig.balanceCfx}.
+   */
   initialBalanceCfx: string;
 }
 
@@ -26,7 +29,12 @@ export interface DevNodeConfig {
   mnemonic?: string;
   /** Number of pre-funded genesis accounts. Default `10`. */
   accounts?: number;
-  /** Initial balance per account, in CFX (decimal string). Default `'1000000'`. */
+  /**
+   * Initial balance per account, in CFX (decimal string), used purely for
+   * display. xcfx hardcodes the genesis balance at `10_000` CFX per
+   * `genesisSecrets`/`genesisEvmSecrets` entry; this field does not change
+   * the actual funding.
+   */
   balanceCfx?: string;
   /**
    * Auto-miner interval in ms. `0` disables the miner; mining can still be

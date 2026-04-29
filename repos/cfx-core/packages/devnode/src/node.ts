@@ -17,9 +17,8 @@ import { mkdir } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  type DualAddressAccount,
-  deriveDualAccount,
-  deriveDualAccounts,
+  coreAddressFromPrivateKey,
+  deriveAccount,
   generateMnemonic,
   validateMnemonic,
 } from '@cfxdevkit/core';
@@ -34,7 +33,7 @@ const DEFAULTS = {
   coreWsPort: 12536,
   evmWsPort: 8546,
   accounts: 10,
-  balanceCfx: '1000000',
+  balanceCfx: '10000',
   miningIntervalMs: 2000,
   logging: false,
 } as const;
@@ -85,7 +84,7 @@ export class DevNode {
    * Dedicated mining / faucet account. Receives block rewards and is funded
    * at genesis like {@link accounts}. Derivation: `accountType: 'mining'`.
    */
-  readonly faucet: DualAddressAccount;
+  readonly faucet: DevNodeAccount;
 
   private status: DevNodeStatus = 'stopped';
   private server: XcfxServer | null = null;
@@ -121,21 +120,32 @@ export class DevNode {
       dataDir,
     };
 
-    const derived = deriveDualAccounts({
-      mnemonic,
-      count: this.config.accounts,
-      coreNetworkId: this.config.chainId,
-    });
-    this.accounts = derived.map((a) => ({
-      ...a,
-      initialBalanceCfx: this.config.balanceCfx,
-    }));
+    // xcfx funds the SAME secp256k1 key on both spaces (one entry in
+    // genesisSecrets + genesisEvmSecrets), so a dev account must use a single
+    // key for both addresses or the displayed Core address won't be the one
+    // that received the genesis allocation. We therefore derive each account
+    // from a single EVM-style BIP-44 path and re-encode that key as Core
+    // base32 — `coreAddressFromPrivateKey` is purely an encoding step.
+    this.accounts = [];
+    for (let i = 0; i < this.config.accounts; i++) {
+      this.accounts.push(this.makeAccount(`m/44'/60'/0'/0/${i}`, i, this.config.balanceCfx));
+    }
+    // Mining branch (`44'/60'/1'/...`) keeps the faucet key out of the user
+    // account index space.
+    this.faucet = this.makeAccount("m/44'/60'/1'/0/0", 0, this.config.balanceCfx);
+  }
 
-    this.faucet = deriveDualAccount({
-      mnemonic,
-      accountType: 'mining',
-      coreNetworkId: this.config.chainId,
-    });
+  private makeAccount(path: string, index: number, balanceCfx: string): DevNodeAccount {
+    const { account, privateKey } = deriveAccount({ mnemonic: this.config.mnemonic, path });
+    return {
+      index,
+      evmAddress: account.address,
+      coreAddress: coreAddressFromPrivateKey(privateKey, this.config.chainId),
+      publicKey: account.publicKey,
+      privateKey: privateKey,
+      paths: { evm: path, core: path },
+      initialBalanceCfx: balanceCfx,
+    };
   }
 
   /** Endpoints the node will listen on once {@link start} returns. */
@@ -176,9 +186,10 @@ export class DevNode {
     try {
       await mkdir(this.config.dataDir, { recursive: true, mode: 0o755 });
 
-      // Convert configured CFX balance to drip (1 CFX = 10^18 drip) — the
-      // form @xcfx/node expects for genesis funding.
-      const balanceDrip = (BigInt(this.config.balanceCfx) * 10n ** 18n).toString();
+      // xcfx hardcodes the per-genesis-account balance at 10_000 CFX (see
+      // `genesisSecrets` doc in @xcfx/node's conflux.d.ts). We keep
+      // `balanceCfx` on the config object so callers can display the figure,
+      // but we don't pass it through — there's no xcfx field for it.
 
       const genesisSecrets = [...this.accounts.map((a) => a.privateKey), this.faucet.privateKey];
 
@@ -199,7 +210,6 @@ export class DevNode {
         log: this.config.logging,
         timeout: 60_000,
         retryInterval: 300,
-        defaultGenesisBalance: balanceDrip,
       };
 
       const created = await xcfx.createServer(serverConfig);

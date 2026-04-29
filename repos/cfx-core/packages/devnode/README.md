@@ -14,7 +14,7 @@ await node.start();
 
 // node.urls.core    → http://127.0.0.1:12537   (matches coreSpaceLocal)
 // node.urls.espace  → http://127.0.0.1:8545    (matches espaceLocal)
-// node.accounts[0]  → pre-funded with 1_000_000 CFX (configurable)
+// node.accounts[0]  → pre-funded with 10_000 CFX (xcfx-fixed; see below)
 
 await node.stop();
 ```
@@ -39,7 +39,7 @@ cfxdevkit-devnode --help
 | eSpace chain id    | `2030`                         | `espaceLocal.id`                 |
 | Genesis accounts   | `10` (BIP-44 standard branch)  | derived from a random mnemonic   |
 | Faucet / miner     | `1` (BIP-44 mining branch)     | receives block rewards           |
-| Initial balance    | `1_000_000` CFX per account    | converted to drip at start       |
+| Initial balance    | `10_000` CFX per account       | hardcoded by `@xcfx/node`        |
 | Auto-miner tick    | `2000` ms (`mine({numTxs:1})`) | packs Core + eSpace pending txs  |
 | Data dir           | `~/.cfxdevkit/devnode/<rand>`  | created with `mkdir -p`          |
 

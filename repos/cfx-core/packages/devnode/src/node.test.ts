@@ -22,7 +22,7 @@ describe('createDevNode (offline)', () => {
       expect(a.evmAddress).toMatch(/^0x[0-9a-fA-F]{40}$/);
       // chainId=2029 → custom net2029 base32 prefix.
       expect(a.coreAddress.startsWith('net2029:')).toBe(true);
-      expect(a.initialBalanceCfx).toBe('1000000');
+      expect(a.initialBalanceCfx).toBe('10000');
     }
     // Independent indices yield distinct addresses.
     const evmSet = new Set(node.accounts.map((a) => a.evmAddress));
@@ -32,7 +32,18 @@ describe('createDevNode (offline)', () => {
   it('exposes a separate faucet/mining account from a different derivation path', () => {
     const node = createDevNode({ mnemonic: TEST_MNEMONIC });
     expect(node.faucet.privateKey).not.toBe(node.accounts[0]?.privateKey);
-    expect(node.faucet.paths.core).toContain("44'/503'/1'");
+    // Faucet uses the BIP-44 mining account branch (1') to stay clear of
+    // the user account index space (0').
+    expect(node.faucet.paths.evm).toBe("m/44'/60'/1'/0/0");
+  });
+
+  it('encodes Core and EVM addresses from the SAME private key (so xcfx funds both)', () => {
+    const node = createDevNode({ mnemonic: TEST_MNEMONIC });
+    for (const a of node.accounts) {
+      // Both addresses share the same key — ensures genesisSecrets +
+      // genesisEvmSecrets fund the displayed addresses, not phantom ones.
+      expect(a.paths.evm).toBe(a.paths.core);
+    }
   });
 
   it('allows overriding ports + accounts + balance', () => {
