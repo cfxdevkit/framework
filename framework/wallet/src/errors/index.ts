@@ -12,3 +12,11 @@ import { CfxError } from '@cfxdevkit/core';
  * - `wallet/signers/readonly`
  */
 export class SessionKeyError extends CfxError {}
+
+/**
+ * Hardware-wallet adapter failures. Codes (vendor-prefixed):
+ * - `wallet/hardware/onekey/{init-failed,user-cancelled,device-error,bad-response}`
+ * - `wallet/hardware/satochip/{bridge-unreachable,no-card,bad-pin,bad-response}`
+ * - `wallet/hardware/{unsupported-tx-type,address-mismatch,aborted}`
+ */
+export class HardwareWalletError extends CfxError {}

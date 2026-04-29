@@ -20,6 +20,18 @@
       "types": "./dist/errors/index.d.ts",
       "import": "./dist/errors/index.js"
     },
+    "./hardware": {
+      "types": "./dist/hardware/index.d.ts",
+      "import": "./dist/hardware/index.js"
+    },
+    "./hardware/onekey": {
+      "types": "./dist/hardware/onekey/index.d.ts",
+      "import": "./dist/hardware/onekey/index.js"
+    },
+    "./hardware/satochip": {
+      "types": "./dist/hardware/satochip/index.d.ts",
+      "import": "./dist/hardware/satochip/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -48,6 +60,7 @@
   },
   "dependencies": {
     "@cfxdevkit/core": "workspace:^",
-    "@cfxdevkit/services": "workspace:^"
+    "@cfxdevkit/services": "workspace:^",
+    "viem": "^2.21.0"
   }
 }

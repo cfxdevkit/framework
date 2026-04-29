@@ -541,6 +541,9 @@ importers:
       '@cfxdevkit/services':
         specifier: workspace:^
         version: link:../services
+      viem:
+        specifier: ^2.21.0
+        version: 2.48.4(typescript@5.9.3)(zod@4.3.6)
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.0.0
