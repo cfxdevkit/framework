@@ -3,17 +3,23 @@
 Tier-aligned repository slices, per [ADR-0003](../docs/adr/0003-multi-repo-split.md).
 
 Each subdirectory is **structured as if it were already a standalone git
-repository**: it has its own `package.json`, `pnpm-workspace.yaml`, and
-`README.md`. While we still live in the `root/` monorepo, the top-level
+repository**: it has its own `package.json`, `pnpm-workspace.template.yaml`,
+and `README.md`. While we still live in the `root/` monorepo, the top-level
 `pnpm-workspace.yaml` globs `repos/*/packages/*` so day-to-day development
 keeps working as a single workspace.
+
+> The per-slice workspace file is a **template** (`.template.yaml`) — pnpm
+> would otherwise treat each slice as a separate workspace and break
+> cross-slice dep resolution against `tools/*`. At carve-out time, rename
+> it to `pnpm-workspace.yaml`.
 
 When a slice is ready to be carved out:
 
 1. `git filter-repo --subdirectory-filter repos/<name>` in a fresh clone.
-2. Push to its new remote (e.g. `cfx-keys`).
-3. Drop its entries from the root `pnpm-workspace.yaml`.
-4. Update consumers to depend on published npm versions.
+2. `mv pnpm-workspace.template.yaml pnpm-workspace.yaml`.
+3. Push to its new remote (e.g. `cfx-keys`).
+4. Drop its entries from the root `pnpm-workspace.yaml`.
+5. Update consumers to depend on published npm versions.
 
 | Slice | Tier | Public surface |
 |-------|------|----------------|
