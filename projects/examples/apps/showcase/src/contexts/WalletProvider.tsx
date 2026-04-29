@@ -40,7 +40,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const accounts = useMemo<DualAddressAccount[]>(() => {
     if (!validateMnemonic(mnemonic.trim())) return [];
     try {
-      return deriveDualAccounts({ mnemonic: mnemonic.trim(), count });
+      // The showcase targets Conflux testnet; derive Core addresses with
+      // testnet networkId (1) so DualAddressAccount.coreAddress matches the
+      // address the signer broadcasts from.
+      return deriveDualAccounts({ mnemonic: mnemonic.trim(), count, coreNetworkId: 1 });
     } catch {
       return [];
     }
