@@ -11,7 +11,10 @@
  * {@link useChain} hook in `ChainProvider.tsx`.
  *
  * **Local network** uses ports the showcase-backend's `/devnode` lifecycle
- * spins up — see `src/components/DevNodePill.tsx`.
+ * spins up — see `src/components/DevNodePill.tsx`. RPC calls for the local
+ * network are routed through the showcase-backend at `/rpc/{core,espace}`
+ * because xcfx itself does not implement CORS (its OPTIONS preflight returns
+ * 405, which browsers refuse to follow).
  */
 import {
   type ChainConfig,
@@ -117,6 +120,19 @@ const isNetworkId = (v: string): v is NetworkId =>
   v === 'mainnet' || v === 'testnet' || v === 'local';
 const isSpace = (v: string): v is Space => v === 'core' || v === 'espace';
 
+const BACKEND_BASE =
+  (import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? 'http://127.0.0.1:5174';
+
+/**
+ * For the local network, point viem's transport at the showcase-backend's
+ * CORS-enabled JSON-RPC proxy (`/rpc/{core,espace}` → xcfx). For mainnet
+ * and testnet, use the chain's catalog default.
+ */
+function transportUrl(networkId: NetworkId, space: Space): string | undefined {
+  if (networkId !== 'local') return undefined;
+  return `${BACKEND_BASE}/rpc/${space}`;
+}
+
 export function NetworkProvider({ children }: { children: ReactNode }) {
   const [networkId, setNetworkIdRaw] = useState<NetworkId>(() =>
     readInitial('net', STORAGE_NET, isNetworkId, 'testnet'),
@@ -133,14 +149,20 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
     return found ?? (NETWORKS[1] as NetworkPair);
   }, [networkId]);
 
-  const coreClient = useMemo(
-    () => createClient({ chain: network.core, transport: http({ timeoutMs: 10_000 }) }),
-    [network.core],
-  );
-  const espaceClient = useMemo(
-    () => createClient({ chain: network.espace, transport: http({ timeoutMs: 10_000 }) }),
-    [network.espace],
-  );
+  const coreClient = useMemo(() => {
+    const url = transportUrl(networkId, 'core');
+    return createClient({
+      chain: network.core,
+      transport: http(url ? { url, timeoutMs: 10_000 } : { timeoutMs: 10_000 }),
+    });
+  }, [network.core, networkId]);
+  const espaceClient = useMemo(() => {
+    const url = transportUrl(networkId, 'espace');
+    return createClient({
+      chain: network.espace,
+      transport: http(url ? { url, timeoutMs: 10_000 } : { timeoutMs: 10_000 }),
+    });
+  }, [network.espace, networkId]);
 
   const setNetwork = useCallback((id: NetworkId) => {
     setNetworkIdRaw(id);

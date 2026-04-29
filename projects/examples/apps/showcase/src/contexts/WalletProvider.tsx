@@ -5,10 +5,10 @@
  * delegation, signing, etc.
  */
 
-import type { Signer } from '@cfxdevkit/core';
+import type { Address, Hex, Signer } from '@cfxdevkit/core';
 import {
-  type DualAddressAccount,
-  deriveDualAccounts,
+  coreAddressFromPrivateKey,
+  deriveAccount,
   signerFromPrivateKey,
   validateMnemonic,
 } from '@cfxdevkit/core';
@@ -17,12 +17,33 @@ import { useNetwork } from './NetworkProvider.js';
 
 export const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
 
+/**
+ * Local account shape — matches `@cfxdevkit/core`'s `DualAddressAccount` field
+ * names but is built from a **single** secp256k1 key (the EVM BIP-44 path
+ * `m/44'/60'/0'/0/i`) re-encoded as Core base32. This mirrors the convention
+ * used by `@cfxdevkit/devnode` (see `node.ts#makeAccount`): xcfx funds the
+ * same key on both spaces, so `coreAddress` here is guaranteed to be the
+ * address that received the genesis allocation. Using
+ * `core.deriveDualAccounts` instead would derive Core from slip-44 503 and
+ * Ethereum from slip-44 60 \u2014 two different keys \u2014 which is the
+ * correct convention for *production* wallets but breaks the showcase's
+ * one-click "use a funded local account" flow.
+ */
+export interface ShowcaseAccount {
+  index: number;
+  evmAddress: Address;
+  coreAddress: string;
+  privateKey: Hex;
+  publicKey: Hex;
+  paths: { evm: string; core: string };
+}
+
 export interface WalletState {
   /** The pool of accounts derived from the active mnemonic. */
-  accounts: DualAddressAccount[];
+  accounts: ShowcaseAccount[];
   /** Which account index is "connected". `null` when disconnected. */
   activeIndex: number | null;
-  active: DualAddressAccount | null;
+  active: ShowcaseAccount | null;
   signer: Signer | null;
   mnemonic: string;
   setMnemonic: (m: string) => void;
@@ -40,13 +61,26 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [count, setCount] = useState<number>(5);
   const [activeIndex, setActive] = useState<number | null>(null);
 
-  const accounts = useMemo<DualAddressAccount[]>(() => {
-    if (!validateMnemonic(mnemonic.trim())) return [];
+  const accounts = useMemo<ShowcaseAccount[]>(() => {
+    const m = mnemonic.trim();
+    if (!validateMnemonic(m)) return [];
     try {
-      // Derive Core addresses with the *active network's* networkId so
-      // `account.coreAddress` matches what the signer broadcasts from. The
-      // base32 prefix changes per network (cfx: / cfxtest: / net2029:).
-      return deriveDualAccounts({ mnemonic: mnemonic.trim(), count, coreNetworkId });
+      const out: ShowcaseAccount[] = [];
+      for (let i = 0; i < count; i++) {
+        const path = `m/44'/60'/0'/0/${i}`;
+        const { account, privateKey } = deriveAccount({ mnemonic: m, path });
+        out.push({
+          index: i,
+          evmAddress: account.address,
+          // Re-encode the SAME key as Core base32 \u2014 the prefix
+          // (cfx:/cfxtest:/net2029:) follows the active network.
+          coreAddress: coreAddressFromPrivateKey(privateKey, coreNetworkId),
+          privateKey,
+          publicKey: account.publicKey,
+          paths: { evm: path, core: path },
+        });
+      }
+      return out;
     } catch {
       return [];
     }

@@ -1,6 +1,20 @@
 import { type ChainConfig, createClient, http, listChains } from '@cfxdevkit/core';
 import { useCallback, useEffect, useState } from 'react';
 
+const BACKEND_BASE =
+  (import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? 'http://127.0.0.1:5174';
+
+/**
+ * Local devnets must be probed through the showcase-backend's CORS-enabled
+ * proxy because xcfx itself returns 405 on OPTIONS preflight, blocking
+ * direct browser fetches.
+ */
+function transportUrl(chain: ChainConfig): string | undefined {
+  if (chain.network !== 'local') return undefined;
+  const space = chain.family === 'core' ? 'core' : 'espace';
+  return `${BACKEND_BASE}/rpc/${space}`;
+}
+
 interface Row {
   chain: ChainConfig;
   state: 'pending' | 'ok' | 'err';
@@ -14,7 +28,8 @@ async function ping(
 ): Promise<Omit<Row, 'chain' | 'state'> & { state: 'ok' | 'err' }> {
   const start = Date.now();
   try {
-    const transport = http({ timeoutMs: 10_000 });
+    const url = transportUrl(chain);
+    const transport = http(url ? { url, timeoutMs: 10_000 } : { timeoutMs: 10_000 });
     const client = createClient({ chain, transport });
     const head =
       client.family === 'core' ? await client.getEpochNumber() : await client.getBlockNumber();

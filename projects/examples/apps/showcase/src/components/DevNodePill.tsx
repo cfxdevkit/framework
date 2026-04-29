@@ -59,17 +59,24 @@ export function DevNodePill() {
     }
   }, []);
 
+  const offline = error !== null && status === null;
+
   const dot = useMemo(() => {
-    if (error && !status) return 'gray';
+    if (offline) return 'red';
     const s = status?.status;
     if (s === 'running') return 'green';
     if (s === 'starting' || s === 'stopping') return 'amber';
     if (s === 'error') return 'red';
     return 'gray';
-  }, [status, error]);
+  }, [status, offline]);
 
   const label = (() => {
-    if (!status) return error ? 'backend offline' : 'devnode…';
+    if (busy === 'start') return 'devnode · starting…';
+    if (busy === 'stop') return 'devnode · stopping…';
+    if (busy === 'restart') return 'devnode · restarting…';
+    if (busy === 'wipe') return 'devnode · wiping…';
+    if (offline) return 'backend offline · :5174';
+    if (!status) return 'devnode…';
     if (status.status === 'running' && status.urls)
       return `devnode · :${status.config?.evmRpcPort ?? '?'}/${status.config?.coreRpcPort ?? '?'}`;
     return `devnode · ${status.status}`;
@@ -95,9 +102,23 @@ export function DevNodePill() {
               Switch network to <strong>Local</strong> to use the dev node.
             </p>
           )}
-          {error && <p className="error small">{error}</p>}
+          {offline && (
+            <p className="error small">
+              Showcase backend not reachable on <code className="mono">:5174</code>. Start it with{' '}
+              <code className="mono">pnpm --filter @cfxdevkit/example-showcase-backend dev</code>.
+            </p>
+          )}
+          {error && !offline && <p className="error small">{error}</p>}
 
           <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="small"
+              disabled={busy !== null}
+              onClick={() => void refresh()}
+            >
+              Refresh
+            </button>
             <button
               type="button"
               className="primary small"
