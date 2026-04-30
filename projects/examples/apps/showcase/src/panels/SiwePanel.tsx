@@ -9,6 +9,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { SiweMessage } from 'siwe';
+import { useNetwork } from '../contexts/NetworkProvider.js';
 import { useWallet } from '../contexts/WalletProvider.js';
 import { type ApiError, api } from '../lib/api.js';
 
@@ -22,7 +23,11 @@ interface MeResult {
 
 export function SiwePanel() {
   const w = useWallet();
-  const [chainId, setChainId] = useState(1030);
+  const n = useNetwork();
+  // SIWE is EVM-only — always pin chainId to the eSpace chain of the active
+  // network so users can't accidentally sign for a different chain than the
+  // backend's verifier expects. Read-only display, no editor.
+  const chainId = n.espace.id;
   const [statement, setStatement] = useState('Sign in to the cfxdevkit showcase.');
   const [token, setToken] = useState<string | null>(() =>
     typeof localStorage === 'undefined' ? null : localStorage.getItem(TOKEN_KEY),
@@ -138,10 +143,12 @@ export function SiwePanel() {
           <label>
             chainId
             <input
-              type="number"
-              value={chainId}
-              onChange={(e) => setChainId(Number(e.target.value) || 0)}
-              style={{ width: 100 }}
+              type="text"
+              value={`${chainId} · ${n.espace.name}`}
+              readOnly
+              disabled
+              style={{ width: 180 }}
+              title="Bound to the active network's eSpace chain. Switch network to change."
             />
           </label>
         </div>

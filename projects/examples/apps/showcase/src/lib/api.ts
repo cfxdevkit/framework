@@ -126,6 +126,37 @@ export const api = {
       { method: 'POST', body: JSON.stringify(body) },
       signal,
     ),
+
+  // ── /compile ───────────────────────────────────────────────────────────────
+  // Backend-side Solidity pipeline (`@cfxdevkit/compiler`). Templates ship
+  // their full source inline so the showcase's in-browser editor can load
+  // and recompile them via `/compile/sources`. The `/compile/catalog`
+  // endpoint pre-compiles every registered template so the frontend can
+  // deploy without a round-trip through solc.
+  compileTemplates: (signal?: AbortSignal) =>
+    call<{ templates: TemplateMetaResponse[] }>('/compile/templates', {}, signal),
+  compile: (body: { templateId: string }, signal?: AbortSignal) =>
+    call<CompileTemplateResponse>(
+      '/compile',
+      { method: 'POST', body: JSON.stringify(body) },
+      signal,
+    ),
+  compileSources: (
+    body: {
+      sources: { path: string; content: string }[];
+      contractName: string;
+      solcVersion: string;
+      evmVersion?: string;
+    },
+    signal?: AbortSignal,
+  ) =>
+    call<CompileTemplateResponse>(
+      '/compile/sources',
+      { method: 'POST', body: JSON.stringify(body) },
+      signal,
+    ),
+  compileCatalog: (signal?: AbortSignal) =>
+    call<{ entries: CatalogEntry[] }>('/compile/catalog', {}, signal),
 };
 
 export interface DevNodeAccountResponse {
@@ -154,4 +185,46 @@ export interface DevNodeStatusResponse {
   mining?: { enabled: boolean; intervalMs: number; ticks: number; startedAt?: string };
   accounts?: DevNodeAccountResponse[];
   faucet?: DevNodeAccountResponse;
+}
+
+export interface TemplateSourceResponse {
+  path: string;
+  content: string;
+}
+
+export interface TemplateMetaResponse {
+  id: string;
+  name: string;
+  description: string;
+  contractName: string;
+  solcVersion: string;
+  constructorArgs: { name: string; type: string }[];
+  /** Full Solidity source(s) for the template — used by the in-browser editor. */
+  sources: TemplateSourceResponse[];
+}
+
+export interface CompileTemplateResponse {
+  templateId: string;
+  contractName: string;
+  abi: unknown[];
+  bytecode: string;
+  deployedBytecode: string;
+  inputHash: string;
+  warnings: { message: string; severity: 'warning' | 'info' }[];
+  cached: boolean;
+}
+
+/** Pre-compiled template returned by `/compile/catalog`. */
+export interface CatalogEntry {
+  templateId: string;
+  name: string;
+  description: string;
+  contractName: string;
+  solcVersion: string;
+  constructorArgs: { name: string; type: string }[];
+  sources: TemplateSourceResponse[];
+  abi: unknown[];
+  bytecode: string;
+  deployedBytecode: string;
+  inputHash: string;
 }

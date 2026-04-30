@@ -12,7 +12,16 @@ import {
   signerFromPrivateKey,
   validateMnemonic,
 } from '@cfxdevkit/core';
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { api } from '../lib/api.js';
 import { useNetwork } from './NetworkProvider.js';
 
 export const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
@@ -55,11 +64,42 @@ export interface WalletState {
 const Ctx = createContext<WalletState | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const { core } = useNetwork();
+  const { core, network } = useNetwork();
   const coreNetworkId = core.id; // 1029 mainnet, 1 testnet, 2029 local
   const [mnemonic, setMnemonicRaw] = useState<string>(TEST_MNEMONIC);
   const [count, setCount] = useState<number>(5);
   const [activeIndex, setActive] = useState<number | null>(null);
+
+  // On the `local` network, adopt the devnode's mnemonic so the showcase
+  // wallet derives accounts that the genesis allocation actually funded.
+  // Without this the wallet would derive `m/44'/60'/0'/0/i` from the BIP39
+  // standard test mnemonic ("test test … junk") which has 0 balance on a
+  // freshly-spawned devnode (devnode picks a random mnemonic by default).
+  useEffect(() => {
+    if (network.id !== 'local') return;
+    const ctrl = new AbortController();
+    let cancelled = false;
+    const sync = async () => {
+      try {
+        const s = await api.devnodeStatus(ctrl.signal);
+        if (cancelled) return;
+        const m = s.config?.mnemonic;
+        if (m && m !== mnemonic) {
+          setMnemonicRaw(m);
+          setActive(null);
+        }
+      } catch {
+        // backend offline or devnode stopped — leave mnemonic alone
+      }
+    };
+    void sync();
+    const t = window.setInterval(() => void sync(), 5_000);
+    return () => {
+      cancelled = true;
+      ctrl.abort();
+      window.clearInterval(t);
+    };
+  }, [network.id, mnemonic]);
 
   const accounts = useMemo<ShowcaseAccount[]>(() => {
     const m = mnemonic.trim();

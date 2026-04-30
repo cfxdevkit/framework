@@ -51,7 +51,6 @@ import type {
   CoreLogFilter,
   EpochTag,
   Hash,
-  Hex,
   NodeStatus,
   SponsorInfo,
   TxReceipt,

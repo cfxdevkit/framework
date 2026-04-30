@@ -45,7 +45,7 @@ export function withCapability(inner: Signer, capability?: Capability): Signer {
     async signTransaction(tx: SignableTx, opts?: SignOptions): Promise<Hex> {
       checkExpiry(cap);
       checkChain(cap, tx.chainId);
-      checkContract(cap, tx.to);
+      checkContract(cap, tx.to as Address | undefined);
       checkSelector(cap, tx.data);
       checkValue(cap, tx.value);
       return inner.signTransaction(tx, opts);
@@ -77,7 +77,7 @@ export function checkCapability(capability: Capability, tx: SignableTx): Session
   try {
     checkExpiry(capability);
     checkChain(capability, tx.chainId);
-    checkContract(capability, tx.to);
+    checkContract(capability, tx.to as Address | undefined);
     checkSelector(capability, tx.data);
     checkValue(capability, tx.value);
     return null;

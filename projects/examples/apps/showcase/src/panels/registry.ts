@@ -87,12 +87,24 @@ export const PANELS: readonly PanelSpec[] = Object.freeze([
     component: lazyDefault(() => import('./CorePanel.js'), 'CorePanel'),
   },
   {
-    id: 'contract',
+    id: 'contract-interaction',
     group: 'onchain',
-    label: 'Contract',
-    spaces: ['espace'],
-    blurb: 'Read / write ERC-20s on the active eSpace chain.',
-    component: lazyDefault(() => import('./ContractPanel.js'), 'ContractPanel'),
+    label: 'Contract interaction',
+    spaces: ['core', 'espace'],
+    blurb:
+      'Generic ABI read/write console — mirrors the VS Code extension contract tree (cfxdevkit.abiCallRead / abiCallWrite).',
+    component: lazyDefault(
+      () => import('./ContractInteractionPanel.js'),
+      'ContractInteractionPanel',
+    ),
+  },
+  {
+    id: 'compiler',
+    group: 'onchain',
+    label: 'Compiler',
+    spaces: ['core', 'espace'],
+    blurb: 'Compile a curated Solidity template (server-side) and deploy it.',
+    component: lazyDefault(() => import('./CompilerPanel.js'), 'CompilerPanel'),
   },
   {
     id: 'status',

@@ -1,0 +1,11 @@
+{
+  "name": "@cfxdevkit/repo-cfx-solidity",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Solidity pipeline — standard ABIs, contract bindings, compiler. Independent carve-out from cfx-core.",
+  "packageManager": "pnpm@10.6.0",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  }
+}

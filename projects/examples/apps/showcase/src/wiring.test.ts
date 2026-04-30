@@ -1,5 +1,6 @@
 import { generateMnemonic, listChains, validateMnemonic } from '@cfxdevkit/core';
 import { describe, expect, it } from 'vitest';
+import { getPanel, PANELS } from './panels/registry.js';
 
 /**
  * The showcase is a UI app and intentionally has no React component tests
@@ -18,5 +19,12 @@ describe('showcase wiring', () => {
     const chains = listChains();
     expect(chains.some((c) => c.family === 'core')).toBe(true);
     expect(chains.some((c) => c.family === 'espace')).toBe(true);
+  });
+
+  it('registers the compiler panel in the on-chain group', () => {
+    const panel = getPanel('compiler');
+    expect(panel).toBeDefined();
+    expect(panel?.group).toBe('onchain');
+    expect(PANELS.map((p) => p.id)).toContain('compiler');
   });
 });

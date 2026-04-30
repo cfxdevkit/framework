@@ -14,7 +14,12 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "README.md", "API.md", "STRUCTURE.md"],
+  "files": [
+    "dist",
+    "README.md",
+    "API.md",
+    "STRUCTURE.md"
+  ],
   "scripts": {
     "build": "vite build",
     "test": "vitest run",

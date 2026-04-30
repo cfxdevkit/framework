@@ -11,8 +11,7 @@ export default defineConfig({
       fileName: () => 'index.js',
     },
     rollupOptions: {
-      external: (id) =>
-        reactExternals.has(id) || (!id.startsWith('.') && !id.startsWith('/')),
+      external: (id) => reactExternals.has(id) || (!id.startsWith('.') && !id.startsWith('/')),
     },
     sourcemap: true,
     minify: false,

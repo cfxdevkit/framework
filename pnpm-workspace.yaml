@@ -1,6 +1,5 @@
 packages:
   - "tools/*"
-  - "tools/codegen/contracts-extract"
   - "repos/*/packages/*"
   - "repos/cfx-tools/devtools/*"
   - "repos/cfx-tools/templates/*"

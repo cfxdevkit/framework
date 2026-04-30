@@ -10,6 +10,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNetwork } from '../contexts/NetworkProvider.js';
+import { TEST_MNEMONIC } from '../contexts/WalletProvider.js';
 import { api, type DevNodeStatusResponse } from '../lib/api.js';
 
 const POLL_MS = 5_000;
@@ -48,7 +49,12 @@ export function DevNodePill() {
     setBusy(action);
     setError(null);
     try {
-      if (action === 'start') setStatus(await api.devnodeStart());
+      // Use the BIP39 standard test mnemonic so the showcase wallet (which
+      // also defaults to it) derives accounts that the genesis allocation
+      // funded. Otherwise devnode picks a random mnemonic and the wallet
+      // sees 0 balance — which makes the deploy panel fail with
+      // `cfx_estimateGasAndCollateral` errors.
+      if (action === 'start') setStatus(await api.devnodeStart({ mnemonic: TEST_MNEMONIC }));
       else if (action === 'stop') setStatus(await api.devnodeStop());
       else if (action === 'restart') setStatus(await api.devnodeRestart());
       else if (action === 'wipe') setStatus(await api.devnodeWipe());

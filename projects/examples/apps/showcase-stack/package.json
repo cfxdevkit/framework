@@ -1,0 +1,42 @@
+{
+  "name": "@cfxdevkit/example-showcase-stack",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Full-stack showcase: browser wallets (wagmi / Fluent / MetaMask) wired to showcase-backend (devnode, SIWE, session-key delegation, Solidity compiler, contract deploy + interact).",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf dist .vite"
+  },
+  "dependencies": {
+    "@cfxdevkit/contracts": "workspace:*",
+    "@cfxdevkit/example-showcase-ui": "workspace:*",
+    "@cfxdevkit/core": "workspace:*",
+    "@cfxdevkit/services": "workspace:*",
+    "@cfxdevkit/wallet": "workspace:*",
+    "@cfxjs/use-wallet-react": "^0.0.9",
+    "@tanstack/react-query": "^5.62.0",
+    "buffer": "^6.0.3",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "siwe": "^2.3.2",
+    "viem": "^2.21.0",
+    "wagmi": "^2.14.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/tsconfig": "workspace:*",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "typescript": "^5.7.0",
+    "vite": "^7.0.0",
+    "vitest": "^3.0.0"
+  }
+}

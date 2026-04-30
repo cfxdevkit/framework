@@ -61,7 +61,7 @@ describe('createMemoryKeystore', () => {
   it('put() stores a new secret; remove() deletes it', async () => {
     const { ks } = seededKeystore();
     const ref = { service: 'cfxdevkit', account: 'second' };
-    const pk = '0x' + 'ab'.repeat(32);
+    const pk = `0x${'ab'.repeat(32)}`;
     await ks.put?.({ ref, kind: 'private-key', secret: pk as `0x${string}` });
     expect(await ks.has(ref)).toBe(true);
     await ks.remove?.(ref);

@@ -18,6 +18,8 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { DevNodePill } from './components/DevNodePill.js';
 import { NetworkSelector } from './components/NetworkSelector.js';
 import { SpaceToggle } from './components/SpaceToggle.js';
+import { WalletPill } from './components/WalletPill.js';
+import { CompilerSessionProvider } from './contexts/CompilerSession.js';
 import { NetworkProvider } from './contexts/NetworkProvider.js';
 import { WalletProvider } from './contexts/WalletProvider.js';
 import { GROUPS, getPanel, PANELS, type PanelSpec, panelsByGroup } from './panels/registry.js';
@@ -111,6 +113,7 @@ function Shell() {
           <NetworkSelector />
           <SpaceToggle />
           <DevNodePill />
+          <WalletPill />
         </div>
       </header>
 
@@ -134,7 +137,9 @@ export function App() {
   return (
     <NetworkProvider>
       <WalletProvider>
-        <Shell />
+        <CompilerSessionProvider>
+          <Shell />
+        </CompilerSessionProvider>
       </WalletProvider>
     </NetworkProvider>
   );

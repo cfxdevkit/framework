@@ -42,7 +42,13 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "README.md", "API.md", "STRUCTURE.md", "PORTING.md"],
+  "files": [
+    "dist",
+    "README.md",
+    "API.md",
+    "STRUCTURE.md",
+    "PORTING.md"
+  ],
   "scripts": {
     "build": "vite build",
     "test": "vitest run",

@@ -151,7 +151,7 @@ export async function signerFromOneKey(input: SignerFromOneKeyInput): Promise<Si
       const eip1559: TransactionSerializableEIP1559 = {
         type: 'eip1559',
         chainId: Number(tx.chainId),
-        ...(tx.to !== undefined ? { to: tx.to } : {}),
+        ...(tx.to !== undefined ? { to: tx.to as `0x${string}` } : {}),
         ...(tx.value !== undefined ? { value: tx.value } : {}),
         ...(tx.data !== undefined ? { data: tx.data } : {}),
         ...(tx.nonce !== undefined ? { nonce: tx.nonce } : {}),
