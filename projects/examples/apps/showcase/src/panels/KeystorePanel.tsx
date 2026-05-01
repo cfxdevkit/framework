@@ -63,8 +63,9 @@ export function KeystorePanel() {
       <section className="panel">
         <h2>Keystore session</h2>
         <p className="panel-desc">
-          Central session status and wallet metadata. Signers are requested through the session,
-          with network capability derived from the active network.
+          Central session status and mnemonic-root metadata. Signers are requested through the
+          selected root and derived account, with network capability derived from the active
+          network.
         </p>
 
         <dl className="kv small">
@@ -84,29 +85,54 @@ export function KeystorePanel() {
             {session.error}
           </div>
         )}
+        <div className="row" style={{ marginTop: 12 }}>
+          <button type="button" className="secondary" onClick={() => session.addWallet()}>
+            Generate mnemonic
+          </button>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => session.restoreRemovedWallets()}
+          >
+            Reset roots
+          </button>
+          <button type="button" className="secondary" onClick={() => session.disconnect()}>
+            Clear account
+          </button>
+        </div>
       </section>
 
       <section className="panel">
-        <h2>Stored wallets ({session.wallets.length})</h2>
+        <h2>Mnemonic roots ({session.wallets.length})</h2>
         {session.wallets.length === 0 && <p className="muted">empty</p>}
         {session.wallets.map((s) => {
           const key = `${s.ref.service}/${s.ref.account}`;
           const isActive =
-            session.activeRef?.service === s.ref.service &&
-            session.activeRef.account === s.ref.account;
+            session.activeWalletRef?.service === s.ref.service &&
+            session.activeWalletRef.account === s.ref.account;
           return (
             <div key={key} className="account-card">
               <div className="row-line">
                 <span className="idx">{key}</span>
                 <span className="path">{s.kind}</span>
                 {isActive && <span className="tag">active</span>}
+                {!isActive && (
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => session.selectMnemonic(s.ref)}
+                    disabled={busy}
+                  >
+                    select
+                  </button>
+                )}
                 <button
                   type="button"
                   className="secondary"
                   onClick={() => signWith(s.ref)}
-                  disabled={busy}
+                  disabled={busy || !isActive || session.activeIndex === null}
                 >
-                  sign message
+                  sign selected account
                 </button>
                 <button
                   type="button"
@@ -117,16 +143,41 @@ export function KeystorePanel() {
                   remove
                 </button>
               </div>
-              {s.meta?.evm && (
+              {s.meta?.storage && (
                 <div className="row-line">
-                  <span className="label">evm</span>
-                  <span>{s.meta.evm}</span>
-                  <CopyButton text={s.meta.evm} />
+                  <span className="label">storage</span>
+                  <span>{s.meta.storage}</span>
                 </div>
               )}
             </div>
           );
         })}
+
+        <h3>Derived accounts ({session.accounts.length})</h3>
+        {session.accounts.map((account) => (
+          <div key={account.index} className="account-card">
+            <div className="row-line">
+              <span className="idx">#{account.index}</span>
+              <span className="path">{account.paths.evm}</span>
+              {session.activeIndex === account.index && <span className="tag">active</span>}
+              {session.activeIndex !== account.index && (
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => session.selectWallet(account.index)}
+                  disabled={busy}
+                >
+                  select
+                </button>
+              )}
+            </div>
+            <div className="row-line">
+              <span className="label">evm</span>
+              <span>{account.evmAddress}</span>
+              <CopyButton text={account.evmAddress} />
+            </div>
+          </div>
+        ))}
 
         <div className="row" style={{ marginTop: 12 }}>
           <label>

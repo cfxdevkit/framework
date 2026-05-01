@@ -27,7 +27,7 @@ import { promises as fs } from 'node:fs';
 import { dirname } from 'node:path';
 import type { Hex, Signer } from '@cfxdevkit/core';
 import { KeystoreError } from '@cfxdevkit/core';
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
+import { deriveAccount, signerFromPrivateKey, validateMnemonic } from '@cfxdevkit/core/wallet';
 import {
   type AesGcmKey,
   decryptAesGcm,
@@ -165,6 +165,23 @@ async function deriveKekFromEnvelope(env: Envelope, passphrase: string): Promise
 
 function aadFor(ref: SecretRef): Uint8Array {
   return new TextEncoder().encode(`cfx-v1:${ref.service}:${ref.account}`);
+}
+
+function plaintextFor(input: KeystorePutInput): Uint8Array {
+  if (input.kind === 'private-key') return fromHex(input.secret as Hex);
+  return new TextEncoder().encode(input.secret);
+}
+
+function signerFromSecret(rec: EncryptedSecret, secret: string, derivationPath?: string): Signer {
+  if (rec.kind === 'private-key') return signerFromPrivateKey(secret as Hex);
+  if (rec.kind === 'mnemonic') {
+    const path = derivationPath ?? rec.meta?.derivationPath ?? "m/44'/60'/0'/0/0";
+    return signerFromPrivateKey(deriveAccount({ mnemonic: secret, path }).privateKey);
+  }
+  throw new KeystoreError({
+    code: 'services/keystore/unsupported',
+    message: `file backend cannot create a signer for kind="${rec.kind}"`,
+  });
 }
 
 /** Initialise an empty encrypted keystore at `path`. Fails if file exists. */
@@ -337,10 +354,10 @@ export function createFileKeystore(opts: FileKeystoreOptions): KeystoreProvider 
           meta: { ref },
         });
       }
-      if (rec.kind !== 'private-key') {
+      if (rec.kind !== 'private-key' && rec.kind !== 'mnemonic') {
         throw new KeystoreError({
           code: 'services/keystore/unsupported',
-          message: `file backend currently only supports kind="private-key" (got ${rec.kind})`,
+          message: `file backend cannot create a signer for kind="${rec.kind}"`,
         });
       }
       const k = await ensureKek(env);
@@ -360,10 +377,10 @@ export function createFileKeystore(opts: FileKeystoreOptions): KeystoreProvider 
           cause,
         });
       }
-      const privateKey = toHex(pt) as Hex;
+      const secret = rec.kind === 'private-key' ? toHex(pt) : new TextDecoder().decode(pt);
       // Best-effort wipe of the plaintext byte buffer.
       pt.fill(0);
-      const base = signerFromPrivateKey(privateKey);
+      const base = signerFromSecret(rec, secret, callOpts.derivationPath);
       const signer = capability ? applyCapability(base, capability) : base;
       audit.record({ at: Date.now(), provider: id, action: 'getSigner', ref, ok: true });
       return signer;
@@ -371,25 +388,36 @@ export function createFileKeystore(opts: FileKeystoreOptions): KeystoreProvider 
 
     async put(input: KeystorePutInput, callOpts: KeystoreCallOptions = {}): Promise<void> {
       checkAborted(callOpts.signal);
-      if (input.kind !== 'private-key') {
+      if (input.kind === 'private-key') {
+        if (typeof input.secret !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(input.secret)) {
+          throw new KeystoreError({
+            code: 'services/keystore/unsupported',
+            message: 'secret must be a 0x-prefixed 32-byte hex private key',
+          });
+        }
+      } else if (input.kind === 'mnemonic') {
+        if (typeof input.secret !== 'string' || !validateMnemonic(input.secret.trim())) {
+          throw new KeystoreError({
+            code: 'services/keystore/unsupported',
+            message: 'secret must be a valid BIP-39 mnemonic',
+          });
+        }
+      } else {
         throw new KeystoreError({
           code: 'services/keystore/unsupported',
-          message: `file backend currently only supports kind="private-key" (got ${input.kind})`,
-        });
-      }
-      if (typeof input.secret !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(input.secret)) {
-        throw new KeystoreError({
-          code: 'services/keystore/unsupported',
-          message: 'secret must be a 0x-prefixed 32-byte hex private key',
+          message: `file backend only supports kind="private-key" or kind="mnemonic" (got ${input.kind})`,
         });
       }
       const env = await readEnvelope(opts.path);
       const k = await ensureKek(env);
-      const pt = fromHex(input.secret as Hex);
+      const pt = plaintextFor({
+        ...input,
+        secret: input.kind === 'mnemonic' ? input.secret.trim() : input.secret,
+      });
       const sealed = await encryptAesGcm({ key: k, plaintext: pt, aad: aadFor(input.ref) });
       pt.fill(0);
       env.secrets[refKey(input.ref)] = {
-        kind: 'private-key',
+        kind: input.kind,
         createdAt: Date.now(),
         ...(input.meta !== undefined ? { meta: input.meta } : {}),
         iv: toBase64Url(sealed.iv),
@@ -398,6 +426,26 @@ export function createFileKeystore(opts: FileKeystoreOptions): KeystoreProvider 
       };
       await writeEnvelope(opts.path, env);
       audit.record({ at: Date.now(), provider: id, action: 'put', ref: input.ref, ok: true });
+    },
+
+    async updateMeta(
+      ref: SecretRef,
+      meta: Record<string, string>,
+      callOpts: KeystoreCallOptions = {},
+    ): Promise<void> {
+      checkAborted(callOpts.signal);
+      const env = await readEnvelope(opts.path);
+      const rec = env.secrets[refKey(ref)];
+      if (!rec) {
+        throw new KeystoreError({
+          code: 'services/keystore/not-found',
+          message: `secret not found: ${ref.service}/${ref.account}`,
+          meta: { ref },
+        });
+      }
+      rec.meta = meta;
+      await writeEnvelope(opts.path, env);
+      audit.record({ at: Date.now(), provider: id, action: 'updateMeta', ref, ok: true });
     },
 
     async remove(ref: SecretRef, callOpts: KeystoreCallOptions = {}): Promise<void> {

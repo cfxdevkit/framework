@@ -3,6 +3,8 @@ import * as vscode from 'vscode';
 export interface AccountTreeRecord {
   label: string;
   description?: string;
+  walletRef?: TreeSecretRef;
+  accountIndex?: number;
   espaceAddress?: string;
   coreAddress?: string;
   espaceBalance?: string;
@@ -11,11 +13,30 @@ export interface AccountTreeRecord {
   state?: 'ready' | 'locked' | 'unavailable';
 }
 
-export interface AccountActionRecord {
+export interface KeystoreBackendOptionRecord {
   label: string;
-  command: string;
+  description: string;
+  backend: string;
+  selected: boolean;
+}
+
+export interface WalletRootRecord {
+  label: string;
+  ref: TreeSecretRef;
   description?: string;
-  icon?: string;
+  detail?: string;
+  active: boolean;
+  state: 'ready' | 'locked' | 'unavailable';
+}
+
+export interface TreeSecretRef {
+  service: string;
+  account: string;
+}
+
+export interface WalletTreeItem extends vscode.TreeItem {
+  walletRef?: TreeSecretRef;
+  accountIndex?: number;
 }
 
 export interface ContractTreeRecord {
@@ -49,12 +70,14 @@ export interface AbiFunctionTreeRecord {
 export interface ViewSnapshot {
   selectedNetworkLabel: string;
   selectedSpaceLabel: string;
+  selectedKeystoreBackendId: string;
   selectedKeystoreBackendLabel: string;
   selectedKeystorePathLabel: string;
+  keystoreBackendOptions: ReadonlyArray<KeystoreBackendOptionRecord>;
+  walletRoots: ReadonlyArray<WalletRootRecord>;
   networkOptions: ReadonlyArray<NetworkTreeRecord>;
   nodeStatusLabel: string;
   nodeActions: ReadonlyArray<{ label: string; command: string; detail?: string }>;
-  accountActions: ReadonlyArray<AccountActionRecord>;
   accounts: ReadonlyArray<AccountTreeRecord>;
   contracts: ReadonlyArray<ContractTreeRecord>;
 }
@@ -136,28 +159,73 @@ export function makeNodeItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
 }
 
 export function makeAccountItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
-  const backend = new vscode.TreeItem(`Keystore: ${snapshot.selectedKeystoreBackendLabel}`);
-  backend.description = snapshot.selectedKeystorePathLabel;
-  backend.tooltip = `Backend: ${snapshot.selectedKeystoreBackendLabel}\nKeystore: ${snapshot.selectedKeystorePathLabel}`;
-  backend.iconPath = new vscode.ThemeIcon('key');
-  backend.command = {
-    command: 'cfxdevkit.selectKeystoreBackend',
-    title: 'Select Keystore Backend',
-  };
+  const backendChildren = [
+    makeCommandItem(
+      `Current: ${snapshot.selectedKeystoreBackendLabel}`,
+      'change backend',
+      'cfxdevkit.selectKeystoreBackend',
+      'server-environment',
+      `Signing backend: ${snapshot.selectedKeystoreBackendLabel}`,
+    ),
+    ...snapshot.keystoreBackendOptions.map((option) => {
+      const item = makeCommandItem(
+        option.label,
+        option.selected ? 'active' : option.description,
+        'cfxdevkit.selectKeystoreBackend',
+        option.selected ? 'check' : 'circle-large-outline',
+        option.description,
+      );
+      item.command = {
+        command: 'cfxdevkit.selectKeystoreBackend',
+        title: `Use ${option.label}`,
+        arguments: [option.backend],
+      };
+      return item;
+    }),
+  ];
+  if (snapshot.selectedKeystoreBackendId === 'file') {
+    backendChildren.push(
+      makeCommandItem(
+        'Keystore file',
+        snapshot.selectedKeystorePathLabel,
+        'cfxdevkit.selectKeystoreFile',
+        'folder',
+        'Select the encrypted file used when the File backend is active.',
+      ),
+    );
+  }
+  const backend = makeSection('Keystore', 'key', backendChildren);
 
-  const actions = snapshot.accountActions.map((action) => {
-    const item = new vscode.TreeItem(action.label);
-    item.description = action.description;
-    item.iconPath = new vscode.ThemeIcon(action.icon ?? 'gear');
-    item.command = { command: action.command, title: action.label };
-    return item;
-  });
+  const walletChildren =
+    snapshot.selectedKeystoreBackendId === 'file'
+      ? snapshot.walletRoots.map(makeWalletItem)
+      : [
+          makeCommandItem(
+            'Hardware wallet',
+            snapshot.selectedKeystoreBackendLabel,
+            'cfxdevkit.unlockKeystore',
+            'plug',
+            'Connect the selected hardware wallet backend.',
+          ),
+        ];
+  if (snapshot.selectedKeystoreBackendId === 'file') {
+    walletChildren.push(
+      makeCommandItem(
+        'Add wallet',
+        snapshot.walletRoots.length ? undefined : 'none yet',
+        'cfxdevkit.addWallet',
+        'add',
+        'Create or import a mnemonic wallet in the selected keystore.',
+      ),
+    );
+  }
+  const wallets = makeSection('Wallets', 'account', walletChildren);
 
   if (!snapshot.accounts.length) {
     const item = new vscode.TreeItem('No accounts available');
-    item.description = 'initialize, unlock, or connect wallet';
+    item.description = 'select a wallet or connect hardware';
     item.iconPath = new vscode.ThemeIcon('person');
-    return [backend, ...actions, item];
+    return [backend, wallets, makeSection('Accounts', 'person', [item])];
   }
 
   const accounts = snapshot.accounts.map((account) => {
@@ -173,6 +241,13 @@ export function makeAccountItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
         : account.description;
     item.tooltip = account.detail;
     item.contextValue = 'cfxAccountItem';
+    if (account.walletRef && account.accountIndex !== undefined) {
+      item.command = {
+        command: 'cfxdevkit.selectWallet',
+        title: `Select ${account.label}`,
+        arguments: [{ walletRef: account.walletRef, accountIndex: account.accountIndex }],
+      };
+    }
     item.iconPath = new vscode.ThemeIcon(
       'account',
       new vscode.ThemeColor(
@@ -190,7 +265,58 @@ export function makeAccountItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
     return item;
   });
 
-  return [backend, ...actions, ...accounts];
+  return [backend, wallets, makeSection('Accounts', 'person', accounts)];
+}
+
+function makeWalletItem(wallet: WalletRootRecord): WalletTreeItem {
+  const item = new vscode.TreeItem(wallet.label) as WalletTreeItem;
+  item.description = wallet.active ? 'active' : wallet.description;
+  item.tooltip = wallet.detail;
+  item.walletRef = wallet.ref;
+  item.accountIndex = 0;
+  item.contextValue = wallet.active
+    ? wallet.state === 'ready'
+      ? 'cfxWalletRootActiveReady'
+      : 'cfxWalletRootActiveLocked'
+    : wallet.state === 'ready'
+      ? 'cfxWalletRootReady'
+      : 'cfxWalletRootLocked';
+  item.iconPath = new vscode.ThemeIcon(
+    wallet.active ? 'check' : wallet.state === 'locked' ? 'lock' : 'key',
+  );
+  item.command = {
+    command: 'cfxdevkit.selectWallet',
+    title: `Select ${wallet.label}`,
+    arguments: [{ walletRef: wallet.ref, accountIndex: 0 }],
+  };
+  return item;
+}
+
+function makeSection(label: string, icon: string, children: vscode.TreeItem[]): vscode.TreeItem {
+  const item = new vscode.TreeItem(
+    label,
+    vscode.TreeItemCollapsibleState.Expanded,
+  ) as vscode.TreeItem & {
+    children?: vscode.TreeItem[];
+  };
+  item.iconPath = new vscode.ThemeIcon(icon);
+  item.children = children;
+  return item;
+}
+
+function makeCommandItem(
+  label: string,
+  description: string | undefined,
+  command: string,
+  icon: string,
+  tooltip?: string,
+): vscode.TreeItem {
+  const item = new vscode.TreeItem(label);
+  item.description = description;
+  item.tooltip = tooltip;
+  item.iconPath = new vscode.ThemeIcon(icon);
+  item.command = { command, title: label };
+  return item;
 }
 
 export function makeContractItems(snapshot: ViewSnapshot): vscode.TreeItem[] {

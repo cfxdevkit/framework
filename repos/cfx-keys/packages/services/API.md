@@ -47,10 +47,11 @@ type KeystoreProvider = {
   has(ref: SecretRef, opts?: { signal?: AbortSignal }): Promise<boolean>
 
   // Returns a Signer bound to the secret. Private material never crosses the boundary.
-  getSigner(ref: SecretRef, capability?: Capability, opts?: { signal?: AbortSignal }): Promise<Signer>
+  getSigner(ref: SecretRef, capability?: Capability, opts?: { signal?: AbortSignal; derivationPath?: string }): Promise<Signer>
 
   // Write operations. Optional per backend (e.g. KMS may forbid put).
-  put?(input: { ref: SecretRef; kind: StoredSecret['kind']; secret: Hex | string; meta?: Record<string, string> }, opts?: { signal?: AbortSignal }): Promise<void>
+  put?(input: { ref: SecretRef; kind: StoredSecret['kind']; secret: Hex | string; meta?: Record<string, string> }, opts?: { signal?: AbortSignal; derivationPath?: string }): Promise<void>
+  updateMeta?(ref: SecretRef, meta: Record<string, string>, opts?: { signal?: AbortSignal; derivationPath?: string }): Promise<void>
   remove?(ref: SecretRef, opts?: { signal?: AbortSignal }): Promise<void>
   rotate?(ref: SecretRef, opts?: { signal?: AbortSignal }): Promise<{ ref: SecretRef }>
 }

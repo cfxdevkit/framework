@@ -38,12 +38,17 @@
     },
     "commands": [
       { "command": "cfxdevkit.selectNetwork", "title": "Conflux: Select Network", "icon": "$(globe)" },
-      { "command": "cfxdevkit.selectKeystoreBackend", "title": "Conflux: Select Keystore Backend", "icon": "$(key)" },
+      { "command": "cfxdevkit.selectKeystoreBackend", "title": "Conflux: Select Keystore Type", "icon": "$(key)" },
       { "command": "cfxdevkit.selectKeystoreFile", "title": "Conflux: Select Keystore File", "icon": "$(folder)" },
       { "command": "cfxdevkit.serverStart", "title": "Conflux: Start DevKit Runtime", "icon": "$(debug-start)" },
       { "command": "cfxdevkit.serverStop", "title": "Conflux: Stop Node", "icon": "$(debug-stop)" },
-      { "command": "cfxdevkit.initializeSetup", "title": "Conflux: Initialize Wallet", "icon": "$(key)" },
+      { "command": "cfxdevkit.initializeSetup", "title": "Conflux: Initialize Keystore", "icon": "$(key)" },
+      { "command": "cfxdevkit.addWallet", "title": "Conflux: Add Wallet", "icon": "$(add)" },
+      { "command": "cfxdevkit.selectWallet", "title": "Conflux: Select Wallet", "icon": "$(check)" },
+      { "command": "cfxdevkit.removeWallet", "title": "Conflux: Remove Wallet", "icon": "$(trash)" },
       { "command": "cfxdevkit.unlockKeystore", "title": "Conflux: Unlock Keystore", "icon": "$(unlock)" },
+      { "command": "cfxdevkit.lockKeystore", "title": "Conflux: Lock Keystore", "icon": "$(lock)" },
+      { "command": "cfxdevkit.rotateKeystorePassphrase", "title": "Conflux: Change Keystore Password", "icon": "$(key)" },
       { "command": "cfxdevkit.nodeStart", "title": "Conflux: Start Node", "icon": "$(play)" },
       { "command": "cfxdevkit.nodeStop", "title": "Conflux: Stop Node", "icon": "$(debug-stop)" },
       { "command": "cfxdevkit.nodeRestart", "title": "Conflux: Restart Node", "icon": "$(refresh)" },
@@ -66,7 +71,7 @@
       "cfxdevkit-sidebar": [
         { "id": "cfxdevkit.networkView", "name": "Network" },
         { "id": "cfxdevkit.nodeView", "name": "Node" },
-        { "id": "cfxdevkit.accountsView", "name": "Accounts" },
+        { "id": "cfxdevkit.accountsView", "name": "Wallets" },
         { "id": "cfxdevkit.contractsView", "name": "Contracts" }
       ]
     },
@@ -81,7 +86,7 @@
       },
       {
         "view": "cfxdevkit.accountsView",
-        "contents": "Initialize or unlock the wallet to inspect available accounts.\n[Initialize Wallet](command:cfxdevkit.initializeSetup)\n[Unlock Keystore](command:cfxdevkit.unlockKeystore)"
+        "contents": "Choose a keystore type, then add or select a wallet before node and contract operations.\n[Select Keystore Type](command:cfxdevkit.selectKeystoreBackend)\n[Add Wallet](command:cfxdevkit.addWallet)\n[Unlock Keystore](command:cfxdevkit.unlockKeystore)"
       },
       {
         "view": "cfxdevkit.contractsView",
@@ -92,14 +97,16 @@
       "view/title": [
         { "command": "cfxdevkit.selectNetwork", "when": "view == cfxdevkit.networkView", "group": "navigation@1" },
         { "command": "cfxdevkit.selectKeystoreBackend", "when": "view == cfxdevkit.accountsView", "group": "navigation@1" },
-        { "command": "cfxdevkit.selectKeystoreFile", "when": "view == cfxdevkit.accountsView", "group": "navigation@2" },
         { "command": "cfxdevkit.nodeStart", "when": "view == cfxdevkit.nodeView", "group": "navigation@1" },
-        { "command": "cfxdevkit.refreshAccounts", "when": "view == cfxdevkit.accountsView", "group": "navigation@3" },
+        { "command": "cfxdevkit.refreshAccounts", "when": "view == cfxdevkit.accountsView", "group": "navigation@2" },
         { "command": "cfxdevkit.deployContract", "when": "view == cfxdevkit.contractsView", "group": "navigation@1" },
         { "command": "cfxdevkit.importContract", "when": "view == cfxdevkit.contractsView", "group": "navigation@2" },
         { "command": "cfxdevkit.refreshContracts", "when": "view == cfxdevkit.contractsView", "group": "navigation@3" }
       ],
       "view/item/context": [
+        { "command": "cfxdevkit.unlockKeystore", "when": "view == cfxdevkit.accountsView && viewItem == cfxWalletRootActiveLocked", "group": "inline@1" },
+        { "command": "cfxdevkit.lockKeystore", "when": "view == cfxdevkit.accountsView && viewItem == cfxWalletRootActiveReady", "group": "inline@1" },
+        { "command": "cfxdevkit.removeWallet", "when": "view == cfxdevkit.accountsView && viewItem =~ /cfxWalletRoot/", "group": "inline@2" },
         { "command": "cfxdevkit.copyAddress", "when": "viewItem == cfxAddressItem", "group": "inline" },
         { "command": "cfxdevkit.copyContractAddress", "when": "viewItem == cfxContractItem", "group": "inline" }
       ]
@@ -156,6 +163,7 @@
     "@cfxdevkit/contracts": "workspace:^",
     "@cfxdevkit/core": "workspace:^",
     "@cfxdevkit/devnode": "workspace:^",
+    "@cfxdevkit/services": "workspace:^",
     "@cfxdevkit/wallet": "workspace:^"
   },
   "devDependencies": {

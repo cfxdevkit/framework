@@ -24,22 +24,18 @@ RUN apt-get update \
     procps \
     python3 \
     unzip \
-    xz-utils \
   && rm -rf /var/lib/apt/lists/*
 
-RUN set -eux; \
-  arch="$(dpkg --print-architecture)"; \
-  case "$arch" in \
-    amd64) node_arch="x64" ;; \
-    arm64) node_arch="arm64" ;; \
-    *) echo "Unsupported Node architecture: $arch" >&2; exit 1 ;; \
-  esac; \
-  curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${node_arch}.tar.xz" \
-    -o /tmp/node.tar.xz; \
-  tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 --no-same-owner; \
-  rm /tmp/node.tar.xz; \
-  node --version | grep -x "v${NODE_VERSION}"; \
-  npm --version
+RUN mkdir -p /usr/local/share/nvm/.cache \
+  && chmod 2775 /usr/local/share/nvm/.cache \
+  && bash -c '. /usr/local/share/nvm/nvm.sh \
+    && nvm install "${NODE_VERSION}" \
+    && nvm alias default "${NODE_VERSION}" \
+    && ln -sfn "/usr/local/share/nvm/versions/node/v${NODE_VERSION}" /usr/local/share/nvm/current \
+    && node --version | grep -x "v${NODE_VERSION}"'
+
+# Prepend nvm/current/bin so it wins over the base image's hardcoded versioned path
+ENV PATH=/usr/local/share/nvm/current/bin:${PATH}
 
 ENV PNPM_HOME=/home/node/.local/share/pnpm
 ENV PNPM_STORE_PATH=/home/node/.local/share/pnpm/store

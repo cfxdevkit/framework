@@ -8,7 +8,7 @@
 
 import type { Hex, Signer } from '@cfxdevkit/core';
 import { KeystoreError } from '@cfxdevkit/core';
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
+import { deriveAccount, signerFromPrivateKey, validateMnemonic } from '@cfxdevkit/core/wallet';
 import {
   type AuditLogger,
   type Capability,
@@ -41,7 +41,7 @@ export interface MemoryKeystoreOptions {
 }
 
 interface MemoryEntry {
-  privateKey: Hex;
+  secret: Hex | string;
   stored: StoredSecret;
 }
 
@@ -66,7 +66,7 @@ export function createMemoryKeystore(opts: MemoryKeystoreOptions = {}): Keystore
 
   for (const s of opts.seed ?? []) {
     store.set(refKey(s.ref), {
-      privateKey: s.privateKey,
+      secret: s.privateKey,
       stored: {
         ref: s.ref,
         kind: 'private-key',
@@ -113,7 +113,7 @@ export function createMemoryKeystore(opts: MemoryKeystoreOptions = {}): Keystore
           meta: { ref },
         });
       }
-      const base = signerFromPrivateKey(entry.privateKey);
+      const base = signerForEntry(entry, callOpts.derivationPath);
       const signer = capability ? applyCapability(base, capability) : base;
       audit.record({ at: Date.now(), provider: id, action: 'getSigner', ref, ok: true });
       return signer;
@@ -121,28 +121,54 @@ export function createMemoryKeystore(opts: MemoryKeystoreOptions = {}): Keystore
 
     async put(input: KeystorePutInput, callOpts: KeystoreCallOptions = {}): Promise<void> {
       checkAborted(callOpts.signal);
-      if (input.kind !== 'private-key') {
+      if (input.kind === 'private-key') {
+        if (typeof input.secret !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(input.secret)) {
+          throw new KeystoreError({
+            code: 'services/keystore/unsupported',
+            message: 'secret must be a 0x-prefixed 32-byte hex private key',
+          });
+        }
+      } else if (input.kind === 'mnemonic') {
+        if (typeof input.secret !== 'string' || !validateMnemonic(input.secret.trim())) {
+          throw new KeystoreError({
+            code: 'services/keystore/unsupported',
+            message: 'secret must be a valid BIP-39 mnemonic',
+          });
+        }
+      } else {
         throw new KeystoreError({
           code: 'services/keystore/unsupported',
-          message: `memory backend only supports kind="private-key" (got ${input.kind})`,
-        });
-      }
-      if (typeof input.secret !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(input.secret)) {
-        throw new KeystoreError({
-          code: 'services/keystore/unsupported',
-          message: 'secret must be a 0x-prefixed 32-byte hex private key',
+          message: `memory backend only supports kind="private-key" or kind="mnemonic" (got ${input.kind})`,
         });
       }
       store.set(refKey(input.ref), {
-        privateKey: input.secret as Hex,
+        secret: input.kind === 'mnemonic' ? input.secret.trim() : (input.secret as Hex),
         stored: {
           ref: input.ref,
-          kind: 'private-key',
+          kind: input.kind,
           createdAt: Date.now(),
           ...(input.meta !== undefined ? { meta: input.meta } : {}),
         },
       });
       audit.record({ at: Date.now(), provider: id, action: 'put', ref: input.ref, ok: true });
+    },
+
+    async updateMeta(
+      ref: SecretRef,
+      meta: Record<string, string>,
+      callOpts: KeystoreCallOptions = {},
+    ): Promise<void> {
+      checkAborted(callOpts.signal);
+      const entry = store.get(refKey(ref));
+      if (!entry) {
+        throw new KeystoreError({
+          code: 'services/keystore/not-found',
+          message: `secret not found: ${ref.service}/${ref.account}`,
+          meta: { ref },
+        });
+      }
+      entry.stored = { ...entry.stored, meta };
+      audit.record({ at: Date.now(), provider: id, action: 'updateMeta', ref, ok: true });
     },
 
     async remove(ref: SecretRef, callOpts: KeystoreCallOptions = {}): Promise<void> {
@@ -158,4 +184,16 @@ export function createMemoryKeystore(opts: MemoryKeystoreOptions = {}): Keystore
       }
     },
   };
+}
+
+function signerForEntry(entry: MemoryEntry, derivationPath?: string): Signer {
+  if (entry.stored.kind === 'private-key') return signerFromPrivateKey(entry.secret as Hex);
+  if (entry.stored.kind === 'mnemonic') {
+    const path = derivationPath ?? entry.stored.meta?.derivationPath ?? "m/44'/60'/0'/0/0";
+    return signerFromPrivateKey(deriveAccount({ mnemonic: entry.secret, path }).privateKey);
+  }
+  throw new KeystoreError({
+    code: 'services/keystore/unsupported',
+    message: `memory backend cannot create a signer for kind="${entry.stored.kind}"`,
+  });
 }

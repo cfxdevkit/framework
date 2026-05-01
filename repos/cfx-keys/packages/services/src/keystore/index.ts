@@ -61,6 +61,7 @@ export interface KeystoreListOptions {
 
 export interface KeystoreCallOptions {
   signal?: AbortSignal;
+  derivationPath?: string;
 }
 
 export interface KeystorePutInput {
@@ -91,6 +92,11 @@ export interface KeystoreProvider {
   getSigner(ref: SecretRef, capability?: Capability, opts?: KeystoreCallOptions): Promise<Signer>;
 
   put?(input: KeystorePutInput, opts?: KeystoreCallOptions): Promise<void>;
+  updateMeta?(
+    ref: SecretRef,
+    meta: Record<string, string>,
+    opts?: KeystoreCallOptions,
+  ): Promise<void>;
   remove?(ref: SecretRef, opts?: KeystoreCallOptions): Promise<void>;
   rotate?(ref: SecretRef, opts?: KeystoreCallOptions): Promise<{ ref: SecretRef }>;
 }

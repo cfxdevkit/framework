@@ -10,7 +10,12 @@
 - `cfxdevkit.serverStart`
 - `cfxdevkit.serverStop`
 - `cfxdevkit.initializeSetup`
+- `cfxdevkit.addWallet`
+- `cfxdevkit.selectWallet`
+- `cfxdevkit.removeWallet`
 - `cfxdevkit.unlockKeystore`
+- `cfxdevkit.lockKeystore`
+- `cfxdevkit.rotateKeystorePassphrase`
 - `cfxdevkit.nodeStart`
 - `cfxdevkit.nodeStop`
 - `cfxdevkit.nodeRestart`
@@ -40,8 +45,10 @@
 
 - Selected network: VS Code workspace state (`local`, `testnet`, or `mainnet`)
 - Last used contract target space: VS Code workspace state (`espace` or `core`)
-- Selected keystore backend: VS Code workspace state (`file`, `onekey`, or `satoshi`)
-- Local node mnemonic: VS Code workspace state, set from generated/imported file-wallet setup when available
+- Selected keystore backend: VS Code workspace state (`file`, `onekey`, or `satoshi`, shown as Satochip)
+- Active file-keystore mnemonic root ref: VS Code workspace state (`service/account` ref)
+- Active derived account index: VS Code workspace state
+- Local node mnemonic: VS Code workspace state, set from generated/imported mnemonic-root setup when available
 - Deployments registry: `.cfxdevkit/deployments.json`
 - Keystore file: `.cfxdevkit/keystore.json` by default
 
@@ -57,8 +64,8 @@ Both Core Space and eSpace are available inside the active network. Contract dep
 
 ## Keystore backends
 
-- `file`: encrypted workspace keystore, supports initialization, unlock, eSpace signing, and Core Space signing.
+- `file`: encrypted workspace keystore, supports mnemonic-root creation/import, unlock, eSpace signing, and Core Space signing.
 - `onekey`: OneKey hardware signer through an installed OneKey SDK, eSpace signing.
-- `satoshi`: Satoshi/Satochip bridge signer, eSpace signing.
+- `satoshi`: Satochip bridge signer, eSpace signing.
 
-The file backend can select an existing keystore file or initialize a new one from a generated or imported mnemonic. New file-wallet setup stores the mnemonic in workspace state for the local dev node, so local genesis accounts are derived from the same wallet seed. Account rows are derived for the active network and remain visible on local, testnet, and mainnet even when the local node is stopped; balances are filled only when the active network RPCs are reachable.
+The Wallets view presents two distinct choices. The Keystore section selects the signing backend (`file`, OneKey, or Satochip) and, only when File is active, the encrypted keystore file. The Wallets section lists file-keystore mnemonic roots; clicking a wallet selects it, inline row actions unlock/lock the active wallet and remove any wallet, and the add-wallet entry sits at the end of the list. The file backend stores each wallet as a `kind: "mnemonic"` root; derived account rows are relative children selected by derivation path. New mnemonic-root setup also stores the mnemonic in workspace state for the local dev node, so local genesis accounts are derived from the same seed. Account rows are derived for the active network and remain visible on local, testnet, and mainnet even when the local node is stopped; balances are filled only when the active network RPCs are reachable.
