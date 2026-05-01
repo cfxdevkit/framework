@@ -3,29 +3,28 @@
  * a `ConnectButton` in production wallet stacks but uses a local mnemonic so
  * the demo runs without a browser wallet extension.
  */
-import { generateMnemonic, validateMnemonic } from '@cfxdevkit/core';
+import { validateMnemonic } from '@cfxdevkit/core';
 import { CopyButton } from '../components/CopyButton.js';
-import { TEST_MNEMONIC, useWallet } from '../contexts/WalletProvider.js';
+import { useKeystoreSession } from '../contexts/KeystoreSessionProvider.js';
+import { useWallet } from '../contexts/WalletProvider.js';
 
 export function WalletPanel() {
   const w = useWallet();
+  const session = useKeystoreSession();
   const mnemonicValid = validateMnemonic(w.mnemonic.trim());
 
   return (
     <>
       <div className="warning">
-        ⚠ The "wallet" here is a local-mnemonic stand-in for a browser wallet. Other showcase tabs
-        (SIWE, Session Key, Keystore) consume the active signer from this panel. Never paste a
-        mnemonic that secures real funds.
+        The showcase session is centralized here: wallet selection, signer state, network
+        capability, and devnode seed alignment all flow through the keystore session provider.
       </div>
 
       <section className="panel">
-        <h2>Wallet · local mnemonic</h2>
+        <h2>Keystore session</h2>
         <p className="panel-desc">
-          Drives a <code className="mono">Signer</code> via{' '}
-          <code className="mono">deriveDualAccount</code> +{' '}
-          <code className="mono">signerFromPrivateKey</code>. The active address is shared across
-          panels via a React context.
+          Active backend: <code className="mono">{session.backendId}</code>. Session:{' '}
+          <code className="mono">{session.sessionId}</code>.
         </p>
 
         <label>
@@ -45,14 +44,10 @@ export function WalletPanel() {
               style={{ width: 80 }}
             />
           </label>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => w.setMnemonic(generateMnemonic(128))}
-          >
+          <button type="button" className="secondary" onClick={() => session.createMnemonic()}>
             New mnemonic
           </button>
-          <button type="button" className="secondary" onClick={() => w.setMnemonic(TEST_MNEMONIC)}>
+          <button type="button" className="secondary" onClick={() => session.resetMnemonic()}>
             Reset to hardhat vector
           </button>
         </div>
@@ -65,11 +60,11 @@ export function WalletPanel() {
       </section>
 
       <section className="panel">
-        <h2>{w.activeIndex === null ? 'Pick an account' : 'Connected'}</h2>
+        <h2>{w.activeIndex === null ? 'Select active wallet' : 'Active wallet'}</h2>
         <p className="panel-desc">
           {w.activeIndex === null
-            ? 'Click "Connect" on a row to make it the active signer.'
-            : `Account [${w.activeIndex}] is the active signer used by SIWE / Session Key / Keystore tabs.`}
+            ? 'Choose one wallet from the session list before signing or starting the local node.'
+            : `Wallet [${w.activeIndex}] is the active signer for wallet-bound clients and panels.`}
         </p>
 
         {w.accounts.map((a) => {
@@ -105,6 +100,12 @@ export function WalletPanel() {
                 <span className="label">core</span>
                 <span>{a.coreAddress}</span>
                 <CopyButton text={a.coreAddress} />
+              </div>
+              <div className="row-line">
+                <span className="label">ref</span>
+                <span>
+                  {a.ref.service}/{a.ref.account}
+                </span>
               </div>
             </div>
           );

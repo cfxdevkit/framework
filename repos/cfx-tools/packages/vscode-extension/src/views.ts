@@ -11,6 +11,13 @@ export interface AccountTreeRecord {
   state?: 'ready' | 'locked' | 'unavailable';
 }
 
+export interface AccountActionRecord {
+  label: string;
+  command: string;
+  description?: string;
+  icon?: string;
+}
+
 export interface ContractTreeRecord {
   id: string;
   label: string;
@@ -43,9 +50,11 @@ export interface ViewSnapshot {
   selectedNetworkLabel: string;
   selectedSpaceLabel: string;
   selectedKeystoreBackendLabel: string;
+  selectedKeystorePathLabel: string;
   networkOptions: ReadonlyArray<NetworkTreeRecord>;
   nodeStatusLabel: string;
   nodeActions: ReadonlyArray<{ label: string; command: string; detail?: string }>;
+  accountActions: ReadonlyArray<AccountActionRecord>;
   accounts: ReadonlyArray<AccountTreeRecord>;
   contracts: ReadonlyArray<ContractTreeRecord>;
 }
@@ -128,18 +137,27 @@ export function makeNodeItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
 
 export function makeAccountItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
   const backend = new vscode.TreeItem(`Keystore: ${snapshot.selectedKeystoreBackendLabel}`);
-  backend.description = 'active backend';
+  backend.description = snapshot.selectedKeystorePathLabel;
+  backend.tooltip = `Backend: ${snapshot.selectedKeystoreBackendLabel}\nKeystore: ${snapshot.selectedKeystorePathLabel}`;
   backend.iconPath = new vscode.ThemeIcon('key');
   backend.command = {
     command: 'cfxdevkit.selectKeystoreBackend',
     title: 'Select Keystore Backend',
   };
 
+  const actions = snapshot.accountActions.map((action) => {
+    const item = new vscode.TreeItem(action.label);
+    item.description = action.description;
+    item.iconPath = new vscode.ThemeIcon(action.icon ?? 'gear');
+    item.command = { command: action.command, title: action.label };
+    return item;
+  });
+
   if (!snapshot.accounts.length) {
     const item = new vscode.TreeItem('No accounts available');
     item.description = 'initialize, unlock, or connect wallet';
     item.iconPath = new vscode.ThemeIcon('person');
-    return [backend, item];
+    return [backend, ...actions, item];
   }
 
   const accounts = snapshot.accounts.map((account) => {
@@ -172,7 +190,7 @@ export function makeAccountItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
     return item;
   });
 
-  return [backend, ...accounts];
+  return [backend, ...actions, ...accounts];
 }
 
 export function makeContractItems(snapshot: ViewSnapshot): vscode.TreeItem[] {

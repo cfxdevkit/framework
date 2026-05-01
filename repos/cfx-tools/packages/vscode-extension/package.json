@@ -39,6 +39,7 @@
     "commands": [
       { "command": "cfxdevkit.selectNetwork", "title": "Conflux: Select Network", "icon": "$(globe)" },
       { "command": "cfxdevkit.selectKeystoreBackend", "title": "Conflux: Select Keystore Backend", "icon": "$(key)" },
+      { "command": "cfxdevkit.selectKeystoreFile", "title": "Conflux: Select Keystore File", "icon": "$(folder)" },
       { "command": "cfxdevkit.serverStart", "title": "Conflux: Start DevKit Runtime", "icon": "$(debug-start)" },
       { "command": "cfxdevkit.serverStop", "title": "Conflux: Stop Node", "icon": "$(debug-stop)" },
       { "command": "cfxdevkit.initializeSetup", "title": "Conflux: Initialize Wallet", "icon": "$(key)" },
@@ -91,8 +92,9 @@
       "view/title": [
         { "command": "cfxdevkit.selectNetwork", "when": "view == cfxdevkit.networkView", "group": "navigation@1" },
         { "command": "cfxdevkit.selectKeystoreBackend", "when": "view == cfxdevkit.accountsView", "group": "navigation@1" },
+        { "command": "cfxdevkit.selectKeystoreFile", "when": "view == cfxdevkit.accountsView", "group": "navigation@2" },
         { "command": "cfxdevkit.nodeStart", "when": "view == cfxdevkit.nodeView", "group": "navigation@1" },
-        { "command": "cfxdevkit.refreshAccounts", "when": "view == cfxdevkit.accountsView", "group": "navigation@2" },
+        { "command": "cfxdevkit.refreshAccounts", "when": "view == cfxdevkit.accountsView", "group": "navigation@3" },
         { "command": "cfxdevkit.deployContract", "when": "view == cfxdevkit.contractsView", "group": "navigation@1" },
         { "command": "cfxdevkit.importContract", "when": "view == cfxdevkit.contractsView", "group": "navigation@2" },
         { "command": "cfxdevkit.refreshContracts", "when": "view == cfxdevkit.contractsView", "group": "navigation@3" }

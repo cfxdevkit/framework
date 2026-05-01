@@ -47,5 +47,8 @@ docs/
 
 - [keystore-docker.md](keystore-docker.md) — Run a hardened local
   encrypted keystore inside Docker (single-container and sidecar patterns).
+- [architecture/keystore-session-provider.md](architecture/keystore-session-provider.md) —
+  Centralized wallet selection, unlock, network alignment, and client reset
+  design for sensitive keystore-backed sessions.
 - [llm-fine-tuning-plan.md](llm-fine-tuning-plan.md) — Plan for generating
   repository-centered datasets and local coding-assistant fine-tuning artifacts.

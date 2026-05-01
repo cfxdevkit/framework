@@ -1,5 +1,5 @@
 import { promises as fs } from 'node:fs';
-import { join, relative } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
 import { type Artifact, compile, listTemplates, npmResolver } from '@cfxdevkit/compiler';
 import { deployContract } from '@cfxdevkit/contracts/deploy';
 import { readContract } from '@cfxdevkit/contracts/read';
@@ -21,7 +21,14 @@ import {
   http,
 } from '@cfxdevkit/core/client';
 import { formatCFX } from '@cfxdevkit/core/units';
-import { generateMnemonic, type Signer, signerFromPrivateKey } from '@cfxdevkit/core/wallet';
+import {
+  coreAddressFromPrivateKey,
+  deriveAccount,
+  generateMnemonic,
+  type Signer,
+  signerFromPrivateKey,
+  validateMnemonic,
+} from '@cfxdevkit/core/wallet';
 import { createDevNode, type DevNode } from '@cfxdevkit/devnode';
 import { type OneKeySdkLike, signerFromOneKey } from '@cfxdevkit/wallet/hardware/onekey';
 import { signerFromSatochip } from '@cfxdevkit/wallet/hardware/satochip';
@@ -182,6 +189,9 @@ class ExtensionRuntime implements vscode.Disposable {
       vscode.commands.registerCommand('cfxdevkit.selectKeystoreBackend', () =>
         this.selectKeystoreBackend(),
       ),
+      vscode.commands.registerCommand('cfxdevkit.selectKeystoreFile', () =>
+        this.selectKeystoreFile(),
+      ),
       vscode.commands.registerCommand('cfxdevkit.serverStart', () => this.startRuntime()),
       vscode.commands.registerCommand('cfxdevkit.serverStop', () => this.stopNode()),
       vscode.commands.registerCommand('cfxdevkit.initializeSetup', () => this.initializeWallet()),
@@ -264,10 +274,15 @@ class ExtensionRuntime implements vscode.Disposable {
   }
 
   private keystorePath(): string {
-    return join(
-      this.workspaceRoot(),
-      this.config().get<string>('keystorePath', '.cfxdevkit/keystore.json'),
-    );
+    const configured = this.config().get<string>('keystorePath', '.cfxdevkit/keystore.json');
+    return isAbsolute(configured) ? configured : join(this.workspaceRoot(), configured);
+  }
+
+  private keystorePathLabel(): string {
+    const path = this.keystorePath();
+    return isInsideWorkspace(path, this.workspaceRoot())
+      ? relative(this.workspaceRoot(), path)
+      : path;
   }
 
   private deploymentsPath(): string {
@@ -394,6 +409,46 @@ class ExtensionRuntime implements vscode.Disposable {
         coreAddress: hexToBase32(signer.account.address as `0x${string}`, networkId),
       },
     };
+  }
+
+  private deriveMnemonicAccounts(mnemonic: string): AccountTreeRecord[] {
+    const count = this.config().get<number>('nodeAccounts', 10);
+    const coreNetworkId = this.currentChains().core.id;
+    const accounts: AccountTreeRecord[] = [];
+    for (let index = 0; index < count; index++) {
+      const { account, privateKey } = deriveAccount({
+        mnemonic,
+        path: `m/44'/60'/0'/0/${index}`,
+      });
+      const coreAddress = coreAddressFromPrivateKey(privateKey, coreNetworkId);
+      accounts.push({
+        label: `Wallet #${index}`,
+        description: account.address,
+        espaceAddress: account.address,
+        coreAddress,
+        detail: `${this.selectedNetworkLabel()}\neSpace: ${account.address}\nCore: ${coreAddress}`,
+        state: 'ready',
+      });
+    }
+    return accounts;
+  }
+
+  private deriveRunningNodeAccounts(): AccountTreeRecord[] {
+    const coreNetworkId = this.currentChains().core.id;
+    return (this.node?.accounts ?? []).map((account) => {
+      const coreAddress = coreAddressFromPrivateKey(
+        account.privateKey as `0x${string}`,
+        coreNetworkId,
+      );
+      return {
+        label: `Local #${account.index}`,
+        description: account.evmAddress,
+        espaceAddress: account.evmAddress,
+        coreAddress,
+        detail: `${this.selectedNetworkLabel()}\neSpace: ${account.evmAddress}\nCore: ${coreAddress}`,
+        state: 'ready' as const,
+      };
+    });
   }
 
   private async walletSignerFor(target: ChainTarget): Promise<Signer> {
@@ -531,20 +586,16 @@ class ExtensionRuntime implements vscode.Disposable {
     const deployments = await this.readDeployments();
     const accounts: AccountTreeRecord[] = [];
 
-    if (network === 'local' && this.node?.isRunning()) {
-      accounts.push(
-        ...this.node.accounts.map((account, index) => ({
-          label: `Local #${index}`,
-          description: account.evmAddress,
-          espaceAddress: account.evmAddress,
-          coreAddress: account.coreAddress,
-          detail: `eSpace: ${account.evmAddress}\nCore: ${account.coreAddress}`,
-          state: 'ready' as const,
-        })),
-      );
-    } else if (this.selectedBackend() === 'file') {
+    if (this.selectedBackend() === 'file') {
+      const mnemonic = this.context.workspaceState.get<string>(STATE_NODE_MNEMONIC);
+      if (mnemonic && validateMnemonic(mnemonic)) {
+        accounts.push(...this.deriveMnemonicAccounts(mnemonic));
+      } else if (network === 'local' && this.node?.isRunning()) {
+        accounts.push(...this.deriveRunningNodeAccounts());
+      }
+
       if (await this.keystoreExists()) {
-        if (this.unlockedPassphrase) {
+        if (!accounts.length && this.unlockedPassphrase) {
           try {
             const unlocked = await openLocalWallet({
               passphrase: this.unlockedPassphrase,
@@ -570,7 +621,7 @@ class ExtensionRuntime implements vscode.Disposable {
               state: 'locked',
             });
           }
-        } else {
+        } else if (!accounts.length) {
           accounts.push({
             label: 'Workspace wallet',
             description: 'locked',
@@ -619,6 +670,8 @@ class ExtensionRuntime implements vscode.Disposable {
       selectedNetworkLabel: this.selectedNetworkLabel(),
       selectedSpaceLabel: this.selectedSpace() === 'core' ? 'Core Space' : 'eSpace',
       selectedKeystoreBackendLabel: BACKEND_LABELS[this.selectedBackend()],
+      selectedKeystorePathLabel:
+        this.selectedBackend() === 'file' ? this.keystorePathLabel() : 'hardware backend',
       networkOptions: NETWORKS.map((option) => ({
         ...option,
         selected: option.network === this.selectedNetwork(),
@@ -630,6 +683,11 @@ class ExtensionRuntime implements vscode.Disposable {
         { label: 'Restart node', command: 'cfxdevkit.nodeRestart' },
         { label: 'Wipe and restart', command: 'cfxdevkit.nodeWipeRestart' },
         { label: 'Mine blocks', command: 'cfxdevkit.mineBlocks', detail: 'local network only' },
+      ],
+      accountActions: [
+        { label: 'Select keystore file', command: 'cfxdevkit.selectKeystoreFile', icon: 'folder' },
+        { label: 'Initialize wallet', command: 'cfxdevkit.initializeSetup', icon: 'key' },
+        { label: 'Unlock / connect', command: 'cfxdevkit.unlockKeystore', icon: 'unlock' },
       ],
       accounts,
       contracts,
@@ -711,6 +769,37 @@ class ExtensionRuntime implements vscode.Disposable {
     await this.setSelectedBackend(pick.backend);
   }
 
+  private async selectKeystoreFile(): Promise<void> {
+    if (this.selectedBackend() !== 'file') {
+      const action = await vscode.window.showWarningMessage(
+        'Keystore file selection is available for the file backend.',
+        'Switch to File',
+      );
+      if (action !== 'Switch to File') return;
+      await this.setSelectedBackend('file');
+    }
+
+    const picked = await vscode.window.showOpenDialog({
+      title: 'Conflux: Select Keystore File',
+      canSelectFiles: true,
+      canSelectFolders: false,
+      canSelectMany: false,
+      filters: { 'JSON keystore': ['json'], 'All files': ['*'] },
+      defaultUri: vscode.Uri.file(this.keystorePath()),
+    });
+    const file = picked?.[0];
+    if (!file) return;
+
+    const path = file.fsPath;
+    const value = isInsideWorkspace(path, this.workspaceRoot())
+      ? relative(this.workspaceRoot(), path)
+      : path;
+    await this.config().update('keystorePath', value, vscode.ConfigurationTarget.Workspace);
+    this.unlockedPassphrase = null;
+    this.cachedSigner = null;
+    await this.refreshAll();
+  }
+
   private async initializeWallet(): Promise<void> {
     if (this.selectedBackend() !== 'file') {
       const action = await vscode.window.showWarningMessage(
@@ -790,6 +879,7 @@ class ExtensionRuntime implements vscode.Disposable {
     );
 
     this.unlockedPassphrase = passphrase;
+    await this.context.workspaceState.update(STATE_NODE_MNEMONIC, result.mnemonic);
     this.output.clear();
     this.output.appendLine('Conflux DevKit wallet initialized.');
     this.output.appendLine(`Address: ${result.address}`);
@@ -1444,6 +1534,11 @@ function formatBalance(value: bigint): string {
   const [whole, fraction = ''] = formatted.split('.');
   const trimmedFraction = fraction.replace(/0+$/, '').slice(0, 4);
   return `${trimmedFraction ? `${whole}.${trimmedFraction}` : whole} CFX`;
+}
+
+function isInsideWorkspace(path: string, workspaceRoot: string): boolean {
+  const relativePath = relative(workspaceRoot, path);
+  return relativePath !== '' && !relativePath.startsWith('..') && !isAbsolute(relativePath);
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {

@@ -12,6 +12,7 @@
  */
 import { formatUnits, type Hex } from '@cfxdevkit/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useKeystoreSession } from '../contexts/KeystoreSessionProvider.js';
 import { useNetwork } from '../contexts/NetworkProvider.js';
 import { useWallet } from '../contexts/WalletProvider.js';
 
@@ -24,6 +25,7 @@ function shortAddr(addr: string): string {
 
 export function WalletPill() {
   const { active, accounts, activeIndex, connect, disconnect } = useWallet();
+  const session = useKeystoreSession();
   const { space, activeClient } = useNetwork();
   const [open, setOpen] = useState(false);
   const [balance, setBalance] = useState<bigint | null>(null);
@@ -81,7 +83,8 @@ export function WalletPill() {
   const dot = active ? (balance !== null && balance > 0n ? 'green' : 'amber') : 'gray';
 
   const label = (() => {
-    if (!active) return 'wallet · disconnected';
+    if (session.status !== 'ready') return `keystore · ${session.status}`;
+    if (!active) return 'keystore · select wallet';
     const bal = balance !== null ? `${Number(formatUnits(balance, 18)).toFixed(4)} CFX` : '…';
     return `[${active.index}] ${shortAddr(address ?? '')} · ${bal}`;
   })();
@@ -99,9 +102,20 @@ export function WalletPill() {
       </button>
       {open && (
         <div className="popover" role="dialog" aria-label="Wallet controls">
+          <dl className="kv small">
+            <dt>backend</dt>
+            <dd className="mono">{session.backendId}</dd>
+            <dt>status</dt>
+            <dd className="mono">{session.status}</dd>
+            <dt>network</dt>
+            <dd className="mono">{session.networkId}</dd>
+            <dt>chains</dt>
+            <dd className="mono">{session.chainIds.join(', ')}</dd>
+          </dl>
+          {session.error && <p className="error small">{session.error}</p>}
           {!active && accounts.length === 0 && (
             <p className="muted small">
-              No accounts derived. Open the <strong>Wallet</strong> tab to set a mnemonic.
+              No wallet metadata available. Open the <strong>Wallet</strong> tab to initialize.
             </p>
           )}
           {!active && accounts.length > 0 && (

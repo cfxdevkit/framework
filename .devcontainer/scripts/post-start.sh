@@ -11,8 +11,16 @@ if [[ -S /var/run/docker.sock ]]; then
   export DOCKER_HOST="${DOCKER_HOST:-unix:///var/run/docker.sock}"
 fi
 
-sudo mkdir -p "${PNPM_STORE_PATH:-/home/node/.local/share/pnpm/store}" "$HOME/.cache/moon" "$HOME/.local/share/gitnexus"
-sudo chown -R "${USER:-node}:${USER:-node}" "${PNPM_STORE_PATH:-/home/node/.local/share/pnpm/store}" "$HOME/.cache/moon" "$HOME/.local/share/gitnexus"
+if [[ "${PNPM_HOME:-}" == /usr/local/* ]]; then
+  export PNPM_HOME="$HOME/.local/share/pnpm"
+else
+  export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
+fi
+export PNPM_STORE_PATH="${PNPM_STORE_PATH:-$HOME/.local/share/pnpm/store}"
+export PATH="$PNPM_HOME:$PATH"
+
+sudo mkdir -p "$PNPM_HOME" "$PNPM_STORE_PATH" "$HOME/.cache/moon" "$HOME/.local/share/gitnexus"
+sudo chown -R "${USER:-node}:${USER:-node}" "$PNPM_HOME" "$PNPM_STORE_PATH" "$HOME/.cache/moon" "$HOME/.local/share/gitnexus"
 
 mkdir -p "$HOME/.cfxdevkit" "${containerWorkspaceFolder:-/workspaces/root}/.cfxdevkit"
 

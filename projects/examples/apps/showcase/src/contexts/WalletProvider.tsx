@@ -1,30 +1,12 @@
-/**
- * Wallet context — manages a "connected" account derived from a local
- * mnemonic. Acts as a stand-in for a browser wallet (Fluent/MetaMask) so the
- * showcase has zero external dependencies but still demonstrates SIWE,
- * delegation, signing, etc.
- */
-
-import type { Address, Hex, Signer } from '@cfxdevkit/core';
+import type { Signer } from '@cfxdevkit/core';
+import { createContext, type ReactNode, useContext, useMemo } from 'react';
 import {
-  coreAddressFromPrivateKey,
-  deriveAccount,
-  signerFromPrivateKey,
-  validateMnemonic,
-} from '@cfxdevkit/core';
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-import { api } from '../lib/api.js';
-import { useNetwork } from './NetworkProvider.js';
+  DEFAULT_SHOWCASE_MNEMONIC,
+  type ShowcaseAccount,
+  useKeystoreSession,
+} from './KeystoreSessionProvider.js';
 
-export const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
+export const TEST_MNEMONIC = DEFAULT_SHOWCASE_MNEMONIC;
 
 /**
  * Local account shape — matches `@cfxdevkit/core`'s `DualAddressAccount` field
@@ -38,15 +20,6 @@ export const TEST_MNEMONIC = 'test test test test test test test test test test 
  * correct convention for *production* wallets but breaks the showcase's
  * one-click "use a funded local account" flow.
  */
-export interface ShowcaseAccount {
-  index: number;
-  evmAddress: Address;
-  coreAddress: string;
-  privateKey: Hex;
-  publicKey: Hex;
-  paths: { evm: string; core: string };
-}
-
 export interface WalletState {
   /** The pool of accounts derived from the active mnemonic. */
   accounts: ShowcaseAccount[];
@@ -64,107 +37,22 @@ export interface WalletState {
 const Ctx = createContext<WalletState | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const { core, network } = useNetwork();
-  const coreNetworkId = core.id; // 1029 mainnet, 1 testnet, 2029 local
-  const [mnemonic, setMnemonicRaw] = useState<string>(TEST_MNEMONIC);
-  const [count, setCount] = useState<number>(5);
-  const [activeIndex, setActive] = useState<number | null>(null);
+  const session = useKeystoreSession();
 
-  // On the `local` network, adopt the devnode's mnemonic so the showcase
-  // wallet derives accounts that the genesis allocation actually funded.
-  // Without this the wallet would derive `m/44'/60'/0'/0/i` from the BIP39
-  // standard test mnemonic ("test test … junk") which has 0 balance on a
-  // freshly-spawned devnode (devnode picks a random mnemonic by default).
-  useEffect(() => {
-    if (network.id !== 'local') return;
-    const ctrl = new AbortController();
-    let cancelled = false;
-    const sync = async () => {
-      try {
-        const s = await api.devnodeStatus(ctrl.signal);
-        if (cancelled) return;
-        const m = s.config?.mnemonic;
-        if (m && m !== mnemonic) {
-          setMnemonicRaw(m);
-          setActive(null);
-        }
-      } catch {
-        // backend offline or devnode stopped — leave mnemonic alone
-      }
-    };
-    void sync();
-    const t = window.setInterval(() => void sync(), 5_000);
-    return () => {
-      cancelled = true;
-      ctrl.abort();
-      window.clearInterval(t);
-    };
-  }, [network.id, mnemonic]);
-
-  const accounts = useMemo<ShowcaseAccount[]>(() => {
-    const m = mnemonic.trim();
-    if (!validateMnemonic(m)) return [];
-    try {
-      const out: ShowcaseAccount[] = [];
-      for (let i = 0; i < count; i++) {
-        const path = `m/44'/60'/0'/0/${i}`;
-        const { account, privateKey } = deriveAccount({ mnemonic: m, path });
-        out.push({
-          index: i,
-          evmAddress: account.address,
-          // Re-encode the SAME key as Core base32 \u2014 the prefix
-          // (cfx:/cfxtest:/net2029:) follows the active network.
-          coreAddress: coreAddressFromPrivateKey(privateKey, coreNetworkId),
-          privateKey,
-          publicKey: account.publicKey,
-          paths: { evm: path, core: path },
-        });
-      }
-      return out;
-    } catch {
-      return [];
-    }
-  }, [mnemonic, count, coreNetworkId]);
-
-  const setMnemonic = useCallback((m: string) => {
-    setMnemonicRaw(m);
-    setActive(null);
-  }, []);
-
-  const connect = useCallback(
-    (index: number) => {
-      if (index < 0 || index >= accounts.length) return;
-      setActive(index);
-    },
-    [accounts.length],
+  const value = useMemo<WalletState>(
+    () => ({
+      accounts: [...session.accounts],
+      activeIndex: session.activeIndex,
+      active: session.active,
+      signer: session.activeSigner as Signer | null,
+      mnemonic: session.mnemonic,
+      setMnemonic: session.setMnemonic,
+      connect: session.selectWallet,
+      disconnect: session.disconnect,
+      rederive: session.setAccountCount,
+    }),
+    [session],
   );
-
-  const disconnect = useCallback(() => setActive(null), []);
-
-  const rederive = useCallback((c: number) => {
-    setCount(Math.max(1, Math.min(50, c)));
-    setActive(null);
-  }, []);
-
-  const active = activeIndex !== null ? (accounts[activeIndex] ?? null) : null;
-  const signer = useMemo<Signer | null>(
-    // Signer's networkId tracks the active network so coreAddress + tx
-    // broadcasts agree.
-    () => (active ? signerFromPrivateKey(active.privateKey, coreNetworkId) : null),
-    [active, coreNetworkId],
-  );
-
-  const value: WalletState = {
-    accounts,
-    activeIndex,
-    active,
-    signer,
-    mnemonic,
-    setMnemonic,
-    connect,
-    disconnect,
-    rederive,
-  };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

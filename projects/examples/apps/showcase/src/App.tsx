@@ -20,6 +20,7 @@ import { NetworkSelector } from './components/NetworkSelector.js';
 import { SpaceToggle } from './components/SpaceToggle.js';
 import { WalletPill } from './components/WalletPill.js';
 import { CompilerSessionProvider } from './contexts/CompilerSession.js';
+import { KeystoreSessionProvider } from './contexts/KeystoreSessionProvider.js';
 import { NetworkProvider } from './contexts/NetworkProvider.js';
 import { WalletProvider } from './contexts/WalletProvider.js';
 import { GROUPS, getPanel, PANELS, type PanelSpec, panelsByGroup } from './panels/registry.js';
@@ -136,11 +137,13 @@ function Shell() {
 export function App() {
   return (
     <NetworkProvider>
-      <WalletProvider>
-        <CompilerSessionProvider>
-          <Shell />
-        </CompilerSessionProvider>
-      </WalletProvider>
+      <KeystoreSessionProvider>
+        <WalletProvider>
+          <CompilerSessionProvider>
+            <Shell />
+          </CompilerSessionProvider>
+        </WalletProvider>
+      </KeystoreSessionProvider>
     </NetworkProvider>
   );
 }

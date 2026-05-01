@@ -3,12 +3,20 @@ set -euo pipefail
 
 cd "${containerWorkspaceFolder:-/workspaces/root}"
 
-sudo mkdir -p "${PNPM_STORE_PATH:-/home/node/.local/share/pnpm/store}" "$HOME/.cache/moon" "$HOME/.local/share/gitnexus"
-sudo chown -R "${USER:-node}:${USER:-node}" "${PNPM_STORE_PATH:-/home/node/.local/share/pnpm/store}" "$HOME/.cache/moon" "$HOME/.local/share/gitnexus"
+if [[ "${PNPM_HOME:-}" == /usr/local/* ]]; then
+  export PNPM_HOME="$HOME/.local/share/pnpm"
+else
+  export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
+fi
+export PNPM_STORE_PATH="${PNPM_STORE_PATH:-$HOME/.local/share/pnpm/store}"
+export PATH="$PNPM_HOME:$PATH"
+
+sudo mkdir -p "$PNPM_HOME" "$PNPM_STORE_PATH" "$HOME/.cache/moon" "$HOME/.local/share/gitnexus"
+sudo chown -R "${USER:-node}:${USER:-node}" "$PNPM_HOME" "$PNPM_STORE_PATH" "$HOME/.cache/moon" "$HOME/.local/share/gitnexus"
 
 corepack enable
 corepack prepare pnpm@10.6.0 --activate
-pnpm config set store-dir "${PNPM_STORE_PATH:-/home/node/.local/share/pnpm/store}"
+pnpm config set store-dir "$PNPM_STORE_PATH"
 
 pnpm install --frozen-lockfile
 

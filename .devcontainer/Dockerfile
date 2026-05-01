@@ -3,6 +3,7 @@
 FROM mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
 
 ARG DEBIAN_FRONTEND=noninteractive
+ARG NODE_VERSION=22.22.0
 
 USER root
 
@@ -26,7 +27,21 @@ RUN apt-get update \
     xz-utils \
   && rm -rf /var/lib/apt/lists/*
 
-ENV PNPM_HOME=/usr/local/share/pnpm
+RUN set -eux; \
+  arch="$(dpkg --print-architecture)"; \
+  case "$arch" in \
+    amd64) node_arch="x64" ;; \
+    arm64) node_arch="arm64" ;; \
+    *) echo "Unsupported Node architecture: $arch" >&2; exit 1 ;; \
+  esac; \
+  curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${node_arch}.tar.xz" \
+    -o /tmp/node.tar.xz; \
+  tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 --no-same-owner; \
+  rm /tmp/node.tar.xz; \
+  node --version | grep -x "v${NODE_VERSION}"; \
+  npm --version
+
+ENV PNPM_HOME=/home/node/.local/share/pnpm
 ENV PNPM_STORE_PATH=/home/node/.local/share/pnpm/store
 ENV PATH=${PNPM_HOME}:${PATH}
 

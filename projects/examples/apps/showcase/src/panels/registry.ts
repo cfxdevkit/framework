@@ -51,7 +51,7 @@ export const PANELS: readonly PanelSpec[] = Object.freeze([
     group: 'identity',
     label: 'Keystore',
     spaces: [],
-    blurb: 'Encrypt / decrypt EIP-2335 JSON keystores.',
+    blurb: 'Inspect and exercise the active keystore session.',
     component: lazyDefault(() => import('./KeystorePanel.js'), 'KeystorePanel'),
   },
   {
@@ -59,7 +59,7 @@ export const PANELS: readonly PanelSpec[] = Object.freeze([
     group: 'identity',
     label: 'Wallet',
     spaces: ['core', 'espace'],
-    blurb: 'In-memory signer derived from the active mnemonic.',
+    blurb: 'Select the active wallet for signer-bound panels.',
     component: lazyDefault(() => import('./WalletPanel.js'), 'WalletPanel'),
   },
   {

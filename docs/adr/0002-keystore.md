@@ -58,3 +58,7 @@ Define a single **`KeystoreProvider`** interface in `framework/services` and shi
 
 - Picking the default file format: raw AES-GCM blob vs SOPS+age. Leaning SOPS+age because it composes with secret managers.
 - Whether to provide a TUI (`cfx-keystore`) in `platform/devtools/` for interactive unlock.
+- Session-level wallet selection, network alignment, and client invalidation are
+  tracked in [Keystore Session Provider](../architecture/keystore-session-provider.md). The showcase
+  now has an initial in-memory session provider; encrypted file/OS/KMS session
+  wiring remains Phase 2 work.

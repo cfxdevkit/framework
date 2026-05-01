@@ -30,6 +30,7 @@ docs/
 │   ├── README.md
 │   ├── overview.md                 5-tier overview + dependency graph diagram
 │   ├── package-layout.md           standard package shape (already created)
+│   ├── keystore-session-provider.md centralized wallet/session control plane
 │   ├── tier-rules.md               what may import what
 │   ├── boundaries.md               public API rules per tier
 │   ├── data-flow.md                project ↔ chain ↔ keeper ↔ MCP

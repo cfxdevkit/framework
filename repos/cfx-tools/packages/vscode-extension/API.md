@@ -6,6 +6,7 @@
 
 - `cfxdevkit.selectNetwork`
 - `cfxdevkit.selectKeystoreBackend`
+- `cfxdevkit.selectKeystoreFile`
 - `cfxdevkit.serverStart`
 - `cfxdevkit.serverStop`
 - `cfxdevkit.initializeSetup`
@@ -40,7 +41,7 @@
 - Selected network: VS Code workspace state (`local`, `testnet`, or `mainnet`)
 - Last used contract target space: VS Code workspace state (`espace` or `core`)
 - Selected keystore backend: VS Code workspace state (`file`, `onekey`, or `satoshi`)
-- Local node mnemonic: VS Code workspace state
+- Local node mnemonic: VS Code workspace state, set from generated/imported file-wallet setup when available
 - Deployments registry: `.cfxdevkit/deployments.json`
 - Keystore file: `.cfxdevkit/keystore.json` by default
 
@@ -59,3 +60,5 @@ Both Core Space and eSpace are available inside the active network. Contract dep
 - `file`: encrypted workspace keystore, supports initialization, unlock, eSpace signing, and Core Space signing.
 - `onekey`: OneKey hardware signer through an installed OneKey SDK, eSpace signing.
 - `satoshi`: Satoshi/Satochip bridge signer, eSpace signing.
+
+The file backend can select an existing keystore file or initialize a new one from a generated or imported mnemonic. New file-wallet setup stores the mnemonic in workspace state for the local dev node, so local genesis accounts are derived from the same wallet seed. Account rows are derived for the active network and remain visible on local, testnet, and mainnet even when the local node is stopped; balances are filled only when the active network RPCs are reachable.
