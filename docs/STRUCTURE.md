@@ -13,7 +13,8 @@ docs/
 ├── STRUCTURE.md
 ├── architecture/
 ├── adr/
-└── keystore-docker.md
+├── keystore-docker.md
+└── llm-fine-tuning-plan.md
 ```
 
 Agents should treat the missing sections below as planned documentation work,
@@ -51,6 +52,7 @@ docs/
 │   ├── getting-started.md
 │   ├── moon-quickstart.md          for contributors used to Turbo
 │   ├── using-the-devcontainer.md
+│   ├── llm-fine-tuning.md          implementation guide once the plan is approved
 │   ├── keystore-setup.md           per-environment setup
 │   ├── publishing-a-framework-package.md
 │   ├── adding-a-new-project.md

@@ -1,0 +1,84 @@
+{
+  "name": "Conflux DevKit Root",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "remoteUser": "node",
+  "containerUser": "node",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder}/.devcontainer/.docker.sock,target=/var/run/docker.sock,type=bind,consistency=cached",
+    "source=cfxdevkit-pnpm-store,target=/home/node/.local/share/pnpm/store,type=volume",
+    "source=cfxdevkit-moon-cache,target=/home/node/.cache/moon,type=volume",
+    "source=cfxdevkit-gitnexus,target=/home/node/.local/share/gitnexus,type=volume"
+  ],
+  "containerEnv": {
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
+    "PNPM_HOME": "/usr/local/share/pnpm",
+    "PNPM_STORE_PATH": "/home/node/.local/share/pnpm/store"
+  },
+  "forwardPorts": [
+    8545,
+    8546,
+    12536,
+    12537,
+    3000,
+    4173,
+    5173,
+    7748,
+    8787
+  ],
+  "portsAttributes": {
+    "8545": {
+      "label": "Conflux eSpace RPC"
+    },
+    "8546": {
+      "label": "Conflux eSpace WebSocket"
+    },
+    "12536": {
+      "label": "Conflux Core WebSocket"
+    },
+    "12537": {
+      "label": "Conflux Core RPC"
+    },
+    "3000": {
+      "label": "App server"
+    },
+    "4173": {
+      "label": "Vite preview"
+    },
+    "5173": {
+      "label": "Vite dev server"
+    },
+    "7748": {
+      "label": "Legacy DevKit backend"
+    },
+    "8787": {
+      "label": "Worker/backend dev server"
+    }
+  },
+  "initializeCommand": ".devcontainer/scripts/detect-docker-socket.sh",
+  "postCreateCommand": ".devcontainer/scripts/post-create.sh",
+  "postStartCommand": ".devcontainer/scripts/post-start.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "biomejs.biome",
+        "dbaeumer.vscode-eslint",
+        "eamodio.gitlens",
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "editor.defaultFormatter": "biomejs.biome",
+        "editor.formatOnSave": true,
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

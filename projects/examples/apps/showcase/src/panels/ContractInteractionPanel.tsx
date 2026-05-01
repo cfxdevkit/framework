@@ -1,7 +1,7 @@
 /**
  * `ContractInteractionPanel` — generic ABI-driven read/write console.
  *
- * Mirrors the contract tree in the `@cfxdevkit/vscode-extension` sidebar
+ * Mirrors the contract tree in the `cfxdevkit-vscode-extension` sidebar
  * (see `packages/vscode-extension/src/views/contracts.ts`). Deployments are
  * grouped first by **environment** (mainnet / testnet / local / custom),
  * then by **chain** (Core / eSpace), exactly like the extension's

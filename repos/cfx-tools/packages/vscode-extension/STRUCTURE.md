@@ -5,9 +5,10 @@ vscode-extension/
 ├── README.md
 ├── STRUCTURE.md
 ├── API.md
-├── package.json                    @cfxdevkit/vscode-extension
+├── package.json                    cfxdevkit-vscode-extension
 ├── tsconfig.json
 ├── moon.yml
+├── media/                          activity bar icon and extension assets
 ├── dist/                           compiled extension entry
 └── src/
     ├── extension.ts                activate / deactivate + commands

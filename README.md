@@ -27,6 +27,7 @@ root/
 │   └── cfx-solidity/ Solidity-oriented packages that are still grouped separately
 ├── projects/         Deployable and example applications
 ├── infrastructure/   Deployment and operational assets
+├── .devcontainer/    Root development container for the active monorepo
 ├── tools/            Shared workspace tooling/config
 └── docs/             Architecture, ADRs, and long-form docs
 ```
@@ -126,6 +127,8 @@ Detailed mapping and planned end-state sequencing live in [MIGRATION.md](MIGRATI
 - [MIGRATION.md](MIGRATION.md) — phase-2 plan: how to move existing code without breaking consumers.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — workflow, tier ownership, PR conventions.
 - [SECURITY.md](SECURITY.md) — secrets, key handling, supply-chain, threat model surface per tier.
+- [.devcontainer/README.md](.devcontainer/README.md) — root devcontainer setup for the monorepo toolchain.
+- [docs/llm-fine-tuning-plan.md](docs/llm-fine-tuning-plan.md) — planning notes for repository-centered local coding-assistant fine-tuning.
 
 ---
 

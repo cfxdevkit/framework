@@ -17,7 +17,8 @@ docs/
 ├── adr/                Architectural Decision Records
 ├── README.md
 ├── STRUCTURE.md
-└── keystore-docker.md  Operational guide
+├── keystore-docker.md  Operational guide
+└── llm-fine-tuning-plan.md  Planning guide
 ```
 
 ## Planned structure
@@ -46,3 +47,5 @@ docs/
 
 - [keystore-docker.md](keystore-docker.md) — Run a hardened local
   encrypted keystore inside Docker (single-container and sidecar patterns).
+- [llm-fine-tuning-plan.md](llm-fine-tuning-plan.md) — Plan for generating
+  repository-centered datasets and local coding-assistant fine-tuning artifacts.
