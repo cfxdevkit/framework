@@ -1,0 +1,147 @@
+{
+  "name": "@cfxdevkit/vscode-extension",
+  "displayName": "Conflux DevKit",
+  "description": "VS Code integration for Conflux node lifecycle, keystore wallet management, and contract deployment.",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/extension.js",
+  "files": [
+    "dist",
+    "README.md",
+    "API.md",
+    "STRUCTURE.md"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "cfxdevkit-sidebar",
+          "title": "Conflux DevKit",
+          "icon": "$(server-environment)"
+        }
+      ]
+    },
+    "commands": [
+      { "command": "cfxdevkit.selectNetwork", "title": "Conflux: Select Network", "icon": "$(globe)" },
+      { "command": "cfxdevkit.initializeSetup", "title": "Conflux: Initialize Wallet", "icon": "$(key)" },
+      { "command": "cfxdevkit.unlockKeystore", "title": "Conflux: Unlock Keystore", "icon": "$(unlock)" },
+      { "command": "cfxdevkit.nodeStart", "title": "Conflux: Start Node", "icon": "$(play)" },
+      { "command": "cfxdevkit.nodeStop", "title": "Conflux: Stop Node", "icon": "$(debug-stop)" },
+      { "command": "cfxdevkit.nodeRestart", "title": "Conflux: Restart Node", "icon": "$(refresh)" },
+      { "command": "cfxdevkit.nodeWipe", "title": "Conflux: Wipe Node Data" },
+      { "command": "cfxdevkit.nodeWipeRestart", "title": "Conflux: Wipe Data And Restart Node" },
+      { "command": "cfxdevkit.mineBlocks", "title": "Conflux: Mine Blocks" },
+      { "command": "cfxdevkit.viewAccounts", "title": "Conflux: View Accounts", "icon": "$(person)" },
+      { "command": "cfxdevkit.deployContract", "title": "Conflux: Deploy Contract", "icon": "$(cloud-upload)" },
+      { "command": "cfxdevkit.listContracts", "title": "Conflux: List Deployed Contracts", "icon": "$(file-code)" },
+      { "command": "cfxdevkit.refreshAccounts", "title": "Conflux: Refresh Accounts", "icon": "$(refresh)" },
+      { "command": "cfxdevkit.refreshContracts", "title": "Conflux: Refresh Contracts", "icon": "$(refresh)" },
+      { "command": "cfxdevkit.copyAddress", "title": "Conflux: Copy Address", "icon": "$(copy)" },
+      { "command": "cfxdevkit.copyContractAddress", "title": "Conflux: Copy Contract Address", "icon": "$(copy)" }
+    ],
+    "views": {
+      "cfxdevkit-sidebar": [
+        { "id": "cfxdevkit.networkView", "name": "Network" },
+        { "id": "cfxdevkit.nodeView", "name": "Node" },
+        { "id": "cfxdevkit.accountsView", "name": "Accounts" },
+        { "id": "cfxdevkit.contractsView", "name": "Contracts" }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "cfxdevkit.networkView",
+        "contents": "Select the active Conflux network.\n[Select Network](command:cfxdevkit.selectNetwork)"
+      },
+      {
+        "view": "cfxdevkit.nodeView",
+        "contents": "Start the local dev node when working against the local chain.\n[Start Node](command:cfxdevkit.nodeStart)"
+      },
+      {
+        "view": "cfxdevkit.accountsView",
+        "contents": "Initialize or unlock the wallet to inspect available accounts.\n[Initialize Wallet](command:cfxdevkit.initializeSetup)\n[Unlock Keystore](command:cfxdevkit.unlockKeystore)"
+      },
+      {
+        "view": "cfxdevkit.contractsView",
+        "contents": "Deploy a contract from a built-in template or a workspace Solidity file.\n[Deploy Contract](command:cfxdevkit.deployContract)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "cfxdevkit.selectNetwork", "when": "view == cfxdevkit.networkView", "group": "navigation@1" },
+        { "command": "cfxdevkit.nodeStart", "when": "view == cfxdevkit.nodeView", "group": "navigation@1" },
+        { "command": "cfxdevkit.refreshAccounts", "when": "view == cfxdevkit.accountsView", "group": "navigation@1" },
+        { "command": "cfxdevkit.deployContract", "when": "view == cfxdevkit.contractsView", "group": "navigation@1" },
+        { "command": "cfxdevkit.refreshContracts", "when": "view == cfxdevkit.contractsView", "group": "navigation@2" }
+      ]
+    },
+    "configuration": {
+      "title": "Conflux DevKit",
+      "properties": {
+        "cfxdevkit.autoStartNode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start the local dev node when the extension activates and the selected network is local."
+        },
+        "cfxdevkit.keystorePath": {
+          "type": "string",
+          "default": ".cfxdevkit/keystore.json",
+          "description": "Workspace-relative path to the encrypted keystore file."
+        },
+        "cfxdevkit.deploymentsPath": {
+          "type": "string",
+          "default": ".cfxdevkit/deployments.json",
+          "description": "Workspace-relative path to the deployment registry used by the extension."
+        },
+        "cfxdevkit.nodeDataDir": {
+          "type": "string",
+          "default": ".cfxdevkit/devnode",
+          "description": "Workspace-relative data directory for the local Conflux dev node."
+        },
+        "cfxdevkit.nodeAccounts": {
+          "type": "number",
+          "default": 10,
+          "description": "Number of pre-funded accounts to expose in the local dev node."
+        },
+        "cfxdevkit.nodeLogging": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable verbose local dev node logging in the extension output channel."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "biome check src",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cfxdevkit/compiler": "workspace:^",
+    "@cfxdevkit/contracts": "workspace:^",
+    "@cfxdevkit/core": "workspace:^",
+    "@cfxdevkit/devnode": "workspace:^",
+    "@cfxdevkit/wallet": "workspace:^"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/tsconfig": "workspace:*",
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.7.0"
+  }
+}

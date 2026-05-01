@@ -3,52 +3,19 @@
 ```
 vscode-extension/
 ├── README.md
-├── package.json                    name: cfxdevkit-vscode (publisher)
+├── STRUCTURE.md
+├── API.md
+├── package.json                    @cfxdevkit/vscode-extension
 ├── tsconfig.json
-├── vite.config.ts                  bundles to dist/extension.js
 ├── moon.yml
-├── .vscodeignore
-├── icon.png
+├── dist/                           compiled extension entry
 └── src/
-    ├── extension.ts                activate / deactivate
-    │
-    ├── statusbar/
-    │   ├── index.ts
-    │   ├── chain.ts                current chain + RPC health
-    │   ├── account.ts              active account + balance
-    │   └── gas.ts
-    │
-    ├── views/                      ── Tree views ──
-    │   ├── index.ts
-    │   ├── deployments.ts
-    │   ├── contracts.ts
-    │   ├── mcp-tools.ts
-    │   └── session-keys.ts
-    │
-    ├── commands/                   ── Command palette entries ──
-    │   ├── index.ts
-    │   ├── scaffold.ts             invokes scaffold-cli
-    │   ├── compile.ts
-    │   ├── deploy.ts
-    │   ├── simulate.ts
-    │   └── unlock-keystore.ts
-    │
-    ├── mcp/                        ── MCP client wiring ──
-    │   ├── index.ts
-    │   ├── client.ts
-    │   └── tools.ts
-    │
-    ├── webview/                    ── Embedded UI panels ──
-    │   ├── index.ts
-    │   ├── dashboard.ts
-    │   └── assets/                 built by Vite (separate sub-build)
-    │
-    └── internal/
-        └── workspace.ts
+    ├── extension.ts                activate / deactivate + commands
+    └── views.ts                    tree providers for network, node, accounts, contracts
 ```
 
 ### Notes
 
-- The extension is a **client** of `platform/mcp-server` and `platform/devtools/devkit-server`.
-  It contains no chain logic of its own.
-- Webview UI is its own Vite sub-build to keep the extension bundle small.
+- The current implementation is intentionally Conflux-only.
+- Node, wallet, compiler, and deploy logic come from the framework packages in this repository.
+- Project/stack automation and DEX tooling are intentionally left out of this package.

@@ -27,6 +27,7 @@ projects:
   - 'repos/cfx-tools/packages/mcp-server'
   - 'repos/cfx-tools/packages/scaffold-cli'
   - 'repos/cfx-tools/packages/cli'
+  - 'repos/cfx-tools/packages/vscode-extension'
   - 'projects/examples/apps/showcase'
   - 'projects/examples/apps/showcase-backend'
   - 'projects/examples/apps/showcase-browser'
