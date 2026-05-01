@@ -8,19 +8,23 @@ Use this decision tree:
 Is the code reusable across ≥ 2 projects?
 ├── No  → projects/<project>/...
 └── Yes → Is it chain/SDK-level (no domain logic)?
-         ├── Yes → framework/<package>/
+         ├── Yes → repos/cfx-{core,keys,ui,solidity}/packages/<package>/
          └── No  → Is it a developer-experience tool?
-                  ├── Yes → platform/<tool>/
-                  └── No  → domains/<vertical>/
+                  ├── Yes → repos/cfx-tools/packages/<tool>/ or repos/cfx-tools/devtools/<tool>/
+                  └── No  → repos/cfx-domain/packages/<vertical>/
 ```
+
+The `framework/`, `platform/`, and `domains/` names are still useful as
+architectural tiers, but the current workspace is organized under `repos/cfx-*`
+plus `projects/*`.
 
 ## Tier ownership
 
 | Tier | Code review required from |
 |------|---------------------------|
-| framework/ | Framework maintainer (semver gatekeeper) |
-| platform/  | Platform maintainer |
-| domains/   | Domain owner (per package) |
+| Tier 0 (`repos/cfx-core`, `repos/cfx-keys`, `repos/cfx-ui`, `repos/cfx-solidity`) | Framework maintainer (semver gatekeeper) |
+| Tier 1 (`repos/cfx-tools`) | Platform maintainer |
+| Tier 2 (`repos/cfx-domain`) | Domain owner (per package) |
 | projects/  | Project lead |
 | infrastructure/ | DevOps / SRE |
 | tools/, docs/ | Anyone, with one approval |
@@ -37,8 +41,12 @@ Is the code reusable across ≥ 2 projects?
 
 1. Create folder under the appropriate tier.
 2. Add a README.md describing scope, public API, and dependencies.
+3. If the package is a reusable library or tool surface, also add `STRUCTURE.md` and `API.md`.
+4. If the package is config-only, document the exported files in its README and API doc.
+5. If the directory is an app or a slice root, README coverage is sufficient unless that unit exposes a documented library API.
 3. Register in the root `pnpm-workspace.yaml`.
-4. Inherit `tsconfig` from `tools/tsconfig/`.
+4. Register the package in `.moon/workspace.yml`.
+5. Inherit `tsconfig` from `tools/tsconfig/`.
 5. If publishable, add changeset config and CI publish hook.
 
 ## Adding a new project

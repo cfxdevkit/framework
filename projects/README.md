@@ -4,8 +4,8 @@ End-user applications. Each project:
 
 - Has its own deploy lifecycle (see `infrastructure/<project>/`).
 - Owns its smart contracts (if any) under `contracts/`.
-- May contain project-specific `packages/` for code that does **not** belong in `domains/`.
-- Consumes `framework/*`, `domains/*`, `platform/*` as needed.
+- May contain project-specific `packages/` for code that does **not** belong in `repos/cfx-domain`.
+- Consumes the shared packages from `repos/cfx-*` according to the architectural tier rules.
 
 ## Standard project layout
 
@@ -17,6 +17,10 @@ projects/<name>/
 ├── contracts/             # Solidity sources + deploy scripts (optional)
 └── e2e/                   # Cross-app end-to-end tests (optional)
 ```
+
+In the current workspace, reusable code that is shared beyond a single project
+should normally live in one of the `repos/cfx-*` slices rather than under
+`projects/<name>/packages/`.
 
 ## Projects
 

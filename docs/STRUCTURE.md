@@ -1,5 +1,26 @@
 # docs — Detailed Structure
 
+This file describes the intended shape of the documentation set. It is a target
+map, not a guarantee that every directory below already exists.
+
+## Current state
+
+At the moment the repository contains:
+
+```
+docs/
+├── README.md
+├── STRUCTURE.md
+├── architecture/
+├── adr/
+└── keystore-docker.md
+```
+
+Agents should treat the missing sections below as planned documentation work,
+not as evidence that the repository structure is wrong.
+
+## Target state
+
 ```
 docs/
 ├── README.md

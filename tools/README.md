@@ -8,12 +8,11 @@ Configuration and small scripts shared by every package and project.
 |--------|-------|
 | `tsconfig/` | Base `tsconfig.json` files (library, app, node, dom) |
 | `biome-config/` | Shared Biome configuration |
-| `eslint-config/` | (legacy projects only) shared ESLint config |
-| `release/` | Changesets config, release scripts, npm publish helpers |
 | `codegen/` | Wagmi codegen, ABI extraction, hardware diagram codegen wrappers |
-| `git-hooks/` | Pre-commit / commit-msg enforcement (incl. secret scanning) |
+| `moon-config/` | Shared Moon task templates |
 
 ## Rules
 
 - Everything here is a dev-dependency only.
-- Versioned alongside framework but consumed by every workspace.
+- Consumed by every workspace package, regardless of whether the package lives in `repos/cfx-*` or `projects/*`.
+- Changes here should keep the current modular workspace layout in mind; these are cross-cutting helpers, not Tier 0 runtime packages.

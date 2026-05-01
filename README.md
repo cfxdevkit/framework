@@ -1,23 +1,49 @@
-# root/ — Unified Codebase Scaffolding (Phase 1)
+# root/ — Modular Monorepo Workspace
 
-> **Phase 1 deliverable:** high-level folder system + scope definitions only.
-> No code, no migration, no implementation. Each component will be reviewed in detail in Phase 2.
+This repository is the active workspace for the modularized `@cfxdevkit/*`
+stack. The codebase already runs as a single pnpm + Moon monorepo, but its
+packages are grouped into `repos/cfx-*` slices so responsibilities are separated
+before the final carve-out into standalone repositories.
 
-This directory proposes a single, unified layout that absorbs and reorganises the
-six existing top-level repositories (`cas/`, `chainbrawler/`, `conflux-phaser/`,
-`devkit/`, `devkit-workspace/`, `Electro/`) into a coherent, layered, modular
-architecture.
-
-The end goal:
+The current goal:
 
 - **Maintainability** — one set of conventions, one build pipeline, one lint config.
 - **Security** — explicit boundaries between published code, private tooling, secrets, and user-facing apps.
-- **Reusability** — `devkit` becomes the framework backbone consumed by every project.
-- **Expandability** — a clear "where does new code go?" answer for any contributor.
+- **Reusability** — shared packages are grouped by technical surface and reused by projects.
+- **Expandability** — contributors and agents can tell where new code belongs today.
+
+## Current workspace layout
+
+The present-day repository shape is:
+
+```
+root/
+├── repos/            Modular package slices used today
+│   ├── cfx-core/     Chain/runtime primitives
+│   ├── cfx-keys/     Signing, keystore, hardware trust boundary
+│   ├── cfx-ui/       React, theme, wallet-connect UI packages
+│   ├── cfx-domain/   Reusable vertical domain packages
+│   ├── cfx-tools/    CLI, MCP, scaffolding, editor/dev tooling
+│   └── cfx-solidity/ Solidity-oriented packages that are still grouped separately
+├── projects/         Deployable and example applications
+├── infrastructure/   Deployment and operational assets
+├── tools/            Shared workspace tooling/config
+└── docs/             Architecture, ADRs, and long-form docs
+```
+
+This is the structure agents should follow when deciding where to place code.
+The `repos/cfx-*` directories are the current source of truth for package
+ownership. The five-tier `framework/` / `platform/` / `domains/` model below is
+the architectural target that explains the intended boundaries those slices map
+to.
 
 ---
 
-## Five-tier architecture
+## Target architecture
+
+The long-term topology remains the five-tier architecture described in
+[ARCHITECTURE.md](ARCHITECTURE.md) and [MIGRATION.md](MIGRATION.md). It is a
+planning model, not the literal top-level folder structure that exists today.
 
 ```
 root/
@@ -40,15 +66,30 @@ infrastructure & tools & docs may be referenced by any tier.
 
 A lower tier may **never** import from a higher tier.
 
+## Current slice-to-tier mapping
+
+Use this mapping when working in the current repository:
+
+| Current slice | Intended tier | Responsibility today |
+|---------------|---------------|----------------------|
+| `repos/cfx-core` | Tier 0 | core, protocol, executor, devnode, testing |
+| `repos/cfx-keys` | Tier 0 | keystore, wallet, hardware signing surface |
+| `repos/cfx-ui` | Tier 0 | React-facing and UI packages |
+| `repos/cfx-solidity` | Tier 0 | contracts, compiler, ABI extraction |
+| `repos/cfx-tools` | Tier 1 | CLI, MCP, scaffolding, editor/dev tooling |
+| `repos/cfx-domain` | Tier 2 | reusable domain packages |
+| `projects/*` | Tier 3 | apps, examples, and project-local packages |
+| `tools/*`, `docs/*`, `infrastructure/*` | Cross-cutting | workspace support |
+
 ---
 
 ## Tier summary
 
 | Tier | Folder | Role | Published? |
 |------|--------|------|------------|
-| 0 | [framework/](framework/) | Chain SDK, contracts, React primitives | ✅ npm `@cfxdevkit/*` |
-| 1 | [platform/](platform/) | Devcontainer, AI agent tools, scaffolding | ⚠️ Some (CLI, MCP) |
-| 2 | [domains/](domains/) | Game engine, automation, hardware bridges | ⚠️ Optional |
+| 0 | `repos/cfx-{core,keys,ui,solidity}` today; `framework/` target | Chain SDK, contracts, React primitives | ✅ npm `@cfxdevkit/*` |
+| 1 | `repos/cfx-tools` today; `platform/` target | Devcontainer, AI agent tools, scaffolding | ⚠️ Some (CLI, MCP) |
+| 2 | `repos/cfx-domain` today; `domains/` target | Game engine, automation, hardware bridges | ⚠️ Optional |
 | 3 | [projects/](projects/) | End-user applications | ❌ Internal/deployed |
 | — | [infrastructure/](infrastructure/) | Docker, K8s, CI, monitoring | ❌ |
 | — | [tools/](tools/) | Shared configs, codegen, release scripts | ❌ |
@@ -56,26 +97,26 @@ A lower tier may **never** import from a higher tier.
 
 ---
 
-## Source repository → new home
+## Legacy source repository → current home
 
 | Existing repo | Destination |
 |---------------|-------------|
-| `devkit/packages/*` | `framework/*` |
-| `devkit/devtools/*` | `platform/devtools/*` |
-| `devkit-workspace/packages/mcp-server` | `platform/mcp-server/` |
-| `devkit-workspace/packages/scaffold-cli` | `platform/scaffold-cli/` |
-| `devkit-workspace/packages/vscode-extension` | `platform/vscode-extension/` |
-| `devkit-workspace/templates/*` | `platform/templates/*` |
-| `devkit-workspace/.devcontainer` | `platform/devcontainer/` |
-| `chainbrawler/packages/core` | `domains/game-engine/` (extracted, generalised) |
-| `cas/conflux-cas/worker` (patterns) | `domains/automation/` (extracted) |
-| `Electro/packages/{ws-protocol,sensor-types,hardware-diagram}` | `domains/hardware-bridge/` |
+| `devkit/packages/*` | `repos/cfx-{core,keys,ui,solidity}/packages/*` |
+| `devkit/devtools/*` | `repos/cfx-tools/devtools/*` |
+| `devkit-workspace/packages/mcp-server` | `repos/cfx-tools/packages/mcp-server` |
+| `devkit-workspace/packages/scaffold-cli` | `repos/cfx-tools/packages/scaffold-cli` |
+| `devkit-workspace/packages/vscode-extension` | `repos/cfx-tools/packages/vscode-extension` |
+| `devkit-workspace/templates/*` | `repos/cfx-tools/templates/*` |
+| `devkit-workspace/.devcontainer` | `repos/cfx-tools/devcontainer/*` |
+| `chainbrawler/packages/core` | `repos/cfx-domain/packages/game-engine` |
+| `cas/conflux-cas/worker` (patterns) | `repos/cfx-domain/packages/automation` |
+| `Electro/packages/{ws-protocol,sensor-types,hardware-diagram}` | `repos/cfx-domain/packages/hardware-bridge` |
 | `cas/*` | `projects/cas/` |
 | `chainbrawler/*` | `projects/chainbrawler/` |
 | `conflux-phaser/*` | `projects/conflux-phaser/` |
 | `Electro/*` | `projects/electro/` |
 
-Detailed mapping & sequencing live in [MIGRATION.md](MIGRATION.md).
+Detailed mapping and planned end-state sequencing live in [MIGRATION.md](MIGRATION.md).
 
 ---
 
@@ -92,7 +133,6 @@ Detailed mapping & sequencing live in [MIGRATION.md](MIGRATION.md).
 
 | Phase | Scope | State |
 |-------|-------|-------|
-| **1** | Folder scaffolding + scope docs (this PR) | ✅ in progress |
-| 2 | Per-component detailed design review | ⏳ pending |
-| 3 | Incremental migration of code | ⏳ pending |
-| 4 | Decommission old top-level repos | ⏳ pending |
+| **Current** | Modular monorepo under `repos/cfx-*` + `projects/*` | ✅ active |
+| Next | Documentation alignment for current structure | 🚧 in progress |
+| Future | Final tier-shaped carve-out / repo split | ⏳ planned |

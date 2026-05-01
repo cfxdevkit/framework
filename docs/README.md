@@ -3,7 +3,26 @@
 Per-package READMEs stay co-located with their packages. This folder hosts
 material that spans multiple packages or tiers.
 
-## Structure
+This folder documents both the current modularized workspace and the planned
+future topology. Unless a document explicitly says otherwise, prefer the current
+`repos/cfx-*` and `projects/*` layout when following setup instructions.
+
+## Current structure
+
+Implemented today:
+
+```
+docs/
+├── architecture/       Cross-cutting design notes and package-shape guidance
+├── adr/                Architectural Decision Records
+├── README.md
+├── STRUCTURE.md
+└── keystore-docker.md  Operational guide
+```
+
+## Planned structure
+
+Target layout after the docs site and supporting sections are filled in:
 
 ```
 docs/
@@ -19,7 +38,9 @@ docs/
 
 - ADRs are append-only; superseded ADRs link forward to their replacement.
 - Generated API docs are produced by CI; the source-of-truth is JSDoc/TSDoc in code.
-- The public docs site (`platform/docs-site/`) builds from this folder.
+- Some sections shown above are planned and may not exist yet.
+- If current code structure and a planned docs example diverge, follow the current workspace structure described in the root README and architecture docs.
+- The public docs site consumes this folder once the docs-site package is wired into the modularized workspace.
 
 ## Operational guides
 

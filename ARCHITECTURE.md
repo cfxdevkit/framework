@@ -1,5 +1,25 @@
 # Architecture
 
+This document describes the architectural rules that govern the current
+workspace. The repository is physically organized as `repos/cfx-*` slices plus
+`projects/*`, but those slices map onto the tier model below.
+
+## Current operating model
+
+Agents and contributors should treat the current workspace like this:
+
+| Current path | Architectural role |
+|--------------|--------------------|
+| `repos/cfx-core`, `repos/cfx-keys`, `repos/cfx-ui`, `repos/cfx-solidity` | Tier 0 reusable packages |
+| `repos/cfx-tools` | Tier 1 developer platform |
+| `repos/cfx-domain` | Tier 2 reusable domains |
+| `projects/*` | Tier 3 applications and project-local code |
+| `tools/*`, `docs/*`, `infrastructure/*` | Cross-cutting support |
+
+When this document says `framework/`, `platform/`, or `domains/`, read those as
+architectural tiers first, not as mandatory literal folder names in the current
+repository.
+
 ## Goals
 
 1. **One-way dependency graph.** Tiers cannot create cycles.
@@ -9,6 +29,8 @@
 5. **Domain extraction by demand.** Logic moves from `projects/` → `domains/` → `framework/` as it proves reusable across ≥ 2 projects.
 
 ## Layered model
+
+Conceptual target:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -25,6 +47,23 @@
             tools/   infrastructure/  docs/   (cross-cutting)
 ```
 
+Current implementation:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  projects/      apps, examples, project-local packages      │  Tier 3
+├─────────────────────────────────────────────────────────────┤
+│  repos/cfx-domain  game-engine │ automation │ hardware      │  Tier 2
+├─────────────────────────────────────────────────────────────┤
+│  repos/cfx-tools   mcp │ scaffold │ cli │ editor tooling   │  Tier 1
+├─────────────────────────────────────────────────────────────┤
+│  repos/cfx-*       core │ keys │ ui │ solidity             │  Tier 0
+└─────────────────────────────────────────────────────────────┘
+                ▲          ▲           ▲          ▲
+                │          │           │          │
+            tools/   infrastructure/  docs/   (cross-cutting)
+```
+
 ## Boundary contracts
 
 ### framework/  (Tier 0)
@@ -32,17 +71,20 @@
 - **MUST** target Node 20+ and modern browsers; no Node-only APIs in browser-targeted packages.
 - **MUST NOT** depend on any other tier.
 - **MUST** publish typed entrypoints + sourcemaps + LICENSE.
+- **Current location:** `repos/cfx-core`, `repos/cfx-keys`, `repos/cfx-ui`, `repos/cfx-solidity`.
 
 ### platform/  (Tier 1)
 - May depend on `framework/` via npm range, never via workspace `*` (so platform can ship independent of framework HEAD).
 - Owns developer experience: containers, AI agent tooling, scaffolding, IDE integration.
 - Is **never** a runtime dependency of a deployed application.
+- **Current location:** `repos/cfx-tools`.
 
 ### domains/  (Tier 2)
 - Encapsulates one vertical concern (game state, automation strategy, hardware protocol).
 - Imports `framework/` only.
 - Each domain package documents its public API in its own README.
 - Promotion criterion: used by ≥ 2 projects, or explicitly designated as a future product.
+- **Current location:** `repos/cfx-domain`.
 
 ### projects/  (Tier 3)
 - Free to be opinionated; may use any framework/domain/platform package.
@@ -72,6 +114,10 @@ Decision recorded in [docs/adr/0001-build-stack.md](docs/adr/0001-build-stack.md
 - **Testing:** **Vitest** (unit + integration), **Playwright** (e2e where needed), **Hardhat** (contracts), **framework/testing** package for shared fixtures.
 - **Type-checking:** project-references TypeScript driven by moon's task graph.
 - **Releases:** **Changesets** in `framework/`; per-project tags + GitOps in `projects/`.
+
+In the current workspace, Moon projects are declared directly from the `repos/*/packages/*`,
+`projects/*/*`, and `tools/*` paths. The architectural rules apply to those
+concrete paths.
 
 ### Why not Turborepo / Nx / Bazel?
 - **Turborepo** has tightened Vercel coupling (Remote Cache hosted on Vercel by default, growing telemetry surface). We want every part of the stack runnable offline and in any cloud.
