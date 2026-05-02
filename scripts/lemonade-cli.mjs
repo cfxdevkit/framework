@@ -2,6 +2,7 @@
 import { execFile } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { createInterface } from 'node:readline';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
@@ -177,19 +178,71 @@ async function runAction(args) {
 
 async function runCommit(args) {
   if (args[0] === '--') args.shift();
-  const { prompt, model, quick } = parsePromptAndFlags(args);
-  const spec = repoActions.commit;
-  const context = await buildActionContext(spec, { quick });
-  const response = await complete({
-    action: 'commit',
-    modelOverride: model,
-    userPrompt: prompt || spec.defaultPrompt,
-    context,
-    quick,
-  });
-  await writeLlmReport('commit', response);
-  console.log(response.content);
-  console.log('\nReport: artifacts/llm/reports/lemonade-commit.md');
+  const flags = parseCommitFlags(args);
+
+  // ── Phase 1: Preflight ────────────────────────────────────────────────────
+  logStep(1, 5, 'Preflight checks');
+  logInfo('  Ensuring GitNexus is registered...');
+  await commandBlock('gitnexus ensure', 'pnpm', ['run', 'gitnexus:ensure'], { timeoutMs: 60000 });
+  logInfo('  Collecting git status, diff, review, and analysis signals...');
+  const preflightCtx = await commitPreflightBlock();
+  logInfo('  ✓ preflight complete');
+
+  // ── Phase 2: Detect changed scopes ───────────────────────────────────────
+  logStep(2, 5, 'Detecting changed scopes');
+  const scopes = await detectChangedScopes();
+  if (scopes.length === 0) {
+    logInfo('  Nothing to commit (working tree clean).');
+    return;
+  }
+  logInfo(`  ${scopes.length} scope(s): ${scopes.map((s) => s.label).join(', ')}`);
+
+  // ── Phase 3: Per-scope changelog generation (serial) ─────────────────────
+  logStep(3, 5, `Generating changelog entries  [serial, ${scopes.length} scope(s)]`);
+  const changelogResults = [];
+  for (const scope of scopes) {
+    logInfo(`  → ${scope.label}  (${scope.files.length} file(s))`);
+    let entry = null;
+    try {
+      entry = await generateChangelogEntry(scope, flags);
+      if (flags.dryRun) {
+        logInfo(`    (--dry-run) skipping write to ${scope.changelogPath}`);
+      } else {
+        await appendToChangelog(scope, entry);
+        logInfo(`    ✓ ${scope.changelogPath} updated`);
+      }
+      changelogResults.push({ scope, entry, ok: true });
+    } catch (error) {
+      logInfo(`    ✗ ${error.message}`);
+      changelogResults.push({ scope, entry: null, ok: false, error: String(error.message) });
+    }
+  }
+
+  // ── Phase 4: Commit message ───────────────────────────────────────────────
+  logStep(4, 5, 'Generating commit message');
+  const commitResponse = await generateCommitMessage(preflightCtx, changelogResults, flags);
+  const { subject, body } = parseCommitMessage(commitResponse.content);
+  logInfo(`  subject: ${subject}`);
+  await writeCommitReport(commitResponse, changelogResults);
+  logInfo('  report: artifacts/llm/reports/lemonade-commit.md');
+
+  // ── Phase 5: Commit ───────────────────────────────────────────────────────
+  logStep(5, 5, 'Committing');
+  if (flags.dryRun) {
+    logInfo('  --dry-run: skipping git add and git commit');
+    printProposedCommit(subject, body);
+    return;
+  }
+  if (!flags.yes) {
+    printProposedCommit(subject, body);
+    const confirmed = await confirmPrompt('Proceed with commit? [Y/n] ');
+    if (!confirmed) {
+      logInfo('  Aborted.');
+      return;
+    }
+  }
+  const sha = await executeCommit(subject, body);
+  logInfo(`  ✓ Committed: ${sha}`);
 }
 
 function listActions() {
@@ -197,6 +250,301 @@ function listActions() {
     console.log(`${name}: ${spec.title}`);
   }
 }
+
+// ─── Progress helpers ─────────────────────────────────────────────────────────
+
+function logStep(n, total, label) {
+  console.log(`\n[${n}/${total}] ${label}`);
+}
+
+function logInfo(msg) {
+  console.log(msg);
+}
+
+// ─── Commit flag parser ───────────────────────────────────────────────────────
+
+function parseCommitFlags(args) {
+  const promptParts = [];
+  let model = null;
+  let quick = false;
+  let dryRun = false;
+  let yes = false;
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index];
+    if (arg === '--model') model = args[++index];
+    else if (arg === '--quick') quick = true;
+    else if (arg === '--dry-run') dryRun = true;
+    else if (arg === '--yes' || arg === '-y') yes = true;
+    else promptParts.push(arg);
+  }
+  return { prompt: promptParts.join(' ').trim(), model, quick, dryRun, yes };
+}
+
+// ─── Scope detection ──────────────────────────────────────────────────────────
+
+async function detectChangedScopes() {
+  const [modified, staged, untracked] = await Promise.all([
+    git(['diff', '--name-only']).catch(() => ''),
+    git(['diff', '--cached', '--name-only']).catch(() => ''),
+    git(['ls-files', '--others', '--exclude-standard']).catch(() => ''),
+  ]);
+  const untrackedSet = new Set(untracked.split('\n').filter(Boolean));
+  const allFiles = new Set([
+    ...modified.split('\n').filter(Boolean),
+    ...staged.split('\n').filter(Boolean),
+    ...untracked.split('\n').filter(Boolean),
+  ]);
+  const groups = new Map();
+  for (const file of allFiles) {
+    const scope = resolveScope(file);
+    if (!groups.has(scope.key)) {
+      groups.set(scope.key, { ...scope, files: [], untrackedSet });
+    }
+    groups.get(scope.key).files.push(file);
+  }
+  return [...groups.values()].sort((a, b) => a.key.localeCompare(b.key));
+}
+
+function resolveScope(filepath) {
+  const [top, second] = filepath.split('/');
+  if ((top === 'repos' || top === 'tools' || top === 'projects') && second) {
+    return {
+      key: `${top}/${second}`,
+      label: `${top}/${second}`,
+      changelogPath: `${top}/${second}/CHANGELOG.md`,
+      scopeGlob: `${top}/${second}`,
+    };
+  }
+  return { key: 'root', label: 'root', changelogPath: 'CHANGELOG.md', scopeGlob: null };
+}
+
+// ─── Per-scope changelog generation ──────────────────────────────────────────
+
+async function generateChangelogEntry(scope, flags) {
+  const trackedFiles = scope.files.filter((f) => !scope.untrackedSet.has(f));
+  const untrackedFiles = scope.files.filter((f) => scope.untrackedSet.has(f));
+
+  let diff = '';
+  if (scope.scopeGlob) {
+    diff = await git(['diff', 'HEAD', '--', scope.scopeGlob]).catch(() => '');
+  } else if (trackedFiles.length > 0) {
+    diff = await git(['diff', 'HEAD', '--', ...trackedFiles]).catch(() => '');
+  }
+
+  const diffCtx = [
+    diff.slice(0, 14000) || '(no tracked diff)',
+    untrackedFiles.length > 0
+      ? `New untracked files:\n${untrackedFiles.map((f) => `  + ${f}`).join('\n')}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+
+  const today = new Date().toISOString().slice(0, 10);
+  const client = await createClient();
+  const config = await readConfig();
+  const models = await discoverModels(client.baseUrls);
+  const modelId =
+    flags.model ?? config.actions?.changelog ?? config.defaultModel ?? chooseModel(models)?.id;
+  if (!modelId) throw new Error('No model available for changelog generation');
+
+  const messages = [
+    {
+      role: 'system',
+      content:
+        'You are a changelog writer for a TypeScript monorepo. Write concise, factual changelog entries in Keep-a-Changelog format. Return ONLY the changelog entry: a date header followed by bullet points grouped under Added / Changed / Fixed / Removed as appropriate. No preamble or explanation.',
+    },
+    {
+      role: 'user',
+      content: [
+        `Scope: ${scope.label}`,
+        `Date: ${today}`,
+        `Changed files: ${scope.files.join(', ')}`,
+        '',
+        'Git diff:',
+        diffCtx,
+        '',
+        'Write the changelog entry for this change.',
+      ].join('\n'),
+    },
+  ];
+
+  const body = {
+    model: modelId,
+    messages,
+    temperature: 0.1,
+    stream: false,
+    max_tokens: flags.quick ? 256 : 512,
+  };
+
+  const attempts = [];
+  for (const path of chatPaths) {
+    const url = new URL(path, client.baseUrl).toString();
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(90000),
+      });
+      attempts.push({ url, ok: response.ok, status: response.status });
+      if (!response.ok) continue;
+      return extractAssistantText(await response.text());
+    } catch (error) {
+      attempts.push({ url, ok: false, error: formatFetchError(error) });
+    }
+  }
+  throw new Error(`LLM call failed for ${scope.label}: ${JSON.stringify(attempts)}`);
+}
+
+async function appendToChangelog(scope, entry) {
+  const changelogPath = join(root, scope.changelogPath);
+  let existing = '';
+  try {
+    existing = await readFile(changelogPath, 'utf8');
+  } catch {
+    existing = `# Changelog\n\nAll notable changes to this package are documented here.\n\n`;
+  }
+  // Insert after the first heading block (# Changelog + optional subtitle lines)
+  const headingEnd = existing.search(/\n##\s|\n\n(?!#)/);
+  const insertPos = headingEnd > 0 ? headingEnd + 1 : existing.indexOf('\n') + 1;
+  const updated = `${existing.slice(0, insertPos)}\n${entry.trim()}\n\n${existing.slice(insertPos)}`;
+  await mkdir(dirname(changelogPath), { recursive: true });
+  await writeFile(changelogPath, updated, 'utf8');
+}
+
+// ─── Commit message generation ────────────────────────────────────────────────
+
+async function generateCommitMessage(preflightCtx, changelogResults, flags) {
+  const changelogSummary = changelogResults
+    .filter((r) => r.ok && r.entry)
+    .map((r) => `### ${r.scope.label}\n${r.entry}`)
+    .join('\n\n');
+
+  const context = [
+    preflightCtx,
+    changelogResults.length > 0 ? `--- changelog entries generated ---\n${changelogSummary}` : '',
+    await readContextFile('CONTRIBUTING.md'),
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+    .slice(0, flags.quick ? 12000 : 60000);
+
+  return complete({
+    action: 'commit',
+    modelOverride: flags.model,
+    userPrompt: flags.prompt || repoActions.commit.defaultPrompt,
+    context,
+    quick: flags.quick,
+  });
+}
+
+function parseCommitMessage(content) {
+  // Try JSON block first (if LLM returns structured JSON)
+  const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[1]);
+      if (typeof parsed.subject === 'string') {
+        return { subject: parsed.subject.slice(0, 72), body: parsed.body ?? '' };
+      }
+    } catch {
+      // fall through
+    }
+  }
+  // Find a conventional commit line
+  const lines = content.split('\n');
+  for (const line of lines) {
+    const trimmed = line
+      .replace(/^[*`#>\s]+/, '')
+      .replace(/[`*]+$/, '')
+      .trim();
+    if (
+      /^(feat|fix|chore|docs|refactor|test|style|perf|ci|build|revert)(\(.+\))?!?:\s/.test(trimmed)
+    ) {
+      const idx = lines.indexOf(line);
+      const body = lines
+        .slice(idx + 1)
+        .join('\n')
+        .trim();
+      return { subject: trimmed.slice(0, 72), body };
+    }
+  }
+  // Fallback: first non-empty line as subject
+  const firstLine =
+    lines
+      .find((l) => l.trim())
+      ?.replace(/^#+\s*/, '')
+      .replace(/^(SUBJECT|Subject|Commit message):\s*/i, '')
+      .trim() ?? 'chore: update';
+  return {
+    subject: firstLine.slice(0, 72),
+    body: lines
+      .slice(lines.indexOf(lines.find((l) => l.trim())) + 1)
+      .join('\n')
+      .trim(),
+  };
+}
+
+// ─── Confirmation + commit execution ─────────────────────────────────────────
+
+function printProposedCommit(subject, body) {
+  console.log('\n  ┌──────────────────────────────────────────────────────────────');
+  console.log(`  │ ${subject}`);
+  if (body) {
+    console.log('  │');
+    for (const line of body.split('\n').slice(0, 20)) {
+      console.log(`  │ ${line}`);
+    }
+  }
+  console.log('  └──────────────────────────────────────────────────────────────');
+}
+
+async function confirmPrompt(question) {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(`\n  ${question}`, (answer) => {
+      rl.close();
+      resolve(answer.trim().toLowerCase() !== 'n');
+    });
+  });
+}
+
+async function executeCommit(subject, body) {
+  await execFileAsync('git', ['add', '-A'], { cwd: root });
+  const messageArgs = body ? ['-m', subject, '-m', body] : ['-m', subject];
+  await execFileAsync('git', ['commit', ...messageArgs], { cwd: root });
+  return git(['rev-parse', '--short', 'HEAD']);
+}
+
+async function writeCommitReport(commitResponse, changelogResults) {
+  const changelogSection = changelogResults
+    .map((r) =>
+      r.ok ? `### ${r.scope.label}\n${r.entry}` : `### ${r.scope.label}\n⚠️ Failed: ${r.error}`,
+    )
+    .join('\n\n');
+
+  const sections = [
+    '# Lemonade commit',
+    '',
+    `Generated: ${commitResponse.generatedAt}`,
+    `Model: ${commitResponse.model}`,
+    `Base URL: ${commitResponse.baseUrl}`,
+    '',
+    '## Commit Analysis',
+    '',
+    commitResponse.content,
+  ];
+  if (changelogResults.length > 0) {
+    sections.push('', '## Changelog Entries', '', changelogSection);
+  }
+
+  const path = join(artifactsRoot, 'reports', 'lemonade-commit.md');
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, sections.join('\n'), 'utf8');
+}
+
+// ─── Complete / LLM call ──────────────────────────────────────────────────────
 
 async function complete({ action, modelOverride, userPrompt, context, quick = false }) {
   const config = await readConfig();
@@ -550,13 +898,24 @@ Commands:
   config set default-model <id>  Pin default model id
   config set action <name> <id>  Pin model for one repo action
   ask [--quick] "question"       Ask a repo-aware question
-  commit [--quick] [prompt]       Analyze current changes and draft commit text
+  commit [flags] [prompt]        Full commit pipeline:
+                                   1. Preflight (gitnexus + git + review)
+                                   2. Detect changed scopes
+                                   3. Generate changelog entry per scope (serial)
+                                   4. Generate commit message
+                                   5. Stage + commit (with confirmation)
+    --dry-run                    Show what would happen; skip writes and commit
+    --yes / -y                   Skip confirmation prompt
+    --quick                      Short LLM calls (faster, less detail)
+    --model <id>                 Override LLM model
   run <action> [--quick] [prompt] Run docs-upkeep, review, plan, architecture, validation
 
 Examples:
   pnpm run llm:models
   pnpm run llm:config -- set default-model Qwen3-Coder-Next-GGUF
   pnpm run llm:commit
+  pnpm run llm:commit -- --dry-run
+  pnpm run llm:commit -- --yes
   pnpm run llm:action -- review
   pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
 `);
