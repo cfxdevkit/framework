@@ -11,7 +11,7 @@ pulling the rest of the devkit.
 | `abis` | `@cfxdevkit/abis` | Standard ABI shapes (ERC-20/721/1155, Multicall3) |
 | `contracts` | `@cfxdevkit/contracts` | Read/write/deploy + ERC-20 helpers + Conflux bridge |
 | `compiler` | `@cfxdevkit/compiler` | Solidity compile pipeline (solc loader, resolvers, templates, artifacts) |
-| `contracts-extract` | `@cfxdevkit/codegen-contracts` | Hardhat artifact → TS module codegen |
+| `contracts-extract` | `@cfxdevkit/contracts-extract` | Hardhat artifact → TS module codegen |
 
 ## Layering
 

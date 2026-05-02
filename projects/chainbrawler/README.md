@@ -6,7 +6,7 @@
 **Other**
 - `contracts/` — Hardhat RPG contracts
 - `packages/game-rules/` — RPG-specific rules (kept project-local)
-- `packages/react-bindings/` — UI ↔ engine adapter (kept project-local until reusable)
+- `packages/react-bindings/` — UI ↔ engine adapter (kept project-local)
 
 **Framework usage (post-migration)**
 - `@cfxdevkit/core`, `@cfxdevkit/react`, `@cfxdevkit/wallet-connect`

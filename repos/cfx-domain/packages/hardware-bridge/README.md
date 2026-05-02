@@ -12,3 +12,4 @@
 **Non-goals**
 - Specific firmware (stays in `projects/electro/apps/firmware/`).
 - Project-specific dashboards.
+- Hardware-specific driver implementations (handled in `projects/electro/apps/firmware/`).

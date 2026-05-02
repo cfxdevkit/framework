@@ -1,5 +1,11 @@
 # Changelog
 
+
+## [Unreleased] - 2026-05-02
+### Changed
+- Added description to `README.md` explaining that `cfx-ui` contains React-based UI surface packages for `@cfxdevkit/*`, published as scoped npm modules.
+- Updated `API.md` to emphasize that all hooks are built on `core` primitives and expose no internal state management, reinforcing the design principle of external state management via TanStack Query and minimal context.
+
 ## [Unreleased] - 2026-05-02
 ### Changed
 - Renamed `framework/defi-react` to `@cfxdevkit/defi-react` across API, README, and STRUCTURE docs.

@@ -2,7 +2,7 @@
 
 ## Access Model
 
-- Grant least privilege by deployment, environment, and operation.
+- Grant least privilege by deployment, environment, and operation type.
 - Prefer OIDC federation and short-lived credentials over static secrets.
 - Separate read, sign, deploy, and rotate permissions where the backend supports it.
 - Production access requires named identities; shared accounts are not allowed.

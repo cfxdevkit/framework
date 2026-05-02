@@ -1,6 +1,6 @@
 # Secrets Operations
 
-This directory contains operational policy and templates only. Do not commit raw secrets, plaintext key material, decrypted SOPS files, wallet mnemonics, private keys, API tokens, or production credentials.
+This directory contains operational policies, templates, and guidance only. Do not commit raw secrets—including plaintext key material, decrypted SOPS files, wallet mnemonics, private keys, API tokens, or production credentials.
 
 ## Current Controls
 

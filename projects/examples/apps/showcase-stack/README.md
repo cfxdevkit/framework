@@ -32,7 +32,7 @@ VITE_BACKEND_URL=http://127.0.0.1:5174 pnpm --filter @cfxdevkit/example-showcase
 1. Start the backend and stack app.
 2. In the stack app, switch the network selector to `Local`.
 3. Open `DevNode Control` and start the devnode.
-4. Import a genesis private key into MetaMask or another non-Fluent eSpace wallet for eSpace flows.
+4. Import a genesis private key into MetaMask or another non-Fluent eSpace-compatible wallet for eSpace flows.
 5. Use Fluent Core through the Core wallet pill for `window.conflux` / `cfx_*` flows.
 
 ## Wallet Split

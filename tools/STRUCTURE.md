@@ -1,4 +1,4 @@
-# tools — Detailed Structure
+# tools — Detailed Structure (current state)
 
 Shared dev-only configuration and small helper scripts. Everything here is
 consumed via workspace dependencies, never imported at runtime.

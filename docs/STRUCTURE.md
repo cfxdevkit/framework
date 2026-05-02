@@ -1,9 +1,9 @@
-# docs — Detailed Structure
+# docs — Detailed Structure (target layout)
 
 This file describes the intended shape of the documentation set. It is a target
 map, not a guarantee that every directory below already exists.
 
-## Current state
+## Current state (implemented today)
 
 At the moment the repository contains:
 
@@ -20,7 +20,7 @@ docs/
 Agents should treat the missing sections below as planned documentation work,
 not as evidence that the repository structure is wrong.
 
-## Target state
+## Target state (planned structure)
 
 ```
 docs/

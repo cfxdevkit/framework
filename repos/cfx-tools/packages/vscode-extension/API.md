@@ -46,7 +46,7 @@
 - Selected network: VS Code workspace state (`local`, `testnet`, or `mainnet`)
 - Last used contract target space: VS Code workspace state (`espace` or `core`)
 - Selected keystore backend: VS Code workspace state (`file`, `onekey`, or `satoshi`, shown as Satochip)
-- Active file-keystore mnemonic root reference: VS Code workspace state (`service/account` reference)
+- Active file-keystore mnemonic root reference: VS Code workspace state (`service/account` path)
 - Active derived account index: VS Code workspace state
 - Local node mnemonic: VS Code workspace state, set from generated/imported mnemonic-root setup when available
 - Deployments registry: `.cfxdevkit/deployments.json`

@@ -1,4 +1,4 @@
-# `@cfxdevkit/example-showcase`
+# `@cfxdevkit/showcase`
 
 Live, browser-side showcase of the currently-implemented `@cfxdevkit/*`
 surface. Drives Core Space (cive) and eSpace (viem) helpers against a chain

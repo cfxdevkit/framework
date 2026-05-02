@@ -1,7 +1,7 @@
 # framework/executor — Detailed Structure
 
 Generic execution primitives. **No domain logic** (strategies live in
-[domains/automation/](../../domains/automation/STRUCTURE.md)).
+`@cfxdevkit/automation`).
 
 ```
 executor/

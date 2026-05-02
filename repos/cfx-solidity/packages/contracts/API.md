@@ -12,13 +12,13 @@
 
 | Sub-path | Concern |
 |----------|---------|
-| `@cfxdevkit/contracts/abis` | Standard ABIs as `as const` arrays |
-| `@cfxdevkit/contracts/read` | `readContract({ client, address, abi, functionName, args })` |
-| `@cfxdevkit/contracts/write` | `prepareWrite()` / `sendWrite()` / `waitForReceipt()` |
-| `@cfxdevkit/contracts/deploy` | `deployContract({ client, signer, abi, bytecode, args })` |
-| `@cfxdevkit/contracts/erc20` | Typed ERC-20 helpers (`balanceOf`, `transfer`, …) |
-| `@cfxdevkit/contracts/bridge` | CrossSpaceCall helpers (`transferToEspace`, `withdrawFromMapped`, mapped balance/address) |
-| `@cfxdevkit/contracts/errors` | `ContractsError` + `ContractsErrorCode` |
+| `./abis` | Standard ABIs as `as const` arrays |
+| `./read` | `readContract({ client, address, abi, functionName, args })` |
+| `./write` | `prepareWrite()` / `sendWrite()` / `waitForReceipt()` |
+| `./deploy` | `deployContract({ client, signer, abi, bytecode, args })` |
+| `./erc20` | Typed ERC-20 helpers (`balanceOf`, `transfer`, …) |
+| `./bridge` | CrossSpaceCall helpers (`transferToEspace`, `withdrawFromMapped`, mapped balance/address) |
+| `./errors` | `ContractsError` + `ContractsErrorCode` |
 
 Importing the sub-paths instead of the barrel keeps tree-shaking sharp.
 

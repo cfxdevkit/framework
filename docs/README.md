@@ -7,7 +7,7 @@ This folder documents both the current modularized workspace and the planned
 future topology. Unless a document explicitly says otherwise, prefer the current
 `repos/cfx-*` and `projects/*` layout when following setup instructions.
 
-## Current structure
+## Current structure (implemented today)
 
 Implemented today:
 
@@ -22,7 +22,7 @@ docs/
 └── llm-fine-tuning-plan.md  Repository LLM automation planning guide
 ```
 
-## Planned structure
+## Planned structure (target after docs site is wired in)
 
 Target layout after the docs site and supporting sections are filled in:
 

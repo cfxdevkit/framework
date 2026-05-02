@@ -40,7 +40,7 @@ chainbrawler/
 │   │       ├── progression/        xp, levels
 │   │       └── balance.ts          tunables
 │   │
-│   └── react-bindings/             ── Adapter: game-rules ↔ web-ui ──
+│   └── react-bindings/             ── Adapter: game-rules ↔ web-ui ── (kept project-local)
 │       ├── package.json
 │       ├── moon.yml
 │       └── src/

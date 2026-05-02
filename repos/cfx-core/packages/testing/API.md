@@ -1,7 +1,7 @@
-# @cfxdevkit/testing — Public API
+# @cfxdevkit/testing — Public API (Test-Only)
 
 > Shared fixtures + helpers. **Test-only.** Imported only from `*.test.ts` and
-> `test/integration/`. Production builds tree-shake away.
+> `test/integration/`. Production builds tree-shake away. Never used in runtime code.
 
 ## Sub-paths
 

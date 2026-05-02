@@ -1,6 +1,6 @@
 # showcase-backend
 
-Backend companion for the Conflux showcase apps. It provides SIWE auth, session-key delegation, Solidity compilation, contract template catalogues, local devnode control, and CORS-safe RPC proxy routes for local Core/eSpace devnode traffic.
+Backend companion for the Conflux showcase apps. It provides SIWE authentication, session-key delegation, Solidity compilation, contract template cataloguing, local devnode control, and CORS-safe RPC proxy routes for local Core/eSpace devnode traffic.
 
 ## Start
 

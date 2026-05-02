@@ -1,6 +1,6 @@
 # ADR-0001 — Build & Workspace Stack
 
-- **Status:** Accepted (Phase 1)
+- **Status:** Accepted (Phase 1) — Implemented
 - **Date:** 2026-04-28
 - **Supersedes:** existing per-repo Turbo + ad-hoc Vite configs
 

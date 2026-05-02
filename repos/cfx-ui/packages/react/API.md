@@ -2,6 +2,7 @@
 
 > Thin React adapters over `framework/core`. **Hooks only**, no providers that
 > hide state. State is managed externally via TanStack Query and a minimal client context.
+> All hooks are built on top of `core` primitives and expose no internal state management.
 
 ## Sub-paths
 

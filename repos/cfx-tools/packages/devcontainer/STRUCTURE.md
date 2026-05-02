@@ -1,4 +1,4 @@
-# platform/devcontainer — Detailed Structure
+# platform/devcontainer — Detailed Structure (Phase 2)
 
 ```
 devcontainer/
@@ -30,4 +30,4 @@ devcontainer/
 
 - `git clone && open in container` works with no host setup beyond Docker + VS Code.
 - No key material in the image. Keystore is mounted/created at first run.
-- Image rebuild is fast: deps in a separate layer, framework prebuilt in a published layer.
+- Image rebuild is fast: deps in a separate layer, framework prebuilt in a published layer, and host keyring is forwarded at runtime.

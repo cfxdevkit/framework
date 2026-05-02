@@ -45,7 +45,7 @@ cas/
 │   │           ├── auth.ts
 │   │           └── rate-limit.ts
 │   │
-│   └── worker/                     ── Keeper ──
+│   └── worker/                     ── Keeper (migrates last, behind feature flag) ──
 │       ├── package.json
 │       ├── vite.config.ts          node target
 │       ├── moon.yml

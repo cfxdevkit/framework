@@ -1,5 +1,16 @@
 # Changelog
 
+
+## [Unreleased] — 2026-05-02
+### Changed
+- Updated `.changeset/README.md` to clarify changesets purpose and documentation link.
+- Adjusted GitNexus metadata in `AGENTS.md` and `CLAUDE.md` to reflect updated symbol, relationship, and flow counts.
+- Clarified `docs/README.md` and `docs/STRUCTURE.md` by adding parenthetical context to current and planned structure headings.
+- Marked ADR-0001 as "Implemented" in `docs/adr/0001-build-stack.md`.
+- Refined framework design principles in `docs/architecture/framework-design-principles.md` to specify conditional imports only when truly necessary.
+- Expanded `infrastructure/secrets/README.md` to explicitly list prohibited content types.
+- Updated `infrastructure/secrets/policies/access.md` to specify "operation type" in least-privilege access model.
+
 ## [Unreleased] - 2026-05-02
 ### Changed
 - Updated symbol count from 4365 to 4664 and relationship count from 7478 to 8008 in GitNexus index metadata

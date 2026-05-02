@@ -1,19 +1,19 @@
-# @cfxdevkit/protocol — Public API (Protocol Features)
+# @cfxdevkit/protocol — Protocol API
 
-> Conflux-specific protocol features that aren't generic EVM. Conservative scope.
+> Protocol-level features specific to Conflux, intended for tooling and SDK consumers.
 
-## Sub-paths
+## Packages
 
 | Sub-path | Concern |
 |----------|---------|
-| `@cfxdevkit/protocol/sponsor` | sponsor mechanism (Core space) |
+| `@cfxdevkit/protocol/sponsor` | Sponsor mechanism (Core space) |
 | `@cfxdevkit/protocol/cross-space` | eSpace ↔ Core bridge |
 | `@cfxdevkit/protocol/staking` | PoS staking helpers |
-| `@cfxdevkit/protocol/storage` | storage collateral helpers |
+| `@cfxdevkit/protocol/storage` | Storage collateral helpers |
 
 ---
 
-## `protocol/sponsor`
+## `@cfxdevkit/protocol/sponsor`
 
 ```
 type SponsorInfo = {
@@ -33,7 +33,7 @@ function removePrivilege(input: { client: Client; signer: Signer; contract: Addr
 
 ---
 
-## `protocol/cross-space`
+## `@cfxdevkit/protocol/cross-space`
 
 ```
 function transferEspaceToCore(input: { client: Client; signer: Signer; from: 'espace'; toCoreAddress: string; amount: Wei; signal?: AbortSignal }): Promise<{ hash: Hash }>
@@ -43,7 +43,7 @@ function readBridgeState(input: { client: Client; signal?: AbortSignal }): Promi
 
 ---
 
-## `protocol/staking`
+## `@cfxdevkit/protocol/staking`
 
 ```
 function deposit(input: { client: Client; signer: Signer; amount: Wei; signal?: AbortSignal }): Promise<{ hash: Hash }>
@@ -54,7 +54,7 @@ function getVotePower(input: { client: Client; address: Address; blockNumber?: b
 
 ---
 
-## `protocol/storage`
+## `@cfxdevkit/protocol/storage`
 
 ```
 function getCollateralForStorage(input: { client: Client; address: Address; signal?: AbortSignal }): Promise<Wei>
@@ -65,7 +65,7 @@ function getSponsoredCollateral(input: { client: Client; contract: Address; sign
 
 ## Notes
 
-- Protocol package is **read-and-narrow-write**. Anything that's "do these 5 calls
+- This package is **read-and-narrow-write**. Anything that's "do these 5 calls
   in sequence to bootstrap a sponsorship" belongs in `domains/` or in a project's
   own scripts — not here.
 - All errors are `ContractError` from `core/contract` (no new error class needed).

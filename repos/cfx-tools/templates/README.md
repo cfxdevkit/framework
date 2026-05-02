@@ -9,7 +9,7 @@ Each subfolder is one self-contained template.
 | `minimal-dapp/` | Bare wagmi + viem + framework setup | `devkit-workspace/templates/minimal-dapp` |
 | `project-example/` | Full-feature reference dapp | `devkit-workspace/templates/project-example` |
 | `wallet-probe/` | Wallet diagnostics tool | `devkit-workspace/templates/wallet-probe` |
-| `nextjs-app/` | Next.js + framework | _new (Phase 2)_ |
+| `nextjs-app/` | Next.js + framework | _new (Phase 2), not yet extracted_ |
 | `phaser-game/` | Phaser + framework wallet integration | _extracted from conflux-phaser_ |
 
 A template **must** be runnable standalone after scaffolding (no monorepo coupling).

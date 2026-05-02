@@ -2,6 +2,7 @@
 // @ts-nocheck
 import { execFile, spawn } from 'node:child_process';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { promisify } from 'node:util';
@@ -1169,6 +1170,19 @@ async function detectChangedScopes() {
 function resolveScope(filepath) {
   const [top, second] = filepath.split('/');
   if ((top === 'repos' || top === 'tools' || top === 'projects') && second) {
+    // If the second segment is not a directory on disk (for example a file
+    // like `projects/README.md`), treat the scope as the top-level folder
+    // so we don't attempt to create a changelog directory under a file path.
+    try {
+      const candidate = join(root, top, second);
+      const s = statSync(candidate);
+      if (!s.isDirectory()) {
+        return { key: top, label: top, changelogPath: `${top}/CHANGELOG.md`, scopeGlob: `${top}` };
+      }
+    } catch {
+      // If the path doesn't exist or cannot be stat'd, fall back to top-level
+      return { key: top, label: top, changelogPath: `${top}/CHANGELOG.md`, scopeGlob: `${top}` };
+    }
     return {
       key: `${top}/${second}`,
       label: `${top}/${second}`,

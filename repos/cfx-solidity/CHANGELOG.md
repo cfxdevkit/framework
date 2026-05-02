@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased] - 2026-05-02
+### Changed
+- Renamed `contracts-extract` package from `@cfxdevkit/codegen-contracts` to `@cfxdevkit/contracts-extract` in root README.md
+- Clarified `@cfxdevkit/abis` usage scope to include TypeScript-based dApps and tooling in API.md
+- Fixed relative path to `contracts` package in `contracts-extract/README.md` from `../../../framework/contracts` to `../../contracts`
+- Simplified relative import paths in `contracts/API.md` from `@cfxdevkit/contracts/*` to `./` equivalents for improved tree-shaking guidance
+- Corrected path reference to `STRUCTURE.md` in `contracts-extract/README.md` from `../../STRUCTURE.md` to `STRUCTURE.md`
+
+
 
 ## [Unreleased] - 2026-05-02
 ### Added

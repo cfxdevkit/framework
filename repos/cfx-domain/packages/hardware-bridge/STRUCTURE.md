@@ -84,3 +84,4 @@ hardware-bridge/
 
 Extracted from `Electro/packages/{ws-protocol,sensor-types,hardware-diagram}`.
 ESP32-specific firmware stays in `projects/electro/apps/firmware/`.
+Hardware-specific driver implementations stay in `projects/electro/apps/firmware/`.

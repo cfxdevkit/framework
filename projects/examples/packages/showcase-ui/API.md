@@ -29,7 +29,7 @@ function useLogList(...): { entries: LogEntry[]; push: (...args: unknown[]) => v
 type CoreChainConfig
 type FluentProvider
 type WalletStatus
-function useCoreWallet(...): unknown
+function useCoreWallet(...): { status: WalletStatus; provider: FluentProvider | null; error: Error | null }
 function buildAddChainParams(...): unknown
 const CORE_CHAIN_CONFIGS: readonly CoreChainConfig[]
 function detectFluentCore(...): Promise<unknown>

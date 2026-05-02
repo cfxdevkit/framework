@@ -13,7 +13,7 @@
 | `services` | `@cfxdevkit/services` | `KeystoreProvider` interface, `keystore-memory`, `keystore-file` (cfx-v1 envelope: Argon2id KEK + per-secret AES-256-GCM with AAD), `crypto` primitives |
 | `wallet` | `@cfxdevkit/wallet` | signers (`signerFromKeystore`, `readonlySigner`), hardware adapters (`onekey`, `satochip`), `init` (filesystem keystore convenience), errors |
 
-Future packages staged for this repo (see [ADR-0002](../../docs/adr/0002-keystore.md)):
+Future packages staged for this repo (see [ADR-0002](../../docs/adr/0002-keystore.md) — *ADR not yet created*):
 `keystore-os`, `keystore-kms`, `keystore-forward`, `wallet/policies`,
 `wallet/session-key`, `wallet/batched`.
 

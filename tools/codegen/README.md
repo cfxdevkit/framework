@@ -10,4 +10,4 @@ Code generators consumed across the workspace.
 > The Solidity-pipeline codegen tool (`@cfxdevkit/codegen-contracts`) lives in
 > [`repos/cfx-solidity/packages/contracts-extract`](../../repos/cfx-solidity/packages/contracts-extract/).
 
-All packages here are **private** (`"private": true`). See [../STRUCTURE.md](../STRUCTURE.md) for the full tooling layout.
+All packages here are **private** (`"private": true`). See [../STRUCTURE.md](../STRUCTURE.md) for the full tooling layout. (Note: `../STRUCTURE.md` does not exist yet.)

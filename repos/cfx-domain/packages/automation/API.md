@@ -24,4 +24,4 @@ See the package's [STRUCTURE.md](./STRUCTURE.md) for the documented intent of ea
 
 ## Tier
 
-Defined per [ARCHITECTURE.md](../../../ARCHITECTURE.md). Dependencies must respect the one-way rule: `projects → domains → platform → framework`.
+Defined per [ARCHITECTURE.md](../../../../../ARCHITECTURE.md). Dependencies must respect the one-way rule: `projects → domains → platform → framework`.

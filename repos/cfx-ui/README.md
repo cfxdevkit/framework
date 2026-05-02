@@ -3,6 +3,10 @@
 **Tier 0c — React UI surface.** Carve-out target per
 [ADR-0003](../../docs/adr/0003-multi-repo-split.md).
 
+This folder contains packages that provide React-based UI surface for the
+`@cfxdevkit/*` stack. Packages are published as scoped npm modules and
+consumed by apps in `projects/` and external consumers.
+
 ## Packages
 
 | Package | npm | Surface |

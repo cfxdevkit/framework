@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased] — 2026-05-02
+### Changed
+- Renamed `framework/services` to `services` in API documentation headers.
+- Simplified section headings (e.g., `services/keystore` → `keystore`) by removing redundant `services/` prefix.
+- Updated error code prefixes (e.g., `services/keystore/locked` → `keystore/locked`) to reflect simplified module paths.
+- Marked ADR-0002 as not yet created in README.md to clarify status of future packages.
+### Removed
+- `framework/` prefix from all public API section titles and error code namespaces.
+
+
 
 ## [Unreleased]
 ### Changed

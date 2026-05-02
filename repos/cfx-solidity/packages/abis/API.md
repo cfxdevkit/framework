@@ -1,6 +1,6 @@
 # @cfxdevkit/abis — Public API
 
-> Stable EVM ABI constants with zero internal workspace dependencies.
+> Stable EVM ABI constants with zero internal workspace dependencies. Intended for use in TypeScript-based dApps and tooling.
 
 ## Exports
 

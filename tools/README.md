@@ -1,6 +1,6 @@
-# tools/  — Shared developer tooling
+# tools/  — Shared developer tooling (current state)
 
-Configuration and small scripts shared by every package and project.
+Configuration and small scripts shared by every package and project. All packages here are dev-dependencies only and consumed via workspace dependencies, never imported at runtime.
 
 ## Contents
 

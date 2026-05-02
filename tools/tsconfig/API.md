@@ -1,6 +1,6 @@
 # `@cfxdevkit/tsconfig` — API Reference
 
-> Config-only package. The public API is the set of exported JSON presets.
+> Config-only package. The public API consists of the exported JSON presets, each defining a TypeScript configuration profile for specific use cases.
 
 ## Files
 

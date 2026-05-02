@@ -4,7 +4,7 @@
 
 ## Files
 
-- `biome.json` — workspace formatter and linter configuration extended by local packages
+- `biome.json` — shared workspace formatter and linter configuration, extended by local packages
 
 ## Usage
 

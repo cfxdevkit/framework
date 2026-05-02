@@ -1,7 +1,7 @@
 # framework/executor — Public API
 
 > Background job runner. **Generic**: knows nothing about DEX, games, or hardware.
-> Strategies are defined in `domains/automation/`.
+> Strategies are defined in `@cfxdevkit/automation`.
 
 ## Sub-paths
 

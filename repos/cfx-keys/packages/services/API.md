@@ -1,4 +1,4 @@
-# framework/services — Public API
+# services — Public API
 
 > Pluggable backends behind a single interface. Backends are independent sub-paths.
 
@@ -19,7 +19,7 @@
 
 ---
 
-## `services/keystore` — interface
+## `keystore` — interface
 
 ```
 type SecretRef = { service: string; account: string }
@@ -63,7 +63,7 @@ function createFileAuditLogger(path: string): AuditLogger
 ```
 
 ### Errors
-`KeystoreError` with codes `services/keystore/{locked,not-found,bad-passphrase,backend-unavailable,unsupported}`.
+`KeystoreError` with codes `keystore/{locked,not-found,bad-passphrase,backend-unavailable,unsupported}`.
 
 ### Rules
 - A backend MUST NOT log secret material.
@@ -73,7 +73,7 @@ function createFileAuditLogger(path: string): AuditLogger
 
 ---
 
-## `services/keystore-kms`
+## `keystore-kms`
 
 ```
 function createAwsKmsKeystore(opts: { region: string; keyArns: Record<string, string>; client?: AwsKmsClient; audit?: AuditLogger }): KeystoreProvider
@@ -87,7 +87,7 @@ All return objects implementing `KeystoreProvider`. KMS variants disable `put` /
 
 ---
 
-## `services/keystore-os`
+## `keystore-os`
 
 ```
 function createOsKeystore(opts?: { service?: string; audit?: AuditLogger }): KeystoreProvider
@@ -99,7 +99,7 @@ factory if the OS keyring is not present.
 
 ---
 
-## `services/keystore-file`
+## `keystore-file`
 
 ```
 type FileKeystoreOptions = {
@@ -121,7 +121,7 @@ On-disk format spec lives in `src/keystore/file/format.ts`; versioned + document
 
 ---
 
-## `services/keystore-forward`
+## `keystore-forward`
 
 ```
 function createForwardedKeystore(opts: {
@@ -136,7 +136,7 @@ private material never enters the container.
 
 ---
 
-## `services/keystore-memory`
+## `keystore-memory`
 
 ```
 function createMemoryKeystore(opts?: { seed?: Array<{ ref: SecretRef; privateKey: Hex }> }): KeystoreProvider
@@ -147,7 +147,7 @@ detection at module top).
 
 ---
 
-## `services/crypto`
+## `crypto`
 
 ```
 type AesGcmKey = Uint8Array & { length: 32 }      // branded
@@ -166,11 +166,11 @@ function toHex(bytes: Uint8Array): Hex
 function fromHex(hex: Hex): Uint8Array
 ```
 
-Errors: `CryptoError` with codes `services/crypto/{decrypt-failed,bad-key}`.
+Errors: `CryptoError` with codes `crypto/{decrypt-failed,bad-key}`.
 
 ---
 
-## `services/dex` — interface
+## `dex` — interface
 
 ```
 type Quote = {
@@ -205,11 +205,11 @@ type DexAdapter = {
 function createSwappiAdapter(opts: { router?: Address; factory?: Address }): DexAdapter
 ```
 
-Errors: `DexError` with codes `services/dex/{no-route,slippage,insufficient-liquidity}`.
+Errors: `DexError` with codes `dex/{no-route,slippage,insufficient-liquidity}`.
 
 ---
 
-## `services/tokens`
+## `tokens`
 
 ```
 type TokenInfo = { address: Address; symbol: string; name: string; decimals: number; logoUri?: string; chainId: ChainId }

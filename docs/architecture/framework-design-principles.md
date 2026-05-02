@@ -138,7 +138,7 @@ The doc generator surfaces stability in the API reference.
 - ❌ Re-exporting everything from `index.ts` ("barrel of barrels"). Re-export
   intentionally; the index is a curated public surface.
 - ❌ Conditional imports based on runtime detection. Split into separate entrypoints
-  (`./node`, `./browser`).
+  (`./node`, `./browser`) only when truly necessary (e.g., Node.js vs browser APIs).
 - ❌ Implicit dependencies on `process.env`. Read env at the app boundary; pass
   values into framework functions.
 - ❌ "Smart" overloading. Two functions are clearer than one with five overloads.

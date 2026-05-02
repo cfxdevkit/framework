@@ -1,6 +1,6 @@
 # @cfxdevkit/testing — Detailed Structure
 
-Dev-dependency only. Used by every package and project.
+Dev-dependency only. Used by every package and project. **Test-only.**
 
 ```
 testing/

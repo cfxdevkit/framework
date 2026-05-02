@@ -1,6 +1,6 @@
 # @cfxdevkit/testing
 
-**Scope:** Shared test utilities used by every package and project.
+**Scope:** Shared test utilities used by every package and project. **Test-only.**
 
 **Responsibilities**
 - Mock chain client

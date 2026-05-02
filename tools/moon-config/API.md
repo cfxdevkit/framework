@@ -4,7 +4,7 @@
 
 ## Templates
 
-- `templates/library.yml` — shared library task template used by workspace packages
+- `templates/library.yml` — shared library task template used by workspace packages to enforce consistent build, lint, typecheck, test, and clean conventions
 
 ## Usage
 

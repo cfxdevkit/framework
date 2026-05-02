@@ -9,3 +9,5 @@
 - Never accept a raw private key; session keys only
 
 Depends on: `framework/core`, `framework/wallet`, `framework/compiler`, `framework/services`.
+
+> **Note:** This package lives under `repos/cfx-tools/packages/mcp-server` but aligns with the `platform/` tier in the five-tier architecture. See [ARCHITECTURE.md](../../../../../docs/architecture/ARCHITECTURE.md) for tier definitions.

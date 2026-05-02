@@ -24,7 +24,7 @@ When a slice is ready to be carved out:
 | Slice | Tier | Public surface |
 |-------|------|----------------|
 | [cfx-meta](./cfx-meta/) | — | architecture, ADRs, release orchestration |
-| [cfx-core](./cfx-core/) | 0a | chain primitives (core, protocol, contracts, compiler, executor, devnode, testing) |
+| [cfx-core](./cfx-core/) | 0a | chain primitives (core, protocol, executor, devnode, testing) |
 | [cfx-keys](./cfx-keys/) | 0b | **audit-grade trust boundary** — keystore + wallet + hardware adapters |
 | [cfx-ui](./cfx-ui/) | 0c | React, theme, defi-react, wallet-connect |
 | [cfx-domain](./cfx-domain/) | 2 | game-engine, automation, hardware-bridge |

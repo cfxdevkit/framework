@@ -31,4 +31,4 @@ should normally live in one of the `repos/cfx-*` slices rather than under
 | [cas/](cas/) | Non-custodial limit-order & DCA automation | `cas/` |
 | [chainbrawler/](chainbrawler/) | On-chain RPG game | `chainbrawler/` |
 | [conflux-phaser/](conflux-phaser/) | Phaser-based blockchain game | `conflux-phaser/` |
-| [electro/](electro/) | ESP32 hardware + Conflux smart contract | `Electro/` |
+| [electro/](electro/) | ESP32 hardware + Conflux smart contract | `electro/` |

@@ -1,6 +1,6 @@
-# platform/devcontainer
+# platform/devcontainer — Reproducible Dev Environment
 
-**Scope:** Reproducible Docker-based development environment.
+**Scope:** Reproducible Docker-based development environment for local and CI contributors.
 
 **Contents (Phase 2)**
 - `devcontainer.json`
@@ -8,4 +8,4 @@
 - Pre-installed framework + platform packages
 - VS Code extension recommendations
 
-Goal: `git clone && open in container && everything works`.
+Goal: `git clone && open in container && everything works` with no host tooling required.
