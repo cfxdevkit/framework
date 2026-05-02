@@ -19,9 +19,6 @@ importers:
       '@changesets/cli':
         specifier: ^2.31.0
         version: 2.31.0(@types/node@22.19.17)
-      '@mariozechner/pi-coding-agent':
-        specifier: ^0.72.0
-        version: 0.72.0(@modelcontextprotocol/sdk@1.29.0(zod@4.3.6))(bufferutil@4.1.0)(utf-8-validate@5.0.10)(ws@8.20.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@4.3.6)
       '@moonrepo/cli':
         specifier: ^2.2.3
         version: 2.2.3
@@ -200,10 +197,10 @@ importers:
         version: 18.3.1(react@18.3.1)
       viem:
         specifier: ^2.21.0
-        version: 2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+        version: 2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
       wagmi:
         specifier: ^2.14.0
-        version: 2.19.5(@tanstack/query-core@5.100.6)(@tanstack/react-query@5.100.6(react@18.3.1))(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(typescript@6.0.3)(utf-8-validate@5.0.10)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76)
+        version: 2.19.5(@tanstack/query-core@5.100.6)(@tanstack/react-query@5.100.6(react@18.3.1))(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(typescript@6.0.3)(utf-8-validate@5.0.10)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6))(zod@4.3.6)
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.4.14
@@ -331,7 +328,7 @@ importers:
         version: 6.0.3
       viem:
         specifier: ^2.21.0
-        version: 2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+        version: 2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       vite:
         specifier: ^8.0.10
         version: 8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4)
@@ -343,7 +340,7 @@ importers:
         version: 4.1.5(@types/node@22.19.17)(vite@8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4))
       wagmi:
         specifier: ^2.14.0
-        version: 2.19.5(@tanstack/query-core@5.100.6)(@tanstack/react-query@5.100.6(react@18.3.1))(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(typescript@6.0.3)(utf-8-validate@5.0.10)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6))(zod@4.3.6)
+        version: 2.19.5(@tanstack/query-core@5.100.6)(@tanstack/react-query@5.100.6(react@18.3.1))(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(typescript@6.0.3)(utf-8-validate@5.0.10)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76)
 
   repos/cfx-core/packages/core:
     dependencies:
@@ -392,10 +389,10 @@ importers:
         version: link:../core
       '@xcfx/node':
         specifier: ^0.8.0
-        version: 0.8.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+        version: 0.8.0(typescript@6.0.3)
       cive:
         specifier: ^0.8.1
-        version: 0.8.1(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+        version: 0.8.1(typescript@6.0.3)
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.4.14
@@ -862,6 +859,40 @@ importers:
       '@types/node':
         specifier: ^22.10.0
         version: 22.19.17
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.0.10
+        version: 8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4)
+      vite-plugin-dts:
+        specifier: ^5.0.0
+        version: 5.0.0(@microsoft/api-extractor@7.58.7(@types/node@22.19.17))(esbuild@0.27.7)(rollup@4.60.2)(typescript@6.0.3)(vite@8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4))
+      vitest:
+        specifier: ^4.1.5
+        version: 4.1.5(@types/node@22.19.17)(vite@8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4))
+
+  repos/cfx-tools/packages/llm-tools:
+    dependencies:
+      '@mariozechner/pi-coding-agent':
+        specifier: ^0.72.0
+        version: 0.72.0(@modelcontextprotocol/sdk@1.29.0(zod@4.3.6))(bufferutil@4.1.0)(utf-8-validate@5.0.10)(ws@8.20.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@4.3.6)
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.4.14
+        version: 2.4.14
+      '@cfxdevkit/biome-config':
+        specifier: workspace:*
+        version: link:../../../../tools/biome-config
+      '@cfxdevkit/tsconfig':
+        specifier: workspace:*
+        version: link:../../../../tools/tsconfig
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.17
+      tsx:
+        specifier: ^4.20.6
+        version: 4.21.0
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -11091,9 +11122,9 @@ snapshots:
   '@xcfx/node-win32-x64-msvc@0.8.0':
     optional: true
 
-  '@xcfx/node@0.8.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
+  '@xcfx/node@0.8.0(typescript@6.0.3)':
     dependencies:
-      cive: 0.8.1(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      cive: 0.8.1(typescript@6.0.3)
     optionalDependencies:
       '@xcfx/node-darwin-arm64': 0.8.0
       '@xcfx/node-linux-arm64-gnu': 0.8.0
@@ -11367,6 +11398,19 @@ snapshots:
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
       viem: 2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  cive@0.8.1(typescript@6.0.3):
+    dependencies:
+      '@noble/curves': 1.9.7
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      viem: 2.48.4(typescript@6.0.3)(zod@3.25.76)
       zod: 3.25.76
     transitivePeerDependencies:
       - bufferutil
@@ -12351,7 +12395,7 @@ snapshots:
     dependencies:
       ws: 8.18.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
 
-  isows@1.0.7(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)):
+  isows@1.0.7(ws@8.18.3):
     dependencies:
       ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
 
@@ -13986,7 +14030,7 @@ snapshots:
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
       abitype: 1.2.3(typescript@6.0.3)(zod@3.22.4)
-      isows: 1.0.7(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+      isows: 1.0.7(ws@8.18.3)
       ox: 0.14.20(typescript@6.0.3)(zod@3.22.4)
       ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     optionalDependencies:
@@ -14003,7 +14047,7 @@ snapshots:
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
       abitype: 1.2.3(typescript@6.0.3)(zod@3.25.76)
-      isows: 1.0.7(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+      isows: 1.0.7(ws@8.18.3)
       ox: 0.14.20(typescript@6.0.3)(zod@3.25.76)
       ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     optionalDependencies:
@@ -14020,8 +14064,25 @@ snapshots:
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
       abitype: 1.2.3(typescript@6.0.3)(zod@4.3.6)
-      isows: 1.0.7(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+      isows: 1.0.7(ws@8.18.3)
       ox: 0.14.20(typescript@6.0.3)(zod@4.3.6)
+      ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+    optionalDependencies:
+      typescript: 6.0.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
+
+  viem@2.48.4(typescript@6.0.3)(zod@3.25.76):
+    dependencies:
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@6.0.3)(zod@3.25.76)
+      isows: 1.0.7(ws@8.18.3)
+      ox: 0.14.20(typescript@6.0.3)(zod@3.25.76)
       ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     optionalDependencies:
       typescript: 6.0.3

@@ -1,5 +1,15 @@
 # Changelog
 
+
+## [Unreleased] - 2026-05-02
+### Changed
+- Moved LLM CLI functionality from `scripts/lemonade-cli.mjs` and `scripts/llm-agents.mjs` to a new `@cfxdevkit/llm-tools` package under `repos/cfx-tools/packages/llm-tools`.
+- Updated root `package.json` to delegate all `llm:*` scripts to `pnpm --filter @cfxdevkit/llm-tools llm --`, including new commands: `architecture`, `docs-upkeep`, `health`, `plan`, `test-audit`, and `validation`.
+- Removed `@mariozechner/pi-coding-agent` from root `devDependencies` and `pnpm-lock.yaml`, as it is now a dependency of `@cfxdevkit/llm-tools`.
+- Added `repos/cfx-tools/packages/llm-tools` to `.moon/workspace.yml`.
+- Simplified `scripts/lemonade-cli.mjs` to a thin wrapper that spawns the new worker script in `@cfxdevkit/llm-tools`.
+- Updated dependency versions in `pnpm-lock.yaml`, notably aligning `zod` to `4.3.6` in some lock entries and removing `bufferutil`/`utf-8-validate` from `@xcfx/node` and `cive` optional dependencies.
+
 ## [Unreleased]
 ### Added
 - Added `@mariozechner/pi-coding-agent@^0.72.0` as a dev dependency.
