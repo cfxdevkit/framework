@@ -1,4 +1,4 @@
-# framework/compiler — Detailed Structure
+# @cfxdevkit/compiler — Detailed Structure
 
 ```
 compiler/

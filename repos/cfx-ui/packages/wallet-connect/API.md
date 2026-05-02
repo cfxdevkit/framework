@@ -1,4 +1,4 @@
-# framework/wallet-connect — Public API
+# @cfxdevkit/wallet-connect — Public API
 
 > Browser wallet connector + UI primitives. Headless logic + opt-in components.
 

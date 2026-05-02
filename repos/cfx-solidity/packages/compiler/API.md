@@ -1,4 +1,4 @@
-# framework/compiler — Public API
+# @cfxdevkit/compiler — Public API
 
 > Solidity compilation. Pure, deterministic, no caching of artifacts (caller's job).
 

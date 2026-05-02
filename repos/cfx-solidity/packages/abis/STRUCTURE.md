@@ -1,4 +1,4 @@
-# framework/abis — Detailed Structure
+# @cfxdevkit/abis — Detailed Structure
 
 ```
 abis/

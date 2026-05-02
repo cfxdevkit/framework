@@ -50,7 +50,7 @@ const coreSpaceTestnet: ChainConfig
 
 function getChain(idOrName: ChainId | string): ChainConfig    // throws CfxError if unknown
 function listChains(): readonly ChainConfig[]
-function defineChain(input: ChainConfig): ChainConfig         // identity validator
+function defineChain(input: ChainConfig): ChainConfig         // validates and registers chain config
 ```
 
 ### Data flow
@@ -150,7 +150,7 @@ function deriveAccounts(input: {
 
 // Signer factories — these need a private key in memory.
 // Production code should not call these directly; use framework/services + framework/wallet/signers.
-function signerFromPrivateKey(privateKey: Hex): Signer        // @internal — moved here for testing only
+function signerFromPrivateKey(privateKey: Hex): Signer        // @deprecated — use `framework/wallet/signers` in production; kept here only for testing
 ```
 
 ### Errors

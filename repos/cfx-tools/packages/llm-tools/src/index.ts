@@ -52,6 +52,13 @@ export const llmCommands = [
     workerArgs: ['docs-upkeep'],
   },
   {
+    name: 'test-upkeep',
+    description:
+      'Analyse test coverage per package, identify hotspots, and optionally generate missing test files',
+    worker: 'lemonade',
+    workerArgs: ['test-upkeep'],
+  },
+  {
     name: 'test-audit',
     description:
       'Ask the local LLM to assess whether changed code has useful test and precheck coverage',

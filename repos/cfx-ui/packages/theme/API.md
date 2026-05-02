@@ -1,4 +1,4 @@
-# framework/theme — Public API
+# @cfxdevkit/theme — Public API
 
 > Design tokens + minimal CSS layer. **Tokens are data**, not components.
 > Consumers (defi-react, wallet-connect/ui, project apps) opt in by importing one

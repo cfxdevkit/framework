@@ -1,4 +1,4 @@
-# framework/wallet — Detailed Structure
+# @cfxdevkit/wallet — Detailed Structure
 
 ```
 wallet/
@@ -48,7 +48,7 @@ wallet/
 
 ### Dependencies
 
-- Runtime: `framework/core`, `framework/services` (for keystore interface).
+- Runtime: `@cfxdevkit/core`, `@cfxdevkit/services` (for keystore interface).
 
 ### Security note
 

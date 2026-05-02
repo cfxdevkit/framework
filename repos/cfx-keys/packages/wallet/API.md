@@ -1,4 +1,4 @@
-# framework/wallet — Public API
+# @cfxdevkit/wallet — Public API
 
 > The **only blessed entrypoint for automated signers**. Raw private keys go
 > through `services/keystore` first; this package wraps them into capability-scoped

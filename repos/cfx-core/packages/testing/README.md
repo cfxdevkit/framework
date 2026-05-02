@@ -1,4 +1,4 @@
-# framework/testing
+# @cfxdevkit/testing
 
 **Scope:** Shared test utilities used by every package and project.
 

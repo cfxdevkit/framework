@@ -39,6 +39,7 @@
     "llm:review": "pnpm --filter @cfxdevkit/llm-tools llm -- review",
     "llm:serve-check": "pnpm --filter @cfxdevkit/llm-tools llm -- serve-check",
     "llm:test-audit": "pnpm --filter @cfxdevkit/llm-tools llm -- test-audit",
+    "llm:test-upkeep": "pnpm --filter @cfxdevkit/llm-tools llm -- test-upkeep",
     "llm:validation": "pnpm --filter @cfxdevkit/llm-tools llm -- validation",
     "security:audit": "pnpm audit --prod --audit-level moderate",
     "security:secrets": "node scripts/check-secret-leaks.mjs",

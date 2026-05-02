@@ -1,7 +1,7 @@
 # framework/react — Public API
 
 > Thin React adapters over `framework/core`. **Hooks only**, no providers that
-> hide state. State lives in TanStack Query + a tiny client context.
+> hide state. State is managed externally via TanStack Query and a minimal client context.
 
 ## Sub-paths
 

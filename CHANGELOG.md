@@ -1,5 +1,10 @@
 # Changelog
 
+
+## [Unreleased]
+### Added
+- `llm:test-upkeep` script to run LLM test upkeep via `@cfxdevkit/llm-tools`
+
 ## [Unreleased]
 ### Changed
 - Updated `zod` dependency from `4.3.6` to `3.25.76` in `pnpm-lock.yaml` for root and dev dependencies, reversing previous version conflicts.

@@ -9,4 +9,4 @@
 - Idempotency keys
 
 Domain-specific automation strategies (DCA, limit orders, etc.) live in
-[domains/automation/](../../domains/automation/) and consume this package.
+[domains/automation/](../../domains/automation/README.md) and consume this package.

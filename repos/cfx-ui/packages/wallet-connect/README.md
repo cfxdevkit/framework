@@ -1,6 +1,6 @@
-# framework/wallet-connect
+# @cfxdevkit/wallet-connect
 
-**Scope:** Opinionated wallet-connection bundle for web apps.
+**Scope:** Opinionated wallet-connection bundle for web apps using @cfxdevkit/wallet-connect.
 
 **Responsibilities**
 - Wagmi v2 connectors pre-configured for Conflux chains

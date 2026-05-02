@@ -59,4 +59,4 @@ game-engine/
 ### Origin
 
 Extracted from `chainbrawler/packages/core`. RPG-specific rules stay in
-`projects/chainbrawler/packages/game-rules/`.
+`projects/chainbrawler/packages/game-rules/`. See [STRUCTURE.md](../../projects/chainbrawler/packages/game-rules/STRUCTURE.md) for the project-specific rules layout.

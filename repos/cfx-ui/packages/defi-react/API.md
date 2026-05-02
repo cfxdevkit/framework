@@ -1,4 +1,4 @@
-# framework/defi-react — Public API
+# @cfxdevkit/defi-react — Public API
 
 > Opinionated DeFi widgets for prototypes & demos. Built on `react`, `services/dex`,
 > `services/tokens`, and `theme`. **No protocol logic here** — this is composition.

@@ -1,4 +1,4 @@
-# framework/theme — Detailed Structure
+# @cfxdevkit/theme — Detailed Structure
 
 UI-library agnostic. Outputs JSON + CSS variables + Tailwind preset.
 

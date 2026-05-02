@@ -1,6 +1,6 @@
 # framework/devnode — Public API
 
-> Local Conflux dev node. One process per `Node`. Lifecycle is explicit.
+> Local Conflux dev node. One process per `Node`. Lifecycle is explicit and managed via `createNode` and `stop`.
 
 ## Sub-paths
 
@@ -62,4 +62,4 @@ function mineBlocks(node: Node, n: number, opts?: { signal?: AbortSignal }): Pro
 function setBlockTime(node: Node, ms: DurationMs): Promise<void>
 ```
 
-Mirrors anvil/hardhat semantics so test fixtures port over.
+Mirrors anvil/hardhat semantics for compatibility with existing test fixtures.

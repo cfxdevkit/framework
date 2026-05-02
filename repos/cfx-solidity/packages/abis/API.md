@@ -1,4 +1,4 @@
-# framework/abis — Public API
+# @cfxdevkit/abis — Public API
 
 > Stable EVM ABI constants with zero internal workspace dependencies.
 

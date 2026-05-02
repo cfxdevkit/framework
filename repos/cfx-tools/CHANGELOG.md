@@ -1,5 +1,20 @@
 # Changelog
 
+
+## [Unreleased] - 2026-05-02
+### Added
+- Introduced `test-upkeep` LLM worker in `@cfxdevkit/llm-tools` to analyze test coverage, identify hotspots, and optionally generate missing test files.
+### Changed
+- Updated `docs-upkeep` pipeline to process folders deepest-first, enabling inner folder artifacts to serve as context for parent folders.
+- Extended `generateDocsUpkeepArtifact` and `generateDocsUpkeepReplacements` with optional `childContext` parameter to incorporate child summaries.
+- Added `buildChildSummaryContext` helper to accumulate and truncate child artifact summaries for LLM prompts.
+- Updated README files for `devtools` and `docs-site` to clarify internal scope and warn about missing `../../docs/` path.
+- Refined CLI documentation in `API.md` files to distinguish between built CLI (`cfx-llm`) and dev-time invocation via package scripts.
+- Added `--skip-test-run` flag to `test-upkeep` to bypass vitest execution during analysis.
+### Fixed
+- Ensured deterministic ordering of discovered scopes in `docs-upkeep` and `test-upkeep` pipelines.
+- Corrected prompt construction to filter empty strings before joining, reducing token waste.
+
 ## [Unreleased] - 2026-05-02
 ### Changed
 - Migrated `workers/lemonade-cli.mjs` and `workers/llm-agents.mjs` to TypeScript (`workers/lemonade-cli.ts`, `workers/llm-agents.ts`) and updated `src/run.ts` to execute them via `tsx`.

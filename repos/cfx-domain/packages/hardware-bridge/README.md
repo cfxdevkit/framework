@@ -10,5 +10,5 @@
 **Origin:** `Electro/packages/{ws-protocol,sensor-types,hardware-diagram}`.
 
 **Non-goals**
-- Specific firmware (stays in `projects/electro/apps/firmware`).
+- Specific firmware (stays in `projects/electro/apps/firmware/`).
 - Project-specific dashboards.

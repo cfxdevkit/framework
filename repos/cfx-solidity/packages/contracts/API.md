@@ -5,8 +5,8 @@
 > `@cfxdevkit/core`'s `Client` and `Signer`.
 >
 > **Status:** `read`, `write`, `deploy`, and `erc20` work for both eSpace and
-> Core Space. Cive-backed Conflux signing and `cfx_sendRawTransaction`
-> dispatch are wired in; `client.family` selects the correct path.
+> Core Space. Conflux-backed signing and `cfx_sendRawTransaction` dispatch
+> are wired in; `client.family` selects the correct path.
 
 ## Sub-paths
 

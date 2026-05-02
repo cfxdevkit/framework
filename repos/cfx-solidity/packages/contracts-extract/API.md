@@ -1,6 +1,6 @@
 # framework/contracts-extract — Public API
 
-> Status: scaffold package. The implemented public surface is intentionally minimal.
+> Status: experimental. The implemented public surface is intentionally minimal and subject to change.
 
 ## Exports
 

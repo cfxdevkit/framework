@@ -1,4 +1,4 @@
-# framework/defi-react — Detailed Structure
+# @cfxdevkit/defi-react — Detailed Structure
 
 ```
 defi-react/
@@ -42,4 +42,4 @@ defi-react/
 ### Dependencies
 
 - Peer: `react`, `@tanstack/react-query`.
-- Runtime: `framework/core`, `framework/react`, `framework/services` (DEX).
+- Runtime: `@cfxdevkit/core`, `@cfxdevkit/react`, `@cfxdevkit/services` (DEX).

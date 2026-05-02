@@ -15,4 +15,4 @@ const symbol = await erc20.symbol({ client, address: '0xToken…' });
 See [API.md](./API.md) for the full surface and [STRUCTURE.md](./STRUCTURE.md)
 for the layout.
 
-eSpace-only in this revision; Core Space support lands next.
+eSpace and Core Space support are fully implemented in this revision.

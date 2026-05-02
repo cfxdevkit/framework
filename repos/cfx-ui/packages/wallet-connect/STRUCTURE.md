@@ -1,6 +1,6 @@
-# framework/wallet-connect — Detailed Structure
+# @cfxdevkit/wallet-connect — Detailed Structure
 
-Opinionated wallet-connection bundle for web apps.
+Opinionated wallet-connection bundle for web apps using @cfxdevkit/wallet-connect.
 
 ```
 wallet-connect/

@@ -149,6 +149,7 @@ try {
   else if (command === 'ask') await ask(args);
   else if (command === 'commit') await runCommit(args);
   else if (command === 'docs-upkeep') await runDocsUpkeep(args);
+  else if (command === 'test-upkeep') await runTestUpkeep(args);
   else if (command === 'run') await runAction(args);
   else if (command === 'actions') listActions();
   else help();
@@ -274,20 +275,34 @@ async function runDocsUpkeep(args) {
       flags.write = false;
     }
   }
+  // Accumulate completed artifacts so parent scopes get child summaries as context
+  const completedArtifacts = new Map(); // dir -> { summary, artifact }
   for (const scope of scopes) {
     logInfo(`  → ${scope.label}  (${scope.files.length} file(s))`);
     try {
-      const result = await generateDocsUpkeepArtifact(scope, baseContext, {
-        ...flags,
-        write: false,
-      });
+      const childContext = buildChildSummaryContext(scope, completedArtifacts, flags);
+      const result = await generateDocsUpkeepArtifact(
+        scope,
+        baseContext,
+        {
+          ...flags,
+          write: false,
+        },
+        childContext,
+      );
       if (flags.write) {
-        result.replacements = await generateDocsUpkeepReplacements(scope, baseContext, flags);
+        result.replacements = await generateDocsUpkeepReplacements(
+          scope,
+          baseContext,
+          flags,
+          childContext,
+        );
       }
       await writeDocsUpkeepScopeArtifact(scope, result);
       if (flags.write) await applyDocsUpkeepUpdates(scope, result);
       logInfo(`    ✓ ${result.summary}`);
       results.push({ scope, ...result, ok: true });
+      completedArtifacts.set(scope.dir, { summary: result.summary, artifact: result.artifact });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logInfo(`    ✗ ${message}`);
@@ -470,7 +485,13 @@ async function discoverDocsUpkeepScopes(flags) {
   }
   return [...groups.values()]
     .map((scope) => ({ ...scope, files: scope.files.sort() }))
-    .sort((left, right) => left.label.localeCompare(right.label))
+    .sort((left, right) => {
+      // Deepest folders first so inner artifacts are ready when parent is processed
+      const leftDepth = left.label === 'root' ? 0 : left.label.split('/').length;
+      const rightDepth = right.label === 'root' ? 0 : right.label.split('/').length;
+      if (rightDepth !== leftDepth) return rightDepth - leftDepth;
+      return left.label.localeCompare(right.label);
+    })
     .slice(0, flags.maxFolders);
 }
 
@@ -536,7 +557,7 @@ async function buildDocsUpkeepBaseContext(docsScan, flags) {
     .slice(0, flags.quick ? 8000 : 20000);
 }
 
-async function generateDocsUpkeepArtifact(scope, baseContext, flags) {
+async function generateDocsUpkeepArtifact(scope, baseContext, flags, childContext = '') {
   const folderContext = await buildDocsFolderContext(scope, flags.quick ? 20000 : 36000);
   const retryFolderContext = await buildDocsFolderContext(scope, flags.quick ? 12000 : 24000);
   const prompt = [
@@ -547,10 +568,13 @@ async function generateDocsUpkeepArtifact(scope, baseContext, flags) {
     '',
     'Repository docs context:',
     baseContext,
+    childContext ? `\n${childContext}` : '',
     '',
     'Folder contents:',
     folderContext,
-  ].join('\n');
+  ]
+    .filter((s) => s !== '')
+    .join('\n');
   const response = await completeDocsUpkeepArtifact({
     flags,
     userPrompt: prompt,
@@ -569,10 +593,13 @@ async function generateDocsUpkeepArtifact(scope, baseContext, flags) {
       '',
       'Repository docs context:',
       baseContext.slice(0, flags.quick ? 5000 : 12000),
+      childContext ? `\n${childContext.slice(0, flags.quick ? 2000 : 6000)}` : '',
       '',
       'Folder contents:',
       retryFolderContext,
-    ].join('\n');
+    ]
+      .filter((s) => s !== '')
+      .join('\n');
     const retryResponse = await completeDocsUpkeepArtifact({
       flags,
       userPrompt: retryPrompt,
@@ -636,7 +663,7 @@ async function completeDocsUpkeepArtifact({ flags, userPrompt, maxTokens }) {
   });
 }
 
-async function generateDocsUpkeepReplacements(scope, baseContext, flags) {
+async function generateDocsUpkeepReplacements(scope, baseContext, flags, childContext = '') {
   const folderContext = await buildDocsFolderContext(scope, flags.quick ? 14000 : 28000);
   const userPrompt = [
     `Folder scope: ${scope.label}`,
@@ -644,12 +671,15 @@ async function generateDocsUpkeepReplacements(scope, baseContext, flags) {
     '',
     'Repository docs context:',
     baseContext.slice(0, flags.quick ? 4000 : 10000),
+    childContext ? `\n${childContext.slice(0, flags.quick ? 2000 : 6000)}` : '',
     '',
     'Folder contents:',
     folderContext,
     '',
     'Return only safe exact replacements for existing files in this folder. Do not create files. Do not rewrite complete files.',
-  ].join('\n');
+  ]
+    .filter((s) => s !== '')
+    .join('\n');
   const response = await completeDirect({
     action: 'docs-upkeep',
     modelOverride: flags.model,
@@ -857,6 +887,7 @@ async function writeDocsUpkeepIndex(results, flags) {
     `Mode: ${flags.quick ? 'quick' : 'full'}`,
     `Scope: ${flags.docsOnly ? 'docs/' : 'all markdown'}`,
     `Write mode: ${flags.write ? 'yes' : 'no'}`,
+    'Processing order: deepest-first (inner folder artifacts used as context for parent folders)',
     '',
     '## Folder Results',
     '',
@@ -879,6 +910,24 @@ async function writeDocsUpkeepIndex(results, flags) {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, lines.join('\n'), 'utf8');
   return 'artifacts/llm/reports/docs-upkeep.md';
+}
+
+function buildChildSummaryContext(scope, completedArtifacts, flags) {
+  const parentDir = scope.dir === 'root' ? '' : scope.dir;
+  const children = [...completedArtifacts.entries()].filter(([dir]) => {
+    if (parentDir === '') return dir !== 'root'; // root inherits everything
+    return dir.startsWith(`${parentDir}/`);
+  });
+  if (children.length === 0) return '';
+  const maxCharsPerChild = flags.quick ? 600 : 1800;
+  const totalMax = flags.quick ? 6000 : 18000;
+  const parts = children
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(
+      ([dir, data]) =>
+        `### Inner scope: ${dir}\nSummary: ${data.summary}\n${data.artifact.slice(0, maxCharsPerChild)}`,
+    );
+  return `## Inner folder summaries (deepest first)\n\n${parts.join('\n\n')}`.slice(0, totalMax);
 }
 
 function artifactSlug(label) {
@@ -2009,6 +2058,538 @@ function parsePromptAndFlags(args) {
   return { prompt: promptParts.join(' ').trim(), model, quick };
 }
 
+// ─── Test upkeep pipeline ─────────────────────────────────────────────────────
+
+async function runTestUpkeep(args) {
+  if (args[0] === '--') args.shift();
+  const flags = parseTestUpkeepFlags(args);
+  const total = 5;
+
+  logStep(1, total, 'Discovering testable packages');
+  const packages = await discoverTestUpkeepPackages(flags);
+  if (packages.length === 0) {
+    logInfo('  No packages with vitest.config matched.');
+    return;
+  }
+  logInfo(`  ${packages.length} package(s): ${packages.map((p) => p.label).join(', ')}`);
+
+  logStep(2, total, 'Building test inventory (deterministic)');
+  for (const pkg of packages) {
+    pkg.inventory = await collectPackageTestInventory(pkg);
+    const { sourceCount, testCount, untestedCount } = pkg.inventory;
+    logInfo(`  ${pkg.label}: ${sourceCount} src, ${testCount} test, ${untestedCount} untested`);
+  }
+
+  logStep(3, total, `Running package tests [${packages.length} package(s)]`);
+  if (flags.skipTestRun) {
+    logInfo('  --skip-test-run: skipping vitest execution');
+    for (const pkg of packages) pkg.testOutput = '(test run skipped)';
+  } else {
+    for (const pkg of packages) {
+      process.stdout.write(`  › ${pkg.label}...`);
+      pkg.testOutput = await runPackageTestsBlock(pkg);
+      const passed = /\d+ passed/.test(pkg.testOutput);
+      const failed = /\d+ failed/.test(pkg.testOutput);
+      console.log(` ${failed ? '\u2717 failures' : passed ? '\u2713 ok' : '\u2013 no tests ran'}`);
+    }
+  }
+
+  logStep(4, total, 'Generating per-package analysis [LLM, serial]');
+  const baseContext = await buildTestUpkeepBaseContext(flags);
+  if (flags.write && !flags.yes) {
+    const confirmed = await confirmPrompt(
+      `Write suggested test files to src/ for ${packages.length} package(s)? [Y/n] `,
+    );
+    if (!confirmed) {
+      logInfo('  Continuing in artifact-only mode.');
+      flags.write = false;
+    }
+  }
+  const completedArtifacts = new Map(); // pkg.dir -> { summary, artifact }
+  const results = [];
+  for (const pkg of packages) {
+    logInfo(`  → ${pkg.label}`);
+    try {
+      const childContext = buildTestChildSummaryContext(pkg, completedArtifacts, flags);
+      const result = await generateTestUpkeepArtifact(pkg, baseContext, flags, childContext);
+      await writeTestUpkeepScopeArtifact(pkg, result);
+      let writtenFiles = [];
+      if (flags.write) {
+        writtenFiles = await writeTestUpkeepSuggestions(pkg, result, flags);
+        if (writtenFiles.length > 0) {
+          logInfo(`    written ${writtenFiles.length} test file(s); re-running tests...`);
+          pkg.testOutput = await runPackageTestsBlock(pkg);
+          const failed = /\d+ failed/.test(pkg.testOutput);
+          logInfo(
+            failed
+              ? '    ✗ new tests have failures — review before committing'
+              : '    ✓ new tests pass',
+          );
+        }
+      }
+      logInfo(`    ✓ ${result.summary}`);
+      results.push({ pkg, ...result, writtenFiles, ok: true });
+      completedArtifacts.set(pkg.dir, { summary: result.summary, artifact: result.artifact });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logInfo(`    ✗ ${message}`);
+      results.push({
+        pkg,
+        summary: '',
+        artifact: '',
+        hotspots: [],
+        suggestions: [],
+        followups: [],
+        writtenFiles: [],
+        ok: false,
+        error: message,
+      });
+    }
+  }
+
+  logStep(5, total, 'Writing test upkeep index');
+  const indexPath = await writeTestUpkeepIndex(results, flags);
+  logInfo(`  report: ${indexPath}`);
+}
+
+function parseTestUpkeepFlags(args) {
+  const promptParts = [];
+  const scopes = [];
+  let model = null;
+  let quick = false;
+  let write = false;
+  let yes = false;
+  let skipTestRun = false;
+  let maxPackages = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--model') model = args[++i];
+    else if (arg === '--quick') quick = true;
+    else if (arg === '--write') write = true;
+    else if (arg === '--yes' || arg === '-y') yes = true;
+    else if (arg === '--skip-test-run') skipTestRun = true;
+    else if (arg === '--scope') scopes.push(args[++i]);
+    else if (arg === '--max-packages') maxPackages = Number(args[++i]);
+    else promptParts.push(arg);
+  }
+  return {
+    prompt: promptParts.join(' ').trim(),
+    model,
+    quick,
+    write,
+    yes,
+    skipTestRun,
+    scopes: scopes.filter(Boolean),
+    maxPackages:
+      Number.isFinite(maxPackages) && maxPackages > 0 ? maxPackages : Number.POSITIVE_INFINITY,
+  };
+}
+
+async function discoverTestUpkeepPackages(flags) {
+  const vitestConfigs = [];
+  await walkForFiles(
+    root,
+    (name) => name === 'vitest.config.ts' || name === 'vitest.config.js',
+    vitestConfigs,
+    ['node_modules', 'dist', 'coverage', 'artifacts', '.git', '.moon'],
+  );
+  const scopeFilters = flags.scopes.map(normalizeScopeFilter);
+  const packages = [];
+  for (const cfgPath of vitestConfigs) {
+    const pkgDir = dirname(cfgPath).replace(`${root}/`, '');
+    if (scopeFilters.length && !scopeFilters.some((s) => pkgDir.startsWith(s))) continue;
+    let pkgJson = {};
+    try {
+      pkgJson = JSON.parse(await readFile(join(root, pkgDir, 'package.json'), 'utf8'));
+    } catch {
+      /* optional */
+    }
+    packages.push({
+      key: pkgDir,
+      label: pkgDir,
+      dir: pkgDir,
+      pkgName: pkgJson.name ?? pkgDir,
+      pkgJson,
+    });
+  }
+  return packages.sort((a, b) => a.label.localeCompare(b.label)).slice(0, flags.maxPackages);
+}
+
+async function walkForFiles(dir, predicate, found, ignore = []) {
+  let entries = [];
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    if (ignore.includes(entry.name)) continue;
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) await walkForFiles(path, predicate, found, ignore);
+    if (entry.isFile() && predicate(entry.name)) found.push(path);
+  }
+}
+
+async function collectPackageTestInventory(pkg) {
+  const srcDir = join(root, pkg.dir, 'src');
+  const allTs = [];
+  await walkForFiles(srcDir, (name) => name.endsWith('.ts') || name.endsWith('.tsx'), allTs, [
+    'node_modules',
+    'dist',
+    'coverage',
+  ]);
+  const relativeToSrc = (abs) => abs.replace(`${srcDir}/`, 'src/');
+  const testFiles = new Set(
+    allTs.filter((f) => f.endsWith('.test.ts') || f.endsWith('.spec.ts')).map(relativeToSrc),
+  );
+  const sourceFiles = allTs
+    .filter((f) => !f.endsWith('.test.ts') && !f.endsWith('.spec.ts') && !f.endsWith('.d.ts'))
+    .map(relativeToSrc);
+  const untestedFiles = sourceFiles.filter((f) => {
+    const base = f.replace(/\.tsx?$/, '');
+    return !testFiles.has(`${base}.test.ts`) && !testFiles.has(`${base}.spec.ts`);
+  });
+  return {
+    sourceFiles,
+    testFiles: [...testFiles],
+    untestedFiles,
+    sourceCount: sourceFiles.length,
+    testCount: testFiles.size,
+    untestedCount: untestedFiles.length,
+  };
+}
+
+async function runPackageTestsBlock(pkg) {
+  try {
+    const { stdout, stderr } = await execFileAsync(
+      'pnpm',
+      ['exec', 'vitest', 'run', '--passWithNoTests', '--reporter=verbose'],
+      {
+        cwd: join(root, pkg.dir),
+        maxBuffer: 1024 * 1024 * 4,
+        signal: AbortSignal.timeout(120000),
+        env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' },
+      },
+    );
+    return [stdout, stderr].filter(Boolean).join('\n').trim().slice(0, 8000);
+  } catch (error) {
+    return [error?.stdout ?? '', error?.stderr ?? error?.message ?? '']
+      .filter(Boolean)
+      .join('\n')
+      .trim()
+      .slice(0, 8000);
+  }
+}
+
+async function buildTestUpkeepBaseContext(flags) {
+  const parts = await Promise.all([
+    readContextFile('README.md'),
+    readContextFile('ARCHITECTURE.md'),
+    readContextFile('CONTRIBUTING.md'),
+    readContextFile('.moon/tasks/node.yml'),
+  ]);
+  return parts
+    .filter(Boolean)
+    .join('\n\n')
+    .slice(0, flags.quick ? 6000 : 14000);
+}
+
+async function generateTestUpkeepArtifact(pkg, baseContext, flags, childContext = '') {
+  const inv = pkg.inventory;
+  // Build source context: untested files first (highest value), then existing tests
+  const untestedContext = await buildFilesContext(
+    pkg.dir,
+    inv.untestedFiles.slice(0, flags.quick ? 3 : 6),
+    flags.quick ? 8000 : 18000,
+  );
+  const testContext = await buildFilesContext(
+    pkg.dir,
+    inv.testFiles.slice(0, flags.quick ? 2 : 4),
+    flags.quick ? 4000 : 10000,
+  );
+
+  const inventorySummary = [
+    `Package: ${pkg.pkgName} (${pkg.dir})`,
+    `Source files (${inv.sourceCount}): ${inv.sourceFiles.slice(0, 20).join(', ')}${inv.sourceCount > 20 ? ', ...' : ''}`,
+    `Test files (${inv.testCount}): ${inv.testFiles.slice(0, 20).join(', ')}${inv.testCount > 20 ? ', ...' : ''}`,
+    `Untested files (${inv.untestedCount}): ${inv.untestedFiles.slice(0, 20).join(', ')}${inv.untestedCount > 20 ? ', ...' : ''}`,
+  ].join('\n');
+
+  const systemPrompt = [
+    'You are a test coverage analyst for a TypeScript monorepo using Vitest.',
+    'Return strict JSON only, with no markdown fence and no explanatory text.',
+    'Schema: {"summary":"one sentence","hotspots":["path: reason"],"suggestions":[{"testFile":"src/relative/path.test.ts","description":"what it covers","contentLines":["TypeScript code line"]}],"followups":["action item"]}.',
+    'hotspots: list source files or specific exported symbols that clearly lack test coverage.',
+    'suggestions: propose new test files or additions to existing ones. Each contentLines array must be complete valid TypeScript using Vitest (import from vitest, no other test framework).',
+    'Do not suggest tests for files that already have a test counterpart unless they are clearly incomplete.',
+    flags.write
+      ? 'The suggestions will be written to disk. Make contentLines a complete, runnable Vitest test file.'
+      : 'Focus on identifying the highest-value missing tests.',
+  ].join(' ');
+
+  const userPrompt = [
+    'Repository context:',
+    baseContext,
+    childContext ? `\n${childContext}` : '',
+    '',
+    '--- Package inventory ---',
+    inventorySummary,
+    '',
+    '--- Test run output ---',
+    pkg.testOutput?.slice(0, flags.quick ? 2000 : 5000) ?? '(not run)',
+    '',
+    '--- Untested source files ---',
+    untestedContext || '(all source files have test counterparts)',
+    '',
+    '--- Existing tests (sample) ---',
+    testContext || '(no test files found)',
+    '',
+    flags.prompt || 'Identify coverage hotspots and generate the highest-value missing test cases.',
+  ]
+    .filter((s) => s !== '')
+    .join('\n');
+
+  const response = await completeDirect({
+    action: 'test-upkeep',
+    modelOverride: flags.model,
+    systemPrompt,
+    userPrompt,
+    maxTokens: flags.write ? (flags.quick ? 3200 : 6000) : flags.quick ? 1400 : 2800,
+  });
+  try {
+    return validateTestUpkeepJson(response.content, pkg.label);
+  } catch {
+    const retryResponse = await completeDirect({
+      action: 'test-upkeep',
+      modelOverride: flags.model,
+      systemPrompt: `${systemPrompt} The previous response was invalid. Return exactly one compact JSON object. No markdown.`,
+      userPrompt: [
+        'Previous invalid response excerpt:',
+        response.content.slice(0, 800),
+        '',
+        userPrompt.slice(0, flags.quick ? 6000 : 20000),
+      ].join('\n'),
+      maxTokens: flags.write ? (flags.quick ? 2600 : 4800) : flags.quick ? 1200 : 2400,
+    });
+    try {
+      return validateTestUpkeepJson(retryResponse.content, pkg.label);
+    } catch {
+      return fallbackTestUpkeepArtifact(pkg);
+    }
+  }
+}
+
+function validateTestUpkeepJson(content, pkgLabel) {
+  const parsed = parseJsonObject(content);
+  if (typeof parsed.summary !== 'string' || !parsed.summary.trim()) {
+    throw new Error(`Invalid test-upkeep JSON for ${pkgLabel}: missing summary`);
+  }
+  const hotspots = Array.isArray(parsed.hotspots)
+    ? parsed.hotspots.filter((h) => typeof h === 'string' && h.trim()).map((h) => h.trim())
+    : [];
+  const suggestions = Array.isArray(parsed.suggestions)
+    ? parsed.suggestions.map((s) => normalizeTestSuggestion(s)).filter(Boolean)
+    : [];
+  const followups = Array.isArray(parsed.followups)
+    ? parsed.followups.filter((f) => typeof f === 'string' && f.trim()).map((f) => f.trim())
+    : [];
+  return {
+    summary: parsed.summary.trim(),
+    artifact: formatTestUpkeepArtifact(hotspots, suggestions, followups),
+    hotspots,
+    suggestions,
+    followups,
+  };
+}
+
+function normalizeTestSuggestion(s) {
+  if (!s || typeof s.testFile !== 'string' || !Array.isArray(s.contentLines)) return null;
+  const testFile = s.testFile.trim().replace(/^\.?\//, '');
+  if (!testFile.endsWith('.test.ts') && !testFile.endsWith('.spec.ts')) return null;
+  const content = s.contentLines
+    .filter((l) => typeof l === 'string')
+    .join('\n')
+    .trim();
+  if (!content) return null;
+  return {
+    testFile,
+    description: typeof s.description === 'string' ? s.description.trim() : '',
+    content: `${content}\n`,
+  };
+}
+
+function formatTestUpkeepArtifact(hotspots, suggestions, followups) {
+  const lines = [];
+  lines.push('## Coverage Hotspots', '');
+  if (hotspots.length) for (const h of hotspots) lines.push(`- ${h}`);
+  else lines.push('- No major hotspots identified.');
+  lines.push('', '## Suggested Tests', '');
+  if (suggestions.length) {
+    for (const s of suggestions) {
+      lines.push(`### \`${s.testFile}\``, s.description, '');
+      lines.push('```typescript', s.content.trim(), '```', '');
+    }
+  } else {
+    lines.push('- No new test suggestions.');
+  }
+  lines.push('', '## Follow-ups', '');
+  if (followups.length) for (const f of followups) lines.push(`- ${f}`);
+  else lines.push('- None.');
+  return lines.join('\n');
+}
+
+function fallbackTestUpkeepArtifact(pkg) {
+  return {
+    summary: `Could not parse LLM test analysis for ${pkg.label}; manual review recommended.`,
+    artifact: [
+      '## Coverage Hotspots',
+      '',
+      `- Untested source files: ${pkg.inventory?.untestedFiles?.join(', ') || 'unknown'}`,
+      '',
+      '## Suggested Tests',
+      '',
+      '- LLM returned malformed JSON. Rerun test-upkeep for this package.',
+      '',
+      '## Follow-ups',
+      '',
+      `- Rerun \`pnpm run llm:test-upkeep -- --scope ${pkg.dir}\` to get proper suggestions.`,
+    ].join('\n'),
+    hotspots: pkg.inventory?.untestedFiles?.slice(0, 5) ?? [],
+    suggestions: [],
+    followups: [`Rerun test-upkeep for ${pkg.label}`],
+  };
+}
+
+async function buildFilesContext(pkgDir, relPaths, maxChars) {
+  const parts = [];
+  for (const rel of relPaths) {
+    try {
+      const content = await readFile(join(root, pkgDir, rel), 'utf8');
+      parts.push(`--- ${rel} ---\n${content.slice(0, 10000)}`);
+    } catch {
+      /* skip */
+    }
+  }
+  return parts.join('\n\n').slice(0, maxChars);
+}
+
+async function writeTestUpkeepSuggestions(pkg, result, _flags) {
+  const written = [];
+  for (const suggestion of result.suggestions) {
+    const destPath = join(root, pkg.dir, suggestion.testFile);
+    // Safety: only write if file does not exist yet
+    try {
+      await stat(destPath);
+      logInfo(`    ! skipped (already exists): ${suggestion.testFile}`);
+      continue;
+    } catch {
+      /* does not exist — safe to write */
+    }
+    await mkdir(dirname(destPath), { recursive: true });
+    await writeFile(destPath, suggestion.content, 'utf8');
+    written.push(suggestion.testFile);
+    logInfo(`    + wrote ${suggestion.testFile}`);
+  }
+  return written;
+}
+
+async function writeTestUpkeepScopeArtifact(pkg, result) {
+  const inv = pkg.inventory ?? {};
+  const filePath = join(artifactsRoot, 'reports', 'test-upkeep', `${artifactSlug(pkg.label)}.md`);
+  await mkdir(dirname(filePath), { recursive: true });
+  await writeFile(
+    filePath,
+    [
+      `# Test upkeep: ${pkg.label}`,
+      '',
+      `Generated: ${new Date().toISOString()}`,
+      `Package: ${pkg.pkgName}`,
+      `Source files: ${inv.sourceCount ?? 'n/a'}`,
+      `Test files: ${inv.testCount ?? 'n/a'}`,
+      `Untested files: ${inv.untestedCount ?? 'n/a'}`,
+      '',
+      result.artifact,
+      '',
+    ].join('\n'),
+    'utf8',
+  );
+}
+
+async function writeTestUpkeepIndex(results, flags) {
+  const path = join(artifactsRoot, 'reports', 'test-upkeep.md');
+  const lines = [
+    '# Test Upkeep',
+    '',
+    `Generated: ${new Date().toISOString()}`,
+    `Mode: ${flags.quick ? 'quick' : 'full'}`,
+    `Write mode: ${flags.write ? 'yes' : 'no (suggestions in artifacts only)'}`,
+    `Test run: ${flags.skipTestRun ? 'skipped' : 'executed'}`,
+    '',
+    '## Package Results',
+    '',
+  ];
+  let totalUntested = 0;
+  let totalWritten = 0;
+  for (const result of results) {
+    const artifact = `artifacts/llm/reports/test-upkeep/${artifactSlug(result.pkg.label)}.md`;
+    const inv = result.pkg.inventory ?? {};
+    totalUntested += inv.untestedCount ?? 0;
+    totalWritten += result.writtenFiles?.length ?? 0;
+    lines.push(
+      `- ${result.ok ? 'ok' : 'error'} ${result.pkg.label}: ${result.ok ? result.summary : result.error}`,
+      `  - Untested: ${inv.untestedCount ?? 'n/a'} of ${inv.sourceCount ?? 'n/a'} source files`,
+      `  - Hotspots: ${result.hotspots?.length ?? 0} | Suggestions: ${result.suggestions?.length ?? 0} | Written: ${result.writtenFiles?.length ?? 0}`,
+      `  - Artifact: ${artifact}`,
+    );
+  }
+  lines.push(
+    '',
+    '## Summary',
+    '',
+    `- Total packages analysed: ${results.length}`,
+    `- Total untested source files: ${totalUntested}`,
+    `- Total test files written: ${totalWritten}`,
+    '',
+    '## Consolidated Hotspots',
+    '',
+  );
+  const allHotspots = results.flatMap((r) =>
+    r.ok ? (r.hotspots ?? []).map((h) => ({ pkg: r.pkg.label, h })) : [],
+  );
+  if (allHotspots.length === 0) lines.push('- None identified.');
+  else for (const { pkg, h } of allHotspots) lines.push(`- ${pkg}: ${h}`);
+  lines.push('', '## Consolidated Follow-ups', '');
+  const allFollowups = results.flatMap((r) =>
+    r.ok ? (r.followups ?? []).map((f) => ({ pkg: r.pkg.label, f })) : [],
+  );
+  if (allFollowups.length === 0) lines.push('- None.');
+  else for (const { pkg, f } of allFollowups) lines.push(`- ${pkg}: ${f}`);
+  lines.push('');
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, lines.join('\n'), 'utf8');
+  return 'artifacts/llm/reports/test-upkeep.md';
+}
+
+function buildTestChildSummaryContext(pkg, completedArtifacts, flags) {
+  // Siblings: packages in the same repo (same first 2 path components)
+  const repoParts = pkg.dir.split('/').slice(0, 2).join('/');
+  const siblings = [...completedArtifacts.entries()].filter(
+    ([dir]) => dir !== pkg.dir && dir.startsWith(repoParts),
+  );
+  if (siblings.length === 0) return '';
+  const maxCharsEach = flags.quick ? 500 : 1400;
+  const parts = siblings
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(
+      ([dir, data]) =>
+        `### Sibling: ${dir}\nSummary: ${data.summary}\n${data.artifact.slice(0, maxCharsEach)}`,
+    );
+  return `## Sibling package summaries (same repo)\n\n${parts.join('\n\n')}`.slice(
+    0,
+    flags.quick ? 4000 : 12000,
+  );
+}
+
 function assertAction(action) {
   if (!repoActions[action]) {
     throw new Error(`Unknown action "${action}". Run pnpm run llm:actions to list actions.`);
@@ -2064,6 +2645,19 @@ Commands:
     --quick                      Short LLM calls (faster, less detail)
     --model <id>                 Override LLM model
   run <action> [--quick] [prompt] Run docs-upkeep, test-audit, repo-health, review, plan, architecture, validation
+  test-upkeep [flags] [prompt]    Analyse test coverage per package, identify hotspots, and optionally write new test files:
+                                   1. Discover packages with vitest.config.ts
+                                   2. Build deterministic test inventory (source vs test files)
+                                   3. Run vitest per package and capture output
+                                   4. LLM: identify hotspots, suggest new tests (sibling context propagated)
+                                   5. Optionally write missing test files directly to src/
+    --scope <path>               Limit to packages under this path prefix; repeatable
+    --max-packages <n>           Limit package count for bounded runs
+    --skip-test-run              Skip vitest execution (inventory-only analysis)
+    --write                      Write LLM-suggested test files to src/ (new files only, skip existing)
+    --yes / -y                   Skip write confirmation prompt
+    --quick                      Shorter LLM calls
+    --model <id>                 Override LLM model
 
 Examples:
   pnpm run llm:models
@@ -2078,5 +2672,11 @@ Examples:
   pnpm run llm:docs-upkeep -- --scope docs/architecture --max-folders 1
   pnpm run llm:test-audit
   pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
+
+  pnpm run llm:test-upkeep
+  pnpm run llm:test-upkeep -- --quick --scope repos/cfx-core/packages/core
+  pnpm run llm:test-upkeep -- --scope repos/cfx-keys --max-packages 3
+  pnpm run llm:test-upkeep -- --write --yes --scope repos/cfx-core/packages/core
+  pnpm run llm:test-upkeep -- --skip-test-run --quick
 `);
 }

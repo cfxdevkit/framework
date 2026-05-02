@@ -1,4 +1,4 @@
-# framework/testing — Public API
+# @cfxdevkit/testing — Public API
 
 > Shared fixtures + helpers. **Test-only.** Imported only from `*.test.ts` and
 > `test/integration/`. Production builds tree-shake away.
@@ -25,7 +25,7 @@ type DevWorld = {
   stop(): Promise<void>
 }
 
-function createDevWorld(opts?: { fundedAccounts?: number; chainId?: ChainId }): Promise<DevWorld>
+function createDevWorld(opts?: { fundedAccounts?: number; chainId?: ChainId; seed?: string }): Promise<DevWorld>
 
 type Erc20Fixture = { token: Address; mint: (to: Address, amount: Wei) => Promise<Hash> }
 function deployErc20(input: { client: Client; signer: Signer; name?: string; symbol?: string; decimals?: number }): Promise<Erc20Fixture>

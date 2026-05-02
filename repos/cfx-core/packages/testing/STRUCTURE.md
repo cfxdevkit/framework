@@ -1,4 +1,4 @@
-# framework/testing — Detailed Structure
+# @cfxdevkit/testing — Detailed Structure
 
 Dev-dependency only. Used by every package and project.
 

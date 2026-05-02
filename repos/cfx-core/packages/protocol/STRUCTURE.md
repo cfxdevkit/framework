@@ -1,6 +1,6 @@
-# framework/protocol — Detailed Structure
+# @cfxdevkit/protocol — Protocol Artifacts Structure
 
-Lower-level than `framework/contracts`: raw artifacts for tooling consumers
+Lower-level than `@cfxdevkit/contracts`: raw artifacts for tooling consumers
 (indexers, explorers, MCP). No opinionated TS surface.
 
 ```

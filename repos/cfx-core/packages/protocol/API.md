@@ -1,4 +1,4 @@
-# framework/protocol — Public API
+# @cfxdevkit/protocol — Public API (Protocol Features)
 
 > Conflux-specific protocol features that aren't generic EVM. Conservative scope.
 

@@ -1,4 +1,4 @@
-# framework/theme
+# @cfxdevkit/theme
 
 **Scope:** Shared design tokens (colors, spacing, typography) usable from any UI library.
 

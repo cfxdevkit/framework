@@ -125,7 +125,7 @@ On-disk format spec lives in `src/keystore/file/format.ts`; versioned + document
 
 ```
 function createForwardedKeystore(opts: {
-  socketPath: string                // e.g. /run/user/1000/keyring/control
+  socketPath: string                // e.g. `/run/user/1000/keyring/control`
   protocol: 'libsecret' | 'ssh-agent'
   audit?: AuditLogger
 }): KeystoreProvider
