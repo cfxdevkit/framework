@@ -27,6 +27,7 @@ pnpm --filter cfxdevkit-vscode-extension... build
 
 pnpm exec moon --version >/dev/null
 pnpm exec gitnexus --version >/dev/null || true
+.devcontainer/scripts/ensure-gitnexus.sh || true
 
 mkdir -p .cfxdevkit "$HOME/.cfxdevkit"
 
@@ -40,6 +41,6 @@ Useful commands:
   pnpm lint
   pnpm devnode
   pnpm --filter cfxdevkit-vscode-extension build
-  pnpm gitnexus analyze
+  pnpm exec gitnexus analyze
 
 MSG

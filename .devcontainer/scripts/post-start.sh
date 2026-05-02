@@ -25,4 +25,6 @@ sudo chown -R "${USER:-node}:${USER:-node}" "$PNPM_HOME" "$PNPM_STORE_PATH" "$HO
 mkdir -p "$HOME/.cfxdevkit" "${containerWorkspaceFolder:-/workspaces/root}/.cfxdevkit"
 
 cd "${containerWorkspaceFolder:-/workspaces/root}"
+.devcontainer/scripts/ensure-gitnexus.sh || true
+.devcontainer/scripts/check-lemonade.sh || true
 .devcontainer/scripts/install-vscode-extension.sh

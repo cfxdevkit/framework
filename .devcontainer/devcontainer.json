@@ -7,6 +7,11 @@
   "remoteUser": "node",
   "containerUser": "node",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "runArgs": [
+    "--network",
+    "host",
+    "--add-host=host.docker.internal:host-gateway"
+  ],
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
@@ -29,6 +34,7 @@
     3000,
     4173,
     5173,
+    13305,
     7748,
     8787
   ],
@@ -53,6 +59,9 @@
     },
     "5173": {
       "label": "Vite dev server"
+    },
+    "13305": {
+      "label": "Lemonade Server"
     },
     "7748": {
       "label": "Legacy DevKit backend"

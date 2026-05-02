@@ -9,7 +9,13 @@ const execFileAsync = promisify(execFile);
 const root = process.cwd();
 const artifactsRoot = join(root, 'artifacts', 'llm');
 const configPath = join(artifactsRoot, 'config', 'lemonade.json');
-const defaultBaseUrls = ['http://localhost:13305/', 'http://127.0.0.1:13305/', 'http://127.0.0.1:8000/'];
+const defaultBaseUrls = [
+  'http://localhost:13305/',
+  'http://127.0.0.1:13305/',
+  'http://host.docker.internal:13305/',
+  'http://host.containers.internal:13305/',
+  'http://127.0.0.1:8000/',
+];
 const modelPaths = ['/api/v1/models', '/v1/models', '/models'];
 const chatPaths = ['/api/v1/chat/completions', '/v1/chat/completions', '/chat/completions'];
 const repoActions = {
@@ -17,7 +23,11 @@ const repoActions = {
     title: 'Documentation Upkeep',
     defaultPrompt:
       'Review documentation alignment warnings and recommend the smallest repo doc updates. Keep findings first.',
-    context: ['artifacts/llm/reports/docs-alignment.md', 'docs/README.md', 'docs/llm-fine-tuning-plan.md'],
+    context: [
+      'artifacts/llm/reports/docs-alignment.md',
+      'docs/README.md',
+      'docs/llm-fine-tuning-plan.md',
+    ],
   },
   review: {
     title: 'Code Review',
@@ -30,7 +40,12 @@ const repoActions = {
     title: 'Implementation Planning',
     defaultPrompt:
       'Create a repo-aware implementation plan. Respect current repos/cfx-* structure and avoid fine-tuning steps unless asked.',
-    context: ['docs/llm-fine-tuning-plan.md', 'docs/llm-automation-agents.md', 'README.md', 'ARCHITECTURE.md'],
+    context: [
+      'docs/llm-fine-tuning-plan.md',
+      'docs/llm-automation-agents.md',
+      'README.md',
+      'ARCHITECTURE.md',
+    ],
   },
   architecture: {
     title: 'Architecture Q&A',
@@ -45,6 +60,17 @@ const repoActions = {
     context: ['package.json', 'artifacts/llm/reports/review.md'],
     includeChangedFiles: true,
   },
+  commit: {
+    title: 'Commit Preparation',
+    defaultPrompt: [
+      'Analyze the current repository state and prepare a clean commit summary.',
+      'Return these sections: Commit message, Commit body, Change comment, Cleanliness checks, Risks, Recommended commands.',
+      'Use imperative mood for the commit message, keep the subject under 72 characters, and do not claim a commit was created.',
+      'Call out generated/artifact files, unrelated worktree changes, missing validation, GitNexus impact, and Moon changed-file signals.',
+    ].join(' '),
+    context: ['artifacts/llm/reports/review.md', 'CONTRIBUTING.md', 'SECURITY.md'],
+    includeCommitPreflight: true,
+  },
 };
 
 const rawArgs = process.argv.slice(2);
@@ -55,6 +81,7 @@ try {
   if (command === 'models') await listModels();
   else if (command === 'config') await configure(args);
   else if (command === 'ask') await ask(args);
+  else if (command === 'commit') await runCommit(args);
   else if (command === 'run') await runAction(args);
   else if (command === 'actions') listActions();
   else help();
@@ -65,10 +92,19 @@ try {
 
 async function listModels() {
   const client = await createClient();
-  const models = await discoverModels(client.baseUrls);
+  const { models, attempts } = await discoverModels(client.baseUrls, { includeAttempts: true });
   const chosen = chooseModel(models, (await readConfig()).defaultModel);
   console.log(`Lemonade base URL: ${client.baseUrl}`);
   console.log(`Discovered models: ${models.length}`);
+  if (!models.length) {
+    console.log('Model discovery attempts:');
+    for (const attempt of attempts) {
+      const detail =
+        attempt.error ??
+        `HTTP ${attempt.status}${attempt.modelCount ? `, ${attempt.modelCount} model(s)` : ''}`;
+      console.log(`- ${attempt.url}: ${detail}`);
+    }
+  }
   for (const model of models) {
     const marker = model.id === chosen?.id ? '*' : ' ';
     const labels = model.labels?.length ? ` [${model.labels.join(', ')}]` : '';
@@ -127,7 +163,7 @@ async function runAction(args) {
   assertAction(action);
   const { prompt, model, quick } = parsePromptAndFlags(rest);
   const spec = repoActions[action];
-  const context = await buildActionContext(action, spec, { quick });
+  const context = await buildActionContext(spec, { quick });
   const response = await complete({
     action,
     modelOverride: model,
@@ -137,6 +173,23 @@ async function runAction(args) {
   });
   await writeLlmReport(action, response);
   console.log(response.content);
+}
+
+async function runCommit(args) {
+  if (args[0] === '--') args.shift();
+  const { prompt, model, quick } = parsePromptAndFlags(args);
+  const spec = repoActions.commit;
+  const context = await buildActionContext(spec, { quick });
+  const response = await complete({
+    action: 'commit',
+    modelOverride: model,
+    userPrompt: prompt || spec.defaultPrompt,
+    context,
+    quick,
+  });
+  await writeLlmReport('commit', response);
+  console.log(response.content);
+  console.log('\nReport: artifacts/llm/reports/lemonade-commit.md');
 }
 
 function listActions() {
@@ -151,7 +204,8 @@ async function complete({ action, modelOverride, userPrompt, context, quick = fa
   const models = await discoverModels(client.baseUrls);
   const modelId =
     modelOverride ?? config.actions?.[action] ?? config.defaultModel ?? chooseModel(models)?.id;
-  if (!modelId) throw new Error('No Lemonade model available. Run pnpm run llm:models to inspect inventory.');
+  if (!modelId)
+    throw new Error('No Lemonade model available. Run pnpm run llm:models to inspect inventory.');
 
   const messages = [
     {
@@ -166,7 +220,13 @@ async function complete({ action, modelOverride, userPrompt, context, quick = fa
     { role: 'user', content: `${context}\n\nTask:\n${userPrompt}` },
   ];
 
-  const body = { model: modelId, messages, temperature: 0.2, stream: false, max_tokens: quick ? 256 : 1600 };
+  const body = {
+    model: modelId,
+    messages,
+    temperature: 0.2,
+    stream: false,
+    max_tokens: quick ? 256 : 1600,
+  };
   const attempts = [];
   for (const path of chatPaths) {
     const url = new URL(path, client.baseUrl).toString();
@@ -203,28 +263,47 @@ async function createClient(config = null) {
       ? [process.env.LEMONADE_URL ?? process.env.LEMONADE_BASE_URL]
       : defaultBaseUrls;
   const models = await discoverModels(baseUrls);
-  const attempt = models.find((model) => model.__baseUrl)?.__baseUrl ?? normalizeBaseUrl(baseUrls[0]);
+  const attempt =
+    models.find((model) => model.__baseUrl)?.__baseUrl ?? normalizeBaseUrl(baseUrls[0]);
   return { baseUrl: attempt, baseUrls };
 }
 
-async function discoverModels(baseUrls) {
+async function discoverModels(baseUrls, opts = {}) {
+  const attempts = [];
   for (const baseUrl of baseUrls.map(normalizeBaseUrl)) {
     for (const path of modelPaths) {
       const url = new URL(path, baseUrl).toString();
       try {
         const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
+        const text = await response.text();
+        const discoveredModels = response.ok ? extractModelInventory(text) : [];
+        attempts.push({
+          url,
+          ok: response.ok,
+          status: response.status,
+          modelCount: discoveredModels.length,
+        });
         if (!response.ok) continue;
-        const models = extractModelInventory(await response.text()).map((model) => ({
+        const models = discoveredModels.map((model) => ({
           ...model,
           __baseUrl: baseUrl,
         }));
-        if (models.length) return models;
-      } catch {
+        if (models.length) return opts.includeAttempts ? { models, attempts } : models;
+      } catch (error) {
+        attempts.push({ url, ok: false, error: formatFetchError(error) });
         // try next endpoint
       }
     }
   }
-  return [];
+  return opts.includeAttempts ? { models: [], attempts } : [];
+}
+
+function formatFetchError(error) {
+  if (!(error instanceof Error)) return String(error);
+  const cause = error.cause;
+  if (cause && typeof cause === 'object' && 'code' in cause)
+    return `${error.message} (${cause.code})`;
+  return error.message;
 }
 
 function extractModelInventory(text) {
@@ -235,7 +314,9 @@ function extractModelInventory(text) {
       .map((model) => ({
         id: typeof model?.id === 'string' ? model.id : undefined,
         checkpoint: typeof model?.checkpoint === 'string' ? model.checkpoint : undefined,
-        labels: Array.isArray(model?.labels) ? model.labels.filter((label) => typeof label === 'string') : [],
+        labels: Array.isArray(model?.labels)
+          ? model.labels.filter((label) => typeof label === 'string')
+          : [],
         recipe: typeof model?.recipe === 'string' ? model.recipe : undefined,
         size: typeof model?.size === 'number' ? model.size : undefined,
         suggested: model?.suggested === true,
@@ -248,14 +329,17 @@ function extractModelInventory(text) {
 
 function chooseModel(models, preferredId) {
   if (preferredId) {
-    const preferred = models.find((model) => model.id === preferredId || model.checkpoint === preferredId);
+    const preferred = models.find(
+      (model) => model.id === preferredId || model.checkpoint === preferredId,
+    );
     if (preferred) return preferred;
   }
   return [...models].sort((left, right) => modelScore(right) - modelScore(left))[0];
 }
 
 function modelScore(model) {
-  const text = `${model.id ?? ''} ${model.checkpoint ?? ''} ${(model.labels ?? []).join(' ')}`.toLowerCase();
+  const text =
+    `${model.id ?? ''} ${model.checkpoint ?? ''} ${(model.labels ?? []).join(' ')}`.toLowerCase();
   let score = 0;
   if (model.suggested) score += 10;
   if (text.includes('coder')) score += 8;
@@ -268,12 +352,13 @@ function modelScore(model) {
 
 function extractAssistantText(text) {
   const parsed = JSON.parse(text);
-  const message = parsed?.choices?.[0]?.message?.content ?? parsed?.choices?.[0]?.text ?? parsed?.message;
+  const message =
+    parsed?.choices?.[0]?.message?.content ?? parsed?.choices?.[0]?.text ?? parsed?.message;
   if (typeof message !== 'string') return text;
   return message.trim();
 }
 
-async function buildActionContext(action, spec, opts = {}) {
+async function buildActionContext(spec, opts = {}) {
   const parts = await buildBaseContext(opts);
   const files = [];
   for (const file of spec.context ?? []) {
@@ -281,6 +366,7 @@ async function buildActionContext(action, spec, opts = {}) {
   }
   if (spec.includeChangedFiles) files.push(await changedFilesBlock());
   if (spec.includeGitDiff) files.push(await gitDiffBlock());
+  if (spec.includeCommitPreflight) files.push(await commitPreflightBlock());
   return `${parts}\n\n${files.filter(Boolean).join('\n\n')}`.slice(0, opts.quick ? 12000 : 60000);
 }
 
@@ -291,7 +377,10 @@ async function buildBaseContext(opts = {}) {
     readContextFile('docs/llm-automation-agents.md'),
     readContextFile('artifacts/llm/corpus/manifest.json'),
   ]);
-  return files.filter(Boolean).join('\n\n').slice(0, opts.quick ? 8000 : 30000);
+  return files
+    .filter(Boolean)
+    .join('\n\n')
+    .slice(0, opts.quick ? 8000 : 30000);
 }
 
 async function readContextFile(path) {
@@ -315,6 +404,67 @@ async function gitDiffBlock() {
   const names = await changedFilesBlock();
   const diff = await git(['diff', '--', ':!pnpm-lock.yaml']);
   return `--- git diff stat ---\n${stat}\n\n${names}\n\n--- git diff excerpt ---\n${diff.slice(0, 30000)}`;
+}
+
+async function commitPreflightBlock() {
+  const gitnexusEnsure = await commandBlock('gitnexus ensure', 'pnpm', ['run', 'gitnexus:ensure']);
+  const blocks = await Promise.all([
+    commandBlock('git status --short --branch', 'git', ['status', '--short', '--branch']),
+    commandBlock('git diff --stat', 'git', ['diff', '--stat']),
+    commandBlock('git diff --cached --stat', 'git', ['diff', '--cached', '--stat']),
+    commandBlock('git diff excerpt', 'git', ['diff', '--', ':!pnpm-lock.yaml'], {
+      maxChars: 30000,
+    }),
+    commandBlock(
+      'git diff --cached excerpt',
+      'git',
+      ['diff', '--cached', '--', ':!pnpm-lock.yaml'],
+      { maxChars: 18000 },
+    ),
+    commandBlock('deterministic llm review', 'pnpm', ['run', 'llm:review'], { maxChars: 12000 }),
+    commandBlock(
+      'gitnexus detect-changes',
+      'pnpm',
+      ['exec', 'gitnexus', 'detect-changes', '--repo', 'root'],
+      {
+        maxChars: 12000,
+      },
+    ),
+    commandBlock(
+      'moon changed files',
+      'pnpm',
+      ['exec', 'moon', 'query', 'changed-files', '--local'],
+      { maxChars: 12000 },
+    ),
+  ]);
+  return `--- commit preflight ---\n${[gitnexusEnsure, ...blocks].join('\n\n')}`;
+}
+
+async function commandBlock(title, command, args, opts = {}) {
+  try {
+    const { stdout, stderr } = await execFileAsync(command, args, {
+      cwd: root,
+      maxBuffer: 1024 * 1024 * 10,
+      signal: AbortSignal.timeout(opts.timeoutMs ?? 30000),
+      env: { ...process.env, NO_COLOR: '1', MOON_COLOR: 'false' },
+    });
+    return renderCommandBlock(title, 0, stdout, stderr, opts.maxChars);
+  } catch (error) {
+    return renderCommandBlock(
+      title,
+      error?.code ?? 1,
+      error?.stdout ?? '',
+      error?.stderr ?? error?.message ?? '',
+      opts.maxChars,
+    );
+  }
+}
+
+function renderCommandBlock(title, exitCode, stdout, stderr, maxChars = 8000) {
+  const output = [stdout, stderr].filter(Boolean).join('\n').trim();
+  const truncated =
+    output.length > maxChars ? `${output.slice(0, maxChars)}\n...[truncated]` : output;
+  return [`## ${title}`, `exitCode: ${exitCode}`, truncated || '(no output)'].join('\n');
 }
 
 async function git(args) {
@@ -345,7 +495,15 @@ async function writeLlmReport(action, response) {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(
     path,
-    [`# Lemonade ${action}`, '', `Generated: ${response.generatedAt}`, `Model: ${response.model}`, `Base URL: ${response.baseUrl}`, '', response.content].join('\n'),
+    [
+      `# Lemonade ${action}`,
+      '',
+      `Generated: ${response.generatedAt}`,
+      `Model: ${response.model}`,
+      `Base URL: ${response.baseUrl}`,
+      '',
+      response.content,
+    ].join('\n'),
     'utf8',
   );
 }
@@ -392,11 +550,13 @@ Commands:
   config set default-model <id>  Pin default model id
   config set action <name> <id>  Pin model for one repo action
   ask [--quick] "question"       Ask a repo-aware question
+  commit [--quick] [prompt]       Analyze current changes and draft commit text
   run <action> [--quick] [prompt] Run docs-upkeep, review, plan, architecture, validation
 
 Examples:
   pnpm run llm:models
   pnpm run llm:config -- set default-model Qwen3-Coder-Next-GGUF
+  pnpm run llm:commit
   pnpm run llm:action -- review
   pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
 `);

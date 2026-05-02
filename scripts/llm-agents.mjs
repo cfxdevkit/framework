@@ -292,7 +292,13 @@ async function runServeCheckAgent(opts = {}) {
   const configuredBaseUrl = process.env.LEMONADE_URL ?? process.env.LEMONADE_BASE_URL;
   const baseUrls = configuredBaseUrl
     ? [configuredBaseUrl]
-    : ['http://localhost:13305/', 'http://127.0.0.1:13305/', 'http://127.0.0.1:8000/'];
+    : [
+        'http://localhost:13305/',
+        'http://127.0.0.1:13305/',
+        'http://host.docker.internal:13305/',
+        'http://host.containers.internal:13305/',
+        'http://127.0.0.1:8000/',
+      ];
   const started = performance.now();
   const attempts = [];
   let discoveredBaseUrl = null;

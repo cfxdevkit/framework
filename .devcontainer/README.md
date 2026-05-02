@@ -19,7 +19,7 @@ host baseline.
 - Node `24.x`, pnpm `10.33.2`, Moon `2.2.3`, TypeScript `6`, Vite `8`, Vitest `4`, and Biome `2`
 - Docker CLI access through the host Docker socket for compose/image workflows
 - GitHub CLI for repository automation
-- GitNexus CLI from the workspace dependency
+- GitNexus CLI from the workspace dependency, registered on container start
 - Local Conflux node workflows through `@cfxdevkit/devnode`
 - VS Code extension development for `cfxdevkit.cfxdevkit-vscode-extension`
 - Workspace-local `.cfxdevkit/` state for keystores, deployments, and devnode data
@@ -48,8 +48,13 @@ pnpm lint
 pnpm devnode
 pnpm --filter cfxdevkit-vscode-extension typecheck
 pnpm --filter cfxdevkit-vscode-extension build
-pnpm gitnexus analyze
+pnpm exec gitnexus analyze
+pnpm exec gitnexus list
 ```
+
+Use `pnpm exec gitnexus ...` rather than `npx gitnexus ...` in this workspace.
+The root package manager settings are pnpm-specific, and npm/npx will warn about
+those settings even though pnpm handles them correctly.
 
 ## Forwarded Ports
 
@@ -62,8 +67,42 @@ pnpm gitnexus analyze
 | `5173` | Vite dev server |
 | `4173` | Vite preview |
 | `3000` | App server |
+| `13305` | Lemonade Server |
 | `7748` | Legacy DevKit backend compatibility port |
 | `8787` | Worker/backend dev server |
+
+## Lemonade Server
+
+Lemonade Server should keep running on the host workstation. On Linux, the
+devcontainer requests host networking so `http://localhost:13305/` resolves to
+the same Lemonade service inside and outside the container. It also keeps
+`host.docker.internal` as a host-gateway alias for Docker backends; Podman hosts
+usually provide `host.containers.internal` automatically.
+
+After rebuilding or reopening the container, verify connectivity:
+
+```bash
+pnpm run llm:serve-check
+pnpm run llm:models
+pnpm run llm:ask -- --quick "Is Lemonade reachable from the devcontainer?"
+```
+
+If your container backend cannot use host networking, start Lemonade so it binds
+outside host loopback or pin a reachable host URL locally:
+
+```bash
+pnpm run llm:config -- set base-url http://<host-ip>:13305/
+```
+
+To check what the devcontainer can see, run:
+
+```bash
+.devcontainer/scripts/check-lemonade.sh
+```
+
+If every endpoint fails but the host shell can reach Lemonade, the container is
+still running with isolated networking. Rebuild the devcontainer rather than only
+reloading VS Code, because `runArgs` only apply when the container is created.
 
 ## Notes
 

@@ -346,8 +346,10 @@ Initial implementation status:
   it is not a fine-tuning dataset promotion step.
 - `pnpm run llm:eval` summarizes deterministic gates from the generated reports.
 - `pnpm run llm:serve-check` probes Lemonade Server from `LEMONADE_URL`, then
-  auto-discovers common local endpoints including `http://localhost:13305/`, and
-  records model inventory without starting training.
+  auto-discovers common local and devcontainer host endpoints including
+  `http://localhost:13305/`, `http://host.docker.internal:13305/`, and
+  `http://host.containers.internal:13305/`, and records model inventory without
+  starting training.
 - `pnpm run llm:models`, `pnpm run llm:config`, `pnpm run llm:ask`, and
   `pnpm run llm:action -- <action>` provide a simple Lemonade-backed CLI for
   model discovery, per-action model configuration, and repo-specific actions.

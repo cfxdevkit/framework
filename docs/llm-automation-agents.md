@@ -41,8 +41,18 @@ Commit only small schemas, manifests, or report excerpts intentionally.
 
 `scripts/lemonade-cli.mjs` provides a small local CLI for using Lemonade Server
 models against repository upkeep tasks. It auto-discovers Lemonade at
-`http://localhost:13305/`, `http://127.0.0.1:13305/`, then
-`http://127.0.0.1:8000/`, unless `LEMONADE_URL` or `LEMONADE_BASE_URL` is set.
+`http://localhost:13305/`, `http://127.0.0.1:13305/`,
+`http://host.docker.internal:13305/`, `http://host.containers.internal:13305/`,
+then `http://127.0.0.1:8000/`, unless `LEMONADE_URL` or `LEMONADE_BASE_URL` is
+set.
+
+Inside the Linux devcontainer, Lemonade is expected to run on the host
+workstation and the container uses host networking, so `http://localhost:13305/`
+should resolve to the same service inside and outside the container. The CLI also
+probes `host.docker.internal` and `host.containers.internal` for container
+backends that expose host aliases. After rebuilding or reopening the
+devcontainer, run `pnpm run llm:serve-check` or `pnpm run llm:models` to verify
+connectivity.
 
 Useful commands:
 
