@@ -35,9 +35,8 @@ projects:
   - 'projects/examples/packages/showcase-ui'
 
 vcs:
-  manager: 'git'
+  client: 'git'
   defaultBranch: 'main'
 
-runner:
-  archivableTargets: []
+pipeline:
   inheritColorsForPipedTasks: true

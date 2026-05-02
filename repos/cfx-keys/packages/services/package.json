@@ -16,6 +16,10 @@
       "types": "./dist/keystore/index.d.ts",
       "import": "./dist/keystore/index.js"
     },
+    "./keystore-audit": {
+      "types": "./dist/keystore/audit.d.ts",
+      "import": "./dist/keystore/audit.js"
+    },
     "./keystore-memory": {
       "types": "./dist/keystore/memory/index.d.ts",
       "import": "./dist/keystore/memory/index.js"
@@ -45,14 +49,14 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.0.0",
+    "@biomejs/biome": "^2.4.14",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
     "@types/node": "^22.10.0",
-    "typescript": "^5.7.0",
-    "vite": "^7.0.0",
-    "vite-plugin-dts": "^4.3.0",
-    "vitest": "^3.0.0"
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
+    "vite-plugin-dts": "^5.0.0",
+    "vitest": "^4.1.5"
   },
   "dependencies": {
     "@cfxdevkit/core": "workspace:^",

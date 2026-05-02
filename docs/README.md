@@ -18,7 +18,7 @@ docs/
 ├── README.md
 ├── STRUCTURE.md
 ├── keystore-docker.md  Operational guide
-└── llm-fine-tuning-plan.md  Planning guide
+└── llm-fine-tuning-plan.md  Repository LLM automation planning guide
 ```
 
 ## Planned structure
@@ -50,5 +50,5 @@ docs/
 - [architecture/keystore-session-provider.md](architecture/keystore-session-provider.md) —
   Centralized wallet selection, unlock, network alignment, and client reset
   design for sensitive keystore-backed sessions.
-- [llm-fine-tuning-plan.md](llm-fine-tuning-plan.md) — Plan for generating
-  repository-centered datasets and local coding-assistant fine-tuning artifacts.
+- [llm-fine-tuning-plan.md](llm-fine-tuning-plan.md) — Plan for repository-centered
+  LLM automation, Lemonade Server inference, datasets, evals, and fine-tuning artifacts.

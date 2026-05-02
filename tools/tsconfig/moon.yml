@@ -1,8 +1,7 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
-type: 'configuration'
+layer: 'configuration'
 language: 'typescript'
-platform: 'node'
 
 tasks:
   build:

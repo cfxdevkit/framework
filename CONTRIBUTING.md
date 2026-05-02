@@ -44,10 +44,10 @@ plus `projects/*`.
 3. If the package is a reusable library or tool surface, also add `STRUCTURE.md` and `API.md`.
 4. If the package is config-only, document the exported files in its README and API doc.
 5. If the directory is an app or a slice root, README coverage is sufficient unless that unit exposes a documented library API.
-3. Register in the root `pnpm-workspace.yaml`.
-4. Register the package in `.moon/workspace.yml`.
-5. Inherit `tsconfig` from `tools/tsconfig/`.
-5. If publishable, add changeset config and CI publish hook.
+6. Register in the root `pnpm-workspace.yaml`.
+7. Register the package in `.moon/workspace.yml`.
+8. Inherit `tsconfig` from `tools/tsconfig/`.
+9. If publishable, add changeset config and CI publish hook.
 
 ## Adding a new project
 

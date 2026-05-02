@@ -7,6 +7,7 @@ export default defineConfig({
       entry: {
         index: 'src/index.ts',
         'keystore/index': 'src/keystore/index.ts',
+        'keystore/audit': 'src/keystore/audit.ts',
         'keystore/memory/index': 'src/keystore/memory/index.ts',
         'keystore/file/index': 'src/keystore/file/index.ts',
         'crypto/index': 'src/crypto/index.ts',

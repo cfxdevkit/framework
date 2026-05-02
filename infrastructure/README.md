@@ -7,16 +7,13 @@ does **not** import from here.
 
 ```
 infrastructure/
-├── docker/               Reusable Dockerfiles + compose stacks
-├── k8s/                  Kubernetes manifests / Helm charts (per project)
-├── ci/                   Reusable GitHub Actions / workflow templates
-├── monitoring/           Prometheus, Grafana, alert rules
-├── secrets/              Pointers/templates only — NEVER actual secrets
-└── <project>/            Per-project deploy artifacts (cas/, chainbrawler/, electro/, …)
+├── README.md
+├── STRUCTURE.md
+└── secrets/              Policies and templates only — NEVER actual secrets
 ```
 
 ## Rules
 
 - Secrets are stored in a secret manager; this folder may only contain templates and references.
-- Per-project subfolders mirror the names in `projects/`.
-- CI workflow files at `.github/workflows/` reference reusable bits from `ci/`.
+- Production signing and deploy secrets must follow [secrets/](secrets/).
+- CI workflow files currently live directly in `.github/workflows/`.

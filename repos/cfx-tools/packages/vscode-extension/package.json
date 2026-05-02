@@ -167,11 +167,11 @@
     "@cfxdevkit/wallet": "workspace:^"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.0.0",
+    "@biomejs/biome": "^2.4.14",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
     "@types/node": "^22.10.0",
     "@types/vscode": "^1.85.0",
-    "typescript": "^5.7.0"
+    "typescript": "^6.0.3"
   }
 }

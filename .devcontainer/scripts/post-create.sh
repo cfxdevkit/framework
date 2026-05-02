@@ -15,7 +15,7 @@ sudo mkdir -p "$PNPM_HOME" "$PNPM_STORE_PATH" "$HOME/.cache/moon" "$HOME/.local/
 sudo chown -R "${USER:-node}:${USER:-node}" "$PNPM_HOME" "$PNPM_STORE_PATH" "$HOME/.cache/moon" "$HOME/.local/share/gitnexus"
 
 corepack enable
-corepack prepare pnpm@10.6.0 --activate
+corepack prepare pnpm@10.33.2 --activate
 pnpm config set store-dir "$PNPM_STORE_PATH"
 
 pnpm install --frozen-lockfile

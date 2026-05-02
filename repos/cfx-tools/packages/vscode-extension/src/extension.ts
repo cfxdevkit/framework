@@ -29,6 +29,7 @@ import {
   validateMnemonic,
 } from '@cfxdevkit/core/wallet';
 import { createDevNode, type DevNode } from '@cfxdevkit/devnode';
+import { createAppendOnlyAuditLogger } from '@cfxdevkit/services';
 import type { KeystoreProvider, SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
 import { createFileKeystore, initFileKeystore } from '@cfxdevkit/services/keystore-file';
 import { type OneKeySdkLike, signerFromOneKey } from '@cfxdevkit/wallet/hardware/onekey';
@@ -77,7 +78,6 @@ const STATE_SPACE = 'cfxdevkit.selectedSpace';
 const STATE_KEYSTORE_BACKEND = 'cfxdevkit.selectedKeystoreBackend';
 const STATE_ACTIVE_FILE_REF = 'cfxdevkit.activeMnemonicRootRef';
 const STATE_ACTIVE_ACCOUNT_INDEX = 'cfxdevkit.activeMnemonicAccountIndex';
-const STATE_NODE_MNEMONIC = 'cfxdevkit.localNodeMnemonic';
 const KEYSTORE_SERVICE = 'cfxdevkit';
 const DERIVATION_BASE = "m/44'/60'/0'/0";
 
@@ -126,6 +126,11 @@ class ExtensionRuntime implements vscode.Disposable {
   private unlockedPassphrase: string | null = null;
   private fileProvider: KeystoreProvider | null = null;
   private cachedSigner: CachedSigner | null = null;
+  private localNodeMnemonic: string | null = null;
+  private readonly auditLogger = createAppendOnlyAuditLogger({
+    path: this.auditLogPath(),
+    onError: (error: unknown) => this.log(`Failed to write keystore audit event: ${String(error)}`),
+  });
   private readonly output = vscode.window.createOutputChannel('Conflux DevKit');
   private readonly networkStatus = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
@@ -344,6 +349,10 @@ class ExtensionRuntime implements vscode.Disposable {
     await fs.mkdir(join(this.workspaceRoot(), '.cfxdevkit'), { recursive: true });
   }
 
+  private auditLogPath(): string {
+    return join(this.workspaceRoot(), '.cfxdevkit', 'audit.log');
+  }
+
   private log(message: string): void {
     const ts = new Date().toISOString().slice(11, 19);
     this.output.appendLine(`[${ts}] ${message}`);
@@ -362,6 +371,7 @@ class ExtensionRuntime implements vscode.Disposable {
     return createFileKeystore({
       path: this.keystorePath(),
       unlock: async () => ({ passphrase }),
+      audit: this.auditLogger,
     });
   }
 
@@ -1082,7 +1092,7 @@ class ExtensionRuntime implements vscode.Disposable {
     });
     await this.context.workspaceState.update(STATE_ACTIVE_FILE_REF, ref);
     await this.context.workspaceState.update(STATE_ACTIVE_ACCOUNT_INDEX, 0);
-    await this.context.workspaceState.update(STATE_NODE_MNEMONIC, mnemonic.trim());
+    this.localNodeMnemonic = mnemonic.trim();
 
     this.output.clear();
     this.output.appendLine('Conflux DevKit mnemonic wallet added.');
@@ -1090,18 +1100,18 @@ class ExtensionRuntime implements vscode.Disposable {
     this.output.appendLine(`Ref: ${this.refKey(ref)}`);
     this.output.appendLine(`First account: ${firstAddress}`);
     this.output.appendLine(`Keystore: ${this.keystorePath()}`);
-    if (source.value === 'generate') {
-      this.output.appendLine('');
-      this.output.appendLine('Recovery mnemonic:');
-      this.output.appendLine(mnemonic.trim());
-    }
     this.output.show(true);
 
-    await vscode.window.showInformationMessage(
-      source.value === 'generate'
-        ? 'Mnemonic wallet added. Save the recovery mnemonic from the Conflux DevKit output channel.'
-        : 'Mnemonic wallet added.',
-    );
+    if (source.value === 'generate') {
+      const action = await vscode.window.showWarningMessage(
+        'Mnemonic wallet added. Copy the recovery mnemonic now and store it outside this workspace.',
+        { modal: true },
+        'Copy Mnemonic',
+      );
+      if (action === 'Copy Mnemonic') await vscode.env.clipboard.writeText(mnemonic.trim());
+    } else {
+      await vscode.window.showInformationMessage('Mnemonic wallet added.');
+    }
     await this.refreshAll();
   }
 
@@ -1213,7 +1223,7 @@ class ExtensionRuntime implements vscode.Disposable {
     if (this.refKey(pick.wallet.ref) === this.refKey(activeRef)) {
       await this.context.workspaceState.update(STATE_ACTIVE_FILE_REF, remaining[0]?.ref ?? null);
       await this.context.workspaceState.update(STATE_ACTIVE_ACCOUNT_INDEX, 0);
-      await this.context.workspaceState.update(STATE_NODE_MNEMONIC, undefined);
+      this.localNodeMnemonic = null;
     }
     await vscode.window.showInformationMessage(`Removed ${pick.label}.`);
     await this.refreshAll();
@@ -1223,6 +1233,7 @@ class ExtensionRuntime implements vscode.Disposable {
     this.unlockedPassphrase = null;
     this.fileProvider = null;
     this.cachedSigner = null;
+    this.localNodeMnemonic = null;
     await vscode.window.showInformationMessage('Keystore locked.');
     await this.refreshAll();
   }
@@ -1290,19 +1301,24 @@ class ExtensionRuntime implements vscode.Disposable {
   }
 
   private async getOrCreateNodeMnemonic(): Promise<string> {
-    const existing = this.context.workspaceState.get<string>(STATE_NODE_MNEMONIC);
-    if (existing && validateMnemonic(existing)) return existing;
+    if (this.localNodeMnemonic && validateMnemonic(this.localNodeMnemonic)) {
+      return this.localNodeMnemonic;
+    }
     const action = await vscode.window.showWarningMessage(
-      'Create or import a mnemonic-backed wallet before starting the local node so node accounts align with the keystore session.',
+      'Create or import a mnemonic-backed wallet before starting the local node so node accounts align with this extension session.',
       'Add Mnemonic',
+      'Use Fresh Dev Seed',
     );
+    if (action === 'Use Fresh Dev Seed') {
+      this.localNodeMnemonic = generateMnemonic(128);
+      return this.localNodeMnemonic;
+    }
     if (action !== 'Add Mnemonic') throw new Error('Local node start cancelled.');
     await this.addWallet();
-    const next = this.context.workspaceState.get<string>(STATE_NODE_MNEMONIC);
-    if (!next || !validateMnemonic(next)) {
+    if (!this.localNodeMnemonic || !validateMnemonic(this.localNodeMnemonic)) {
       throw new Error('Local node requires a mnemonic-backed active wallet.');
     }
-    return next;
+    return this.localNodeMnemonic;
   }
 
   private async startNode(): Promise<void> {

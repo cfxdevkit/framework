@@ -19,7 +19,7 @@ The legacy repos use a mix of Turborepo (`devkit/`, `chainbrawler/`), pnpm-only 
 | Concern | Choice |
 |---------|--------|
 | Package manager | **pnpm 10+** workspaces |
-| Bundler (libs + apps) | **Vite 7** (Rolldown). Libraries with `vite build --lib` + `vite-plugin-dts`. |
+| Bundler (libs + apps) | **Vite 8** (Rolldown). Libraries with `vite build --lib` + `vite-plugin-dts`. |
 | Task runner / cache | **moonrepo** (Rust, vendor-neutral). Local cache by default; pluggable S3-compatible remote cache. |
 | Linter / formatter | **Biome** |
 | Tests | **Vitest** (unit/integration), **Playwright** (e2e), **Hardhat** (contracts) |

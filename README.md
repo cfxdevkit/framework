@@ -128,7 +128,7 @@ Detailed mapping and planned end-state sequencing live in [MIGRATION.md](MIGRATI
 - [CONTRIBUTING.md](CONTRIBUTING.md) — workflow, tier ownership, PR conventions.
 - [SECURITY.md](SECURITY.md) — secrets, key handling, supply-chain, threat model surface per tier.
 - [.devcontainer/README.md](.devcontainer/README.md) — root devcontainer setup for the monorepo toolchain.
-- [docs/llm-fine-tuning-plan.md](docs/llm-fine-tuning-plan.md) — planning notes for repository-centered local coding-assistant fine-tuning.
+- [docs/llm-fine-tuning-plan.md](docs/llm-fine-tuning-plan.md) — planning notes for repository-centered LLM automation, local inference, datasets, evals, and fine-tuning.
 
 ---
 

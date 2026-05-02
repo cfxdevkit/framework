@@ -16,7 +16,7 @@ host baseline.
 
 ## What It Enables
 
-- Node `22.x`, pnpm `10.6.0`, Moon, TypeScript, Vite, Vitest, and Biome
+- Node `24.x`, pnpm `10.33.2`, Moon `2.2.3`, TypeScript `6`, Vite `8`, Vitest `4`, and Biome `2`
 - Docker CLI access through the host Docker socket for compose/image workflows
 - GitHub CLI for repository automation
 - GitNexus CLI from the workspace dependency

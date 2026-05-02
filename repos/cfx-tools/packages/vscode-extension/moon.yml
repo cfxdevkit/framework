@@ -1,5 +1,31 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
-type: 'application'
+layer: 'application'
 language: 'typescript'
-platform: 'node'
+
+tasks:
+  build:
+    command: 'tsc -p tsconfig.json'
+    inputs:
+      - '@group(sources)'
+      - '@group(configs)'
+    outputs:
+      - 'dist'
+    options:
+      mergeArgs: 'replace'
+      cache: true
+
+  typecheck:
+    command: 'tsc --noEmit -p tsconfig.json'
+    inputs:
+      - '@group(sources)'
+      - '@group(configs)'
+    options:
+      mergeArgs: 'replace'
+      cache: true
+
+  test:
+    command: 'echo "no tests"'
+    options:
+      mergeArgs: 'replace'
+      cache: false

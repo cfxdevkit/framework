@@ -42,7 +42,7 @@ docs/
 │   ├── README.md                   index + ADR template
 │   ├── 0001-build-stack.md         (created)
 │   ├── 0002-keystore.md            (created)
-│   ├── 0003-monorepo-task-runner.md      (placeholder)
+│   ├── 0003-multi-repo-split.md           (accepted)
 │   ├── 0004-vite-everywhere.md           (placeholder)
 │   ├── 0005-session-keys-default.md      (placeholder)
 │   ├── 0006-mcp-tool-allowlist.md        (placeholder)
@@ -53,7 +53,7 @@ docs/
 │   ├── getting-started.md
 │   ├── moon-quickstart.md          for contributors used to Turbo
 │   ├── using-the-devcontainer.md
-│   ├── llm-fine-tuning.md          implementation guide once the plan is approved
+│   ├── llm-automation.md           implementation guide once the plan is approved
 │   ├── keystore-setup.md           per-environment setup
 │   ├── publishing-a-framework-package.md
 │   ├── adding-a-new-project.md

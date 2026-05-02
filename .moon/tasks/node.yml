@@ -36,7 +36,7 @@ tasks:
       cache: true
 
   test:
-    command: 'pnpm exec vitest run'
+    command: 'pnpm exec vitest run --passWithNoTests'
     inputs:
       - '@group(sources)'
       - '@group(tests)'

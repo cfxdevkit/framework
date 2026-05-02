@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1.7
 
-FROM mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
+FROM mcr.microsoft.com/devcontainers/typescript-node:dev-24-bookworm
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG NODE_VERSION=22.22.0
+ARG NODE_VERSION=24.15.0
 
 USER root
 
@@ -42,13 +42,17 @@ ENV PNPM_STORE_PATH=/home/node/.local/share/pnpm/store
 ENV PATH=${PNPM_HOME}:${PATH}
 
 RUN corepack enable \
-  && corepack prepare pnpm@10.6.0 --activate \
-  && npm install -g @moonrepo/cli@1.30.0 \
+  && corepack prepare pnpm@10.33.2 --activate \
   && npm cache clean --force \
   && mkdir -p /home/node/.local/share/pnpm/store /home/node/.cache/moon /home/node/.cfxdevkit \
   && chown -R node:node /home/node/.local /home/node/.cache /home/node/.cfxdevkit
 
 USER node
+
+# Install moon via native installer so `moon upgrade` works (~/.moon is the required location)
+RUN curl -fsSL https://moonrepo.dev/install/moon.sh | bash
+
+ENV PATH=/home/node/.moon:${PATH}
 
 RUN pnpm config set store-dir /home/node/.local/share/pnpm/store
 
