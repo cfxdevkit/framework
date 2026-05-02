@@ -49,5 +49,8 @@ pnpm-debug.log*
 *.tmp
 .tmp/
 
+# Local LLM automation artifacts
+artifacts/llm/
+
 # GitNexus index (local cache, regeneratable)
 .gitnexus/

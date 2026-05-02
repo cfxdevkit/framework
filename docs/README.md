@@ -18,6 +18,7 @@ docs/
 ├── README.md
 ├── STRUCTURE.md
 ├── keystore-docker.md  Operational guide
+├── llm-automation-agents.md  Implemented no-training upkeep agents
 └── llm-fine-tuning-plan.md  Repository LLM automation planning guide
 ```
 
@@ -52,3 +53,5 @@ docs/
   design for sensitive keystore-backed sessions.
 - [llm-fine-tuning-plan.md](llm-fine-tuning-plan.md) — Plan for repository-centered
   LLM automation, Lemonade Server inference, datasets, evals, and fine-tuning artifacts.
+- [llm-automation-agents.md](llm-automation-agents.md) — Implemented deterministic
+  repository upkeep agents for corpus, docs, review, eval, and Lemonade checks.

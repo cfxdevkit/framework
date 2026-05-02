@@ -333,6 +333,28 @@ Repository automation services:
 - `llm:docs`: detect documentation drift and propose patches.
 - `llm:serve-check`: verify Lemonade Server reachability and model inventory.
 
+Initial implementation status:
+
+- `scripts/llm-agents.mjs` implements the first deterministic upkeep agents.
+- `pnpm run llm:corpus` writes file, chunk, and documentation-heading metadata
+  under `artifacts/llm/corpus/`.
+- `pnpm run llm:docs` checks Markdown path references, package export coverage,
+  Moon project registration, and current-vs-planned structure language.
+- `pnpm run llm:review` inspects uncommitted changes, flags security-sensitive
+  surfaces, and suggests validation commands.
+- `pnpm run llm:datasets` creates deterministic evaluation seed examples only;
+  it is not a fine-tuning dataset promotion step.
+- `pnpm run llm:eval` summarizes deterministic gates from the generated reports.
+- `pnpm run llm:serve-check` probes Lemonade Server from `LEMONADE_URL`, then
+  auto-discovers common local endpoints including `http://localhost:13305/`, and
+  records model inventory without starting training.
+- `pnpm run llm:models`, `pnpm run llm:config`, `pnpm run llm:ask`, and
+  `pnpm run llm:action -- <action>` provide a simple Lemonade-backed CLI for
+  model discovery, per-action model configuration, and repo-specific actions.
+- `pnpm run llm:all` runs the full no-training upkeep loop.
+- Fine-tuning remains intentionally unimplemented until these agents produce
+  useful reports and eval evidence.
+
 Storage layout:
 
 - `artifacts/llm/corpus/` for generated corpus files.
