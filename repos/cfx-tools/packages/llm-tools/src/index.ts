@@ -49,7 +49,7 @@ export const llmCommands = [
     description:
       'Run deterministic docs checks, then delegate doc-maintenance recommendations to the local LLM',
     worker: 'lemonade',
-    workerArgs: ['run', 'docs-upkeep'],
+    workerArgs: ['docs-upkeep'],
   },
   {
     name: 'test-audit',

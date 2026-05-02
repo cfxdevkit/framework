@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFile, spawn } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { promisify } from 'node:util';
@@ -147,6 +147,7 @@ try {
   else if (command === 'config') await configure(args);
   else if (command === 'ask') await ask(args);
   else if (command === 'commit') await runCommit(args);
+  else if (command === 'docs-upkeep') await runDocsUpkeep(args);
   else if (command === 'run') await runAction(args);
   else if (command === 'actions') listActions();
   else help();
@@ -238,6 +239,48 @@ async function runAction(args) {
   });
   await writeLlmReport(action, response);
   console.log(response.content);
+}
+
+async function runDocsUpkeep(args) {
+  if (args[0] === '--') args.shift();
+  const flags = parseDocsUpkeepFlags(args);
+  const total = 4;
+
+  logStep(1, total, 'Deterministic docs scan');
+  const docsScan = await commandBlock('deterministic docs alignment', 'pnpm', ['run', 'llm:docs'], {
+    timeoutMs: 120000,
+    maxChars: 20000,
+  });
+  logInfo('  ✓ docs alignment artifacts refreshed');
+
+  logStep(2, total, 'Discovering documentation folders');
+  const scopes = await discoverDocsUpkeepScopes(flags);
+  if (scopes.length === 0) {
+    logInfo('  No documentation folders matched.');
+    return;
+  }
+  logInfo(`  ${scopes.length} folder scope(s): ${scopes.map((scope) => scope.label).join(', ')}`);
+
+  logStep(3, total, 'Generating folder artifacts');
+  const baseContext = await buildDocsUpkeepBaseContext(docsScan, flags);
+  const results = [];
+  for (const scope of scopes) {
+    logInfo(`  → ${scope.label}  (${scope.files.length} file(s))`);
+    try {
+      const result = await generateDocsUpkeepArtifact(scope, baseContext, flags);
+      await writeDocsUpkeepScopeArtifact(scope, result);
+      logInfo(`    ✓ ${result.summary}`);
+      results.push({ scope, ...result, ok: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logInfo(`    ✗ ${message}`);
+      results.push({ scope, summary: '', artifact: '', followups: [], ok: false, error: message });
+    }
+  }
+
+  logStep(4, total, 'Writing docs upkeep index');
+  const indexPath = await writeDocsUpkeepIndex(results, flags);
+  logInfo(`  report: ${indexPath}`);
 }
 
 async function runCommit(args) {
@@ -361,6 +404,267 @@ function listActions() {
   for (const [name, spec] of Object.entries(repoActions)) {
     console.log(`${name}: ${spec.title}`);
   }
+}
+
+// ─── Docs upkeep pipeline ────────────────────────────────────────────────────
+
+function parseDocsUpkeepFlags(args) {
+  const promptParts = [];
+  const scopes = [];
+  let model = null;
+  let quick = false;
+  let includePackageDocs = false;
+  let maxFolders = Number.POSITIVE_INFINITY;
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index];
+    if (arg === '--model') model = args[++index];
+    else if (arg === '--quick') quick = true;
+    else if (arg === '--include-package-docs') includePackageDocs = true;
+    else if (arg === '--scope') scopes.push(args[++index]);
+    else if (arg === '--max-folders') maxFolders = Number(args[++index]);
+    else promptParts.push(arg);
+  }
+  return {
+    prompt: promptParts.join(' ').trim(),
+    model,
+    quick,
+    includePackageDocs,
+    scopes: scopes.filter(Boolean),
+    maxFolders:
+      Number.isFinite(maxFolders) && maxFolders > 0 ? maxFolders : Number.POSITIVE_INFINITY,
+  };
+}
+
+async function discoverDocsUpkeepScopes(flags) {
+  const files = await collectDocsUpkeepFiles(flags.includePackageDocs);
+  const scopeFilters = flags.scopes.map(normalizeScopeFilter);
+  const groups = new Map();
+  for (const file of files) {
+    if (scopeFilters.length && !scopeFilters.some((scope) => file.startsWith(scope))) continue;
+    const dir = dirname(file) === '.' ? 'root' : dirname(file);
+    if (!groups.has(dir)) groups.set(dir, { label: dir, dir, files: [] });
+    groups.get(dir).files.push(file);
+  }
+  return [...groups.values()]
+    .map((scope) => ({ ...scope, files: scope.files.sort() }))
+    .sort((left, right) => left.label.localeCompare(right.label))
+    .slice(0, flags.maxFolders);
+}
+
+async function collectDocsUpkeepFiles(includePackageDocs) {
+  const files = [];
+  await walkDocsFiles(join(root, 'docs'), files, (file) => file.endsWith('.md'));
+  if (includePackageDocs) {
+    for (const base of ['.', 'infrastructure', 'projects', 'repos', 'tools']) {
+      await walkDocsFiles(join(root, base), files, (file) =>
+        /(^|\/)(README|API|STRUCTURE)\.md$/.test(file),
+      );
+    }
+  }
+  return unique(files.map((file) => file.replace(`${root}/`, ''))).filter(
+    (file) => !file.startsWith('artifacts/') && !file.includes('/node_modules/'),
+  );
+}
+
+async function walkDocsFiles(dir, files, predicate) {
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    if (error?.code === 'ENOENT') return;
+    throw error;
+  }
+  for (const entry of entries) {
+    if (entry.name.startsWith('.') && entry.name !== '.github') continue;
+    if (['artifacts', 'dist', 'node_modules', 'coverage'].includes(entry.name)) continue;
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) await walkDocsFiles(path, files, predicate);
+    if (entry.isFile() && predicate(path)) files.push(path);
+  }
+}
+
+function normalizeScopeFilter(scope) {
+  return scope.replace(/^\.\//, '').replace(/\/$/, '');
+}
+
+async function buildDocsUpkeepBaseContext(docsScan, flags) {
+  const files = await Promise.all([
+    readContextFile('README.md'),
+    readContextFile('ARCHITECTURE.md'),
+    readContextFile('docs/README.md'),
+    readContextFile('docs/STRUCTURE.md'),
+    readContextFile('artifacts/llm/reports/docs-alignment.md'),
+  ]);
+  return [docsScan, ...files]
+    .filter(Boolean)
+    .join('\n\n')
+    .slice(0, flags.quick ? 8000 : 20000);
+}
+
+async function generateDocsUpkeepArtifact(scope, baseContext, flags) {
+  const folderContext = await buildDocsFolderContext(scope, flags.quick ? 20000 : 36000);
+  const retryFolderContext = await buildDocsFolderContext(scope, flags.quick ? 12000 : 24000);
+  const prompt = [
+    flags.prompt || repoActions['docs-upkeep'].defaultPrompt,
+    '',
+    `Folder scope: ${scope.label}`,
+    `Files: ${scope.files.join(', ')}`,
+    '',
+    'Repository docs context:',
+    baseContext,
+    '',
+    'Folder contents:',
+    folderContext,
+  ].join('\n');
+  const response = await completeDocsUpkeepArtifact({
+    flags,
+    userPrompt: prompt,
+    maxTokens: flags.quick ? 1600 : 2600,
+  });
+  try {
+    return validateDocsUpkeepJson(response.content, scope.label);
+  } catch {
+    const retryPrompt = [
+      flags.prompt || repoActions['docs-upkeep'].defaultPrompt,
+      '',
+      `Folder scope: ${scope.label}`,
+      `Existing files: ${scope.files.join(', ')}`,
+      '',
+      'Write a concise artifact. Keep each artifactLines item short. Do not include nested JSON, markdown fences, or raw multiline strings.',
+      '',
+      'Repository docs context:',
+      baseContext.slice(0, flags.quick ? 5000 : 12000),
+      '',
+      'Folder contents:',
+      retryFolderContext,
+    ].join('\n');
+    const retryResponse = await completeDocsUpkeepArtifact({
+      flags,
+      userPrompt: retryPrompt,
+      maxTokens: flags.quick ? 1200 : 2000,
+    });
+    return validateDocsUpkeepJson(retryResponse.content, scope.label);
+  }
+}
+
+async function completeDocsUpkeepArtifact({ flags, userPrompt, maxTokens }) {
+  return completeDirect({
+    action: 'docs-upkeep',
+    modelOverride: flags.model,
+    systemPrompt: [
+      'You are a documentation maintainer for a TypeScript monorepo.',
+      'Return strict JSON only, with no markdown fence and no explanatory text.',
+      'Use artifactLines and followups arrays so each markdown line or action item is a separate JSON string.',
+      'The Files list is authoritative: do not recommend creating a file that is already listed there.',
+    ].join(' '),
+    userPrompt: [
+      'Schema: {"summary":"one sentence","artifactLines":["markdown line"],"followups":["action item"]}.',
+      'The artifact should be a practical folder-level upkeep note with sections: Current State, Drift or Gaps, Recommended Edits, Validation.',
+      'Prefer concrete file-specific edits. Do not invent checked-in files or claim edits were applied.',
+      'If a file is listed in the folder scope, treat it as existing even if its contents are truncated.',
+      userPrompt,
+    ].join('\n'),
+    maxTokens,
+  });
+}
+
+async function buildDocsFolderContext(scope, maxChars) {
+  const parts = [];
+  for (const file of scope.files) {
+    try {
+      const info = await stat(join(root, file));
+      if (info.size > 256 * 1024) continue;
+      const content = await readFile(join(root, file), 'utf8');
+      parts.push(`--- ${file} ---\n${content.slice(0, 12000)}`);
+    } catch {
+      // skip files that disappeared during the run
+    }
+  }
+  return parts.join('\n\n').slice(0, maxChars);
+}
+
+function validateDocsUpkeepJson(content, scopeLabel) {
+  const parsed = parseJsonObject(content);
+  if (typeof parsed.summary !== 'string' || !parsed.summary.trim()) {
+    throw new Error(`Invalid docs-upkeep JSON for ${scopeLabel}: missing summary`);
+  }
+  const artifact = Array.isArray(parsed.artifactLines)
+    ? parsed.artifactLines.filter((line) => typeof line === 'string').join('\n')
+    : parsed.artifact;
+  if (typeof artifact !== 'string' || !artifact.trim()) {
+    throw new Error(`Invalid docs-upkeep JSON for ${scopeLabel}: missing artifactLines`);
+  }
+  return {
+    summary: parsed.summary.trim(),
+    artifact: artifact.trim(),
+    followups: Array.isArray(parsed.followups)
+      ? parsed.followups
+          .filter((followup) => typeof followup === 'string' && followup.trim())
+          .map((followup) => followup.trim())
+      : [],
+  };
+}
+
+async function writeDocsUpkeepScopeArtifact(scope, result) {
+  const filePath = join(artifactsRoot, 'reports', 'docs-upkeep', `${artifactSlug(scope.label)}.md`);
+  await mkdir(dirname(filePath), { recursive: true });
+  await writeFile(
+    filePath,
+    [
+      `# Docs upkeep: ${scope.label}`,
+      '',
+      `Generated: ${new Date().toISOString()}`,
+      `Files: ${scope.files.join(', ')}`,
+      '',
+      result.artifact,
+      '',
+      '## Follow-ups',
+      '',
+      ...(result.followups.length ? result.followups.map((item) => `- ${item}`) : ['- None.']),
+      '',
+    ].join('\n'),
+    'utf8',
+  );
+}
+
+async function writeDocsUpkeepIndex(results, flags) {
+  const path = join(artifactsRoot, 'reports', 'docs-upkeep.md');
+  const lines = [
+    '# Documentation Upkeep',
+    '',
+    `Generated: ${new Date().toISOString()}`,
+    `Mode: ${flags.quick ? 'quick' : 'full'}`,
+    `Included package docs: ${flags.includePackageDocs ? 'yes' : 'no'}`,
+    '',
+    '## Folder Results',
+    '',
+  ];
+  for (const result of results) {
+    const artifact = `artifacts/llm/reports/docs-upkeep/${artifactSlug(result.scope.label)}.md`;
+    lines.push(
+      `- ${result.ok ? 'ok' : 'error'} ${result.scope.label}: ${result.ok ? result.summary : result.error}`,
+      `  - Artifact: ${artifact}`,
+    );
+  }
+  const followups = results.flatMap((result) =>
+    result.ok ? result.followups.map((item) => ({ scope: result.scope.label, item })) : [],
+  );
+  lines.push('', '## Consolidated Follow-ups', '');
+  if (followups.length === 0) lines.push('- None.');
+  else for (const followup of followups) lines.push(`- ${followup.scope}: ${followup.item}`);
+  lines.push('');
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, lines.join('\n'), 'utf8');
+  return 'artifacts/llm/reports/docs-upkeep.md';
+}
+
+function artifactSlug(label) {
+  return (
+    label
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase() || 'root'
+  );
 }
 
 // ─── Progress helpers ─────────────────────────────────────────────────────────
@@ -1345,6 +1649,12 @@ Commands:
   config set default-model <id>  Pin default model id
   config set action <name> <id>  Pin model for one repo action
   ask [--quick] "question"       Ask a repo-aware question
+  docs-upkeep [flags] [prompt]   Refresh docs checks and generate folder-by-folder upkeep artifacts
+    --scope <path>               Limit to one docs folder prefix; repeatable
+    --max-folders <n>            Limit folder count for bounded local runs
+    --include-package-docs       Also scan README/API/STRUCTURE files outside docs/
+    --quick                      Shorter per-folder artifact generation
+    --model <id>                 Override LLM model
   commit [flags] [prompt]        Full commit pipeline:
                                    1. Quality gates (lint, typecheck; opt-in: build, tests)
                                    2. Preflight (gitnexus + git + review)
@@ -1377,6 +1687,7 @@ Examples:
   pnpm run llm:commit -- --agent pi-rpc --pi-provider lemonade --pi-model Qwen3-Coder-Next-GGUF
   pnpm run llm:action -- review
   pnpm run llm:docs-upkeep -- --quick
+  pnpm run llm:docs-upkeep -- --scope docs/architecture --max-folders 1
   pnpm run llm:test-audit
   pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
 `);

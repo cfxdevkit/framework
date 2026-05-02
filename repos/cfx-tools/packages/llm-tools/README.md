@@ -17,6 +17,25 @@ This package owns the Lemonade/Pi developer harness and deterministic repo upkee
 
 Root `pnpm run llm:*` scripts route through this package so developers can keep using the short commands from the workspace root.
 
+## Docs Upkeep
+
+`pnpm run llm:docs-upkeep` runs a four-phase documentation maintenance loop:
+
+1. Refresh deterministic docs alignment artifacts with `llm:docs`.
+2. Discover documentation folder scopes under `docs/`.
+3. Process each folder serially with bounded context from that folder plus repository docs signals.
+4. Write per-folder artifacts under `artifacts/llm/reports/docs-upkeep/` and an index at `artifacts/llm/reports/docs-upkeep.md`.
+
+Useful flags:
+
+```bash
+pnpm run llm:docs-upkeep -- --quick
+pnpm run llm:docs-upkeep -- --scope docs/architecture --max-folders 1
+pnpm run llm:docs-upkeep -- --include-package-docs --max-folders 10
+```
+
+The command produces reviewable artifacts; it does not silently rewrite checked-in docs.
+
 ## Backend
 
 The delegated commands use Lemonade Server directly by default. Commit preparation can also use Pi via `--agent pi-rpc`, which registers a generated local Lemonade provider extension under `artifacts/llm/config/`.
