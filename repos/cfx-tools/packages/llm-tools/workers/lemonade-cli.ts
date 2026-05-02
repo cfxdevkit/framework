@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 import { execFile, spawn } from 'node:child_process';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -264,11 +265,27 @@ async function runDocsUpkeep(args) {
   logStep(3, total, 'Generating folder artifacts');
   const baseContext = await buildDocsUpkeepBaseContext(docsScan, flags);
   const results = [];
+  if (flags.write && !flags.yes) {
+    const confirmed = await confirmPrompt(
+      `Apply local LLM documentation edits to ${scopes.length} folder scope(s)? [Y/n] `,
+    );
+    if (!confirmed) {
+      logInfo('  Continuing in artifact-only mode.');
+      flags.write = false;
+    }
+  }
   for (const scope of scopes) {
     logInfo(`  → ${scope.label}  (${scope.files.length} file(s))`);
     try {
-      const result = await generateDocsUpkeepArtifact(scope, baseContext, flags);
+      const result = await generateDocsUpkeepArtifact(scope, baseContext, {
+        ...flags,
+        write: false,
+      });
+      if (flags.write) {
+        result.replacements = await generateDocsUpkeepReplacements(scope, baseContext, flags);
+      }
       await writeDocsUpkeepScopeArtifact(scope, result);
+      if (flags.write) await applyDocsUpkeepUpdates(scope, result);
       logInfo(`    ✓ ${result.summary}`);
       results.push({ scope, ...result, ok: true });
     } catch (error) {
@@ -413,13 +430,17 @@ function parseDocsUpkeepFlags(args) {
   const scopes = [];
   let model = null;
   let quick = false;
-  let includePackageDocs = false;
+  let docsOnly = false;
+  let write = false;
+  let yes = false;
   let maxFolders = Number.POSITIVE_INFINITY;
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === '--model') model = args[++index];
     else if (arg === '--quick') quick = true;
-    else if (arg === '--include-package-docs') includePackageDocs = true;
+    else if (arg === '--docs-only') docsOnly = true;
+    else if (arg === '--write') write = true;
+    else if (arg === '--yes' || arg === '-y') yes = true;
     else if (arg === '--scope') scopes.push(args[++index]);
     else if (arg === '--max-folders') maxFolders = Number(args[++index]);
     else promptParts.push(arg);
@@ -428,7 +449,9 @@ function parseDocsUpkeepFlags(args) {
     prompt: promptParts.join(' ').trim(),
     model,
     quick,
-    includePackageDocs,
+    docsOnly,
+    write,
+    yes,
     scopes: scopes.filter(Boolean),
     maxFolders:
       Number.isFinite(maxFolders) && maxFolders > 0 ? maxFolders : Number.POSITIVE_INFINITY,
@@ -436,7 +459,7 @@ function parseDocsUpkeepFlags(args) {
 }
 
 async function discoverDocsUpkeepScopes(flags) {
-  const files = await collectDocsUpkeepFiles(flags.includePackageDocs);
+  const files = await collectDocsUpkeepFiles(flags.docsOnly);
   const scopeFilters = flags.scopes.map(normalizeScopeFilter);
   const groups = new Map();
   for (const file of files) {
@@ -451,23 +474,20 @@ async function discoverDocsUpkeepScopes(flags) {
     .slice(0, flags.maxFolders);
 }
 
-async function collectDocsUpkeepFiles(includePackageDocs) {
+async function collectDocsUpkeepFiles(docsOnly) {
   const files = [];
-  await walkDocsFiles(join(root, 'docs'), files, (file) => file.endsWith('.md'));
-  if (includePackageDocs) {
-    for (const base of ['.', 'infrastructure', 'projects', 'repos', 'tools']) {
-      await walkDocsFiles(join(root, base), files, (file) =>
-        /(^|\/)(README|API|STRUCTURE)\.md$/.test(file),
-      );
-    }
+  if (docsOnly) {
+    await walkDocsFiles(join(root, 'docs'), files, (file) => file.endsWith('.md'));
+  } else {
+    await walkDocsFiles(root, files, (file) => file.endsWith('.md'));
   }
   return unique(files.map((file) => file.replace(`${root}/`, ''))).filter(
-    (file) => !file.startsWith('artifacts/') && !file.includes('/node_modules/'),
+    (file) => !isIgnoredDocsPath(file),
   );
 }
 
 async function walkDocsFiles(dir, files, predicate) {
-  let entries;
+  let entries = [];
   try {
     entries = await readdir(dir, { withFileTypes: true });
   } catch {
@@ -475,12 +495,27 @@ async function walkDocsFiles(dir, files, predicate) {
     throw error;
   }
   for (const entry of entries) {
-    if (entry.name.startsWith('.') && entry.name !== '.github') continue;
-    if (['artifacts', 'dist', 'node_modules', 'coverage'].includes(entry.name)) continue;
+    if (
+      entry.name.startsWith('.') &&
+      !['.changeset', '.devcontainer', '.github'].includes(entry.name)
+    )
+      continue;
+    if (['artifacts', 'dist', 'node_modules', 'coverage', '.moon'].includes(entry.name)) continue;
     const path = join(dir, entry.name);
     if (entry.isDirectory()) await walkDocsFiles(path, files, predicate);
     if (entry.isFile() && predicate(path)) files.push(path);
   }
+}
+
+function isIgnoredDocsPath(file) {
+  return (
+    file.startsWith('artifacts/') ||
+    file.startsWith('node_modules/') ||
+    file.includes('/node_modules/') ||
+    file.includes('/dist/') ||
+    file.includes('/coverage/') ||
+    file.startsWith('.moon/')
+  );
 }
 
 function normalizeScopeFilter(scope) {
@@ -519,7 +554,7 @@ async function generateDocsUpkeepArtifact(scope, baseContext, flags) {
   const response = await completeDocsUpkeepArtifact({
     flags,
     userPrompt: prompt,
-    maxTokens: flags.quick ? 1600 : 2600,
+    maxTokens: flags.write ? (flags.quick ? 3200 : 5200) : flags.quick ? 1600 : 2600,
   });
   try {
     return validateDocsUpkeepJson(response.content, scope.label);
@@ -541,10 +576,36 @@ async function generateDocsUpkeepArtifact(scope, baseContext, flags) {
     const retryResponse = await completeDocsUpkeepArtifact({
       flags,
       userPrompt: retryPrompt,
-      maxTokens: flags.quick ? 1200 : 2000,
+      maxTokens: flags.write ? (flags.quick ? 2600 : 4200) : flags.quick ? 1200 : 2000,
     });
-    return validateDocsUpkeepJson(retryResponse.content, scope.label);
+    try {
+      return validateDocsUpkeepJson(retryResponse.content, scope.label);
+    } catch {
+      return fallbackDocsUpkeepArtifact(scope, retryResponse.content);
+    }
   }
+}
+
+function fallbackDocsUpkeepArtifact(scope, content) {
+  return {
+    summary: `Generated fallback docs-upkeep note for ${scope.label}; rerun recommended for strict JSON output.`,
+    artifact: [
+      '## Current State',
+      '',
+      'The local model returned malformed JSON for this folder, so the raw bounded response is preserved for review.',
+      '',
+      '## Model Response Excerpt',
+      '',
+      content.trim().slice(0, 4000) || '(empty response)',
+      '',
+      '## Validation',
+      '',
+      '- Rerun docs-upkeep for this scope before applying broad documentation updates.',
+    ].join('\n'),
+    followups: [`Rerun docs-upkeep for ${scope.label} to get strict JSON output.`],
+    replacements: [],
+    fileUpdates: [],
+  };
 }
 
 async function completeDocsUpkeepArtifact({ flags, userPrompt, maxTokens }) {
@@ -555,17 +616,101 @@ async function completeDocsUpkeepArtifact({ flags, userPrompt, maxTokens }) {
       'You are a documentation maintainer for a TypeScript monorepo.',
       'Return strict JSON only, with no markdown fence and no explanatory text.',
       'Use artifactLines and followups arrays so each markdown line or action item is a separate JSON string.',
+      'When asked to write docs, prefer compact exact replacements with oldLines and newLines arrays.',
       'The Files list is authoritative: do not recommend creating a file that is already listed there.',
     ].join(' '),
     userPrompt: [
-      'Schema: {"summary":"one sentence","artifactLines":["markdown line"],"followups":["action item"]}.',
+      'Schema: {"summary":"one sentence","artifactLines":["markdown line"],"followups":["action item"],"replacements":[{"path":"existing markdown path","oldLines":["exact old line"],"newLines":["replacement line"]}],"fileUpdates":[{"path":"existing markdown path","contentLines":["complete file line"]}]}.',
       'The artifact should be a practical folder-level upkeep note with sections: Current State, Drift or Gaps, Recommended Edits, Validation.',
+      flags.write
+        ? 'Also include replacements for safe exact edits of existing markdown files in this folder scope. Use fileUpdates only if an exact replacement cannot express the edit compactly.'
+        : 'Do not include fileUpdates unless the command is running in write mode.',
+      flags.write && flags.quick
+        ? 'In quick write mode, include at most one replacement for one existing file and keep artifactLines concise.'
+        : '',
       'Prefer concrete file-specific edits. Do not invent checked-in files or claim edits were applied.',
       'If a file is listed in the folder scope, treat it as existing even if its contents are truncated.',
       userPrompt,
     ].join('\n'),
     maxTokens,
   });
+}
+
+async function generateDocsUpkeepReplacements(scope, baseContext, flags) {
+  const folderContext = await buildDocsFolderContext(scope, flags.quick ? 14000 : 28000);
+  const userPrompt = [
+    `Folder scope: ${scope.label}`,
+    `Existing files: ${scope.files.join(', ')}`,
+    '',
+    'Repository docs context:',
+    baseContext.slice(0, flags.quick ? 4000 : 10000),
+    '',
+    'Folder contents:',
+    folderContext,
+    '',
+    'Return only safe exact replacements for existing files in this folder. Do not create files. Do not rewrite complete files.',
+  ].join('\n');
+  const response = await completeDirect({
+    action: 'docs-upkeep',
+    modelOverride: flags.model,
+    systemPrompt: [
+      'You are a documentation editor for a TypeScript monorepo.',
+      'Return strict JSON only, with no markdown fence and no explanatory text.',
+      'Use compact exact replacements. Each replacement oldLines block must match existing content exactly.',
+    ].join(' '),
+    userPrompt: [
+      'Schema: {"replacements":[{"path":"existing markdown path","oldLines":["exact old line"],"newLines":["replacement line"]}],"followups":["action item"]}.',
+      flags.quick
+        ? 'In quick mode, include at most one replacement.'
+        : 'Include only high-confidence replacements.',
+      userPrompt,
+    ].join('\n'),
+    maxTokens: flags.quick ? 1200 : 2400,
+  });
+  try {
+    const replacements = validateDocsReplacementJson(response.content);
+    if (replacements.length > 0) return replacements;
+  } catch {
+    // fall through to narrower retry
+  }
+  return generateSingleDocsReplacement(scope, flags);
+}
+
+async function generateSingleDocsReplacement(scope, flags) {
+  const file = scope.files[0];
+  if (!file) return [];
+  const content = await readFile(join(root, file), 'utf8');
+  const response = await completeDirect({
+    action: 'docs-upkeep',
+    modelOverride: flags.model,
+    systemPrompt: [
+      'You are a documentation editor for a TypeScript monorepo.',
+      'Return strict JSON only, with no markdown fence and no explanatory text.',
+      'Return at most one exact replacement. If no safe edit exists, return {"replacements":[]}.',
+    ].join(' '),
+    userPrompt: [
+      'Schema: {"replacements":[{"path":"existing markdown path","oldLines":["exact old line"],"newLines":["replacement line"]}]}',
+      `Path: ${file}`,
+      'Task: make one conservative documentation upkeep edit if the file has stale, unclear, or incomplete wording.',
+      'File content:',
+      content.slice(0, flags.quick ? 10000 : 20000),
+    ].join('\n'),
+    maxTokens: flags.quick ? 900 : 1600,
+  });
+  try {
+    return validateDocsReplacementJson(response.content);
+  } catch {
+    return [];
+  }
+}
+
+function validateDocsReplacementJson(content) {
+  const parsed = parseJsonObject(content);
+  return Array.isArray(parsed.replacements)
+    ? parsed.replacements
+        .map((replacement) => normalizeDocsReplacement(replacement))
+        .filter(Boolean)
+    : [];
 }
 
 async function buildDocsFolderContext(scope, maxChars) {
@@ -602,7 +747,82 @@ function validateDocsUpkeepJson(content, scopeLabel) {
           .filter((followup) => typeof followup === 'string' && followup.trim())
           .map((followup) => followup.trim())
       : [],
+    replacements: Array.isArray(parsed.replacements)
+      ? parsed.replacements
+          .map((replacement) => normalizeDocsReplacement(replacement))
+          .filter(Boolean)
+      : [],
+    fileUpdates: Array.isArray(parsed.fileUpdates)
+      ? parsed.fileUpdates.map((update) => normalizeDocsFileUpdate(update)).filter(Boolean)
+      : [],
   };
+}
+
+function normalizeDocsReplacement(replacement) {
+  if (
+    !replacement ||
+    typeof replacement.path !== 'string' ||
+    !Array.isArray(replacement.oldLines) ||
+    !Array.isArray(replacement.newLines)
+  ) {
+    return null;
+  }
+  const path = replacement.path.trim().replace(/^\.\//, '');
+  const oldText = replacement.oldLines.filter((line) => typeof line === 'string').join('\n');
+  const newText = replacement.newLines.filter((line) => typeof line === 'string').join('\n');
+  if (!path.endsWith('.md') || !oldText.trim()) return null;
+  return { path, oldText, newText };
+}
+
+function normalizeDocsFileUpdate(update) {
+  if (!update || typeof update.path !== 'string' || !Array.isArray(update.contentLines)) {
+    return null;
+  }
+  const path = update.path.trim().replace(/^\.\//, '');
+  const content = update.contentLines
+    .filter((line) => typeof line === 'string')
+    .join('\n')
+    .trimEnd();
+  if (!path.endsWith('.md') || !content.trim()) return null;
+  return { path, content: `${content}\n` };
+}
+
+async function applyDocsUpkeepUpdates(scope, result) {
+  const allowed = new Set(scope.files);
+  let applied = 0;
+  for (const replacement of result.replacements ?? []) {
+    if (!allowed.has(replacement.path)) {
+      logInfo(`    ! skipped replacement outside scope: ${replacement.path}`);
+      continue;
+    }
+    if (isIgnoredDocsPath(replacement.path)) {
+      logInfo(`    ! skipped ignored docs path: ${replacement.path}`);
+      continue;
+    }
+    const path = join(root, replacement.path);
+    const current = await readFile(path, 'utf8');
+    const occurrences = current.split(replacement.oldText).length - 1;
+    if (occurrences !== 1) {
+      logInfo(`    ! skipped non-unique replacement in ${replacement.path}`);
+      continue;
+    }
+    await writeFile(path, current.replace(replacement.oldText, replacement.newText), 'utf8');
+    applied++;
+  }
+  for (const update of result.fileUpdates ?? []) {
+    if (!allowed.has(update.path)) {
+      logInfo(`    ! skipped update outside scope: ${update.path}`);
+      continue;
+    }
+    if (isIgnoredDocsPath(update.path)) {
+      logInfo(`    ! skipped ignored docs path: ${update.path}`);
+      continue;
+    }
+    await writeFile(join(root, update.path), update.content, 'utf8');
+    applied++;
+  }
+  result.updatedFiles = applied;
+  if (applied > 0) logInfo(`    updated ${applied} markdown file(s)`);
 }
 
 async function writeDocsUpkeepScopeArtifact(scope, result) {
@@ -615,6 +835,7 @@ async function writeDocsUpkeepScopeArtifact(scope, result) {
       '',
       `Generated: ${new Date().toISOString()}`,
       `Files: ${scope.files.join(', ')}`,
+      `Updated files: ${result.updatedFiles ?? 0}`,
       '',
       result.artifact,
       '',
@@ -634,7 +855,8 @@ async function writeDocsUpkeepIndex(results, flags) {
     '',
     `Generated: ${new Date().toISOString()}`,
     `Mode: ${flags.quick ? 'quick' : 'full'}`,
-    `Included package docs: ${flags.includePackageDocs ? 'yes' : 'no'}`,
+    `Scope: ${flags.docsOnly ? 'docs/' : 'all markdown'}`,
+    `Write mode: ${flags.write ? 'yes' : 'no'}`,
     '',
     '## Folder Results',
     '',
@@ -644,6 +866,7 @@ async function writeDocsUpkeepIndex(results, flags) {
     lines.push(
       `- ${result.ok ? 'ok' : 'error'} ${result.scope.label}: ${result.ok ? result.summary : result.error}`,
       `  - Artifact: ${artifact}`,
+      `  - Updated files: ${result.updatedFiles ?? 0}`,
     );
   }
   const followups = results.flatMap((result) =>
@@ -845,29 +1068,71 @@ async function generateChangelogEntry(scope, flags) {
     .join('\n\n');
 
   const today = new Date().toISOString().slice(0, 10);
+  const systemPrompt = [
+    'You are a changelog writer for a TypeScript monorepo.',
+    'Return strict JSON only, with no markdown fence and no explanatory text.',
+    'Schema: {"summary":"one sentence","entryLines":["markdown line"],"risks":["risk or empty"]}.',
+    'Use entryLines instead of a multiline string so every markdown line is a separate JSON string.',
+    'The entryLines must form a Keep-a-Changelog style entry with a date heading and only factual bullets under Added, Changed, Fixed, or Removed.',
+  ].join(' ');
+  const userPrompt = [
+    `Scope: ${scope.label}`,
+    `Date: ${today}`,
+    `Changed files: ${scope.files.join(', ')}`,
+    '',
+    'Git diff:',
+    diffCtx,
+    '',
+    'Write the JSON changelog analysis for this scope.',
+  ].join('\n');
   const response = await completeCommitAgent({
     action: 'changelog',
     flags,
-    systemPrompt: [
-      'You are a changelog writer for a TypeScript monorepo.',
-      'Return strict JSON only, with no markdown fence and no explanatory text.',
-      'Schema: {"summary":"one sentence","entryLines":["markdown line"],"risks":["risk or empty"]}.',
-      'Use entryLines instead of a multiline string so every markdown line is a separate JSON string.',
-      'The entryLines must form a Keep-a-Changelog style entry with a date heading and only factual bullets under Added, Changed, Fixed, or Removed.',
-    ].join(' '),
-    userPrompt: [
-      `Scope: ${scope.label}`,
-      `Date: ${today}`,
-      `Changed files: ${scope.files.join(', ')}`,
-      '',
-      'Git diff:',
-      diffCtx,
-      '',
-      'Write the JSON changelog analysis for this scope.',
-    ].join('\n'),
+    systemPrompt,
+    userPrompt,
     maxTokens: flags.quick ? 384 : 800,
   });
-  return validateChangelogJson(response.content, scope.label);
+  try {
+    return validateChangelogJson(response.content, scope.label);
+  } catch {
+    const retryResponse = await completeCommitAgent({
+      action: 'changelog',
+      flags,
+      systemPrompt: `${systemPrompt} The previous response was invalid or incomplete. Return exactly one compact JSON object. Do not include markdown.`,
+      userPrompt: [
+        'Previous invalid response excerpt:',
+        response.content.slice(0, 900),
+        '',
+        userPrompt,
+      ].join('\n'),
+      maxTokens: flags.quick ? 512 : 900,
+    });
+    try {
+      return validateChangelogJson(retryResponse.content, scope.label);
+    } catch {
+      return fallbackChangelogEntry(scope, today);
+    }
+  }
+}
+
+function fallbackChangelogEntry(scope, today) {
+  const changedFiles = scope.files.slice(0, 12);
+  const extraCount = Math.max(scope.files.length - changedFiles.length, 0);
+  const fileSummary =
+    changedFiles.length > 0
+      ? `${changedFiles.join(', ')}${extraCount > 0 ? `, and ${extraCount} more` : ''}`
+      : 'workspace metadata';
+  return {
+    summary: `Updated ${scope.label} files: ${fileSummary}.`,
+    entry: [
+      `## ${today}`,
+      '',
+      '### Changed',
+      '',
+      `- Updated ${scope.label} files: ${fileSummary}.`,
+    ].join('\n'),
+    risks: ['Generated from changed file list after local LLM returned invalid changelog JSON.'],
+  };
 }
 
 async function appendToChangelog(scope, entry) {
@@ -903,21 +1168,41 @@ async function generateCommitMessage(preflightCtx, changelogResults, flags) {
     .join('\n\n')
     .slice(0, flags.quick ? 12000 : 60000);
 
+  const systemPrompt = [
+    'You prepare commit metadata for a local deterministic git harness.',
+    'Return strict JSON only, with no markdown fence and no explanatory text.',
+    'Schema: {"subject":"conventional commit subject under 72 chars","bodyLines":["commit body line"],"filesToStage":["optional relative paths"],"risks":["risk or empty"]}.',
+    'Use bodyLines instead of a multiline string so every commit body line is a separate JSON string.',
+    'The subject must start with one of feat, fix, chore, docs, refactor, test, style, perf, ci, build, or revert.',
+    'Do not claim the commit already happened.',
+  ].join(' ');
+  const userPrompt = `${context}\n\nTask:\n${flags.prompt || repoActions.commit.defaultPrompt}`;
   const response = await completeCommitAgent({
     action: 'commit',
     flags,
-    systemPrompt: [
-      'You prepare commit metadata for a local deterministic git harness.',
-      'Return strict JSON only, with no markdown fence and no explanatory text.',
-      'Schema: {"subject":"conventional commit subject under 72 chars","bodyLines":["commit body line"],"filesToStage":["optional relative paths"],"risks":["risk or empty"]}.',
-      'Use bodyLines instead of a multiline string so every commit body line is a separate JSON string.',
-      'The subject must start with one of feat, fix, chore, docs, refactor, test, style, perf, ci, build, or revert.',
-      'Do not claim the commit already happened.',
-    ].join(' '),
-    userPrompt: `${context}\n\nTask:\n${flags.prompt || repoActions.commit.defaultPrompt}`,
+    systemPrompt,
+    userPrompt,
     maxTokens: flags.quick ? 512 : 1400,
   });
-  return { response, commit: validateCommitJson(response.content) };
+  try {
+    return { response, commit: validateCommitJson(response.content) };
+  } catch {
+    const retryResponse = await completeCommitAgent({
+      action: 'commit',
+      flags,
+      systemPrompt: `${systemPrompt} The previous response was invalid. Return only one compact valid JSON object.`,
+      userPrompt: [
+        'Previous invalid response excerpt:',
+        response.content.slice(0, 1200),
+        '',
+        'Regenerate the commit JSON. Keep bodyLines short. Use a conventional commit subject.',
+        '',
+        userPrompt.slice(0, flags.quick ? 8000 : 30000),
+      ].join('\n'),
+      maxTokens: flags.quick ? 512 : 1200,
+    });
+    return { response: retryResponse, commit: validateCommitJson(retryResponse.content) };
+  }
 }
 
 // ─── Confirmation + commit execution ─────────────────────────────────────────
@@ -1040,15 +1325,7 @@ function validateChangelogJson(content, scopeLabel) {
 function validateCommitJson(content) {
   const parsed = parseJsonObject(content);
   if (typeof parsed.subject !== 'string') throw new Error('Invalid commit JSON: missing subject');
-  const subject = parsed.subject
-    .trim()
-    .replace(/[`*]+$/g, '')
-    .slice(0, 72);
-  if (
-    !/^(feat|fix|chore|docs|refactor|test|style|perf|ci|build|revert)(\(.+\))?!?:\s/.test(subject)
-  ) {
-    throw new Error(`Invalid commit subject from LLM: ${subject}`);
-  }
+  const subject = normalizeCommitSubject(parsed.subject);
   const body = Array.isArray(parsed.bodyLines)
     ? parsed.bodyLines.filter((line) => typeof line === 'string').join('\n')
     : parsed.body;
@@ -1068,14 +1345,122 @@ function validateCommitJson(content) {
   };
 }
 
+function normalizeCommitSubject(rawSubject) {
+  const cleaned = rawSubject
+    .trim()
+    .replace(/^commit message:\s*/i, '')
+    .replace(/[`*]+$/g, '')
+    .replace(/\s+/g, ' ');
+  if (
+    /^(feat|fix|chore|docs|refactor|test|style|perf|ci|build|revert)(\(.+\))?!?:\s/.test(cleaned)
+  ) {
+    return cleaned.slice(0, 72);
+  }
+  const type = inferCommitType(cleaned);
+  const withoutTerminalPunctuation = cleaned.replace(/[.?!]+$/g, '');
+  return `${type}: ${withoutTerminalPunctuation}`.slice(0, 72);
+}
+
+function inferCommitType(subject) {
+  const text = subject.toLowerCase();
+  if (/\b(fix|repair|correct|resolve)\b/.test(text)) return 'fix';
+  if (/\b(doc|docs|readme|documentation)\b/.test(text)) return 'docs';
+  if (/\b(test|spec|coverage)\b/.test(text)) return 'test';
+  if (/\b(build|dependency|dependencies|package|lockfile|vite|tsx)\b/.test(text)) return 'build';
+  if (/\b(ci|workflow|pipeline)\b/.test(text)) return 'ci';
+  if (/\b(perf|performance|optimize)\b/.test(text)) return 'perf';
+  if (/\b(style|format|lint)\b/.test(text)) return 'style';
+  if (/\b(refactor|migrate|move|rename|restructure|split)\b/.test(text)) return 'refactor';
+  return 'chore';
+}
+
 function parseJsonObject(content) {
   const text = content.trim();
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)?.[1]?.trim();
-  const candidate = fenced ?? text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1);
+  const candidate = fenced ?? extractJsonObjectCandidate(text);
   if (!candidate?.startsWith('{')) {
     throw new Error(`LLM did not return a JSON object: ${text.slice(0, 120)}`);
   }
-  return JSON.parse(candidate);
+  return parseJsonWithRepairs(candidate);
+}
+
+function extractJsonObjectCandidate(text) {
+  const start = text.indexOf('{');
+  const end = findBalancedJsonEnd(text, start);
+  if (start === -1) return '';
+  return text.slice(start, end > start ? end + 1 : text.lastIndexOf('}') + 1);
+}
+
+function findBalancedJsonEnd(text, start) {
+  if (start < 0) return -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = start; index < text.length; index++) {
+    const char = text[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+    else if (char === '{') depth++;
+    else if (char === '}') {
+      depth--;
+      if (depth === 0) return index;
+    }
+  }
+  return -1;
+}
+
+function parseJsonWithRepairs(candidate) {
+  const attempts = [
+    candidate,
+    escapeRawNewlinesInJsonStrings(candidate),
+    stripTrailingCommas(escapeRawNewlinesInJsonStrings(candidate)),
+  ];
+  let lastError = null;
+  for (const attempt of unique(attempts)) {
+    try {
+      return JSON.parse(attempt);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
+function escapeRawNewlinesInJsonStrings(text) {
+  let output = '';
+  let inString = false;
+  let escaped = false;
+  for (const char of text) {
+    if (inString) {
+      if (escaped) {
+        output += char;
+        escaped = false;
+        continue;
+      }
+      if (char === '\\') {
+        output += char;
+        escaped = true;
+        continue;
+      }
+      if (char === '"') inString = false;
+      if (char === '\n') output += '\\n';
+      else if (char === '\r') output += '\\r';
+      else output += char;
+      continue;
+    }
+    if (char === '"') inString = true;
+    output += char;
+  }
+  return output;
+}
+
+function stripTrailingCommas(text) {
+  return text.replace(/,\s*([}\]])/g, '$1');
 }
 
 async function completeCommitAgent({ action, flags, systemPrompt, userPrompt, maxTokens }) {
@@ -1196,7 +1581,7 @@ async function completeWithPiRpc({ action, flags, systemPrompt, userPrompt }) {
         const line = buffer.slice(0, newlineIndex).replace(/\r$/, '');
         buffer = buffer.slice(newlineIndex + 1);
         if (!line.trim()) continue;
-        let event;
+        let event = null;
         try {
           event = JSON.parse(line);
         } catch {
@@ -1649,10 +2034,12 @@ Commands:
   config set default-model <id>  Pin default model id
   config set action <name> <id>  Pin model for one repo action
   ask [--quick] "question"       Ask a repo-aware question
-  docs-upkeep [flags] [prompt]   Refresh docs checks and generate folder-by-folder upkeep artifacts
+  docs-upkeep [flags] [prompt]   Refresh docs checks and upkeep markdown folder-by-folder
     --scope <path>               Limit to one docs folder prefix; repeatable
     --max-folders <n>            Limit folder count for bounded local runs
-    --include-package-docs       Also scan README/API/STRUCTURE files outside docs/
+    --docs-only                  Only scan docs/ instead of every markdown file in the repo
+    --write                      Apply complete-file markdown updates proposed by the local LLM
+    --yes / -y                   Skip write confirmation prompt
     --quick                      Shorter per-folder artifact generation
     --model <id>                 Override LLM model
   commit [flags] [prompt]        Full commit pipeline:
@@ -1687,6 +2074,7 @@ Examples:
   pnpm run llm:commit -- --agent pi-rpc --pi-provider lemonade --pi-model Qwen3-Coder-Next-GGUF
   pnpm run llm:action -- review
   pnpm run llm:docs-upkeep -- --quick
+  pnpm run llm:docs-upkeep -- --quick --write --yes --max-folders 3
   pnpm run llm:docs-upkeep -- --scope docs/architecture --max-folders 1
   pnpm run llm:test-audit
   pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"

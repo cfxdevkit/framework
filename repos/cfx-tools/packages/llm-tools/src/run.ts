@@ -29,9 +29,9 @@ export async function runCli(rawArgs: readonly string[]): Promise<void> {
 async function runWorker(command: LlmCommandDefinition, args: readonly string[]): Promise<void> {
   const repoRoot = findRepoRoot(packageDir);
   const script =
-    command.worker === 'lemonade' ? 'workers/lemonade-cli.mjs' : 'workers/llm-agents.mjs';
+    command.worker === 'lemonade' ? 'workers/lemonade-cli.ts' : 'workers/llm-agents.ts';
   const exitCode = await spawnNode(
-    [join(packageDir, script), ...command.workerArgs, ...args],
+    ['exec', 'tsx', join(packageDir, script), ...command.workerArgs, ...args],
     repoRoot,
   );
   process.exitCode = exitCode;
@@ -39,7 +39,7 @@ async function runWorker(command: LlmCommandDefinition, args: readonly string[])
 
 async function spawnNode(args: readonly string[], cwd: string): Promise<number> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args, {
+    const child = spawn('pnpm', args, {
       cwd,
       stdio: 'inherit',
       env: process.env,

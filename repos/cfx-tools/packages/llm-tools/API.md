@@ -1,6 +1,6 @@
 # API
 
-`@cfxdevkit/llm-tools` currently exposes command metadata for tooling integrations.
+`@cfxdevkit/llm-tools` exposes command metadata for tooling integrations.
 
 ```ts
 import { llmCommands, findLlmCommand } from '@cfxdevkit/llm-tools';

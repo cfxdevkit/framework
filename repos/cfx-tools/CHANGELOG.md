@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased] - 2026-05-02
+### Changed
+- Migrated `workers/lemonade-cli.mjs` and `workers/llm-agents.mjs` to TypeScript (`workers/lemonade-cli.ts`, `workers/llm-agents.ts`) and updated `src/run.ts` to execute them via `tsx`.
+- Updated `tsconfig.json` to include `workers/**/*` in `include` and set `rootDir` to `.` for unified TypeScript compilation.
+- Modified `moon.yml` to define `fileGroups.sources` covering `src`, `workers`, `package.json`, and `tsconfig*.json`.
+- Updated `package.json` to move `tsx` from `devDependencies` to `dependencies` and extended `lint` to include `workers`.
+- Adjusted `README.md` to clarify `llm:docs-upkeep` behavior: replaced `--include-package-docs` with `--write`, added `--docs-only`, and clarified write-mode constraints.
+- Updated `API.md` to remove 'currently' from description of `@cfxdevkit/llm-tools` capabilities.
+- Updated `STRUCTURE.md` to reflect TypeScript workers and clarify that implementation resides in typed source.
+
+
 
 ## [Unreleased] - 2026-05-02
 ### Added

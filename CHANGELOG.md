@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+### Changed
+- Updated `zod` dependency from `4.3.6` to `3.25.76` in `pnpm-lock.yaml` for root and dev dependencies, reversing previous version conflicts.
+- Migrated `lemonade-cli.mjs` and `llm-agents.mjs` scripts to use TypeScript workers (`lemonade-cli.ts` and `llm-agents.ts`) and execute via `pnpm exec tsx` instead of direct Node execution.
+- Added `tsx` as a direct dependency in root importers and removed it from devDependencies in `pnpm-lock.yaml`.
+### Fixed
+- Resolved dependency version mismatch between `zod@4.3.6` and `zod@3.25.76` in `viem` and `wagmi` transitive dependencies.
+
+
 
 ## [Unreleased] - 2026-05-02
 ### Changed

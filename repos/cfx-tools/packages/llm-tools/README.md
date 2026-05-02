@@ -22,7 +22,7 @@ Root `pnpm run llm:*` scripts route through this package so developers can keep 
 `pnpm run llm:docs-upkeep` runs a four-phase documentation maintenance loop:
 
 1. Refresh deterministic docs alignment artifacts with `llm:docs`.
-2. Discover documentation folder scopes under `docs/`.
+2. Discover markdown folder scopes across the repo.
 3. Process each folder serially with bounded context from that folder plus repository docs signals.
 4. Write per-folder artifacts under `artifacts/llm/reports/docs-upkeep/` and an index at `artifacts/llm/reports/docs-upkeep.md`.
 
@@ -30,11 +30,12 @@ Useful flags:
 
 ```bash
 pnpm run llm:docs-upkeep -- --quick
+pnpm run llm:docs-upkeep -- --docs-only --quick
 pnpm run llm:docs-upkeep -- --scope docs/architecture --max-folders 1
-pnpm run llm:docs-upkeep -- --include-package-docs --max-folders 10
+pnpm run llm:docs-upkeep -- --quick --write --yes --max-folders 3
 ```
 
-The command produces reviewable artifacts; it does not silently rewrite checked-in docs.
+By default the command produces reviewable artifacts only. Add `--write` to let the local model return exact search/replace edits for existing markdown files in the current folder scope. Write mode never creates new files, skips updates outside the folder scope, and only applies replacements whose old text matches exactly once.
 
 ## Backend
 

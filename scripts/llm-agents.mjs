@@ -4,8 +4,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
-const worker = join(repoRoot, 'repos/cfx-tools/packages/llm-tools/workers/llm-agents.mjs');
-const child = spawn(process.execPath, [worker, ...process.argv.slice(2)], {
+const worker = join(repoRoot, 'repos/cfx-tools/packages/llm-tools/workers/llm-agents.ts');
+const child = spawn('pnpm', ['exec', 'tsx', worker, ...process.argv.slice(2)], {
   cwd: process.cwd(),
   stdio: 'inherit',
   env: process.env,

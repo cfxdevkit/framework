@@ -2,3 +2,10 @@ $schema: 'https://moonrepo.dev/schemas/project.json'
 
 layer: 'application'
 language: 'typescript'
+
+fileGroups:
+  sources:
+    - 'src/**/*'
+    - 'workers/**/*'
+    - 'package.json'
+    - 'tsconfig*.json'

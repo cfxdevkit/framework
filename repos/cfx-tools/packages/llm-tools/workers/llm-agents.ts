@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { createHash } from 'node:crypto';
+// @ts-nocheck
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, extname, join, relative, resolve } from 'node:path';
 import { promisify } from 'node:util';
@@ -60,8 +61,8 @@ const textExtensions = new Set([
 ]);
 const sourceExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.sol']);
 const docExtensions = new Set(['.md']);
-const configExtensions = new Set(['.json', '.yaml', '.yml']);
-const secretNamePattern = /(^|[./_-])(\.env|env\.local|secret|secrets|private[-_]?key|mnemonic|passphrase|keystore)([./_-]|$)/i;
+const secretNamePattern =
+  /(^|[./_-])(\.env|env\.local|secret|secrets|private[-_]?key|mnemonic|passphrase|keystore)([./_-]|$)/i;
 const markdownLinkPattern = /\[[^\]]+\]\(([^)\s]+)\)/g;
 const inlineCodePattern = /`([^`\n]+)`/g;
 const headingPattern = /^(#{1,6})\s+(.+)$/gm;
@@ -200,7 +201,9 @@ async function runDatasetAgent(opts = {}) {
 }
 
 async function runDocsAgent(opts = {}) {
-  const markdownFiles = (await collectCorpusFiles()).filter((file) => docExtensions.has(extname(file)));
+  const markdownFiles = (await collectCorpusFiles()).filter((file) =>
+    docExtensions.has(extname(file)),
+  );
   const findings = [];
   for (const filePath of markdownFiles) {
     const rel = toRel(filePath);
@@ -218,7 +221,10 @@ async function runDocsAgent(opts = {}) {
     findings,
   };
   await writeJsonReport('reports/docs-alignment.json', report);
-  await writeMarkdownReport('reports/docs-alignment.md', renderFindings('Documentation Alignment', findings));
+  await writeMarkdownReport(
+    'reports/docs-alignment.md',
+    renderFindings('Documentation Alignment', findings),
+  );
   if (!opts.silent) printSummary('llm:docs', [report]);
   return { agent: 'docs', status: report.status, findings: findings.length };
 }
@@ -256,7 +262,12 @@ async function runReviewAgent(opts = {}) {
   await writeJsonReport('reports/review.json', report);
   await writeMarkdownReport('reports/review.md', renderReview(report));
   if (!opts.silent) printSummary('llm:review', [report]);
-  return { agent: 'review', status: report.status, changedFiles: changed.length, findings: findings.length };
+  return {
+    agent: 'review',
+    status: report.status,
+    changedFiles: changed.length,
+    findings: findings.length,
+  };
 }
 
 async function runEvalAgent(opts = {}) {
@@ -264,12 +275,24 @@ async function runEvalAgent(opts = {}) {
   const datasetManifest = await readJsonIfExists('datasets/manifest.json');
   const findings = [];
   if (!docsReport) {
-    findings.push({ severity: 'warning', issue: 'docs agent has not run', recommendation: 'Run pnpm run llm:docs.' });
+    findings.push({
+      severity: 'warning',
+      issue: 'docs agent has not run',
+      recommendation: 'Run pnpm run llm:docs.',
+    });
   } else if (docsReport.status !== 'ok') {
-    findings.push({ severity: 'error', issue: 'documentation alignment failed', recommendation: 'Review artifacts/llm/reports/docs-alignment.md.' });
+    findings.push({
+      severity: 'error',
+      issue: 'documentation alignment failed',
+      recommendation: 'Review artifacts/llm/reports/docs-alignment.md.',
+    });
   }
   if (!datasetManifest) {
-    findings.push({ severity: 'warning', issue: 'dataset seed has not been generated', recommendation: 'Run pnpm run llm:datasets.' });
+    findings.push({
+      severity: 'warning',
+      issue: 'dataset seed has not been generated',
+      recommendation: 'Run pnpm run llm:datasets.',
+    });
   }
 
   const report = {
@@ -350,7 +373,9 @@ function extractModelInventory(text) {
       .map((model) => ({
         id: typeof model?.id === 'string' ? model.id : undefined,
         checkpoint: typeof model?.checkpoint === 'string' ? model.checkpoint : undefined,
-        labels: Array.isArray(model?.labels) ? model.labels.filter((label) => typeof label === 'string') : [],
+        labels: Array.isArray(model?.labels)
+          ? model.labels.filter((label) => typeof label === 'string')
+          : [],
         recipe: typeof model?.recipe === 'string' ? model.recipe : undefined,
         size: typeof model?.size === 'number' ? model.size : undefined,
       }))
@@ -448,7 +473,11 @@ async function findBrokenPathRefs(path, content) {
     if (!looksLikeLocalPath(ref, source)) continue;
     const candidates = resolveDocRefCandidates(path, ref);
     if (candidates.some((candidate) => !candidate.startsWith(root))) {
-      findings.push({ severity: 'error', file: path, issue: `Path reference escapes repository: ${raw}` });
+      findings.push({
+        severity: 'error',
+        file: path,
+        issue: `Path reference escapes repository: ${raw}`,
+      });
       continue;
     }
     let found = false;
@@ -462,7 +491,11 @@ async function findBrokenPathRefs(path, content) {
       }
     }
     if (!found) {
-      findings.push({ severity: 'warning', file: path, issue: `Referenced path does not exist: ${raw}` });
+      findings.push({
+        severity: 'warning',
+        file: path,
+        issue: `Referenced path does not exist: ${raw}`,
+      });
     }
   }
   return findings;
@@ -506,10 +539,10 @@ async function checkMoonRegistration() {
   );
   for (const packageJson of await findFiles(root, 'package.json')) {
     const rel = dirname(toRel(packageJson));
-    if (rel === '.' || rel.startsWith('repos/cfx-') && rel.split('/').length === 2) continue;
+    if (rel === '.' || (rel.startsWith('repos/cfx-') && rel.split('/').length === 2)) continue;
     if (rel.startsWith('tools/codegen')) continue;
     const pkg = JSON.parse(await readFile(packageJson, 'utf8'));
-    if (!pkg.name || pkg.private === true && rel.startsWith('repos/')) continue;
+    if (!pkg.name || (pkg.private === true && rel.startsWith('repos/'))) continue;
     const moonPath = join(root, rel, 'moon.yml');
     try {
       await stat(moonPath);
@@ -517,7 +550,11 @@ async function checkMoonRegistration() {
       continue;
     }
     if (!registered.has(rel)) {
-      findings.push({ severity: 'warning', file: '.moon/workspace.yml', issue: `Moon project missing package path: ${rel}` });
+      findings.push({
+        severity: 'warning',
+        file: '.moon/workspace.yml',
+        issue: `Moon project missing package path: ${rel}`,
+      });
     }
   }
   return findings;
@@ -535,15 +572,26 @@ async function checkPackageExports() {
     try {
       vite = await readFile(vitePath, 'utf8');
     } catch {
-      findings.push({ severity: 'warning', file: rel, issue: 'Package has exports but no vite.config.ts found.' });
+      findings.push({
+        severity: 'warning',
+        file: rel,
+        issue: 'Package has exports but no vite.config.ts found.',
+      });
       continue;
     }
     for (const [exportPath, target] of Object.entries(pkg.exports)) {
       const importPath = typeof target === 'object' && target ? target.import : undefined;
       if (typeof importPath !== 'string') continue;
       const entryName = exportPath === '.' ? 'index' : exportPath.replace(/^\.\//, '');
-      if (!vite.includes(entryName) && !vite.includes(importPath.replace(/^\.\/dist\//, '').replace(/\.js$/, ''))) {
-        findings.push({ severity: 'warning', file: `${rel}/package.json`, issue: `Export ${exportPath} may not be represented in vite lib entries.` });
+      if (
+        !vite.includes(entryName) &&
+        !vite.includes(importPath.replace(/^\.\/dist\//, '').replace(/\.js$/, ''))
+      ) {
+        findings.push({
+          severity: 'warning',
+          file: `${rel}/package.json`,
+          issue: `Export ${exportPath} may not be represented in vite lib entries.`,
+        });
       }
     }
   }
@@ -572,7 +620,9 @@ async function gitChangedFiles() {
     ['ls-files', '--others', '--exclude-standard'],
   ]) {
     const { stdout } = await execFileAsync('git', args, { cwd: root });
-    stdout.split('\n').filter(Boolean).forEach((file) => changed.add(file));
+    for (const file of stdout.split('\n').filter(Boolean)) {
+      changed.add(file);
+    }
   }
   return [...changed].sort();
 }
@@ -585,7 +635,9 @@ function suggestValidationCommands(changed) {
     commands.add('pnpm run typecheck');
     commands.add('pnpm exec moon run :test --concurrency 4');
   }
-  if (changed.some((file) => file.endsWith('.md') || file.endsWith('.yml') || file.endsWith('.yaml'))) {
+  if (
+    changed.some((file) => file.endsWith('.md') || file.endsWith('.yml') || file.endsWith('.yaml'))
+  ) {
     commands.add('pnpm run llm:docs');
   }
   if (changed.some(isSecuritySensitive)) {
@@ -596,23 +648,34 @@ function suggestValidationCommands(changed) {
 }
 
 function isSecuritySensitive(file) {
-  return /keystore|wallet|secret|security|release|workflow|mcp-server|vscode-extension|audit/i.test(file);
+  return /keystore|wallet|secret|security|release|workflow|mcp-server|vscode-extension|audit/i.test(
+    file,
+  );
 }
 
 function isGeneratedPath(file) {
-  return file.startsWith('artifacts/') || file.includes('/dist/') || file.includes('/coverage/') || file.includes('/node_modules/');
+  return (
+    file.startsWith('artifacts/') ||
+    file.includes('/dist/') ||
+    file.includes('/coverage/') ||
+    file.includes('/node_modules/')
+  );
 }
 
 function looksLikeLocalPath(ref, source) {
-  if (!ref || ref.startsWith('http:') || ref.startsWith('https:') || ref.startsWith('mailto:')) return false;
+  if (!ref || ref.startsWith('http:') || ref.startsWith('https:') || ref.startsWith('mailto:'))
+    return false;
   if (ref.startsWith('#')) return false;
   if (ref.startsWith('/')) return false;
   if (ref.startsWith('@') || ref.includes('@')) return false;
   if (ref.includes('*')) return false;
-  if (ref.includes('<') || ref.includes('>') || ref.includes('{') || ref.includes('}')) return false;
+  if (ref.includes('<') || ref.includes('>') || ref.includes('{') || ref.includes('}'))
+    return false;
   if (ref.includes(' ') || ref.includes('\n')) return false;
   if (source === 'code') {
-    return /^(\.\.?\/|\.github\/|\.moon\/|docs\/|infrastructure\/|projects\/|repos\/|scripts\/|tools\/|README\.md|ARCHITECTURE\.md|CONTRIBUTING\.md|MIGRATION\.md|SECURITY\.md|package\.json|pnpm-workspace\.yaml|biome\.json)/.test(ref);
+    return /^(\.\.?\/|\.github\/|\.moon\/|docs\/|infrastructure\/|projects\/|repos\/|scripts\/|tools\/|README\.md|ARCHITECTURE\.md|CONTRIBUTING\.md|MIGRATION\.md|SECURITY\.md|package\.json|pnpm-workspace\.yaml|biome\.json)/.test(
+      ref,
+    );
   }
   return /[/.]/.test(ref);
 }
@@ -640,7 +703,8 @@ function tierForPath(path) {
 function packageOwner(path) {
   const parts = path.split('/');
   const packageIndex = parts.indexOf('packages');
-  if (packageIndex >= 1 && parts[packageIndex + 1]) return parts.slice(0, packageIndex + 2).join('/');
+  if (packageIndex >= 1 && parts[packageIndex + 1])
+    return parts.slice(0, packageIndex + 2).join('/');
   if (parts[0] === 'tools' && parts[1]) return parts.slice(0, 2).join('/');
   if (parts[0] === 'projects' && parts[1]) return parts.slice(0, 2).join('/');
   if (parts[0] === 'repos' && parts[1]) return parts.slice(0, 2).join('/');
@@ -649,25 +713,30 @@ function packageOwner(path) {
 
 function languageForPath(path) {
   const ext = extname(path);
-  return {
-    '.css': 'css',
-    '.html': 'html',
-    '.js': 'javascript',
-    '.jsx': 'javascriptreact',
-    '.json': 'json',
-    '.md': 'markdown',
-    '.mjs': 'javascript',
-    '.sh': 'shell',
-    '.sol': 'solidity',
-    '.ts': 'typescript',
-    '.tsx': 'typescriptreact',
-    '.yaml': 'yaml',
-    '.yml': 'yaml',
-  }[ext] ?? 'text';
+  return (
+    {
+      '.css': 'css',
+      '.html': 'html',
+      '.js': 'javascript',
+      '.jsx': 'javascriptreact',
+      '.json': 'json',
+      '.md': 'markdown',
+      '.mjs': 'javascript',
+      '.sh': 'shell',
+      '.sol': 'solidity',
+      '.ts': 'typescript',
+      '.tsx': 'typescriptreact',
+      '.yaml': 'yaml',
+      '.yml': 'yaml',
+    }[ext] ?? 'text'
+  );
 }
 
 async function writeJsonl(path, records) {
-  await writeArtifact(path, records.map((record) => JSON.stringify(record)).join('\n') + (records.length ? '\n' : ''));
+  await writeArtifact(
+    path,
+    records.map((record) => JSON.stringify(record)).join('\n') + (records.length ? '\n' : ''),
+  );
 }
 
 async function writeJsonReport(path, value) {
@@ -711,7 +780,9 @@ function renderFindings(title, findings) {
     lines.push('No findings.');
   } else {
     for (const finding of findings) {
-      lines.push(`- ${finding.severity ?? 'info'}: ${finding.file ? `${finding.file}: ` : ''}${finding.issue}`);
+      lines.push(
+        `- ${finding.severity ?? 'info'}: ${finding.file ? `${finding.file}: ` : ''}${finding.issue}`,
+      );
       if (finding.recommendation) lines.push(`  Recommendation: ${finding.recommendation}`);
     }
   }
@@ -719,10 +790,25 @@ function renderFindings(title, findings) {
 }
 
 function renderReview(report) {
-  const lines = ['# LLM Review Agent Report', '', `Generated: ${report.generatedAt}`, '', '## Changed Files', ''];
-  lines.push(...(report.changedFiles.length ? report.changedFiles.map((file) => `- ${file}`) : ['No uncommitted changes detected.']));
+  const lines = [
+    '# LLM Review Agent Report',
+    '',
+    `Generated: ${report.generatedAt}`,
+    '',
+    '## Changed Files',
+    '',
+  ];
+  lines.push(
+    ...(report.changedFiles.length
+      ? report.changedFiles.map((file) => `- ${file}`)
+      : ['No uncommitted changes detected.']),
+  );
   lines.push('', '## Findings', '');
-  lines.push(report.findings.length ? renderFindings('', report.findings).split('\n').slice(3).join('\n') : 'No findings.');
+  lines.push(
+    report.findings.length
+      ? renderFindings('', report.findings).split('\n').slice(3).join('\n')
+      : 'No findings.',
+  );
   lines.push('', '## Suggested Validation', '');
   lines.push(...report.suggestedValidation.map((command) => `- ${command}`));
   return lines.join('\n');
@@ -745,7 +831,19 @@ function renderEval(report) {
 }
 
 function renderServeCheck(report) {
-  const lines = ['# Lemonade Server Check', '', `Generated: ${report.generatedAt}`, '', `Status: ${report.status}`, `Base URL: ${report.baseUrl}`, `Latency: ${report.latencyMs} ms`, `Models: ${report.models.length}`, '', '## Models', ''];
+  const lines = [
+    '# Lemonade Server Check',
+    '',
+    `Generated: ${report.generatedAt}`,
+    '',
+    `Status: ${report.status}`,
+    `Base URL: ${report.baseUrl}`,
+    `Latency: ${report.latencyMs} ms`,
+    `Models: ${report.models.length}`,
+    '',
+    '## Models',
+    '',
+  ];
   if (report.models.length) {
     for (const model of report.models) {
       lines.push(`- ${model.id ?? model.checkpoint}${model.size ? ` (${model.size} GB)` : ''}`);
@@ -756,14 +854,22 @@ function renderServeCheck(report) {
   }
   lines.push('', '## Attempts', '');
   for (const attempt of report.attempts) {
-    lines.push(`- ${attempt.ok ? 'ok' : 'failed'} ${attempt.url}${attempt.status ? ` (${attempt.status})` : ''}${attempt.modelCount ? `, ${attempt.modelCount} model(s)` : ''}`);
+    lines.push(
+      `- ${attempt.ok ? 'ok' : 'failed'} ${attempt.url}${attempt.status ? ` (${attempt.status})` : ''}${attempt.modelCount ? `, ${attempt.modelCount} model(s)` : ''}`,
+    );
     if (attempt.error) lines.push(`  Error: ${attempt.error}`);
   }
   return lines.join('\n');
 }
 
 function renderAgentRun(report) {
-  return ['# LLM Agent Run', '', `Generated: ${report.generatedAt}`, '', ...report.results.map((result) => `- ${result.agent}: ${result.status}`)].join('\n');
+  return [
+    '# LLM Agent Run',
+    '',
+    `Generated: ${report.generatedAt}`,
+    '',
+    ...report.results.map((result) => `- ${result.agent}: ${result.status}`),
+  ].join('\n');
 }
 
 function printSummary(label, results) {
