@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { pathToFileURL } from 'node:url';
 /**
  * `cfxdevkit-devnode` — minimal CLI to spin up a local Conflux node.
  *
@@ -17,13 +18,13 @@
 import { createDevNode } from './node.js';
 import type { DevNodeConfig } from './types.js';
 
-interface ParsedArgs {
+export interface ParsedArgs {
   config: DevNodeConfig;
   help: boolean;
   noMining: boolean;
 }
 
-function parseArgs(argv: string[]): ParsedArgs {
+export function parseArgs(argv: string[]): ParsedArgs {
   const out: ParsedArgs = { config: {}, help: false, noMining: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -85,7 +86,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   return out;
 }
 
-function printHelp(): void {
+export function printHelp(): void {
   process.stdout.write(`cfxdevkit-devnode — local Conflux dev node
 
 Options:
@@ -164,7 +165,9 @@ async function main(): Promise<void> {
   process.on('SIGTERM', () => void shutdown('SIGTERM'));
 }
 
-main().catch((e) => {
-  process.stderr.write(`fatal: ${e instanceof Error ? e.stack || e.message : String(e)}\n`);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((e) => {
+    process.stderr.write(`fatal: ${e instanceof Error ? e.stack || e.message : String(e)}\n`);
+    process.exit(1);
+  });
+}

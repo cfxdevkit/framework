@@ -1,5 +1,12 @@
 # Changelog
 
+
+## [Unreleased] - 2026-05-02
+### Changed
+- Exported `ParsedArgs` interface, `parseArgs`, and `printHelp` from `cli.ts` to enable external reuse and testing.
+- Updated CLI entrypoint to use `pathToFileURL` and `import.meta.url` for safe detection of direct execution, preventing unintended `main()` invocation during module imports.
+- Added new test files: `cli.test.ts`, `errors.test.ts`, `index.test.ts`, and `core/src/index.test.ts` to improve test coverage.
+
 ## [Unreleased] - 2026-05-02
 ### Changed
 - Renamed `framework/core`, `framework/protocol`, `framework/testing`, and `framework/executor` packages to `@cfxdevkit/*` scope in API and documentation references.

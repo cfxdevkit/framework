@@ -39,15 +39,8 @@ export interface RawEvmSignature {
 
 /** Serialise an `(r,s,v)` tuple to the 65-byte 0x-hex personal_sign form. */
 export function rawSignatureToHex(sig: RawEvmSignature): Hex {
-  const r = stripHex(sig.r).padStart(64, '0');
-  const s = stripHex(sig.s).padStart(64, '0');
-  if (r.length !== 64 || s.length !== 64) {
-    throw new HardwareWalletError({
-      code: 'wallet/hardware/bad-signature',
-      message: 'r/s must be 32 bytes',
-      meta: { rLen: r.length, sLen: s.length },
-    });
-  }
+  const r = signaturePart(sig.r, 'r');
+  const s = signaturePart(sig.s, 's');
   // Normalise v to 27/28 for compatibility with `eth_personalSign` consumers.
   let v = sig.v;
   if (v === 0 || v === 1) v += 27;
@@ -86,11 +79,26 @@ export function finaliseEip1559Tx(tx: TransactionSerializableEIP1559, sig: RawEv
       message: `v parity must be 0|1|27|28, got ${sig.v}`,
     });
   }
-  return serializeTransaction(tx, {
-    r: toCanonicalHex(sig.r) as Hex,
-    s: toCanonicalHex(sig.s) as Hex,
-    yParity: yParity as 0 | 1,
-  });
+  return serializeTransaction(
+    { ...tx, type: 'eip1559' },
+    {
+      r: `0x${signaturePart(sig.r, 'r')}` as Hex,
+      s: `0x${signaturePart(sig.s, 's')}` as Hex,
+      yParity: yParity as 0 | 1,
+    },
+  );
+}
+
+function signaturePart(value: Hex, name: 'r' | 's'): string {
+  const stripped = stripHex(value);
+  if (!/^[0-9a-fA-F]+$/.test(stripped) || stripped.length !== 64) {
+    throw new HardwareWalletError({
+      code: 'wallet/hardware/bad-signature',
+      message: `${name} must be a 32-byte hex string`,
+      meta: { part: name, length: stripped.length },
+    });
+  }
+  return stripped.toLowerCase();
 }
 
 function stripHex(s: string): string {

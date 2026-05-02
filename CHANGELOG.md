@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - 2026-05-02
+### Changed
+- Updated symbol count from 4365 to 4664 and relationship count from 7478 to 8008 in GitNexus index metadata
+- Changed recommended CLI command from `pnpm exec gitnexus analyze` to `npx gitnexus analyze`
+
+
 
 ## [Unreleased]
 ### Added

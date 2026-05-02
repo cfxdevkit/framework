@@ -1,5 +1,25 @@
 # Changelog
 
+
+## [Unreleased] - 2026-05-02
+### Added
+- Added test suite for artifact generation and validation in `compiler/src/artifacts.test.ts`
+- Added test suite for compiler error handling in `compiler/src/errors.test.ts`
+- Added test suite for dependency resolution logic in `compiler/src/resolver/index.test.ts`
+- Added test suite for Solc compilation pipeline in `compiler/src/solc/compile.test.ts`
+- Added test suite for Solc integration entrypoints in `compiler/src/solc/index.test.ts`
+- Added test suite for Solc binary loading and caching in `compiler/src/solc/loader.test.ts`
+- Added test suite for ERC20 template source generation in `compiler/src/templates/erc20/source.test.ts`
+- Added test suite for template system in `compiler/src/templates/index.test.ts`
+- Added test suite for ABI parsing and validation in `contracts/src/abis/index.test.ts`
+- Added test suite for bridge contract interactions in `contracts/src/bridge/index.test.ts`
+- Added test suite for deployment orchestration in `contracts/src/deploy/index.test.ts`
+- Added test suite for ERC20 contract behavior in `contracts/src/erc20/index.test.ts`
+- Added test suite for contract error handling in `contracts/src/errors/index.test.ts`
+- Added test suite for read-only contract calls in `contracts/src/read/index.test.ts`
+- Added test suite for mock contract utilities in `contracts/src/test/mocks.test.ts`
+- Added test suite for write contract interactions in `contracts/src/write/index.test.ts`
+
 ## [Unreleased] - 2026-05-02
 ### Changed
 - Renamed `framework/abis` to `@cfxdevkit/abis` in API and STRUCTURE docs.

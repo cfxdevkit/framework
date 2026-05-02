@@ -12,6 +12,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./templates": {
+      "types": "./dist/templates.d.ts",
+      "import": "./dist/templates.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

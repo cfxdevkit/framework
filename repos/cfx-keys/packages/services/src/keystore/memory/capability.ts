@@ -44,7 +44,7 @@ function assertCapability(tx: SignableTx, cap: Capability): void {
     if (!allowed.includes(target)) {
       throw new KeystoreError({
         code: 'services/keystore/unsupported',
-        message: `target ${tx.to} not permitted by capability`,
+        message: `target ${shortHex(tx.to)} not permitted by capability`,
         meta: { to: tx.to },
       });
     }
@@ -67,4 +67,8 @@ function assertCapability(tx: SignableTx, cap: Capability): void {
       meta: { value: tx.value.toString(), max: cap.maxValuePerTx.toString() },
     });
   }
+}
+
+function shortHex(value: string): string {
+  return `${value.slice(0, 4)}...`;
 }

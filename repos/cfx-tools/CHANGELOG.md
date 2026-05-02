@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] - 2026-05-02
+### Changed
+- **lemonade-cli.ts**: Updated test gate to require concurrency=1 and mark as required; refactored docs-upkeep to group scopes by main folder, process leaf-to-root within each group, and share context only within groups; added `--agent`, `--pi-provider`, and `--pi-model` flags; replaced `completeDirect` calls with `completeStructuredAgent`; adjusted commit flags to default `withTests` to true and added `--skip-tests`; updated fallback artifact messages for clarity.
+- **scaffold-cli**: Added new package with argument parsing (`args.ts`), scaffolding logic (`scaffold.ts`), template handling (`templates.ts`), and validation (`validate.ts`), including corresponding test files.
+- **cli**: Added new test files for `args`, `derive`, `generate`, `status`, and `run` commands to improve test coverage.
+- **scaffold-cli**: Added test files for `args`, `scaffold`, `templates`, and `validate` modules.
+
+
 
 ## [Unreleased] - 2026-05-02
 ### Added

@@ -133,8 +133,8 @@ const QUALITY_GATES = [
     id: 'test',
     label: 'Test',
     cmd: 'pnpm',
-    args: ['exec', 'moon', 'run', ':test', '--concurrency', '4'],
-    required: false,
+    args: ['exec', 'moon', 'run', ':test', '--concurrency', '1'],
+    required: true,
     timeoutMs: 600000,
   },
 ];
@@ -261,7 +261,12 @@ async function runDocsUpkeep(args) {
     logInfo('  No documentation folders matched.');
     return;
   }
-  logInfo(`  ${scopes.length} folder scope(s): ${scopes.map((scope) => scope.label).join(', ')}`);
+  const scopeGroups = groupDocsUpkeepScopesByBranch(scopes);
+  logInfo(
+    `  ${scopes.length} folder scope(s) across ${scopeGroups.length} main folder(s): ${scopeGroups
+      .map((group) => `${group.branch} (${group.scopes.length})`)
+      .join(', ')}`,
+  );
 
   logStep(3, total, 'Generating folder artifacts');
   const baseContext = await buildDocsUpkeepBaseContext(docsScan, flags);
@@ -275,38 +280,62 @@ async function runDocsUpkeep(args) {
       flags.write = false;
     }
   }
-  // Accumulate completed artifacts so parent scopes get child summaries as context
-  const completedArtifacts = new Map(); // dir -> { summary, artifact }
-  for (const scope of scopes) {
-    logInfo(`  → ${scope.label}  (${scope.files.length} file(s))`);
-    try {
-      const childContext = buildChildSummaryContext(scope, completedArtifacts, flags);
-      const result = await generateDocsUpkeepArtifact(
-        scope,
-        baseContext,
-        {
-          ...flags,
-          write: false,
-        },
-        childContext,
-      );
-      if (flags.write) {
-        result.replacements = await generateDocsUpkeepReplacements(
+  const branchSummaries = new Map(); // branch -> top-level summary for workspace root
+  for (const group of scopeGroups) {
+    logInfo(`  Main folder: ${group.branch} (leaf-to-root)`);
+    const completedArtifacts = group.branch === 'root' ? new Map(branchSummaries) : new Map();
+    const groupResults = [];
+    for (const scope of group.scopes) {
+      logInfo(`  → ${scope.label}  (${scope.files.length} file(s))`);
+      try {
+        const childContext = buildChildSummaryContext(scope, completedArtifacts, flags);
+        const result = await generateDocsUpkeepArtifact(
           scope,
           baseContext,
-          flags,
+          {
+            ...flags,
+            write: false,
+          },
           childContext,
         );
+        if (flags.write) {
+          result.replacements = await generateDocsUpkeepReplacements(
+            scope,
+            baseContext,
+            flags,
+            childContext,
+          );
+        }
+        await writeDocsUpkeepScopeArtifact(scope, result);
+        if (flags.write) await applyDocsUpkeepUpdates(scope, result);
+        logInfo(`    ✓ ${result.summary}`);
+        const resultEntry = { scope, ...result, ok: true };
+        results.push(resultEntry);
+        groupResults.push(resultEntry);
+        completedArtifacts.set(scope.dir, { summary: result.summary, artifact: result.artifact });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        logInfo(`    ✗ ${message}`);
+        const resultEntry = {
+          scope,
+          summary: '',
+          artifact: '',
+          followups: [],
+          ok: false,
+          error: message,
+        };
+        results.push(resultEntry);
+        groupResults.push(resultEntry);
       }
-      await writeDocsUpkeepScopeArtifact(scope, result);
-      if (flags.write) await applyDocsUpkeepUpdates(scope, result);
-      logInfo(`    ✓ ${result.summary}`);
-      results.push({ scope, ...result, ok: true });
-      completedArtifacts.set(scope.dir, { summary: result.summary, artifact: result.artifact });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      logInfo(`    ✗ ${message}`);
-      results.push({ scope, summary: '', artifact: '', followups: [], ok: false, error: message });
+    }
+    if (group.branch !== 'root') {
+      const topResult = [...groupResults].reverse().find((result) => result.ok);
+      if (topResult) {
+        branchSummaries.set(group.branch, {
+          summary: topResult.summary,
+          artifact: topResult.artifact,
+        });
+      }
     }
   }
 
@@ -414,7 +443,6 @@ async function runCommit(args) {
     const postChecksPassed = await runQualityGates({
       ...flags,
       withBuild: false,
-      withTests: false,
     });
     if (!postChecksPassed && !flags.force) {
       logInfo('\n  Commit aborted due to post-generation check failures. Use --force to bypass.');
@@ -448,10 +476,16 @@ function parseDocsUpkeepFlags(args) {
   let docsOnly = false;
   let write = false;
   let yes = false;
+  let agent = 'direct';
+  let piProvider = null;
+  let piModel = null;
   let maxFolders = Number.POSITIVE_INFINITY;
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === '--model') model = args[++index];
+    else if (arg === '--agent') agent = args[++index];
+    else if (arg === '--pi-provider') piProvider = args[++index];
+    else if (arg === '--pi-model') piModel = args[++index];
     else if (arg === '--quick') quick = true;
     else if (arg === '--docs-only') docsOnly = true;
     else if (arg === '--write') write = true;
@@ -460,9 +494,15 @@ function parseDocsUpkeepFlags(args) {
     else if (arg === '--max-folders') maxFolders = Number(args[++index]);
     else promptParts.push(arg);
   }
+  if (!['direct', 'pi-rpc'].includes(agent)) {
+    throw new Error('Docs upkeep --agent must be one of: direct, pi-rpc');
+  }
   return {
     prompt: promptParts.join(' ').trim(),
     model,
+    agent,
+    piProvider,
+    piModel,
     quick,
     docsOnly,
     write,
@@ -480,19 +520,62 @@ async function discoverDocsUpkeepScopes(flags) {
   for (const file of files) {
     if (scopeFilters.length && !scopeFilters.some((scope) => file.startsWith(scope))) continue;
     const dir = dirname(file) === '.' ? 'root' : dirname(file);
-    if (!groups.has(dir)) groups.set(dir, { label: dir, dir, files: [] });
+    if (!groups.has(dir)) {
+      groups.set(dir, {
+        label: dir,
+        dir,
+        files: [],
+        branch: docsUpkeepBranch(dir, scopeFilters),
+        depth: docsUpkeepDepth(dir),
+      });
+    }
     groups.get(dir).files.push(file);
   }
   return [...groups.values()]
     .map((scope) => ({ ...scope, files: scope.files.sort() }))
-    .sort((left, right) => {
-      // Deepest folders first so inner artifacts are ready when parent is processed
-      const leftDepth = left.label === 'root' ? 0 : left.label.split('/').length;
-      const rightDepth = right.label === 'root' ? 0 : right.label.split('/').length;
-      if (rightDepth !== leftDepth) return rightDepth - leftDepth;
-      return left.label.localeCompare(right.label);
-    })
+    .sort(compareDocsUpkeepScopes)
     .slice(0, flags.maxFolders);
+}
+
+function groupDocsUpkeepScopesByBranch(scopes) {
+  const groups = new Map();
+  for (const scope of scopes) {
+    const branch = scope.branch ?? docsUpkeepBranch(scope.dir, []);
+    if (!groups.has(branch)) groups.set(branch, []);
+    groups.get(branch).push(scope);
+  }
+  return [...groups.entries()]
+    .sort(([left], [right]) => compareDocsUpkeepBranches(left, right))
+    .map(([branch, branchScopes]) => ({
+      branch,
+      scopes: branchScopes.sort(compareDocsUpkeepScopes),
+    }));
+}
+
+function compareDocsUpkeepScopes(left, right) {
+  const branchOrder = compareDocsUpkeepBranches(left.branch, right.branch);
+  if (branchOrder !== 0) return branchOrder;
+  if (right.depth !== left.depth) return right.depth - left.depth;
+  return left.label.localeCompare(right.label);
+}
+
+function compareDocsUpkeepBranches(left, right) {
+  if (left === 'root' && right !== 'root') return 1;
+  if (right === 'root' && left !== 'root') return -1;
+  return left.localeCompare(right);
+}
+
+function docsUpkeepBranch(dir, scopeFilters) {
+  if (dir === 'root') return 'root';
+  const matchingScope = scopeFilters
+    .filter((scope) => dir === scope || dir.startsWith(`${scope}/`))
+    .sort((left, right) => docsUpkeepDepth(right) - docsUpkeepDepth(left))[0];
+  if (matchingScope) return matchingScope;
+  return dir.split('/')[0];
+}
+
+function docsUpkeepDepth(dir) {
+  return dir === 'root' ? 0 : dir.split('/').length;
 }
 
 async function collectDocsUpkeepFiles(docsOnly) {
@@ -615,7 +698,7 @@ async function generateDocsUpkeepArtifact(scope, baseContext, flags, childContex
 
 function fallbackDocsUpkeepArtifact(scope, content) {
   return {
-    summary: `Generated fallback docs-upkeep note for ${scope.label}; rerun recommended for strict JSON output.`,
+    summary: `Captured fallback docs-upkeep note for ${scope.label}; strict JSON was unavailable.`,
     artifact: [
       '## Current State',
       '',
@@ -627,18 +710,18 @@ function fallbackDocsUpkeepArtifact(scope, content) {
       '',
       '## Validation',
       '',
-      '- Rerun docs-upkeep for this scope before applying broad documentation updates.',
+      '- Review the preserved model excerpt before applying broad documentation updates.',
     ].join('\n'),
-    followups: [`Rerun docs-upkeep for ${scope.label} to get strict JSON output.`],
+    followups: [`Review fallback docs-upkeep output for ${scope.label} before applying edits.`],
     replacements: [],
     fileUpdates: [],
   };
 }
 
 async function completeDocsUpkeepArtifact({ flags, userPrompt, maxTokens }) {
-  return completeDirect({
+  return completeStructuredAgent({
     action: 'docs-upkeep',
-    modelOverride: flags.model,
+    flags,
     systemPrompt: [
       'You are a documentation maintainer for a TypeScript monorepo.',
       'Return strict JSON only, with no markdown fence and no explanatory text.',
@@ -680,9 +763,9 @@ async function generateDocsUpkeepReplacements(scope, baseContext, flags, childCo
   ]
     .filter((s) => s !== '')
     .join('\n');
-  const response = await completeDirect({
+  const response = await completeStructuredAgent({
     action: 'docs-upkeep',
-    modelOverride: flags.model,
+    flags,
     systemPrompt: [
       'You are a documentation editor for a TypeScript monorepo.',
       'Return strict JSON only, with no markdown fence and no explanatory text.',
@@ -710,9 +793,9 @@ async function generateSingleDocsReplacement(scope, flags) {
   const file = scope.files[0];
   if (!file) return [];
   const content = await readFile(join(root, file), 'utf8');
-  const response = await completeDirect({
+  const response = await completeStructuredAgent({
     action: 'docs-upkeep',
-    modelOverride: flags.model,
+    flags,
     systemPrompt: [
       'You are a documentation editor for a TypeScript monorepo.',
       'Return strict JSON only, with no markdown fence and no explanatory text.',
@@ -887,7 +970,8 @@ async function writeDocsUpkeepIndex(results, flags) {
     `Mode: ${flags.quick ? 'quick' : 'full'}`,
     `Scope: ${flags.docsOnly ? 'docs/' : 'all markdown'}`,
     `Write mode: ${flags.write ? 'yes' : 'no'}`,
-    'Processing order: deepest-first (inner folder artifacts used as context for parent folders)',
+    'Processing order: main-folder batches, leaf-to-root inside each batch, then workspace root',
+    'Context flow: child artifacts are shared only inside the current main folder; root receives compact main-folder summaries',
     '',
     '## Folder Results',
     '',
@@ -960,7 +1044,7 @@ function parseCommitFlags(args) {
   let force = false;
   let skipChecks = false;
   let skipPostChecks = false;
-  let withTests = false;
+  let withTests = true;
   let withBuild = false;
   let agent = 'direct';
   let piProvider = process.env.PI_PROVIDER ?? null;
@@ -978,6 +1062,7 @@ function parseCommitFlags(args) {
     else if (arg === '--skip-checks') skipChecks = true;
     else if (arg === '--skip-post-checks') skipPostChecks = true;
     else if (arg === '--with-tests') withTests = true;
+    else if (arg === '--skip-tests') withTests = false;
     else if (arg === '--with-build') withBuild = true;
     else promptParts.push(arg);
   }
@@ -1513,6 +1598,19 @@ function stripTrailingCommas(text) {
 }
 
 async function completeCommitAgent({ action, flags, systemPrompt, userPrompt, maxTokens }) {
+  if (flags.agent === 'pi-rpc') {
+    return completeWithPiRpc({ action, flags, systemPrompt, userPrompt });
+  }
+  return completeDirect({
+    action,
+    modelOverride: flags.model,
+    systemPrompt,
+    userPrompt,
+    maxTokens,
+  });
+}
+
+async function completeStructuredAgent({ action, flags, systemPrompt, userPrompt, maxTokens }) {
   if (flags.agent === 'pi-rpc') {
     return completeWithPiRpc({ action, flags, systemPrompt, userPrompt });
   }
@@ -2087,10 +2185,10 @@ async function runTestUpkeep(args) {
   } else {
     for (const pkg of packages) {
       process.stdout.write(`  › ${pkg.label}...`);
-      pkg.testOutput = await runPackageTestsBlock(pkg);
-      const passed = /\d+ passed/.test(pkg.testOutput);
-      const failed = /\d+ failed/.test(pkg.testOutput);
-      console.log(` ${failed ? '\u2717 failures' : passed ? '\u2713 ok' : '\u2013 no tests ran'}`);
+      const testResult = await runPackageTestsBlock(pkg);
+      pkg.testOutput = testResult.output;
+      pkg.initialTestPassed = testResult.ok;
+      console.log(` ${testResult.ok ? '\u2713 ok' : '\u2717 failures'}`);
     }
   }
 
@@ -2114,21 +2212,28 @@ async function runTestUpkeep(args) {
       const result = await generateTestUpkeepArtifact(pkg, baseContext, flags, childContext);
       await writeTestUpkeepScopeArtifact(pkg, result);
       let writtenFiles = [];
+      let testFailure = pkg.initialTestPassed === false ? summarizePackageTestFailure(pkg) : '';
+      let testStatus = flags.skipTestRun
+        ? 'skipped'
+        : pkg.initialTestPassed === false
+          ? 'failed before updates'
+          : 'passed before updates';
       if (flags.write) {
         writtenFiles = await writeTestUpkeepSuggestions(pkg, result, flags);
         if (writtenFiles.length > 0) {
           logInfo(`    written ${writtenFiles.length} test file(s); re-running tests...`);
-          pkg.testOutput = await runPackageTestsBlock(pkg);
-          const failed = /\d+ failed/.test(pkg.testOutput);
-          logInfo(
-            failed
-              ? '    ✗ new tests have failures — review before committing'
-              : '    ✓ new tests pass',
-          );
+          const postWriteTestResult = await runPackageTestsBlock(pkg);
+          pkg.testOutput = postWriteTestResult.output;
+          pkg.postWriteTestPassed = postWriteTestResult.ok;
+          testStatus = postWriteTestResult.ok ? 'passed after updates' : 'failed after updates';
+          if (!postWriteTestResult.ok) testFailure = summarizePackageTestFailure(pkg);
+          logInfo(postWriteTestResult.ok ? '    ✓ new tests pass' : '    ✗ test errors remain');
         }
       }
-      logInfo(`    ✓ ${result.summary}`);
-      results.push({ pkg, ...result, writtenFiles, ok: true });
+      const ok = !testFailure;
+      logInfo(`${ok ? '    ✓' : '    ✗'} ${result.summary}`);
+      if (testFailure) logInfo(`    ${testFailure}`);
+      results.push({ pkg, ...result, writtenFiles, ok, error: testFailure, testStatus });
       completedArtifacts.set(pkg.dir, { summary: result.summary, artifact: result.artifact });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -2140,9 +2245,11 @@ async function runTestUpkeep(args) {
         hotspots: [],
         suggestions: [],
         followups: [],
+        documentedGaps: [],
         writtenFiles: [],
         ok: false,
         error: message,
+        testStatus: pkg.initialTestPassed === false ? 'failed before analysis' : 'not completed',
       });
     }
   }
@@ -2150,6 +2257,12 @@ async function runTestUpkeep(args) {
   logStep(5, total, 'Writing test upkeep index');
   const indexPath = await writeTestUpkeepIndex(results, flags);
   logInfo(`  report: ${indexPath}`);
+  const failedResults = results.filter((result) => !result.ok);
+  if (failedResults.length > 0) {
+    throw new Error(
+      `test-upkeep completed with ${failedResults.length} package(s) still failing validation. See ${indexPath}.`,
+    );
+  }
 }
 
 function parseTestUpkeepFlags(args) {
@@ -2160,10 +2273,16 @@ function parseTestUpkeepFlags(args) {
   let write = false;
   let yes = false;
   let skipTestRun = false;
+  let agent = 'direct';
+  let piProvider = null;
+  let piModel = null;
   let maxPackages = Number.POSITIVE_INFINITY;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--model') model = args[++i];
+    else if (arg === '--agent') agent = args[++i];
+    else if (arg === '--pi-provider') piProvider = args[++i];
+    else if (arg === '--pi-model') piModel = args[++i];
     else if (arg === '--quick') quick = true;
     else if (arg === '--write') write = true;
     else if (arg === '--yes' || arg === '-y') yes = true;
@@ -2172,9 +2291,15 @@ function parseTestUpkeepFlags(args) {
     else if (arg === '--max-packages') maxPackages = Number(args[++i]);
     else promptParts.push(arg);
   }
+  if (!['direct', 'pi-rpc'].includes(agent)) {
+    throw new Error('Test upkeep --agent must be one of: direct, pi-rpc');
+  }
   return {
     prompt: promptParts.join(' ').trim(),
     model,
+    agent,
+    piProvider,
+    piModel,
     quick,
     write,
     yes,
@@ -2271,14 +2396,29 @@ async function runPackageTestsBlock(pkg) {
         env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' },
       },
     );
-    return [stdout, stderr].filter(Boolean).join('\n').trim().slice(0, 8000);
+    return {
+      ok: true,
+      output: [stdout, stderr].filter(Boolean).join('\n').trim().slice(0, 8000),
+    };
   } catch (error) {
-    return [error?.stdout ?? '', error?.stderr ?? error?.message ?? '']
-      .filter(Boolean)
-      .join('\n')
-      .trim()
-      .slice(0, 8000);
+    return {
+      ok: false,
+      output: [error?.stdout ?? '', error?.stderr ?? error?.message ?? '']
+        .filter(Boolean)
+        .join('\n')
+        .trim()
+        .slice(0, 8000),
+    };
   }
+}
+
+function summarizePackageTestFailure(pkg) {
+  const output = pkg.testOutput || '(no test output captured)';
+  const firstUsefulLine = output
+    .split('\n')
+    .map((line) => line.trim())
+    .find((line) => /fail|error|failed/i.test(line));
+  return `Tests failed for ${pkg.label}${firstUsefulLine ? `: ${firstUsefulLine}` : ''}`;
 }
 
 async function buildTestUpkeepBaseContext(flags) {
@@ -2349,19 +2489,20 @@ async function generateTestUpkeepArtifact(pkg, baseContext, flags, childContext 
     .filter((s) => s !== '')
     .join('\n');
 
-  const response = await completeDirect({
+  const response = await completeStructuredAgent({
     action: 'test-upkeep',
-    modelOverride: flags.model,
+    flags,
     systemPrompt,
     userPrompt,
     maxTokens: flags.write ? (flags.quick ? 3200 : 6000) : flags.quick ? 1400 : 2800,
   });
   try {
-    return validateTestUpkeepJson(response.content, pkg.label);
+    const result = validateTestUpkeepJson(response.content, pkg.label);
+    return addDeterministicTestUpkeepCoverage(pkg, result, flags);
   } catch {
-    const retryResponse = await completeDirect({
+    const retryResponse = await completeStructuredAgent({
       action: 'test-upkeep',
-      modelOverride: flags.model,
+      flags,
       systemPrompt: `${systemPrompt} The previous response was invalid. Return exactly one compact JSON object. No markdown.`,
       userPrompt: [
         'Previous invalid response excerpt:',
@@ -2372,9 +2513,10 @@ async function generateTestUpkeepArtifact(pkg, baseContext, flags, childContext 
       maxTokens: flags.write ? (flags.quick ? 2600 : 4800) : flags.quick ? 1200 : 2400,
     });
     try {
-      return validateTestUpkeepJson(retryResponse.content, pkg.label);
+      const result = validateTestUpkeepJson(retryResponse.content, pkg.label);
+      return addDeterministicTestUpkeepCoverage(pkg, result, flags);
     } catch {
-      return fallbackTestUpkeepArtifact(pkg);
+      return fallbackTestUpkeepArtifact(pkg, flags);
     }
   }
 }
@@ -2395,16 +2537,18 @@ function validateTestUpkeepJson(content, pkgLabel) {
     : [];
   return {
     summary: parsed.summary.trim(),
-    artifact: formatTestUpkeepArtifact(hotspots, suggestions, followups),
+    artifact: formatTestUpkeepArtifact(hotspots, suggestions, followups, []),
     hotspots,
     suggestions,
     followups,
+    documentedGaps: [],
   };
 }
 
 function normalizeTestSuggestion(s) {
   if (!s || typeof s.testFile !== 'string' || !Array.isArray(s.contentLines)) return null;
   const testFile = s.testFile.trim().replace(/^\.?\//, '');
+  if (!testFile.startsWith('src/') || testFile.includes('..')) return null;
   if (!testFile.endsWith('.test.ts') && !testFile.endsWith('.spec.ts')) return null;
   const content = s.contentLines
     .filter((l) => typeof l === 'string')
@@ -2418,7 +2562,7 @@ function normalizeTestSuggestion(s) {
   };
 }
 
-function formatTestUpkeepArtifact(hotspots, suggestions, followups) {
+function formatTestUpkeepArtifact(hotspots, suggestions, followups, documentedGaps = []) {
   const lines = [];
   lines.push('## Coverage Hotspots', '');
   if (hotspots.length) for (const h of hotspots) lines.push(`- ${h}`);
@@ -2432,31 +2576,157 @@ function formatTestUpkeepArtifact(hotspots, suggestions, followups) {
   } else {
     lines.push('- No new test suggestions.');
   }
+  lines.push('', '## Expected But Not Found', '');
+  if (documentedGaps.length) for (const gap of documentedGaps) lines.push(`- ${gap}`);
+  else lines.push('- None.');
   lines.push('', '## Follow-ups', '');
   if (followups.length) for (const f of followups) lines.push(`- ${f}`);
   else lines.push('- None.');
   return lines.join('\n');
 }
 
-function fallbackTestUpkeepArtifact(pkg) {
+async function addDeterministicTestUpkeepCoverage(pkg, result, flags) {
+  const baseline = await generateBaselineTestSuggestions(pkg, result.suggestions, flags);
+  const suggestions = [...result.suggestions, ...baseline.suggestions];
+  const hotspots = unique([...result.hotspots, ...baseline.hotspots]);
+  const documentedGaps = unique([...(result.documentedGaps ?? []), ...baseline.documentedGaps]);
+  const followups = unique([...result.followups, ...baseline.followups]);
+  const summary =
+    baseline.suggestions.length > 0
+      ? `${result.summary} Added ${baseline.suggestions.length} deterministic baseline test suggestion(s).`
+      : result.summary;
   return {
-    summary: `Could not parse LLM test analysis for ${pkg.label}; manual review recommended.`,
-    artifact: [
-      '## Coverage Hotspots',
-      '',
-      `- Untested source files: ${pkg.inventory?.untestedFiles?.join(', ') || 'unknown'}`,
-      '',
-      '## Suggested Tests',
-      '',
-      '- LLM returned malformed JSON. Rerun test-upkeep for this package.',
-      '',
-      '## Follow-ups',
-      '',
-      `- Rerun \`pnpm run llm:test-upkeep -- --scope ${pkg.dir}\` to get proper suggestions.`,
-    ].join('\n'),
-    hotspots: pkg.inventory?.untestedFiles?.slice(0, 5) ?? [],
-    suggestions: [],
-    followups: [`Rerun test-upkeep for ${pkg.label}`],
+    ...result,
+    summary,
+    artifact: formatTestUpkeepArtifact(hotspots, suggestions, followups, documentedGaps),
+    hotspots,
+    suggestions,
+    followups,
+    documentedGaps,
+  };
+}
+
+async function generateBaselineTestSuggestions(pkg, existingSuggestions, flags) {
+  const existingTestFiles = new Set(existingSuggestions.map((suggestion) => suggestion.testFile));
+  const suggestions = [];
+  const hotspots = [];
+  const documentedGaps = [];
+  const followups = [];
+  const candidates = pkg.inventory?.untestedFiles ?? [];
+  const maxCandidates = flags.quick ? 4 : 10;
+  for (const sourceFile of candidates.slice(0, maxCandidates)) {
+    const testFile = sourceFile.replace(/\.tsx?$/, '.test.ts');
+    if (existingTestFiles.has(testFile)) continue;
+    let content = '';
+    try {
+      content = await readFile(join(root, pkg.dir, sourceFile), 'utf8');
+    } catch {
+      documentedGaps.push(
+        `${sourceFile}: source file disappeared before baseline test generation.`,
+      );
+      continue;
+    }
+    const classification = classifyBaselineTestTarget(sourceFile, content);
+    hotspots.push(`${sourceFile}: ${classification.reason}`);
+    if (!classification.testable) {
+      documentedGaps.push(`${sourceFile}: ${classification.reason}`);
+      continue;
+    }
+    suggestions.push({
+      testFile,
+      description: classification.description,
+      content: buildBaselineRuntimeTest(sourceFile, classification),
+      deterministic: true,
+    });
+    existingTestFiles.add(testFile);
+  }
+  if (candidates.length > maxCandidates) {
+    followups.push(
+      `${candidates.length - maxCandidates} additional untested file(s) were deferred by the current run limit.`,
+    );
+  }
+  return { suggestions, hotspots, documentedGaps, followups };
+}
+
+function classifyBaselineTestTarget(sourceFile, content) {
+  const stripped = stripCommentsForTestClassification(content);
+  const hasRuntimeExport =
+    /^\s*export\s+(?:async\s+)?(?:function|class|const|let|var|enum|default)\b/m.test(stripped);
+  const hasRuntimeReExport = /^\s*export\s+(?:\*\s+from|\{[^}]+\}\s+from)\b/m.test(stripped);
+  if (hasRuntimeExport || hasRuntimeReExport) {
+    return {
+      testable: true,
+      reason: 'missing runtime smoke test for exported module surface.',
+      description: `Baseline runtime smoke test for ${sourceFile}.`,
+    };
+  }
+  if (/^\s*export\s+(?:type|interface)\b/m.test(stripped)) {
+    return {
+      testable: false,
+      reason:
+        'type-only module has no runtime exports to assert; needs type-level coverage or API extraction checks.',
+    };
+  }
+  return {
+    testable: false,
+    reason: 'no obvious exported runtime surface; needs manual test design.',
+  };
+}
+
+function stripCommentsForTestClassification(content) {
+  return content
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '')
+    .trim();
+}
+
+function buildBaselineRuntimeTest(sourceFile, classification) {
+  const importPath = `./${sourceFile
+    .split('/')
+    .pop()
+    .replace(/\.tsx?$/, '.js')}`;
+  const subject = sourceFile.replace(/^src\//, '').replace(/\.tsx?$/, '');
+  const exportAssertion = classification.reason.includes('runtime smoke')
+    ? ['    expect(Object.keys(moduleUnderTest).length).toBeGreaterThan(0);']
+    : [];
+  return [
+    "import { describe, expect, it } from 'vitest';",
+    `import * as moduleUnderTest from '${importPath}';`,
+    '',
+    `describe('${subject}', () => {`,
+    "  it('loads its public runtime surface', () => {",
+    '    expect(moduleUnderTest).toBeDefined();',
+    ...exportAssertion,
+    '  });',
+    '});',
+    '',
+  ].join('\n');
+}
+
+async function fallbackTestUpkeepArtifact(pkg, flags) {
+  const baseline = await generateBaselineTestSuggestions(pkg, [], flags);
+  const summary =
+    baseline.suggestions.length > 0
+      ? `LLM test analysis was malformed for ${pkg.label}; generated ${baseline.suggestions.length} deterministic baseline test suggestion(s).`
+      : `LLM test analysis was malformed for ${pkg.label}; documented coverage gaps for manual review.`;
+  return {
+    summary,
+    artifact: formatTestUpkeepArtifact(
+      baseline.hotspots,
+      baseline.suggestions,
+      [
+        ...baseline.followups,
+        `Review deterministic baseline tests for ${pkg.label}; they cover module loading, not deep behavior.`,
+      ],
+      baseline.documentedGaps,
+    ),
+    hotspots: baseline.hotspots,
+    suggestions: baseline.suggestions,
+    followups: [
+      ...baseline.followups,
+      `Review deterministic baseline tests for ${pkg.label}; they cover module loading, not deep behavior.`,
+    ],
+    documentedGaps: baseline.documentedGaps,
   };
 }
 
@@ -2530,15 +2800,18 @@ async function writeTestUpkeepIndex(results, flags) {
   ];
   let totalUntested = 0;
   let totalWritten = 0;
+  let totalDocumentedGaps = 0;
   for (const result of results) {
     const artifact = `artifacts/llm/reports/test-upkeep/${artifactSlug(result.pkg.label)}.md`;
     const inv = result.pkg.inventory ?? {};
     totalUntested += inv.untestedCount ?? 0;
     totalWritten += result.writtenFiles?.length ?? 0;
+    totalDocumentedGaps += result.documentedGaps?.length ?? 0;
     lines.push(
       `- ${result.ok ? 'ok' : 'error'} ${result.pkg.label}: ${result.ok ? result.summary : result.error}`,
       `  - Untested: ${inv.untestedCount ?? 'n/a'} of ${inv.sourceCount ?? 'n/a'} source files`,
-      `  - Hotspots: ${result.hotspots?.length ?? 0} | Suggestions: ${result.suggestions?.length ?? 0} | Written: ${result.writtenFiles?.length ?? 0}`,
+      `  - Test status: ${result.testStatus ?? (flags.skipTestRun ? 'skipped' : 'unknown')}`,
+      `  - Hotspots: ${result.hotspots?.length ?? 0} | Suggestions: ${result.suggestions?.length ?? 0} | Written: ${result.writtenFiles?.length ?? 0} | Documented gaps: ${result.documentedGaps?.length ?? 0}`,
       `  - Artifact: ${artifact}`,
     );
   }
@@ -2549,21 +2822,28 @@ async function writeTestUpkeepIndex(results, flags) {
     `- Total packages analysed: ${results.length}`,
     `- Total untested source files: ${totalUntested}`,
     `- Total test files written: ${totalWritten}`,
+    `- Total expected-but-not-found gaps documented: ${totalDocumentedGaps}`,
     '',
     '## Consolidated Hotspots',
     '',
   );
   const allHotspots = results.flatMap((r) =>
-    r.ok ? (r.hotspots ?? []).map((h) => ({ pkg: r.pkg.label, h })) : [],
+    (r.hotspots ?? []).map((h) => ({ pkg: r.pkg.label, h })),
   );
   if (allHotspots.length === 0) lines.push('- None identified.');
   else for (const { pkg, h } of allHotspots) lines.push(`- ${pkg}: ${h}`);
   lines.push('', '## Consolidated Follow-ups', '');
   const allFollowups = results.flatMap((r) =>
-    r.ok ? (r.followups ?? []).map((f) => ({ pkg: r.pkg.label, f })) : [],
+    (r.followups ?? []).map((f) => ({ pkg: r.pkg.label, f })),
   );
   if (allFollowups.length === 0) lines.push('- None.');
   else for (const { pkg, f } of allFollowups) lines.push(`- ${pkg}: ${f}`);
+  lines.push('', '## Expected But Not Found', '');
+  const allDocumentedGaps = results.flatMap((r) =>
+    (r.documentedGaps ?? []).map((gap) => ({ pkg: r.pkg.label, gap })),
+  );
+  if (allDocumentedGaps.length === 0) lines.push('- None.');
+  else for (const { pkg, gap } of allDocumentedGaps) lines.push(`- ${pkg}: ${gap}`);
   lines.push('');
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, lines.join('\n'), 'utf8');
@@ -2622,23 +2902,27 @@ Commands:
     --write                      Apply complete-file markdown updates proposed by the local LLM
     --yes / -y                   Skip write confirmation prompt
     --quick                      Shorter per-folder artifact generation
+    --agent <direct|pi-rpc>      Use direct Lemonade calls or Pi RPC for structured LLM steps
+    --pi-provider <name>         Pi provider to use with --agent pi-rpc
+    --pi-model <id>              Pi model to use with --agent pi-rpc
     --model <id>                 Override LLM model
   commit [flags] [prompt]        Full commit pipeline:
-                                   1. Quality gates (lint, typecheck; opt-in: build, tests)
+                                   1. Quality gates (lint, typecheck, tests; opt-in: build)
                                    2. Preflight (gitnexus + git + review)
                                    3. Detect changed scopes
                                    4. Generate structured changelog JSON per scope (serial)
                                    5. Generate structured commit JSON
                                    6. Confirm proposed commit
-                                   7. Write changelogs + re-run lint/typecheck
+                                   7. Write changelogs + re-run lint/typecheck/tests
                                    8. Stage explicit file list + commit
     --dry-run                    Show what would happen; skip writes and commit
     --yes / -y                   Skip confirmation prompt
     --force / -f                 Commit even if quality gates fail
     --skip-checks                Skip all quality gates (Phase 1)
-    --skip-post-checks           Skip post-generation lint/typecheck after changelog writes
+    --skip-post-checks           Skip post-generation lint/typecheck/tests after changelog writes
+    --skip-tests                 Skip Moon test suite in quality gates
     --with-build                 Also run Moon build in quality gates
-    --with-tests                 Also run Moon test suite in quality gates
+    --with-tests                 Explicitly keep Moon test suite enabled (default)
     --agent <direct|pi-rpc>       Use direct Lemonade calls or Pi RPC for agent steps
     --pi-provider <name>          Pi provider to use with --agent pi-rpc
     --pi-model <id>               Pi model to use with --agent pi-rpc
@@ -2657,6 +2941,9 @@ Commands:
     --write                      Write LLM-suggested test files to src/ (new files only, skip existing)
     --yes / -y                   Skip write confirmation prompt
     --quick                      Shorter LLM calls
+    --agent <direct|pi-rpc>      Use direct Lemonade calls or Pi RPC for structured LLM steps
+    --pi-provider <name>         Pi provider to use with --agent pi-rpc
+    --pi-model <id>              Pi model to use with --agent pi-rpc
     --model <id>                 Override LLM model
 
 Examples:
@@ -2669,6 +2956,7 @@ Examples:
   pnpm run llm:action -- review
   pnpm run llm:docs-upkeep -- --quick
   pnpm run llm:docs-upkeep -- --quick --write --yes --max-folders 3
+  pnpm run llm:docs-upkeep -- --agent pi-rpc --pi-provider lemonade --quick --max-folders 1
   pnpm run llm:docs-upkeep -- --scope docs/architecture --max-folders 1
   pnpm run llm:test-audit
   pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
@@ -2677,6 +2965,7 @@ Examples:
   pnpm run llm:test-upkeep -- --quick --scope repos/cfx-core/packages/core
   pnpm run llm:test-upkeep -- --scope repos/cfx-keys --max-packages 3
   pnpm run llm:test-upkeep -- --write --yes --scope repos/cfx-core/packages/core
+  pnpm run llm:test-upkeep -- --agent pi-rpc --pi-provider lemonade --quick --max-packages 1
   pnpm run llm:test-upkeep -- --skip-test-run --quick
 `);
 }
