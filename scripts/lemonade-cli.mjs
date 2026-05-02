@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
@@ -214,7 +214,7 @@ async function runAction(args) {
 async function runCommit(args) {
   if (args[0] === '--') args.shift();
   const flags = parseCommitFlags(args);
-  const total = 6;
+  const total = 8;
 
   // ── Phase 1: Quality gates ────────────────────────────────────────────────
   logStep(1, total, 'Quality gates');
@@ -242,53 +242,89 @@ async function runCommit(args) {
     logInfo('  Nothing to commit (working tree clean).');
     return;
   }
+  const initialFiles = unique(scopes.flatMap((scope) => scope.files));
   logInfo(`  ${scopes.length} scope(s): ${scopes.map((s) => s.label).join(', ')}`);
 
   // ── Phase 4: Per-scope changelog generation (serial) ─────────────────────
-  logStep(4, total, `Generating changelog entries  [serial, ${scopes.length} scope(s)]`);
+  logStep(
+    4,
+    total,
+    `Generating changelog entries  [${flags.agent}, serial, ${scopes.length} scope(s)]`,
+  );
   const changelogResults = [];
   for (const scope of scopes) {
     logInfo(`  → ${scope.label}  (${scope.files.length} file(s))`);
-    let entry = null;
     try {
-      entry = await generateChangelogEntry(scope, flags);
-      if (flags.dryRun) {
-        logInfo(`    (--dry-run) skipping write to ${scope.changelogPath}`);
-      } else {
-        await appendToChangelog(scope, entry);
-        logInfo(`    ✓ ${scope.changelogPath} updated`);
-      }
-      changelogResults.push({ scope, entry, ok: true });
+      const analysis = await generateChangelogEntry(scope, flags);
+      logInfo(`    ✓ ${analysis.summary}`);
+      changelogResults.push({ scope, ...analysis, ok: true });
     } catch (error) {
       logInfo(`    ✗ ${error.message}`);
-      changelogResults.push({ scope, entry: null, ok: false, error: String(error.message) });
+      changelogResults.push({
+        scope,
+        entry: null,
+        summary: '',
+        risks: [],
+        ok: false,
+        error: String(error.message),
+      });
     }
   }
 
   // ── Phase 5: Commit message ───────────────────────────────────────────────
-  logStep(5, total, 'Generating commit message');
-  const commitResponse = await generateCommitMessage(preflightCtx, changelogResults, flags);
-  const { subject, body } = parseCommitMessage(commitResponse.content);
+  logStep(5, total, `Generating commit message  [${flags.agent}]`);
+  const { response: commitResponse, commit } = await generateCommitMessage(
+    preflightCtx,
+    changelogResults,
+    flags,
+  );
+  const { subject, body } = commit;
   logInfo(`  subject: ${subject}`);
   await writeCommitReport(commitResponse, changelogResults);
   logInfo('  report: artifacts/llm/reports/lemonade-commit.md');
 
-  // ── Phase 6: Commit ───────────────────────────────────────────────────────
-  logStep(6, total, 'Committing');
+  // ── Phase 6: Approval ─────────────────────────────────────────────────────
+  logStep(6, total, 'Approval');
+  printProposedCommit(subject, body);
   if (flags.dryRun) {
-    logInfo('  --dry-run: skipping git add and git commit');
-    printProposedCommit(subject, body);
+    logInfo('  --dry-run: skipping changelog writes, post-generation checks, staging, and commit');
     return;
   }
   if (!flags.yes) {
-    printProposedCommit(subject, body);
-    const confirmed = await confirmPrompt('Proceed with commit? [Y/n] ');
+    const confirmed = await confirmPrompt('Write changelogs and commit? [Y/n] ');
     if (!confirmed) {
       logInfo('  Aborted.');
       return;
     }
   }
-  const sha = await executeCommit(subject, body);
+
+  // ── Phase 7: Write generated files and re-check ───────────────────────────
+  logStep(7, total, 'Writing generated files and post-checks');
+  const generatedFiles = [];
+  for (const result of changelogResults.filter((item) => item.ok && item.entry)) {
+    await appendToChangelog(result.scope, result.entry);
+    generatedFiles.push(result.scope.changelogPath);
+    logInfo(`  ✓ ${result.scope.changelogPath} updated`);
+  }
+  if (!flags.skipPostChecks) {
+    const postChecksPassed = await runQualityGates({
+      ...flags,
+      withBuild: false,
+      withTests: false,
+    });
+    if (!postChecksPassed && !flags.force) {
+      logInfo('\n  Commit aborted due to post-generation check failures. Use --force to bypass.');
+      process.exit(1);
+    }
+  } else {
+    logInfo('  --skip-post-checks: skipping post-generation validation');
+  }
+
+  // ── Phase 8: Commit ───────────────────────────────────────────────────────
+  logStep(8, total, 'Committing');
+  const filesToStage = await resolveFilesToStage(initialFiles, generatedFiles, commit.filesToStage);
+  await assertNoUnexpectedChanges(filesToStage);
+  const sha = await executeCommit(subject, body, filesToStage);
   logInfo(`  ✓ Committed: ${sha}`);
 }
 
@@ -318,19 +354,30 @@ function parseCommitFlags(args) {
   let yes = false;
   let force = false;
   let skipChecks = false;
+  let skipPostChecks = false;
   let withTests = false;
   let withBuild = false;
+  let agent = 'direct';
+  let piProvider = process.env.PI_PROVIDER ?? null;
+  let piModel = process.env.PI_MODEL ?? null;
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === '--model') model = args[++index];
+    else if (arg === '--agent') agent = args[++index];
+    else if (arg === '--pi-provider') piProvider = args[++index];
+    else if (arg === '--pi-model') piModel = args[++index];
     else if (arg === '--quick') quick = true;
     else if (arg === '--dry-run') dryRun = true;
     else if (arg === '--yes' || arg === '-y') yes = true;
     else if (arg === '--force' || arg === '-f') force = true;
     else if (arg === '--skip-checks') skipChecks = true;
+    else if (arg === '--skip-post-checks') skipPostChecks = true;
     else if (arg === '--with-tests') withTests = true;
     else if (arg === '--with-build') withBuild = true;
     else promptParts.push(arg);
+  }
+  if (!['direct', 'pi-rpc'].includes(agent)) {
+    throw new Error('Commit --agent must be one of: direct, pi-rpc');
   }
   return {
     prompt: promptParts.join(' ').trim(),
@@ -340,8 +387,12 @@ function parseCommitFlags(args) {
     yes,
     force,
     skipChecks,
+    skipPostChecks,
     withTests,
     withBuild,
+    agent,
+    piProvider,
+    piModel,
   };
 }
 
@@ -461,60 +512,29 @@ async function generateChangelogEntry(scope, flags) {
     .join('\n\n');
 
   const today = new Date().toISOString().slice(0, 10);
-  const client = await createClient();
-  const config = await readConfig();
-  const models = await discoverModels(client.baseUrls);
-  const modelId =
-    flags.model ?? config.actions?.changelog ?? config.defaultModel ?? chooseModel(models)?.id;
-  if (!modelId) throw new Error('No model available for changelog generation');
-
-  const messages = [
-    {
-      role: 'system',
-      content:
-        'You are a changelog writer for a TypeScript monorepo. Write concise, factual changelog entries in Keep-a-Changelog format. Return ONLY the changelog entry: a date header followed by bullet points grouped under Added / Changed / Fixed / Removed as appropriate. No preamble or explanation.',
-    },
-    {
-      role: 'user',
-      content: [
-        `Scope: ${scope.label}`,
-        `Date: ${today}`,
-        `Changed files: ${scope.files.join(', ')}`,
-        '',
-        'Git diff:',
-        diffCtx,
-        '',
-        'Write the changelog entry for this change.',
-      ].join('\n'),
-    },
-  ];
-
-  const body = {
-    model: modelId,
-    messages,
-    temperature: 0.1,
-    stream: false,
-    max_tokens: flags.quick ? 256 : 512,
-  };
-
-  const attempts = [];
-  for (const path of chatPaths) {
-    const url = new URL(path, client.baseUrl).toString();
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(90000),
-      });
-      attempts.push({ url, ok: response.ok, status: response.status });
-      if (!response.ok) continue;
-      return extractAssistantText(await response.text());
-    } catch (error) {
-      attempts.push({ url, ok: false, error: formatFetchError(error) });
-    }
-  }
-  throw new Error(`LLM call failed for ${scope.label}: ${JSON.stringify(attempts)}`);
+  const response = await completeCommitAgent({
+    action: 'changelog',
+    flags,
+    systemPrompt: [
+      'You are a changelog writer for a TypeScript monorepo.',
+      'Return strict JSON only, with no markdown fence and no explanatory text.',
+      'Schema: {"summary":"one sentence","entryLines":["markdown line"],"risks":["risk or empty"]}.',
+      'Use entryLines instead of a multiline string so every markdown line is a separate JSON string.',
+      'The entryLines must form a Keep-a-Changelog style entry with a date heading and only factual bullets under Added, Changed, Fixed, or Removed.',
+    ].join(' '),
+    userPrompt: [
+      `Scope: ${scope.label}`,
+      `Date: ${today}`,
+      `Changed files: ${scope.files.join(', ')}`,
+      '',
+      'Git diff:',
+      diffCtx,
+      '',
+      'Write the JSON changelog analysis for this scope.',
+    ].join('\n'),
+    maxTokens: flags.quick ? 384 : 800,
+  });
+  return validateChangelogJson(response.content, scope.label);
 }
 
 async function appendToChangelog(scope, entry) {
@@ -538,7 +558,7 @@ async function appendToChangelog(scope, entry) {
 async function generateCommitMessage(preflightCtx, changelogResults, flags) {
   const changelogSummary = changelogResults
     .filter((r) => r.ok && r.entry)
-    .map((r) => `### ${r.scope.label}\n${r.entry}`)
+    .map((r) => `### ${r.scope.label}\nSummary: ${r.summary}\n${r.entry}`)
     .join('\n\n');
 
   const context = [
@@ -550,60 +570,21 @@ async function generateCommitMessage(preflightCtx, changelogResults, flags) {
     .join('\n\n')
     .slice(0, flags.quick ? 12000 : 60000);
 
-  return complete({
+  const response = await completeCommitAgent({
     action: 'commit',
-    modelOverride: flags.model,
-    userPrompt: flags.prompt || repoActions.commit.defaultPrompt,
-    context,
-    quick: flags.quick,
+    flags,
+    systemPrompt: [
+      'You prepare commit metadata for a local deterministic git harness.',
+      'Return strict JSON only, with no markdown fence and no explanatory text.',
+      'Schema: {"subject":"conventional commit subject under 72 chars","bodyLines":["commit body line"],"filesToStage":["optional relative paths"],"risks":["risk or empty"]}.',
+      'Use bodyLines instead of a multiline string so every commit body line is a separate JSON string.',
+      'The subject must start with one of feat, fix, chore, docs, refactor, test, style, perf, ci, build, or revert.',
+      'Do not claim the commit already happened.',
+    ].join(' '),
+    userPrompt: `${context}\n\nTask:\n${flags.prompt || repoActions.commit.defaultPrompt}`,
+    maxTokens: flags.quick ? 512 : 1400,
   });
-}
-
-function parseCommitMessage(content) {
-  // Try JSON block first (if LLM returns structured JSON)
-  const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
-  if (jsonMatch) {
-    try {
-      const parsed = JSON.parse(jsonMatch[1]);
-      if (typeof parsed.subject === 'string') {
-        return { subject: parsed.subject.slice(0, 72), body: parsed.body ?? '' };
-      }
-    } catch {
-      // fall through
-    }
-  }
-  // Find a conventional commit line
-  const lines = content.split('\n');
-  for (const line of lines) {
-    const trimmed = line
-      .replace(/^[*`#>\s]+/, '')
-      .replace(/[`*]+$/, '')
-      .trim();
-    if (
-      /^(feat|fix|chore|docs|refactor|test|style|perf|ci|build|revert)(\(.+\))?!?:\s/.test(trimmed)
-    ) {
-      const idx = lines.indexOf(line);
-      const body = lines
-        .slice(idx + 1)
-        .join('\n')
-        .trim();
-      return { subject: trimmed.slice(0, 72), body };
-    }
-  }
-  // Fallback: first non-empty line as subject
-  const firstLine =
-    lines
-      .find((l) => l.trim())
-      ?.replace(/^#+\s*/, '')
-      .replace(/^(SUBJECT|Subject|Commit message):\s*/i, '')
-      .trim() ?? 'chore: update';
-  return {
-    subject: firstLine.slice(0, 72),
-    body: lines
-      .slice(lines.indexOf(lines.find((l) => l.trim())) + 1)
-      .join('\n')
-      .trim(),
-  };
+  return { response, commit: validateCommitJson(response.content) };
 }
 
 // ─── Confirmation + commit execution ─────────────────────────────────────────
@@ -630,11 +611,48 @@ async function confirmPrompt(question) {
   });
 }
 
-async function executeCommit(subject, body) {
-  await execFileAsync('git', ['add', '-A'], { cwd: root });
+async function executeCommit(subject, body, filesToStage) {
+  if (filesToStage.length === 0) throw new Error('No files selected for staging.');
+  await execFileAsync('git', ['add', '--', ...filesToStage], { cwd: root });
   const messageArgs = body ? ['-m', subject, '-m', body] : ['-m', subject];
   await execFileAsync('git', ['commit', ...messageArgs], { cwd: root });
   return git(['rev-parse', '--short', 'HEAD']);
+}
+
+async function resolveFilesToStage(initialFiles, generatedFiles, modelFiles = []) {
+  const requested = [...initialFiles, ...generatedFiles, ...modelFiles];
+  const dirty = new Set(await changedFilesList());
+  return unique(requested).filter((file) => dirty.has(file));
+}
+
+async function assertNoUnexpectedChanges(expectedFiles) {
+  const expected = new Set(expectedFiles);
+  const dirty = await changedFilesList();
+  const unexpected = dirty.filter((file) => !expected.has(file));
+  if (unexpected.length > 0) {
+    throw new Error(
+      [
+        'Unexpected working tree changes appeared during commit pipeline:',
+        ...unexpected.map((file) => `  - ${file}`),
+        'Review them or rerun the command after staging scope is clear.',
+      ].join('\n'),
+    );
+  }
+}
+
+async function changedFilesList() {
+  const [modified, staged, untracked] = await Promise.all([
+    git(['diff', '--name-only']).catch(() => ''),
+    git(['diff', '--cached', '--name-only']).catch(() => ''),
+    git(['ls-files', '--others', '--exclude-standard']).catch(() => ''),
+  ]);
+  return unique(
+    [modified, staged, untracked].flatMap((value) => value.split('\n').filter(Boolean)),
+  );
+}
+
+function unique(values) {
+  return [...new Set(values.filter(Boolean))].sort();
 }
 
 async function writeCommitReport(commitResponse, changelogResults) {
@@ -662,6 +680,283 @@ async function writeCommitReport(commitResponse, changelogResults) {
   const path = join(artifactsRoot, 'reports', 'lemonade-commit.md');
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, sections.join('\n'), 'utf8');
+}
+
+function validateChangelogJson(content, scopeLabel) {
+  const parsed = parseJsonObject(content);
+  if (typeof parsed.summary !== 'string' || !parsed.summary.trim()) {
+    throw new Error(`Invalid changelog JSON for ${scopeLabel}: missing summary`);
+  }
+  const entry = Array.isArray(parsed.entryLines)
+    ? parsed.entryLines.filter((line) => typeof line === 'string').join('\n')
+    : parsed.entry;
+  if (typeof entry !== 'string' || !entry.trim()) {
+    throw new Error(`Invalid changelog JSON for ${scopeLabel}: missing entry`);
+  }
+  return {
+    summary: parsed.summary.trim(),
+    entry: entry.trim(),
+    risks: Array.isArray(parsed.risks)
+      ? parsed.risks
+          .filter((risk) => typeof risk === 'string' && risk.trim())
+          .map((risk) => risk.trim())
+      : [],
+  };
+}
+
+function validateCommitJson(content) {
+  const parsed = parseJsonObject(content);
+  if (typeof parsed.subject !== 'string') throw new Error('Invalid commit JSON: missing subject');
+  const subject = parsed.subject
+    .trim()
+    .replace(/[`*]+$/g, '')
+    .slice(0, 72);
+  if (
+    !/^(feat|fix|chore|docs|refactor|test|style|perf|ci|build|revert)(\(.+\))?!?:\s/.test(subject)
+  ) {
+    throw new Error(`Invalid commit subject from LLM: ${subject}`);
+  }
+  const body = Array.isArray(parsed.bodyLines)
+    ? parsed.bodyLines.filter((line) => typeof line === 'string').join('\n')
+    : parsed.body;
+  return {
+    subject,
+    body: typeof body === 'string' ? body.trim() : '',
+    filesToStage: Array.isArray(parsed.filesToStage)
+      ? parsed.filesToStage
+          .filter((file) => typeof file === 'string' && file.trim())
+          .map((file) => file.trim())
+      : [],
+    risks: Array.isArray(parsed.risks)
+      ? parsed.risks
+          .filter((risk) => typeof risk === 'string' && risk.trim())
+          .map((risk) => risk.trim())
+      : [],
+  };
+}
+
+function parseJsonObject(content) {
+  const text = content.trim();
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)?.[1]?.trim();
+  const candidate = fenced ?? text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1);
+  if (!candidate?.startsWith('{')) {
+    throw new Error(`LLM did not return a JSON object: ${text.slice(0, 120)}`);
+  }
+  return JSON.parse(candidate);
+}
+
+async function completeCommitAgent({ action, flags, systemPrompt, userPrompt, maxTokens }) {
+  if (flags.agent === 'pi-rpc') {
+    return completeWithPiRpc({ action, flags, systemPrompt, userPrompt });
+  }
+  return completeDirect({
+    action,
+    modelOverride: flags.model,
+    systemPrompt,
+    userPrompt,
+    maxTokens,
+  });
+}
+
+async function completeDirect({ action, modelOverride, systemPrompt, userPrompt, maxTokens }) {
+  const config = await readConfig();
+  const client = await createClient(config);
+  const models = await discoverModels(client.baseUrls);
+  const modelId =
+    modelOverride ?? config.actions?.[action] ?? config.defaultModel ?? chooseModel(models)?.id;
+  if (!modelId)
+    throw new Error('No Lemonade model available. Run pnpm run llm:models to inspect inventory.');
+
+  const body = {
+    model: modelId,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature: 0.1,
+    stream: false,
+    max_tokens: maxTokens,
+  };
+
+  const attempts = [];
+  for (const path of chatPaths) {
+    const url = new URL(path, client.baseUrl).toString();
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(120000),
+      });
+      const text = await response.text();
+      attempts.push({ url, ok: response.ok, status: response.status });
+      if (!response.ok) continue;
+      return {
+        generatedAt: new Date().toISOString(),
+        action,
+        baseUrl: client.baseUrl,
+        model: modelId,
+        content: extractAssistantText(text),
+        attempts,
+      };
+    } catch (error) {
+      attempts.push({ url, ok: false, error: formatFetchError(error) });
+    }
+  }
+  throw new Error(`Lemonade completion failed: ${JSON.stringify(attempts)}`);
+}
+
+async function completeWithPiRpc({ action, flags, systemPrompt, userPrompt }) {
+  const piArgs = ['--mode', 'json', '--print', '--no-session', '--no-tools'];
+  const piProvider = flags.piProvider ?? 'lemonade';
+  let piModel = flags.piModel ?? flags.model;
+  if (piProvider === 'lemonade') {
+    const lemonadeProvider = await writePiLemonadeProviderExtension(piModel);
+    piArgs.push('--extension', lemonadeProvider.extensionPath, '--provider', 'lemonade');
+    piModel = lemonadeProvider.modelId;
+  } else {
+    piArgs.push('--provider', piProvider);
+  }
+  if (piModel) piArgs.push('--model', piModel);
+
+  const prompt = [
+    systemPrompt,
+    '',
+    'Important: return only the requested strict JSON object. Do not edit files or run commands.',
+    '',
+    userPrompt,
+  ].join('\n');
+  piArgs.push(prompt);
+
+  return new Promise((resolve, reject) => {
+    const child = spawn('pi', piArgs, {
+      cwd: root,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' },
+    });
+    const timeout = setTimeout(() => {
+      child.kill('SIGTERM');
+      reject(new Error('Pi RPC completion timed out'));
+    }, 180000);
+    let buffer = '';
+    let stderr = '';
+    let lastAssistantText = '';
+    let settled = false;
+
+    function settle(error, response) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (error) reject(error);
+      else resolve(response);
+    }
+
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    child.stdout.on('data', (chunk) => {
+      buffer += chunk.toString();
+      while (true) {
+        const newlineIndex = buffer.indexOf('\n');
+        if (newlineIndex === -1) break;
+        const line = buffer.slice(0, newlineIndex).replace(/\r$/, '');
+        buffer = buffer.slice(newlineIndex + 1);
+        if (!line.trim()) continue;
+        let event;
+        try {
+          event = JSON.parse(line);
+        } catch {
+          continue;
+        }
+        if (event.type === 'message_end' && event.message?.role === 'assistant') {
+          lastAssistantText = assistantMessageText(event.message);
+        }
+        if (event.type === 'agent_end') {
+          const finalMessage = [...(event.messages ?? [])]
+            .reverse()
+            .find((message) => message.role === 'assistant');
+          const content = assistantMessageText(finalMessage) || lastAssistantText;
+          settle(null, {
+            generatedAt: new Date().toISOString(),
+            action,
+            baseUrl: 'pi-rpc',
+            model: piModel ?? 'pi-default',
+            content: content.trim(),
+            attempts: [{ url: 'pi --mode json --print', ok: true, status: 0 }],
+          });
+        }
+      }
+    });
+
+    child.on('error', (error) => {
+      settle(
+        new Error(
+          `Unable to start pi. Install it with: pnpm add -g @mariozechner/pi-coding-agent. ${error.message}`,
+        ),
+      );
+    });
+    child.on('exit', (code) => {
+      if (!settled && code !== 0) settle(new Error(`Pi RPC exited ${code}: ${stderr.trim()}`));
+    });
+  });
+}
+
+async function writePiLemonadeProviderExtension(preferredModel) {
+  const config = await readConfig();
+  const client = await createClient(config);
+  const models = await discoverModels(client.baseUrls);
+  const chosen = chooseModel(models, preferredModel ?? config.defaultModel);
+  if (!chosen?.id) {
+    throw new Error('No Lemonade model available for Pi provider registration.');
+  }
+  const providerBaseUrl = new URL('/api/v1', client.baseUrl).toString();
+  const extensionPath = join(artifactsRoot, 'config', 'pi-lemonade-provider.mjs');
+  const providerModels = models.map((model) => ({
+    id: model.id ?? model.checkpoint,
+    name: model.id ?? model.checkpoint,
+    reasoning: false,
+    input: ['text'],
+    contextWindow: 128000,
+    maxTokens: 4096,
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    compat: {
+      supportsDeveloperRole: false,
+      supportsReasoningEffort: false,
+      supportsUsageInStreaming: false,
+      maxTokensField: 'max_tokens',
+    },
+  }));
+  const source = [
+    'export default function registerLemonadeProvider(pi) {',
+    `  pi.registerProvider('lemonade', ${JSON.stringify(
+      {
+        name: 'Lemonade Server',
+        baseUrl: providerBaseUrl,
+        apiKey: 'lemonade',
+        api: 'openai-completions',
+        models: providerModels,
+      },
+      null,
+      2,
+    )});`,
+    '}',
+    '',
+  ].join('\n');
+  await mkdir(dirname(extensionPath), { recursive: true });
+  await writeFile(extensionPath, source, 'utf8');
+  return { extensionPath, modelId: chosen.id };
+}
+
+function assistantMessageText(message) {
+  if (!message?.content) return '';
+  if (typeof message.content === 'string') return message.content;
+  if (!Array.isArray(message.content)) return '';
+  return message.content
+    .filter((part) => part?.type === 'text' && typeof part.text === 'string')
+    .map((part) => part.text)
+    .join('')
+    .trim();
 }
 
 // ─── Complete / LLM call ──────────────────────────────────────────────────────
@@ -1022,15 +1317,21 @@ Commands:
                                    1. Quality gates (lint, typecheck; opt-in: build, tests)
                                    2. Preflight (gitnexus + git + review)
                                    3. Detect changed scopes
-                                   4. Generate changelog entry per scope (serial)
-                                   5. Generate commit message
-                                   6. Stage + commit (with confirmation)
+                                   4. Generate structured changelog JSON per scope (serial)
+                                   5. Generate structured commit JSON
+                                   6. Confirm proposed commit
+                                   7. Write changelogs + re-run lint/typecheck
+                                   8. Stage explicit file list + commit
     --dry-run                    Show what would happen; skip writes and commit
     --yes / -y                   Skip confirmation prompt
     --force / -f                 Commit even if quality gates fail
     --skip-checks                Skip all quality gates (Phase 1)
+    --skip-post-checks           Skip post-generation lint/typecheck after changelog writes
     --with-build                 Also run Moon build in quality gates
     --with-tests                 Also run Moon test suite in quality gates
+    --agent <direct|pi-rpc>       Use direct Lemonade calls or Pi RPC for agent steps
+    --pi-provider <name>          Pi provider to use with --agent pi-rpc
+    --pi-model <id>               Pi model to use with --agent pi-rpc
     --quick                      Short LLM calls (faster, less detail)
     --model <id>                 Override LLM model
   run <action> [--quick] [prompt] Run docs-upkeep, review, plan, architecture, validation
@@ -1041,6 +1342,7 @@ Examples:
   pnpm run llm:commit
   pnpm run llm:commit -- --dry-run
   pnpm run llm:commit -- --yes
+  pnpm run llm:commit -- --agent pi-rpc --pi-provider lemonade --pi-model Qwen3-Coder-Next-GGUF
   pnpm run llm:action -- review
   pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
 `);

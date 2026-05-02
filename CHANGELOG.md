@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+### Added
+- Added `@mariozechner/pi-coding-agent@^0.72.0` as a dev dependency.
+### Changed
+- Updated `vite`, `vite-plugin-dts`, and `vitest` to include `yaml@2.8.4` as a transitive dependency in multiple packages.
+- Updated `viem` and `wagmi` in `showcase-browser` and `showcase-ui` to use `zod@3.25.76` instead of `zod@4.3.6`.
+- Updated `@xcfx/node` and `cive` in `devnode` to include `bufferutil`, `utf-8-validate` peer dependencies.
+- Reverted `zod` version in `showcase-browser` and `showcase-ui` from `4.3.6` to `3.25.76` for `viem` and `wagmi`.
+
+
 
 ## [Unreleased] - 2026-05-02
 
