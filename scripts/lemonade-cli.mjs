@@ -74,6 +74,41 @@ const repoActions = {
   },
 };
 
+const QUALITY_GATES = [
+  {
+    id: 'lint',
+    label: 'Lint',
+    cmd: 'pnpm',
+    args: ['run', 'lint'],
+    required: true,
+    timeoutMs: 120000,
+  },
+  {
+    id: 'typecheck',
+    label: 'Typecheck',
+    cmd: 'pnpm',
+    args: ['run', 'typecheck'],
+    required: true,
+    timeoutMs: 180000,
+  },
+  {
+    id: 'build',
+    label: 'Build',
+    cmd: 'pnpm',
+    args: ['exec', 'moon', 'run', ':build', '--concurrency', '4'],
+    required: false,
+    timeoutMs: 300000,
+  },
+  {
+    id: 'test',
+    label: 'Test',
+    cmd: 'pnpm',
+    args: ['exec', 'moon', 'run', ':test', '--concurrency', '4'],
+    required: false,
+    timeoutMs: 600000,
+  },
+];
+
 const rawArgs = process.argv.slice(2);
 if (rawArgs[0] === '--') rawArgs.shift();
 const [command = 'help', ...args] = rawArgs;
@@ -179,17 +214,29 @@ async function runAction(args) {
 async function runCommit(args) {
   if (args[0] === '--') args.shift();
   const flags = parseCommitFlags(args);
+  const total = 6;
 
-  // ── Phase 1: Preflight ────────────────────────────────────────────────────
-  logStep(1, 5, 'Preflight checks');
+  // ── Phase 1: Quality gates ────────────────────────────────────────────────
+  logStep(1, total, 'Quality gates');
+  const gatesPassed = await runQualityGates(flags);
+  if (!gatesPassed && !flags.force) {
+    logInfo('\n  Commit aborted due to quality gate failures. Use --force to bypass.');
+    process.exit(1);
+  }
+  if (!gatesPassed && flags.force) {
+    logInfo('  ⚠ --force: proceeding despite gate failures');
+  }
+
+  // ── Phase 2: Preflight ────────────────────────────────────────────────────
+  logStep(2, total, 'Preflight checks');
   logInfo('  Ensuring GitNexus is registered...');
   await commandBlock('gitnexus ensure', 'pnpm', ['run', 'gitnexus:ensure'], { timeoutMs: 60000 });
   logInfo('  Collecting git status, diff, review, and analysis signals...');
   const preflightCtx = await commitPreflightBlock();
   logInfo('  ✓ preflight complete');
 
-  // ── Phase 2: Detect changed scopes ───────────────────────────────────────
-  logStep(2, 5, 'Detecting changed scopes');
+  // ── Phase 3: Detect changed scopes ───────────────────────────────────────
+  logStep(3, total, 'Detecting changed scopes');
   const scopes = await detectChangedScopes();
   if (scopes.length === 0) {
     logInfo('  Nothing to commit (working tree clean).');
@@ -197,8 +244,8 @@ async function runCommit(args) {
   }
   logInfo(`  ${scopes.length} scope(s): ${scopes.map((s) => s.label).join(', ')}`);
 
-  // ── Phase 3: Per-scope changelog generation (serial) ─────────────────────
-  logStep(3, 5, `Generating changelog entries  [serial, ${scopes.length} scope(s)]`);
+  // ── Phase 4: Per-scope changelog generation (serial) ─────────────────────
+  logStep(4, total, `Generating changelog entries  [serial, ${scopes.length} scope(s)]`);
   const changelogResults = [];
   for (const scope of scopes) {
     logInfo(`  → ${scope.label}  (${scope.files.length} file(s))`);
@@ -218,16 +265,16 @@ async function runCommit(args) {
     }
   }
 
-  // ── Phase 4: Commit message ───────────────────────────────────────────────
-  logStep(4, 5, 'Generating commit message');
+  // ── Phase 5: Commit message ───────────────────────────────────────────────
+  logStep(5, total, 'Generating commit message');
   const commitResponse = await generateCommitMessage(preflightCtx, changelogResults, flags);
   const { subject, body } = parseCommitMessage(commitResponse.content);
   logInfo(`  subject: ${subject}`);
   await writeCommitReport(commitResponse, changelogResults);
   logInfo('  report: artifacts/llm/reports/lemonade-commit.md');
 
-  // ── Phase 5: Commit ───────────────────────────────────────────────────────
-  logStep(5, 5, 'Committing');
+  // ── Phase 6: Commit ───────────────────────────────────────────────────────
+  logStep(6, total, 'Committing');
   if (flags.dryRun) {
     logInfo('  --dry-run: skipping git add and git commit');
     printProposedCommit(subject, body);
@@ -269,15 +316,88 @@ function parseCommitFlags(args) {
   let quick = false;
   let dryRun = false;
   let yes = false;
+  let force = false;
+  let skipChecks = false;
+  let withTests = false;
+  let withBuild = false;
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === '--model') model = args[++index];
     else if (arg === '--quick') quick = true;
     else if (arg === '--dry-run') dryRun = true;
     else if (arg === '--yes' || arg === '-y') yes = true;
+    else if (arg === '--force' || arg === '-f') force = true;
+    else if (arg === '--skip-checks') skipChecks = true;
+    else if (arg === '--with-tests') withTests = true;
+    else if (arg === '--with-build') withBuild = true;
     else promptParts.push(arg);
   }
-  return { prompt: promptParts.join(' ').trim(), model, quick, dryRun, yes };
+  return {
+    prompt: promptParts.join(' ').trim(),
+    model,
+    quick,
+    dryRun,
+    yes,
+    force,
+    skipChecks,
+    withTests,
+    withBuild,
+  };
+}
+
+// ─── Quality gates ────────────────────────────────────────────────────────────
+
+async function runQualityGates(flags) {
+  if (flags.skipChecks) {
+    logInfo('  --skip-checks: skipping all quality gates');
+    return true;
+  }
+
+  const gates = QUALITY_GATES.filter((g) => {
+    if (g.id === 'test') return flags.withTests;
+    if (g.id === 'build') return flags.withBuild;
+    return true; // lint + typecheck always run
+  });
+
+  let allPassed = true;
+  for (const gate of gates) {
+    process.stdout.write(`  › ${gate.label}...`);
+    const start = Date.now();
+    try {
+      const { stdout, stderr } = await execFileAsync(gate.cmd, gate.args, {
+        cwd: root,
+        maxBuffer: 1024 * 1024 * 10,
+        signal: AbortSignal.timeout(gate.timeoutMs),
+        env: { ...process.env, NO_COLOR: '1', MOON_COLOR: 'false', FORCE_COLOR: '0' },
+      });
+      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+      const summary = extractGateSummary(stdout + stderr);
+      console.log(` ✓  (${elapsed}s)${summary ? `  ${summary}` : ''}`);
+    } catch (error) {
+      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+      console.log(` ✗  (${elapsed}s)`);
+      const output = [error?.stdout ?? '', error?.stderr ?? error?.message ?? ''].join('\n').trim();
+      // Print first 20 lines of error output indented
+      const lines = output.split('\n').slice(0, 20);
+      for (const line of lines) {
+        logInfo(`     ${line}`);
+      }
+      if (output.split('\n').length > 20) logInfo('     ...[truncated]');
+      if (gate.required) allPassed = false;
+      else logInfo(`     (non-required gate, continuing)`);
+    }
+  }
+  return allPassed;
+}
+
+function extractGateSummary(output) {
+  // Moon task summary line: "Tasks: N completed (N cached)"
+  const moonMatch = output.match(/Tasks:\s+\d+\s+completed[^\n]*/);
+  if (moonMatch) return moonMatch[0].trim();
+  // Biome summary: "Checked N files"
+  const biomeMatch = output.match(/Checked \d+ files[^\n]*/);
+  if (biomeMatch) return biomeMatch[0].trim();
+  return '';
 }
 
 // ─── Scope detection ──────────────────────────────────────────────────────────
@@ -899,13 +1019,18 @@ Commands:
   config set action <name> <id>  Pin model for one repo action
   ask [--quick] "question"       Ask a repo-aware question
   commit [flags] [prompt]        Full commit pipeline:
-                                   1. Preflight (gitnexus + git + review)
-                                   2. Detect changed scopes
-                                   3. Generate changelog entry per scope (serial)
-                                   4. Generate commit message
-                                   5. Stage + commit (with confirmation)
+                                   1. Quality gates (lint, typecheck; opt-in: build, tests)
+                                   2. Preflight (gitnexus + git + review)
+                                   3. Detect changed scopes
+                                   4. Generate changelog entry per scope (serial)
+                                   5. Generate commit message
+                                   6. Stage + commit (with confirmation)
     --dry-run                    Show what would happen; skip writes and commit
     --yes / -y                   Skip confirmation prompt
+    --force / -f                 Commit even if quality gates fail
+    --skip-checks                Skip all quality gates (Phase 1)
+    --with-build                 Also run Moon build in quality gates
+    --with-tests                 Also run Moon test suite in quality gates
     --quick                      Short LLM calls (faster, less detail)
     --model <id>                 Override LLM model
   run <action> [--quick] [prompt] Run docs-upkeep, review, plan, architecture, validation
