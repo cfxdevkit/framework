@@ -1,8 +1,8 @@
 # framework/core — Public API
 
 > Stability: every symbol below is `@stable` unless marked.
-> Principles: [framework-design-principles.md](../../docs/architecture/framework-design-principles.md).
-> Error model: [framework-error-types.md](../../docs/architecture/framework-error-types.md).
+> Principles: see [docs/architecture/framework-design-principles.md](../../docs/architecture/framework-design-principles.md).
+> Error model: see [docs/architecture/framework-error-types.md](../../docs/architecture/framework-error-types.md).
 > **Implementation traceability:** see [PORTING.md](./PORTING.md) for the symbol-by-symbol mapping from the reference implementation (`devkit/packages/core@1.2.5`) to this contract — every source export is accounted for as `PORT` / `RENAME` / `RESHAPE` / `RELOCATE` / `NEW` / `DROP`, with phase-tracking checkboxes.
 
 This document is the **contract**. If a function isn't here, it isn't public.
@@ -335,7 +335,7 @@ function isCfxError(value: unknown): value is CfxError
 ## `core/types`
 
 Re-exports the common value types listed in
-[framework-error-types.md](../../docs/architecture/framework-error-types.md).
+[docs/architecture/framework-error-types.md](../../docs/architecture/framework-error-types.md).
 Plus:
 
 ```

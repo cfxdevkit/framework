@@ -1,5 +1,14 @@
 # Changelog
 
+
+## 2026-05-03
+### Changed
+  - Fixed relative links in `README.md` to point to the correct ADR location.
+  - Updated links in `framework/core/API.md` to use explicit 'see' references for design principles and error model documentation.
+  - Corrected path reference in `framework/core/PORTING.md` to point to the architecture documentation.
+  - Clarified description of strategy definitions in `framework/executor/API.md` to specify they are in `@cfxdevkit/automation`.
+  - Revised documentation in `framework/protocol/API.md` to better describe the scope of read-and-narrow-write operations.
+
 ## [Unreleased] - 2026-05-02
 - Exported `ParsedArgs` interface, `parseArgs`, and `printHelp` from `cli.ts` to enable external reuse and testing.
 - Updated CLI entrypoint to use `pathToFileURL` and `import.meta.url` for safe detection of direct execution, preventing unintended `main()` invocation during module imports.

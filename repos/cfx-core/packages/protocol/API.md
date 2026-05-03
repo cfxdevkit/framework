@@ -65,7 +65,7 @@ function getSponsoredCollateral(input: { client: Client; contract: Address; sign
 
 ## Notes
 
-- This package is **read-and-narrow-write**. Anything that's "do these 5 calls
-  in sequence to bootstrap a sponsorship" belongs in `domains/` or in a project's
+- This package is **read-and-narrow-write**. Anything that involves orchestrating multiple calls
+  (e.g., "do these 5 calls in sequence to bootstrap a sponsorship") belongs in `domains/` or in a project's
   own scripts — not here.
 - All errors are `ContractError` from `core/contract` (no new error class needed).

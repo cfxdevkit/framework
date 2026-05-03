@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-05-03
+### Changed
+- Updated devcontainer.json to use a custom network configuration with `--network pasta:--map-gw` and `--add-host=host.containers.internal:169.254.1.2` instead of host networking.
+- Added `LEMONADE_URL` and `LEMONADE_BASE_URL` environment variables in devcontainer.json to point to the internal host address for Lemonade.
+- Reordered and explicitly listed `forwardPorts` in devcontainer.json for clarity and consistency.
+- Enhanced the check-lemonade.sh script with more detailed troubleshooting steps for Lemonade connectivity issues, including instructions for binding Lemonade to all interfaces or using a proxy.
+### Added
+- Added new file .continue/mcpServers/new-mcp-server.yaml for MCP server configuration.
+- Added new file .devcontainer/NOTES.md with development container notes and setup instructions.
+
+
 
 ## [Unreleased] — 2026-05-02
 ### Changed

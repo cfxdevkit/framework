@@ -1,7 +1,7 @@
 # framework/core — Porting Plan
 
 > **Source:** `/home/sp/Documents/Code/devkit/packages/core` (`@cfxdevkit/core@1.2.5` reference implementation).
-> **Target:** `framework/core` in this monorepo, conforming to [API.md](./API.md) + [STRUCTURE.md](./STRUCTURE.md) + the tier rules in [ARCHITECTURE.md](../../ARCHITECTURE.md).
+> **Target:** `framework/core` in this monorepo, conforming to [API.md](./API.md) + [STRUCTURE.md](./STRUCTURE.md) + the tier rules in [docs/architecture/ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md).
 >
 > This document is the **traceability matrix**: every public symbol exported by the source must appear below with a verdict (port / rename / reshape / relocate / drop). When the port is complete, this file becomes the proof of 100% coverage.
 

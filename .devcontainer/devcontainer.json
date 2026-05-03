@@ -7,11 +7,7 @@
   "remoteUser": "node",
   "containerUser": "node",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  "runArgs": [
-    "--network",
-    "host",
-    "--add-host=host.docker.internal:host-gateway"
-  ],
+  "runArgs": ["--network","pasta:--map-gw","--add-host=host.containers.internal:169.254.1.2"],
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
@@ -24,20 +20,12 @@
   "containerEnv": {
     "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
     "PNPM_HOME": "/home/node/.local/share/pnpm",
-    "PNPM_STORE_PATH": "/home/node/.local/share/pnpm/store"
+    "PNPM_STORE_PATH": "/home/node/.local/share/pnpm/store",
+    "LEMONADE_URL": "http://host.containers.internal:13305/",
+    "LEMONADE_BASE_URL": "http://host.containers.internal:13305/"
   },
-  "forwardPorts": [
-    8545,
-    8546,
-    12536,
-    12537,
-    3000,
-    4173,
-    5173,
-    13305,
-    7748,
-    8787
-  ],
+
+  "forwardPorts": [8545, 8546, 12536, 12537, 3000, 4173, 5173, 13305, 7748, 8787],
   "portsAttributes": {
     "8545": {
       "label": "Conflux eSpace RPC"
