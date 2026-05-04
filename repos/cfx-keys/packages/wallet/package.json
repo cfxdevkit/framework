@@ -28,6 +28,10 @@
       "types": "./dist/hardware/onekey/index.d.ts",
       "import": "./dist/hardware/onekey/index.js"
     },
+    "./hardware/ledger": {
+      "types": "./dist/hardware/ledger/index.d.ts",
+      "import": "./dist/hardware/ledger/index.js"
+    },
     "./hardware/satochip": {
       "types": "./dist/hardware/satochip/index.d.ts",
       "import": "./dist/hardware/satochip/index.js"

@@ -2,14 +2,16 @@
  * `@cfxdevkit/services/keystore` — provider interface.
  *
  * Defines the `KeystoreProvider` contract that all backends (memory, file, OS,
- * KMS, forwarded) implement. Private key material is **never** returned across
- * this boundary — providers only hand back a `Signer` from `core/wallet`.
+ * KMS/Vault, Ledger, forwarded) implement. Private key material is **never**
+ * returned across this boundary — providers only hand back a `Signer` from
+ * `core/wallet`.
  *
  * Concrete backends live in sibling sub-paths:
  * - `@cfxdevkit/services/keystore-memory` — tests only
  * - `@cfxdevkit/services/keystore-file`   — encrypted file
  * - `@cfxdevkit/services/keystore-os`     — OS keyring
- * - `@cfxdevkit/services/keystore-kms`    — cloud KMS / Vault / Ledger
+ * - `@cfxdevkit/services/keystore-ledger` — Ledger hardware wallet
+ * - `@cfxdevkit/services/keystore-kms`    — cloud KMS / Vault
  * - `@cfxdevkit/services/keystore-forward`— host socket → container bridge
  */
 import type { Address, ChainId, Hex, Signer } from '@cfxdevkit/core';
@@ -78,7 +80,7 @@ export interface KeystorePutInput {
  * (not present) on read-only backends, not implemented to throw.
  */
 export interface KeystoreProvider {
-  /** Stable backend id, e.g. `"memory"`, `"file"`, `"os"`, `"kms-aws"`. */
+  /** Stable backend id, e.g. `"memory"`, `"file"`, `"os"`, `"kms-aws"`, `"ledger"`. */
   readonly id: string;
   readonly capabilities: KeystoreCapabilities;
 

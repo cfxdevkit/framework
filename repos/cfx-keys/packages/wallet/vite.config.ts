@@ -9,6 +9,7 @@ export default defineConfig({
         'signers/index': 'src/signers/index.ts',
         'errors/index': 'src/errors/index.ts',
         'hardware/index': 'src/hardware/index.ts',
+        'hardware/ledger/index': 'src/hardware/ledger/index.ts',
         'hardware/onekey/index': 'src/hardware/onekey/index.ts',
         'hardware/satochip/index': 'src/hardware/satochip/index.ts',
         'init/index': 'src/init/index.ts',

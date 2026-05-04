@@ -1,5 +1,5 @@
 /**
- * Common types shared by hardware-wallet adapters (OneKey, Satochip, …).
+ * Common types shared by hardware-wallet adapters (Ledger, OneKey, Satochip, …).
  *
  * The framework `Signer` interface (`@cfxdevkit/core`) expects
  * `signTransaction` to return a fully-RLP-encoded **raw signed
@@ -15,8 +15,10 @@ import { HardwareWalletError } from '../errors/index.js';
 /** Default Conflux eSpace / EVM derivation path. */
 export const EVM_DEFAULT_PATH = "m/44'/60'/0'/0/0" as const;
 
-/** Vendor identifier; used for telemetry & error categorisation. */
-export type HardwareWalletKind = 'onekey' | 'satochip';
+/** Supported hardware wallet vendors; used for telemetry & error categorisation. */
+export const HARDWARE_WALLET_KINDS = ['ledger', 'onekey', 'satochip'] as const;
+
+export type HardwareWalletKind = (typeof HARDWARE_WALLET_KINDS)[number];
 
 /** Vendor-agnostic adapter contract. */
 export interface HardwareWalletAdapter {

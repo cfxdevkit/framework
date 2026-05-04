@@ -1,13 +1,25 @@
 import type { Hex } from 'viem';
 import { describe, expect, it } from 'vitest';
 import { HardwareWalletError } from '../errors/index.js';
-import { EVM_DEFAULT_PATH, finaliseEip1559Tx, rawSignatureToHex, toCanonicalHex } from './types.js';
+import {
+  EVM_DEFAULT_PATH,
+  finaliseEip1559Tx,
+  HARDWARE_WALLET_KINDS,
+  rawSignatureToHex,
+  toCanonicalHex,
+} from './types.js';
 
 const hex32 = (byte: string): Hex => `0x${byte.repeat(32)}`;
 
 describe('EVM_DEFAULT_PATH', () => {
   it('is the standard Conflux eSpace derivation path', () => {
     expect(EVM_DEFAULT_PATH).toBe("m/44'/60'/0'/0/0");
+  });
+});
+
+describe('HARDWARE_WALLET_KINDS', () => {
+  it('includes Ledger in the supported hardware backend list', () => {
+    expect(HARDWARE_WALLET_KINDS).toEqual(['ledger', 'onekey', 'satochip']);
   });
 });
 

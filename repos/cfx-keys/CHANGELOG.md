@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-04
+
+### Changed
+
+- Updated repos/cfx-keys files: repos/cfx-keys/packages/services/API.md, repos/cfx-keys/packages/services/package.json, repos/cfx-keys/packages/services/src/keystore/index.ts, repos/cfx-keys/packages/services/vite.config.ts, repos/cfx-keys/packages/wallet/API.md, repos/cfx-keys/packages/wallet/STRUCTURE.md, repos/cfx-keys/packages/wallet/package.json, repos/cfx-keys/packages/wallet/src/errors/index.ts, repos/cfx-keys/packages/wallet/src/hardware/index.ts, repos/cfx-keys/packages/wallet/src/hardware/types.test.ts, repos/cfx-keys/packages/wallet/src/hardware/types.ts, repos/cfx-keys/packages/wallet/vite.config.ts, and 13 more.
+
+
 
 ## 2026-05-04
 

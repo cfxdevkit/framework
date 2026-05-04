@@ -30,6 +30,12 @@ wallet/
     │   ├── from-hardware.ts        Ledger / Trezor wrapper (re-exports services/keystore-kms/ledger)
     │   └── readonly.ts             watch-only address signer
     │
+    ├── hardware/                   ── Vendor hardware wallet adapters ──
+    │   ├── index.ts                common adapter types and helpers
+    │   ├── ledger/                 Ledger adapter, sharing services/keystore-ledger signer
+    │   ├── onekey/                 OneKey adapter
+    │   └── satochip/               Satochip adapter
+    │
     ├── policies/                   ── Reusable policy presets ──
     │   ├── index.ts
     │   ├── allowlist.ts
@@ -43,7 +49,7 @@ wallet/
 ### Public exports map
 
 ```
-".", "./session-key", "./batched", "./signers", "./policies"
+".", "./session-key", "./hardware", "./hardware/ledger", "./hardware/onekey", "./hardware/satochip", "./signers", "./policies"
 ```
 
 ### Dependencies

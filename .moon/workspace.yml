@@ -32,6 +32,7 @@ projects:
   - 'projects/examples/apps/showcase'
   - 'projects/examples/apps/showcase-backend'
   - 'projects/examples/apps/showcase-browser'
+  - 'projects/examples/apps/hardware-wallet-showcase'
   - 'projects/examples/apps/showcase-stack'
   - 'projects/examples/packages/showcase-ui'
 

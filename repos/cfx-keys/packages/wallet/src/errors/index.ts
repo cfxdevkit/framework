@@ -15,6 +15,7 @@ export class SessionKeyError extends CfxError {}
 
 /**
  * Hardware-wallet adapter failures. Codes (vendor-prefixed):
+ * - `wallet/hardware/ledger/{transport-unavailable,user-cancelled,device-error,bad-response}`
  * - `wallet/hardware/onekey/{init-failed,user-cancelled,device-error,bad-response}`
  * - `wallet/hardware/satochip/{bridge-unreachable,no-card,bad-pin,bad-response}`
  * - `wallet/hardware/{unsupported-tx-type,address-mismatch,aborted}`

@@ -10,6 +10,7 @@ export default defineConfig({
         'keystore/audit': 'src/keystore/audit.ts',
         'keystore/memory/index': 'src/keystore/memory/index.ts',
         'keystore/file/index': 'src/keystore/file/index.ts',
+        'keystore/ledger/index': 'src/keystore/ledger/index.ts',
         'crypto/index': 'src/crypto/index.ts',
       },
       formats: ['es'],

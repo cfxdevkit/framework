@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-04
+
+### Changed
+
+- Updated root files: .moon/workspace.yml, AGENTS.md, CLAUDE.md, pnpm-lock.yaml.
+
+
 
 ## 2026-05-04
 

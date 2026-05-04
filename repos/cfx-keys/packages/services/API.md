@@ -7,7 +7,8 @@
 | Sub-path | Concern |
 |----------|---------|
 | `@cfxdevkit/services/keystore` | `KeystoreProvider` interface + types |
-| `@cfxdevkit/services/keystore-kms` | KMS / Vault / Ledger backend |
+| `@cfxdevkit/services/keystore-ledger` | Ledger hardware keystore provider (eSpace via Ethereum app) |
+| `@cfxdevkit/services/keystore-kms` | KMS / Vault backend |
 | `@cfxdevkit/services/keystore-os` | OS keyring backend (`@napi-rs/keyring`) |
 | `@cfxdevkit/services/keystore-file` | Encrypted file backend (AES-GCM + Argon2id) |
 | `@cfxdevkit/services/keystore-forward` | Forward host keyring socket into container |
@@ -40,7 +41,7 @@ type StoredSecret = {
 }
 
 type KeystoreProvider = {
-  readonly id: string                // e.g. "kms-aws", "os", "file"
+  readonly id: string                // e.g. "kms-aws", "ledger", "os", "file"
   readonly capabilities: { write: boolean; list: boolean; rotate: boolean }
 
   list(opts?: { service?: string; signal?: AbortSignal }): Promise<StoredSecret[]>
@@ -73,17 +74,36 @@ function createFileAuditLogger(path: string): AuditLogger
 
 ---
 
+## `keystore-ledger`
+
+Ledger-backed deployer custody uses the same `KeystoreProvider` boundary as
+file, memory, and future KMS/Vault backends. The Ledger provider is read-only:
+it lists configured derivation paths as opaque secrets and returns a signer that
+delegates eSpace signing to the device. It never persists private material in the
+repository, server, or browser runtime.
+
+```
+function createNodeHidLedgerTransport(): Promise<LedgerTransportLike>
+function createLedgerEthApp(transport: LedgerTransportLike): Promise<LedgerEthAppLike>
+function signerFromLedger(opts: { eth: LedgerEthAppLike; path?: string; chainId?: number | string; expectedAddress?: Address; showAddressOnDevice?: boolean }): Promise<Signer>
+function createLedgerKeystore(opts: { eth: LedgerEthAppLike; accounts?: LedgerAccountConfig[]; defaultPath?: string; defaultChainId?: number; audit?: AuditLogger }): KeystoreProvider
+```
+
+Core Space Ledger signing is intentionally rejected until the core package
+exposes unsigned Core transaction serialization for the Conflux Ledger APDU
+signer. eSpace EIP-1559 transactions, personal messages, and LedgerJS EIP-712
+message signing are supported through the Ethereum app client.
+
 ## `keystore-kms`
 
 ```
 function createAwsKmsKeystore(opts: { region: string; keyArns: Record<string, string>; client?: AwsKmsClient; audit?: AuditLogger }): KeystoreProvider
 function createGcpKmsKeystore(opts: { project: string; locationId: string; keyRing: string; audit?: AuditLogger }): KeystoreProvider
 function createVaultKeystore(opts: { endpoint: string; mount: string; token: () => Promise<string>; audit?: AuditLogger }): KeystoreProvider
-function createLedgerKeystore(opts: { transport: () => Promise<LedgerTransport>; audit?: AuditLogger }): KeystoreProvider
 ```
 
-All return objects implementing `KeystoreProvider`. KMS variants disable `put` /
-`remove` by default (the cloud key never leaves the cloud).
+KMS and Vault variants disable `put` / `remove` by default because the signing
+key never leaves the external custody boundary.
 
 ---
 

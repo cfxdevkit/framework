@@ -1,5 +1,12 @@
 # Changelog
 
+
+## 2026-05-04
+
+### Changed
+
+- Updated projects/examples files: projects/examples/apps/hardware-wallet-showcase/index.html, projects/examples/apps/hardware-wallet-showcase/moon.yml, projects/examples/apps/hardware-wallet-showcase/package.json, projects/examples/apps/hardware-wallet-showcase/src/App.test.ts, projects/examples/apps/hardware-wallet-showcase/src/App.tsx, projects/examples/apps/hardware-wallet-showcase/src/devnode-client.ts, projects/examples/apps/hardware-wallet-showcase/src/ledger-session.ts, projects/examples/apps/hardware-wallet-showcase/src/main.tsx, projects/examples/apps/hardware-wallet-showcase/src/styles-base.css, projects/examples/apps/hardware-wallet-showcase/src/styles-components.css, projects/examples/apps/hardware-wallet-showcase/src/styles-deploy.css, projects/examples/apps/hardware-wallet-showcase/src/styles.css, and 10 more.
+
 ## [2026-05-04]
 ### Changed
 - Updated `@vitejs/plugin-react` from `^4.3.0` to `^6.0.1` in `showcase-browser`, `showcase-stack`, and `showcase` apps.

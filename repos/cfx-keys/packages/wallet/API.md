@@ -13,6 +13,10 @@
 | `@cfxdevkit/wallet/signers` | signer factories (from-keystore, from-hardware, readonly) |
 | `@cfxdevkit/wallet/policies` | reusable policy presets for capabilities |
 | `@cfxdevkit/wallet/errors` | `SessionKeyError` |
+| `@cfxdevkit/wallet/hardware` | shared hardware wallet adapter types; supported kinds: Ledger, OneKey, Satochip |
+| `@cfxdevkit/wallet/hardware/ledger` | direct Ledger hardware adapter over the services Ledger signer |
+| `@cfxdevkit/wallet/hardware/onekey` | direct OneKey hardware adapter |
+| `@cfxdevkit/wallet/hardware/satochip` | Satochip local bridge adapter |
 
 ---
 
@@ -97,6 +101,28 @@ function readonlySigner(address: Address): Signer    // throws on any sign* call
 
 `signerFromKeystore` is the recommended starting point everywhere. It delegates
 to the provider's `getSigner` so private material stays inside the backend.
+Hardware signers use the same shape; Ledger support should expose both a direct
+hardware adapter and a `KeystoreProvider` wrapper for deployment automation.
+
+## `wallet/hardware/ledger`
+
+```
+function createLedgerHardwareAdapter(input: {
+  eth: LedgerEthAppLike
+  path?: string
+  chainId?: number | string
+  expectedAddress?: Address
+  showAddressOnDevice?: boolean
+}): HardwareWalletAdapter
+
+function signerFromLedger(input: SignerFromLedgerInput): Promise<Signer>
+function createNodeHidLedgerTransport(): Promise<LedgerTransportLike>
+function createLedgerEthApp(transport: LedgerTransportLike): Promise<LedgerEthAppLike>
+```
+
+The adapter signs Conflux eSpace transactions and messages through the Ledger
+Ethereum app. Core Space signing fails fast until unsigned Core transaction
+serialization is available for the Conflux Ledger app APDU flow.
 
 ---
 
