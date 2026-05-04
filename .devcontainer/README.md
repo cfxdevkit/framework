@@ -67,7 +67,6 @@ those settings even though pnpm handles them correctly.
 | `5173` | Vite dev server |
 | `4173` | Vite preview |
 | `3000` | App server |
-| `13305` | Lemonade Server |
 | `7748` | Legacy DevKit backend compatibility port |
 | `8787` | Worker/backend dev server |
 

@@ -1,5 +1,13 @@
 # Changelog
 
+
+## 2026-05-04
+### Changed
+ - Removed Lemonade Server port (13305) from devcontainer port mappings and settings.
+ - Updated devcontainer.json to use proper spacing in runArgs and added otherPortsAttributes configuration.
+ - Disabled auto-forwarding of ports in VSCode settings and devcontainer configurations.
+ - Updated GitNexus symbol count in AGENTS.md and CLAUDE.md from 4799 to 4796.
+
 ## 2026-05-03
 ### Changed
 - Updated devcontainer.json to use a custom network configuration with `--network pasta:--map-gw` and `--add-host=host.containers.internal:169.254.1.2` instead of host networking.

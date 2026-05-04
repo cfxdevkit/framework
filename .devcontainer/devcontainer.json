@@ -7,7 +7,7 @@
   "remoteUser": "node",
   "containerUser": "node",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  "runArgs": ["--network","pasta:--map-gw","--add-host=host.containers.internal:169.254.1.2"],
+  "runArgs": ["--network", "pasta:--map-gw", "--add-host=host.containers.internal:169.254.1.2"],
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
@@ -25,7 +25,8 @@
     "LEMONADE_BASE_URL": "http://host.containers.internal:13305/"
   },
 
-  "forwardPorts": [8545, 8546, 12536, 12537, 3000, 4173, 5173, 13305, 7748, 8787],
+  "forwardPorts": [8545, 8546, 12536, 12537, 3000, 4173, 5173, 7748, 8787],
+  "otherPortsAttributes": { "onAutoForward": "ignore" },
   "portsAttributes": {
     "8545": {
       "label": "Conflux eSpace RPC"
@@ -47,9 +48,6 @@
     },
     "5173": {
       "label": "Vite dev server"
-    },
-    "13305": {
-      "label": "Lemonade Server"
     },
     "7748": {
       "label": "Legacy DevKit backend"
@@ -73,8 +71,15 @@
       "settings": {
         "editor.defaultFormatter": "biomejs.biome",
         "editor.formatOnSave": true,
-        "typescript.tsdk": "node_modules/typescript/lib",
-        "terminal.integrated.defaultProfile.linux": "bash"
+        "ts.tsdk.path": "node_modules/typescript/lib",
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "remote.autoForwardPorts": false,
+        "remote.autoForwardPortsFallback": 0,
+        "remote.autoForwardPortsSource": "process",
+        "remote.restoreForwardedPorts": false,
+        "remote.otherPortsAttributes": { "onAutoForward": "ignore" },
+        "dev.containers.autoForwardPorts": false,
+        "dev.containers.autoForwardPortsFallback": 0
       }
     }
   }
