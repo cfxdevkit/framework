@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-05-04]
+### Changed
+- Updated `@vitejs/plugin-react` from `^4.3.0` to `^6.0.1` in `showcase-browser`, `showcase-stack`, and `showcase` apps.
+
+
 
 ## 2026-05-04
 

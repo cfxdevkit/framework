@@ -1,5 +1,12 @@
 # Changelog
 
+
+## 2026-05-04
+
+### Changed
+
+- Updated root files: pnpm-lock.yaml.
+
 ## 2026-05-04
 
 ### Changed
