@@ -5,6 +5,20 @@
 
 ### Changed
 
+- Updated repos/cfx-keys files: repos/cfx-keys/CHANGELOG.md, repos/cfx-keys/packages/services/src/crypto/index.ts, repos/cfx-keys/packages/services/src/crypto/aead.ts, repos/cfx-keys/packages/services/src/crypto/constants.ts, repos/cfx-keys/packages/services/src/crypto/encoding.ts, repos/cfx-keys/packages/services/src/crypto/errors.ts, repos/cfx-keys/packages/services/src/crypto/kdf.ts, repos/cfx-keys/packages/services/src/crypto/keys.ts, repos/cfx-keys/packages/services/src/crypto/random.ts.
+
+## 2026-05-04
+
+### Changed
+
+- Updated repos/cfx-keys files: repos/cfx-keys/packages/services/src/crypto/index.ts, repos/cfx-keys/packages/services/src/crypto/aead.ts, repos/cfx-keys/packages/services/src/crypto/constants.ts, repos/cfx-keys/packages/services/src/crypto/encoding.ts, repos/cfx-keys/packages/services/src/crypto/errors.ts, repos/cfx-keys/packages/services/src/crypto/kdf.ts, repos/cfx-keys/packages/services/src/crypto/keys.ts, repos/cfx-keys/packages/services/src/crypto/random.ts.
+
+
+
+## 2026-05-04
+
+### Changed
+
 - Updated repos/cfx-keys files: repos/cfx-keys/packages/services/src/keystore/file/index.ts, repos/cfx-keys/packages/wallet/src/hardware/onekey/index.ts, repos/cfx-keys/packages/wallet/src/hardware/satochip/index.ts, repos/cfx-keys/packages/services/src/keystore/file/internals.ts, repos/cfx-keys/packages/wallet/src/hardware/onekey/helpers.ts, repos/cfx-keys/packages/wallet/src/hardware/satochip/helpers.ts.
 
 ## [Unreleased] — 2026-05-02

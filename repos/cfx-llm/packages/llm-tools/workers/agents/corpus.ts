@@ -18,7 +18,7 @@ import {
   toRel,
   writeJsonl,
   writeJsonReport,
-} from '../agent-runtime.ts';
+} from './runtime/index.ts';
 
 export async function runCorpusAgent(opts = {}) {
   const files = await collectCorpusFiles();

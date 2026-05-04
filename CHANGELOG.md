@@ -5,6 +5,18 @@
 
 ### Changed
 
+- Updated root files: AGENTS.md, CHANGELOG.md, CLAUDE.md.
+
+## [2026-05-04]
+### Changed
+- Updated GitNexus index statistics in `AGENTS.md` and `CLAUDE.md` (symbols: 5216 → 5399, relationships: 8430 → 8810).
+
+
+
+## 2026-05-04
+
+### Changed
+
 - Updated root files: pnpm-lock.yaml.
 
 ## 2026-05-04

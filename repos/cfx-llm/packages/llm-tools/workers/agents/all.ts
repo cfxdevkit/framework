@@ -1,14 +1,15 @@
 // @ts-nocheck
+
+import { runCorpusAgent, runDatasetAgent } from './corpus.ts';
+import { runDocsAgent } from './docs.ts';
+import { runEvalAgent, runServeCheckAgent } from './eval-serve.ts';
+import { runReviewAgent } from './review.ts';
 import {
   printSummary,
   renderAgentRun,
   writeJsonReport,
   writeMarkdownReport,
-} from '../agent-runtime.ts';
-import { runCorpusAgent, runDatasetAgent } from './corpus.ts';
-import { runDocsAgent } from './docs.ts';
-import { runEvalAgent, runServeCheckAgent } from './eval-serve.ts';
-import { runReviewAgent } from './review.ts';
+} from './runtime/index.ts';
 
 export async function runAll() {
   const results = [];

@@ -13,7 +13,7 @@ import {
   toRel,
   writeJsonReport,
   writeMarkdownReport,
-} from '../agent-runtime.ts';
+} from './runtime/index.ts';
 
 export async function runDocsAgent(opts = {}) {
   const markdownFiles = (await collectCorpusFiles()).filter((file) =>

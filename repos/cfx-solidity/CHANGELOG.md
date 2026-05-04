@@ -5,6 +5,20 @@
 
 ### Changed
 
+- Updated repos/cfx-solidity files: repos/cfx-solidity/CHANGELOG.md, repos/cfx-solidity/packages/contracts/src/deploy/index.ts, repos/cfx-solidity/packages/contracts/src/deploy/core.ts, repos/cfx-solidity/packages/contracts/src/deploy/espace.ts, repos/cfx-solidity/packages/contracts/src/deploy/types.ts.
+
+## 2026-05-04
+
+### Changed
+
+- Updated repos/cfx-solidity files: repos/cfx-solidity/packages/contracts/src/deploy/index.ts, repos/cfx-solidity/packages/contracts/src/deploy/core.ts, repos/cfx-solidity/packages/contracts/src/deploy/espace.ts, repos/cfx-solidity/packages/contracts/src/deploy/types.ts.
+
+
+
+## 2026-05-04
+
+### Changed
+
 - Updated repos/cfx-solidity files: repos/cfx-solidity/packages/compiler/src/solc/compile.ts, repos/cfx-solidity/packages/contracts/src/bridge/index.ts, repos/cfx-solidity/packages/contracts/src/write/index.ts, repos/cfx-solidity/packages/compiler/src/solc/compile-helpers.ts, repos/cfx-solidity/packages/contracts/src/bridge/internals.ts, repos/cfx-solidity/packages/contracts/src/write/core.ts, repos/cfx-solidity/packages/contracts/src/write/espace.ts, repos/cfx-solidity/packages/contracts/src/write/receipt.ts.
 
 ## [Unreleased] - 2026-05-02

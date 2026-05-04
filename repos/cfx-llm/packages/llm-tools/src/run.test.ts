@@ -28,7 +28,7 @@ describe('runCli', () => {
       expect.arrayContaining([
         'exec',
         'tsx',
-        expect.stringContaining('workers/lemonade-cli.ts'),
+        expect.stringContaining('workers/lemonade/cli.ts'),
         'commit',
         '--',
         '--dry-run',
@@ -46,7 +46,7 @@ describe('runCli', () => {
       expect.arrayContaining([
         'exec',
         'tsx',
-        expect.stringContaining('workers/lemonade-cli.ts'),
+        expect.stringContaining('workers/lemonade/cli.ts'),
         'commit',
         '--dry-run',
       ]),

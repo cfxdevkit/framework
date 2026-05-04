@@ -9,7 +9,7 @@ import {
   suggestValidationCommands,
   writeJsonReport,
   writeMarkdownReport,
-} from '../agent-runtime.ts';
+} from './runtime/index.ts';
 
 export async function runReviewAgent(opts = {}) {
   const changed = await gitChangedFiles();

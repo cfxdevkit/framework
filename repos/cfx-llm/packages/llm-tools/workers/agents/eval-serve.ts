@@ -7,7 +7,7 @@ import {
   renderServeCheck,
   writeJsonReport,
   writeMarkdownReport,
-} from '../agent-runtime.ts';
+} from './runtime/index.ts';
 
 export async function runEvalAgent(opts = {}) {
   const docsReport = await readJsonIfExists('reports/docs-alignment.json');

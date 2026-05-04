@@ -37,7 +37,7 @@ async function runWorker(command: LlmCommandDefinition, args: readonly string[])
 }
 
 function workerScript(worker: LlmCommandDefinition['worker']): string {
-  if (worker === 'lemonade') return 'workers/lemonade-cli.ts';
+  if (worker === 'lemonade') return 'workers/lemonade/cli.ts';
   if (worker === 'hotspots') return 'workers/code-hotspots.ts';
   return 'workers/llm-agents.ts';
 }
