@@ -1,6 +1,18 @@
 # Changelog
 
 
+## 2026-05-04
+
+### Changed
+
+- Updated repos/cfx-tools files: repos/cfx-tools/CHANGELOG.md, repos/cfx-tools/README.md, repos/cfx-tools/packages/llm-tools/API.md, repos/cfx-tools/packages/llm-tools/README.md, repos/cfx-tools/packages/llm-tools/STRUCTURE.md, repos/cfx-tools/packages/llm-tools/moon.yml, repos/cfx-tools/packages/llm-tools/package.json, repos/cfx-tools/packages/llm-tools/src/bin.ts, repos/cfx-tools/packages/llm-tools/src/index.ts, repos/cfx-tools/packages/llm-tools/src/run.ts, repos/cfx-tools/packages/llm-tools/tsconfig.json, repos/cfx-tools/packages/llm-tools/vite.config.ts, and 23 more.
+
+## [Unreleased] - 2026-05-04
+### Changed
+- Moved `@cfxdevkit/llm-tools` out to the new `repos/cfx-llm` slice.
+- Updated package documentation so `cfx-tools` owns general developer tooling while `cfx-llm` owns local LLM automation.
+
+
 ## [Unreleased] - 2026-05-02
 ### Changed
 - **lemonade-cli.ts**: Clarified that `--skip-tests` applies only when `withTests` is enabled (default), and updated fallback artifact messages for clarity.

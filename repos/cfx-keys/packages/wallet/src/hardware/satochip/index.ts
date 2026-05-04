@@ -26,12 +26,14 @@ import {
   type TransactionSerializableEIP1559,
 } from 'viem';
 import { HardwareWalletError } from '../../errors/index.js';
+import { EVM_DEFAULT_PATH, finaliseEip1559Tx, toCanonicalHex } from '../types.js';
 import {
-  EVM_DEFAULT_PATH,
-  finaliseEip1559Tx,
-  rawSignatureToHex,
-  toCanonicalHex,
-} from '../types.js';
+  hexBig,
+  normaliseSignature,
+  safeDetail,
+  splitSignature,
+  throwIfAborted,
+} from './helpers.js';
 
 export interface SatochipBridgeConfig {
   /** Base URL of the Satochip bridge. Default `http://127.0.0.1:8397`. */
@@ -219,62 +221,4 @@ export async function signerFromSatochip(input: SignerFromSatochipInput = {}): P
       return normaliseSignature(signature);
     },
   };
-}
-
-// ── helpers ──────────────────────────────────────────────────────────────────
-
-function throwIfAborted(signal: AbortSignal | undefined): void {
-  if (signal?.aborted) {
-    throw new HardwareWalletError({
-      code: 'wallet/hardware/aborted',
-      message: 'signing aborted',
-    });
-  }
-}
-
-function hexBig(n: bigint | number | string): string {
-  if (typeof n === 'string') return n.startsWith('0x') ? n : `0x${BigInt(n).toString(16)}`;
-  return `0x${BigInt(n).toString(16)}`;
-}
-
-function splitSignature(sig: string): { r: Hex; s: Hex; v: number } {
-  const canonical = toCanonicalHex(sig);
-  if (canonical.length !== 2 + 130) {
-    throw new HardwareWalletError({
-      code: 'wallet/hardware/satochip/bad-response',
-      message: `expected 65-byte signature, got ${(canonical.length - 2) / 2} bytes`,
-    });
-  }
-  return {
-    r: `0x${canonical.slice(2, 66)}` as Hex,
-    s: `0x${canonical.slice(66, 130)}` as Hex,
-    v: Number.parseInt(canonical.slice(130, 132), 16),
-  };
-}
-
-function normaliseSignature(sig: string): Hex {
-  const canonical = toCanonicalHex(sig);
-  if (canonical.length === 2 + 128) {
-    return rawSignatureToHex({
-      r: `0x${canonical.slice(2, 66)}` as Hex,
-      s: `0x${canonical.slice(66, 130)}` as Hex,
-      v: 27,
-    });
-  }
-  if (canonical.length !== 2 + 130) {
-    throw new HardwareWalletError({
-      code: 'wallet/hardware/satochip/bad-response',
-      message: `unexpected signature length ${canonical.length}`,
-    });
-  }
-  return canonical;
-}
-
-async function safeDetail(r: Response): Promise<string> {
-  try {
-    const j = (await r.json()) as { detail?: string };
-    return j.detail ?? '';
-  } catch {
-    return '';
-  }
 }

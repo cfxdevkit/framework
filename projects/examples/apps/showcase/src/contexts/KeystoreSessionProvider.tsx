@@ -1,17 +1,5 @@
-import type { Address, Hex, Signer } from '@cfxdevkit/core';
-import {
-  coreAddressFromPrivateKey,
-  deriveAccount,
-  generateMnemonic,
-  signerFromPrivateKey,
-  validateMnemonic,
-} from '@cfxdevkit/core';
-import type {
-  Capability,
-  KeystoreProvider,
-  SecretRef,
-  StoredSecret,
-} from '@cfxdevkit/services/keystore';
+import { generateMnemonic, signerFromPrivateKey } from '@cfxdevkit/core';
+import type { Capability, SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
 import {
   createContext,
   type ReactNode,
@@ -21,104 +9,26 @@ import {
   useMemo,
   useState,
 } from 'react';
+import {
+  DEFAULT_SHOWCASE_MNEMONIC,
+  deriveAccounts,
+  type KeystoreSessionState,
+  refForIndex,
+  refFromKey,
+  refKey,
+  SERVICE,
+} from './keystore-session-model.js';
+import { useMemoryKeystore } from './keystore-session-store.js';
 import { useNetwork } from './NetworkProvider.js';
 
-export const DEFAULT_SHOWCASE_MNEMONIC =
-  'test test test test test test test test test test test junk';
-
-const SERVICE = 'showcase';
-
-export type KeystoreSessionStatus = 'unconfigured' | 'locked' | 'unlocking' | 'ready' | 'error';
-
-export interface ShowcaseAccount {
-  index: number;
-  ref: SecretRef;
-  evmAddress: Address;
-  coreAddress: string;
-  privateKey: Hex;
-  publicKey: Hex;
-  paths: { evm: string; core: string };
-}
-
-export interface KeystoreSessionState {
-  status: KeystoreSessionStatus;
-  backendId: string;
-  networkId: 'mainnet' | 'testnet' | 'local';
-  chainIds: readonly number[];
-  wallets: readonly StoredSecret[];
-  accounts: readonly ShowcaseAccount[];
-  activeWalletRef: SecretRef | null;
-  activeIndex: number | null;
-  active: ShowcaseAccount | null;
-  activeRef: SecretRef | null;
-  activeSigner: Signer | null;
-  capability: Capability;
-  sessionId: string;
-  mnemonic: string;
-  accountCount: number;
-  error: string | null;
-  setMnemonic: (mnemonic: string) => void;
-  createMnemonic: () => void;
-  resetMnemonic: () => void;
-  setAccountCount: (count: number) => void;
-  addWallet: () => void;
-  selectMnemonic: (ref: SecretRef) => void;
-  selectWallet: (index: number) => void;
-  disconnect: () => void;
-  removeWallet: (ref: SecretRef) => Promise<void>;
-  restoreRemovedWallets: () => void;
-  signMessage: (
-    ref: SecretRef,
-    message: string,
-    capability?: Capability,
-  ) => Promise<{ account: string; signature: Hex }>;
-  refreshWallets: () => Promise<void>;
-}
+export type { ShowcaseAccount } from './keystore-session-model.js';
+export { DEFAULT_SHOWCASE_MNEMONIC } from './keystore-session-model.js';
 
 const Ctx = createContext<KeystoreSessionState | null>(null);
 
-function refForIndex(index: number): SecretRef {
-  return { service: SERVICE, account: `mnemonic-${index}` };
-}
-
-function accountRefForIndex(index: number): SecretRef {
-  return { service: SERVICE, account: `account-${index}` };
-}
-
-function refKey(ref: SecretRef): string {
-  return `${ref.service}/${ref.account}`;
-}
-
-function refFromKey(key: string): SecretRef {
-  const [service, account] = key.split('/');
-  return { service: service ?? SERVICE, account: account ?? 'mnemonic-0' };
-}
-
-function deriveAccounts(mnemonic: string, count: number, coreNetworkId: number): ShowcaseAccount[] {
-  const clean = mnemonic.trim();
-  if (!validateMnemonic(clean)) return [];
-
-  const accounts: ShowcaseAccount[] = [];
-  for (let index = 0; index < count; index++) {
-    const path = `m/44'/60'/0'/0/${index}`;
-    const { account, privateKey } = deriveAccount({ mnemonic: clean, path });
-    accounts.push({
-      index,
-      ref: accountRefForIndex(index),
-      evmAddress: account.address,
-      coreAddress: coreAddressFromPrivateKey(privateKey, coreNetworkId),
-      privateKey,
-      publicKey: account.publicKey,
-      paths: { evm: path, core: path },
-    });
-  }
-  return accounts;
-}
-
 export function KeystoreSessionProvider({ children }: { children: ReactNode }) {
   const { network, core, espace } = useNetwork();
-  const [keystore, setKeystore] = useState<KeystoreProvider | null>(null);
-  const [status, setStatus] = useState<KeystoreSessionStatus>('unconfigured');
+  const { keystore, status, error, setError } = useMemoryKeystore();
   const [mnemonics, setMnemonics] = useState<ReadonlyMap<string, string>>(
     () => new Map([[refKey(refForIndex(0)), DEFAULT_SHOWCASE_MNEMONIC]]),
   );
@@ -126,28 +36,7 @@ export function KeystoreSessionProvider({ children }: { children: ReactNode }) {
   const [activeWalletRef, setActiveWalletRef] = useState<SecretRef>(refForIndex(0));
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [wallets, setWallets] = useState<StoredSecret[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    setStatus('unlocking');
-    void import('@cfxdevkit/services/keystore-memory')
-      .then((mod) => {
-        if (cancelled) return;
-        setKeystore(mod.createMemoryKeystore());
-        setStatus('ready');
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setStatus('error');
-        setError(err instanceof Error ? err.message : String(err));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const activeWalletKey = refKey(activeWalletRef);
   const mnemonic = mnemonics.get(activeWalletKey) ?? '';
@@ -192,7 +81,7 @@ export function KeystoreSessionProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [keystore, mnemonics, accountCount, refreshWallets]);
+  }, [keystore, mnemonics, accountCount, refreshWallets, setError]);
 
   useEffect(() => {
     if (activeIndex !== null && !accounts.some((account) => account.index === activeIndex)) {

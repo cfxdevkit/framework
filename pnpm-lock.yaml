@@ -703,6 +703,40 @@ importers:
         specifier: ^4.1.5
         version: 4.1.5(@types/node@22.19.17)(vite@8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4))
 
+  repos/cfx-llm/packages/llm-tools:
+    dependencies:
+      '@mariozechner/pi-coding-agent':
+        specifier: ^0.72.0
+        version: 0.72.0(@modelcontextprotocol/sdk@1.29.0(zod@4.3.6))(bufferutil@4.1.0)(utf-8-validate@5.0.10)(ws@8.20.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@4.3.6)
+      tsx:
+        specifier: ^4.20.6
+        version: 4.21.0
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.4.14
+        version: 2.4.14
+      '@cfxdevkit/biome-config':
+        specifier: workspace:*
+        version: link:../../../../tools/biome-config
+      '@cfxdevkit/tsconfig':
+        specifier: workspace:*
+        version: link:../../../../tools/tsconfig
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.17
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.0.10
+        version: 8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4)
+      vite-plugin-dts:
+        specifier: ^5.0.0
+        version: 5.0.0(@microsoft/api-extractor@7.58.7(@types/node@22.19.17))(esbuild@0.27.7)(rollup@4.60.2)(typescript@6.0.3)(vite@8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4))
+      vitest:
+        specifier: ^4.1.5
+        version: 4.1.5(@types/node@22.19.17)(vite@8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4))
+
   repos/cfx-solidity/packages/abis:
     dependencies:
       viem:
@@ -846,40 +880,6 @@ importers:
       '@cfxdevkit/core':
         specifier: workspace:*
         version: link:../../../cfx-core/packages/core
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.4.14
-        version: 2.4.14
-      '@cfxdevkit/biome-config':
-        specifier: workspace:*
-        version: link:../../../../tools/biome-config
-      '@cfxdevkit/tsconfig':
-        specifier: workspace:*
-        version: link:../../../../tools/tsconfig
-      '@types/node':
-        specifier: ^22.10.0
-        version: 22.19.17
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-      vite:
-        specifier: ^8.0.10
-        version: 8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4)
-      vite-plugin-dts:
-        specifier: ^5.0.0
-        version: 5.0.0(@microsoft/api-extractor@7.58.7(@types/node@22.19.17))(esbuild@0.27.7)(rollup@4.60.2)(typescript@6.0.3)(vite@8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4))
-      vitest:
-        specifier: ^4.1.5
-        version: 4.1.5(@types/node@22.19.17)(vite@8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.4))
-
-  repos/cfx-tools/packages/llm-tools:
-    dependencies:
-      '@mariozechner/pi-coding-agent':
-        specifier: ^0.72.0
-        version: 0.72.0(@modelcontextprotocol/sdk@1.29.0(zod@4.3.6))(bufferutil@4.1.0)(utf-8-validate@5.0.10)(ws@8.20.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@4.3.6)
-      tsx:
-        specifier: ^4.20.6
-        version: 4.21.0
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.4.14

@@ -1,5 +1,12 @@
 # Changelog
 
+
+## 2026-05-04
+
+### Changed
+
+- Updated repos/cfx-solidity files: repos/cfx-solidity/packages/compiler/src/solc/compile.ts, repos/cfx-solidity/packages/contracts/src/bridge/index.ts, repos/cfx-solidity/packages/contracts/src/write/index.ts, repos/cfx-solidity/packages/compiler/src/solc/compile-helpers.ts, repos/cfx-solidity/packages/contracts/src/bridge/internals.ts, repos/cfx-solidity/packages/contracts/src/write/core.ts, repos/cfx-solidity/packages/contracts/src/write/espace.ts, repos/cfx-solidity/packages/contracts/src/write/receipt.ts.
+
 ## [Unreleased] - 2026-05-02
 ### Changed
 - Renamed `contracts-extract` package from `@cfxdevkit/codegen-contracts` to `@cfxdevkit/contracts-extract` in root README.md

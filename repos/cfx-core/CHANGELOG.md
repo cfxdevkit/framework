@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-04
+
+### Changed
+
+- Updated repos/cfx-core files: repos/cfx-core/packages/core/src/client/index.ts, repos/cfx-core/packages/core/src/wallet/index.ts, repos/cfx-core/packages/devnode/src/node.ts, repos/cfx-core/packages/core/src/client/core.ts, repos/cfx-core/packages/core/src/client/errors.ts, repos/cfx-core/packages/core/src/client/espace.ts, repos/cfx-core/packages/core/src/client/transport.ts, repos/cfx-core/packages/core/src/wallet/derivation.ts, repos/cfx-core/packages/core/src/wallet/signing.ts, repos/cfx-core/packages/devnode/src/internals.ts, repos/cfx-core/packages/devnode/src/server.ts.
+
+
 
 ## 2026-05-03
 ### Changed

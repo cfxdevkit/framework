@@ -1,5 +1,12 @@
 # Changelog
 
+
+## 2026-05-04
+
+### Changed
+
+- Updated repos/cfx-keys files: repos/cfx-keys/packages/services/src/keystore/file/index.ts, repos/cfx-keys/packages/wallet/src/hardware/onekey/index.ts, repos/cfx-keys/packages/wallet/src/hardware/satochip/index.ts, repos/cfx-keys/packages/services/src/keystore/file/internals.ts, repos/cfx-keys/packages/wallet/src/hardware/onekey/helpers.ts, repos/cfx-keys/packages/wallet/src/hardware/satochip/helpers.ts.
+
 ## [Unreleased] — 2026-05-02
 ### Changed
 - Renamed `framework/services` to `services` in API documentation headers.

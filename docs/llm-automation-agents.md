@@ -18,6 +18,7 @@ pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
 pnpm run llm:corpus
 pnpm run llm:docs
 pnpm run llm:review
+pnpm run llm:hotspots
 pnpm run llm:datasets
 pnpm run llm:eval
 pnpm run llm:serve-check
@@ -33,14 +34,15 @@ Commit only small schemas, manifests, or report excerpts intentionally.
 | `llm:corpus` | Build safe repository metadata for retrieval and later eval seeds | `artifacts/llm/corpus/*.jsonl` |
 | `llm:docs` | Detect broken documentation references, Moon registration drift, package export drift, and current/planned wording risk | `artifacts/llm/reports/docs-alignment.*` |
 | `llm:review` | Inspect current git changes and suggest targeted validation commands | `artifacts/llm/reports/review.*` |
+| `llm:hotspots` | Scan source file size and recent churn against the framework component budget | `artifacts/llm/reports/code-hotspots.*` |
 | `llm:datasets` | Generate deterministic evaluation seed examples from corpus metadata | `artifacts/llm/datasets/*.jsonl` |
 | `llm:eval` | Summarize deterministic gates from the generated reports | `artifacts/llm/reports/eval.*` |
 | `llm:serve-check` | Probe Lemonade Server reachability and model-list endpoints, including `http://localhost:13305/` by default | `artifacts/llm/reports/serve-check.*` |
 
 ## Lemonade CLI
 
-`scripts/lemonade-cli.mjs` provides a small local CLI for using Lemonade Server
-models against repository upkeep tasks. It auto-discovers Lemonade at
+`@cfxdevkit/llm-tools` in `repos/cfx-llm` provides a local CLI for using
+Lemonade Server models against repository upkeep tasks. It auto-discovers Lemonade at
 `http://localhost:13305/`, `http://127.0.0.1:13305/`,
 `http://host.docker.internal:13305/`, `http://host.containers.internal:13305/`,
 then `http://127.0.0.1:8000/`, unless `LEMONADE_URL` or `LEMONADE_BASE_URL` is

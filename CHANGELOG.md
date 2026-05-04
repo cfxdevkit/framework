@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-04
+
+### Changed
+
+- Updated root files: .moon/workspace.yml, AGENTS.md, CLAUDE.md, docs/llm-automation-agents.md, docs/llm-fine-tuning-plan.md, package.json, pnpm-lock.yaml, scripts/lemonade-cli.mjs, scripts/llm-agents.mjs.
+
+
 
 ## 2026-05-04
 ### Changed

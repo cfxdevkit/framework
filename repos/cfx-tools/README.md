@@ -8,13 +8,14 @@
 | Package | npm | Surface |
 |---------|-----|---------|
 | `scaffold-cli` | `@cfxdevkit/scaffold-cli` | `pnpm dlx @cfxdevkit/scaffold` project bootstrapper |
-| `llm-tools` | `@cfxdevkit/llm-tools` | Local Lemonade/Pi automation for docs, validation, review, and commit workflows |
 | `mcp-server` | `@cfxdevkit/mcp-server` | Model Context Protocol server for AI agents |
 | `vscode-extension` | `cfxdevkit.vscode` | VS Code integration |
 | `devcontainer` | — | reusable `.devcontainer.json` + Docker images |
 | `devtools` | — | shared dev scripts |
 | `docs-site` | — | docs.cfxdevkit.dev (Astro/VitePress) |
 | `templates` | — | starter templates referenced by scaffold-cli |
+
+Local LLM and AI-assisted repository automation lives in [`../cfx-llm/`](../cfx-llm/).
 
 ## Why standalone
 

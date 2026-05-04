@@ -1,26 +1,10 @@
-/**
- * SiwePanel — Sign-In With Ethereum using a connected browser wallet.
- *
- * 1. GET /auth/nonce?address=…
- * 2. Build a SIWE message and sign via wagmi useSignMessage
- * 3. POST /auth/verify { message, signature } → bearer token
- * 4. GET /auth/me with the bearer token
- */
-
 import { errMsg, WalletPickerModal } from '@cfxdevkit/example-showcase-ui';
 import { useCallback, useEffect, useState } from 'react';
 import { SiweMessage } from 'siwe';
 import { useAccount, useSignMessage } from 'wagmi';
 import { useNetwork } from '../contexts/NetworkProvider.js';
 import { api } from '../lib/api.js';
-
-const TOKEN_KEY = 'showcase-stack.siwe.token';
-
-interface MeResult {
-  address: string;
-  issuedAt: number;
-  expiresAt: number;
-}
+import { type MeResult, SiweResults, TOKEN_KEY } from './siwe-results.js';
 
 export function SiwePanel() {
   const { espace } = useNetwork();
@@ -222,58 +206,7 @@ export function SiwePanel() {
         )}
       </div>
 
-      {/* SIWE message */}
-      {signedMsg && (
-        <div style={{ marginBottom: 12 }}>
-          <div className="muted" style={{ fontSize: 11, marginBottom: 4 }}>
-            Signed SIWE message
-          </div>
-          <pre className="result" style={{ whiteSpace: 'pre-wrap' }}>
-            {signedMsg}
-          </pre>
-        </div>
-      )}
-
-      {/* Token */}
-      {token && (
-        <div style={{ marginBottom: 12 }}>
-          <div className="muted" style={{ fontSize: 11, marginBottom: 4 }}>
-            Bearer token (stored in localStorage)
-          </div>
-          <pre className="result">{token}</pre>
-        </div>
-      )}
-
-      {/* /auth/me result */}
-      {me && (
-        <div style={{ marginBottom: 12 }}>
-          <div className="muted" style={{ fontSize: 11, marginBottom: 4 }}>
-            GET /auth/me
-          </div>
-          <table className="status-table">
-            <tbody>
-              <tr>
-                <th>address</th>
-                <td className="mono">{me.address}</td>
-              </tr>
-              <tr>
-                <th>issuedAt</th>
-                <td>{new Date(me.issuedAt).toLocaleString()}</td>
-              </tr>
-              <tr>
-                <th>expiresAt</th>
-                <td>{new Date(me.expiresAt).toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {error && (
-        <div className="result" style={{ color: 'var(--err)' }}>
-          {error}
-        </div>
-      )}
+      <SiweResults signedMsg={signedMsg} token={token} me={me} error={error} />
     </div>
   );
 }

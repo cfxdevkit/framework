@@ -331,11 +331,14 @@ Repository automation services:
 - `llm:review`: produce a review report for current changes using retrieval and
   the selected local model.
 - `llm:docs`: detect documentation drift and propose patches.
+- `llm:hotspots`: scan source file size and churn against the framework
+  component budget.
 - `llm:serve-check`: verify Lemonade Server reachability and model inventory.
 
 Initial implementation status:
 
-- `scripts/llm-agents.mjs` implements the first deterministic upkeep agents.
+- `@cfxdevkit/llm-tools` in `repos/cfx-llm` implements the first deterministic
+  upkeep agents.
 - `pnpm run llm:corpus` writes file, chunk, and documentation-heading metadata
   under `artifacts/llm/corpus/`.
 - `pnpm run llm:docs` checks Markdown path references, package export coverage,

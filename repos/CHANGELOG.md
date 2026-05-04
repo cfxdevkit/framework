@@ -1,5 +1,18 @@
 # Changelog
 
+
+## 2026-05-04
+
+### Changed
+
+- Updated repos files: repos/CHANGELOG.md, repos/README.md.
+
+## [Unreleased] - 2026-05-04
+### Added
+- Added the `cfx-llm` slice for local LLM automation, repo review, hotspot scanning, and commit assistance.
+### Changed
+- Moved `@cfxdevkit/llm-tools` from `cfx-tools` into `cfx-llm`.
+
 ## [Unreleased] - 2026-05-02
 ### Changed
 - Removed `compiler` and `contracts` from `cfx-core` slice description in `repos/README.md`.

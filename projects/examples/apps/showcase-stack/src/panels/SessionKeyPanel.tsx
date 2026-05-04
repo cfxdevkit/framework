@@ -1,56 +1,13 @@
-/**
- * SessionKeyPanel — session key delegation via /session-key/issue + verify.
- *
- * The backend generates a random session keypair and attests it against the
- * parent private key. The parent address and its private key can be obtained
- * from the DevNode genesis accounts (copy-paste from DevNode panel) or
- * entered manually.
- *
- * After issue, the full attestation (message, signature, digest) is shown.
- * POST /session-key/verify confirms the attestation is valid.
- */
-
-import { CopyButton, errMsg } from '@cfxdevkit/example-showcase-ui';
+import { errMsg } from '@cfxdevkit/example-showcase-ui';
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
-
-interface Capability {
-  chains: string;
-  contracts: string;
-  selectors: string;
-  maxValuePerTx: string;
-  ttlSeconds: string;
-}
-
-type IssueResult = Awaited<ReturnType<typeof api.sessionKeyIssue>>;
-type VerifyResult = Awaited<ReturnType<typeof api.sessionKeyVerify>>;
-
-function parseCapability(cap: Capability) {
-  const chains = cap.chains
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .map(Number)
-    .filter((n) => !Number.isNaN(n));
-  const contracts = cap.contracts
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const selectors = cap.selectors
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const maxValuePerTx = cap.maxValuePerTx.trim() || undefined;
-  const ttl = Number(cap.ttlSeconds);
-  const notAfter = ttl > 0 ? Math.floor(Date.now() / 1000) + ttl : undefined;
-  return {
-    ...(chains.length > 0 ? { chains } : {}),
-    ...(contracts.length > 0 ? { contracts } : {}),
-    ...(selectors.length > 0 ? { selectors } : {}),
-    ...(maxValuePerTx !== undefined ? { maxValuePerTx } : {}),
-    ...(notAfter !== undefined ? { notAfter } : {}),
-  };
-}
+import {
+  type Capability,
+  type IssueResult,
+  parseCapability,
+  type VerifyResult,
+} from './session-key-model.js';
+import { SessionKeyResults } from './session-key-results.js';
 
 export function SessionKeyPanel() {
   const [backendOk, setBackendOk] = useState<boolean | null>(null);
@@ -234,98 +191,7 @@ export function SessionKeyPanel() {
         )}
       </div>
 
-      {/* Issue result */}
-      {issueResult && (
-        <div className="panel" style={{ marginBottom: 16 }}>
-          <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600 }}>Session key issued</h3>
-          <table className="status-table">
-            <tbody>
-              <tr>
-                <th>parent</th>
-                <td>
-                  <span className="mono" style={{ fontSize: 11 }}>
-                    {issueResult.parent}
-                  </span>
-                  <CopyButton text={issueResult.parent} />
-                </td>
-              </tr>
-              <tr>
-                <th>session</th>
-                <td>
-                  <span className="mono" style={{ fontSize: 11 }}>
-                    {issueResult.session}
-                  </span>
-                  <CopyButton text={issueResult.session} />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div className="muted" style={{ fontSize: 11, marginTop: 16, marginBottom: 4 }}>
-            Attestation
-          </div>
-          <table className="status-table">
-            <tbody>
-              <tr>
-                <th>digest</th>
-                <td>
-                  <span className="mono" style={{ fontSize: 10 }}>
-                    {issueResult.attestation.digest}
-                  </span>
-                  <CopyButton text={issueResult.attestation.digest} />
-                </td>
-              </tr>
-              <tr>
-                <th>signature</th>
-                <td>
-                  <span className="mono" style={{ fontSize: 10 }}>
-                    {issueResult.attestation.signature}
-                  </span>
-                  <CopyButton text={issueResult.attestation.signature} />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div className="muted" style={{ fontSize: 11, marginTop: 12, marginBottom: 4 }}>
-            Canonical attestation message
-          </div>
-          <pre className="result" style={{ whiteSpace: 'pre-wrap', fontSize: 11 }}>
-            {issueResult.attestation.message}
-          </pre>
-
-          <div className="muted" style={{ fontSize: 11, marginTop: 12, marginBottom: 4 }}>
-            Capability granted
-          </div>
-          <pre className="result" style={{ fontSize: 11 }}>
-            {JSON.stringify(issueResult.capability, null, 2)}
-          </pre>
-        </div>
-      )}
-
-      {/* Verify result */}
-      {verifyResult && (
-        <div
-          className="panel"
-          style={{
-            marginBottom: 16,
-            borderColor: verifyResult.valid ? 'var(--accent-2)' : 'var(--err)',
-          }}
-        >
-          <h3 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600 }}>
-            Verification: {verifyResult.valid ? 'valid' : 'INVALID'}
-          </h3>
-          <p className="muted" style={{ margin: 0, fontSize: 12 }}>
-            {verifyResult.message}
-          </p>
-        </div>
-      )}
-
-      {error && (
-        <div className="result" style={{ color: 'var(--err)' }}>
-          {error}
-        </div>
-      )}
+      <SessionKeyResults issueResult={issueResult} verifyResult={verifyResult} error={error} />
     </div>
   );
 }

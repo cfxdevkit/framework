@@ -1,39 +1,8 @@
-/**
- * SessionKeyPanel — exercises `@cfxdevkit/wallet/session-key` via the
- * showcase backend (`POST /session-key/issue` + `POST /session-key/verify`).
- *
- * Why backend-mediated? `createSessionKey` uses Node's `randomBytes` from
- * `node:crypto`, which doesn't run in the browser. The route accepts the
- * parent private key, mints the session key server-side, and returns a
- * canonical attestation the client can independently re-verify.
- */
 import { useEffect, useState } from 'react';
 import { CopyButton } from '../components/CopyButton.js';
 import { useWallet } from '../contexts/WalletProvider.js';
 import { type ApiError, api } from '../lib/api.js';
-
-interface IssuedKey {
-  parent: string;
-  session: string;
-  attestation: { message: string; signature: string; digest: string };
-  capability: Record<string, unknown>;
-  inputCapability: CapabilityInput;
-}
-
-interface CapabilityInput {
-  chains: number[];
-  contracts: string[];
-  selectors: string[];
-  maxValuePerTx: string;
-  notAfterMs: number;
-}
-
-const CHAIN_OPTIONS = [
-  { id: 1030, label: 'Conflux eSpace mainnet (1030)' },
-  { id: 71, label: 'Conflux eSpace testnet (71)' },
-  { id: 2030, label: 'Conflux eSpace devnet (2030)' },
-  { id: 1, label: 'Ethereum mainnet (1)' },
-];
+import { type CapabilityInput, CHAIN_OPTIONS, type IssuedKey } from './session-key-model.js';
 
 export function SessionKeyPanel() {
   const w = useWallet();

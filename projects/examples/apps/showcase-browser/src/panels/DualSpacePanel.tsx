@@ -1,27 +1,3 @@
-/**
- * DualSpacePanel — demonstrates Conflux's dual-space architecture.
- *
- * Conflux has two parallel address spaces that can run simultaneously:
- *
- *   ┌──────────────┐   ┌───────────────────────────────┐
- *   │  Core space  │   │         eSpace (EVM)          │
- *   │  cfx_* RPC   │   │  eth_* RPC, solidity contracts│
- *   │  base32 addr │   │  hex 0x... addresses          │
- *   │ window.conflux│  │ window.fluent / window.ethereum│
- *   └──────────────┘   └───────────────────────────────┘
- *
- * Fluent wallet supports BOTH simultaneously — it exposes two providers:
- *   - window.conflux  →  Core space (cfx_* RPC, CIP-37 base32 addresses)
- *   - window.fluent   →  eSpace  (eth_* RPC, standard hex addresses)
- *
- * These two providers are independent. You connect them separately, they
- * can be on different networks, and each requires its own wallet approval.
- *
- * This panel connects BOTH at the same time to demonstrate the dual-space
- * approach. It also shows `requestCrossNetworkPermission()` which unlocks
- * the ability to query the other space's state from within one provider.
- */
-
 import { errMsg } from '@cfxdevkit/example-showcase-ui';
 import {
   connect as fluentConnect,

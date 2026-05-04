@@ -1,0 +1,177 @@
+.pill-label {
+  white-space: nowrap;
+}
+
+.popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 50;
+  min-width: 240px;
+  max-width: 360px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.popover-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.popover-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  gap: 8px;
+}
+
+.popover-key {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.popover-val {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.popover-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+}
+
+.popover-close:hover {
+  color: var(--text);
+}
+
+/* ── Wallet bar ────────────────────────────────────────────────────────── */
+
+.dual-wallet-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dual-wallet-divider {
+  color: var(--border);
+  font-size: 16px;
+  user-select: none;
+  padding: 0 2px;
+}
+
+.wallet-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 10px;
+  flex-wrap: wrap;
+}
+
+.wallet-pill.pill-active {
+  border-color: var(--accent);
+}
+
+.wallet-pill.pill-warn {
+  border-color: var(--warn, #ffb703);
+}
+
+.wallet-addr {
+  padding: 2px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--mono);
+}
+
+/* ── Wallet picker modal ───────────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 16px;
+}
+
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 85vh;
+  overflow: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.modal-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  font-family: inherit;
+  transition:
+    border-color 0.15s,
+    transform 0.1s;
+}
+
+.modal-card:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.modal-card:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.modal-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-card img {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: white;
+  padding: 2px;
+}

@@ -1,5 +1,12 @@
 # Changelog
 
+
+## 2026-05-04
+
+### Changed
+
+- Updated projects/examples files: projects/examples/apps/showcase-browser/src/lib/use-core-wallet.ts, projects/examples/apps/showcase-browser/src/panels/DualSpacePanel.tsx, projects/examples/apps/showcase-browser/src/panels/UnifiedSendPanel.tsx, projects/examples/apps/showcase-browser/src/panels/UnifiedSignPanel.tsx, projects/examples/apps/showcase-browser/src/panels/WalletConnectPanel.tsx, projects/examples/apps/showcase-browser/src/styles.css, projects/examples/apps/showcase-stack/src/components/WalletBar.tsx, projects/examples/apps/showcase-stack/src/panels/CompilerPanel.tsx, projects/examples/apps/showcase-stack/src/panels/ContractPanel.tsx, projects/examples/apps/showcase-stack/src/panels/DevNodePanel.tsx, projects/examples/apps/showcase-stack/src/panels/SessionKeyPanel.tsx, projects/examples/apps/showcase-stack/src/panels/SiwePanel.tsx, and 55 more.
+
 ## [Unreleased] - 2026-05-02
 ### Changed
 - Renamed `@cfxdevkit/example-showcase` to `@cfxdevkit/showcase` in the main showcase app README.
