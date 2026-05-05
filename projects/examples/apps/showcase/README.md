@@ -6,27 +6,36 @@ of your choice (mainnet / testnet / local).
 
 ## Local development
 
+Recommended full-stack workflow:
+
+```sh
+pnpm showcase
+```
+
+Then open `http://127.0.0.1:5173/showcase/`.
+
+Standalone workflow:
+
 ```sh
 pnpm install
+pnpm --filter @cfxdevkit/example-showcase-backend dev
 pnpm --filter @cfxdevkit/example-showcase dev
 ```
 
-Then visit the URL Vite prints. Pick a chain in the header (`ChainProvider`).
+Then visit the URL Vite prints. Pick a chain in the header (`ChainProvider`). The standalone
+Vite server proxies `/devnode`, `/compile`, `/rpc`, `/auth`, and `/session-key` to the backend on
+port `5174`, matching the gateway routing model.
 
 ### Pointing at a local node
 
-The `core-local` (`http://127.0.0.1:12537`, chainId `2029`) and
-`espace-local` (`http://127.0.0.1:8545`, chainId `2030`) options require a
-running Conflux node on those ports. From the repo root:
+The local network uses the showcase backend's `/devnode` lifecycle and `/rpc/{core,espace}`
+proxy. From the repo root:
 
 ```sh
-pnpm devnode             # builds + starts the dev node (10 funded accounts)
-# ── or, with options:
-pnpm exec cfxdevkit-devnode --accounts 4 --balance 1000 --logging
+pnpm --filter @cfxdevkit/example-showcase-backend dev
 ```
 
-The dev node prints a faucet address + a list of pre-funded accounts (each
-with `1_000_000` CFX by default) you can paste into MetaMask / Fluent.
+Then switch the app to `Local` and use the DevNode controls in the header.
 
 See [`@cfxdevkit/devnode`](../../../../repos/cfx-core/packages/devnode/README.md)
 for the full lifecycle API.

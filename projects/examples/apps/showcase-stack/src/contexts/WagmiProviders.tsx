@@ -24,8 +24,7 @@ import {
 } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 
-const BACKEND_BASE =
-  (import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? 'http://127.0.0.1:5174';
+const BACKEND_BASE = (import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? '';
 
 export const espaceMainnet = defineChain({
   id: 1030,

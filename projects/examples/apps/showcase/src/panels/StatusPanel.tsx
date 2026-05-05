@@ -1,8 +1,7 @@
 import { type ChainConfig, createClient, http, listChains } from '@cfxdevkit/core';
 import { useCallback, useEffect, useState } from 'react';
 
-const BACKEND_BASE =
-  (import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? 'http://127.0.0.1:5174';
+const BACKEND_BASE = (import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? '';
 
 /**
  * Local devnets must be probed through the showcase-backend's CORS-enabled

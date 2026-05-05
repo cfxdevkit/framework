@@ -1,3 +1,5 @@
+@import "@cfxdevkit/example-showcase-ui/theme.css";
 @import "./styles-base.css";
+@import "./styles-keystore.css";
 @import "./styles-components.css";
 @import "./styles-deploy.css";

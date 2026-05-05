@@ -9,6 +9,10 @@ and light integration coverage for the public API surface.
 
 ## Apps
 
+- [`apps/showcase-gateway/`](apps/showcase-gateway/) — single development
+  entry point and reverse proxy for the showcase apps. Run `pnpm showcase` from
+  the monorepo root, then open `http://127.0.0.1:5173`.
+
 - [`apps/showcase/`](apps/showcase/) — Tier 3 single-page React app demonstrating
   the currently-implemented features:
   - BIP-39 mnemonic generation
@@ -26,10 +30,47 @@ and light integration coverage for the public API surface.
 - [`apps/showcase-backend/`](apps/showcase-backend/) — Tier 1 backend service used by
   the stack example.
 
+## Recommended Local Workflow
+
+Run the whole showcase stack behind one stable URL:
+
+```bash
+pnpm showcase
+```
+
+Then open `http://127.0.0.1:5173`. The gateway proxies frontend sections by
+path (`/showcase/`, `/stack/`, `/browser/`, `/hardware/`) and backend routes by
+same-origin paths (`/api/*`, `/devnode/*`, `/compile/*`, `/rpc/*`). This avoids
+browser-side `127.0.0.1` confusion and Vite port drift when another dev server
+is still running.
+
+## Linear Walkthrough
+
+The gateway presents the examples as a single path through the current codebase:
+
+1. `/showcase/` — SDK fundamentals: `@cfxdevkit/core`, wallet derivation,
+  keystore sessions, address/unit helpers, Solidity template compile/deploy,
+  and network status.
+2. `/stack/` — backend-backed flows: `@cfxdevkit/devnode`, backend SIWE,
+  session-key delegation, compiler endpoints, contract deployment, and local
+  RPC proxying.
+3. `/browser/` — external wallet coverage: Fluent Core, non-Fluent eSpace
+  providers, wagmi, raw injected provider diagnostics, signing, and transfer
+  flows.
+4. `/hardware/` — keystore management coverage: memory, encrypted file, Ledger,
+  and reserved OneKey/Satochip backend slots, plus Core/eSpace transfer and
+  deploy flows through the active managed signer.
+
+Current known coverage gaps are visible in the gateway coverage map. The next
+sections to add should target `@cfxdevkit/theme`, `@cfxdevkit/react`,
+`@cfxdevkit/cli`, `@cfxdevkit/llm-tools`, and the domain packages
+(`automation`, `game-engine`, `hardware-bridge`).
+
 ## Shared package
 
-- [`packages/showcase-ui/`](packages/showcase-ui/) — Tier 2 shared presentational UI
-  pieces used by `showcase-browser` and `showcase-stack`.
+- [`packages/showcase-ui/`](packages/showcase-ui/) — Tier 2 shared theme,
+  shell navigation, sidebar state, backend/devnode controls, and wallet UI
+  primitives used by the showcase apps.
 
 ## Adding an app
 

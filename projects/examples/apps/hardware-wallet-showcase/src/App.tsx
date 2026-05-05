@@ -1,3 +1,7 @@
+import { ShowcaseNav } from '@cfxdevkit/example-showcase-ui';
+import { useState } from 'react';
+import { KEYSTORE_BACKENDS, type KeystoreBackendId } from './keystore-demo.js';
+import { KeystoreBackendDetails, KeystoreBackendMatrix } from './keystore-ui.js';
 import { useWalletController } from './wallet-controller.js';
 import {
   BalancePanel,
@@ -11,21 +15,43 @@ import {
 
 export function App() {
   const wallet = useWalletController();
+  const [activeBackend, setActiveBackend] = useState<KeystoreBackendId>('ledger');
+  const defaultBackend = KEYSTORE_BACKENDS[0] as (typeof KEYSTORE_BACKENDS)[number];
+  const selectedBackend =
+    KEYSTORE_BACKENDS.find((backend) => backend.id === activeBackend) ?? defaultBackend;
 
   return (
     <main className="app-shell">
+      <ShowcaseNav current="hardware" />
       <header className="topbar">
         <div>
-          <h1>Hardware wallet showcase</h1>
-          <p>Ledger wallet testing for local Conflux Core and eSpace operations.</p>
+          <h1>Keystore management showcase</h1>
+          <p>
+            Compare memory, encrypted file, and Ledger-backed signers with room for OneKey and
+            Satochip adapters.
+          </p>
         </div>
         <span className={`pill ${wallet.webHid ? 'ok' : 'warn'}`}>
           {wallet.webHid ? 'WebHID ready' : 'WebHID unavailable'}
         </span>
       </header>
 
+      <KeystoreBackendMatrix
+        backends={KEYSTORE_BACKENDS}
+        active={activeBackend}
+        onSelect={setActiveBackend}
+      />
+
+      <KeystoreBackendDetails
+        backend={selectedBackend}
+        busy={wallet.busy}
+        memoryDemo={wallet.memoryDemo}
+        onRunMemoryDemo={() => void wallet.runMemoryDemo()}
+      />
+
       <section className="workspace">
         <aside className="rail">
+          <span className="rail-label">Ledger space</span>
           <button
             className={wallet.mode === 'espace' ? 'active' : ''}
             type="button"
@@ -57,7 +83,9 @@ export function App() {
 
           <div className="connection-strip">
             <span className={`connection-dot ${wallet.connected ? 'connected' : ''}`} />
-            <span>{wallet.connected ? 'Ledger connected' : 'Ledger disconnected'}</span>
+            <span>
+              {wallet.connected ? 'Ledger signer connected' : 'Ledger signer disconnected'}
+            </span>
             {wallet.state.activity ? <strong>{wallet.state.activity}</strong> : null}
           </div>
 

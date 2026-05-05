@@ -4,6 +4,17 @@ Backend companion for the Conflux showcase apps. It provides SIWE authentication
 
 ## Start
 
+Recommended full showcase workflow:
+
+```bash
+pnpm showcase
+```
+
+Then open `http://127.0.0.1:5173`. The gateway exposes backend routes through same-origin paths
+such as `/api/health`, `/api/devnode/status`, `/api/compile/catalog`, and `/api/rpc/espace`.
+
+Backend-only workflow:
+
 Run from the monorepo root:
 
 ```bash

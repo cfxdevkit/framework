@@ -1,12 +1,12 @@
 {
-  "name": "@cfxdevkit/example-hardware-wallet-showcase",
+  "name": "@cfxdevkit/example-showcase-gateway",
   "version": "0.0.0",
   "private": true,
-  "description": "Browser keystore management showcase covering memory, file, and hardware wallets.",
+  "description": "Single dev entry point and reverse proxy for the cfxdevkit showcase apps.",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:gateway": "VITE_BASE_PATH=/hardware/ VITE_DEV_PORT=5184 vite",
+    "dev:gateway": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
@@ -15,16 +15,9 @@
     "clean": "rm -rf dist .vite"
   },
   "dependencies": {
-    "@cfxdevkit/core": "workspace:*",
     "@cfxdevkit/example-showcase-ui": "workspace:*",
-    "@cfxdevkit/services": "workspace:*",
-    "@cfxdevkit/wallet": "workspace:*",
-    "@ledgerhq/hw-app-eth": "^7.8.1",
-    "@ledgerhq/hw-transport-webhid": "^6.35.1",
-    "buffer": "^6.0.3",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0",
-    "viem": "^2.21.0"
+    "react-dom": "^18.3.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",

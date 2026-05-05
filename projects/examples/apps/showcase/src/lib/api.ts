@@ -1,8 +1,8 @@
 /**
  * Frontend client for `@cfxdevkit/example-showcase-backend`.
- * Base URL is taken from `VITE_BACKEND_URL` (defaults to localhost:5174).
+ * Base URL is taken from `VITE_BACKEND_URL` (defaults to same-origin Vite proxy).
  */
-const BASE = (import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? 'http://127.0.0.1:5174';
+const BASE = import.meta.env?.VITE_BACKEND_URL ?? '';
 
 export interface ApiError extends Error {
   status: number;

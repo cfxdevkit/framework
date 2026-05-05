@@ -113,7 +113,7 @@ export function TransferPanel(props: {
       <div className="subpanel-header">
         <div>
           <h2>Transfer</h2>
-          <p>Send native CFX from the connected Ledger address.</p>
+          <p>Send native CFX from the active signer. Ledger is the current hardware signer.</p>
         </div>
       </div>
       <div className="form-grid">
@@ -148,7 +148,7 @@ export function DeployPanel(props: {
       <div className="subpanel-header">
         <div>
           <h2>Deploy</h2>
-          <p>Deploy the precompiled Basic ERC-20 example with the connected Ledger account.</p>
+          <p>Deploy the precompiled Basic ERC-20 example with the active keystore signer.</p>
         </div>
       </div>
       <div className="deploy-summary">

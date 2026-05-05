@@ -1,7 +1,20 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
+const backendProxy = {
+  '/auth': 'http://127.0.0.1:5174',
+  '/compile': 'http://127.0.0.1:5174',
+  '/devnode': 'http://127.0.0.1:5174',
+  '/health': 'http://127.0.0.1:5174',
+  '/rpc': 'http://127.0.0.1:5174',
+  '/session-key': 'http://127.0.0.1:5174',
+};
+
+const port = Number(process.env.VITE_DEV_PORT ?? 5175);
+const base = process.env.VITE_BASE_PATH ?? '/';
+
 export default defineConfig({
+  base,
   plugins: [react()],
   optimizeDeps: {
     include: ['buffer'],
@@ -14,7 +27,9 @@ export default defineConfig({
     sourcemap: true,
   },
   server: {
-    port: 5175,
-    host: '127.0.0.1',
+    port,
+    host: '0.0.0.0',
+    strictPort: Boolean(process.env.VITE_DEV_PORT),
+    proxy: backendProxy,
   },
 });

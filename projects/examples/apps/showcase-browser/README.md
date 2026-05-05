@@ -32,8 +32,11 @@ backend signer** in this app. Those concerns live in the sister apps:
 ## Run
 
 ```bash
+pnpm showcase
+# -> http://127.0.0.1:5173/browser/
+
 pnpm --filter @cfxdevkit/example-showcase-browser dev
-# → http://127.0.0.1:5175
+# -> http://127.0.0.1:5176
 
 pnpm exec moon run showcase-browser:check
 ```

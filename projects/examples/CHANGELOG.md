@@ -1,5 +1,25 @@
 # Changelog
 
+
+## [Unreleased] - 2026-05-05
+### Added
+- `apps/showcase-gateway/` — unified development entry point and reverse proxy for all showcase apps, accessible via `pnpm showcase` at `http://127.0.0.1:5173`
+- `apps/hardware-wallet-showcase/` keystore management coverage: memory, encrypted file, Ledger, and reserved OneKey/Satochip slots
+- `packages/showcase-ui/src/devnode.tsx`, `shell.tsx`, `theme.css` — shared UI primitives for backend/devnode controls, navigation, and theming
+### Changed
+- `apps/hardware-wallet-showcase/` renamed from hardware wallet showcase to keystore management showcase with new `keystore-demo.ts`, `keystore-ui.tsx`, `wallet-controller-keystore.ts`, and `styles-keystore.css`
+- `README.md` updated with gateway workflow, linear walkthrough, and coverage gap guidance
+- `packages/showcase-ui` description updated to reflect shared theme, shell, sidebar, and wallet UI primitives
+- All showcase apps updated to use `@cfxdevkit/example-showcase-ui` and `@cfxdevkit/services` where applicable
+### Fixed
+- CSS variables standardized across hardware-wallet-showcase styles to use theme tokens (`--accent`, `--border`, `--muted`, etc.)
+### Removed
+- Legacy base styles in `styles-base.css` replaced with theme-aware variables
+### Risks
+- Gateway proxying introduces new routing complexity; ensure path-based routing aligns with Vite dev server port drift behavior
+- Keystore backend matrix may require additional adapter support for OneKey/Satochip backends
+- Theme token adoption in legacy apps may cause visual inconsistencies if not uniformly applied
+
 ## [Unreleased] - 2026-05-05
 ### Changed
 - Updated `App.tsx` to disable message signing when wallet mode is `core`, as Core app `2.2.2` does not expose message signing.

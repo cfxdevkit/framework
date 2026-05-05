@@ -5,7 +5,8 @@
   "description": "Shared UI primitives for the Conflux showcase examples (showcase-browser + showcase-stack).",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./theme.css": "./src/theme.css"
   },
   "scripts": {
     "build": "vite build",

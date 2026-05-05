@@ -120,8 +120,7 @@ const isNetworkId = (v: string): v is NetworkId =>
   v === 'mainnet' || v === 'testnet' || v === 'local';
 const isSpace = (v: string): v is Space => v === 'core' || v === 'espace';
 
-const BACKEND_BASE =
-  (import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? 'http://127.0.0.1:5174';
+const BACKEND_BASE = (import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? '';
 
 /**
  * For the local network, point viem's transport at the showcase-backend's

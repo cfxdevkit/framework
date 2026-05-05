@@ -108,8 +108,7 @@ const isNetworkId = (v: string): v is NetworkId =>
   v === 'mainnet' || v === 'testnet' || v === 'local';
 const isSpace = (v: string): v is Space => v === 'core' || v === 'espace';
 
-const BACKEND_BASE =
-  (import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? 'http://127.0.0.1:5174';
+const BACKEND_BASE = (import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? '';
 
 function transportUrl(networkId: NetworkId, space: Space): string | undefined {
   if (networkId !== 'local') return undefined;

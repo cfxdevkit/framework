@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { type DevNodeStatusSnapshot, devNodeStatus, packDevNodeTxs } from './devnode-client.js';
+import type { MemoryDemoResult } from './keystore-demo.js';
 import {
   closeLedgerSession,
   createLedgerSession,
@@ -19,6 +20,7 @@ import {
   type TxDraft,
 } from './wallet-actions.js';
 import { createDeployAction } from './wallet-controller-deploy.js';
+import { createKeystoreControls } from './wallet-controller-keystore.js';
 import { createLocalNodeControls } from './wallet-controller-local-node.js';
 import { requireSession, runWalletAction as runAction } from './wallet-controller-runtime.js';
 import { CORE_PATH, EVM_PATH, initialState, supportsWebHid } from './wallet-state.js';
@@ -33,10 +35,12 @@ export function useWalletController() {
   const [transferTo, setTransferTo] = useState('');
   const [transferAmount, setTransferAmount] = useState('0');
   const [devNode, setDevNode] = useState<DevNodeStatusSnapshot | null>(null);
+  const [memoryDemo, setMemoryDemo] = useState<MemoryDemoResult | null>(null);
   const [state, setState] = useState(initialState);
   const connected = Boolean(sessionRef.current && state.address);
   const busy = state.status === 'busy';
   const localNode = createLocalNodeControls({ connected, setDevNode, setState, runWalletAction });
+  const keystore = createKeystoreControls({ runWalletAction, setMemoryDemo, setState });
   const deployBasicErc20 = createDeployAction({
     getMode: () => mode,
     getRpcUrl: () => rpcUrl,
@@ -217,6 +221,7 @@ export function useWalletController() {
     state,
     balanceLabel: formatNativeBalance(state.balance),
     devNode,
+    memoryDemo,
     connected,
     busy,
     setModePath,
@@ -236,6 +241,7 @@ export function useWalletController() {
     stopLocalNode: localNode.stopLocalNode,
     mineLocalNode: localNode.mineLocalNode,
     faucetConnectedAddress,
+    runMemoryDemo: keystore.runMemoryDemo,
     updateMessage: (message: string) => setState((current) => ({ ...current, message })),
   };
 }

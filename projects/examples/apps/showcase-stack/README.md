@@ -4,7 +4,19 @@ Full-stack Conflux showcase that pairs browser wallets with the local `showcase-
 
 ## Start The App
 
-Run these from the monorepo root:
+Recommended full-stack workflow:
+
+```bash
+pnpm showcase
+```
+
+Then open:
+
+```text
+http://127.0.0.1:5173/stack/
+```
+
+Standalone workflow:
 
 ```bash
 pnpm --filter @cfxdevkit/example-showcase-backend dev
@@ -17,7 +29,7 @@ Then open:
 http://127.0.0.1:5175
 ```
 
-The backend listens on `http://127.0.0.1:5174` by default. If the header says `backend offline`, start the backend command above and refresh the stack app.
+The standalone Vite server proxies backend routes to `http://127.0.0.1:5174` by default. If the header says `backend offline`, start the backend command above and refresh the stack app.
 
 ## Optional Backend URL
 

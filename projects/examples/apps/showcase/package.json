@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:gateway": "VITE_BASE_PATH=/showcase/ VITE_DEV_PORT=5181 vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
@@ -16,6 +17,7 @@
   "dependencies": {
     "@cfxdevkit/contracts": "workspace:*",
     "@cfxdevkit/core": "workspace:*",
+    "@cfxdevkit/example-showcase-ui": "workspace:*",
     "@cfxdevkit/services": "workspace:*",
     "@cfxdevkit/wallet": "workspace:*",
     "buffer": "^6.0.3",

@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased] - 2026-05-05
+### Added
+- Added `projects/examples/apps/showcase-gateway` to workspace projects in `.moon/workspace.yml`.
+- Added `showcase` script to root `package.json` to run gateway and related showcase apps in parallel.
+### Changed
+- Updated `pnpm-lock.yaml` to include new dependency entries for `@cfxdevkit/example-showcase-ui` and `@cfxdevkit/services` in gateway and other projects.
+- Adjusted `zod` version from `3.25.76` to `4.3.6` in some projects and reverted to `3.25.76` in others, indicating conditional dependency resolution.
+- Removed `libc` field from several platform-specific binary package entries in lockfile.
+
+
 
 ## [Unreleased] - 2026-05-05
 ### Changed
