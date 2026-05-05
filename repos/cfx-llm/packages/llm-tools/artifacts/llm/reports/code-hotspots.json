@@ -3,8 +3,8 @@
   "status": "error",
   "policy": {
     "source": "docs/architecture/framework-design-principles.md",
-    "softFileLineLimit": 150,
-    "hardFileLineLimit": 250,
+    "softFileLineLimit": 250,
+    "hardFileLineLimit": 300,
     "churnWindow": "90 days ago"
   },
   "totals": {

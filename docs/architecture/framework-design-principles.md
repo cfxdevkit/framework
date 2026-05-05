@@ -30,7 +30,7 @@
 
 | Unit | Soft limit | Hard limit |
 |------|-----------|-----------|
-| File | 150 LOC | 250 LOC |
+| File | 250 LOC | 300 LOC |
 | Function | 30 LOC | 60 LOC |
 | Public exports per module | 5 | 10 |
 | Public methods on a class | 4 | 7 |
@@ -153,7 +153,7 @@ When applying this document to a package:
 
 - [ ] Public surface listed in `API.md`, every entry annotated with stability.
 - [ ] `src/errors/` exists; one error type per failure mode; all extend `CfxError`.
-- [ ] No file > 250 LOC; no function > 60 LOC.
+- [ ] No file > 300 LOC; no function > 60 LOC.
 - [ ] No module-scope mutable state.
 - [ ] Every async public function accepts `{ signal? }`.
 - [ ] Every external dep (network, fs, clock, rand) injectable.

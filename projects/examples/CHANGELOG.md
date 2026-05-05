@@ -1,5 +1,17 @@
 # Changelog
 
+
+## [Unreleased] - 2026-05-05
+### Changed
+- Updated topbar layout in hardware-wallet-showcase to use column direction and reduced gap from 20px to 12px
+- Removed CSS custom properties and simplified header layout in showcase-browser
+- Enhanced panel styling with backdrop-filter, rounded corners, hover effects, and transitions
+- Redesigned hero section in showcase-gateway with improved grid, typography, and visual depth using background image and gradients
+- Updated routes panel and section cards with refined spacing, hover states, and glow effects
+- Replaced local `BackendPill` component with shared `SharedDevNodePill` in showcase-stack
+- Removed `BackendPill.tsx` component file from showcase-stack
+- Added hero background image (`hero-bg.png`) to showcase-gateway public assets
+
 ## [Unreleased] - 2026-05-05
 ### Changed
 - Renamed `hardware-wallet-showcase` app to `keystore-management-showcase` and updated all references in README, package.json, and tests.

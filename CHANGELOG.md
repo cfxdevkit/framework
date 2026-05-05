@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+### Changed
+- Updated file size limits in framework design principles: soft limit from 150 LOC to 250 LOC, hard limit from 250 LOC to 300 LOC
+- Updated checklist item to reflect new hard limit of 300 LOC per file
+
+
 
 ## [Unreleased] - 2026-05-05
 ### Changed

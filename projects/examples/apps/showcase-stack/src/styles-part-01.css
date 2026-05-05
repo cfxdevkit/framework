@@ -2,22 +2,6 @@
    showcase-stack styles — merged from showcase + showcase-browser
    ============================================================ */
 
-:root {
-  color-scheme: dark;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --bg: #0b0d12;
-  --panel: #14181f;
-  --panel-2: #1b212b;
-  --border: #2a313d;
-  --text: #e6e9ef;
-  --muted: #8a93a3;
-  --accent: #4cc9f0;
-  --accent-2: #80ed99;
-  --warn: #ffb703;
-  --err: #f85149;
-  --mono: ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -39,13 +23,12 @@ body {
 
 header.app-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
   border-bottom: 1px solid var(--border);
   padding-bottom: 16px;
   margin-bottom: 24px;
-  flex-wrap: wrap;
 }
 
 .brand {
@@ -157,10 +140,23 @@ header.app-header {
 
 .panel {
   background: var(--panel);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 16px;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+
+.panel:hover {
+  border-color: var(--border-hover);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.3),
+    0 0 15px var(--glow-cyan);
 }
 
 .panel h2 {

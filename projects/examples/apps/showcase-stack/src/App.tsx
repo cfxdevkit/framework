@@ -1,5 +1,9 @@
-import { PanelSidebar, ShowcaseNav, useActivePanelState } from '@cfxdevkit/example-showcase-ui';
-import { BackendPill } from './components/BackendPill.js';
+import {
+  PanelSidebar,
+  SharedDevNodePill,
+  ShowcaseNav,
+  useActivePanelState,
+} from '@cfxdevkit/example-showcase-ui';
 import { NetworkSelector } from './components/NetworkSelector.js';
 import { WalletBar } from './components/WalletBar.js';
 import { NetworkProvider } from './contexts/NetworkProvider.js';
@@ -56,7 +60,7 @@ function Shell() {
         </div>
         <div className="env-bar" style={{ flex: 1, justifyContent: 'flex-end' }}>
           <NetworkSelector />
-          <BackendPill />
+          <SharedDevNodePill />
           <WalletBar />
         </div>
       </header>

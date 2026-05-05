@@ -149,3 +149,95 @@ export function ShowcaseOpsPanel(props: { apiBase?: string }) {
     </section>
   );
 }
+
+export function SharedDevNodePill(props: { apiBase?: string }) {
+  const backend = useShowcaseBackend(props.apiBase ? { apiBase: props.apiBase } : {});
+  const [open, setOpen] = useState(false);
+
+  let dotClass = 'showcase-status-dot';
+  let label = 'backend …';
+  if (backend.health === 'offline') {
+    dotClass += ' err';
+    label = 'backend offline';
+  } else if (backend.health === 'online') {
+    if (backend.devnode?.running) {
+      dotClass += ' ok';
+      label = 'devnode running';
+    } else {
+      dotClass += ' warn';
+      label = backend.devnode ? `devnode ${backend.devnode.status}` : 'backend online';
+    }
+  }
+
+  return (
+    <div className="pill-wrap">
+      <button type="button" className="pill" onClick={() => setOpen((v) => !v)}>
+        <span className={dotClass} />
+        <span className="pill-label">{label}</span>
+      </button>
+      {open && (
+        <div className="popover" style={{ minWidth: 260 }}>
+          <div className="popover-section">
+            <div className="popover-row">
+              <span className="popover-key">backend</span>
+              <span className="popover-val">
+                {backend.health === 'checking' ? '…' : backend.health}
+              </span>
+            </div>
+            {backend.devnode && (
+              <>
+                <div className="popover-row">
+                  <span className="popover-key">devnode</span>
+                  <span className="popover-val">{backend.devnode.status}</span>
+                </div>
+                {backend.devnode.config && (
+                  <div className="popover-row">
+                    <span className="popover-key">eSpace chain</span>
+                    <span className="popover-val mono">{backend.devnode.config.evmChainId}</span>
+                  </div>
+                )}
+              </>
+            )}
+            {backend.error && (
+              <div className="popover-row">
+                <span className="popover-val" style={{ color: 'var(--err)', fontSize: 11 }}>
+                  {backend.error}
+                </span>
+              </div>
+            )}
+
+            <div className="row" style={{ gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
+              <button
+                type="button"
+                className="small"
+                disabled={!!backend.busy}
+                onClick={() => void backend.refresh()}
+              >
+                Refresh
+              </button>
+              <button
+                type="button"
+                className="primary small"
+                disabled={!!backend.busy || backend.devnode?.running}
+                onClick={() => void backend.run('start')}
+              >
+                Start
+              </button>
+              <button
+                type="button"
+                className="small"
+                disabled={!!backend.busy || !backend.devnode?.running}
+                onClick={() => void backend.run('stop')}
+              >
+                Stop
+              </button>
+            </div>
+          </div>
+          <button type="button" className="popover-close" onClick={() => setOpen(false)}>
+            close
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

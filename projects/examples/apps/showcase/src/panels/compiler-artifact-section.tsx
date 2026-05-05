@@ -30,9 +30,9 @@ export function CompilerArtifactSection({
 }: CompilerArtifactSectionProps) {
   if (!artifact) return null;
   return (
-    <div className="card" style={{ marginTop: 16 }}>
-      <h3 style={{ marginTop: 0 }}>
-        Compiled <span className="muted">({artifact.contractName})</span>
+    <div className="card" style={{ marginTop: 16, border: '1px solid var(--accent)' }}>
+      <h3 style={{ marginTop: 0, fontSize: 14, color: 'var(--accent)' }}>
+        3. Deploy <span className="muted">({artifact.contractName})</span>
         {artifact.cached && (
           <span className="muted" style={{ fontSize: 11, marginLeft: 8 }}>
             cached
@@ -53,8 +53,14 @@ export function CompilerArtifactSection({
         <dt>warnings</dt>
         <dd>{artifact.warnings.length}</dd>
       </dl>
-      <div className="row" style={{ gap: 8, marginTop: 12 }}>
-        <button type="button" className="primary" onClick={deploy} disabled={deploying || !signer}>
+      <div className="row" style={{ gap: 8, marginTop: 16 }}>
+        <button
+          type="button"
+          className="primary"
+          style={{ width: '100%', padding: '12px 0', fontSize: 16 }}
+          onClick={deploy}
+          disabled={deploying || !signer}
+        >
           {deploying ? 'Deploying…' : `Deploy to ${chain.name} (${isCore ? 'Core' : 'eSpace'})`}
         </button>
       </div>

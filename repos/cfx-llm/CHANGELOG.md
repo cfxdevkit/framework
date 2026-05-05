@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - 2026-05-05
+### Changed
+- Increased soft file line limit from 150 to 250 and hard file line limit from 250 to 300 in `code-hotspots.ts`, `models.ts`, and `code-hotspots.json`
+- Updated `README.md` to reflect the new hard limit of 300 lines in the `llm:commit` quality gate
+
+
 
 ## 2026-05-04
 

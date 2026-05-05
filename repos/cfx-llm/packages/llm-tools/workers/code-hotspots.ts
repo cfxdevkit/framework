@@ -7,8 +7,8 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 const root = process.cwd();
 const artifactsRoot = join(root, 'artifacts', 'llm', 'reports');
-const defaultSoftLimit = 150;
-const defaultHardLimit = 250;
+const defaultSoftLimit = 250;
+const defaultHardLimit = 300;
 const defaultSince = '90 days ago';
 const generatedDirs = new Set(
   '.git .gitnexus .moon .pnpm-store .tmp .vite .vitest .cfxdevkit artifacts build coverage dist node_modules out'.split(

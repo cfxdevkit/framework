@@ -6,7 +6,7 @@ export { CopyButton } from './components/CopyButton.js';
 export { LogBox } from './components/LogBox.js';
 export { WalletPickerModal } from './components/WalletPickerModal.js';
 export type { SharedDevNodeStatus } from './devnode.js';
-export { ShowcaseOpsPanel, useShowcaseBackend } from './devnode.js';
+export { SharedDevNodePill, ShowcaseOpsPanel, useShowcaseBackend } from './devnode.js';
 export { copy } from './lib/copy.js';
 export { errMsg } from './lib/err.js';
 export type { LogEntry, LogLevel } from './lib/log.js';

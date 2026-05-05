@@ -14,9 +14,13 @@
  * server-side Solidity compilation + managed-key deployment, and network
  * health inspection. No user-controlled browser wallet is required.
  */
-import { PanelSidebar, ShowcaseNav, useActivePanelState } from '@cfxdevkit/example-showcase-ui';
+import {
+  PanelSidebar,
+  SharedDevNodePill,
+  ShowcaseNav,
+  useActivePanelState,
+} from '@cfxdevkit/example-showcase-ui';
 import { Suspense, useMemo } from 'react';
-import { DevNodePill } from './components/DevNodePill.js';
 import { NetworkSelector } from './components/NetworkSelector.js';
 import { WalletPill } from './components/WalletPill.js';
 import { CompilerSessionProvider } from './contexts/CompilerSession.js';
@@ -47,7 +51,7 @@ function Shell() {
         </div>
         <div className="env-bar">
           <NetworkSelector />
-          <DevNodePill />
+          <SharedDevNodePill />
           <WalletPill />
         </div>
       </header>

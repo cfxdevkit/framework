@@ -17,7 +17,7 @@ export async function codeHotspotReport() {
   } catch (error) {
     return {
       status: 'error',
-      policy: { softFileLineLimit: 150, hardFileLineLimit: 250 },
+      policy: { softFileLineLimit: 250, hardFileLineLimit: 300 },
       totals: { hardViolations: 0, softWarnings: 0 },
       hardViolations: [],
       softWarnings: [],

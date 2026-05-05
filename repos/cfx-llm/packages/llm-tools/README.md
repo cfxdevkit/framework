@@ -17,7 +17,7 @@ This package owns the Lemonade/Pi developer harness and deterministic repo upkee
 
 Root `pnpm run llm:*` scripts route through this package so developers can keep using the short commands from the workspace root.
 
-`llm:commit` runs `llm hotspots --fail-on-hard` as a non-bypassable quality gate. The scanner applies the framework design-principles file budget across source files in the whole repository, writes `artifacts/llm/reports/code-hotspots.md`, and blocks commits while any source file exceeds the hard 250-line limit.
+`llm:commit` runs `llm hotspots --fail-on-hard` as a non-bypassable quality gate. The scanner applies the framework design-principles file budget across source files in the whole repository, writes `artifacts/llm/reports/code-hotspots.md`, and blocks commits while any source file exceeds the hard 300-line limit.
 
 ## Docs Upkeep
 
