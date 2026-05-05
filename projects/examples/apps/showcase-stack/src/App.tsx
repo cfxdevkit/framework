@@ -58,7 +58,7 @@ function Shell() {
             showcase-combined
           </span>
         </div>
-        <div className="env-bar" style={{ flex: 1, justifyContent: 'flex-end' }}>
+        <div className="env-bar">
           <NetworkSelector />
           <SharedDevNodePill />
           <WalletBar />

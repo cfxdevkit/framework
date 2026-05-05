@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - 2026-05-05
+### Changed
+- Removed `header.app-header` CSS rules from `showcase-browser` and `showcase` apps
+- Removed inline `flex: 1` and `justifyContent` styles from `env-bar` div in `showcase-stack` App.tsx
+
+
 
 ## [Unreleased] - 2026-05-05
 ### Changed
