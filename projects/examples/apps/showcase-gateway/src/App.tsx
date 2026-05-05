@@ -2,36 +2,40 @@ import { ShowcaseNav, ShowcaseOpsPanel } from '@cfxdevkit/example-showcase-ui';
 
 const sections = [
   {
+    tier: 'Backend',
     href: '/showcase/',
-    title: 'SDK Showcase',
-    eyebrow: '1 · SDK',
+    title: 'Backend Showcase',
+    eyebrow: 'Core RPC · Compiler · Network',
     summary:
-      'Start with keys, dual-space clients, codecs, compiler templates, and local network status.',
-    stack: 'React + @cfxdevkit/*',
+      'Core Space SDK surface, server-side Solidity compile + managed-key deploy, and live RPC network health.',
+    stack: 'React + @cfxdevkit/core · showcase-backend',
   },
   {
-    href: '/stack/',
-    title: 'Full-Stack Wallet Showcase',
-    eyebrow: '2 · Backend',
-    summary:
-      'Continue with backend-mediated SIWE, session keys, Solidity compile/deploy, and devnode operations.',
-    stack: 'React + wagmi + showcase-backend',
-  },
-  {
+    tier: 'Browser',
     href: '/browser/',
-    title: 'Browser Wallet Showcase',
-    eyebrow: '3 · Browser wallets',
+    title: 'Browser Showcase',
+    eyebrow: 'Keys · Wallets · Sign · Send',
     summary:
-      'External injected wallet diagnostics for Fluent Core and non-Fluent eSpace providers.',
-    stack: 'React + wagmi + provider probes',
+      'BIP-39 mnemonic generation, BIP-32/SLIP-0044 dual-space HD derivation, and live Fluent / MetaMask / injected-EIP-1193 wallet operations.',
+    stack: 'React + @cfxdevkit/core · wagmi · Fluent',
   },
   {
-    href: '/hardware/',
-    title: 'Keystore Management Showcase',
-    eyebrow: '4 · Keystores',
+    tier: 'Combined',
+    href: '/stack/',
+    title: 'Combined Showcase',
+    eyebrow: 'SIWE · Session Keys · Compiler · Contracts',
     summary:
-      'Memory, encrypted file, Ledger, and future hardware backend coverage for managed signing.',
-    stack: 'React + keystore providers + WebHID',
+      'DevNode lifecycle, Sign-In With Ethereum, session-key delegation, backend compile + browser-wallet deploy, and ABI-driven contract interaction.',
+    stack: 'React + wagmi · showcase-backend',
+  },
+  {
+    tier: 'Combined',
+    href: '/keystores/',
+    title: 'Managed Signers',
+    eyebrow: 'Memory · File · Ledger · Hardware',
+    summary:
+      'Secure mnemonic management and the full signer spectrum: Memory keystore → encrypted File keystore → Ledger hardware wallet via WebHID.',
+    stack: 'React + @cfxdevkit/services · WebHID',
   },
 ] as const;
 
@@ -43,45 +47,16 @@ const routes = [
   { label: 'eSpace RPC proxy', value: '/api/rpc/espace' },
 ] as const;
 
-const coverage = [
-  {
-    title: 'Core Runtime',
-    packages: '@cfxdevkit/core · @cfxdevkit/protocol · @cfxdevkit/devnode',
-    app: 'SDK + Stack',
-    detail: 'dual-space clients, local Core/eSpace RPC proxy, addresses, units, network status',
-  },
-  {
-    title: 'Keys & Wallets',
-    packages: '@cfxdevkit/services · @cfxdevkit/wallet',
-    app: 'SDK + Browser + Keystores',
-    detail:
-      'memory/file/ledger keystores, browser wallets, Fluent Core/eSpace, hardware signer slots',
-  },
-  {
-    title: 'Solidity',
-    packages: '@cfxdevkit/contracts · @cfxdevkit/compiler · @cfxdevkit/abis',
-    app: 'SDK + Stack + Keystores',
-    detail: 'template catalog, compile endpoints, ABI read/write console, deploy flows',
-  },
-  {
-    title: 'UI & Tooling Gaps',
-    packages: '@cfxdevkit/theme · @cfxdevkit/react · @cfxdevkit/cli · @cfxdevkit/llm-tools',
-    app: 'Planned sections',
-    detail:
-      'theme dogfooding started here; CLI, LLM tools, automation, and domain packages need demos',
-  },
-] as const;
-
 export function App() {
   return (
     <main className="shell">
       <ShowcaseNav
         current="gateway"
         title="cfxdevkit showcase"
-        subtitle="linear gateway workflow"
+        subtitle="backend · browser · combined"
       />
       <header className="hero">
-        <div>
+        <div className="hero-text">
           <p className="kicker">cfxdevkit examples</p>
           <h1>Showcase Gateway</h1>
           <p className="lede">
@@ -89,7 +64,7 @@ export function App() {
             compiler routes, and RPC proxy paths.
           </p>
         </div>
-        <section className="status-panel" aria-label="Gateway routes">
+        <section className="routes-panel" aria-label="Gateway routes">
           <span className="status-title">Same-origin backend routes</span>
           {routes.map((route) => (
             <a key={route.value} href={route.value} className="route-link">
@@ -102,44 +77,31 @@ export function App() {
 
       <ShowcaseOpsPanel />
 
-      <section className="section-grid" aria-label="Showcase sections">
+      <div className="section-grid">
         {sections.map((section) => (
-          <a className="section-card" href={section.href} key={section.href}>
-            <span className="eyebrow">{section.eyebrow}</span>
+          <a
+            className="section-card"
+            href={section.href}
+            key={section.href}
+            data-tier={section.tier.toLowerCase()}
+          >
+            <div className="card-meta">
+              <span className="tier-tag">{section.tier}</span>
+              <span className="eyebrow">{section.eyebrow}</span>
+            </div>
             <strong>{section.title}</strong>
-            <span>{section.summary}</span>
+            <span className="card-summary">{section.summary}</span>
             <code>{section.stack}</code>
           </a>
         ))}
-      </section>
-
-      <section className="coverage-panel" aria-label="Codebase coverage">
-        <div>
-          <p className="kicker">coverage map</p>
-          <h2>Current Codebase Surface</h2>
-          <p className="lede">
-            The showcase is now arranged as a linear walkthrough. The map below keeps the covered
-            packages and the remaining gaps visible while the apps evolve.
-          </p>
-        </div>
-        <div className="coverage-grid">
-          {coverage.map((item) => (
-            <article className="coverage-card" key={item.title}>
-              <strong>{item.title}</strong>
-              <code>{item.packages}</code>
-              <span>{item.app}</span>
-              <span>{item.detail}</span>
-            </article>
-          ))}
-        </div>
-      </section>
+      </div>
 
       <section className="ops-band" aria-label="Startup notes">
         <div>
           <h2>Run Everything</h2>
           <p>
-            Start the gateway stack from the monorepo root. The child apps stay on fixed internal
-            ports, while this page remains the public entry point.
+            Start the full gateway stack from the monorepo root. Child apps stay on fixed internal
+            ports — this page is the single public entry point.
           </p>
         </div>
         <pre>pnpm showcase</pre>

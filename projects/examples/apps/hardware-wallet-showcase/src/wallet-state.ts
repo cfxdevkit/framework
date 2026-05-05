@@ -26,7 +26,7 @@ export const initialState: LedgerState = {
   status: 'idle',
   address: '',
   coreAddress: '',
-  message: 'cfxdevkit Ledger hardware wallet check',
+  message: 'cfxdevkit keystore signer check',
   rawTx: '',
   txHash: '',
   contractAddress: '',

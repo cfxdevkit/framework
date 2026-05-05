@@ -18,10 +18,10 @@ export interface PanelLike<TGroup extends string = string> {
 }
 
 const DEFAULT_LINKS: readonly ShowcaseSectionLink[] = Object.freeze([
-  { id: 'showcase', label: 'SDK', href: '/showcase/' },
-  { id: 'stack', label: 'Stack', href: '/stack/' },
+  { id: 'showcase', label: 'Backend', href: '/showcase/' },
+  { id: 'stack', label: 'Combined', href: '/stack/' },
   { id: 'browser', label: 'Browser', href: '/browser/' },
-  { id: 'hardware', label: 'Hardware', href: '/hardware/' },
+  { id: 'keystores', label: 'Signers', href: '/keystores/' },
 ]);
 
 export function ShowcaseNav(props: {

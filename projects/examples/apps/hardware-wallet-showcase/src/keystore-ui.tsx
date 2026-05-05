@@ -1,4 +1,4 @@
-import type { KeystoreBackendInfo, MemoryDemoResult } from './keystore-demo.js';
+import type { KeystoreBackendInfo } from './keystore-demo.js';
 
 export function KeystoreBackendMatrix(props: {
   backends: readonly KeystoreBackendInfo[];
@@ -23,12 +23,7 @@ export function KeystoreBackendMatrix(props: {
   );
 }
 
-export function KeystoreBackendDetails(props: {
-  backend: KeystoreBackendInfo;
-  busy: boolean;
-  memoryDemo: MemoryDemoResult | null;
-  onRunMemoryDemo(): void;
-}) {
+export function KeystoreBackendDetails(props: { backend: KeystoreBackendInfo }) {
   const backend = props.backend;
   return (
     <section className="subpanel backend-details">
@@ -46,21 +41,6 @@ export function KeystoreBackendDetails(props: {
         ))}
       </div>
       <BackendGuidance backend={backend} />
-      {backend.id === 'memory' ? (
-        <div className="actions secondary">
-          <button
-            className="primary"
-            type="button"
-            onClick={props.onRunMemoryDemo}
-            disabled={props.busy}
-          >
-            Run memory keystore demo
-          </button>
-        </div>
-      ) : null}
-      {backend.id === 'memory' && props.memoryDemo ? (
-        <MemoryDemoResults result={props.memoryDemo} />
-      ) : null}
     </section>
   );
 }
@@ -91,8 +71,8 @@ function BackendGuidance(props: { backend: KeystoreBackendInfo }) {
     return (
       <p className="info-note">
         The encrypted file backend is implemented for Node runtimes because it uses filesystem
-        access and `0600` writes. In this browser showcase it is represented as a managed backend
-        target; use it from the backend, CLI, or a desktop shell that can prompt for a passphrase.
+        access and `0600` writes. This showcase unlocks it through the backend companion, then uses
+        the same account actions as memory and Ledger.
       </p>
     );
   }
@@ -113,24 +93,4 @@ function BackendGuidance(props: { backend: KeystoreBackendInfo }) {
     );
   }
   return null;
-}
-
-function MemoryDemoResults(props: { result: MemoryDemoResult }) {
-  return (
-    <dl className="results compact-results">
-      <Result label="Provider" value={props.result.providerId} />
-      <Result label="Listed" value={props.result.listed.join(', ')} wrap />
-      <Result label="Address" value={props.result.address} wrap />
-      <Result label="Signature" value={props.result.signature} wrap />
-    </dl>
-  );
-}
-
-function Result(props: { label: string; value: string; wrap?: boolean }) {
-  return (
-    <div>
-      <dt>{props.label}</dt>
-      <dd className={`mono ${props.wrap ? 'wrap' : ''}`}>{props.value}</dd>
-    </div>
-  );
 }

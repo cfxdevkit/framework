@@ -1,14 +1,11 @@
 import { type ComponentType, lazy } from 'react';
-import type { Space } from '../contexts/NetworkProvider.js';
 
-export type PanelGroup = 'identity' | 'auth' | 'onchain' | 'inspect';
+export type PanelGroup = 'backend' | 'onchain' | 'keys' | 'auth' | 'contracts' | 'inspect';
 
 export interface PanelSpec {
   id: string;
   group: PanelGroup;
   label: string;
-  /** Which Conflux spaces the panel exercises. Empty = network-agnostic. */
-  spaces: readonly Space[];
   /** One-liner shown under the panel title. */
   blurb: string;
   component: ComponentType;
@@ -20,9 +17,11 @@ export interface PanelGroupSpec {
 }
 
 export const GROUPS: readonly PanelGroupSpec[] = Object.freeze([
-  { id: 'identity', label: 'Identity' },
-  { id: 'auth', label: 'Auth' },
-  { id: 'onchain', label: 'On-chain' },
+  { id: 'backend', label: 'Backend SDK' },
+  { id: 'onchain', label: 'On-Chain' },
+  { id: 'keys', label: 'Key Tools' },
+  { id: 'auth', label: 'Auth & Signing' },
+  { id: 'contracts', label: 'Contracts' },
   { id: 'inspect', label: 'Inspect' },
 ]);
 
@@ -30,96 +29,97 @@ const lazyDefault = <K extends string>(loader: () => Promise<Record<K, Component
   lazy(() => loader().then((m) => ({ default: m[key] })));
 
 export const PANELS: readonly PanelSpec[] = Object.freeze([
-  {
-    id: 'mnemonic',
-    group: 'identity',
-    label: 'Mnemonic',
-    spaces: [],
-    blurb: 'Generate / validate BIP-39 mnemonics.',
-    component: lazyDefault(() => import('./MnemonicPanel.js'), 'MnemonicPanel'),
-  },
-  {
-    id: 'derive',
-    group: 'identity',
-    label: 'Derive',
-    spaces: ['core', 'espace'],
-    blurb: 'Walk BIP-32/SLIP-0044 paths and inspect dual-space addresses.',
-    component: lazyDefault(() => import('./DerivePanel.js'), 'DerivePanel'),
-  },
-  {
-    id: 'keystore',
-    group: 'identity',
-    label: 'Keystore',
-    spaces: [],
-    blurb: 'Inspect and exercise the active keystore session.',
-    component: lazyDefault(() => import('./KeystorePanel.js'), 'KeystorePanel'),
-  },
-  {
-    id: 'wallet',
-    group: 'identity',
-    label: 'Wallet',
-    spaces: ['core', 'espace'],
-    blurb: 'Select the active wallet for signer-bound panels.',
-    component: lazyDefault(() => import('./WalletPanel.js'), 'WalletPanel'),
-  },
-  {
-    id: 'siwe',
-    group: 'auth',
-    label: 'SIWE',
-    spaces: ['espace'],
-    blurb: 'Sign-In With Ethereum end-to-end (frontend + showcase-backend).',
-    component: lazyDefault(() => import('./SiwePanel.js'), 'SiwePanel'),
-  },
-  {
-    id: 'session-key',
-    group: 'auth',
-    label: 'Session Key',
-    spaces: ['espace'],
-    blurb: 'Issue + verify scoped session-key delegations.',
-    component: lazyDefault(() => import('./SessionKeyPanel.js'), 'SessionKeyPanel'),
-  },
+  // ── Backend SDK ──────────────────────────────────────────────────
   {
     id: 'core',
-    group: 'onchain',
+    group: 'backend',
     label: 'Core RPC',
-    spaces: ['core'],
-    blurb: 'Core Space client surface, address codecs, bridge.',
-    component: lazyDefault(() => import('./CorePanel.js'), 'CorePanel'),
-  },
-  {
-    id: 'contract-interaction',
-    group: 'onchain',
-    label: 'Contract interaction',
-    spaces: ['core', 'espace'],
     blurb:
-      'Generic ABI read/write console — mirrors the VS Code extension contract tree (cfxdevkit.abiCallRead / abiCallWrite).',
-    component: lazyDefault(
-      () => import('./ContractInteractionPanel.js'),
-      'ContractInteractionPanel',
-    ),
+      'Core Space client: address codec, unit helpers, RPC methods, block/tx lookups, and the cross-space bridge — all bound to the active network.',
+    component: lazyDefault(() => import('./CorePanel.js'), 'CorePanel'),
   },
   {
     id: 'compiler',
     group: 'onchain',
     label: 'Compiler',
-    spaces: ['core', 'espace'],
-    blurb: 'Compile a curated Solidity template (server-side) and deploy it.',
+    blurb:
+      'Compile a Solidity template server-side via the backend solc pipeline, inspect the ABI and bytecode, then deploy to Core or eSpace with a managed key.',
     component: lazyDefault(() => import('./CompilerPanel.js'), 'CompilerPanel'),
   },
   {
+    id: 'contract-interaction',
+    group: 'contracts',
+    label: 'Contract Interaction',
+    blurb:
+      'ABI-driven read / write console. Reuse session deployments or paste an address + ABI to call any function on Core or eSpace.',
+    component: lazyDefault(
+      () => import('./ContractInteractionPanel.js'),
+      'ContractInteractionPanel',
+    ),
+  },
+  // ── Key Tools ────────────────────────────────────────────────────
+  {
+    id: 'mnemonic',
+    group: 'keys',
+    label: 'BIP-39 Mnemonic',
+    blurb:
+      'Generate entropy-backed BIP-39 phrases (12–24 words) and validate any existing phrase against the English wordlist checksum.',
+    component: lazyDefault(() => import('./MnemonicPanel.js'), 'MnemonicPanel'),
+  },
+  {
+    id: 'derive',
+    group: 'keys',
+    label: 'HD Derivation',
+    blurb:
+      'Call deriveDualAccounts() to produce EVM + Core base32 address pairs from any BIP-39 phrase. Supports standard and mining derivation paths.',
+    component: lazyDefault(() => import('./DerivePanel.js'), 'DerivePanel'),
+  },
+  {
+    id: 'wallet',
+    group: 'keys',
+    label: 'Managed Wallet',
+    blurb:
+      'Manage the backend keystore session: choose the active mnemonic, derive accounts, connect a signer. The connected account is shared across Core and eSpace panels.',
+    component: lazyDefault(() => import('./WalletPanel.js'), 'WalletPanel'),
+  },
+  {
+    id: 'keystore',
+    group: 'keys',
+    label: 'Keystore Session',
+    blurb:
+      'Inspect the active keystore backend (memory / file), list managed roots, sign a test message, and exercise capability-scoped signing.',
+    component: lazyDefault(() => import('./KeystorePanel.js'), 'KeystorePanel'),
+  },
+  // ── Auth & Signing ───────────────────────────────────────────────
+  {
+    id: 'session-key',
+    group: 'auth',
+    label: 'Session Key',
+    blurb:
+      'Issue a sub-key with fine-grained capability constraints (chain, contract, selector, value, TTL) and verify the server-signed attestation.',
+    component: lazyDefault(() => import('./SessionKeyPanel.js'), 'SessionKeyPanel'),
+  },
+  {
+    id: 'siwe',
+    group: 'auth',
+    label: 'Sign-In With Ethereum',
+    blurb:
+      'Full SIWE round-trip: fetch a nonce, sign the EIP-4361 message with the active managed key, verify with the backend, and call /auth/me.',
+    component: lazyDefault(() => import('./SiwePanel.js'), 'SiwePanel'),
+  },
+  // ── Inspect ──────────────────────────────────────────────────────
+  {
     id: 'status',
     group: 'inspect',
-    label: 'Network status',
-    spaces: ['core', 'espace'],
-    blurb: 'Ping every chain in listChains() in parallel.',
+    label: 'Network Status',
+    blurb: 'Ping every chain in listChains() in parallel and surface block numbers and chain IDs.',
     component: lazyDefault(() => import('./StatusPanel.js'), 'StatusPanel'),
   },
   {
     id: 'about',
     group: 'inspect',
     label: 'About',
-    spaces: [],
-    blurb: 'What this showcase covers.',
+    blurb: 'What this showcase covers and how the SDK packages fit together.',
     component: lazyDefault(() => import('./AboutPanel.js'), 'AboutPanel'),
   },
 ]);

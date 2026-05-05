@@ -5,13 +5,17 @@
  */
 import { validateMnemonic } from '@cfxdevkit/core';
 import { CopyButton } from '../components/CopyButton.js';
-import { useKeystoreSession } from '../contexts/KeystoreSessionProvider.js';
+import {
+  DEFAULT_SHOWCASE_MNEMONIC,
+  useKeystoreSession,
+} from '../contexts/KeystoreSessionProvider.js';
 import { useWallet } from '../contexts/WalletProvider.js';
 
 export function WalletPanel() {
   const w = useWallet();
   const session = useKeystoreSession();
   const mnemonicValid = validateMnemonic(w.mnemonic.trim());
+  const isDevnodeSeed = w.mnemonic.trim() === DEFAULT_SHOWCASE_MNEMONIC;
 
   return (
     <>
@@ -26,6 +30,48 @@ export function WalletPanel() {
           Active backend: <code className="mono">{session.backendId}</code>. Session:{' '}
           <code className="mono">{session.sessionId}</code>.
         </p>
+
+        {/* Devnode-seed status banner */}
+        {isDevnodeSeed ? (
+          <div
+            style={{
+              background: 'color-mix(in srgb, #22c55e 10%, var(--panel))',
+              border: '1px solid #22c55e66',
+              borderRadius: 6,
+              padding: '8px 10px',
+              marginBottom: 10,
+              fontSize: '0.82em',
+            }}
+          >
+            ✓ <strong>Devnode seed active</strong> — derived accounts match the genesis wallets
+            funded by the local devnode.
+          </div>
+        ) : (
+          <div
+            style={{
+              background: 'color-mix(in srgb, #f59e0b 12%, var(--panel))',
+              border: '1px solid #f59e0b88',
+              borderRadius: 6,
+              padding: '8px 10px',
+              marginBottom: 10,
+              fontSize: '0.82em',
+            }}
+          >
+            ⚠ <strong>Custom mnemonic</strong> — these accounts are NOT funded by the local devnode.
+            Transactions on the Local network will fail without tokens.{' '}
+            <button
+              type="button"
+              className="link"
+              style={{ fontSize: 'inherit' }}
+              onClick={() => {
+                session.resetMnemonic();
+                session.selectWallet(0);
+              }}
+            >
+              Restore devnode seed
+            </button>
+          </div>
+        )}
 
         <label>
           Mnemonic
@@ -47,8 +93,16 @@ export function WalletPanel() {
           <button type="button" className="secondary" onClick={() => session.createMnemonic()}>
             New mnemonic
           </button>
-          <button type="button" className="secondary" onClick={() => session.resetMnemonic()}>
-            Reset to hardhat vector
+          <button
+            type="button"
+            className="secondary"
+            disabled={isDevnodeSeed}
+            onClick={() => {
+              session.resetMnemonic();
+              session.selectWallet(0);
+            }}
+          >
+            Restore devnode seed
           </button>
         </div>
 

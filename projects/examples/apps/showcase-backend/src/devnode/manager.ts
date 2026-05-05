@@ -29,12 +29,13 @@ export interface DevNodeStatusSnapshot {
     accounts: number;
     balanceCfx: string;
     miningIntervalMs: number;
-    dataDir: string;
-    mnemonic: string;
   };
   mining?: { enabled: boolean; intervalMs: number; ticks: number; startedAt?: string };
-  accounts?: DevNodeAccountSnapshot[];
-  faucet?: DevNodeAccountSnapshot;
+}
+
+export interface DevNodeAccountsSnapshot {
+  accounts: DevNodeAccountSnapshot[];
+  faucet: DevNodeAccountSnapshot;
 }
 
 /**
@@ -104,8 +105,6 @@ export class DevNodeManager {
         accounts: node.config.accounts,
         balanceCfx: node.config.balanceCfx,
         miningIntervalMs: node.config.miningIntervalMs,
-        dataDir: node.config.dataDir,
-        mnemonic: node.config.mnemonic,
       },
       mining: {
         enabled: mining.enabled,
@@ -113,6 +112,13 @@ export class DevNodeManager {
         ticks: mining.ticks,
         ...(mining.startedAt ? { startedAt: mining.startedAt.toISOString() } : {}),
       },
+    };
+  }
+
+  accounts(): DevNodeAccountsSnapshot | null {
+    const node = this.node;
+    if (!node?.isRunning()) return null;
+    return {
       accounts: node.accounts.map(toAccountSnapshot),
       faucet: toAccountSnapshot(node.faucet),
     };

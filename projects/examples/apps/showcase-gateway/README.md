@@ -21,7 +21,8 @@ The gateway keeps one public URL and proxies the individual apps by path:
 - `/showcase/` -> base SDK showcase
 - `/stack/` -> full-stack wallet/backend showcase
 - `/browser/` -> browser wallet showcase
-- `/hardware/` -> Ledger hardware wallet showcase
+- `/keystores/` -> keystore management showcase
+- `/hardware/` -> compatibility alias for the keystore management showcase
 
 It also exposes the backend through same-origin routes:
 

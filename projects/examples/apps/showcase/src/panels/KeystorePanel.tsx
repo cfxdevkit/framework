@@ -2,7 +2,10 @@ import type { Hex } from '@cfxdevkit/core';
 import type { Capability, SecretRef } from '@cfxdevkit/services/keystore';
 import { useState } from 'react';
 import { CopyButton } from '../components/CopyButton.js';
-import { useKeystoreSession } from '../contexts/KeystoreSessionProvider.js';
+import {
+  DEFAULT_SHOWCASE_MNEMONIC,
+  useKeystoreSession,
+} from '../contexts/KeystoreSessionProvider.js';
 
 interface SignResult {
   account: string;
@@ -85,16 +88,45 @@ export function KeystorePanel() {
             {session.error}
           </div>
         )}
+
+        {/* Explain the relationship between keystore roots and the devnode seed */}
+        <div
+          style={{
+            background: 'color-mix(in srgb, #4cc9f0 8%, var(--panel))',
+            border: '1px solid #4cc9f044',
+            borderRadius: 6,
+            padding: '8px 10px',
+            margin: '10px 0',
+            fontSize: '0.82em',
+          }}
+        >
+          <strong>About mnemonic roots</strong>
+          <p style={{ margin: '4px 0 0' }}>
+            The showcase uses the{' '}
+            <code className="mono" style={{ fontSize: 'inherit' }}>
+              test … junk
+            </code>{' '}
+            mnemonic as its <em>devnode seed</em> — derived accounts from that root are pre-funded
+            by the local node. Generating a new root creates a demo wallet whose accounts have{' '}
+            <em>no tokens</em>; use the <strong>Managed Wallet</strong> panel to restore the funded
+            seed at any time.
+          </p>
+        </div>
+
         <div className="row" style={{ marginTop: 12 }}>
           <button type="button" className="secondary" onClick={() => session.addWallet()}>
-            Generate mnemonic
+            Add demo wallet root
           </button>
           <button
             type="button"
             className="secondary"
-            onClick={() => session.restoreRemovedWallets()}
+            disabled={session.mnemonic.trim() === DEFAULT_SHOWCASE_MNEMONIC}
+            onClick={() => {
+              session.resetMnemonic();
+              session.selectWallet(0);
+            }}
           >
-            Reset roots
+            Return to devnode seed
           </button>
           <button type="button" className="secondary" onClick={() => session.disconnect()}>
             Clear account

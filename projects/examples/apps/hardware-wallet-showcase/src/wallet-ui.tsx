@@ -113,7 +113,7 @@ export function TransferPanel(props: {
       <div className="subpanel-header">
         <div>
           <h2>Transfer</h2>
-          <p>Send native CFX from the active signer. Ledger is the current hardware signer.</p>
+          <p>Prepare and send native CFX from the active keystore signer.</p>
         </div>
       </div>
       <div className="form-grid">
@@ -121,14 +121,11 @@ export function TransferPanel(props: {
         <Field label="Amount CFX" value={props.amount} onChange={props.onAmountChange} />
       </div>
       {props.mode === 'espace' ? (
-        <p className="info-note">
-          Local eSpace uses chain 2030; Ledger may show ??? for the native asset, but the amount is
-          CFX.
-        </p>
+        <p className="info-note">Local eSpace uses chain 2030 and submits native CFX transfers.</p>
       ) : (
         <p className="info-note">
-          Core Space uses the published `2.2.2` `SIGN_TX` APDU flow. Data-bearing transactions and
-          contract deployment may require blind signing or display-data settings on the device.
+          Core Space signs Conflux transactions with storage collateral and epoch fields included in
+          the draft.
         </p>
       )}
       {props.children}
@@ -158,7 +155,7 @@ export function DeployPanel(props: {
         </div>
         <div>
           <span>Constructor</span>
-          <strong>Ledger Demo Token / LDT / 1,000,000</strong>
+          <strong>Keystore Demo Token / KDT / 1,000,000</strong>
         </div>
         <div>
           <span>Address</span>

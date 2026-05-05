@@ -1,6 +1,6 @@
 import { type ComponentType, lazy } from 'react';
 
-export type PanelGroup = 'connect' | 'use' | 'dual' | 'utility';
+export type PanelGroup = 'keys' | 'connect' | 'use' | 'dual' | 'utility';
 
 export interface PanelSpec {
   id: string;
@@ -18,6 +18,7 @@ export interface PanelGroupSpec {
 }
 
 export const GROUPS: readonly PanelGroupSpec[] = Object.freeze([
+  { id: 'keys', label: 'Keys' },
   { id: 'connect', label: 'Connect' },
   { id: 'use', label: 'Use' },
   { id: 'dual', label: 'Dual space' },
@@ -28,6 +29,24 @@ const lazyDefault = <K extends string>(loader: () => Promise<Record<K, Component
   lazy(() => loader().then((m) => ({ default: m[key] })));
 
 export const PANELS: readonly PanelSpec[] = Object.freeze([
+  // ---------- Keys ----------
+  {
+    id: 'mnemonic',
+    group: 'keys',
+    label: 'Mnemonic',
+    stack: 'core',
+    blurb: 'Generate and validate BIP-39 mnemonics in the browser using the platform CSPRNG.',
+    component: lazyDefault(() => import('./MnemonicPanel.js'), 'MnemonicPanel'),
+  },
+  {
+    id: 'derive',
+    group: 'keys',
+    label: 'Derive',
+    stack: 'core',
+    blurb: 'Walk BIP-32/SLIP-0044 paths and inspect dual-space eSpace + Core addresses.',
+    component: lazyDefault(() => import('./DerivePanel.js'), 'DerivePanel'),
+  },
+
   // ---------- Connect ----------
   {
     id: 'wallets',

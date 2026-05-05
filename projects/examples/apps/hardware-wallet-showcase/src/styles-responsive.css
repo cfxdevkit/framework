@@ -1,0 +1,23 @@
+@media (max-width: 720px) {
+  .app-shell {
+    width: min(100% - 20px, 1120px);
+    padding: 20px 0;
+  }
+
+  .topbar,
+  .workspace,
+  .summary-grid,
+  .results div,
+  .form-grid,
+  .form-grid.compact {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    display: grid;
+  }
+
+  .rail {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -22,6 +22,10 @@ export interface MemoryDemoResult {
   notice: string;
 }
 
+export const DEMO_SECRET_REF = Object.freeze({ service: 'showcase', account: 'demo' });
+export const DEMO_PRIVATE_KEY =
+  '0x0000000000000000000000000000000000000000000000000000000000000001' as const;
+
 export const KEYSTORE_BACKENDS: readonly KeystoreBackendInfo[] = Object.freeze([
   {
     id: 'memory',
@@ -36,12 +40,12 @@ export const KEYSTORE_BACKENDS: readonly KeystoreBackendInfo[] = Object.freeze([
   {
     id: 'file',
     name: 'Encrypted file',
-    status: 'browser-limited',
+    status: 'ready',
     secret: 'private-key or mnemonic',
     capabilities: { write: true, list: true, rotate: false },
     storage: 'cfx-v1 envelope, Argon2id KEK, AES-256-GCM records',
     signer: 'software signer after passphrase unlock',
-    operations: ['initFileKeystore', 'createFileKeystore', 'put', 'list', 'getSigner'],
+    operations: ['unlock', 'list', 'getSigner', 'signMessage', 'signTransaction', 'deploy'],
   },
   {
     id: 'ledger',
@@ -75,22 +79,24 @@ export const KEYSTORE_BACKENDS: readonly KeystoreBackendInfo[] = Object.freeze([
   },
 ]);
 
-export async function runMemoryKeystoreDemo(): Promise<MemoryDemoResult> {
+export async function runMemoryKeystoreDemo(
+  message = 'cfxdevkit memory keystore check',
+): Promise<MemoryDemoResult> {
   const [{ createMemoryKeystore }, { signerFromKeystore }] = await Promise.all([
     import('@cfxdevkit/services/keystore-memory'),
     import('@cfxdevkit/wallet/signers'),
   ]);
-  const ref = { service: 'showcase', account: 'memory-demo' };
+  const ref = DEMO_SECRET_REF;
   const provider = createMemoryKeystore();
   await provider.put?.({
     ref,
     kind: 'private-key',
-    secret: '0x0000000000000000000000000000000000000000000000000000000000000001',
+    secret: DEMO_PRIVATE_KEY,
     meta: { backend: 'memory', purpose: 'browser showcase' },
   });
   const listed = await provider.list({ service: 'showcase' });
   const signer = await signerFromKeystore({ provider, ref });
-  const signature = await signer.signMessage('cfxdevkit memory keystore check');
+  const signature = await signer.signMessage(message);
   return {
     providerId: provider.id,
     listed: listed.map((item) => `${item.ref.service}/${item.ref.account}:${item.kind}`),

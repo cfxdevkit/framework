@@ -35,7 +35,7 @@
   gap: 10px;
   min-height: 36px;
   padding: 8px 10px;
-  border: 1px solid #d9e0ec;
+  border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--panel-2);
   color: var(--muted);
@@ -62,6 +62,10 @@
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr);
   gap: 20px;
+}
+
+.workspace.single {
+  grid-template-columns: 1fr;
 }
 
 .rail {
@@ -92,7 +96,16 @@
 
 .actions button:not(:disabled):not(.primary) {
   border-color: var(--border);
+  background: var(--panel-2);
   color: var(--text);
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.actions button:not(:disabled):not(.primary):hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .panel {
@@ -125,7 +138,7 @@
 }
 
 .actions.secondary button:not(:disabled) {
-  background: #eef6ff;
+  background: var(--panel-2);
 }
 
 .summary-grid {
@@ -217,28 +230,4 @@
   padding: 10px 12px;
   background: rgba(248, 81, 73, 0.1);
   color: var(--err);
-}
-
-@media (max-width: 720px) {
-  .app-shell {
-    width: min(100% - 20px, 1120px);
-    padding: 20px 0;
-  }
-
-  .topbar,
-  .workspace,
-  .summary-grid,
-  .results div,
-  .form-grid,
-  .form-grid.compact {
-    grid-template-columns: 1fr;
-  }
-
-  .topbar {
-    display: grid;
-  }
-
-  .rail {
-    grid-template-columns: 1fr 1fr;
-  }
 }

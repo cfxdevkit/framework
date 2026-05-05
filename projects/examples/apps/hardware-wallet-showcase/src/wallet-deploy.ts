@@ -23,7 +23,7 @@ interface DeployReceipt {
   contractCreated?: string | null;
 }
 
-export interface LedgerDeployResult {
+export interface KeystoreDeployResult {
   artifact: CatalogEntry;
   rawTx: Hex;
   txHash: string;
@@ -32,18 +32,18 @@ export interface LedgerDeployResult {
 }
 
 const BASIC_ERC20_ARGS = [
-  'Ledger Demo Token',
-  'LDT',
+  'Keystore Demo Token',
+  'KDT',
   18,
   1_000_000n * 1_000_000_000_000_000_000n,
 ] as const;
 
-export async function deployBasicErc20WithLedger(input: {
+export async function deployBasicErc20WithSigner(input: {
   rpcUrl: string;
   mode: LedgerMode;
   signer: Signer;
   afterBroadcast?(): Promise<void>;
-}): Promise<LedgerDeployResult> {
+}): Promise<KeystoreDeployResult> {
   const artifact = await loadBasicErc20Artifact();
   const plan = await buildDeployPlan(input.rpcUrl, input.mode, input.signer, artifact);
   const rawTx = await input.signer.signTransaction(plan.tx);
@@ -61,6 +61,8 @@ export async function deployBasicErc20WithLedger(input: {
     contractAddress: extractDeployedAddress(receipt) ?? plan.expectedContractAddress ?? '',
   };
 }
+
+export const deployBasicErc20WithLedger = deployBasicErc20WithSigner;
 
 async function loadBasicErc20Artifact(): Promise<CatalogEntry> {
   const response = await fetch('/compile/catalog');

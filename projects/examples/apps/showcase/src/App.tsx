@@ -1,8 +1,8 @@
 /**
- * Showcase shell.
+ * Backend showcase shell.
  *
  *   ┌────────────────────────────────────────────────────────────────────┐
- *   │  Title · NetworkSelector · SpaceToggle · DevNodePill              │
+ *   │  Title · NetworkSelector · DevNodePill                            │
  *   ├──────────────┬─────────────────────────────────────────────────────┤
  *   │              │                                                     │
  *   │  Sidebar     │                <active panel>                       │
@@ -10,15 +10,14 @@
  *   │              │                                                     │
  *   └──────────────┴─────────────────────────────────────────────────────┘
  *
- * Panels are registered in `panels/registry.ts` and lazy-loaded so the
- * initial bundle only ships the shell + the chosen panel. Active panel
- * id is persisted to `?panel=` so deep links survive reload.
+ * This app demonstrates backend-powered operations: Core RPC SDK surface,
+ * server-side Solidity compilation + managed-key deployment, and network
+ * health inspection. No user-controlled browser wallet is required.
  */
 import { PanelSidebar, ShowcaseNav, useActivePanelState } from '@cfxdevkit/example-showcase-ui';
 import { Suspense, useMemo } from 'react';
 import { DevNodePill } from './components/DevNodePill.js';
 import { NetworkSelector } from './components/NetworkSelector.js';
-import { SpaceToggle } from './components/SpaceToggle.js';
 import { WalletPill } from './components/WalletPill.js';
 import { CompilerSessionProvider } from './contexts/CompilerSession.js';
 import { KeystoreSessionProvider } from './contexts/KeystoreSessionProvider.js';
@@ -26,14 +25,12 @@ import { NetworkProvider } from './contexts/NetworkProvider.js';
 import { WalletProvider } from './contexts/WalletProvider.js';
 import { GROUPS, getPanel, PANELS, type PanelSpec } from './panels/registry.js';
 
-// `PANELS` is built from a frozen literal in `panels/registry.ts` and is
-// always non-empty — the cast keeps `noUncheckedIndexedAccess` quiet.
 const DEFAULT_PANEL = PANELS[0] as PanelSpec;
 
 function Shell() {
   const { activeId, select } = useActivePanelState({
     panels: PANELS,
-    storageKey: 'showcase.panel',
+    storageKey: 'showcase-backend.panel',
     fallbackId: DEFAULT_PANEL.id,
   });
   const active = useMemo(() => getPanel(activeId) ?? DEFAULT_PANEL, [activeId]);
@@ -45,35 +42,18 @@ function Shell() {
       <ShowcaseNav current="showcase" />
       <header className="app-header">
         <div className="brand">
-          <h1>cfxdevkit · showcase</h1>
-          <span className="sub">@cfxdevkit/* live demo + integration harness</span>
+          <h1>cfxdevkit · backend</h1>
+          <span className="sub">backend-powered SDK operations · managed key · RPC · compiler</span>
         </div>
         <div className="env-bar">
           <NetworkSelector />
-          <SpaceToggle />
           <DevNodePill />
           <WalletPill />
         </div>
       </header>
 
       <div className="layout">
-        <PanelSidebar
-          groups={GROUPS}
-          panels={PANELS}
-          active={activeId}
-          onSelect={select}
-          renderMeta={(panel) =>
-            panel.spaces.length > 0 ? (
-              <span className="space-badges" aria-hidden>
-                {panel.spaces.map((space) => (
-                  <span key={space} className={`space-badge space-${space}`}>
-                    {space === 'core' ? 'C' : 'E'}
-                  </span>
-                ))}
-              </span>
-            ) : null
-          }
-        />
+        <PanelSidebar groups={GROUPS} panels={PANELS} active={activeId} onSelect={select} />
         <main className="content">
           <div className="panel-head">
             <h2>{active.label}</h2>

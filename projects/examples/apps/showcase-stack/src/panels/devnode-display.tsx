@@ -1,5 +1,9 @@
 import { CopyButton } from '@cfxdevkit/example-showcase-ui';
-import type { DevNodeAccountResponse, DevNodeStatusResponse } from '../lib/api.js';
+import type {
+  DevNodeAccountResponse,
+  DevNodeAccountsResponse,
+  DevNodeStatusResponse,
+} from '../lib/api.js';
 
 function statusColor(status: DevNodeStatusResponse['status'] | undefined): string {
   if (status === 'running') return 'var(--accent-2)';
@@ -89,21 +93,6 @@ export function DevNodeConfigPanel({ status }: { status: DevNodeStatusResponse }
             <th>Balance / account</th>
             <td>{status.config.balanceCfx} CFX</td>
           </tr>
-          <tr>
-            <th>Mnemonic</th>
-            <td>
-              <span className="mono" style={{ fontSize: 11 }}>
-                {status.config.mnemonic}
-              </span>
-              <CopyButton text={status.config.mnemonic} />
-            </td>
-          </tr>
-          <tr>
-            <th>Data dir</th>
-            <td className="mono" style={{ fontSize: 11 }}>
-              {status.config.dataDir}
-            </td>
-          </tr>
         </tbody>
       </table>
     </div>
@@ -111,12 +100,22 @@ export function DevNodeConfigPanel({ status }: { status: DevNodeStatusResponse }
 }
 
 export function GenesisAccountsPanel({
-  accounts,
+  accountsData,
   isStopped,
 }: {
-  accounts: DevNodeAccountResponse[] | undefined;
+  accountsData: DevNodeAccountsResponse | null | undefined;
   isStopped: boolean;
 }) {
+  const accounts = accountsData?.accounts;
+  if (isStopped)
+    return (
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <h3 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600 }}>Genesis accounts</h3>
+        <div className="muted" style={{ fontSize: 12 }}>
+          Start the devnode to see genesis accounts.
+        </div>
+      </div>
+    );
   if (!accounts?.length) return null;
   return (
     <div className="panel" style={{ marginBottom: 16 }}>
@@ -152,7 +151,12 @@ export function GenesisAccountsPanel({
   );
 }
 
-export function FaucetPanel({ faucet }: { faucet: DevNodeAccountResponse | undefined }) {
+export function FaucetPanel({
+  accountsData,
+}: {
+  accountsData: DevNodeAccountsResponse | null | undefined;
+}) {
+  const faucet = accountsData?.faucet;
   if (!faucet) return null;
   return (
     <div className="panel">

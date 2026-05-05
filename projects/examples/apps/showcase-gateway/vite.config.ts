@@ -8,6 +8,16 @@ function appProxy(target: string): ProxyOptions {
     target,
     changeOrigin: true,
     ws: true,
+    // Disable compression so Content-Length headers from child Vite apps match
+    // actual byte counts — prevents ERR_CONTENT_LENGTH_MISMATCH in the browser.
+    headers: { 'accept-encoding': 'identity' },
+  };
+}
+
+function aliasedAppProxy(target: string, from: RegExp, to: string): ProxyOptions {
+  return {
+    ...appProxy(target),
+    rewrite: (path) => path.replace(from, to),
   };
 }
 
@@ -32,11 +42,13 @@ export default defineConfig({
       '/showcase': appProxy('http://127.0.0.1:5181'),
       '/stack': appProxy('http://127.0.0.1:5182'),
       '/browser': appProxy('http://127.0.0.1:5183'),
-      '/hardware': appProxy('http://127.0.0.1:5184'),
+      '/keystores': appProxy('http://127.0.0.1:5184'),
+      '/hardware': aliasedAppProxy('http://127.0.0.1:5184', /^\/hardware/, '/keystores'),
       '/auth': backendProxy(),
       '/compile': backendProxy(),
       '/devnode': backendProxy(),
       '/health': backendProxy(),
+      '^/keystore(/|$)': backendProxy(),
       '/rpc': backendProxy(),
       '/session-key': backendProxy(),
       '/api': {

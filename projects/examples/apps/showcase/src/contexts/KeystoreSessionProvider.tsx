@@ -1,14 +1,7 @@
 import { generateMnemonic, signerFromPrivateKey } from '@cfxdevkit/core';
 import type { Capability, SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { Ctx } from './keystore-session-context.js';
 import {
   DEFAULT_SHOWCASE_MNEMONIC,
   deriveAccounts,
@@ -21,10 +14,9 @@ import {
 import { useMemoryKeystore } from './keystore-session-store.js';
 import { useNetwork } from './NetworkProvider.js';
 
+export { useKeystoreSession } from './keystore-session-context.js';
 export type { ShowcaseAccount } from './keystore-session-model.js';
 export { DEFAULT_SHOWCASE_MNEMONIC } from './keystore-session-model.js';
-
-const Ctx = createContext<KeystoreSessionState | null>(null);
 
 export function KeystoreSessionProvider({ children }: { children: ReactNode }) {
   const { network, core, espace } = useNetwork();
@@ -72,6 +64,17 @@ export function KeystoreSessionProvider({ children }: { children: ReactNode }) {
               source: 'showcase-session-root',
             },
           });
+        }
+        // Remove keystore entries that are no longer in the mnemonics Map (e.g. after resetMnemonic).
+        // Without this, refreshWallets() would return stale roots whose "select" buttons silently
+        // fail because selectMnemonic() checks `mnemonics.has(refKey(ref))`.
+        if (keystore.remove) {
+          const all = await keystore.list({ service: SERVICE });
+          for (const s of all) {
+            if (!mnemonics.has(refKey(s.ref))) {
+              await keystore.remove(s.ref);
+            }
+          }
         }
         if (!cancelled) await refreshWallets();
       } catch (err) {
@@ -237,10 +240,4 @@ export function KeystoreSessionProvider({ children }: { children: ReactNode }) {
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
-}
-
-export function useKeystoreSession(): KeystoreSessionState {
-  const value = useContext(Ctx);
-  if (!value) throw new Error('useKeystoreSession must be called inside <KeystoreSessionProvider>');
-  return value;
 }

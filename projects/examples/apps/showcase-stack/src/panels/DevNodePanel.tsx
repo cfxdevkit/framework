@@ -1,13 +1,14 @@
 import { errMsg } from '@cfxdevkit/example-showcase-ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useNetwork } from '../contexts/NetworkProvider.js';
-import { api, type DevNodeStatusResponse } from '../lib/api.js';
+import { api, type DevNodeAccountsResponse, type DevNodeStatusResponse } from '../lib/api.js';
 import {
   DevNodeConfigPanel,
   DevNodeStatusBar,
   FaucetPanel,
   GenesisAccountsPanel,
 } from './devnode-display.js';
+import { DevNodeMineSection, DevNodeStartForm } from './devnode-forms.js';
 
 const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
 const POLL_MS = 5_000;
@@ -19,6 +20,9 @@ export function DevNodePanel() {
   const [status, setStatus] = useState<DevNodeStatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [accountsData, setAccountsData] = useState<DevNodeAccountsResponse | null>(null);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
+  const [accountsBusy, setAccountsBusy] = useState(false);
 
   // Start options
   const [mnemonic, setMnemonic] = useState(TEST_MNEMONIC);
@@ -35,11 +39,25 @@ export function DevNodePanel() {
       if (!signal?.aborted) {
         setStatus(s);
         setError(null);
+        // Clear cached accounts when node stops
+        if (!s.running) setAccountsData(null);
       }
     } catch (e) {
       if (!signal?.aborted && (e as { name?: string }).name !== 'AbortError') {
         setError(errMsg(e));
       }
+    }
+  }, []);
+
+  const fetchAccounts = useCallback(async () => {
+    setAccountsBusy(true);
+    setAccountsError(null);
+    try {
+      setAccountsData(await api.devnodeAccounts());
+    } catch (e) {
+      setAccountsError(errMsg(e));
+    } finally {
+      setAccountsBusy(false);
     }
   }, []);
 
@@ -57,7 +75,10 @@ export function DevNodePanel() {
     setBusy(action);
     setError(null);
     try {
-      setStatus(await apiFn());
+      const s = await apiFn();
+      setStatus(s);
+      // Clear cached accounts after lifecycle changes
+      if (action === 'stop' || action === 'wipe' || action === 'restart') setAccountsData(null);
     } catch (e) {
       setError(errMsg(e));
     } finally {
@@ -86,61 +107,25 @@ export function DevNodePanel() {
 
       {/* Start form */}
       {!isRunning && (
-        <div className="panel" style={{ marginBottom: 16 }}>
-          <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600 }}>Start node</h3>
-          <div className="row" style={{ marginBottom: 8 }}>
-            <label style={{ flex: 1 }}>
-              Mnemonic
-              <input
-                value={mnemonic}
-                onChange={(e) => setMnemonic(e.target.value)}
-                style={{ fontFamily: 'var(--mono)', fontSize: 11 }}
-                placeholder="BIP-39 mnemonic (blank = random)"
-              />
-            </label>
-          </div>
-          <div className="row" style={{ marginBottom: 12 }}>
-            <label>
-              Accounts
-              <input
-                type="number"
-                value={accounts}
-                min={1}
-                max={20}
-                style={{ width: 70 }}
-                onChange={(e) => setAccounts(Number(e.target.value))}
-              />
-            </label>
-            <label>
-              Mining interval (ms)
-              <input
-                type="number"
-                value={miningIntervalMs}
-                min={0}
-                step={100}
-                style={{ width: 100 }}
-                onChange={(e) => setMiningIntervalMs(Number(e.target.value))}
-              />
-            </label>
-            <button
-              type="button"
-              className="primary"
-              style={{ alignSelf: 'flex-end' }}
-              disabled={!isLocal || !!busy}
-              onClick={() =>
-                void run('start', () =>
-                  api.devnodeStart({
-                    ...(mnemonic.trim() ? { mnemonic: mnemonic.trim() } : {}),
-                    accounts,
-                    miningIntervalMs,
-                  }),
-                )
-              }
-            >
-              {busy === 'start' ? 'Starting…' : 'Start'}
-            </button>
-          </div>
-        </div>
+        <DevNodeStartForm
+          isLocal={isLocal}
+          busy={busy}
+          mnemonic={mnemonic}
+          setMnemonic={setMnemonic}
+          accounts={accounts}
+          setAccounts={setAccounts}
+          miningIntervalMs={miningIntervalMs}
+          setMiningIntervalMs={setMiningIntervalMs}
+          onStart={() =>
+            void run('start', () =>
+              api.devnodeStart({
+                ...(mnemonic.trim() ? { mnemonic: mnemonic.trim() } : {}),
+                accounts,
+                miningIntervalMs,
+              }),
+            )
+          }
+        />
       )}
 
       {/* Running controls */}
@@ -180,51 +165,43 @@ export function DevNodePanel() {
 
       {/* Mine section */}
       {isRunning && (
+        <DevNodeMineSection
+          busy={busy}
+          mineBlocks={mineBlocks}
+          setMineBlocks={setMineBlocks}
+          minePack={minePack}
+          setMinePack={setMinePack}
+          mining={status?.mining}
+          onMine={() =>
+            void run('mine', () => api.devnodeMine({ blocks: mineBlocks, pack: minePack }))
+          }
+        />
+      )}
+
+      {status && <DevNodeConfigPanel status={status} />}
+
+      {isRunning && (
         <div className="panel" style={{ marginBottom: 16 }}>
-          <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600 }}>Mine blocks</h3>
-          <div className="row">
-            <label>
-              Blocks
-              <input
-                type="number"
-                value={mineBlocks}
-                min={1}
-                max={100}
-                style={{ width: 70 }}
-                onChange={(e) => setMineBlocks(Number(e.target.value))}
-              />
-            </label>
-            <label style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <input
-                type="checkbox"
-                checked={minePack}
-                onChange={(e) => setMinePack(e.target.checked)}
-              />
-              Pack transactions
-            </label>
+          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>Genesis accounts</h3>
             <button
               type="button"
-              className="primary"
-              style={{ alignSelf: 'flex-end' }}
-              disabled={!!busy}
-              onClick={() =>
-                void run('mine', () => api.devnodeMine({ blocks: mineBlocks, pack: minePack }))
-              }
+              className="secondary"
+              style={{ padding: '4px 10px', fontSize: 11 }}
+              disabled={accountsBusy}
+              onClick={() => void fetchAccounts()}
             >
-              {busy === 'mine' ? 'Mining…' : 'Mine'}
+              {accountsBusy ? 'Loading…' : accountsData ? 'Refresh' : 'Reveal accounts'}
             </button>
           </div>
-          {status?.mining && (
-            <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
-              Mining ticks: {status.mining.ticks} · interval: {status.mining.intervalMs}ms
-            </div>
+          {accountsError && (
+            <div style={{ color: 'var(--err)', fontSize: 12 }}>{accountsError}</div>
           )}
         </div>
       )}
 
-      {status && <DevNodeConfigPanel status={status} />}
-      <GenesisAccountsPanel accounts={status?.accounts} isStopped={isStopped} />
-      <FaucetPanel faucet={status?.faucet} />
+      <GenesisAccountsPanel accountsData={accountsData} isStopped={isStopped} />
+      <FaucetPanel accountsData={accountsData} />
 
       {error && (
         <div className="result" style={{ color: 'var(--err)' }}>

@@ -51,13 +51,13 @@ function Shell() {
         <div className="brand">
           <strong style={{ fontSize: 15 }}>cfxdevkit</strong>
           <span className="muted" style={{ fontSize: 11 }}>
-            showcase-stack
+            showcase-combined
           </span>
         </div>
         <div className="env-bar" style={{ flex: 1, justifyContent: 'flex-end' }}>
+          <NetworkSelector />
           <BackendPill />
           <WalletBar />
-          <NetworkSelector />
         </div>
       </header>
 

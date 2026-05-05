@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { LedgerMode, LedgerSession } from './ledger-session.js';
 import { requireSession } from './wallet-controller-runtime.js';
-import { deployBasicErc20WithLedger } from './wallet-deploy.js';
+import { deployBasicErc20WithSigner } from './wallet-deploy.js';
 import type { LedgerState } from './wallet-state.js';
 
 export function createDeployAction(input: {
@@ -18,7 +18,7 @@ export function createDeployAction(input: {
       async () => {
         const session = requireSession(input.getSession());
         const { artifact, rawTx, txHash, balance, contractAddress } =
-          await deployBasicErc20WithLedger({
+          await deployBasicErc20WithSigner({
             rpcUrl: input.getRpcUrl(),
             mode: input.getMode(),
             signer: session.signer,

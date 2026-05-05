@@ -1,23 +1,23 @@
 /**
- * AboutPanel — explains what showcase-stack demonstrates.
+ * AboutPanel — explains what the combined showcase demonstrates.
  */
 export function AboutPanel() {
   return (
     <div>
       <div className="panel" style={{ marginBottom: 16 }}>
         <h3 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 600 }}>
-          What is showcase-stack?
+          What is the Combined showcase?
         </h3>
         <p style={{ margin: '0 0 10px', fontSize: 13, lineHeight: 1.6 }}>
-          <strong>showcase-stack</strong> bridges browser wallets (MetaMask, Fluent) with the
-          cfxdevkit showcase-backend to demonstrate every available API endpoint combined with real
-          wallet signing.
+          The <strong>combined showcase</strong> is the full-stack integration layer: it pairs a
+          user-controlled browser wallet (MetaMask, Fluent) with the cfxdevkit showcase-backend to
+          demonstrate every API endpoint that requires <em>both</em> a backend service and a signed
+          transaction or message from the user's real wallet.
         </p>
         <p style={{ margin: '0 0 10px', fontSize: 13, lineHeight: 1.6 }}>
-          Unlike the base <code className="mono">showcase</code> (which uses a derived in-browser
-          wallet) or <code className="mono">showcase-browser</code> (which only shows wallet
-          capabilities), this app is the full-stack merge: browser signing + server-side
-          infrastructure.
+          The <a href="/showcase/">backend showcase</a> shows backend-only operations with a managed
+          key. The <a href="/browser/">browser showcase</a> shows browser-only operations. This app
+          is the combination of both worlds.
         </p>
       </div>
 
@@ -26,8 +26,8 @@ export function AboutPanel() {
         <table className="status-table">
           <tbody>
             <tr>
-              <th>showcase-stack (this app)</th>
-              <td>port 5175 · React + Vite</td>
+              <th>showcase-combined (this app)</th>
+              <td>port 5182 · React + Vite</td>
             </tr>
             <tr>
               <th>showcase-backend</th>
@@ -58,7 +58,9 @@ export function AboutPanel() {
             </tr>
             <tr>
               <th>Sign-In With Ethereum</th>
-              <td>Full SIWE (EIP-4361) round-trip: nonce → browser sign → backend verify → JWT.</td>
+              <td>
+                Full SIWE (EIP-4361) round-trip: nonce → browser wallet sign → backend verify → JWT.
+              </td>
             </tr>
             <tr>
               <th>Session Key Delegation</th>
@@ -77,8 +79,8 @@ export function AboutPanel() {
             <tr>
               <th>Contract Interaction</th>
               <td>
-                ABI-driven read / write console. Paste any address + ABI and call functions via
-                wagmi.
+                ABI-driven read / write console. Paste any address + ABI and call functions via your
+                connected browser wallet.
               </td>
             </tr>
             <tr>
@@ -90,22 +92,8 @@ export function AboutPanel() {
       </div>
 
       <div className="panel">
-        <h3 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 600 }}>Quick start</h3>
-        <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, lineHeight: 2 }}>
-          <li>
-            Run <code className="mono">pnpm --filter @cfxdevkit/example-showcase-backend dev</code>{' '}
-            on port 5174
-          </li>
-          <li>
-            Run <code className="mono">pnpm --filter @cfxdevkit/example-showcase-stack dev</code> on
-            port 5175
-          </li>
-          <li>
-            Switch network to <strong>Local</strong> and start the DevNode
-          </li>
-          <li>Import a genesis account into MetaMask or another non-Fluent eSpace wallet</li>
-          <li>Connect the wallet and explore SIWE, Session Keys, Compiler, and Contracts</li>
-        </ol>
+        <h3 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 600 }}>Run</h3>
+        <pre className="result">pnpm showcase</pre>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { bridge } from '@cfxdevkit/contracts';
 import {
   base32ToHex,
+  type CoreSpaceClient,
   formatCFX,
   formatGDrip,
   getCoreAddress,
@@ -8,7 +9,7 @@ import {
   parseCFX,
 } from '@cfxdevkit/core';
 import { useCallback, useMemo, useState } from 'react';
-import { useChain } from '../contexts/ChainProvider.js';
+import { useNetwork } from '../contexts/NetworkProvider.js';
 import { useWallet } from '../contexts/WalletProvider.js';
 import { executeLookup } from './core-panel-actions.js';
 import {
@@ -25,9 +26,11 @@ import {
 } from './core-panel-basics.js';
 
 export function CorePanel() {
-  const { chain, client } = useChain();
+  // Always bound to Core Space — no global space toggle needed.
+  const { core: chain, coreClient: rawCoreClient } = useNetwork();
+  // The network provider always creates a CoreSpaceClient for the core chain.
+  const client = rawCoreClient as CoreSpaceClient;
   const { active, signer } = useWallet();
-  const isCore = chain.family === 'core';
   const [hexIn, setHexIn] = useState('0x1a2f80341409639ea6a35bbcab8299066109aa55');
   const [base32In, setBase32In] = useState('');
   const [codecOut, setCodecOut] = useState<string | null>(null);
@@ -74,7 +77,6 @@ export function CorePanel() {
   };
 
   const refreshStatus = useCallback(async () => {
-    if (!isCore || client.family !== 'core') return;
     setStatusBusy(true);
     setStatusErr(null);
     try {
@@ -88,10 +90,10 @@ export function CorePanel() {
     } finally {
       setStatusBusy(false);
     }
-  }, [client, isCore]);
+  }, [client]);
 
   const refreshAccount = useCallback(async () => {
-    if (!isCore || client.family !== 'core' || !active) return;
+    if (!active) return;
     setAcctBusy(true);
     setAcctErr(null);
     try {
@@ -111,10 +113,9 @@ export function CorePanel() {
     } finally {
       setAcctBusy(false);
     }
-  }, [client, isCore, active]);
+  }, [client, active]);
 
   const runLookup = useCallback(async () => {
-    if (!isCore || client.family !== 'core') return;
     setLookupBusy(true);
     setLookupErr(null);
     setLookupOut(null);
@@ -125,11 +126,11 @@ export function CorePanel() {
     } finally {
       setLookupBusy(false);
     }
-  }, [client, isCore, lookupKind, lookupHash, lookupAddr]);
+  }, [client, lookupKind, lookupHash, lookupAddr]);
 
   const runBridge = useCallback(async () => {
-    if (!isCore || !signer) {
-      setBridgeErr('Connect a wallet on the Wallet tab and pick a Core chain.');
+    if (!signer) {
+      setBridgeErr('Connect a wallet on the Wallet tab first.');
       return;
     }
     setBridgeBusy(true);
@@ -152,9 +153,8 @@ export function CorePanel() {
     } finally {
       setBridgeBusy(false);
     }
-  }, [client, signer, isCore, bridgeAmt, bridgeKind, bridgeTo, active]);
+  }, [client, signer, bridgeAmt, bridgeKind, bridgeTo, active]);
 
-  if (!isCore) return <CoreSpaceHint />;
   return (
     <section className="panel">
       <h2>Core Space — full surface</h2>
@@ -217,19 +217,6 @@ export function CorePanel() {
         setBridgeTo={setBridgeTo}
         runBridge={() => void runBridge()}
       />
-    </section>
-  );
-}
-
-function CoreSpaceHint() {
-  return (
-    <section className="panel">
-      <h2>Core Space</h2>
-      <p className="panel-desc">
-        This panel exhaustively exercises <code className="mono">@cfxdevkit/core</code> against a
-        Conflux <strong>Core Space</strong> chain. Switch the chain selector at the top of the page
-        to <code className="mono">core-mainnet</code> or <code className="mono">core-testnet</code>.
-      </p>
     </section>
   );
 }

@@ -9,13 +9,13 @@
   gap: 6px;
   min-height: 64px;
   padding: 10px;
-  border: 1px solid #d9e0ec;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--panel-2);
 }
 
 .deploy-summary span {
-  color: #596273;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -23,7 +23,7 @@
 
 .deploy-summary strong {
   align-self: end;
-  color: #1f2937;
+  color: var(--text);
   font-size: 14px;
 }
 

@@ -6,8 +6,8 @@ The showcase suite is a linear walkthrough behind `pnpm showcase` and
 | Area | Packages | Covered By | Notes |
 | --- | --- | --- | --- |
 | Core runtime | `@cfxdevkit/core`, `@cfxdevkit/protocol`, `@cfxdevkit/devnode` | `/showcase/`, `/stack/` | dual-space clients, local devnode, Core/eSpace RPC proxy, address/unit helpers |
-| Keys and wallets | `@cfxdevkit/services`, `@cfxdevkit/wallet` | `/showcase/`, `/browser/`, `/hardware/` | memory/file/Ledger keystore management, browser wallets, Fluent providers, future OneKey/Satochip slots |
-| Solidity | `@cfxdevkit/contracts`, `@cfxdevkit/compiler`, `@cfxdevkit/abis` | `/showcase/`, `/stack/`, `/hardware/` | template catalog, compile endpoints, ABI read/write console, deploy flows through managed signers |
+| Keys and wallets | `@cfxdevkit/services`, `@cfxdevkit/wallet` | `/showcase/`, `/browser/`, `/keystores/` | memory/file/Ledger keystore management, browser wallets, Fluent providers, future OneKey/Satochip slots |
+| Solidity | `@cfxdevkit/contracts`, `@cfxdevkit/compiler`, `@cfxdevkit/abis` | `/showcase/`, `/stack/`, `/keystores/` | template catalog, compile endpoints, ABI read/write console, deploy flows through managed signers |
 | Shared example UI | `@cfxdevkit/example-showcase-ui` | all showcase apps | shared theme, gateway navigation, panel sidebar state, backend/devnode controls |
 | UI packages | `@cfxdevkit/theme`, `@cfxdevkit/react`, `@cfxdevkit/defi-react`, `@cfxdevkit/wallet-connect` | partial | shared showcase theme is in place; dedicated component demos still need to be added |
 | Tools | `@cfxdevkit/cli`, `@cfxdevkit/create`, `@cfxdevkit/mcp-server`, `@cfxdevkit/llm-tools` | gap | add CLI/scaffold and LLM automation demos or documentation panels |

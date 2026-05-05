@@ -1,4 +1,4 @@
-# hardware-wallet-showcase
+# keystore-management-showcase
 
 Keystore management showcase for the Conflux examples suite.
 
@@ -19,7 +19,7 @@ Recommended gateway workflow:
 pnpm showcase
 ```
 
-Then open `http://127.0.0.1:5173/hardware/`.
+Then open `http://127.0.0.1:5173/keystores/`.
 
 Standalone workflow:
 

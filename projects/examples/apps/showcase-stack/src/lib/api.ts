@@ -96,6 +96,8 @@ export const api = {
 
   devnodeStatus: (signal?: AbortSignal) =>
     call<DevNodeStatusResponse>('/devnode/status', {}, signal),
+  devnodeAccounts: (signal?: AbortSignal) =>
+    call<DevNodeAccountsResponse>('/devnode/accounts', {}, signal),
   devnodeStart: (
     body: {
       mnemonic?: string;
@@ -157,6 +159,11 @@ export interface DevNodeAccountResponse {
   initialBalanceCfx: string;
 }
 
+export interface DevNodeAccountsResponse {
+  accounts: DevNodeAccountResponse[];
+  faucet: DevNodeAccountResponse;
+}
+
 export interface DevNodeStatusResponse {
   status: 'stopped' | 'starting' | 'running' | 'stopping' | 'error';
   running: boolean;
@@ -169,12 +176,8 @@ export interface DevNodeStatusResponse {
     accounts: number;
     balanceCfx: string;
     miningIntervalMs: number;
-    dataDir: string;
-    mnemonic: string;
   };
   mining?: { enabled: boolean; intervalMs: number; ticks: number; startedAt?: string };
-  accounts?: DevNodeAccountResponse[];
-  faucet?: DevNodeAccountResponse;
 }
 
 export interface TemplateSourceResponse {

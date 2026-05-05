@@ -39,7 +39,7 @@ pnpm showcase
 ```
 
 Then open `http://127.0.0.1:5173`. The gateway proxies frontend sections by
-path (`/showcase/`, `/stack/`, `/browser/`, `/hardware/`) and backend routes by
+path (`/showcase/`, `/stack/`, `/browser/`, `/keystores/`) and backend routes by
 same-origin paths (`/api/*`, `/devnode/*`, `/compile/*`, `/rpc/*`). This avoids
 browser-side `127.0.0.1` confusion and Vite port drift when another dev server
 is still running.
@@ -57,7 +57,7 @@ The gateway presents the examples as a single path through the current codebase:
 3. `/browser/` — external wallet coverage: Fluent Core, non-Fluent eSpace
   providers, wagmi, raw injected provider diagnostics, signing, and transfer
   flows.
-4. `/hardware/` — keystore management coverage: memory, encrypted file, Ledger,
+4. `/keystores/` — keystore management coverage: memory, encrypted file, Ledger,
   and reserved OneKey/Satochip backend slots, plus Core/eSpace transfer and
   deploy flows through the active managed signer.
 

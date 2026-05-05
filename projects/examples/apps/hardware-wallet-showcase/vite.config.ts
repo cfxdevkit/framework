@@ -24,6 +24,7 @@ export default defineConfig({
     proxy: {
       '/compile': 'http://127.0.0.1:5174',
       '/devnode': 'http://127.0.0.1:5174',
+      '^/keystore(/|$)': 'http://127.0.0.1:5174',
       '/rpc': 'http://127.0.0.1:5174',
     },
   },

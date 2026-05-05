@@ -69,9 +69,9 @@ function Shell() {
       <ShowcaseNav current="browser" />
       <header className="app-header">
         <div className="brand">
-          <h1>cfxdevkit · external wallets</h1>
+          <h1>cfxdevkit · browser</h1>
           <span className="sub">
-            user-controlled wallets in the browser · Fluent · MetaMask · injected EIP-1193
+            browser keys · BIP-39 / HD derive · user wallets · Fluent · MetaMask · EIP-1193
           </span>
         </div>
         <div className="env-bar">

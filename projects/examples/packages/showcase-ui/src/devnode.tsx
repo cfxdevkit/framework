@@ -133,16 +133,17 @@ export function ShowcaseOpsPanel(props: { apiBase?: string }) {
         </div>
       </div>
       <div className="showcase-op-card">
-        <span>Coverage</span>
-        <strong>Core + eSpace + wallets + compiler</strong>
+        <span>Sections</span>
+        <strong>Backend · Browser · Combined · Signers</strong>
         <div className="showcase-status-line">
           <span className="showcase-status-dot ok" />
-          <span>Use the linear sections below to walk the codebase surface.</span>
+          <span>Four showcases covering the full SDK surface.</span>
         </div>
         <div className="showcase-op-actions">
-          <a href="/showcase/">SDK</a>
-          <a href="/stack/">Stack</a>
-          <a href="/hardware/">Hardware</a>
+          <a href="/showcase/">Backend</a>
+          <a href="/browser/">Browser</a>
+          <a href="/stack/">Combined</a>
+          <a href="/keystores/">Signers</a>
         </div>
       </div>
     </section>

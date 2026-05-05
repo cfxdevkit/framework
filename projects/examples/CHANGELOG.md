@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased] - 2026-05-05
+### Changed
+- Renamed `hardware-wallet-showcase` app to `keystore-management-showcase` and updated all references in README, package.json, and tests.
+- Updated gateway path from `/hardware/` to `/keystores/` across documentation and configuration files.
+- Refactored `App.tsx` to use new `KeystoreWorkspace`, `KeystoreBackendDetails`, and `wallet-controller-*` modules for modular backend support.
+- Replaced monolithic UI with dedicated workspace components (`ledger-workspace.tsx`, `managed-keystore-workspace.tsx`, `file-keystore-client.ts`, `wallet-controller-memory.ts`, `wallet-controller-ledger.ts`).
+- Added new keystore backend implementations and backend routes in `showcase-backend/src/keystore/` for file management, deployment, transaction signing, and routing.
+- Introduced `keystore-session-context.ts` and `devnode-pill-popover.tsx` to improve session and devnode state handling in `/showcase/`.
+- Added new UI components: `CopyButton`, `DerivePanel`, `MnemonicPanel`, `devnode-forms.tsx`, `session-key-account-picker.tsx`, `compiler-catalog-hook.ts`, and `contract-interaction-hooks.ts`.
+- Updated `SHOWCASE-COVERAGE.md` and root `README.md` to reflect `/keystores/` instead of `/hardware/` in navigation and coverage mapping.
+
+
 
 ## [Unreleased] - 2026-05-05
 ### Added

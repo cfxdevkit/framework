@@ -6,17 +6,25 @@ export interface DevNodeAccountSnapshot {
   initialBalanceCfx: string;
 }
 
+export interface DevNodeAccountsSnapshot {
+  accounts: DevNodeAccountSnapshot[];
+  faucet: DevNodeAccountSnapshot;
+}
+
 export interface DevNodeStatusSnapshot {
   status: 'stopped' | 'starting' | 'running' | 'stopping' | 'error';
   running: boolean;
   urls?: { core: string; espace: string; coreWs: string; espaceWs: string };
-  faucet?: DevNodeAccountSnapshot;
 }
 
 const BACKEND_BASE = import.meta.env.VITE_SHOWCASE_BACKEND_URL ?? '';
 
 export function devNodeStatus(): Promise<DevNodeStatusSnapshot> {
   return backendRequest('/devnode/status', 'GET');
+}
+
+export function devNodeAccounts(): Promise<DevNodeAccountsSnapshot> {
+  return backendRequest('/devnode/accounts', 'GET');
 }
 
 export function startDevNode(): Promise<DevNodeStatusSnapshot> {

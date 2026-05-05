@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:gateway": "VITE_BASE_PATH=/hardware/ VITE_DEV_PORT=5184 vite",
+    "dev:gateway": "VITE_BASE_PATH=/keystores/ VITE_DEV_PORT=5184 vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",

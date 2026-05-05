@@ -1,6 +1,7 @@
 import { errMsg } from '@cfxdevkit/example-showcase-ui';
 import { useEffect, useState } from 'react';
-import { api } from '../lib/api.js';
+import { api, type DevNodeAccountResponse } from '../lib/api.js';
+import { SessionKeyAccountPicker } from './session-key-account-picker.js';
 import {
   type Capability,
   type IssueResult,
@@ -12,6 +13,9 @@ import { SessionKeyResults } from './session-key-results.js';
 export function SessionKeyPanel() {
   const [backendOk, setBackendOk] = useState<boolean | null>(null);
   const [parentPrivateKey, setParentPrivateKey] = useState('');
+  const [accounts, setAccounts] = useState<DevNodeAccountResponse[] | null>(null);
+  const [accountsLoading, setAccountsLoading] = useState(false);
+  const [accountsErr, setAccountsErr] = useState<string | null>(null);
   const [cap, setCap] = useState<Capability>({
     chains: '',
     contracts: '',
@@ -39,10 +43,24 @@ export function SessionKeyPanel() {
     };
   }, []);
 
+  const loadAccounts = async () => {
+    setAccountsLoading(true);
+    setAccountsErr(null);
+    try {
+      const data = await api.devnodeAccounts();
+      setAccounts(data.accounts);
+    } catch (e) {
+      setAccountsErr(errMsg(e));
+      setAccounts(null);
+    } finally {
+      setAccountsLoading(false);
+    }
+  };
+
   const doIssue = async () => {
     const trimmedKey = parentPrivateKey.trim();
     if (!trimmedKey) {
-      setError('Enter a parent private key');
+      setError('Select an account or enter a parent private key');
       return;
     }
     setError(null);
@@ -109,19 +127,24 @@ export function SessionKeyPanel() {
         </span>
       </div>
 
-      <div className="warning">
-        Copy a private key from the <strong>DevNode genesis accounts</strong> (DevNode Control
-        panel) and paste it below. The server issues a session key attested against it.
-      </div>
+      {/* Genesis account picker */}
+      <SessionKeyAccountPicker
+        accounts={accounts}
+        accountsLoading={accountsLoading}
+        accountsErr={accountsErr}
+        parentPrivateKey={parentPrivateKey}
+        setParentPrivateKey={setParentPrivateKey}
+        onLoad={() => void loadAccounts()}
+      />
 
-      {/* Parent private key */}
+      {/* Parent private key (manual override) */}
       <label style={{ marginBottom: 16 }}>
         Parent private key (0x…)
         <input
           type="password"
           value={parentPrivateKey}
           onChange={(e) => setParentPrivateKey(e.target.value)}
-          placeholder="0x..."
+          placeholder="0x... — or select an account above"
           style={{ fontFamily: 'var(--mono)', fontSize: 12 }}
         />
       </label>

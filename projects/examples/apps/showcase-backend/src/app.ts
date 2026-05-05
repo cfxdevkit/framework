@@ -4,6 +4,7 @@ import { authRouter } from './auth/router.js';
 import { compileRouter } from './compile/router.js';
 import { devNodeRouter } from './devnode/router.js';
 import { rpcProxyRouter } from './devnode/rpc-proxy.js';
+import { keystoreRouter } from './keystore/router.js';
 import { sessionKeyRouter } from './session-key/router.js';
 
 export interface CreateAppOptions {
@@ -29,6 +30,7 @@ export function createApp(opts: CreateAppOptions = {}): Express {
   app.use('/auth', authRouter());
   app.use('/session-key', sessionKeyRouter());
   app.use('/devnode', devNodeRouter());
+  app.use('/keystore', keystoreRouter());
   app.use('/compile', compileRouter());
   // CORS-enabled proxy so the browser can speak JSON-RPC to the dev node
   // (xcfx itself returns 405 on OPTIONS preflight). Active only while the

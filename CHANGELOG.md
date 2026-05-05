@@ -1,5 +1,10 @@
 # Changelog
 
+
+## [Unreleased] - 2026-05-05
+### Changed
+- Updated GitNexus index statistics in AGENTS.md and CLAUDE.md from 5698 symbols and 9399 relationships to 5983 symbols and 9838 relationships
+
 ## [Unreleased] - 2026-05-05
 ### Added
 - Added `projects/examples/apps/showcase-gateway` to workspace projects in `.moon/workspace.yml`.

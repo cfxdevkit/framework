@@ -2,29 +2,29 @@ import { readContract } from '@cfxdevkit/contracts/read';
 import { sendWrite } from '@cfxdevkit/contracts/write';
 import { useCallback, useMemo, useState } from 'react';
 import type { Abi, AbiFunction } from 'viem';
-import { useChain } from '../contexts/ChainProvider.js';
-import {
-  type DeployLogEntry,
-  type DeployNetworkId,
-  useCompilerSession,
-} from '../contexts/CompilerSession.js';
+import { useCompilerSession } from '../contexts/CompilerSession.js';
 import { useNetwork } from '../contexts/NetworkProvider.js';
 import { useWallet } from '../contexts/WalletProvider.js';
 import { validateAddress } from './contract-interaction-helpers.js';
-import { ModeTabs, SessionDeployments } from './contract-interaction-sections.js';
 import {
-  type InteractionTarget,
-  ManualContractForm,
-  TargetContractCard,
-} from './contract-target-sections.js';
+  toTarget,
+  useActiveSession,
+  useCallableFunctions,
+  useGroupedDeployments,
+} from './contract-interaction-hooks.js';
+import { ModeTabs, SessionDeployments } from './contract-interaction-sections.js';
+import { ManualContractForm, TargetContractCard } from './contract-target-sections.js';
 
 export function ContractInteractionPanel() {
   const { signer } = useWallet();
-  const { chain, client } = useChain();
-  const { network } = useNetwork();
+  const { network, core, espace, coreClient, espaceClient } = useNetwork();
+  // Inline space selector — pick Core or eSpace without a global toggle.
+  const [localSpace, setLocalSpace] = useState<'core' | 'espace'>('espace');
+  const chain = localSpace === 'core' ? core : espace;
+  const client = localSpace === 'core' ? coreClient : espaceClient;
+  const isCore = localSpace === 'core';
+  const family: 'core' | 'espace' = localSpace;
   const { history, removeDeploy } = useCompilerSession();
-  const isCore = chain.family === 'core';
-  const family: 'core' | 'espace' = isCore ? 'core' : 'espace';
   const grouped = useGroupedDeployments(history);
   const [mode, setMode] = useState<'session' | 'manual'>('session');
   const [selectedId, setSelectedId] = useState<string>('');
@@ -97,6 +97,33 @@ export function ContractInteractionPanel() {
         Deployments are persisted in <code className="mono">localStorage</code> and grouped by
         environment.
       </p>
+
+      {/* Inline space selector */}
+      <div className="row" style={{ marginBottom: 12, alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 12, color: 'var(--muted)' }}>Space</span>
+        <div className="seg">
+          <button
+            type="button"
+            className={localSpace === 'espace' ? 'seg-item active' : 'seg-item'}
+            onClick={() => setLocalSpace('espace')}
+            title={`eSpace — EVM compatible (chain ${espace.id})`}
+          >
+            eSpace
+          </button>
+          <button
+            type="button"
+            className={localSpace === 'core' ? 'seg-item active' : 'seg-item'}
+            onClick={() => setLocalSpace('core')}
+            title={`Core Space (chain ${core.id})`}
+          >
+            Core
+          </button>
+        </div>
+        <span className="muted" style={{ fontSize: 11 }}>
+          chain {chain.id} · {chain.name}
+        </span>
+      </div>
+
       <ModeTabs mode={mode} setMode={setMode} historyLength={history.length} />
       {mode === 'session' && (
         <div style={{ marginTop: 12 }}>
@@ -138,96 +165,4 @@ export function ContractInteractionPanel() {
       )}
     </section>
   );
-}
-
-function useGroupedDeployments(history: DeployLogEntry[]) {
-  return useMemo(() => {
-    const map = new Map<DeployNetworkId, Map<'core' | 'espace', DeployLogEntry[]>>();
-    for (const entry of history) {
-      if (!Array.isArray(entry.abi)) continue;
-      const net = entry.networkId ?? 'custom';
-      if (!map.has(net)) map.set(net, new Map());
-      const byFamily = map.get(net) as Map<'core' | 'espace', DeployLogEntry[]>;
-      if (!byFamily.has(entry.family)) byFamily.set(entry.family, []);
-      (byFamily.get(entry.family) as DeployLogEntry[]).push(entry);
-    }
-    return map;
-  }, [history]);
-}
-
-function useActiveSession({
-  history,
-  selectedId,
-  networkId,
-  family,
-}: {
-  history: DeployLogEntry[];
-  selectedId: string;
-  networkId: DeployNetworkId;
-  family: 'core' | 'espace';
-}) {
-  return useMemo<DeployLogEntry | null>(() => {
-    if (selectedId) {
-      const found = history.find((entry) => entry.id === selectedId);
-      if (found) return found;
-    }
-    return (
-      history.find((entry) => entry.networkId === networkId && entry.family === family) ??
-      history[0] ??
-      null
-    );
-  }, [history, selectedId, networkId, family]);
-}
-
-function toTarget({
-  mode,
-  activeSession,
-  manualParsed,
-  chain,
-  family,
-  networkId,
-}: {
-  mode: 'session' | 'manual';
-  activeSession: DeployLogEntry | null;
-  manualParsed: { address: string; abi: Abi } | null;
-  chain: { name: string; id: number };
-  family: 'core' | 'espace';
-  networkId: DeployNetworkId;
-}): InteractionTarget | null {
-  if (mode === 'session' && activeSession)
-    return {
-      address: activeSession.address,
-      abi: activeSession.abi,
-      name: activeSession.contractName,
-      chainName: activeSession.chainName,
-      family: activeSession.family,
-      chainId: activeSession.chainId,
-      networkId: activeSession.networkId,
-    };
-  if (mode === 'manual' && manualParsed)
-    return {
-      address: manualParsed.address,
-      abi: manualParsed.abi,
-      name: 'Manual',
-      chainName: chain.name,
-      family,
-      chainId: chain.id,
-      networkId,
-    };
-  return null;
-}
-
-function useCallableFunctions(target: InteractionTarget | null) {
-  return useMemo(() => {
-    if (!target) return { reads: [] as AbiFunction[], writes: [] as AbiFunction[] };
-    const functions = target.abi.filter((entry): entry is AbiFunction => entry.type === 'function');
-    return {
-      reads: functions.filter(
-        (fn) => fn.stateMutability === 'view' || fn.stateMutability === 'pure',
-      ),
-      writes: functions.filter(
-        (fn) => fn.stateMutability === 'nonpayable' || fn.stateMutability === 'payable',
-      ),
-    };
-  }, [target]);
 }

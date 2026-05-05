@@ -126,6 +126,9 @@ export const api = {
       { method: 'POST', body: JSON.stringify(body) },
       signal,
     ),
+  /** Fetch genesis accounts on-demand. Cached no-store — never persisted. */
+  devnodeAccounts: (signal?: AbortSignal) =>
+    call<DevNodeAccountsResponse>('/devnode/accounts', {}, signal),
 
   // ── /compile ───────────────────────────────────────────────────────────────
   // Backend-side Solidity pipeline (`@cfxdevkit/compiler`). Templates ship
@@ -167,6 +170,12 @@ export interface DevNodeAccountResponse {
   initialBalanceCfx: string;
 }
 
+/** Returned by GET /devnode/accounts (on-demand, no-store). */
+export interface DevNodeAccountsResponse {
+  accounts: DevNodeAccountResponse[];
+  faucet: DevNodeAccountResponse;
+}
+
 export interface DevNodeStatusResponse {
   status: 'stopped' | 'starting' | 'running' | 'stopping' | 'error';
   running: boolean;
@@ -179,12 +188,8 @@ export interface DevNodeStatusResponse {
     accounts: number;
     balanceCfx: string;
     miningIntervalMs: number;
-    dataDir: string;
-    mnemonic: string;
   };
   mining?: { enabled: boolean; intervalMs: number; ticks: number; startedAt?: string };
-  accounts?: DevNodeAccountResponse[];
-  faucet?: DevNodeAccountResponse;
 }
 
 export interface TemplateSourceResponse {

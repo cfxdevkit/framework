@@ -5,13 +5,21 @@
  * RPCs point at the locally-spawned node).
  *
  * Polls `/devnode/status` every 5 s. Click expands a popover with
- * Start / Stop / Restart / Wipe controls + the genesis account list
- * (so users can copy a funded private key into a panel).
+ * Start / Stop / Restart / Wipe controls.
+ *
+ * Genesis accounts are fetched on-demand via `/devnode/accounts` (no-store)
+ * to avoid persisting private keys in polling state. A "Sync wallet" button
+ * resets the keystore session back to the devnode seed mnemonic so the
+ * connected accounts are always the funded genesis ones.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useKeystoreSession } from '../contexts/KeystoreSessionProvider.js';
+import {
+  DEFAULT_SHOWCASE_MNEMONIC,
+  useKeystoreSession,
+} from '../contexts/KeystoreSessionProvider.js';
 import { useNetwork } from '../contexts/NetworkProvider.js';
-import { api, type DevNodeStatusResponse } from '../lib/api.js';
+import { api, type DevNodeAccountsResponse, type DevNodeStatusResponse } from '../lib/api.js';
+import { DevNodePopoverContent } from './devnode-pill-popover.js';
 
 const POLL_MS = 5_000;
 
@@ -24,6 +32,12 @@ export function DevNodePill() {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<Action>(null);
+  const [accountsData, setAccountsData] = useState<DevNodeAccountsResponse | null>(null);
+  const [accountsBusy, setAccountsBusy] = useState(false);
+  const [accountsErr, setAccountsErr] = useState<string | null>(null);
+
+  // Is the current keystore mnemonic the devnode seed?
+  const isDefaultSeed = keystore.mnemonic.trim() === DEFAULT_SHOWCASE_MNEMONIC;
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -50,6 +64,7 @@ export function DevNodePill() {
     async (action: Exclude<Action, null>) => {
       setBusy(action);
       setError(null);
+      if (action !== 'start') setAccountsData(null); // clear on lifecycle changes
       try {
         if (action === 'start') setStatus(await api.devnodeStart({ mnemonic: keystore.mnemonic }));
         else if (action === 'stop') setStatus(await api.devnodeStop());
@@ -63,6 +78,24 @@ export function DevNodePill() {
     },
     [keystore.mnemonic],
   );
+
+  const fetchAccounts = useCallback(async () => {
+    setAccountsBusy(true);
+    setAccountsErr(null);
+    try {
+      setAccountsData(await api.devnodeAccounts());
+    } catch (e) {
+      setAccountsErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAccountsBusy(false);
+    }
+  }, []);
+
+  /** Reset the keystore session to the devnode seed mnemonic and connect account 0. */
+  const syncWallet = useCallback(() => {
+    keystore.resetMnemonic();
+    keystore.selectWallet(0);
+  }, [keystore]);
 
   const offline = error !== null && status === null;
 
@@ -102,116 +135,22 @@ export function DevNodePill() {
         <span className="pill-label">{label}</span>
       </button>
       {open && (
-        <div className="popover" role="dialog" aria-label="Dev node controls">
-          {!isLocal && (
-            <p className="muted small">
-              Switch network to <strong>Local</strong> to use the dev node.
-            </p>
-          )}
-          {isLocal && !sessionReady && (
-            <p className="muted small">
-              Select an active wallet before starting the local dev node.
-            </p>
-          )}
-          {offline && (
-            <p className="error small">
-              Showcase backend not reachable on <code className="mono">:5174</code>. Start it with{' '}
-              <code className="mono">pnpm --filter @cfxdevkit/example-showcase-backend dev</code>.
-            </p>
-          )}
-          {error && !offline && <p className="error small">{error}</p>}
-
-          <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              className="small"
-              disabled={busy !== null}
-              onClick={() => void refresh()}
-            >
-              Refresh
-            </button>
-            <button
-              type="button"
-              className="primary small"
-              disabled={busy !== null || status?.running === true || !isLocal || !sessionReady}
-              onClick={() => run('start')}
-            >
-              {busy === 'start' ? '…' : 'Start'}
-            </button>
-            <button
-              type="button"
-              className="small"
-              disabled={busy !== null || !status?.running}
-              onClick={() => run('restart')}
-            >
-              {busy === 'restart' ? '…' : 'Restart'}
-            </button>
-            <button
-              type="button"
-              className="small"
-              disabled={busy !== null || !status?.running}
-              onClick={() => run('stop')}
-            >
-              {busy === 'stop' ? '…' : 'Stop'}
-            </button>
-            <button
-              type="button"
-              className="danger small"
-              disabled={busy !== null}
-              onClick={() => {
-                if (window.confirm('Stop the dev node and delete its data dir?')) void run('wipe');
-              }}
-            >
-              {busy === 'wipe' ? '…' : 'Wipe'}
-            </button>
-          </div>
-
-          {status?.urls && (
-            <dl className="kv small">
-              <dt>core</dt>
-              <dd className="mono">{status.urls.core}</dd>
-              <dt>espace</dt>
-              <dd className="mono">{status.urls.espace}</dd>
-              {status.config && (
-                <>
-                  <dt>chainId</dt>
-                  <dd className="mono">
-                    {status.config.chainId} / {status.config.evmChainId}
-                  </dd>
-                  <dt>mining</dt>
-                  <dd className="mono">
-                    {status.mining?.enabled ? `every ${status.mining.intervalMs}ms` : 'off'}
-                    {status.mining?.ticks ? ` · ${status.mining.ticks} ticks` : ''}
-                  </dd>
-                </>
-              )}
-            </dl>
-          )}
-
-          {status?.accounts && status.accounts.length > 0 && (
-            <details>
-              <summary className="small">{status.accounts.length} funded accounts</summary>
-              <ul className="acct-list">
-                {status.accounts.map((a) => (
-                  <li key={a.index}>
-                    <span className="muted small">
-                      [{a.index}] {a.initialBalanceCfx} CFX
-                    </span>
-                    <button
-                      type="button"
-                      className="link"
-                      onClick={() => void navigator.clipboard.writeText(a.privateKey)}
-                      title="Copy private key"
-                    >
-                      copy pk
-                    </button>
-                    <code className="mono small">{a.evmAddress}</code>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </div>
+        <DevNodePopoverContent
+          isLocal={isLocal}
+          sessionReady={sessionReady}
+          offline={offline}
+          error={error}
+          status={status}
+          busy={busy}
+          isDefaultSeed={isDefaultSeed}
+          syncWallet={syncWallet}
+          run={run}
+          refresh={refresh}
+          accountsData={accountsData}
+          accountsBusy={accountsBusy}
+          accountsErr={accountsErr}
+          fetchAccounts={fetchAccounts}
+        />
       )}
     </div>
   );

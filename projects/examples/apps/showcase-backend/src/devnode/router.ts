@@ -15,6 +15,18 @@ export function devNodeRouter(manager: DevNodeManager = devNodeManager): Router 
     res.json(manager.status());
   });
 
+  r.get('/accounts', (_req: Request, res: Response) => {
+    const snapshot = manager.accounts();
+    if (!snapshot) {
+      res.status(409).json({ error: 'dev node is not running' });
+      return;
+    }
+    // Private keys must never be cached by browsers or proxies.
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Pragma', 'no-cache');
+    res.json(snapshot);
+  });
+
   r.post('/start', async (req: Request, res: Response) => {
     const parsed = parseStartBody(req.body);
     if ('error' in parsed) {
