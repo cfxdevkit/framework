@@ -1,5 +1,17 @@
 # Changelog
 
+
+## [Unreleased]
+### Changed
+### Fixed
+### Removed
+- Removed legacy `exchangeLegacyChunks` fallback for personal-signing APDU (INS=0x04) in `core-apdu.ts`
+- Removed `isLedgerStatus` import and usage in `core-apdu.ts`
+- Simplified `signCoreLedgerMessage` and `signCoreLedgerTransaction` to use only `exchangeChunks`
+### Added
+### Security
+### Dependencies
+
 ## 2026-05-04
 
 ### Changed

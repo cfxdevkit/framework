@@ -101,23 +101,19 @@ describe('ledger keystore', () => {
         const request = new Uint8Array(apdu);
         calls.push(request);
         const ins = request[1];
-        const p1 = request[2];
-        const p2 = request[3];
         if (ins === 0x01) return hexBytes('030203009000');
         if (ins === 0x02) return hexBytes(`41${corePublicKey}9000`);
-        if (ins === 0x04 && p1 === 0x00 && p2 === 0x80) return hexBytes('6a86');
-        if (ins === 0x04 && p1 === 0x00 && p2 === 0x00) return hexBytes(`00${r}${s}9000`);
+        if (ins === 0x04) return hexBytes('6a86');
         return hexBytes('6d00');
       }),
     };
     const signer = await signerFromLedger({ family: 'core', coreTransport, chainId: 1029 });
 
-    await expect(signer.signMessage('Hello, world!')).resolves.toBe(`0x${r}${s}1b`);
+    await expect(signer.signMessage('Hello, world!')).rejects.toMatchObject({
+      code: 'services/keystore/ledger/core-apdu-error',
+    });
     expect(bytesHex(calls[2] ?? new Uint8Array())).toBe(
       'e004008015058000002c800001f7800000000000000000000000',
-    );
-    expect(bytesHex(calls[3] ?? new Uint8Array())).toBe(
-      'e00400002a058000002c800001f7800000000000000000000000000004050000000d48656c6c6f2c20776f726c6421',
     );
   });
 
@@ -138,6 +134,8 @@ describe('ledger keystore', () => {
 
     await expect(signer.signMessage('Hello, world!')).rejects.toMatchObject({
       code: 'services/keystore/ledger/core-message-unsupported',
+      message:
+        'Conflux Core Ledger app 2.2.2 does not expose Core message signing in the published app source. Transaction signing still uses the current SIGN_TX APDU flow.',
     });
     expect(calls.map((call) => call[1])).toEqual([0x01, 0x02]);
   });

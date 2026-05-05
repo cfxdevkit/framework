@@ -37,42 +37,167 @@
       ]
     },
     "commands": [
-      { "command": "cfxdevkit.selectNetwork", "title": "Conflux: Select Network", "icon": "$(globe)" },
-      { "command": "cfxdevkit.selectKeystoreBackend", "title": "Conflux: Select Keystore Type", "icon": "$(key)" },
-      { "command": "cfxdevkit.selectKeystoreFile", "title": "Conflux: Select Keystore File", "icon": "$(folder)" },
-      { "command": "cfxdevkit.serverStart", "title": "Conflux: Start DevKit Runtime", "icon": "$(debug-start)" },
-      { "command": "cfxdevkit.serverStop", "title": "Conflux: Stop Node", "icon": "$(debug-stop)" },
-      { "command": "cfxdevkit.initializeSetup", "title": "Conflux: Initialize Keystore", "icon": "$(key)" },
-      { "command": "cfxdevkit.addWallet", "title": "Conflux: Add Wallet", "icon": "$(add)" },
-      { "command": "cfxdevkit.selectWallet", "title": "Conflux: Select Wallet", "icon": "$(check)" },
-      { "command": "cfxdevkit.removeWallet", "title": "Conflux: Remove Wallet", "icon": "$(trash)" },
-      { "command": "cfxdevkit.unlockKeystore", "title": "Conflux: Unlock Keystore", "icon": "$(unlock)" },
-      { "command": "cfxdevkit.lockKeystore", "title": "Conflux: Lock Keystore", "icon": "$(lock)" },
-      { "command": "cfxdevkit.rotateKeystorePassphrase", "title": "Conflux: Change Keystore Password", "icon": "$(key)" },
-      { "command": "cfxdevkit.nodeStart", "title": "Conflux: Start Node", "icon": "$(play)" },
-      { "command": "cfxdevkit.nodeStop", "title": "Conflux: Stop Node", "icon": "$(debug-stop)" },
-      { "command": "cfxdevkit.nodeRestart", "title": "Conflux: Restart Node", "icon": "$(refresh)" },
-      { "command": "cfxdevkit.nodeWipe", "title": "Conflux: Wipe Node Data" },
-      { "command": "cfxdevkit.nodeWipeRestart", "title": "Conflux: Wipe Data And Restart Node" },
-      { "command": "cfxdevkit.shutdown", "title": "Conflux: Shut Down Stack", "icon": "$(debug-stop)" },
-      { "command": "cfxdevkit.mineBlocks", "title": "Conflux: Mine Blocks" },
-      { "command": "cfxdevkit.viewAccounts", "title": "Conflux: View Accounts", "icon": "$(person)" },
-      { "command": "cfxdevkit.deployContract", "title": "Conflux: Deploy Contract", "icon": "$(cloud-upload)" },
-      { "command": "cfxdevkit.importContract", "title": "Conflux: Import Contract", "icon": "$(cloud-download)" },
-      { "command": "cfxdevkit.listContracts", "title": "Conflux: List Deployed Contracts", "icon": "$(file-code)" },
-      { "command": "cfxdevkit.refreshAccounts", "title": "Conflux: Refresh Accounts", "icon": "$(refresh)" },
-      { "command": "cfxdevkit.refreshContracts", "title": "Conflux: Refresh Contracts", "icon": "$(refresh)" },
-      { "command": "cfxdevkit.copyAddress", "title": "Conflux: Copy Address", "icon": "$(copy)" },
-      { "command": "cfxdevkit.copyContractAddress", "title": "Conflux: Copy Contract Address", "icon": "$(copy)" },
-      { "command": "cfxdevkit.abiCallRead", "title": "Conflux: Call Read Function", "icon": "$(eye)" },
-      { "command": "cfxdevkit.abiCallWrite", "title": "Conflux: Send Write Function", "icon": "$(edit)" }
+      {
+        "command": "cfxdevkit.selectNetwork",
+        "title": "Conflux: Select Network",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "cfxdevkit.selectKeystoreBackend",
+        "title": "Conflux: Select Keystore Type",
+        "icon": "$(key)"
+      },
+      {
+        "command": "cfxdevkit.selectKeystoreFile",
+        "title": "Conflux: Select Keystore File",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "cfxdevkit.serverStart",
+        "title": "Conflux: Start DevKit Runtime",
+        "icon": "$(debug-start)"
+      },
+      {
+        "command": "cfxdevkit.serverStop",
+        "title": "Conflux: Stop Node",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "cfxdevkit.initializeSetup",
+        "title": "Conflux: Initialize Keystore",
+        "icon": "$(key)"
+      },
+      {
+        "command": "cfxdevkit.addWallet",
+        "title": "Conflux: Add Wallet",
+        "icon": "$(add)"
+      },
+      {
+        "command": "cfxdevkit.selectWallet",
+        "title": "Conflux: Select Wallet",
+        "icon": "$(check)"
+      },
+      {
+        "command": "cfxdevkit.removeWallet",
+        "title": "Conflux: Remove Wallet",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "cfxdevkit.unlockKeystore",
+        "title": "Conflux: Unlock Keystore",
+        "icon": "$(unlock)"
+      },
+      {
+        "command": "cfxdevkit.lockKeystore",
+        "title": "Conflux: Lock Keystore",
+        "icon": "$(lock)"
+      },
+      {
+        "command": "cfxdevkit.rotateKeystorePassphrase",
+        "title": "Conflux: Change Keystore Password",
+        "icon": "$(key)"
+      },
+      {
+        "command": "cfxdevkit.nodeStart",
+        "title": "Conflux: Start Node",
+        "icon": "$(play)"
+      },
+      {
+        "command": "cfxdevkit.nodeStop",
+        "title": "Conflux: Stop Node",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "cfxdevkit.nodeRestart",
+        "title": "Conflux: Restart Node",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "cfxdevkit.nodeWipe",
+        "title": "Conflux: Wipe Node Data"
+      },
+      {
+        "command": "cfxdevkit.nodeWipeRestart",
+        "title": "Conflux: Wipe Data And Restart Node"
+      },
+      {
+        "command": "cfxdevkit.shutdown",
+        "title": "Conflux: Shut Down Stack",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "cfxdevkit.mineBlocks",
+        "title": "Conflux: Mine Blocks"
+      },
+      {
+        "command": "cfxdevkit.viewAccounts",
+        "title": "Conflux: View Accounts",
+        "icon": "$(person)"
+      },
+      {
+        "command": "cfxdevkit.deployContract",
+        "title": "Conflux: Deploy Contract",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "cfxdevkit.importContract",
+        "title": "Conflux: Import Contract",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "cfxdevkit.listContracts",
+        "title": "Conflux: List Deployed Contracts",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "cfxdevkit.refreshAccounts",
+        "title": "Conflux: Refresh Accounts",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "cfxdevkit.refreshContracts",
+        "title": "Conflux: Refresh Contracts",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "cfxdevkit.copyAddress",
+        "title": "Conflux: Copy Address",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "cfxdevkit.copyContractAddress",
+        "title": "Conflux: Copy Contract Address",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "cfxdevkit.abiCallRead",
+        "title": "Conflux: Call Read Function",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "cfxdevkit.abiCallWrite",
+        "title": "Conflux: Send Write Function",
+        "icon": "$(edit)"
+      }
     ],
     "views": {
       "cfxdevkit-sidebar": [
-        { "id": "cfxdevkit.networkView", "name": "Network" },
-        { "id": "cfxdevkit.nodeView", "name": "Node" },
-        { "id": "cfxdevkit.accountsView", "name": "Wallets" },
-        { "id": "cfxdevkit.contractsView", "name": "Contracts" }
+        {
+          "id": "cfxdevkit.networkView",
+          "name": "Network"
+        },
+        {
+          "id": "cfxdevkit.nodeView",
+          "name": "Node"
+        },
+        {
+          "id": "cfxdevkit.accountsView",
+          "name": "Wallets"
+        },
+        {
+          "id": "cfxdevkit.contractsView",
+          "name": "Contracts"
+        }
       ]
     },
     "viewsWelcome": [
@@ -95,20 +220,68 @@
     ],
     "menus": {
       "view/title": [
-        { "command": "cfxdevkit.selectNetwork", "when": "view == cfxdevkit.networkView", "group": "navigation@1" },
-        { "command": "cfxdevkit.selectKeystoreBackend", "when": "view == cfxdevkit.accountsView", "group": "navigation@1" },
-        { "command": "cfxdevkit.nodeStart", "when": "view == cfxdevkit.nodeView", "group": "navigation@1" },
-        { "command": "cfxdevkit.refreshAccounts", "when": "view == cfxdevkit.accountsView", "group": "navigation@2" },
-        { "command": "cfxdevkit.deployContract", "when": "view == cfxdevkit.contractsView", "group": "navigation@1" },
-        { "command": "cfxdevkit.importContract", "when": "view == cfxdevkit.contractsView", "group": "navigation@2" },
-        { "command": "cfxdevkit.refreshContracts", "when": "view == cfxdevkit.contractsView", "group": "navigation@3" }
+        {
+          "command": "cfxdevkit.selectNetwork",
+          "when": "view == cfxdevkit.networkView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "cfxdevkit.selectKeystoreBackend",
+          "when": "view == cfxdevkit.accountsView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "cfxdevkit.nodeStart",
+          "when": "view == cfxdevkit.nodeView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "cfxdevkit.refreshAccounts",
+          "when": "view == cfxdevkit.accountsView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "cfxdevkit.deployContract",
+          "when": "view == cfxdevkit.contractsView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "cfxdevkit.importContract",
+          "when": "view == cfxdevkit.contractsView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "cfxdevkit.refreshContracts",
+          "when": "view == cfxdevkit.contractsView",
+          "group": "navigation@3"
+        }
       ],
       "view/item/context": [
-        { "command": "cfxdevkit.unlockKeystore", "when": "view == cfxdevkit.accountsView && viewItem == cfxWalletRootActiveLocked", "group": "inline@1" },
-        { "command": "cfxdevkit.lockKeystore", "when": "view == cfxdevkit.accountsView && viewItem == cfxWalletRootActiveReady", "group": "inline@1" },
-        { "command": "cfxdevkit.removeWallet", "when": "view == cfxdevkit.accountsView && viewItem =~ /cfxWalletRoot/", "group": "inline@2" },
-        { "command": "cfxdevkit.copyAddress", "when": "viewItem == cfxAddressItem", "group": "inline" },
-        { "command": "cfxdevkit.copyContractAddress", "when": "viewItem == cfxContractItem", "group": "inline" }
+        {
+          "command": "cfxdevkit.unlockKeystore",
+          "when": "view == cfxdevkit.accountsView && viewItem == cfxWalletRootActiveLocked",
+          "group": "inline@1"
+        },
+        {
+          "command": "cfxdevkit.lockKeystore",
+          "when": "view == cfxdevkit.accountsView && viewItem == cfxWalletRootActiveReady",
+          "group": "inline@1"
+        },
+        {
+          "command": "cfxdevkit.removeWallet",
+          "when": "view == cfxdevkit.accountsView && viewItem =~ /cfxWalletRoot/",
+          "group": "inline@2"
+        },
+        {
+          "command": "cfxdevkit.copyAddress",
+          "when": "viewItem == cfxAddressItem",
+          "group": "inline"
+        },
+        {
+          "command": "cfxdevkit.copyContractAddress",
+          "when": "viewItem == cfxContractItem",
+          "group": "inline"
+        }
       ]
     },
     "configuration": {

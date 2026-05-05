@@ -87,7 +87,7 @@ async function signerFromLedgerCore(input: SignerFromLedgerInput, path: string):
   });
   return {
     account,
-    signTransaction: (tx, opts) => {
+    signTransaction: async (tx, opts) => {
       checkAborted(opts?.signal);
       return signCoreLedgerTransaction({ transport: input.coreTransport as never, path, tx });
     },
@@ -128,7 +128,7 @@ function unsupportedCoreMessageSigning(version: {
 }): KeystoreError {
   return new KeystoreError({
     code: 'services/keystore/ledger/core-message-unsupported',
-    message: `Conflux Core Ledger app ${version.major}.${version.minor}.${version.patch} does not support Core message signing. Update the Ledger app to 2.3.0 or newer, then reconnect.`,
+    message: `Conflux Core Ledger app ${version.major}.${version.minor}.${version.patch} does not expose Core message signing in the published app source. Transaction signing still uses the current SIGN_TX APDU flow.`,
   });
 }
 

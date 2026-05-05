@@ -1,5 +1,10 @@
 # Changelog
 
+
+## [Unreleased] - 2026-05-05
+### Changed
+- Ensured trailing newline in `.devcontainer/devcontainer-lock.json`
+
 ## 2026-05-04
 
 ### Changed

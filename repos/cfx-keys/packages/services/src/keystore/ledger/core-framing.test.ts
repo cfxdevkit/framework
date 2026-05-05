@@ -51,7 +51,7 @@ describe('Ledger Core APDU status mapping', () => {
 
   it('explains rejected APDU parameters', async () => {
     await expect(exchange(statusTransport(0x6a86), 0x04, 0, 0, new Uint8Array())).rejects.toThrow(
-      'requires Conflux Core app 2.3.0 or newer',
+      'does not expose INS=0x04 personal-signing in version 2.2.2',
     );
   });
 

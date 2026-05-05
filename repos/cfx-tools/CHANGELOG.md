@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - 2026-05-05
+### Changed
+- Reformatted `package.json` commands, views, viewsWelcome, and menus sections with consistent multi-line JSON formatting.
+- Ensured trailing newline in `package.json` and `tsconfig.json` files.
+
+
 
 ## 2026-05-04
 

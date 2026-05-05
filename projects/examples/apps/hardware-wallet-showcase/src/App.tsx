@@ -82,7 +82,7 @@ export function App() {
             <button
               type="button"
               onClick={() => void wallet.signMessage()}
-              disabled={!wallet.connected || wallet.busy}
+              disabled={!wallet.connected || wallet.busy || wallet.mode === 'core'}
             >
               Sign message
             </button>
@@ -119,6 +119,12 @@ export function App() {
             value={wallet.state.message}
             onChange={(event) => wallet.updateMessage(event.target.value)}
           />
+          {wallet.mode === 'core' ? (
+            <p className="info-note">
+              Published Conflux Core app `2.2.2` does not expose Core message signing. Core
+              transaction signing still uses the single `SIGN_TX` APDU protocol from the app source.
+            </p>
+          ) : null}
 
           <TransferPanel
             mode={wallet.mode}
@@ -141,6 +147,7 @@ export function App() {
           </TransferPanel>
 
           <DeployPanel
+            mode={wallet.mode}
             busy={wallet.busy}
             connected={wallet.connected}
             contractAddress={wallet.state.contractAddress}

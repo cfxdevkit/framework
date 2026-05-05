@@ -6,9 +6,7 @@ import {
   encodePath,
   exchange,
   exchangeChunks,
-  exchangeLegacyChunks,
   hexToBytes,
-  isLedgerStatus,
   parseLedgerSignature,
   signatureToHex,
   uint32,
@@ -76,13 +74,7 @@ export async function signCoreLedgerTransaction(input: {
   const unsigned = serializeCoreTransaction(input.tx);
   const path = encodePath(input.path);
   const txBytes = hexToBytes(unsigned);
-  let response: Uint8Array<ArrayBufferLike>;
-  try {
-    response = await exchangeChunks(input.transport, INS_SIGN_TX, path, txBytes);
-  } catch (cause) {
-    if (!isLedgerStatus(cause, 0x6a86)) throw cause;
-    response = await exchangeLegacyChunks(input.transport, INS_SIGN_TX, path, txBytes);
-  }
+  const response = await exchangeChunks(input.transport, INS_SIGN_TX, path, txBytes);
   return finaliseCoreTransaction(input.tx, parseLedgerSignature(response));
 }
 
@@ -95,19 +87,7 @@ export async function signCoreLedgerMessage(input: {
   const message =
     typeof input.message === 'string' ? new TextEncoder().encode(input.message) : input.message;
   const path = encodePath(input.path);
-  let response: Uint8Array<ArrayBufferLike>;
-  try {
-    response = await exchangeChunks(input.transport, INS_SIGN_PERSONAL, path, message);
-  } catch (cause) {
-    if (!isLedgerStatus(cause, 0x6a86)) throw cause;
-    const legacyPrefix = concatBytes(path, uint32(input.chainId), uint32(message.length));
-    response = await exchangeLegacyChunks(
-      input.transport,
-      INS_SIGN_PERSONAL,
-      legacyPrefix,
-      message,
-    );
-  }
+  const response = await exchangeChunks(input.transport, INS_SIGN_PERSONAL, path, message);
   return signatureToHex(parseLedgerSignature(response));
 }
 

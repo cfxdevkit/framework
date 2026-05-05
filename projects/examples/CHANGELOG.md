@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased] - 2026-05-05
+### Changed
+- Updated `App.tsx` to disable message signing when wallet mode is `core`, as Core app `2.2.2` does not expose message signing.
+- Added informational note in `App.tsx` explaining Core message signing limitation and `SIGN_TX` APDU usage for transactions.
+- Extended `TransferPanel` in `wallet-ui.tsx` to show Core Space-specific guidance about blind signing or data-display settings.
+- Added `mode` prop to `DeployPanel` and included Core Space deployment notes referencing `SIGN_TX` APDU flow and device settings.
+- Fixed missing trailing newlines in `package.json` and `tsconfig.json`.
+
+
 
 ## 2026-05-04
 

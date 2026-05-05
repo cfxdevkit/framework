@@ -125,13 +125,19 @@ export function TransferPanel(props: {
           Local eSpace uses chain 2030; Ledger may show ??? for the native asset, but the amount is
           CFX.
         </p>
-      ) : null}
+      ) : (
+        <p className="info-note">
+          Core Space uses the published `2.2.2` `SIGN_TX` APDU flow. Data-bearing transactions and
+          contract deployment may require blind signing or display-data settings on the device.
+        </p>
+      )}
       {props.children}
     </section>
   );
 }
 
 export function DeployPanel(props: {
+  mode: 'core' | 'espace';
   busy: boolean;
   connected: boolean;
   contractAddress: string;
@@ -159,6 +165,12 @@ export function DeployPanel(props: {
           <strong className="mono wrap">{props.contractAddress || 'not deployed'}</strong>
         </div>
       </div>
+      {props.mode === 'core' ? (
+        <p className="info-note">
+          Core deploy uses the same published `SIGN_TX` APDU flow as transfer signing. If the device
+          rejects the request, check the app settings for blind signing or detailed data display.
+        </p>
+      ) : null}
       <div className="actions secondary">
         <button
           className="primary"

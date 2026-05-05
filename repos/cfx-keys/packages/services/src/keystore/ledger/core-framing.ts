@@ -233,7 +233,7 @@ function formatStatusError(
     : '';
   const hint = STATUS_HINTS[status];
   if (status === 0x6a86 && apdu?.ins === 0x04) {
-    return `Ledger Core app returned status ${statusHex}${details}: This Conflux Core app rejected both known message signing APDU protocols. Message signing requires Conflux Core app 2.3.0 or newer; update the Ledger app, then retry.`;
+    return `Ledger Core app returned status ${statusHex}${details}: The published Conflux Core app does not expose INS=0x04 personal-signing in version 2.2.2. Core transaction signing still uses INS=0x03 with the current chunked APDU flow.`;
   }
   return hint
     ? `Ledger Core app returned status ${statusHex}${details}: ${hint}`
