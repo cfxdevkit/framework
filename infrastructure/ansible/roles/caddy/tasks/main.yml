@@ -1,0 +1,53 @@
+---
+- name: Add Caddy GPG key
+  apt_key:
+    url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
+    state: present
+
+- name: Add Caddy apt repository
+  apt_repository:
+    repo: "deb [trusted=yes] https://apt.fury.io/caddy/ /"
+    state: present
+    filename: caddy-stable
+
+- name: Install Caddy
+  apt:
+    name: caddy
+    state: present
+    update_cache: true
+
+- name: Create sites-enabled directory
+  file:
+    path: /etc/caddy/sites-enabled
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write base Caddyfile
+  template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload Caddy
+
+- name: Write per-site Caddy snippets
+  template:
+    src: "{{ snippet }}"
+    dest: "/etc/caddy/sites-enabled/{{ snippet | basename | regex_replace('\\.j2$', '') }}.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  with_fileglob:
+    - "{{ role_path }}/templates/sites/*.j2"
+  loop_control:
+    loop_var: snippet
+  notify: Reload Caddy
+
+- name: Enable and start Caddy
+  service:
+    name: caddy
+    state: started
+    enabled: true

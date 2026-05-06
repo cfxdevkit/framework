@@ -11,7 +11,7 @@ import {
 
 export async function runEvalAgent(opts = {}) {
   const docsReport = await readJsonIfExists('reports/docs-alignment.json');
-  const datasetManifest = await readJsonIfExists('datasets/manifest.json');
+  const ciCdReport = await readJsonIfExists('reports/ci-cd.json');
   const findings = [];
   if (!docsReport) {
     findings.push({
@@ -26,11 +26,17 @@ export async function runEvalAgent(opts = {}) {
       recommendation: 'Review artifacts/llm/reports/docs-alignment.md.',
     });
   }
-  if (!datasetManifest) {
+  if (!ciCdReport) {
     findings.push({
       severity: 'warning',
-      issue: 'dataset seed has not been generated',
-      recommendation: 'Run pnpm run llm:datasets.',
+      issue: 'CI/CD readiness agent has not run',
+      recommendation: 'Run pnpm run llm:ci.',
+    });
+  } else if (ciCdReport.status !== 'ok') {
+    findings.push({
+      severity: 'error',
+      issue: 'CI/CD readiness checks failed',
+      recommendation: 'Review artifacts/llm/reports/ci-cd.md.',
     });
   }
 
@@ -39,7 +45,7 @@ export async function runEvalAgent(opts = {}) {
     status: findings.some((finding) => finding.severity === 'error') ? 'error' : 'ok',
     checks: {
       docsAlignment: docsReport?.status ?? 'missing',
-      datasetExamples: datasetManifest?.examples ?? 0,
+      ciCdReadiness: ciCdReport?.status ?? 'missing',
       fineTuning: false,
     },
     findings,

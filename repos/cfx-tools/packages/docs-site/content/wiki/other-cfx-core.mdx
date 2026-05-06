@@ -67,9 +67,9 @@ All submodules are exported via **subpath exports** (e.g., `@cfxdevkit/core/clie
 
 Conflux uses **base32-encoded addresses** with network-specific prefixes. This module implements:
 
-- `hexToBase32(hex: `0x${string}`, networkId: number): string`  
+- `hexToBase32(hex: HexAddress, networkId: number): string`  
   Converts a 20-byte hex address to a Conflux base32 address (e.g., `cfx:aarc9...`).
-- `base32ToHex(base32: string): `0x${string}``  
+- `base32ToHex(base32: string): HexAddress`  
   Decodes base32 back to hex, validating checksums.
 - `isBase32Address(addr: string): boolean`  
   Validates base32 format and prefix.
@@ -149,7 +149,7 @@ const client = createClient({
 - `deriveDualAccounts({ mnemonic, count, startIndex })`
 
 #### Signers
-- `signerFromPrivateKey(privateKey: `0x${string}`)`  
+- `signerFromPrivateKey(privateKey: HexAddress)`  
   Returns `{ account, signMessage, signTransaction, signTypedData }`.
 
 #### Core Address Encoding
@@ -279,7 +279,7 @@ console.log(formatGDrip(gasPrice)); // "20"
 
 - **No side effects**: Pure functions, no global state.
 - **Explicit over implicit**: Network IDs required for address encoding.
-- **Type safety first**: All APIs use precise types (`0x${string}`, `bigint`, etc.).
+- **Type safety first**: All APIs use precise types (HexAddress, `bigint`, etc.).
 - **Test-driven**: Every public function has unit tests; network tests are opt-in.
 - **Extensibility**: `defineChain` and transport pluggability support custom networks.
 

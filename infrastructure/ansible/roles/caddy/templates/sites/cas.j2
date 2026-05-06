@@ -1,0 +1,6 @@
+# Caddyfile snippet — CAS backend
+# Managed by Ansible. Do not edit manually.
+
+api.cas.{{ base_domain }} {
+	reverse_proxy localhost:{{ app_ports.cas }}
+}

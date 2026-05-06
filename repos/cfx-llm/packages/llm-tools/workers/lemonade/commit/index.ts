@@ -1,7 +1,8 @@
 // @ts-nocheck
 
 import { commandBlock, commitPreflightBlock } from '../completion/index.ts';
-import { appendToChangelog, generateChangelogEntry } from './changelog.ts';
+import { logInfo, logStep, unique } from '../shared/logging.ts';
+import { generateChangesetPlan, writeChangesetFile } from './changeset.ts';
 import { runCodeHotspotGate, runQualityGates } from './gates.ts';
 import {
   assertNoUnexpectedChanges,
@@ -16,14 +17,11 @@ import { detectChangedScopes } from './scope.ts';
 
 export { changedFilesList, detectChangedScopes, resolveScope } from './scope.ts';
 
-import { logInfo, logStep, unique } from '../shared/logging.ts';
-
 export async function runCommit(args) {
   if (args[0] === '--') args.shift();
   const flags = parseCommitFlags(args);
   const total = 8;
 
-  // ── Phase 1: Quality gates ────────────────────────────────────────────────
   logStep(1, total, 'Quality gates');
   const hotspotsPassed = await runCodeHotspotGate();
   if (!hotspotsPassed) {
@@ -42,7 +40,6 @@ export async function runCommit(args) {
     logInfo('  ⚠ --force: proceeding despite gate failures');
   }
 
-  // ── Phase 2: Preflight ────────────────────────────────────────────────────
   logStep(2, total, 'Preflight checks');
   logInfo('  Ensuring GitNexus is registered...');
   await commandBlock('gitnexus ensure', 'pnpm', ['run', 'gitnexus:ensure'], { timeoutMs: 60000 });
@@ -50,7 +47,6 @@ export async function runCommit(args) {
   const preflightCtx = await commitPreflightBlock();
   logInfo('  ✓ preflight complete');
 
-  // ── Phase 3: Detect changed scopes ───────────────────────────────────────
   logStep(3, total, 'Detecting changed scopes');
   const scopes = await detectChangedScopes();
   if (scopes.length === 0) {
@@ -58,68 +54,58 @@ export async function runCommit(args) {
     return;
   }
   const initialFiles = unique(scopes.flatMap((scope) => scope.files));
-  logInfo(`  ${scopes.length} scope(s): ${scopes.map((s) => s.label).join(', ')}`);
+  logInfo(`  ${scopes.length} scope(s): ${scopes.map((scope) => scope.label).join(', ')}`);
 
-  // ── Phase 4: Per-scope changelog generation (serial) ─────────────────────
-  logStep(
-    4,
-    total,
-    `Generating changelog entries  [${flags.agent}, serial, ${scopes.length} scope(s)]`,
-  );
-  const changelogResults = [];
-  for (const scope of scopes) {
-    logInfo(`  → ${scope.label}  (${scope.files.length} file(s))`);
-    try {
-      const analysis = await generateChangelogEntry(scope, flags);
-      logInfo(`    ✓ ${analysis.summary}`);
-      changelogResults.push({ scope, ...analysis, ok: true });
-    } catch (error) {
-      logInfo(`    ✗ ${error.message}`);
-      changelogResults.push({
-        scope,
-        entry: null,
-        summary: '',
-        risks: [],
-        ok: false,
-        error: String(error.message),
-      });
+  logStep(4, total, `Checking release intent  [${flags.agent}]`);
+  const changesetPlan = await generateChangesetPlan(scopes, flags);
+  logInfo(`  ${changesetPlan.summary}`);
+  if (changesetPlan.releaseRelevant && changesetPlan.changedChangesets.length === 0) {
+    logInfo(
+      `  publishable package changes: ${changesetPlan.packages.map((pkg) => pkg.name).join(', ')}`,
+    );
+    for (const entry of changesetPlan.changesets) {
+      logInfo(`  → ${entry.packageName}: ${entry.bump} — ${entry.summary}`);
     }
   }
 
-  // ── Phase 5: Commit message ───────────────────────────────────────────────
   logStep(5, total, `Generating commit message  [${flags.agent}]`);
   const { response: commitResponse, commit } = await generateCommitMessage(
     preflightCtx,
-    changelogResults,
+    changesetPlan,
     flags,
   );
   const { subject, body } = commit;
   logInfo(`  subject: ${subject}`);
-  await writeCommitReport(commitResponse, changelogResults);
+  await writeCommitReport(commitResponse, changesetPlan);
   logInfo('  report: artifacts/llm/reports/lemonade-commit.md');
 
-  // ── Phase 6: Approval ─────────────────────────────────────────────────────
   logStep(6, total, 'Approval');
   printProposedCommit(subject, body);
   if (flags.dryRun) {
-    logInfo('  --dry-run: skipping changelog writes, post-generation checks, staging, and commit');
+    logInfo('  --dry-run: skipping changeset writes, post-generation checks, staging, and commit');
     return;
   }
   if (!flags.yes) {
-    const confirmed = await confirmPrompt('Write changelogs and commit? [Y/n] ');
+    const confirmed = await confirmPrompt('Write changeset if needed and commit? [Y/n] ');
     if (!confirmed) {
       logInfo('  Aborted.');
       return;
     }
   }
 
-  // ── Phase 7: Write generated files and re-check ───────────────────────────
-  logStep(7, total, 'Writing generated files and post-checks');
+  logStep(7, total, 'Writing changeset and post-checks');
   const generatedFiles = [];
-  for (const result of changelogResults.filter((item) => item.ok && item.entry)) {
-    await appendToChangelog(result.scope, result.entry);
-    generatedFiles.push(result.scope.changelogPath);
-    logInfo(`  ✓ ${result.scope.changelogPath} updated`);
+  if (
+    changesetPlan.releaseRelevant &&
+    changesetPlan.changedChangesets.length === 0 &&
+    changesetPlan.changesets.length > 0 &&
+    !flags.skipChangeset
+  ) {
+    const written = await writeChangesetFile(changesetPlan);
+    generatedFiles.push(...written);
+    for (const file of written) logInfo(`  ✓ ${file} created`);
+  } else if (changesetPlan.releaseRelevant && changesetPlan.changedChangesets.length === 0) {
+    logInfo('  ⚠ release-relevant package changes have no changeset');
   }
   if (!flags.skipPostChecks) {
     const postChecksPassed = await runQualityGates({
@@ -134,7 +120,6 @@ export async function runCommit(args) {
     logInfo('  --skip-post-checks: skipping post-generation validation');
   }
 
-  // ── Phase 8: Commit ───────────────────────────────────────────────────────
   logStep(8, total, 'Committing');
   const filesToStage = await resolveFilesToStage(initialFiles, generatedFiles, commit.filesToStage);
   await assertNoUnexpectedChanges(filesToStage);
@@ -151,6 +136,8 @@ export function parseCommitFlags(args) {
   let force = false;
   let skipChecks = false;
   let skipPostChecks = false;
+  let skipChangeset = false;
+  let changesetBump = null;
   let withTests = true;
   let withBuild = false;
   let agent = 'direct';
@@ -168,6 +155,9 @@ export function parseCommitFlags(args) {
     else if (arg === '--force' || arg === '-f') force = true;
     else if (arg === '--skip-checks') skipChecks = true;
     else if (arg === '--skip-post-checks') skipPostChecks = true;
+    else if (arg === '--skip-changeset') skipChangeset = true;
+    else if (arg === '--no-changeset') changesetBump = 'none';
+    else if (arg === '--changeset-bump') changesetBump = args[++index];
     else if (arg === '--with-tests') withTests = true;
     else if (arg === '--skip-tests') withTests = false;
     else if (arg === '--with-build') withBuild = true;
@@ -175,6 +165,9 @@ export function parseCommitFlags(args) {
   }
   if (!['direct', 'pi-rpc'].includes(agent)) {
     throw new Error('Commit --agent must be one of: direct, pi-rpc');
+  }
+  if (changesetBump && !['patch', 'minor', 'major', 'none'].includes(changesetBump)) {
+    throw new Error('Commit --changeset-bump must be one of: patch, minor, major');
   }
   return {
     prompt: promptParts.join(' ').trim(),
@@ -185,6 +178,8 @@ export function parseCommitFlags(args) {
     force,
     skipChecks,
     skipPostChecks,
+    skipChangeset,
+    changesetBump,
     withTests,
     withBuild,
     agent,
@@ -192,5 +187,3 @@ export function parseCommitFlags(args) {
     piModel,
   };
 }
-
-// ─── Quality gates ────────────────────────────────────────────────────────────

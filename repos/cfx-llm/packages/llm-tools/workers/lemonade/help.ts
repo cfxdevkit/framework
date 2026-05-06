@@ -26,16 +26,19 @@ Commands:
                                    1. Quality gates (lint, typecheck, tests; opt-in: build)
                                    2. Preflight (gitnexus + git + review)
                                    3. Detect changed scopes
-                                   4. Generate structured changelog JSON per scope (serial)
+                                   4. Check package release intent and Changeset coverage
                                    5. Generate structured commit JSON
                                    6. Confirm proposed commit
-                                   7. Write changelogs + re-run lint/typecheck/tests
+                                   7. Write a missing Changeset + re-run lint/typecheck/tests
                                    8. Stage explicit file list + commit
     --dry-run                    Show what would happen; skip writes and commit
     --yes / -y                   Skip confirmation prompt
     --force / -f                 Commit even if quality gates fail
     --skip-checks                Skip all quality gates (Phase 1)
-    --skip-post-checks           Skip post-generation lint/typecheck/tests after changelog writes
+    --skip-post-checks           Skip post-generation lint/typecheck/tests after generated writes
+    --skip-changeset             Do not create a missing Changeset for publishable package changes
+    --changeset-bump <level>     Force generated Changeset bump: patch, minor, or major
+    --no-changeset               Alias for intentionally committing without a generated Changeset
     --skip-tests                 Skip Moon test suite in quality gates
     --with-build                 Also run Moon build in quality gates
     --with-tests                 Explicitly keep Moon test suite enabled (default)
@@ -44,7 +47,7 @@ Commands:
     --pi-model <id>               Pi model to use with --agent pi-rpc
     --quick                      Short LLM calls (faster, less detail)
     --model <id>                 Override LLM model
-  run <action> [--quick] [prompt] Run docs-upkeep, test-audit, repo-health, review, plan, architecture, validation
+  run <action> [--quick] [prompt] Run docs-upkeep, test-audit, repo-health, review, validation, changeset, release-readiness, ci-cd, docs-pipeline
   test-upkeep [flags] [prompt]    Analyse test coverage per package, identify hotspots, and optionally write new test files:
                                    1. Discover packages with vitest.config.ts
                                    2. Build deterministic test inventory (source vs test files)
@@ -68,8 +71,14 @@ Examples:
   pnpm run llm:commit
   pnpm run llm:commit -- --dry-run
   pnpm run llm:commit -- --yes
+  pnpm run llm:commit -- --yes --changeset-bump patch
   pnpm run llm:commit -- --agent pi-rpc --pi-provider lemonade --pi-model Qwen3-Coder-Next-GGUF
   pnpm run llm:action -- review
+  pnpm run llm:changeset
+  pnpm run llm:release
+  pnpm run llm:ci
+  pnpm run llm:ci-cd
+  pnpm run llm:docs-pipeline
   pnpm run llm:docs-upkeep -- --quick
   pnpm run llm:docs-upkeep -- --quick --write --yes --max-folders 3
   pnpm run llm:docs-upkeep -- --agent pi-rpc --pi-provider lemonade --quick --max-folders 1

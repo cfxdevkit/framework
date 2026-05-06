@@ -106,6 +106,17 @@ export async function gitChangedFiles() {
 export function suggestValidationCommands(changed) {
   const commands = new Set();
   if (!changed.length) return ['pnpm run llm:docs', 'pnpm run llm:eval'];
+  const touchesWorkflow = changed.some((file) => file.startsWith('.github/workflows/'));
+  const touchesDocsSite = changed.some((file) =>
+    file.startsWith('repos/cfx-tools/packages/docs-site/'),
+  );
+  const touchesDocsDeploy = changed.some(
+    (file) => touchesWorkflow && /build-docs|deploy-docs/.test(file),
+  );
+  const touchesChangeset = changed.some(
+    (file) => file.startsWith('.changeset/') || /(^|\/)package\.json$/.test(file),
+  );
+  const touchesAnsible = changed.some((file) => file.startsWith('infrastructure/ansible/'));
   if (changed.some((file) => /\.(ts|tsx|js|mjs)$/.test(file))) {
     commands.add('pnpm run lint');
     commands.add('pnpm run typecheck');
@@ -115,6 +126,19 @@ export function suggestValidationCommands(changed) {
     changed.some((file) => file.endsWith('.md') || file.endsWith('.yml') || file.endsWith('.yaml'))
   ) {
     commands.add('pnpm run llm:docs');
+  }
+  if (touchesDocsSite) {
+    commands.add('pnpm --filter @cfxdevkit/docs-site build');
+    commands.add('pnpm run llm:docs-pipeline');
+  }
+  if (touchesWorkflow || touchesDocsDeploy || touchesAnsible) {
+    commands.add('pnpm run llm:ci');
+    commands.add('pnpm run llm:ci-cd');
+  }
+  if (touchesChangeset) {
+    commands.add('pnpm exec changeset status');
+    commands.add('pnpm run llm:changeset');
+    commands.add('pnpm run llm:release');
   }
   if (changed.some(isSecuritySensitive)) {
     commands.add('pnpm run security:check');

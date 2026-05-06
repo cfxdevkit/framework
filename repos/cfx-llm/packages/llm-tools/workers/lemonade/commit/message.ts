@@ -8,15 +8,12 @@ import { unique } from '../shared/logging.ts';
 import { changedFilesList } from './scope.ts';
 import { validateCommitJson } from './validate.ts';
 
-export async function generateCommitMessage(preflightCtx, changelogResults, flags) {
-  const changelogSummary = changelogResults
-    .filter((r) => r.ok && r.entry)
-    .map((r) => `### ${r.scope.label}\nSummary: ${r.summary}\n${r.entry}`)
-    .join('\n\n');
+export async function generateCommitMessage(preflightCtx, changesetPlan, flags) {
+  const changesetSummary = renderChangesetGuidance(changesetPlan).join('\n');
 
   const context = [
     preflightCtx,
-    changelogResults.length > 0 ? `--- changelog entries generated ---\n${changelogSummary}` : '',
+    `--- changeset guidance ---\n${changesetSummary}`,
     await readContextFile('CONTRIBUTING.md'),
   ]
     .filter(Boolean)
@@ -59,27 +56,38 @@ export async function generateCommitMessage(preflightCtx, changelogResults, flag
     try {
       return { response: retryResponse, commit: validateCommitJson(retryResponse.content) };
     } catch {
-      return { response: retryResponse, commit: fallbackCommitMessage(changelogResults) };
+      return { response: retryResponse, commit: fallbackCommitMessage(changesetPlan) };
     }
   }
 }
 
-export function fallbackCommitMessage(changelogResults) {
-  const okResults = changelogResults.filter((result) => result.ok);
-  const scopeLabels = okResults.map((result) => result.scope.label);
+export function fallbackCommitMessage(changesetPlan) {
+  const packageNames = changesetPlan?.packages?.map((pkg) => pkg.name) ?? [];
+  const changesets = changesetPlan?.changesets ?? [];
   const bodyLines = [
     'Generated deterministic fallback commit metadata after the local LLM returned invalid commit JSON.',
     '',
-    ...okResults.slice(0, 8).map((result) => `- ${result.scope.label}: ${result.summary}`),
+    changesetPlan?.summary
+      ? `- Release intent: ${changesetPlan.summary}`
+      : '- Release intent: not detected',
+    ...changesets
+      .slice(0, 8)
+      .map((entry) => `- ${entry.packageName}: ${entry.bump} - ${entry.summary}`),
   ];
-  if (okResults.length > 8)
-    bodyLines.push(`- ${okResults.length - 8} additional scope(s) updated.`);
+  if (changesets.length > 8)
+    bodyLines.push(
+      `- ${changesets.length - 8} additional changeset entr${changesets.length - 8 === 1 ? 'y' : 'ies'}.`,
+    );
   return {
-    subject: 'refactor: update workspace structure and tooling',
+    subject: changesetPlan?.releaseRelevant
+      ? 'chore: update release-ready package changes'
+      : 'refactor: update workspace structure and tooling',
     body: bodyLines.join('\n').trim(),
     filesToStage: [],
     risks: [
-      `Fallback commit metadata used for ${scopeLabels.length} scope(s): ${scopeLabels.join(', ')}`,
+      packageNames.length > 0
+        ? `Fallback commit metadata used for package changes: ${packageNames.join(', ')}`
+        : 'Fallback commit metadata used without publishable package changes.',
     ],
   };
 }
@@ -98,7 +106,7 @@ export function printProposedCommit(subject, body) {
   console.log('  └──────────────────────────────────────────────────────────────');
 }
 
-export async function writeCommitReport(response, changelogResults) {
+export async function writeCommitReport(response, changesetPlan) {
   const reportPath = join(artifactsRoot, 'reports', 'lemonade-commit.md');
   await mkdir(dirname(reportPath), { recursive: true });
   await writeFile(
@@ -114,25 +122,49 @@ export async function writeCommitReport(response, changelogResults) {
       '',
       response.content,
       '',
-      '## Changelog Scopes',
+      '## Changeset Guidance',
       '',
-      ...renderChangelogScopes(changelogResults),
+      ...renderChangesetGuidance(changesetPlan),
       '',
     ].join('\n'),
     'utf8',
   );
 }
 
-function renderChangelogScopes(changelogResults) {
-  if (!changelogResults.length) return ['No changed scopes detected.'];
-  return changelogResults.flatMap((result) => [
-    `### ${result.scope.label}`,
+function renderChangesetGuidance(changesetPlan) {
+  if (!changesetPlan) return ['No changeset guidance generated.'];
+  const lines = [
+    `Release relevant: ${changesetPlan.releaseRelevant ? 'yes' : 'no'}`,
+    `Summary: ${changesetPlan.summary}`,
     '',
-    result.ok ? result.summary : `Failed: ${result.error}`,
-    '',
-    result.entry ?? '',
-    '',
-  ]);
+  ];
+  if (changesetPlan.changedChangesets?.length) {
+    lines.push(
+      'Existing changesets:',
+      '',
+      ...changesetPlan.changedChangesets.map((file) => `- ${file}`),
+      '',
+    );
+  }
+  if (changesetPlan.packages?.length) {
+    lines.push(
+      'Changed publishable packages:',
+      '',
+      ...changesetPlan.packages.map((pkg) => `- ${pkg.name} (${pkg.dir})`),
+      '',
+    );
+  }
+  if (changesetPlan.changesets?.length) {
+    lines.push('Suggested entries:', '');
+    for (const entry of changesetPlan.changesets) {
+      lines.push(`- ${entry.packageName}: ${entry.bump} - ${entry.summary}`);
+    }
+    lines.push('');
+  }
+  if (changesetPlan.risks?.length) {
+    lines.push('Risks:', '', ...changesetPlan.risks.map((risk) => `- ${risk}`), '');
+  }
+  return lines;
 }
 
 export async function confirmPrompt(question) {

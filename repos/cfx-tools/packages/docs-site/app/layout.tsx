@@ -1,8 +1,8 @@
-import { Footer, Layout, Navbar } from 'nextra-theme-docs'
-import { Head } from 'nextra/components'
-import { getPageMap } from 'nextra/page-map'
-import 'nextra-theme-docs/style.css'
-import type { Metadata } from 'next'
+import { Footer, Layout, Navbar } from 'nextra-theme-docs';
+import { Head } from 'nextra/components';
+import { getPageMap } from 'nextra/page-map';
+import 'nextra-theme-docs/style.css';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   },
   description:
     'Production-grade TypeScript SDK, React components, and developer tooling for building on the Conflux network.',
-}
+};
 
 const navbar = (
   <Navbar
@@ -22,7 +22,7 @@ const navbar = (
     }
     projectLink="https://github.com/cfxdevkit"
   />
-)
+);
 
 const footer = (
   <Footer>
@@ -33,7 +33,7 @@ const footer = (
       </a>
     </span>
   </Footer>
-)
+);
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -53,5 +53,5 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </Layout>
       </body>
     </html>
-  )
+  );
 }

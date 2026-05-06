@@ -10,10 +10,8 @@ import {
   languageForPath,
   packageOwner,
   printSummary,
-  readJsonlIfExists,
   secretNamePattern,
   sha256,
-  sourceExtensions,
   tierForPath,
   toRel,
   writeJsonl,
@@ -64,50 +62,4 @@ export async function runCorpusAgent(opts = {}) {
   await writeJsonReport('corpus/manifest.json', manifest);
   if (!opts.silent) printSummary('llm:corpus', [manifest]);
   return { agent: 'corpus', status: 'ok', ...manifest };
-}
-
-export async function runDatasetAgent(opts = {}) {
-  const files = await readJsonlIfExists('corpus/files.jsonl');
-  const docs = await readJsonlIfExists('corpus/docs-index.jsonl');
-  const sourceExamples = files
-    .filter((file) => sourceExtensions.has(extname(file.path)))
-    .slice(0, 50)
-    .map((file) => ({
-      task: 'classify-package-boundary',
-      input: { path: file.path, language: file.language },
-      expected: { tier: file.tier, package: file.package },
-      source: 'deterministic-corpus',
-    }));
-  const docExamples = docs.slice(0, 50).map((doc) => ({
-    task: 'answer-doc-heading-location',
-    input: { heading: doc.heading },
-    expected: { path: doc.path, depth: doc.depth },
-    source: 'deterministic-doc-index',
-  }));
-  const reviewExamples = [
-    {
-      task: 'review-security-sensitive-change',
-      input: { touchedPath: 'repos/cfx-keys/packages/services/src/keystore/file/index.ts' },
-      expected: { requiredValidation: ['pnpm run security:check', 'pnpm run typecheck'] },
-      source: 'policy-seed',
-    },
-    {
-      task: 'review-doc-only-change',
-      input: { touchedPath: 'docs/llm-fine-tuning-plan.md' },
-      expected: { requiredValidation: ['pnpm run llm:docs'] },
-      source: 'policy-seed',
-    },
-  ];
-
-  const examples = [...sourceExamples, ...docExamples, ...reviewExamples];
-  await writeJsonl('datasets/agent-eval.jsonl', examples);
-  const manifest = {
-    generatedAt: new Date().toISOString(),
-    examples: examples.length,
-    fineTuning: false,
-    note: 'Evaluation seed data only. No training dataset is promoted by this agent.',
-  };
-  await writeJsonReport('datasets/manifest.json', manifest);
-  if (!opts.silent) printSummary('llm:datasets', [manifest]);
-  return { agent: 'datasets', status: 'ok', ...manifest };
 }

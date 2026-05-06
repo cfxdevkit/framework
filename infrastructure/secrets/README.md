@@ -13,6 +13,16 @@ This directory contains operational policies, templates, and guidance only. Do n
 
 Every production secret must have an owner, purpose, storage backend, rotation interval, recovery procedure, and access-review cadence recorded in the deployment runbook that consumes it.
 
+## GitHub Actions Secrets and Variables
+
+| Name | Type | Used by | Purpose |
+| --- | --- | --- | --- |
+| `VPS_HOST` | secret | `deploy-docs.yml` | Hetzner VPS public IP or host name |
+| `VPS_SSH_KEY` | secret | `deploy-docs.yml` | Private key for the VPS `deploy` user |
+| `GHCR_TOKEN` | secret | `deploy-docs.yml` | Optional PAT with `read:packages` when GHCR images are private |
+| `GHCR_USERNAME` | variable | `deploy-docs.yml` | Optional GHCR username; defaults to `cfxdevkit` |
+| npm trusted publishing | external config | `release.yml`, `changeset-release.yml` | Configure each public package on npmjs.com for OIDC publishing from this repository |
+
 ## Policies
 
 - [Rotation](policies/rotation.md)

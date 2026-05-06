@@ -12,4 +12,4 @@ export default {
   'project-layout-examples': 'Project Layout & Examples',
   'repository-layout': 'Repository Layout',
   'tooling-config': 'Tooling & Config',
-}
+};

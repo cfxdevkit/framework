@@ -78,16 +78,28 @@ export const llmCommands = [
     workerArgs: ['run', 'validation'],
   },
   {
-    name: 'plan',
-    description: 'Ask the local LLM for a repo-aware implementation plan',
+    name: 'changeset',
+    description: 'Ask the local LLM to review Changeset readiness for changed packages',
     worker: 'lemonade',
-    workerArgs: ['run', 'plan'],
+    workerArgs: ['run', 'changeset'],
   },
   {
-    name: 'architecture',
-    description: 'Ask the local LLM architecture questions with repo context',
+    name: 'release',
+    description: 'Ask the local LLM to review Changesets and npm publish readiness',
     worker: 'lemonade',
-    workerArgs: ['run', 'architecture'],
+    workerArgs: ['run', 'release-readiness'],
+  },
+  {
+    name: 'ci-cd',
+    description: 'Ask the local LLM to review CI/CD workflow and VPS deployment risk',
+    worker: 'lemonade',
+    workerArgs: ['run', 'ci-cd'],
+  },
+  {
+    name: 'docs-pipeline',
+    description: 'Ask the local LLM to review docs build, wiki sync, image, and deploy flow',
+    worker: 'lemonade',
+    workerArgs: ['run', 'docs-pipeline'],
   },
   {
     name: 'all',
@@ -96,16 +108,16 @@ export const llmCommands = [
     workerArgs: ['all'],
   },
   {
+    name: 'ci',
+    description: 'Run deterministic CI/CD and docs deploy readiness checks',
+    worker: 'deterministic',
+    workerArgs: ['ci'],
+  },
+  {
     name: 'corpus',
     description: 'Build local repo corpus metadata for LLM context',
     worker: 'deterministic',
     workerArgs: ['corpus'],
-  },
-  {
-    name: 'datasets',
-    description: 'Build deterministic eval seed data, not training data',
-    worker: 'deterministic',
-    workerArgs: ['datasets'],
   },
   {
     name: 'docs',

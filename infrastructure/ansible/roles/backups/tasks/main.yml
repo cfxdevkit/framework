@@ -1,0 +1,52 @@
+---
+- name: Install restic
+  apt:
+    name: restic
+    state: present
+    update_cache: true
+
+- name: Create backup script from template
+  template:
+    src: backup.sh.j2
+    dest: /usr/local/bin/backup.sh
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Write systemd backup service
+  copy:
+    dest: /etc/systemd/system/restic-backup.service
+    content: |
+      [Unit]
+      Description=Restic backup - cfxdevkit framework VPS
+      After=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/backup.sh
+      User=root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Write systemd backup timer
+  copy:
+    dest: /etc/systemd/system/restic-backup.timer
+    content: |
+      [Unit]
+      Description=Daily restic backup timer
+
+      [Timer]
+      OnCalendar=*-*-* 02:00:00
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable and start backup timer
+  systemd:
+    name: restic-backup.timer
+    state: started
+    enabled: true
+    daemon_reload: true

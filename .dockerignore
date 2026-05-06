@@ -3,13 +3,19 @@
 .moon/cache
 .cfxdevkit
 .devcontainer/.cache
-
+.next
+**/.next
 node_modules
 **/node_modules
+artifacts
+coverage
+dist
+**/dist
+*.log
+infrastructure/ansible/inventory.local.ini
+infrastructure/ansible/vars/local.yml
 
 .pnpm-store
 .turbo
 .vite
 .vitest
-coverage
-*.log

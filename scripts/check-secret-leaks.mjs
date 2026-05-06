@@ -5,7 +5,17 @@ import { join, relative } from 'node:path';
 const root = process.cwd();
 const roots = ['repos', 'projects', 'tools', 'scripts'];
 const allowedExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
-const ignoredDirs = new Set(['node_modules', 'dist', 'coverage', '.moon', '.git', '.vitest']);
+const ignoredDirs = new Set([
+  'node_modules',
+  'dist',
+  'coverage',
+  '.next',
+  '.moon',
+  '.git',
+  '.turbo',
+  '.vite',
+  '.vitest',
+]);
 const ignoredFiles = new Set(['scripts/check-secret-leaks.mjs']);
 
 const rules = [

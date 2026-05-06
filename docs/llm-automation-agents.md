@@ -16,12 +16,16 @@ pnpm run llm:config -- show
 pnpm run llm:action -- review
 pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
 pnpm run llm:corpus
+pnpm run llm:ci
 pnpm run llm:docs
 pnpm run llm:review
 pnpm run llm:hotspots
-pnpm run llm:datasets
 pnpm run llm:eval
 pnpm run llm:serve-check
+pnpm run llm:changeset
+pnpm run llm:release
+pnpm run llm:ci-cd
+pnpm run llm:docs-pipeline
 ```
 
 Generated outputs are written under `artifacts/llm/`, which is ignored by git.
@@ -32,10 +36,10 @@ Commit only small schemas, manifests, or report excerpts intentionally.
 | Agent | Purpose | Output |
 |-------|---------|--------|
 | `llm:corpus` | Build safe repository metadata for retrieval and later eval seeds | `artifacts/llm/corpus/*.jsonl` |
+| `llm:ci` | Check CI/CD workflow, docs image, release, and VPS deploy wiring | `artifacts/llm/reports/ci-cd.*` |
 | `llm:docs` | Detect broken documentation references, Moon registration drift, package export drift, and current/planned wording risk | `artifacts/llm/reports/docs-alignment.*` |
 | `llm:review` | Inspect current git changes and suggest targeted validation commands | `artifacts/llm/reports/review.*` |
 | `llm:hotspots` | Scan source file size and recent churn against the framework component budget | `artifacts/llm/reports/code-hotspots.*` |
-| `llm:datasets` | Generate deterministic evaluation seed examples from corpus metadata | `artifacts/llm/datasets/*.jsonl` |
 | `llm:eval` | Summarize deterministic gates from the generated reports | `artifacts/llm/reports/eval.*` |
 | `llm:serve-check` | Probe Lemonade Server reachability and model-list endpoints, including `http://localhost:13305/` by default | `artifacts/llm/reports/serve-check.*` |
 
@@ -65,7 +69,10 @@ pnpm run llm:config -- set default-model Qwen3-Coder-Next-GGUF
 pnpm run llm:config -- set action review Qwen3-Coder-Next-GGUF
 pnpm run llm:action -- docs-upkeep
 pnpm run llm:action -- review
-pnpm run llm:action -- plan "Add a package export scanner"
+pnpm run llm:changeset
+pnpm run llm:release
+pnpm run llm:ci-cd
+pnpm run llm:docs-pipeline
 pnpm run llm:ask -- --quick "Which validation commands should I run for a docs-only change?"
 ```
 
@@ -78,9 +85,11 @@ The available repo actions are:
 |--------|---------|
 | `docs-upkeep` | Use docs alignment reports and docs context to recommend minimal documentation fixes |
 | `review` | Review the current git diff with repo security and contribution context |
-| `plan` | Produce implementation plans grounded in the current architecture and LLM automation plan |
-| `architecture` | Answer package-boundary and current-vs-planned topology questions |
 | `validation` | Pick targeted validation commands for the current change set |
+| `changeset` | Review changed publishable packages for required Changesets, bump levels, and release notes |
+| `release-readiness` | Review Changesets, release workflows, and npm publish provenance before releasing |
+| `ci-cd` | Review GitHub Actions, security gates, docs image publishing, and VPS deploy wiring |
+| `docs-pipeline` | Review wiki sync, docs build, Docker image, and docs deploy readiness |
 
 Local Lemonade configuration is written to `artifacts/llm/config/lemonade.json`,
 which is ignored by git. LLM outputs are written to
@@ -94,7 +103,7 @@ which is ignored by git. LLM outputs are written to
   available, the agent records discovered model ids, labels, recipes, and sizes.
 - Lemonade CLI actions ask the model for recommendations only; they do not apply
   patches, run deployment commands, publish packages, or commit changes.
-- Dataset generation creates eval seed records, not approved training data.
+- Dataset generation and fine-tuning remain outside this repo automation surface.
 - The review agent checks uncommitted changes. For committed ranges, compare or
   checkout the desired diff before running it.
 - The documentation agent intentionally reports warnings rather than rewriting

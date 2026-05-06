@@ -99,7 +99,7 @@ export function renderEval(report) {
     `Status: ${report.status}`,
     '',
     `Docs alignment: ${report.checks.docsAlignment}`,
-    `Dataset examples: ${report.checks.datasetExamples}`,
+    `CI/CD readiness: ${report.checks.ciCdReadiness}`,
     `Fine tuning: ${report.checks.fineTuning}`,
     '',
     renderFindings('Findings', report.findings),

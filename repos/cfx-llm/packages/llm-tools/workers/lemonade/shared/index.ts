@@ -59,29 +59,75 @@ export const repoActions = {
     ],
     includeChangedFiles: true,
   },
+  changeset: {
+    title: 'Changeset Readiness',
+    defaultPrompt:
+      'Review the current changes for release relevance. Identify which publishable packages need a Changeset, whether an existing .changeset entry is sufficient, and whether bump levels and release notes match the public behavior changed. Do not suggest direct CHANGELOG edits.',
+    context: [
+      '.changeset/config.json',
+      'artifacts/llm/reports/review.md',
+      'package.json',
+      'scripts/publish-packages.mjs',
+      '.github/workflows/changeset-release.yml',
+    ],
+    includeChangedFiles: true,
+    includeGitDiff: true,
+  },
+  'release-readiness': {
+    title: 'Release Readiness',
+    defaultPrompt:
+      'Review the Changesets release flow, package publish helper, and npm provenance assumptions. Find blockers before merging the release PR or manually running the release workflow. Focus on package versions, publishability, OIDC, ignored packages, and validation commands.',
+    context: [
+      '.changeset/config.json',
+      '.github/workflows/changeset-release.yml',
+      '.github/workflows/release.yml',
+      'scripts/publish-packages.mjs',
+      'package.json',
+      'artifacts/llm/reports/ci-cd.md',
+      'artifacts/llm/reports/eval.md',
+    ],
+    includeChangedFiles: true,
+    includeGitDiff: true,
+  },
+  'ci-cd': {
+    title: 'CI/CD Pipeline Review',
+    defaultPrompt:
+      'Review CI/CD, docs image publishing, docs deploy, release, security, and VPS deployment wiring. Prioritize concrete failure modes, missing secrets, unsafe assumptions, and the minimum validation commands to run next.',
+    context: [
+      '.github/workflows/build-docs.yml',
+      '.github/workflows/deploy-docs.yml',
+      '.github/workflows/changeset-release.yml',
+      '.github/workflows/release.yml',
+      '.github/workflows/security.yml',
+      'infrastructure/ansible/vars/all.yml',
+      'artifacts/llm/reports/ci-cd.md',
+    ],
+    includeChangedFiles: true,
+    includeGitDiff: true,
+  },
+  'docs-pipeline': {
+    title: 'Docs Pipeline Review',
+    defaultPrompt:
+      'Review docs build, wiki sync, Docker image, Nextra output, and VPS deploy flow. Find issues that could break www.cfxdevkit.org or make docs drift from generated GitNexus content.',
+    context: [
+      'repos/cfx-tools/packages/docs-site/package.json',
+      'repos/cfx-tools/packages/docs-site/Dockerfile',
+      'repos/cfx-tools/packages/docs-site/scripts/sync-wiki.mjs',
+      '.github/workflows/build-docs.yml',
+      '.github/workflows/deploy-docs.yml',
+      'infrastructure/ansible/roles/docs/tasks/main.yml',
+      'artifacts/llm/reports/docs-alignment.md',
+      'artifacts/llm/reports/ci-cd.md',
+    ],
+    includeChangedFiles: true,
+    includeGitDiff: true,
+  },
   review: {
     title: 'Code Review',
     defaultPrompt:
       'Review the current git changes. Prioritize bugs, security risks, missing validation, and regressions.',
     context: ['artifacts/llm/reports/review.md', 'SECURITY.md', 'CONTRIBUTING.md'],
     includeGitDiff: true,
-  },
-  plan: {
-    title: 'Implementation Planning',
-    defaultPrompt:
-      'Create a repo-aware implementation plan. Respect current repos/cfx-* structure and avoid fine-tuning steps unless asked.',
-    context: [
-      'docs/llm-fine-tuning-plan.md',
-      'docs/llm-automation-agents.md',
-      'README.md',
-      'ARCHITECTURE.md',
-    ],
-  },
-  architecture: {
-    title: 'Architecture Q&A',
-    defaultPrompt:
-      'Answer using the current repository architecture and package boundaries. Call out planned topology separately.',
-    context: ['ARCHITECTURE.md', 'README.md', 'docs/architecture/package-layout.md'],
   },
   validation: {
     title: 'Validation Selection',

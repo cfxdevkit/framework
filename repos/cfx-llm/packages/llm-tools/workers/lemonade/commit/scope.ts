@@ -62,4 +62,4 @@ export function resolveScope(filepath) {
   return { key: 'root', label: 'root', changelogPath: 'CHANGELOG.md', scopeGlob: null };
 }
 
-// ─── Per-scope changelog generation ──────────────────────────────────────────
+// ─── Commit scope grouping ───────────────────────────────────────────────────

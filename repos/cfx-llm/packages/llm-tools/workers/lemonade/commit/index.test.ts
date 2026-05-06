@@ -14,27 +14,37 @@ describe('parseCommitFlags', () => {
       model: 'Qwen3-Coder-Next-GGUF',
     });
   });
+
+  it('captures changeset controls for release-aware commits', () => {
+    expect(parseCommitFlags(['--skip-changeset', '--changeset-bump', 'minor'])).toMatchObject({
+      skipChangeset: true,
+      changesetBump: 'minor',
+    });
+  });
 });
 
 describe('fallbackCommitMessage', () => {
-  it('returns valid conventional metadata from changelog scope summaries', () => {
-    const commit = fallbackCommitMessage([
-      {
-        ok: true,
-        scope: { label: 'repos/cfx-llm' },
-        summary: 'Repaired command routing and structural tests.',
-      },
-      {
-        ok: true,
-        scope: { label: 'root' },
-        summary: 'Updated root LLM scripts.',
-      },
-    ]);
+  it('returns valid conventional metadata from changeset guidance', () => {
+    const commit = fallbackCommitMessage({
+      releaseRelevant: true,
+      summary: 'Prepared fallback changesets for changed package tooling.',
+      packages: [{ name: '@cfxdevkit/llm-tools', dir: 'repos/cfx-llm/packages/llm-tools' }],
+      changesets: [
+        {
+          packageName: '@cfxdevkit/llm-tools',
+          bump: 'patch',
+          summary: 'Align commit automation with Changesets.',
+        },
+      ],
+      risks: [],
+    });
 
-    expect(commit.subject).toMatch(/^refactor: /);
-    expect(commit.body).toContain('repos/cfx-llm: Repaired command routing and structural tests.');
+    expect(commit.subject).toMatch(/^chore: /);
+    expect(commit.body).toContain(
+      '@cfxdevkit/llm-tools: patch - Align commit automation with Changesets.',
+    );
     expect(commit.filesToStage).toEqual([]);
-    expect(commit.risks[0]).toContain('repos/cfx-llm, root');
+    expect(commit.risks[0]).toContain('@cfxdevkit/llm-tools');
   });
 });
 

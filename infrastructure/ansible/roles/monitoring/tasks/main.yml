@@ -1,0 +1,38 @@
+---
+- name: Create monitoring directory
+  file:
+    path: /opt/monitoring
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: "0755"
+
+- name: Write Uptime Kuma docker-compose.yml
+  copy:
+    dest: /opt/monitoring/docker-compose.yml
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: "0644"
+    content: |
+      services:
+        uptime-kuma:
+          image: louislam/uptime-kuma:1
+          container_name: uptime-kuma
+          restart: unless-stopped
+          ports:
+            - "127.0.0.1:{{ app_ports.monitoring }}:3001"
+          volumes:
+            - kuma-data:/app/data
+          security_opt:
+            - no-new-privileges:true
+
+      volumes:
+        kuma-data:
+          driver: local
+
+- name: Start Uptime Kuma
+  community.docker.docker_compose_v2:
+    project_src: /opt/monitoring
+    state: present
+    pull: always
+  become_user: "{{ deploy_user }}"

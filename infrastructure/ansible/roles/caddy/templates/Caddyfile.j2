@@ -1,0 +1,8 @@
+# Caddyfile — cfxdevkit framework VPS
+# Managed by Ansible. Do not edit manually.
+
+{
+	email {{ acme_email }}
+}
+
+import /etc/caddy/sites-enabled/*.conf

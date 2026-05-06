@@ -1,0 +1,6 @@
+# Caddyfile snippet — framework docs
+# Managed by Ansible. Do not edit manually.
+
+{{ docs_domain }} {
+	reverse_proxy localhost:{{ app_ports.docs }}
+}

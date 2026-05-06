@@ -141,7 +141,7 @@ import { ERC20_ABI, MULTICALL3_ADDRESS } from '@cfxdevkit/abis';
   - For **Core**: uses `cfx_sendRawTransaction` with `cip2930`-style gas estimation (`gasLimit`, `storageLimit`, `epochHeight`).
 
 **Bridge Helpers** (`src/bridge/index.ts`):
-- `mappedEspaceAddress(coreHex: `0x${string}`)`  
+- `mappedEspaceAddress(coreHex: HexAddress)`  
   Derives eSpace address via `keccak256(coreHex)[12:32]`.
 - `transferToEspace({ client, signer, to, value })`  
   Encodes `transferEVM(bytes20)` and sends to `CrossSpaceCall` (`0x0888...0006`).

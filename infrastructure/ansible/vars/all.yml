@@ -1,0 +1,34 @@
+---
+# cfxdevkit framework VPS variables.
+# Copy to vars/local.yml, fill in TODOs, and never commit local.yml.
+
+deploy_user: deploy
+deploy_group: deploy
+deploy_pubkey: "TODO_replace_with_deploy_public_key"
+
+server_timezone: "UTC"
+
+base_domain: "cfxdevkit.org"
+docs_domain: "www.cfxdevkit.org"
+acme_email: "info@cfxdevkit.org"
+
+app_ports:
+  docs: 3100
+  monitoring: 3002
+  cas: 3001
+
+docs_image: "ghcr.io/cfxdevkit/framework/docs-site"
+docs_image_tag: "edge"
+
+restic_repository: "/opt/restic-repo"
+restic_password: "TODO_set_strong_passphrase"
+b2_account_id: ""
+b2_application_key: ""
+
+backup_paths:
+  - /opt/apps
+  - /opt/monitoring
+
+restic_keep_daily: 7
+restic_keep_weekly: 4
+restic_keep_monthly: 3

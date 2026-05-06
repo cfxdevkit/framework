@@ -1,0 +1,6 @@
+# Caddyfile snippet — Uptime Kuma monitoring dashboard
+# Managed by Ansible. Do not edit manually.
+
+monitor.{{ base_domain }} {
+	reverse_proxy localhost:{{ app_ports.monitoring }}
+}

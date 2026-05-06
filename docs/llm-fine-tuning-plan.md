@@ -325,8 +325,9 @@ Recommended separation:
 Repository automation services:
 
 - `llm:corpus`: build corpus metadata and chunks.
-- `llm:datasets`: generate train/eval JSONL datasets from approved corpus and
-  examples.
+- Dataset generation: deferred until there is a reviewed promotion path for
+  train/eval JSONL examples.
+- `llm:ci`: check CI/CD, docs image, release, and VPS deploy wiring.
 - `llm:eval`: run completion, review, doc-alignment, and agent-task benchmarks.
 - `llm:review`: produce a review report for current changes using retrieval and
   the selected local model.
@@ -345,8 +346,8 @@ Initial implementation status:
   Moon project registration, and current-vs-planned structure language.
 - `pnpm run llm:review` inspects uncommitted changes, flags security-sensitive
   surfaces, and suggests validation commands.
-- `pnpm run llm:datasets` creates deterministic evaluation seed examples only;
-  it is not a fine-tuning dataset promotion step.
+- `pnpm run llm:ci` checks docs image publishing, deploy workflow, Changesets
+  release workflow, npm publish helper, and Ansible deployment scaffolding.
 - `pnpm run llm:eval` summarizes deterministic gates from the generated reports.
 - `pnpm run llm:serve-check` probes Lemonade Server from `LEMONADE_URL`, then
   auto-discovers common local and devcontainer host endpoints including

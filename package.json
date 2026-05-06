@@ -25,19 +25,21 @@
     "llm": "pnpm --filter @cfxdevkit/llm-tools llm --",
     "llm:actions": "pnpm --filter @cfxdevkit/llm-tools llm -- actions",
     "llm:action": "pnpm --filter @cfxdevkit/llm-tools llm -- action",
-    "llm:architecture": "pnpm --filter @cfxdevkit/llm-tools llm -- architecture",
     "llm:ask": "pnpm --filter @cfxdevkit/llm-tools llm -- ask",
+    "llm:changeset": "pnpm --filter @cfxdevkit/llm-tools llm -- changeset",
+    "llm:ci": "pnpm --filter @cfxdevkit/llm-tools llm -- ci",
+    "llm:ci-cd": "pnpm --filter @cfxdevkit/llm-tools llm -- ci-cd",
     "llm:config": "pnpm --filter @cfxdevkit/llm-tools llm -- config",
     "llm:commit": "pnpm --filter @cfxdevkit/llm-tools llm -- commit",
     "llm:corpus": "pnpm --filter @cfxdevkit/llm-tools llm -- corpus",
-    "llm:datasets": "pnpm --filter @cfxdevkit/llm-tools llm -- datasets",
     "llm:docs": "pnpm --filter @cfxdevkit/llm-tools llm -- docs",
+    "llm:docs-pipeline": "pnpm --filter @cfxdevkit/llm-tools llm -- docs-pipeline",
     "llm:docs-upkeep": "pnpm --filter @cfxdevkit/llm-tools llm -- docs-upkeep",
     "llm:eval": "pnpm --filter @cfxdevkit/llm-tools llm -- eval",
     "llm:health": "pnpm --filter @cfxdevkit/llm-tools llm -- health",
     "llm:hotspots": "pnpm --filter @cfxdevkit/llm-tools llm -- hotspots",
     "llm:models": "pnpm --filter @cfxdevkit/llm-tools llm -- models",
-    "llm:plan": "pnpm --filter @cfxdevkit/llm-tools llm -- plan",
+    "llm:release": "pnpm --filter @cfxdevkit/llm-tools llm -- release",
     "llm:review": "pnpm --filter @cfxdevkit/llm-tools llm -- review",
     "llm:serve-check": "pnpm --filter @cfxdevkit/llm-tools llm -- serve-check",
     "llm:test-audit": "pnpm --filter @cfxdevkit/llm-tools llm -- test-audit",
@@ -62,8 +64,11 @@
   "pnpm": {
     "overrides": {
       "axios": "^1.15.0",
+      "ip-address": "^10.1.1",
+      "postcss": "^8.5.10",
       "tmp": "^0.2.4",
-      "uuid": "^14.0.0"
+      "uuid": "^14.0.0",
+      "zod": "4.3.4"
     },
     "onlyBuiltDependencies": [
       "@ladybugdb/core",
