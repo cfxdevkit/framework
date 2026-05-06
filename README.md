@@ -1,4 +1,4 @@
-# root/ — Modular Monorepo Workspace
+# framework/ — Modular Monorepo Workspace
 
 This repository is the active workspace for the modularized `@cfxdevkit/*`
 stack. The codebase already runs as a single pnpm + Moon monorepo, but its

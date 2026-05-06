@@ -44,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           navbar={navbar}
           footer={footer}
           pageMap={await getPageMap()}
-          docsRepositoryBase="https://github.com/cfxdevkit/root/tree/main/repos/cfx-tools/packages/docs-site"
+          docsRepositoryBase="https://github.com/cfxdevkit/framework/tree/main/repos/cfx-tools/packages/docs-site"
           editLink="Edit this page on GitHub"
           feedback={{ content: 'Question? Give us feedback' }}
           sidebar={{ defaultMenuCollapseLevel: 1 }}
