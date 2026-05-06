@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@cfxdevkit/tsconfig": "workspace:*",
-    "@types/node": "^22.10.0",
+    "@types/node": "^25.6.0",
     "@cfxdevkit/biome-config": "workspace:*",
     "@biomejs/biome": "^2.4.14",
     "typescript": "^6.0.3",
