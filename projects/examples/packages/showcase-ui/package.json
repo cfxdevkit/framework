@@ -26,7 +26,7 @@
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
     "@cfxjs/use-wallet-react": "^0.0.9",
-    "@tanstack/react-query": "^5.62.0",
+    "@tanstack/react-query": "^5.100.9",
     "@types/react": "^18.3.0",
     "react": "^18.3.0",
     "typescript": "^6.0.3",
