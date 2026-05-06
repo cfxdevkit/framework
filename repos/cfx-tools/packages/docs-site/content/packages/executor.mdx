@@ -1,0 +1,38 @@
+---
+title: "@cfxdevkit/executor"
+description: Job queue, retry/backoff policies, and gas-aware transaction submission.
+---
+
+# @cfxdevkit/executor
+
+> Generic execution primitives for keeper and off-chain automation systems.
+
+```bash
+pnpm add @cfxdevkit/executor
+```
+
+---
+
+## Responsibilities
+
+- Job queue interface with pluggable backends
+- Retry and backoff policies
+- Gas-aware transaction submission
+- Idempotency keys for safe re-execution
+
+Domain-specific automation strategies (DCA, limit orders, etc.) live in `@cfxdevkit/automation` and consume this package.
+
+```typescript
+import { createJobQueue, withRetry } from '@cfxdevkit/executor'
+
+const queue = createJobQueue({ concurrency: 3 })
+
+queue.add(
+  withRetry(
+    async () => {
+      await submitTransaction(client, signer, tx)
+    },
+    { maxAttempts: 5, backoff: 'exponential' }
+  )
+)
+```

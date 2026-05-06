@@ -1,0 +1,108 @@
+---
+title: Quick Start
+description: Get started with cfxdevkit in under 5 minutes.
+---
+
+import { Callout, Steps, Tabs } from 'nextra/components'
+
+# Quick Start
+
+<Callout type="info">
+  Prerequisites: Node.js 18+, pnpm 8+.
+</Callout>
+
+## Install
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/core
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/core
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/core
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+---
+
+## Connect to Conflux eSpace
+
+```typescript
+import { createClient, http } from '@cfxdevkit/core/client'
+import { espaceTestnet } from '@cfxdevkit/core/chains'
+
+const client = createClient({
+  chain: espaceTestnet,
+  transport: http(),
+})
+
+const block = await client.getBlockNumber()
+console.log('Block:', block)
+```
+
+## Create a wallet
+
+```typescript
+import { signerFromPrivateKey } from '@cfxdevkit/core/wallet'
+
+const signer = signerFromPrivateKey('0xYOUR_PRIVATE_KEY')
+
+console.log('eSpace address:', signer.address)
+console.log('Core address:', signer.coreAddress) // Base32 format
+```
+
+## Read a contract
+
+```typescript
+import { createClient, http } from '@cfxdevkit/core/client'
+import { espaceTestnet } from '@cfxdevkit/core/chains'
+
+const client = createClient({ chain: espaceTestnet, transport: http() })
+
+const balance = await client.readContract({
+  address: '0xYOUR_CONTRACT',
+  abi: [{ name: 'balanceOf', type: 'function', inputs: [{ type: 'address' }], outputs: [{ type: 'uint256' }] }],
+  functionName: 'balanceOf',
+  args: ['0xYOUR_WALLET'],
+})
+```
+
+## Deploy a contract
+
+```typescript
+import { createClient, http } from '@cfxdevkit/core/client'
+import { signerFromPrivateKey } from '@cfxdevkit/core/wallet'
+import { espaceTestnet } from '@cfxdevkit/core/chains'
+import { compileContract } from '@cfxdevkit/compiler'
+
+const client = createClient({ chain: espaceTestnet, transport: http() })
+const signer = signerFromPrivateKey(process.env.PRIVATE_KEY!)
+
+// Compile your Solidity
+const { abi, bytecode } = await compileContract('MyToken.sol', source)
+
+// Deploy
+const hash = await client.deployContract({
+  abi,
+  bytecode,
+  account: signer,
+})
+
+const receipt = await client.waitForTransactionReceipt({ hash })
+console.log('Deployed at:', receipt.contractAddress)
+```
+
+---
+
+## Next steps
+
+- [Package reference →](/packages)
+- [Architecture →](/architecture)

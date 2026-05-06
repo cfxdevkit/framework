@@ -1,0 +1,113 @@
+---
+title: "@cfxdevkit/core"
+description: Foundation layer — chain clients, HD wallet, contract utilities, address codec.
+---
+
+import { Callout, Tabs } from 'nextra/components'
+
+# @cfxdevkit/core
+
+> Foundation layer. Everything else in `@cfxdevkit/*` builds on this package.
+> Cross-space: every primitive works on Conflux **eSpace** (EVM, viem-backed) and **Core Space** (Conflux-native, cive-backed).
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/core
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/core
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/core
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+---
+
+## Sub-paths
+
+| Import | Contents |
+|---|---|
+| `@cfxdevkit/core/chains` | Chain definitions and registry |
+| `@cfxdevkit/core/client` | RPC client factory and transports |
+| `@cfxdevkit/core/wallet` | HD derivation, account, signer interface |
+| `@cfxdevkit/core/contract` | Typed read / write / simulate / deploy / events |
+| `@cfxdevkit/core/batch` | Multicall, multisend, request batcher |
+| `@cfxdevkit/core/address` | Checksum, validate, eSpace ↔ Core conversion |
+| `@cfxdevkit/core/units` | Format and parse CFX, Drip, GDrip (BigInt-only) |
+| `@cfxdevkit/core/errors` | `CfxError` root + typed error subclasses |
+| `@cfxdevkit/core/types` | `Address`, `Hash`, `Hex`, `Wei`, `ChainId`, … |
+
+---
+
+## Connect to a chain
+
+```typescript
+import { createClient, http } from '@cfxdevkit/core/client'
+import { espaceTestnet } from '@cfxdevkit/core/chains'
+
+const client = createClient({
+  chain: espaceTestnet,
+  transport: http(),
+})
+
+const block = await client.getBlockNumber()
+const balance = await client.getBalance('0xYourAddress')
+```
+
+Available chains: `espaceMainnet`, `espaceTestnet`, `coreSpaceMainnet`, `coreSpaceTestnet`.
+
+## Create a signer
+
+```typescript
+import { signerFromPrivateKey } from '@cfxdevkit/core/wallet'
+
+const signer = signerFromPrivateKey(process.env.PRIVATE_KEY!)
+
+console.log('eSpace address:', signer.address)
+console.log('Core address:', signer.coreAddress) // Base32 format, e.g. cfxtest:...
+```
+
+## Address utilities
+
+```typescript
+import { hexToBase32, base32ToHex, isBase32Address } from '@cfxdevkit/core/address'
+
+const base32 = hexToBase32('0xabc...', 1)   // '1' = testnet network ID
+const hex = base32ToHex('cfxtest:aak...')
+```
+
+## Unit formatting
+
+```typescript
+import { formatCFX, parseCFX, formatDrip } from '@cfxdevkit/core/units'
+
+formatCFX(1_000_000_000_000_000_000n) // '1'
+parseCFX('1.5')                        // 1500000000000000000n
+formatDrip(500_000_000n)               // '0.5 GDrip'
+```
+
+## Error handling
+
+```typescript
+import { CfxError } from '@cfxdevkit/core/errors'
+
+try {
+  await client.getTransactionReceipt('0xinvalid')
+} catch (err) {
+  if (err instanceof CfxError) {
+    console.log(err.code)    // e.g. 'core/rpc/timeout'
+    console.log(err.message)
+  }
+}
+```
+
+<Callout type="info">
+  `@cfxdevkit/core` **must not** depend on any other `@cfxdevkit/*` package.
+</Callout>

@@ -1,0 +1,47 @@
+---
+title: "@cfxdevkit/compiler"
+description: Solidity compilation, ABI extraction, and contract template catalog.
+---
+
+# @cfxdevkit/compiler
+
+> Runtime Solidity compilation with a curated template catalog.
+
+```bash
+pnpm add @cfxdevkit/compiler
+```
+
+**Depends on:** nothing in `@cfxdevkit/*`. Pure utility.
+
+---
+
+## Compile Solidity
+
+```typescript
+import { compileContract } from '@cfxdevkit/compiler'
+
+const source = `
+  // SPDX-License-Identifier: MIT
+  pragma solidity ^0.8.20;
+  import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+  contract MyToken is ERC20 {
+    constructor() ERC20("MyToken", "MTK") {
+      _mint(msg.sender, 1_000_000 ether);
+    }
+  }
+`
+
+const { abi, bytecode } = await compileContract('MyToken.sol', source)
+```
+
+## Template catalog
+
+```typescript
+import { getTemplate, listTemplates } from '@cfxdevkit/compiler'
+
+const templates = listTemplates()
+// ['erc20', 'erc721', 'nft-collection', 'multisig', ...]
+
+const erc20Template = getTemplate('erc20')
+const { abi, bytecode } = await erc20Template.compile({ name: 'MyToken', symbol: 'MTK' })
+```

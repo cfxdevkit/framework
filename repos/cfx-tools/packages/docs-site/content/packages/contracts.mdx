@@ -1,0 +1,26 @@
+---
+title: "@cfxdevkit/contracts"
+description: ABIs, bytecodes, and on-chain deployment addresses for Conflux contracts.
+---
+
+# @cfxdevkit/contracts
+
+> Curated contract artifacts — ABIs, bytecodes, and deployment addresses for mainnet and testnet.
+
+```bash
+pnpm add @cfxdevkit/contracts
+```
+
+---
+
+```typescript
+import { ERC20_ABI, SWAPPI_ROUTER_ABI, SWAPPI_ROUTER_ADDRESS } from '@cfxdevkit/contracts'
+
+// Use with @cfxdevkit/core/contract
+const balance = await client.readContract({
+  address: SWAPPI_ROUTER_ADDRESS.testnet,
+  abi: SWAPPI_ROUTER_ABI,
+  functionName: 'getAmountsOut',
+  args: [amountIn, [tokenA, tokenB]],
+})
+```

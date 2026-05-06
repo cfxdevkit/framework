@@ -1,0 +1,15 @@
+export default {
+  index: 'Overview',
+  core: '@cfxdevkit/core',
+  protocol: '@cfxdevkit/protocol',
+  executor: '@cfxdevkit/executor',
+  wallet: '@cfxdevkit/wallet',
+  services: '@cfxdevkit/services',
+  compiler: '@cfxdevkit/compiler',
+  contracts: '@cfxdevkit/contracts',
+  devnode: '@cfxdevkit/devnode',
+  react: '@cfxdevkit/react',
+  'defi-react': '@cfxdevkit/defi-react',
+  'wallet-connect': '@cfxdevkit/wallet-connect',
+  theme: '@cfxdevkit/theme',
+}

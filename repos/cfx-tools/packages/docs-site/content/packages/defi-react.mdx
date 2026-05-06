@@ -1,0 +1,35 @@
+---
+title: "@cfxdevkit/defi-react"
+description: React hooks for DeFi data — swap quotes, prices, LP data.
+---
+
+# @cfxdevkit/defi-react
+
+> React hooks for DeFi interactions on Conflux — swap quotes, token prices, and liquidity data via Swappi DEX.
+
+```bash
+pnpm add @cfxdevkit/defi-react
+```
+
+---
+
+```tsx
+import { useSwapQuote, useTokenPrice } from '@cfxdevkit/defi-react'
+
+function SwapWidget() {
+  const { data: quote, isLoading } = useSwapQuote({
+    tokenIn: CFX_ADDRESS,
+    tokenOut: USDT_ADDRESS,
+    amountIn: parseCFX('10'),
+  })
+
+  if (isLoading) return <span>Loading quote...</span>
+
+  return (
+    <div>
+      <p>You receive: {formatUnits(quote.amountOut, 18)} USDT</p>
+      <p>Price impact: {quote.priceImpact}%</p>
+    </div>
+  )
+}
+```

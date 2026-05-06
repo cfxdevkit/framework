@@ -8,13 +8,18 @@ workspace. The repository is physically organized as `repos/cfx-*` slices plus
 
 Agents and contributors should treat the current workspace like this:
 
-| Current path | Architectural role |
-|--------------|--------------------|
-| `repos/cfx-core`, `repos/cfx-keys`, `repos/cfx-ui`, `repos/cfx-solidity` | Tier 0 reusable packages |
-| `repos/cfx-tools` | Tier 1 developer platform |
-| `repos/cfx-domain` | Tier 2 reusable domains |
-| `projects/*` | Tier 3 applications and project-local code |
-| `tools/*`, `docs/*`, `infrastructure/*` | Cross-cutting support |
+| Current path | Architectural role | Conceptual tier name |
+|---|---|---|
+| `repos/cfx-core`, `repos/cfx-keys`, `repos/cfx-ui`, `repos/cfx-solidity` | Tier 0 reusable packages | `framework/` |
+| `repos/cfx-tools` | Tier 1 developer platform | `platform/` |
+| `repos/cfx-domain` | Tier 2 reusable domains | `domains/` |
+| `projects/*` | Tier 3 applications and project-local code | `projects/` |
+| `tools/*`, `docs/*`, `infrastructure/*` | Cross-cutting support | (literal paths) |
+
+> **Note for documentation tooling:** When this document uses `framework/`, `platform/`,
+> or `domains/` as shorthand tier names, those are **conceptual labels only** — the actual
+> file paths on disk follow the `repos/cfx-*` layout above. Do **not** generate file paths
+> using the shorthand tier names; use the real `repos/cfx-*/packages/` paths instead.
 
 When this document says `framework/`, `platform/`, or `domains/`, read those as
 architectural tiers first, not as mandatory literal folder names in the current

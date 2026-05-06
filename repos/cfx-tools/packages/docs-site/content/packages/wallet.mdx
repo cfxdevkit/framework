@@ -1,0 +1,50 @@
+---
+title: "@cfxdevkit/wallet"
+description: Session keys, capability-scoped signers, and batched transactions.
+---
+
+# @cfxdevkit/wallet
+
+> Focused wallet primitives — the only blessed entrypoint for automated signers in the cfxdevkit stack.
+
+```bash
+pnpm add @cfxdevkit/wallet
+```
+
+**Depends on:** `@cfxdevkit/core`, `@cfxdevkit/services` (for keystore).
+
+---
+
+## Responsibilities
+
+- Session key generation and lifecycle management
+- Capability / policy attached to a signer (scoped permissions)
+- Batched transaction helpers (multicall + multisend)
+- Re-exports a curated subset of `@cfxdevkit/core` wallet APIs
+
+---
+
+## Session keys
+
+```typescript
+import { createSessionKey, SessionKeyPolicy } from '@cfxdevkit/wallet'
+
+const policy: SessionKeyPolicy = {
+  allowedContracts: ['0xYOUR_CONTRACT'],
+  maxValuePerTx: parseCFX('0.1'),
+  expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
+}
+
+const sessionKey = await createSessionKey({ signer: rootSigner, policy })
+```
+
+## Batch transactions
+
+```typescript
+import { batchTransactions } from '@cfxdevkit/wallet'
+
+const result = await batchTransactions(client, signer, [
+  { to: '0xA', data: '0x...', value: 0n },
+  { to: '0xB', data: '0x...', value: 0n },
+])
+```

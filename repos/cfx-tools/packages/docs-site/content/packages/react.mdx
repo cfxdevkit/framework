@@ -1,0 +1,49 @@
+---
+title: "@cfxdevkit/react"
+description: React hooks for chain state, balances, and token data.
+---
+
+# @cfxdevkit/react
+
+> React hooks for interacting with the Conflux network — balances, tokens, and chain state.
+
+```bash
+pnpm add @cfxdevkit/react
+```
+
+---
+
+## Setup
+
+Wrap your app with `CfxProvider`:
+
+```tsx
+import { CfxProvider } from '@cfxdevkit/react'
+import { espaceTestnet } from '@cfxdevkit/core/chains'
+
+function App() {
+  return (
+    <CfxProvider chain={espaceTestnet}>
+      <YourApp />
+    </CfxProvider>
+  )
+}
+```
+
+## Hooks
+
+```tsx
+import { useBalance, useTokenBalance, useBlockNumber } from '@cfxdevkit/react'
+
+function WalletInfo({ address }: { address: string }) {
+  const { data: balance } = useBalance(address)
+  const { data: block } = useBlockNumber()
+
+  return (
+    <div>
+      <p>CFX Balance: {formatCFX(balance ?? 0n)}</p>
+      <p>Block: {block?.toString()}</p>
+    </div>
+  )
+}
+```

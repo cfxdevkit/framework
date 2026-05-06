@@ -1,0 +1,44 @@
+---
+title: Packages Overview
+description: All @cfxdevkit packages — install only what you need.
+---
+
+import { Cards } from 'nextra/components'
+
+# Packages
+
+cfxdevkit is a monorepo of focused, layered packages. Install only what you need.
+
+<Cards>
+  <Cards.Card title="@cfxdevkit/core" href="/packages/core" description="Chain clients, HD wallet, contract utilities, address codec, units" />
+  <Cards.Card title="@cfxdevkit/protocol" href="/packages/protocol" description="Cross-space bridge, automation, permit transfers" />
+  <Cards.Card title="@cfxdevkit/executor" href="/packages/executor" description="Job queue, retry/backoff, gas-aware tx submission" />
+  <Cards.Card title="@cfxdevkit/wallet" href="/packages/wallet" description="Session keys, capability signers, batch transactions" />
+  <Cards.Card title="@cfxdevkit/services" href="/packages/services" description="Keystore encryption, token swap via Swappi DEX" />
+  <Cards.Card title="@cfxdevkit/compiler" href="/packages/compiler" description="Solidity compilation, ABI extraction, template catalog" />
+  <Cards.Card title="@cfxdevkit/contracts" href="/packages/contracts" description="ABIs, bytecodes, and on-chain deployment addresses" />
+  <Cards.Card title="@cfxdevkit/devnode" href="/packages/devnode" description="Programmatic local Conflux node for integration tests" />
+  <Cards.Card title="@cfxdevkit/react" href="/packages/react" description="React hooks — balances, tokens, chain state" />
+  <Cards.Card title="@cfxdevkit/defi-react" href="/packages/defi-react" description="React hooks for DeFi — swap quotes, prices, LP data" />
+  <Cards.Card title="@cfxdevkit/wallet-connect" href="/packages/wallet-connect" description="ConnectKit + wagmi integration for React dApps" />
+  <Cards.Card title="@cfxdevkit/theme" href="/packages/theme" description="Shared design tokens and component styling" />
+</Cards>
+
+---
+
+## Dependency tree
+
+```
+@cfxdevkit/core                ← Tier 0 foundation
+├── @cfxdevkit/protocol        ← cross-space bridge
+├── @cfxdevkit/executor        ← automation primitives
+├── @cfxdevkit/wallet          ← session keys (→ core, services)
+├── @cfxdevkit/services        ← keystore, swap (→ core)
+├── @cfxdevkit/compiler        ← Solidity tooling (standalone)
+├── @cfxdevkit/contracts       ← ABIs/addresses (→ compiler)
+├── @cfxdevkit/devnode         ← local node (standalone)
+├── @cfxdevkit/react           ← React hooks (→ core)
+├── @cfxdevkit/defi-react      ← DeFi hooks (→ core, services)
+├── @cfxdevkit/wallet-connect  ← ConnectKit (→ wagmi)
+└── @cfxdevkit/theme           ← design tokens (standalone)
+```

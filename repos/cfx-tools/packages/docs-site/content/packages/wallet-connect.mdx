@@ -1,0 +1,31 @@
+---
+title: "@cfxdevkit/wallet-connect"
+description: ConnectKit + wagmi integration for React dApps on Conflux.
+---
+
+# @cfxdevkit/wallet-connect
+
+> Plug-and-play ConnectKit wallet modal with wagmi for React dApps targeting Conflux eSpace.
+
+```bash
+pnpm add @cfxdevkit/wallet-connect
+```
+
+---
+
+```tsx
+import { CfxWalletProvider, ConnectButton } from '@cfxdevkit/wallet-connect'
+import { espaceMainnet, espaceTestnet } from '@cfxdevkit/core/chains'
+
+function App() {
+  return (
+    <CfxWalletProvider
+      chains={[espaceMainnet, espaceTestnet]}
+      projectId={process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!}
+    >
+      <ConnectButton />
+      <YourApp />
+    </CfxWalletProvider>
+  )
+}
+```

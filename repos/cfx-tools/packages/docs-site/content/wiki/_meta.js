@@ -1,0 +1,15 @@
+export default {
+  index: 'Overview',
+  'core-protocol-chain': 'Core Protocol & Chain',
+  'devnode-runtime': 'DevNode & Runtime',
+  'keystore-wallet-services': 'Keystore & Wallet Services',
+  'wallet-abstraction-hardware': 'Wallet Abstraction & Hardware',
+  'solidity-compiler-contracts': 'Solidity Compiler & Contracts',
+  'cli-developer-tools': 'CLI & Developer Tools',
+  'llm-automation-tooling': 'LLM Automation & Tooling',
+  'documentation-architecture': 'Documentation & Architecture',
+  'infrastructure-security': 'Infrastructure & Security',
+  'project-layout-examples': 'Project Layout & Examples',
+  'repository-layout': 'Repository Layout',
+  'tooling-config': 'Tooling & Config',
+}

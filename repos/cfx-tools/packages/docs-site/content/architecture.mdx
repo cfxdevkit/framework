@@ -1,0 +1,94 @@
+---
+title: Architecture
+description: Layered architecture and dependency rules for the cfxdevkit monorepo.
+---
+
+import { Callout } from 'nextra/components'
+
+# Architecture
+
+cfxdevkit follows a **four-tier layered architecture**. Dependencies flow downward only — no upward or circular imports are allowed.
+
+## Tier model
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  Tier 3 — Projects & Apps                                        │
+│  projects/cas  │  projects/chainbrawler  │  projects/electro     │
+├──────────────────────────────────────────────────────────────────┤
+│  Tier 2 — Domain Logic                                           │
+│  repos/cfx-domain:  automation │ game-engine │ hardware-bridge   │
+├──────────────────────────────────────────────────────────────────┤
+│  Tier 1 — Developer Platform                                     │
+│  repos/cfx-tools:  cli │ mcp-server │ scaffold-cli │ vscode-ext  │
+├──────────────────────────────────────────────────────────────────┤
+│  Tier 0 — Framework                                              │
+│  repos/cfx-core │ cfx-keys │ cfx-ui │ cfx-solidity               │
+└──────────────────────────────────────────────────────────────────┘
+             ▲             ▲             ▲
+        tools/       infrastructure/   docs/   ← cross-cutting
+```
+
+## Package map
+
+| Package | Tier | Repo slice |
+|---|---|---|
+| `@cfxdevkit/core` | 0 | `repos/cfx-core` |
+| `@cfxdevkit/protocol` | 0 | `repos/cfx-core` |
+| `@cfxdevkit/executor` | 0 | `repos/cfx-core` |
+| `@cfxdevkit/devnode` | 0 | `repos/cfx-core` |
+| `@cfxdevkit/testing` | 0 | `repos/cfx-core` |
+| `@cfxdevkit/wallet` | 0 | `repos/cfx-keys` |
+| `@cfxdevkit/services` | 0 | `repos/cfx-keys` |
+| `@cfxdevkit/react` | 0 | `repos/cfx-ui` |
+| `@cfxdevkit/defi-react` | 0 | `repos/cfx-ui` |
+| `@cfxdevkit/wallet-connect` | 0 | `repos/cfx-ui` |
+| `@cfxdevkit/theme` | 0 | `repos/cfx-ui` |
+| `@cfxdevkit/compiler` | 0 | `repos/cfx-solidity` |
+| `@cfxdevkit/contracts` | 0 | `repos/cfx-solidity` |
+| `@cfxdevkit/abis` | 0 | `repos/cfx-solidity` |
+| `@cfxdevkit/cli` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/mcp-server` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/scaffold-cli` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/vscode-extension` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/automation` | 2 | `repos/cfx-domain` |
+| `@cfxdevkit/game-engine` | 2 | `repos/cfx-domain` |
+| `@cfxdevkit/hardware-bridge` | 2 | `repos/cfx-domain` |
+
+## Key principles
+
+**One-way dependency graph** — Tiers cannot create cycles. A tier-0 package must never import from tier-1 or higher.
+
+**Domain extraction by demand** — Logic moves `projects/ → domains/ → framework/` once it proves reusable across ≥ 2 projects.
+
+**Stable public surface** — Tier-0 packages follow semver and are published to npm. Anything in `platform/devtools/` or `projects/` is internal and may change freely.
+
+## Key execution flows
+
+### Smart contract deployment
+
+```
+CompilerPanel (UI)
+  → useCompilerCatalog (react)
+  → deployContract (contracts)
+  → deployCoreContract (contracts)
+  → waitForReceipt (contracts)
+  → assertSuccessfulReceipt (contracts)
+```
+
+### Wallet initialization with Argon2id key derivation
+
+```
+InitializeWallet (wallet)
+  → addWallet (wallet)
+  → initFileKeystore (services)
+  → deriveKekFromEnvelope (services)
+  → deriveKeyArgon2id (services)
+  → brandKey (services)
+```
+
+## ADRs
+
+- [ADR-0001 — Build stack](/architecture/adr-0001)
+- [ADR-0002 — Keystore design](/architecture/adr-0002)
+- [ADR-0003 — Multi-repo split](/architecture/adr-0003)

@@ -1,0 +1,62 @@
+---
+title: "@cfxdevkit/devnode"
+description: Programmatic local Conflux node for dev and integration testing.
+---
+
+# @cfxdevkit/devnode
+
+> Brings up a dual-space (Core + eSpace) Conflux chain on deterministic ports with pre-funded genesis accounts. **Dev and test only — Node.js host required.**
+
+```bash
+pnpm add -D @cfxdevkit/devnode
+```
+
+---
+
+## Programmatic usage
+
+```typescript
+import { createDevNode } from '@cfxdevkit/devnode'
+
+const node = createDevNode()
+await node.start()
+
+// node.urls.core   → http://127.0.0.1:12537  (coreSpaceLocal)
+// node.urls.espace → http://127.0.0.1:8545   (espaceLocal)
+// node.accounts[0] → pre-funded with 10_000 CFX
+
+// ... run your tests ...
+
+await node.stop()
+```
+
+## CLI
+
+```bash
+npx cfxdevkit-devnode --accounts 4 --balance 1000
+```
+
+## Default ports
+
+| Space | HTTP | WebSocket | Chain ID |
+|---|---|---|---|
+| eSpace | 8545 | 8546 | 2030 |
+| Core Space | 12537 | 12536 | 2029 |
+
+10 pre-funded accounts (10,000 CFX each), 2s block time.
+
+## Vitest integration
+
+```typescript
+import { createDevNode } from '@cfxdevkit/devnode'
+
+let node: Awaited<ReturnType<typeof createDevNode>>
+
+beforeAll(async () => { node = createDevNode(); await node.start() })
+afterAll(async () => { await node.stop() })
+
+test('deploys a contract', async () => {
+  const client = createClient({ chain: espaceLocal, transport: http(node.urls.espace) })
+  // ...
+})
+```

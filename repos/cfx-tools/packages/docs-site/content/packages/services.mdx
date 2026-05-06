@@ -1,0 +1,48 @@
+---
+title: "@cfxdevkit/services"
+description: Keystore encryption and DEX swap service primitives.
+---
+
+# @cfxdevkit/services
+
+> Stateless service primitives sitting just above `@cfxdevkit/core`.
+
+```bash
+pnpm add @cfxdevkit/services
+```
+
+**Depends on:** `@cfxdevkit/core` only.
+
+---
+
+## Keystore
+
+AES-256-GCM encrypted keystore with Argon2id key derivation.
+
+```typescript
+import { initFileKeystore, unlockKeystore } from '@cfxdevkit/services'
+
+// Create a new encrypted keystore
+const keystore = await initFileKeystore({
+  path: './keystore.json',
+  password: process.env.KEYSTORE_PASSWORD!,
+})
+
+// Unlock and get a signer
+const signer = await unlockKeystore(keystore, password)
+```
+
+## Token swap (Swappi DEX)
+
+```typescript
+import { getSwapQuote, executeSwap } from '@cfxdevkit/services'
+
+const quote = await getSwapQuote({
+  tokenIn: '0xCFX_ADDRESS',
+  tokenOut: '0xUSDT_ADDRESS',
+  amountIn: parseCFX('10'),
+  slippage: 0.005, // 0.5%
+})
+
+const txHash = await executeSwap(client, signer, quote)
+```

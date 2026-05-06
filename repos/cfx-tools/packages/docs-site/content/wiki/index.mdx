@@ -1,0 +1,33 @@
+---
+title: Code Wiki
+description: Auto-generated code intelligence wiki from the GitNexus knowledge graph.
+---
+
+import { Callout } from 'nextra/components'
+
+# Code Wiki
+
+<Callout type="info">
+  This wiki is generated from the GitNexus knowledge graph — it maps actual execution flows, call graphs, and symbol relationships extracted from the source code. Run `pnpm gitnexus wiki` to regenerate after code changes.
+</Callout>
+
+This section documents the internal architecture as it exists in the code, not as intended.
+Use it to understand how modules connect, what the key execution flows are, and where to find
+specific functionality.
+
+## Modules
+
+| Module | Description |
+|---|---|
+| [Core Protocol & Chain](/wiki/core-protocol-chain) | Chain clients, RPC, wallet, contract interaction |
+| [DevNode & Runtime](/wiki/devnode-runtime) | Local Conflux node, test infrastructure |
+| [Keystore & Wallet Services](/wiki/keystore-wallet-services) | Encrypted keystore, DEX swap, key derivation |
+| [Wallet Abstraction & Hardware](/wiki/wallet-abstraction-hardware) | Session keys, hardware wallet, capability signers |
+| [Solidity Compiler & Contracts](/wiki/solidity-compiler-contracts) | Compilation, ABIs, contract templates |
+| [CLI & Developer Tools](/wiki/cli-developer-tools) | CLI, MCP server, scaffold, VS Code extension |
+| [LLM Automation & Tooling](/wiki/llm-automation-tooling) | AI-assisted workflows, LLM tools |
+| [Documentation & Architecture](/wiki/documentation-architecture) | ADRs, design principles, error model |
+| [Infrastructure & Security](/wiki/infrastructure-security) | Workspace config, secrets, CI |
+| [Project Layout & Examples](/wiki/project-layout-examples) | Projects and example apps |
+| [Repository Layout](/wiki/repository-layout) | Monorepo structure and conventions |
+| [Tooling & Config](/wiki/tooling-config) | Biome, TypeScript, Moon config |

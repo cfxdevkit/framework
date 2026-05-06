@@ -1,0 +1,22 @@
+---
+title: "@cfxdevkit/theme"
+description: Shared design tokens and component styling for cfxdevkit UI packages.
+---
+
+# @cfxdevkit/theme
+
+> Shared design tokens, CSS variables, and component styling used across `@cfxdevkit/react`, `@cfxdevkit/defi-react`, and `@cfxdevkit/wallet-connect`.
+
+```bash
+pnpm add @cfxdevkit/theme
+```
+
+---
+
+```tsx
+import '@cfxdevkit/theme/styles.css'
+import { tokens } from '@cfxdevkit/theme'
+
+// CSS variables are injected globally, or use tokens in JS
+const primary = tokens.colors.brand.primary  // '#1a56db'
+```

@@ -1,5 +1,5 @@
 {
-  "name": "@cfxdevkit/root",
+  "name": "@cfxdevkit/framework",
   "version": "0.0.0",
   "private": true,
   "description": "Conflux DevKit monorepo — framework, platform, domains, projects.",

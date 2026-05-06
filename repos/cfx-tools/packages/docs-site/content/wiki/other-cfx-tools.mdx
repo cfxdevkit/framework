@@ -1,0 +1,305 @@
+---
+title: "Other — cfx-tools"
+---
+
+# Other — cfx-tools
+
+# `cfx-tools` Module
+
+The `cfx-tools` module is a **developer experience (Tier 1)** workspace containing tooling for Conflux developers. It provides command-line interfaces, scaffolding, VS Code integration, and MCP server capabilities — all designed to accelerate local development, testing, and deployment workflows.
+
+Per ADR-0003, this module is a carve-out target for modularization and independent release, grouping tightly coupled developer tooling under a single monorepo.
+
+---
+
+## High-Level Architecture
+
+```mermaid
+flowchart TD
+    subgraph CLI
+        CLI_BIN["cfx (bin.js)"]
+        CLI_CORE["src/index.ts"]
+        CLI_RUN["src/run.ts"]
+        CLI_DERIVE["src/commands/derive.ts"]
+        CLI_GEN["src/commands/generate.ts"]
+        CLI_STATUS["src/commands/status.ts"]
+    end
+
+    subgraph Scaffold
+        SCAFFOLD["@cfxdevkit/create"]
+        SCAFFOLD_TEMPLATES["src/templates.ts"]
+        SCAFFOLD_SCAFF["src/scaffold.ts"]
+    end
+
+    subgraph VS Code
+        VSX["cfxdevkit-vscode-extension"]
+        VSX_VIEWS["src/views.ts"]
+        VSX_MODELS["src/views-model.ts"]
+    end
+
+    subgraph MCP
+        MCP["@cfxdevkit/mcp-server"]
+    end
+
+    CLI_CORE --> CLI_RUN
+    CLI_RUN --> CLI_DERIVE
+    CLI_RUN --> CLI_GEN
+    CLI_RUN --> CLI_STATUS
+    CLI_BIN --> CLI_CORE
+
+    SCAFFOLD --> SCAFFOLD_TEMPLATES
+    SCAFFOLD --> SCAFFOLD_SCAFF
+
+    VSX --> VSX_VIEWS
+    VSX_VIEWS --> VSX_MODELS
+
+    MCP -->|"exposes"| CLI_CORE
+    MCP -->|"exposes"| SCAFFOLD
+    MCP -->|"exposes"| VSX
+
+    CLI_CORE -->|"uses"| "@cfxdevkit/core"
+    SCAFFOLD -->|"uses"| "@cfxdevkit/core"
+    VSX -->|"uses"| "@cfxdevkit/core"
+    VSX -->|"uses"| "@cfxdevkit/wallet"
+    VSX -->|"uses"| "@cfxdevkit/devnode"
+    MCP -->|"uses"| "@cfxdevkit/compiler"
+    MCP -->|"uses"| "@cfxdevkit/contracts"
+```
+
+---
+
+## Package Overview
+
+| Package | Type | Purpose |
+|--------|------|---------|
+| `@cfxdevkit/cli` | CLI | `cfx` command-line tool for account derivation, network status, and mnemonic generation |
+| `@cfxdevkit/create` (scaffold-cli) | Library | Project scaffolding via `npm create @cfxdevkit` |
+| `@cfxdevkit/mcp-server` | Library | MCP server exposing tooling to AI agents (e.g., Copilot, Claude) |
+| `cfxdevkit-vscode-extension` | VS Code Extension | Full IDE integration for node lifecycle, wallet, and contract workflows |
+
+All packages share:
+- TypeScript (ES2023 target)
+- Vite for bundling (with `vite-plugin-dts`)
+- Biome for linting/formatting
+- Vitest for unit tests
+- Workspace dependencies (`@cfxdevkit/core`, `@cfxdevkit/wallet`, etc.)
+
+---
+
+## `@cfxdevkit/cli`: Developer Command-Line Tool
+
+### Purpose
+
+The CLI (`cfx`) is the primary interface for low-level developer tasks:
+- Deriving dual-space accounts (EVM + Core Space)
+- Generating BIP-39 mnemonics
+- Checking network status (head block/epoch + latency)
+
+It exercises the public API of `@cfxdevkit/core` and is designed for both interactive use and shell pipelines.
+
+### Usage
+
+```bash
+# Show help
+cfx --help
+
+# Derive accounts from mnemonic
+cfx derive --mnemonic "…12 words…" --count 3 --core-network-id 2029
+
+# Generate a new mnemonic
+cfx generate --strength 256
+
+# Check network status
+cfx status --chain core-mainnet
+```
+
+### Output Modes
+
+| Flag | Behavior |
+|------|----------|
+| (default) | Human-readable, tabular output |
+| `--json` | Machine-readable JSON (no private keys by default) |
+| `--show-private-keys` | Include private keys in JSON output (⚠️ use with care) |
+
+### Key Functions
+
+| Function | Signature | Description |
+|---------|-----------|-------------|
+| `run` | `(argv: string[], io?: IO) => Promise<number>` | Main entry point; parses args, dispatches commands, returns exit code |
+| `parseArgs` | `(argv: string[]) => ParsedArgs` | Parses `['derive', 'extra', '--count', '3']` into `{ command, positionals, flags }` |
+| `runDerive` | `(opts: DeriveOptions) => DeriveReport` | Derives accounts; supports `--mnemonic`, `--generate`, `--type`, `--startIndex`, `--count` |
+| `runGenerate` | `(opts?: GenerateOptions) => GenerateReport` | Generates a BIP-39 mnemonic (12 or 24 words) |
+| `runStatus` | `(opts: StatusOptions) => StatusReport` | Pings a chain and returns latency + head info |
+
+### Argument Helpers
+
+| Helper | Behavior |
+|--------|----------|
+| `getString(obj, key)` | Returns string value or `undefined`; ignores booleans |
+| `getNumber(obj, key)` | Parses numeric strings; returns `undefined` for non-numeric, `NaN`, `Infinity` |
+| `getBool(obj, key)` | Returns `true` for `true` or `"true"`; `false` otherwise |
+
+---
+
+## `@cfxdevkit/create`: Project Scaffolder
+
+### Purpose
+
+Provides `npm create @cfxdevkit` to bootstrap new Conflux projects with opinionated templates (e.g., `basic`, `react`, `solidity`). It handles:
+- Directory creation
+- Template rendering (with `{{name}}`, `{{version}}` placeholders)
+- Optional `npm install`
+
+### Public API
+
+| Function | Description |
+|---------|-------------|
+| `scaffoldProject(targetDir, templateName, ctx)` | Renders template files into `targetDir`, runs `npm install` unless `skipInstall: true` |
+| `getTemplate(name)` | Returns template metadata (files, description) |
+| `listTemplates()` | Returns all available templates |
+| `renderFile(content, ctx)` | Replaces `{{key}}` placeholders in file content |
+| `validateName(name)` | Validates project name (e.g., no spaces, no leading digits) |
+
+### Template System
+
+Templates are defined in `templates/` (not shown in source but referenced in tests). Each template includes:
+- A list of files to copy
+- A description
+- Placeholder-aware content (e.g., `{{name}}` in `package.json`)
+
+---
+
+## `@cfxdevkit/mcp-server`: Model Context Protocol Server
+
+### Purpose
+
+Exposes CLI and scaffolding functionality to AI agents via the [MCP](https://modelcontextprotocol.io/) protocol. This enables:
+- Code generation in response to natural language prompts
+- Contract deployment via chat
+- Wallet management guided by LLMs
+
+### Current State
+
+The package is currently a **stub** — only exposing its package name and test infrastructure. Full implementation is pending (see `API.md` and `STRUCTURE.md` in the package root).
+
+### Integration Points
+
+The server will eventually wrap:
+- `@cfxdevkit/cli` commands (e.g., `derive`, `generate`)
+- `@cfxdevkit/create` scaffolding
+- VS Code extension APIs (e.g., `cfxdevkit.deployContract`)
+
+---
+
+## `cfxdevkit-vscode-extension`: VS Code Integration
+
+### Purpose
+
+A full-featured VS Code extension for Conflux development, providing:
+- **Sidebar views**: Network, Node, Wallets, Contracts
+- **Keystore management**: Local file, Satoshi/Satochip backends
+- **Node lifecycle**: Start/stop/restart/wipe
+- **Contract workflows**: Deploy, import, call read/write functions
+- **Account management**: Add/remove wallets, copy addresses
+
+### Key Features
+
+| Feature | Command | Description |
+|--------|---------|-------------|
+| Network selection | `cfxdevkit.selectNetwork` | Choose between local, testnet, mainnet |
+| Keystore setup | `cfxdevkit.selectKeystoreBackend` | Select file or hardware backend |
+| Node control | `cfxdevkit.nodeStart`, `cfxdevkit.nodeStop` | Manage local dev node |
+| Wallet ops | `cfxdevkit.addWallet`, `cfxdevkit.unlockKeystore` | Manage accounts |
+| Contract deployment | `cfxdevkit.deployContract` | Deploy from compiled artifacts |
+| ABI interaction | `cfxdevkit.abiCallRead`, `cfxdevkit.abiCallWrite` | Call contract functions |
+
+### Configuration
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `cfxdevkit.autoStartNode` | `false` | Auto-start dev node on activation |
+| `cfxdevkit.keystorePath` | `.cfxdevkit/keystore.json` | Path to encrypted keystore |
+| `cfxdevkit.satoshiBridgeUrl` | `http://127.0.0.1:8397` | URL for hardware wallet bridge |
+| `cfxdevkit.nodeDataDir` | `.cfxdevkit/devnode` | Local node data directory |
+| `cfxdevkit.nodeAccounts` | `10` | Pre-funded accounts in dev node |
+| `cfxdevkit.nodeLogging` | `false` | Enable verbose node logs |
+
+### View Model
+
+The extension uses a tree-based UI model (`src/views-model.ts`) with typed records:
+- `NetworkTreeRecord`, `NodeTreeRecord`
+- `WalletRootRecord`, `AccountTreeRecord`
+- `ContractTreeRecord`, `AbiFunctionTreeRecord`
+
+Views are implemented in `src/views.ts` and powered by `StaticTreeProvider`.
+
+---
+
+## Dependencies & Integration
+
+All packages depend on core libraries from the monorepo:
+
+| Dependency | Role |
+|-----------|------|
+| `@cfxdevkit/core` | Core primitives: HD derivation, address formats, network definitions |
+| `@cfxdevkit/wallet` | Wallet management: keystore, hardware backends |
+| `@cfxdevkit/devnode` | Local node lifecycle: start/stop/wipe |
+| `@cfxdevkit/compiler` | Solidity compilation |
+| `@cfxdevkit/contracts` | Contract ABIs, deployment registry |
+| `@cfxdevkit/services` | RPC service clients |
+
+The CLI and VS Code extension are the primary consumers of `@cfxdevkit/core`. The MCP server and scaffolder act as higher-level integrators.
+
+---
+
+## Testing Strategy
+
+All packages use **Vitest** for unit tests:
+- CLI: Full integration tests for `run()`, `derive`, `generate`, `status`
+- Scaffold: Tests for `scaffoldProject`, `renderFile`, `validateName`
+- MCP/VS Code: Minimal stub tests (expand as features land)
+
+Tests are colocated with source (`*.test.ts`) and excluded from `tsconfig.json` `include` paths.
+
+---
+
+## Build & Development
+
+### Prerequisites
+
+- Node.js ≥ 22
+- pnpm ≥ 10
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `pnpm build` | Bundles package to `dist/` (ESM + `.d.ts`) |
+| `pnpm test` | Runs all tests |
+| `pnpm typecheck` | Type-checks source |
+| `pnpm lint` | Runs Biome checks |
+| `pnpm clean` | Removes build artifacts |
+
+### Build Tooling
+
+- **Vite** (ESM bundler)
+- **vite-plugin-dts** (TypeScript declaration generation)
+- **Biome** (linting/formatting)
+- **MoonRepo** (`moon.yml` for task orchestration)
+
+---
+
+## Future Work
+
+- Full MCP server implementation (exposing CLI/scaffolder via protocol)
+- Template registry (dynamic template loading)
+- VS Code extension: Contract explorer, debug adapter
+- CLI: Subcommand plugins, interactive mode
+
+---
+
+## References
+
+- ADR-0003: Module carve-out strategy
+- `API.md` / `STRUCTURE.md` in each package (for future expansion)
+- BIP-44 paths: `m/44'/60'/...` (EVM), `m/44'/503'/...` (Core Space)

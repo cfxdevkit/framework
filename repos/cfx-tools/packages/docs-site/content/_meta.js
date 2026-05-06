@@ -1,0 +1,23 @@
+export default {
+  index: {
+    title: 'Home',
+    type: 'page',
+    display: 'hidden',
+  },
+  quickstart: {
+    title: 'Quick Start',
+    type: 'page',
+  },
+  packages: {
+    title: 'Packages',
+    type: 'page',
+  },
+  architecture: {
+    title: 'Architecture',
+    type: 'page',
+  },
+  wiki: {
+    title: 'Code Wiki',
+    type: 'page',
+  },
+}
