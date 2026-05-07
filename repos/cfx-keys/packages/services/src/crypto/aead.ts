@@ -1,4 +1,4 @@
-import { gcm } from '@noble/ciphers/aes';
+import { gcm } from '@noble/ciphers/aes.js';
 import { GCM_IV_LEN, GCM_TAG_LEN } from './constants.js';
 import { CryptoError } from './errors.js';
 import type { AesGcmKey } from './keys.js';

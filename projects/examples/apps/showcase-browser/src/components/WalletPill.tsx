@@ -11,6 +11,7 @@
 
 import { CopyButton, WalletPickerModal } from '@cfxdevkit/example-showcase-ui';
 import { useState } from 'react';
+import { formatUnits } from 'viem';
 import { useAccount, useBalance, useChainId, useConnect, useDisconnect } from 'wagmi';
 
 function shortAddress(addr: string): string {
@@ -56,7 +57,7 @@ export function WalletPill() {
     <div className="row" style={{ gap: 8, alignItems: 'center' }}>
       <span className="mono" style={{ fontSize: 12 }}>
         {balance
-          ? `${Number(balance.formatted).toLocaleString(undefined, { maximumFractionDigits: 4 })} ${balance.symbol}`
+          ? `${Number(formatUnits(balance.value, balance.decimals)).toLocaleString(undefined, { maximumFractionDigits: 4 })} ${balance.symbol}`
           : '—'}
       </span>
       <span

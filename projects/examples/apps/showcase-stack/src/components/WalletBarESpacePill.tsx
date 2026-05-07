@@ -1,5 +1,6 @@
 import { CopyButton, WalletPickerModal } from '@cfxdevkit/example-showcase-ui';
 import { useState } from 'react';
+import { formatUnits } from 'viem';
 import {
   useAccount,
   useBalance,
@@ -49,7 +50,7 @@ export function ESpacePill() {
           )}
           <span className="mono" style={{ fontSize: 11 }}>
             {onCorrectChain && balance
-              ? `${Number(balance.formatted).toLocaleString(undefined, { maximumFractionDigits: 4 })} ${balance.symbol}`
+              ? `${Number(formatUnits(balance.value, balance.decimals)).toLocaleString(undefined, { maximumFractionDigits: 4 })} ${balance.symbol}`
               : '—'}
           </span>
           <span className="mono wallet-addr" title={address}>

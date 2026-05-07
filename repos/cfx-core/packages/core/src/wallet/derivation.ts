@@ -4,7 +4,7 @@ import {
   generateMnemonic as scureGenerateMnemonic,
   validateMnemonic as scureValidateMnemonic,
 } from '@scure/bip39';
-import { wordlist as english } from '@scure/bip39/wordlists/english';
+import { wordlist as english } from '@scure/bip39/wordlists/english.js';
 import { privateKeyToAccount as civePrivateKeyToAccount } from 'cive/accounts';
 import { privateKeyToAccount } from 'viem/accounts';
 import { WalletError } from '../errors/index.js';

@@ -5,6 +5,7 @@
  */
 
 import { CopyButton } from '@cfxdevkit/example-showcase-ui';
+import { formatUnits } from 'viem';
 import { useAccount, useBalance, useBlockNumber, useChainId, useEnsName, useGasPrice } from 'wagmi';
 import { espaceMainnet } from '../contexts/WagmiProviders.js';
 
@@ -50,7 +51,7 @@ export function AccountSummaryPanel() {
         {'\n'}connector : {connector?.name ?? 'unknown'}
         {'\n'}ens : {ens ?? '(none)'}
         {'\n'}chainId : {chainId}
-        {'\n'}balance : {balance ? `${balance.formatted} ${balance.symbol}` : '…'}
+        {'\n'}balance : {balance ? `${formatUnits(balance.value, balance.decimals)} ${balance.symbol}` : '…'}
         {'\n'}blockNumber : {blockNumber !== undefined ? blockNumber.toString() : '…'}
         {'\n'}gasPrice : {gasPrice !== undefined ? `${gasPrice.toString()} wei` : '…'}
       </div>
