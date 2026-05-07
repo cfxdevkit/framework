@@ -9,6 +9,9 @@ import {
   rotateLocalPassphrase,
 } from './index.js';
 
+/** Lightweight Argon2id params for tests — real derivation takes ~5 s per call. */
+const TEST_KDF = { memKiB: 64, iterations: 1 } as const;
+
 let dir: string;
 let path: string;
 
@@ -22,8 +25,12 @@ afterEach(() => {
 });
 
 describe('initLocalWallet', () => {
-  it('creates an encrypted keystore, returns mnemonic + signer', { timeout: 30_000 }, async () => {
-    const w = await initLocalWallet({ passphrase: 'correct horse battery staple', path });
+  it('creates an encrypted keystore, returns mnemonic + signer', { timeout: 5_000 }, async () => {
+    const w = await initLocalWallet({
+      passphrase: 'correct horse battery staple',
+      path,
+      kdf: TEST_KDF,
+    });
     expect(w.path).toBe(path);
     expect(w.address).toMatch(/^0x[0-9a-fA-F]{40}$/);
     expect(w.mnemonic.split(/\s+/).length).toBe(24);
@@ -37,8 +44,12 @@ describe('initLocalWallet', () => {
     await expect(initLocalWallet({ passphrase: 'short', path })).rejects.toThrow();
   });
 
-  it('openLocalWallet round-trips after init', { timeout: 30_000 }, async () => {
-    const init = await initLocalWallet({ passphrase: 'correct horse battery staple', path });
+  it('openLocalWallet round-trips after init', { timeout: 5_000 }, async () => {
+    const init = await initLocalWallet({
+      passphrase: 'correct horse battery staple',
+      path,
+      kdf: TEST_KDF,
+    });
     const opened = await openLocalWallet({
       passphrase: 'correct horse battery staple',
       path,
@@ -46,8 +57,8 @@ describe('initLocalWallet', () => {
     expect(opened.signer.account.address).toBe(init.signer.account.address);
   });
 
-  it('rotateLocalPassphrase changes the unlock secret', { timeout: 60_000 }, async () => {
-    await initLocalWallet({ passphrase: 'correct horse battery staple', path });
+  it('rotateLocalPassphrase changes the unlock secret', { timeout: 10_000 }, async () => {
+    await initLocalWallet({ passphrase: 'correct horse battery staple', path, kdf: TEST_KDF });
     await rotateLocalPassphrase({
       oldPassphrase: 'correct horse battery staple',
       newPassphrase: 'a-much-better-secret-9876',

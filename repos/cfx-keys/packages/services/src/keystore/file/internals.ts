@@ -89,15 +89,24 @@ export async function writeEnvelope(path: string, env: Envelope): Promise<void> 
   await fs.rename(tmp, path);
 }
 
-export function emptyEnvelope(salt: Uint8Array): Envelope {
+export interface KdfParams {
+  /** Memory cost in KiB. Production default: 64 MiB. Use a small value (≥ 8) in tests. */
+  memKiB?: number;
+  /** Time cost (iterations). Production default: 3. */
+  iterations?: number;
+  /** Parallelism / lanes. Default: 1. */
+  parallelism?: number;
+}
+
+export function emptyEnvelope(salt: Uint8Array, kdf?: KdfParams): Envelope {
   return {
     version: FORMAT_VERSION,
     kdf: {
       name: 'argon2id',
       salt: toBase64Url(salt),
-      memKiB: 64 * 1024,
-      iterations: 3,
-      parallelism: 1,
+      memKiB: kdf?.memKiB ?? 64 * 1024,
+      iterations: kdf?.iterations ?? 3,
+      parallelism: kdf?.parallelism ?? 1,
     },
     secrets: {},
   };
@@ -161,7 +170,11 @@ export function validatePutInput(input: KeystorePutInput) {
   });
 }
 
-export async function initFileKeystore(input: { path: string; passphrase: string }): Promise<void> {
+export async function initFileKeystore(input: {
+  path: string;
+  passphrase: string;
+  kdf?: KdfParams;
+}): Promise<void> {
   try {
     await fs.access(input.path);
     throw new KeystoreError({
@@ -171,7 +184,7 @@ export async function initFileKeystore(input: { path: string; passphrase: string
   } catch (error) {
     if (error instanceof KeystoreError) throw error;
   }
-  const env = emptyEnvelope(randomBytes(SALT_LEN));
+  const env = emptyEnvelope(randomBytes(SALT_LEN), input.kdf);
   await deriveKekFromEnvelope(env, input.passphrase);
   await writeEnvelope(input.path, env);
 }
@@ -211,7 +224,11 @@ export async function changeFilePassphrase(input: {
       });
     }
   }
-  const newEnv = emptyEnvelope(randomBytes(SALT_LEN));
+  const newEnv = emptyEnvelope(randomBytes(SALT_LEN), {
+    memKiB: env.kdf.memKiB,
+    iterations: env.kdf.iterations,
+    parallelism: env.kdf.parallelism,
+  });
   const newKek = await deriveKekFromEnvelope(newEnv, input.newPassphrase);
   for (const { key, pt, rec } of decrypted) {
     const [service, account] = key.split('\0') as [string, string];

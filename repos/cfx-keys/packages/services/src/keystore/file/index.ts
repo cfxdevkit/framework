@@ -30,7 +30,7 @@ import {
   writeEnvelope,
 } from './internals.js';
 
-export { changeFilePassphrase, initFileKeystore } from './internals.js';
+export { changeFilePassphrase, initFileKeystore, type KdfParams } from './internals.js';
 
 export interface FileKeystoreOptions {
   path: string;
