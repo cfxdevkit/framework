@@ -76,23 +76,43 @@ export async function abiCallWrite(
       }),
   );
 
-  // On local, pack immediately so the receipt arrives quickly.
+  // Confirm by advancing epochs until the receipt appears (local) or polling
+  // the real network (testnet/mainnet).
+  let receiptResult: unknown;
   if (this.selectedNetwork() === 'local' && this.node?.isRunning()) {
     await this.node.packMine().catch(() => {});
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Confirming ${fn.name}…`,
+      },
+      async () => {
+        for (let i = 0; i < 30; i++) {
+          const receipt = await (client.family === 'espace'
+            ? client.getTransactionReceipt(submitted.hash)
+            : client.request({ method: 'cfx_getTransactionReceipt', params: [submitted.hash] })
+          ).catch(() => null);
+          if (receipt) {
+            receiptResult = receipt;
+            break;
+          }
+          await this.node?.mine(1).catch(() => {});
+          await new Promise<void>((r) => setTimeout(r, 300));
+        }
+      },
+    );
+  } else {
+    receiptResult = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Waiting for ${fn.name} receipt…`,
+      },
+      () => waitForReceipt(client, submitted.hash, { pollIntervalMs: 1_000, timeoutMs: 120_000 }),
+    );
   }
 
-  const receiptTimeoutMs = this.selectedNetwork() === 'local' ? 60_000 : 120_000;
-  const result = await vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: `Waiting for ${fn.name} receipt…`,
-    },
-    () =>
-      waitForReceipt(client, submitted.hash, { pollIntervalMs: 500, timeoutMs: receiptTimeoutMs }),
-  );
-
   this.output.appendLine(
-    `[WRITE] ${contract.label}.${fn.name} -> ${submitted.hash} (block ${(result as unknown as { blockNumber?: unknown }).blockNumber ?? 'n/a'})`,
+    `[WRITE] ${contract.label}.${fn.name} -> ${submitted.hash} (block ${(receiptResult as unknown as { blockNumber?: unknown }).blockNumber ?? 'n/a'})`,
   );
   this.output.show(true);
   await vscode.window.showInformationMessage(`${fn.name} confirmed: ${submitted.hash}`);

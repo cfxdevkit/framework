@@ -92,6 +92,11 @@ export class DevNode {
       }
     } catch (cause) {
       this.status = 'error';
+      // Release ports if the server partially started before failing.
+      if (this.server) {
+        void Promise.resolve(this.server.stop()).catch(() => {});
+        this.server = null;
+      }
       throw new DevNodeError({
         code: 'devnode/start-failed',
         message: cause instanceof Error ? cause.message : String(cause),

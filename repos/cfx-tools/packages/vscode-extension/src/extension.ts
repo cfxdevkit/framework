@@ -53,8 +53,14 @@ class ExtensionRuntime implements vscode.Disposable {
 
   dispose(): void {
     for (const disposable of this.disposables) disposable.dispose();
+    // Node stop is handled by deactivate() which awaits it properly.
+    // dispose() is intentionally synchronous; don't fire-and-forget stop here.
+    this.node = null;
+  }
+
+  async stopNodeForDeactivation(): Promise<void> {
     if (this.node) {
-      void this.node.stop();
+      await this.node.stop().catch(() => {});
       this.node = null;
     }
   }
@@ -160,6 +166,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 }
 
 export async function deactivate(): Promise<void> {
+  // Await the node stop so ports are released before VS Code restarts the
+  // extension host (e.g. after a reload). Swallow errors so deactivation
+  // always completes cleanly.
+  await runtime?.stopNodeForDeactivation();
   runtime?.dispose();
   runtime = null;
 }

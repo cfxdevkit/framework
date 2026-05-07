@@ -129,29 +129,46 @@ export async function deployContractCommand(this: ExtensionRuntime): Promise<voi
       }),
   );
 
-  // On local network, force-pack the transaction immediately so the receipt
-  // arrives within the next poll cycle rather than waiting for the auto-miner.
+  // Confirm the deployment by advancing epochs until the receipt appears.
+  // On local, packMine() packs the tx then mine(1) advances deferred execution
+  // epochs — without advancing epochs the receipt never appears.
+  // On testnet/mainnet the network advances on its own, so fall back to polling.
+  let contractAddress: string | undefined;
   if (this.selectedNetwork() === 'local' && this.node?.isRunning()) {
     await this.node.packMine().catch(() => {});
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Confirming ${artifact.contractName}…`,
+      },
+      async () => {
+        for (let i = 0; i < 30; i++) {
+          const receipt = await (client.family === 'espace'
+            ? client.getTransactionReceipt(submitted.hash)
+            : client.request({ method: 'cfx_getTransactionReceipt', params: [submitted.hash] })
+          ).catch(() => null);
+          if (receipt) {
+            contractAddress =
+              (receipt as unknown as { contractAddress?: string }).contractAddress ?? undefined;
+            break;
+          }
+          await this.node?.mine(1).catch(() => {});
+          await new Promise<void>((r) => setTimeout(r, 300));
+        }
+      },
+    );
+  } else {
+    const receipt = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Waiting for ${artifact.contractName} deploy receipt…`,
+      },
+      () => waitForReceipt(client, submitted.hash, { pollIntervalMs: 1_000, timeoutMs: 120_000 }),
+    );
+    contractAddress =
+      (receipt as unknown as { contractAddress?: string }).contractAddress ?? undefined;
   }
 
-  // Wait for the receipt. Use a generous timeout on local (60 s) since the
-  // node may need a couple of deferred-execution epochs to confirm.
-  const receiptTimeoutMs = this.selectedNetwork() === 'local' ? 60_000 : 120_000;
-  const result = await vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: `Waiting for ${artifact.contractName} deploy receipt…`,
-    },
-    () =>
-      waitForReceipt(client, submitted.hash, {
-        pollIntervalMs: 500,
-        timeoutMs: receiptTimeoutMs,
-      }),
-  );
-
-  const contractAddress =
-    (result as unknown as { contractAddress?: string }).contractAddress ?? undefined;
   if (!contractAddress) throw new Error('Deployment completed without a contract address.');
 
   const deployments = await this.readDeployments();
@@ -170,8 +187,10 @@ export async function deployContractCommand(this: ExtensionRuntime): Promise<voi
   this.log(
     `Deployed ${artifact.contractName} to ${this.selectedNetworkLabel()} ${target === 'core' ? 'Core Space' : 'eSpace'} at ${contractAddress}`,
   );
-  await vscode.window.showInformationMessage(
+  // Refresh the tree immediately so the new contract appears without waiting
+  // for the notification to be dismissed.
+  await this.refreshAll();
+  void vscode.window.showInformationMessage(
     `Deployed ${artifact.contractName} at ${contractAddress}`,
   );
-  await this.refreshAll();
 }

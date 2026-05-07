@@ -197,9 +197,14 @@
           "group": "inline@1"
         },
         {
+          "command": "cfxdevkit.rotateKeystorePassphrase",
+          "when": "view == cfxdevkit.mainView && viewItem == cfxWalletActiveReady",
+          "group": "inline@2"
+        },
+        {
           "command": "cfxdevkit.removeWallet",
           "when": "view == cfxdevkit.mainView && viewItem =~ /cfxWallet/",
-          "group": "inline@2"
+          "group": "inline@3"
         },
         {
           "command": "cfxdevkit.selectAccount",

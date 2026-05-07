@@ -59,10 +59,10 @@ export async function startNode(this: ExtensionRuntime): Promise<void> {
   );
   this.node = node;
   this.log(`Node started. Core RPC: ${node.urls.core} eSpace RPC: ${node.urls.espace}`);
-  await vscode.window.showInformationMessage(
+  await this.refreshAll();
+  void vscode.window.showInformationMessage(
     `Conflux local node running. eSpace: ${node.urls.espace}`,
   );
-  await this.refreshAll();
 }
 
 export async function stopNode(this: ExtensionRuntime): Promise<void> {

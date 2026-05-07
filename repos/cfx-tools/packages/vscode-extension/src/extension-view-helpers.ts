@@ -4,6 +4,9 @@
 import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createDevNode, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeMainItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode } from './extension-helper-shared.js';
 
 export async function refreshAll(this: ExtensionRuntime): Promise<void> {
+  // Build snapshot without balance fetches so the tree renders immediately
+  // with the correct node/wallet state. Balance fetches may take several
+  // seconds (HTTP timeout) if the node is still warming up.
   const snapshot = await this.buildSnapshot();
   this.mainProvider.setItems(makeMainItems(snapshot));
   this.networkStatus.text = `$(globe) ${this.selectedNetworkLabel()}`;
@@ -14,6 +17,14 @@ export async function refreshAll(this: ExtensionRuntime): Promise<void> {
     'cfxdevkit.nodeRunning',
     this.node?.isRunning() ?? false,
   );
+  // Fetch balances in the background and re-render once they arrive.
+  if (snapshot.accounts.length > 0) {
+    void this.populateAccountBalances(snapshot.accounts)
+      .then(() => {
+        this.mainProvider.setItems(makeMainItems(snapshot));
+      })
+      .catch(() => {});
+  }
 }
 
 export async function buildSnapshot(this: ExtensionRuntime): Promise<ViewSnapshot> {
@@ -75,8 +86,6 @@ export async function buildSnapshot(this: ExtensionRuntime): Promise<ViewSnapsho
       }
     }
   }
-
-  await this.populateAccountBalances(accounts);
 
   const contracts: ContractTreeRecord[] = deployments.map((entry) => ({
     id: entry.id,

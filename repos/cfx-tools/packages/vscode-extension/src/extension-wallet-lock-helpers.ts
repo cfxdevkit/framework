@@ -8,8 +8,8 @@ export async function lockKeystore(this: ExtensionRuntime): Promise<void> {
   this.fileProvider = null;
   this.cachedSigner = null;
   this.localNodeMnemonic = null;
-  await vscode.window.showInformationMessage('Keystore locked.');
   await this.refreshAll();
+  void vscode.window.showInformationMessage('Keystore locked.');
 }
 
 export async function rotateKeystorePassphrase(this: ExtensionRuntime): Promise<void> {
@@ -33,8 +33,8 @@ export async function rotateKeystorePassphrase(this: ExtensionRuntime): Promise<
   this.unlockedPassphrase = newPassphrase;
   this.fileProvider = this.fileKeystore(newPassphrase);
   this.cachedSigner = null;
-  await vscode.window.showInformationMessage('Keystore password changed.');
   await this.refreshAll();
+  void vscode.window.showInformationMessage('Keystore password changed.');
 }
 
 export function sanitizeAccountName(this: ExtensionRuntime, label: string): string {
