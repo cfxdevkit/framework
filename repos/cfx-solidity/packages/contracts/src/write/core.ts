@@ -1,6 +1,6 @@
 import type { CoreSpaceClient, Hex, SignableTx } from '@cfxdevkit/core';
 import type { Abi, ContractFunctionName } from 'viem';
-import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
+import { encodeFunctionData, hexToBigInt, isAddress, toHex } from 'viem';
 import { ContractsError } from '../errors/index.js';
 import type { SendWriteInput, SendWriteResult } from './index.js';
 import { waitForReceipt } from './receipt.js';
@@ -19,7 +19,7 @@ export async function sendCoreWrite(
   input: GenericSendWriteInput,
   client: CoreSpaceClient,
 ): Promise<SendWriteResult> {
-  if (/^0x[0-9a-fA-F]+$/.test(input.address)) {
+  if (isAddress(input.address)) {
     throw new ContractsError({
       code: 'contracts/invalid-argument',
       message: `Expected base32 address for Core Space, got 0x-hex: ${input.address}`,

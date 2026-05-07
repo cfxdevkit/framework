@@ -11,6 +11,7 @@
   "scripts": {
     "build": "moon run :build",
     "test": "moon run :test",
+    "test:cover": "pnpm -r --if-present test:coverage",
     "lint": "moon run :lint",
     "typecheck": "moon run :typecheck",
     "check": "moon run :check",

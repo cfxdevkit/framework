@@ -11,7 +11,7 @@
  */
 import type { Client, EpochTag } from '@cfxdevkit/core';
 import type { Abi, ContractFunctionArgs, ContractFunctionName } from 'viem';
-import { decodeFunctionResult, encodeFunctionData, toHex } from 'viem';
+import { decodeFunctionResult, encodeFunctionData, isAddress, toHex } from 'viem';
 import { ContractsError } from '../errors/index.js';
 
 /** Epoch tags accepted by `cfx_call` (no `latest_confirmed`). */
@@ -78,14 +78,14 @@ async function callEspace(
   input: ReadContractInput<Abi, ContractFunctionName<Abi, 'pure' | 'view'>>,
   data: `0x${string}`,
 ): Promise<`0x${string}`> {
-  if (!isHex0x(input.address)) {
+  if (!isAddress(input.address)) {
     throw new ContractsError({
       code: 'contracts/invalid-argument',
       message: `eSpace addresses must be 0x-prefixed 20-byte hex (got "${input.address}")`,
       meta: { address: input.address, family: 'espace' },
     });
   }
-  if (input.from !== undefined && !isHex0x(input.from)) {
+  if (input.from !== undefined && !isAddress(input.from)) {
     throw new ContractsError({
       code: 'contracts/invalid-argument',
       message: `eSpace 'from' must be 0x hex (got "${input.from}")`,
@@ -109,14 +109,14 @@ async function callCore(
   input: ReadContractInput<Abi, ContractFunctionName<Abi, 'pure' | 'view'>>,
   data: `0x${string}`,
 ): Promise<`0x${string}`> {
-  if (isHex0x(input.address)) {
+  if (isAddress(input.address)) {
     throw new ContractsError({
       code: 'contracts/invalid-argument',
       message: `Core Space addresses must be base32 (got 0x hex "${input.address}")`,
       meta: { address: input.address, family: 'core' },
     });
   }
-  if (input.from !== undefined && isHex0x(input.from)) {
+  if (input.from !== undefined && isAddress(input.from)) {
     throw new ContractsError({
       code: 'contracts/invalid-argument',
       message: `Core Space 'from' must be base32 (got 0x hex "${input.from}")`,
@@ -129,8 +129,4 @@ async function callCore(
     { method: 'cfx_call', params: [callObject, epochParam] },
     input.signal ? { signal: input.signal } : {},
   );
-}
-
-function isHex0x(s: string): s is `0x${string}` {
-  return /^0x[0-9a-fA-F]+$/.test(s);
 }

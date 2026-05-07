@@ -1,4 +1,13 @@
-import type { Hex, SignableTx } from '@cfxdevkit/core';
+import {
+  type CoreSpaceClient,
+  coreSpaceLocal,
+  createClient,
+  type EspaceClient,
+  espaceLocal,
+  type Hex,
+  http,
+  type SignableTx,
+} from '@cfxdevkit/core';
 import type { Signer } from '@cfxdevkit/core/wallet';
 import { type DevNodeAccountSnapshot, devNodeManager } from '../devnode/manager.js';
 
@@ -22,6 +31,22 @@ export function rpcUrl(space: Space): string {
   const urls = status.urls;
   if (!status.running || !urls) throw new Error('Start the local node before this operation');
   return space === 'core' ? urls.core : urls.espace;
+}
+
+export function coreClient(): CoreSpaceClient {
+  const url = rpcUrl('core');
+  return createClient({
+    chain: { ...coreSpaceLocal, rpc: { http: [url] } },
+    transport: http({ url }),
+  }) as CoreSpaceClient;
+}
+
+export function espaceClient(): EspaceClient {
+  const url = rpcUrl('espace');
+  return createClient({
+    chain: { ...espaceLocal, rpc: { http: [url] } },
+    transport: http({ url }),
+  }) as EspaceClient;
 }
 
 export function buildTransaction(space: Space, signer: Signer, draft: TxDraft): SignableTx {
@@ -58,14 +83,15 @@ export function buildTransaction(space: Space, signer: Signer, draft: TxDraft): 
 export async function getNativeBalance(space: Space, signer: Signer): Promise<string> {
   const address = space === 'core' ? signer.account.coreAddress : signer.account.address;
   if (!address) throw new Error('Address is unavailable');
-  const method = space === 'core' ? 'cfx_getBalance' : 'eth_getBalance';
-  const tag = space === 'core' ? 'latest_state' : 'latest';
-  return BigInt((await rpc(rpcUrl(space), method, [address, tag])) as Hex).toString();
+  if (space === 'core') {
+    return (await coreClient().getBalance(address)).toString();
+  }
+  return (await espaceClient().getBalance(address as `0x${string}`)).toString();
 }
 
 export async function broadcastRaw(space: Space, rawTx: Hex): Promise<string> {
-  const method = space === 'core' ? 'cfx_sendRawTransaction' : 'eth_sendRawTransaction';
-  return String(await rpc(rpcUrl(space), method, [rawTx]));
+  if (space === 'core') return coreClient().sendRawTransaction(rawTx);
+  return espaceClient().sendRawTransaction(rawTx);
 }
 
 export async function fundAddress(space: Space, signer: Signer): Promise<string> {
@@ -89,11 +115,11 @@ async function fundCore(_faucet: DevNodeAccountSnapshot, faucetSigner: Signer, s
   const to = signer.account.coreAddress;
   const from = faucetSigner.account.coreAddress;
   if (!to || !from) throw new Error('Core address is unavailable');
-  const url = rpcUrl('core');
-  const [nonceHex, gasPriceHex, epochHex] = await Promise.all([
-    rpc(url, 'cfx_getNextNonce', [from, 'latest_state']),
-    rpc(url, 'cfx_gasPrice', []),
-    rpc(url, 'cfx_epochNumber', ['latest_state']),
+  const client = coreClient();
+  const [nonce, gasPrice, epochHeight] = await Promise.all([
+    client.getTransactionCount(from, { epochTag: 'latest_state' }),
+    client.getGasPrice(),
+    client.getEpochNumber({ epochTag: 'latest_state' }),
   ]);
   const rawTx = await faucetSigner.signTransaction({
     family: 'core',
@@ -101,28 +127,25 @@ async function fundCore(_faucet: DevNodeAccountSnapshot, faucetSigner: Signer, s
     chainId: 2029,
     to,
     value: 1_000_000_000_000_000_000n,
-    nonce: Number(BigInt(String(nonceHex))),
+    nonce,
     gas: 21000n,
-    gasPrice: BigInt(String(gasPriceHex)),
+    gasPrice,
     storageLimit: 0n,
-    epochHeight: BigInt(String(epochHex)),
+    epochHeight,
     data: '0x',
   });
   return broadcastRaw('core', rawTx);
 }
 
 async function fundEspace(faucetSigner: Signer, signer: Signer) {
-  const url = rpcUrl('espace');
-  const nonceHex = await rpc(url, 'eth_getTransactionCount', [
-    faucetSigner.account.address,
-    'pending',
-  ]);
+  const client = espaceClient();
+  const nonce = await client.getTransactionCount(faucetSigner.account.address as `0x${string}`);
   const rawTx = await faucetSigner.signTransaction({
     family: 'espace',
     chainId: 2030,
     to: signer.account.address,
     value: 1_000_000_000_000_000_000n,
-    nonce: Number(BigInt(String(nonceHex))),
+    nonce,
     gas: 21000n,
     maxFeePerGas: 2_000_000_000n,
     maxPriorityFeePerGas: 1_000_000_000n,
@@ -143,19 +166,19 @@ export async function rpc(url: string, method: string, params: unknown[]) {
 }
 
 async function waitForTransactionReceipt(space: Space, txHash: string) {
-  const method = space === 'core' ? 'cfx_getTransactionReceipt' : 'eth_getTransactionReceipt';
+  const client = space === 'core' ? coreClient() : espaceClient();
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    const receipt = await rpc(rpcUrl(space), method, [txHash]);
+    const receipt = await client.getTransactionReceipt(txHash as `0x${string}`);
     if (receipt) return;
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
 }
 
 async function waitForTransaction(space: Space, txHash: string) {
-  const method = space === 'core' ? 'cfx_getTransactionByHash' : 'eth_getTransactionByHash';
+  const client = space === 'core' ? coreClient() : espaceClient();
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    const transaction = await rpc(rpcUrl(space), method, [txHash]);
-    if (transaction) return;
+    const tx = await client.getTransaction(txHash as `0x${string}`);
+    if (tx) return;
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
 }

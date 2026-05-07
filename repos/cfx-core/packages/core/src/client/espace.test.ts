@@ -10,7 +10,10 @@ const { mockPublicClient } = vi.hoisted(() => ({
     getBlockNumber: vi.fn(),
     getBlock: vi.fn(),
     getBalance: vi.fn(),
+    getTransaction: vi.fn(),
     getTransactionReceipt: vi.fn(),
+    getTransactionCount: vi.fn(),
+    getGasPrice: vi.fn(),
     estimateGas: vi.fn(),
   },
 }));
@@ -141,6 +144,63 @@ describe('createEspaceClient', () => {
   it('request wraps errors in RpcError', async () => {
     mockPublicClient.request.mockRejectedValue(new Error('method not found'));
     await expect(client.request({ method: 'eth_unknown' })).rejects.toBeInstanceOf(RpcError);
+  });
+
+  it('getTransaction returns the transaction when found', async () => {
+    const tx = { hash: HASH, nonce: 1 };
+    mockPublicClient.getTransaction.mockResolvedValue(tx);
+    expect(await client.getTransaction(HASH)).toBe(tx);
+  });
+
+  it('getTransaction returns null for TransactionNotFoundError', async () => {
+    const err = Object.assign(new Error('not found'), { name: 'TransactionNotFoundError' });
+    mockPublicClient.getTransaction.mockRejectedValue(err);
+    expect(await client.getTransaction(HASH)).toBeNull();
+  });
+
+  it('getTransaction wraps other errors in RpcError', async () => {
+    mockPublicClient.getTransaction.mockRejectedValue(new Error('network'));
+    await expect(client.getTransaction(HASH)).rejects.toBeInstanceOf(RpcError);
+  });
+
+  it('getTransactionCount returns the nonce', async () => {
+    mockPublicClient.getTransactionCount.mockResolvedValue(5);
+    const count = await client.getTransactionCount('0x0000000000000000000000000000000000000001');
+    expect(count).toBe(5);
+  });
+
+  it('getTransactionCount wraps errors in RpcError', async () => {
+    mockPublicClient.getTransactionCount.mockRejectedValue(new Error('bad'));
+    await expect(
+      client.getTransactionCount('0x0000000000000000000000000000000000000001'),
+    ).rejects.toBeInstanceOf(RpcError);
+  });
+
+  it('getGasPrice returns the current gas price', async () => {
+    mockPublicClient.getGasPrice.mockResolvedValue(1_000_000_000n);
+    expect(await client.getGasPrice()).toBe(1_000_000_000n);
+  });
+
+  it('getGasPrice wraps errors in RpcError', async () => {
+    mockPublicClient.getGasPrice.mockRejectedValue(new Error('bad'));
+    await expect(client.getGasPrice()).rejects.toBeInstanceOf(RpcError);
+  });
+
+  it('sendRawTransaction returns the tx hash', async () => {
+    mockPublicClient.request.mockResolvedValue(HASH);
+    const hash = await client.sendRawTransaction('0xdeadbeef' as `0x${string}`);
+    expect(hash).toBe(HASH);
+    expect(mockPublicClient.request).toHaveBeenCalledWith({
+      method: 'eth_sendRawTransaction',
+      params: ['0xdeadbeef'],
+    });
+  });
+
+  it('sendRawTransaction wraps errors in RpcError', async () => {
+    mockPublicClient.request.mockRejectedValue(new Error('nonce too low'));
+    await expect(client.sendRawTransaction('0xdeadbeef' as `0x${string}`)).rejects.toBeInstanceOf(
+      RpcError,
+    );
   });
 });
 

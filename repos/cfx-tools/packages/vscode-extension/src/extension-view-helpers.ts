@@ -9,9 +9,6 @@ export async function refreshAll(this: ExtensionRuntime): Promise<void> {
   // seconds (HTTP timeout) if the node is still warming up.
   const snapshot = await this.buildSnapshot();
   this.mainProvider.setItems(makeMainItems(snapshot));
-  this.networkStatus.text = `$(globe) ${this.selectedNetworkLabel()}`;
-  this.nodeStatus.text = `$(server) ${snapshot.nodeStatusLabel}`;
-  this.nodeStatus.tooltip = 'Conflux local node status';
   await vscode.commands.executeCommand(
     'setContext',
     'cfxdevkit.nodeRunning',

@@ -1,62 +1,79 @@
-# @cfxdevkit/testing — Public API (Test-Only)
+# `@cfxdevkit/testing` — API Reference
 
-> Shared fixtures + helpers. **Test-only.** Imported only from `*.test.ts` and
-> `test/integration/`. Production builds tree-shake away. Never used in runtime code.
+> Shared test utilities. **Test-only.** Import only from `*.test.ts` files.
+> Never imported in production/runtime code.
 
-## Sub-paths
+## Exports
 
-| Sub-path | Concern |
-|----------|---------|
-| `@cfxdevkit/testing/fixtures` | reusable fixtures (devnode, accounts, deployed contracts) |
-| `@cfxdevkit/testing/matchers` | vitest custom matchers |
-| `@cfxdevkit/testing/random` | deterministic random helpers |
-| `@cfxdevkit/testing/clock` | controllable clock |
-| `@cfxdevkit/testing/snapshots` | chain snapshot helpers |
-
----
-
-## `testing/fixtures`
-
-```
-type DevWorld = {
-  node: Node
-  client: Client
-  funded: readonly { signer: Signer; address: Address }[]
-  stop(): Promise<void>
+```ts
+// Deferred promise (resolve/reject from outside)
+function createDeferred<T>(): Deferred<T>
+interface Deferred<T> {
+  promise: Promise<T>
+  resolve(value: T | PromiseLike<T>): void
+  reject(error: unknown): void
 }
 
-function createDevWorld(opts?: { fundedAccounts?: number; chainId?: ChainId; seed?: string }): Promise<DevWorld>
+// Poll until assertion returns true
+async function waitFor(
+  assertion: () => boolean | Promise<boolean>,
+  options?: { timeoutMs?: number; intervalMs?: number },  // defaults: 1000 ms / 25 ms
+): Promise<void>
 
-type Erc20Fixture = { token: Address; mint: (to: Address, amount: Wei) => Promise<Hash> }
-function deployErc20(input: { client: Client; signer: Signer; name?: string; symbol?: string; decimals?: number }): Promise<Erc20Fixture>
+// In-memory mock client (eSpace or Core Space)
+function createMockClient(options?: MockClientOptions): Client
+interface MockClientOptions {
+  family?: 'core' | 'espace'    // default 'espace'
+  chainId?: number
+  receipts?: Map<string, TxReceipt | null>
+  logs?: CoreLog[]
+  request?: (method: string, params: readonly unknown[]) => unknown | Promise<unknown>
+}
+
+// Disposable devnode (does NOT auto-start by default)
+async function createDevNodeFixture(options?: DevNodeFixtureOptions): Promise<DevNode>
+interface DevNodeFixtureOptions {
+  mnemonic?: string
+  dataDir?: string
+  accounts?: number
+  logging?: boolean
+  autoStart?: boolean   // default false — call node.start() in beforeAll if needed
+}
 ```
 
-`createDevWorld` is the single entry for an integration test. Returns a working
-node + client + accounts. `await world.stop()` in `afterEach`.
+## Usage
 
----
+```ts
+import { createDeferred, waitFor, createMockClient, createDevNodeFixture } from '@cfxdevkit/testing';
 
-## `testing/matchers`
+// Deferred
+const deferred = createDeferred<string>();
+deferred.resolve('hello');
+await expect(deferred.promise).resolves.toBe('hello');
 
+// Poll
+let ready = false;
+setTimeout(() => { ready = true; }, 50);
+await waitFor(() => ready, { intervalMs: 5 });
+
+// Mock client
+const client = createMockClient({
+  receipts: new Map([['0xabc', { status: 'success' }]]),
+});
+const r = await client.getTransactionReceipt('0xabc');
+
+// Devnode fixture with auto-start
+const node = await createDevNodeFixture({ autoStart: true });
+// ... tests ...
+await node.stop();
 ```
-expect(receipt).toBeMined()
-expect(receipt).toEmitEvent({ abi, name, args? })
-expect(call).toRevertWithCode('core/contract/revert')
-expect(addr).toBeAddress()
-expect(amount).toEqualWei('1.234', 18)
-```
 
-Auto-registered when imported once: `import '@cfxdevkit/testing/matchers'`.
+## Notes
 
----
-
-## `testing/random`
-
-```
-function seedRandom(seed: string): { next(): number; address(): Address; hex(n: number): Hex }
-```
-
-Pure deterministic generator. Same `seed` → same outputs across runs.
+- `createMockClient` creates a fully typed `Client` that satisfies both eSpace and Core Space interfaces.
+- `waitFor` throws `Error('condition was not met within Nms')` after the timeout.
+- `createDevNodeFixture` wraps `createDevNode` from `@cfxdevkit/devnode`. Use `autoStart: true` for
+  integration tests that need a real node, or leave it off and call `node.start()` in `beforeAll`.
 
 ---
 

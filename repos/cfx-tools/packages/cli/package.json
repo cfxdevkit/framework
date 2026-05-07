@@ -30,6 +30,7 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
+    "@cfxdevkit/codegen-contracts": "workspace:*",
     "@cfxdevkit/core": "workspace:*"
   },
   "devDependencies": {

@@ -82,6 +82,9 @@ export function makeMockClient(opts: MockClientOptions = {}): Client {
       getLogs: async (_f: never, _o?: CallOptions) => [] as never,
       getSponsorInfo: async (_a: string, _o?: CallOptions) => null as never,
       getAdmin: async (_a: string, _o?: CallOptions) => null as never,
+      getTransactionCount: async (_a: string, _o?: never) => 0,
+      getGasPrice: async (_o?: CallOptions) => 0n,
+      sendRawTransaction: async (_tx: never, _o?: CallOptions) => '0x' as Hash,
     } as Client;
   }
 
@@ -103,6 +106,10 @@ export function makeMockClient(opts: MockClientOptions = {}): Client {
     getBalance: async (_a: Address, _o?: GetBalanceOptions) => 0n as Wei,
     getTransactionReceipt: async (_h: Hash, _o?: CallOptions) =>
       opts.receipt === undefined ? null : opts.receipt,
+    getTransaction: async (_h: Hash, _o?: CallOptions) => null,
+    getTransactionCount: async (_a: Address, _o?: never) => 0,
+    getGasPrice: async (_o?: CallOptions) => 0n,
+    sendRawTransaction: async (_tx: never, _o?: CallOptions) => '0x' as Hash,
     estimateGas: async (_i: TxRequest, _o?: CallOptions) => opts.gas ?? 21_000n,
   };
   return espace;

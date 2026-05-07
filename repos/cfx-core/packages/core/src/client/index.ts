@@ -7,6 +7,7 @@ import type {
   CoreLogFilter,
   EpochTag,
   Hash,
+  Hex,
   NodeStatus,
   SponsorInfo,
   TxReceipt,
@@ -48,8 +49,12 @@ export interface EspaceClient extends ClientBase {
   getBlockNumber(opts?: CallOptions): Promise<bigint>;
   getBlock(tag: BlockTag, opts?: CallOptions): Promise<Block>;
   getBalance(address: Address, opts?: GetBalanceOptions): Promise<Wei>;
+  getTransaction(hash: Hash, opts?: CallOptions): Promise<unknown | null>;
   getTransactionReceipt(hash: Hash, opts?: CallOptions): Promise<TxReceipt | null>;
+  getTransactionCount(address: Address, opts?: GetBalanceOptions): Promise<number>;
+  getGasPrice(opts?: CallOptions): Promise<bigint>;
   estimateGas(input: TxRequest, opts?: CallOptions): Promise<bigint>;
+  sendRawTransaction(signedTx: Hex, opts?: CallOptions): Promise<Hash>;
 }
 
 export interface CoreSpaceClient extends ClientBase {
@@ -57,8 +62,11 @@ export interface CoreSpaceClient extends ClientBase {
   getEpochNumber(opts?: CoreCallOptions): Promise<bigint>;
   getStatus(opts?: CallOptions): Promise<NodeStatus>;
   getBalance(address: string, opts?: CoreCallOptions): Promise<Wei>;
-  getTransactionReceipt(hash: Hash, opts?: CallOptions): Promise<TxReceipt | null>;
   getTransaction(hash: Hash, opts?: CallOptions): Promise<unknown | null>;
+  getTransactionReceipt(hash: Hash, opts?: CallOptions): Promise<TxReceipt | null>;
+  getTransactionCount(address: string, opts?: CoreCallOptions): Promise<number>;
+  getGasPrice(opts?: CallOptions): Promise<bigint>;
+  sendRawTransaction(signedTx: Hex, opts?: CallOptions): Promise<Hash>;
   getLogs(filter: CoreLogFilter, opts?: CallOptions): Promise<CoreLog[]>;
   getSponsorInfo(address: string, opts?: CoreCallOptions): Promise<SponsorInfo>;
   getAdmin(address: string, opts?: CoreCallOptions): Promise<string | null>;

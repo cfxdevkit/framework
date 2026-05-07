@@ -3,11 +3,14 @@ import {
   getAdmin as civeGetAdmin,
   getBalance as civeGetBalance,
   getEpochNumber as civeGetEpochNumber,
+  getGasPrice as civeGetGasPrice,
   getLogs as civeGetLogs,
+  getNextNonce as civeGetNextNonce,
   GetSponsorInfo as civeGetSponsorInfo,
   getStatus as civeGetStatus,
   getTransaction as civeGetTransaction,
   getTransactionReceipt as civeGetTransactionReceipt,
+  sendRawTransaction as civeSendRawTransaction,
 } from 'cive/actions';
 import { defineChain as civeDefineChain } from 'cive/utils';
 import type { ChainConfig } from '../chains/index.js';
@@ -16,6 +19,7 @@ import type {
   CoreLogFilter,
   EpochTag,
   Hash,
+  Hex,
   NodeStatus,
   SponsorInfo,
   TxReceipt,
@@ -102,6 +106,26 @@ export function createCoreClient(chain: ChainConfig, transport: Transport): Core
         ) as unknown as Promise<string | null>,
         'core/rpc/get-admin',
         { address },
+      );
+    },
+    getTransactionCount(address: string, opts?: CoreCallOptions): Promise<number> {
+      const params: Parameters<typeof civeGetNextNonce>[1] = { address: address as never };
+      if (opts?.epochTag) (params as { epochTag?: EpochTag }).epochTag = opts.epochTag;
+      return wrapRpc(
+        civeGetNextNonce(publicClient, params).then(Number),
+        'core/rpc/get-transaction-count',
+        { address },
+      );
+    },
+    getGasPrice(_opts?: CallOptions): Promise<bigint> {
+      return wrapRpc(civeGetGasPrice(publicClient) as Promise<bigint>, 'core/rpc/get-gas-price');
+    },
+    sendRawTransaction(signedTx: Hex, _opts?: CallOptions): Promise<Hash> {
+      return wrapRpc(
+        civeSendRawTransaction(publicClient, {
+          serializedTransaction: signedTx as never,
+        }) as Promise<Hash>,
+        'core/rpc/send-raw-transaction',
       );
     },
   };

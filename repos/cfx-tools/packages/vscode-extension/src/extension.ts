@@ -26,24 +26,12 @@ class ExtensionRuntime implements vscode.Disposable {
     onError: (error: unknown) => this.log(`Failed to write keystore audit event: ${String(error)}`),
   });
   private readonly output = vscode.window.createOutputChannel('Conflux DevKit');
-  private readonly networkStatus = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left,
-    100,
-  );
-  private readonly nodeStatus = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left,
-    99,
-  );
   private readonly mainProvider = new StaticTreeProvider<vscode.TreeItem>();
   private readonly disposables: vscode.Disposable[] = [];
 
   constructor(private readonly context: vscode.ExtensionContext) {
-    this.networkStatus.command = 'cfxdevkit.selectNetwork';
-    this.nodeStatus.command = 'cfxdevkit.nodeStart';
     this.disposables.push(
       this.output,
-      this.networkStatus,
-      this.nodeStatus,
       vscode.window.createTreeView('cfxdevkit.mainView', {
         treeDataProvider: this.mainProvider,
         showCollapseAll: false,
@@ -67,8 +55,6 @@ class ExtensionRuntime implements vscode.Disposable {
 
   async activate(): Promise<void> {
     this.registerCommands();
-    this.networkStatus.show();
-    this.nodeStatus.show();
     await this.refreshAll();
     if (this.selectedNetwork() === 'local' && this.config().get<boolean>('autoStartNode', false)) {
       await this.startNode().catch((error) => {

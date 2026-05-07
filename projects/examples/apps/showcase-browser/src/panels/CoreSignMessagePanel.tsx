@@ -20,6 +20,7 @@
 
 import { CopyButton, errMsg } from '@cfxdevkit/example-showcase-ui';
 import { useMemo, useState } from 'react';
+import { fromHex } from 'viem';
 import { getFluentProvider, useCoreWallet } from '../lib/use-core-wallet.js';
 
 export function CoreSignMessagePanel() {
@@ -34,7 +35,7 @@ export function CoreSignMessagePanel() {
   // "0x405" → 1029.
   const numericChainId = useMemo(() => {
     if (!chainId) return 0;
-    return Number.parseInt(chainId, 16) || 0;
+    return fromHex(chainId as `0x${string}`, 'number');
   }, [chainId]);
 
   const typedSample = useMemo(

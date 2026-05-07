@@ -19,6 +19,7 @@
     "@cfxdevkit/compiler": "workspace:*",
     "@cfxdevkit/core": "workspace:*",
     "@cfxdevkit/devnode": "workspace:*",
+    "@cfxdevkit/protocol": "workspace:*",
     "@cfxdevkit/services": "workspace:*",
     "@cfxdevkit/wallet": "workspace:*",
     "cors": "^2.8.5",
