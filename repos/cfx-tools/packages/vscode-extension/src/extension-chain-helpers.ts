@@ -1,7 +1,7 @@
 // @ts-nocheck
 // biome-ignore-all lint/correctness/noUnusedImports: extension helper groups share the VS Code runtime surface.
 // biome-ignore format: shared helper import is intentionally kept compact for hotspot limits.
-import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createDevNode, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode } from './extension-helper-shared.js';
+import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createDevNode, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, readFileKeystoreMnemonic, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode } from './extension-helper-shared.js';
 
 export async function readDeployments(this: ExtensionRuntime): Promise<DeploymentRecord[]> {
   try {
@@ -134,15 +134,28 @@ export async function walletSignerFor(
   this: ExtensionRuntime,
   target: ChainTarget,
 ): Promise<Signer> {
-  const backend = this.selectedBackend();
-  const signer =
-    backend === 'file'
-      ? (await this.ensureUnlockedWallet()).signer
-      : await this.ensureHardwareSigner();
-  if (target === 'core' && backend !== 'file') {
-    throw new Error(
-      'Hardware keystore backends currently support eSpace signing only. Select the file backend for Core Space writes.',
-    );
+  const signer = (await this.ensureUnlockedWallet()).signer;
+  if (this.selectedNetwork() === 'local' && this.node?.isRunning()) {
+    const accountIndex = this.selectedAccountIndex();
+    const fundedAccount = this.node.accounts[accountIndex];
+    if (!fundedAccount) {
+      throw new Error(
+        `The local node exposes ${this.node.accounts.length} funded account(s), but account #${accountIndex} is selected. Increase cfxdevkit.nodeAccounts or select a lower account index.`,
+      );
+    }
+
+    if (fundedAccount.evmAddress.toLowerCase() !== signer.account.address.toLowerCase()) {
+      const action = await vscode.window.showWarningMessage(
+        'The running local node was started from a different wallet. Restart it from the active wallet before deploying.',
+        'Restart Node',
+      );
+      if (action !== 'Restart Node') {
+        throw new Error('Restart the local node from the active wallet before deploying.');
+      }
+      await this.node.stop();
+      this.node = null;
+      await this.startNode();
+    }
   }
   if (target === 'core') {
     return this.withCoreAddress(signer, this.currentChains().core.id);
@@ -170,6 +183,13 @@ export async function ensureUnlockedWallet(this: ExtensionRuntime): Promise<Open
     const signer = await provider.getSigner(ref, this.currentCapability(), {
       derivationPath: this.derivationPath(),
     });
+    if (this.unlockedPassphrase) {
+      this.localNodeMnemonic = await readFileKeystoreMnemonic({
+        path: this.keystorePath(),
+        passphrase: this.unlockedPassphrase,
+        ref,
+      });
+    }
     return { provider, signer, ref, path: this.keystorePath() };
   } catch (error) {
     this.unlockedPassphrase = null;

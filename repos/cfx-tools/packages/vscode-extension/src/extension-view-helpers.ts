@@ -1,14 +1,11 @@
 // @ts-nocheck
 // biome-ignore-all lint/correctness/noUnusedImports: extension helper groups share the VS Code runtime surface.
 // biome-ignore format: shared helper import is intentionally kept compact for hotspot limits.
-import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createDevNode, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode } from './extension-helper-shared.js';
+import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createDevNode, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeMainItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode } from './extension-helper-shared.js';
 
 export async function refreshAll(this: ExtensionRuntime): Promise<void> {
   const snapshot = await this.buildSnapshot();
-  this.networkProvider.setItems(makeNetworkItems(snapshot));
-  this.nodeProvider.setItems(makeNodeItems(snapshot));
-  this.accountsProvider.setItems(makeAccountItems(snapshot));
-  this.contractsProvider.setItems(makeContractItems(snapshot));
+  this.mainProvider.setItems(makeMainItems(snapshot));
   this.networkStatus.text = `$(globe) ${this.selectedNetworkLabel()}`;
   this.nodeStatus.text = `$(server) ${snapshot.nodeStatusLabel}`;
   this.nodeStatus.tooltip = 'Conflux local node status';
@@ -20,110 +17,63 @@ export async function refreshAll(this: ExtensionRuntime): Promise<void> {
 }
 
 export async function buildSnapshot(this: ExtensionRuntime): Promise<ViewSnapshot> {
-  const network = this.selectedNetwork();
   const deployments = await this.readDeployments();
   const accounts: AccountTreeRecord[] = [];
   const walletRoots: WalletRootRecord[] = [];
+  const keystoreExists = await this.keystoreExists();
+  const unlockedProvider = this.unlockedPassphrase
+    ? this.fileKeystore(this.unlockedPassphrase)
+    : null;
+  let keystoreLocked = true;
 
-  if (this.selectedBackend() === 'file') {
-    if (network === 'local' && this.node?.isRunning()) {
-      accounts.push(...this.deriveRunningNodeAccounts());
-    }
+  if (keystoreExists) {
+    const wallets = await this.listFileWallets().catch(() => []);
+    const activeRef = this.selectedFileRef();
+    const activeIndex = this.selectedAccountIndex();
+    keystoreLocked = wallets.length > 0 && !unlockedProvider;
 
-    if (await this.keystoreExists()) {
-      const wallets = await this.listFileWallets().catch(() => []);
-      const activeRef = this.selectedFileRef();
-      const activeIndex = this.selectedAccountIndex();
-      const unlockedProvider = this.unlockedPassphrase
-        ? this.fileKeystore(this.unlockedPassphrase)
-        : null;
+    for (const wallet of wallets) {
+      const isActive = this.refKey(wallet.ref) === this.refKey(activeRef);
+      const label = wallet.meta?.label ?? wallet.ref.account;
+      const baseDetail = `File keystore: ${this.keystorePathLabel()}\nRef: ${this.refKey(wallet.ref)}`;
+      const accountCount = Math.max(1, Number(wallet.meta?.accountCount ?? '1'));
+      walletRoots.push({
+        label,
+        ref: wallet.ref,
+        description: `${accountCount} account${accountCount === 1 ? '' : 's'}`,
+        detail: `${baseDetail}\n${accountCount} derived account${accountCount === 1 ? '' : 's'}\nSelect the wallet to choose its active account.`,
+        active: isActive,
+        state: unlockedProvider ? 'ready' : 'locked',
+      });
 
-      for (const wallet of wallets) {
-        const isActive = this.refKey(wallet.ref) === this.refKey(activeRef);
-        const label = wallet.meta?.label ?? wallet.ref.account;
-        const baseDetail = `File keystore: ${this.keystorePathLabel()}\nRef: ${this.refKey(wallet.ref)}`;
-        const accountCount = Math.max(1, Number(wallet.meta?.accountCount ?? '1'));
-        walletRoots.push({
-          label,
-          ref: wallet.ref,
-          description: `${accountCount} account${accountCount === 1 ? '' : 's'}`,
-          detail: `${baseDetail}\n${accountCount} derived account${accountCount === 1 ? '' : 's'}\nSelect the wallet to choose its active account.`,
-          active: isActive,
-          state: unlockedProvider ? 'ready' : 'locked',
-        });
-
-        if (unlockedProvider) {
-          try {
-            for (let index = 0; index < accountCount; index++) {
-              const signer = await unlockedProvider.getSigner(
-                wallet.ref,
-                this.currentCapability(),
-                {
-                  derivationPath: this.derivationPath(index),
-                },
-              );
-              const coreAddress = hexToBase32(
-                signer.account.address as `0x${string}`,
-                this.currentChains().core.id,
-              );
-              const selected = isActive && index === activeIndex;
-              accounts.push({
-                label: `${label} #${index}${selected ? ' (active)' : ''}`,
-                description: signer.account.address,
-                walletRef: wallet.ref,
-                accountIndex: index,
-                espaceAddress: signer.account.address,
-                coreAddress,
-                detail: `${baseDetail}\nPath: ${this.derivationPath(index)}\neSpace: ${signer.account.address}\nCore: ${coreAddress}`,
-                state: 'ready',
-              });
-            }
-            continue;
-          } catch {
-            this.unlockedPassphrase = null;
-            this.fileProvider = null;
-          }
-        }
-
-        if (isActive && !accounts.length) {
+      if (!unlockedProvider) continue;
+      try {
+        for (let index = 0; index < accountCount; index++) {
+          const signer = await unlockedProvider.getSigner(wallet.ref, this.currentCapability(), {
+            derivationPath: this.derivationPath(index),
+          });
+          const coreAddress = hexToBase32(
+            signer.account.address as `0x${string}`,
+            this.currentChains().core.id,
+          );
+          const selected = isActive && index === activeIndex;
           accounts.push({
-            label: 'Unlock active wallet',
-            description: label,
-            detail: `${baseDetail}\nEncrypted mnemonic root. Derived accounts are hidden until unlock.`,
-            state: 'locked',
+            label: `${label} #${index}${selected ? ' (active)' : ''}`,
+            description: signer.account.address,
+            walletRef: wallet.ref,
+            accountIndex: index,
+            espaceAddress: signer.account.address,
+            coreAddress,
+            detail: `${baseDetail}\nPath: ${this.derivationPath(index)}\neSpace: ${signer.account.address}\nCore: ${coreAddress}`,
+            state: 'ready',
           });
         }
-      }
-
-      if (!walletRoots.length && !accounts.length) {
-        accounts.push({
-          label: 'No wallets in selected keystore',
-          description: 'add wallet',
-          detail: 'Use the Add Wallet row at the end of the Wallets section.',
-          state: 'unavailable',
-        });
+      } catch {
+        this.unlockedPassphrase = null;
+        this.fileProvider = null;
+        keystoreLocked = true;
       }
     }
-  } else if (this.cachedSigner?.backend === this.selectedBackend()) {
-    const coreAddress = hexToBase32(
-      this.cachedSigner.signer.account.address as `0x${string}`,
-      this.currentChains().core.id,
-    );
-    accounts.push({
-      label: `${BACKEND_LABELS[this.selectedBackend()]} account`,
-      description: this.cachedSigner.signer.account.address,
-      espaceAddress: this.cachedSigner.signer.account.address,
-      coreAddress,
-      detail: `eSpace: ${this.cachedSigner.signer.account.address}\nCore: ${coreAddress}`,
-      state: 'ready',
-    });
-  } else {
-    accounts.push({
-      label: `${BACKEND_LABELS[this.selectedBackend()]} account`,
-      description: 'not connected',
-      detail: 'Use Conflux: Unlock Keystore to connect this backend',
-      state: 'unavailable',
-    });
   }
 
   await this.populateAccountBalances(accounts);
@@ -141,23 +91,11 @@ export async function buildSnapshot(this: ExtensionRuntime): Promise<ViewSnapsho
   }));
 
   return {
+    selectedNetwork: this.selectedNetwork(),
     selectedNetworkLabel: this.selectedNetworkLabel(),
     selectedSpaceLabel: this.selectedSpace() === 'core' ? 'Core Space' : 'eSpace',
-    selectedKeystoreBackendId: this.selectedBackend(),
-    selectedKeystoreBackendLabel: BACKEND_LABELS[this.selectedBackend()],
-    selectedKeystorePathLabel:
-      this.selectedBackend() === 'file' ? this.keystorePathLabel() : 'hardware backend',
-    keystoreBackendOptions: (['file', 'onekey', 'satoshi'] as const).map((backend) => ({
-      label: BACKEND_LABELS[backend],
-      description:
-        backend === 'file'
-          ? 'Encrypted local keystore file'
-          : backend === 'onekey'
-            ? 'OneKey hardware wallet'
-            : 'Satochip bridge',
-      backend,
-      selected: backend === this.selectedBackend(),
-    })),
+    keystoreLocked,
+    nodeRunning: this.node?.isRunning() ?? false,
     walletRoots,
     networkOptions: NETWORKS.map((option) => ({
       ...option,

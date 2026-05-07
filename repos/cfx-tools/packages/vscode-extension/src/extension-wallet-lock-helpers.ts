@@ -13,20 +13,23 @@ export async function lockKeystore(this: ExtensionRuntime): Promise<void> {
 }
 
 export async function rotateKeystorePassphrase(this: ExtensionRuntime): Promise<void> {
-  if (!(await this.ensureFileBackend())) return;
   if (!(await this.keystoreExists())) {
-    await vscode.window.showInformationMessage('Create or select a file keystore first.');
+    await vscode.window.showInformationMessage('Create a wallet first.');
     return;
   }
   const oldPassphrase = await this.promptKeystorePassphrase('Conflux: Current Keystore Password');
   if (!oldPassphrase) return;
   const newPassphrase = await this.promptNewKeystorePassphrase();
   if (!newPassphrase) return;
-  await rotateLocalPassphrase({
-    oldPassphrase,
-    newPassphrase,
-    path: this.keystorePath(),
-  });
+  await vscode.window.withProgress(
+    { location: vscode.ProgressLocation.Notification, title: 'Changing keystore password…' },
+    () =>
+      rotateLocalPassphrase({
+        oldPassphrase,
+        newPassphrase,
+        path: this.keystorePath(),
+      }),
+  );
   this.unlockedPassphrase = newPassphrase;
   this.fileProvider = this.fileKeystore(newPassphrase);
   this.cachedSigner = null;
@@ -48,19 +51,14 @@ export async function unlockKeystore(
   target?: WalletCommandTarget,
 ): Promise<void> {
   const selectedTarget = this.walletTarget(target);
-  if (selectedTarget?.walletRef && this.selectedBackend() === 'file') {
+  if (selectedTarget?.walletRef) {
     await this.context.workspaceState.update(STATE_ACTIVE_FILE_REF, selectedTarget.walletRef);
     await this.context.workspaceState.update(
       STATE_ACTIVE_ACCOUNT_INDEX,
       selectedTarget.accountIndex ?? 0,
     );
   }
-  const signer =
-    this.selectedBackend() === 'file'
-      ? (await this.ensureUnlockedWallet()).signer
-      : await this.ensureHardwareSigner();
-  await vscode.window.showInformationMessage(
-    `${BACKEND_LABELS[this.selectedBackend()]} ready for ${signer.account.address}`,
-  );
+  const signer = (await this.ensureUnlockedWallet()).signer;
+  void vscode.window.showInformationMessage(`Wallet ready for ${signer.account.address}`);
   await this.refreshAll();
 }

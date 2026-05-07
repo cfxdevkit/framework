@@ -68,12 +68,11 @@ export interface AbiFunctionTreeRecord {
 }
 
 export interface ViewSnapshot {
+  selectedNetwork: 'local' | 'testnet' | 'mainnet';
   selectedNetworkLabel: string;
   selectedSpaceLabel: string;
-  selectedKeystoreBackendId: string;
-  selectedKeystoreBackendLabel: string;
-  selectedKeystorePathLabel: string;
-  keystoreBackendOptions: ReadonlyArray<KeystoreBackendOptionRecord>;
+  keystoreLocked: boolean;
+  nodeRunning: boolean;
   walletRoots: ReadonlyArray<WalletRootRecord>;
   networkOptions: ReadonlyArray<NetworkTreeRecord>;
   nodeStatusLabel: string;

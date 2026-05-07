@@ -19,16 +19,15 @@ export async function getOrCreateNodeMnemonic(this: ExtensionRuntime): Promise<s
   if (this.localNodeMnemonic && validateMnemonic(this.localNodeMnemonic)) {
     return this.localNodeMnemonic;
   }
-  const action = await vscode.window.showWarningMessage(
-    'Create or import a mnemonic-backed wallet before starting the local node so node accounts align with this extension session.',
-    'Add Mnemonic',
-    'Use Fresh Dev Seed',
-  );
-  if (action === 'Use Fresh Dev Seed') {
-    this.localNodeMnemonic = generateMnemonic(128);
+  await this.ensureUnlockedWallet().catch(() => null);
+  if (this.localNodeMnemonic && validateMnemonic(this.localNodeMnemonic)) {
     return this.localNodeMnemonic;
   }
-  if (action !== 'Add Mnemonic') throw new Error('Local node start cancelled.');
+  const action = await vscode.window.showWarningMessage(
+    'Start the local node from a mnemonic wallet stored in the encrypted keystore. Add or import a wallet first.',
+    'Add Wallet',
+  );
+  if (action !== 'Add Wallet') throw new Error('Local node start cancelled.');
   await this.addWallet();
   if (!this.localNodeMnemonic || !validateMnemonic(this.localNodeMnemonic)) {
     throw new Error('Local node requires a mnemonic-backed active wallet.');
@@ -42,6 +41,7 @@ export async function startNode(this: ExtensionRuntime): Promise<void> {
     return;
   }
   const mnemonic = await this.getOrCreateNodeMnemonic();
+  await this.ensureUnlockedWallet();
   await fs.mkdir(this.nodeDataDir(), { recursive: true });
   const node = createDevNode({
     mnemonic,
@@ -59,6 +59,9 @@ export async function startNode(this: ExtensionRuntime): Promise<void> {
   );
   this.node = node;
   this.log(`Node started. Core RPC: ${node.urls.core} eSpace RPC: ${node.urls.espace}`);
+  await vscode.window.showInformationMessage(
+    `Conflux local node running. eSpace: ${node.urls.espace}`,
+  );
   await this.refreshAll();
 }
 
@@ -67,7 +70,10 @@ export async function stopNode(this: ExtensionRuntime): Promise<void> {
     await vscode.window.showInformationMessage('The local node is not running.');
     return;
   }
-  await this.node.stop();
+  await vscode.window.withProgress(
+    { location: vscode.ProgressLocation.Notification, title: 'Stopping Conflux local node…' },
+    () => this.node?.stop(),
+  );
   this.node = null;
   this.log('Node stopped.');
   await this.refreshAll();
@@ -78,17 +84,26 @@ export async function restartNode(this: ExtensionRuntime): Promise<void> {
     await this.startNode();
     return;
   }
-  await this.node.restart();
+  await vscode.window.withProgress(
+    { location: vscode.ProgressLocation.Notification, title: 'Restarting Conflux local node…' },
+    () => this.node?.restart(),
+  );
   this.log('Node restarted.');
   await this.refreshAll();
 }
 
 export async function wipeNode(this: ExtensionRuntime): Promise<void> {
   if (this.node) {
-    await this.node.stop();
+    await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: 'Stopping Conflux local node…' },
+      () => this.node?.stop(),
+    );
     this.node = null;
   }
-  await fs.rm(this.nodeDataDir(), { recursive: true, force: true });
+  await vscode.window.withProgress(
+    { location: vscode.ProgressLocation.Notification, title: 'Wiping Conflux node data…' },
+    () => fs.rm(this.nodeDataDir(), { recursive: true, force: true }),
+  );
   this.log('Node data wiped.');
   await this.refreshAll();
 }
@@ -110,6 +125,11 @@ export async function mineBlocks(this: ExtensionRuntime): Promise<void> {
       /^\d+$/.test(value) && Number(value) > 0 ? null : 'Enter a positive integer',
   });
   if (!raw) return;
-  await this.node.mine(Number(raw));
+  const count = Number(raw);
+  await vscode.window.withProgress(
+    { location: vscode.ProgressLocation.Notification, title: `Mining ${count} block(s)…` },
+    () => this.node?.mine(count),
+  );
   this.log(`Mined ${raw} block(s).`);
+  await vscode.window.showInformationMessage(`Mined ${count} block(s).`);
 }

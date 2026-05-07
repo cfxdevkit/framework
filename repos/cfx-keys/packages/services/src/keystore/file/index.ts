@@ -38,6 +38,39 @@ export interface FileKeystoreOptions {
   audit?: AuditLogger;
 }
 
+export async function readFileKeystoreMnemonic(input: {
+  path: string;
+  passphrase: string;
+  ref: SecretRef;
+}): Promise<string> {
+  const env = await readEnvelope(input.path);
+  const rec = env.secrets[refKey(input.ref)];
+  if (!rec) throw notFound(input.ref);
+  if (rec.kind !== 'mnemonic') throw unsupportedSignerKind(rec.kind);
+  const key = await deriveKekFromEnvelope(env, input.passphrase);
+  let plaintext: Uint8Array;
+  try {
+    plaintext = await decryptAesGcm({
+      key,
+      ciphertext: fromBase64Url(rec.ct),
+      iv: fromBase64Url(rec.iv),
+      tag: fromBase64Url(rec.tag),
+      aad: aadFor(input.ref),
+    });
+  } catch (cause) {
+    throw new KeystoreError({
+      code: 'services/keystore/bad-passphrase',
+      message: 'failed to decrypt mnemonic with passphrase',
+      cause,
+    });
+  }
+  try {
+    return new TextDecoder().decode(plaintext).trim();
+  } finally {
+    plaintext.fill(0);
+  }
+}
+
 export function createFileKeystore(opts: FileKeystoreOptions): KeystoreProvider {
   const audit = opts.audit ?? noopAuditLogger;
   const id = 'file';

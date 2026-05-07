@@ -1,7 +1,7 @@
 // @ts-nocheck
 // biome-ignore-all lint/correctness/noUnusedImports: extension helper groups share the VS Code runtime surface.
 // biome-ignore format: shared helper import is intentionally kept compact for hotspot limits.
-import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createDevNode, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode } from './extension-helper-shared.js';
+import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createDevNode, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode, waitForReceipt } from './extension-helper-shared.js';
 
 export async function abiCallRead(
   this: ExtensionRuntime,
@@ -56,10 +56,12 @@ export async function abiCallWrite(
   if (value === null) return;
   const client = await this.createClientFor(contract.target);
   const signer = await this.walletSignerFor(contract.target);
-  const result = await vscode.window.withProgress(
+
+  // Submit without waiting for receipt so we can immediately pack-mine on local.
+  const submitted = await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: `Sending ${contract.label}.${fn.name}...`,
+      title: `Sending ${contract.label}.${fn.name}…`,
     },
     () =>
       sendWrite({
@@ -70,13 +72,30 @@ export async function abiCallWrite(
         functionName: fn.name as never,
         args: args as never,
         ...(value !== undefined ? { value } : {}),
-        waitForReceipt: true,
-        receiptTimeoutMs: this.selectedNetwork() === 'local' ? 30_000 : 120_000,
+        waitForReceipt: false,
       }),
   );
-  this.output.appendLine(`[WRITE] ${contract.label}.${fn.name} -> ${result.hash}`);
+
+  // On local, pack immediately so the receipt arrives quickly.
+  if (this.selectedNetwork() === 'local' && this.node?.isRunning()) {
+    await this.node.packMine().catch(() => {});
+  }
+
+  const receiptTimeoutMs = this.selectedNetwork() === 'local' ? 60_000 : 120_000;
+  const result = await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: `Waiting for ${fn.name} receipt…`,
+    },
+    () =>
+      waitForReceipt(client, submitted.hash, { pollIntervalMs: 500, timeoutMs: receiptTimeoutMs }),
+  );
+
+  this.output.appendLine(
+    `[WRITE] ${contract.label}.${fn.name} -> ${submitted.hash} (block ${(result as unknown as { blockNumber?: unknown }).blockNumber ?? 'n/a'})`,
+  );
   this.output.show(true);
-  await vscode.window.showInformationMessage(`${fn.name} transaction sent: ${result.hash}`);
+  await vscode.window.showInformationMessage(`${fn.name} confirmed: ${submitted.hash}`);
 }
 
 export async function promptAbiArgs(

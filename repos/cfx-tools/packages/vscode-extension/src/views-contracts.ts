@@ -1,13 +1,29 @@
 import * as vscode from 'vscode';
-import { shorten } from './views-common.js';
+import { makeCommandItem, shorten } from './views-common.js';
 import type { AbiFunctionTreeRecord, ContractTreeRecord, ViewSnapshot } from './views-model.js';
 
 export function makeContractItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
+  const actions = [
+    makeCommandItem(
+      'Deploy contract',
+      undefined,
+      'cfxdevkit.deployContract',
+      'cloud-upload',
+      'Compile and deploy a contract to the selected network.',
+    ),
+    makeCommandItem(
+      'Import contract',
+      undefined,
+      'cfxdevkit.importContract',
+      'cloud-download',
+      'Register an existing deployed contract in this workspace.',
+    ),
+  ];
   if (!snapshot.contracts.length) {
     const item = new vscode.TreeItem('No deployed contracts recorded');
     item.description = 'deploy a contract to populate this view';
     item.iconPath = new vscode.ThemeIcon('file-code');
-    return [item];
+    return [...actions, item];
   }
 
   const byNetwork = new Map<string, ContractTreeRecord[]>();
@@ -17,30 +33,33 @@ export function makeContractItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
     byNetwork.set(contract.network, list);
   }
 
-  return [...byNetwork.entries()].map(([network, contracts]) => {
-    const networkItem = new vscode.TreeItem(
-      labelNetwork(network),
-      vscode.TreeItemCollapsibleState.Expanded,
-    ) as vscode.TreeItem & { children?: vscode.TreeItem[] };
-    networkItem.description =
-      labelNetwork(network) === snapshot.selectedNetworkLabel ? 'active' : `${contracts.length}`;
-    networkItem.iconPath = new vscode.ThemeIcon('globe');
-    networkItem.children = (['espace', 'core'] as const)
-      .map((target) => {
-        const targetContracts = contracts.filter((contract) => contract.target === target);
-        if (!targetContracts.length) return undefined;
-        const targetItem = new vscode.TreeItem(
-          target === 'core' ? 'Core Space' : 'eSpace',
-          vscode.TreeItemCollapsibleState.Expanded,
-        ) as vscode.TreeItem & { children?: vscode.TreeItem[] };
-        targetItem.description = `${targetContracts.length}`;
-        targetItem.iconPath = new vscode.ThemeIcon(target === 'core' ? 'symbol-key' : 'globe');
-        targetItem.children = targetContracts.map(makeContractItem);
-        return targetItem;
-      })
-      .filter((item): item is vscode.TreeItem => item !== undefined);
-    return networkItem;
-  });
+  return [
+    ...actions,
+    ...[...byNetwork.entries()].map(([network, contracts]) => {
+      const networkItem = new vscode.TreeItem(
+        labelNetwork(network),
+        vscode.TreeItemCollapsibleState.Expanded,
+      ) as vscode.TreeItem & { children?: vscode.TreeItem[] };
+      networkItem.description =
+        labelNetwork(network) === snapshot.selectedNetworkLabel ? 'active' : `${contracts.length}`;
+      networkItem.iconPath = new vscode.ThemeIcon('globe');
+      networkItem.children = (['espace', 'core'] as const)
+        .map((target) => {
+          const targetContracts = contracts.filter((contract) => contract.target === target);
+          if (!targetContracts.length) return undefined;
+          const targetItem = new vscode.TreeItem(
+            target === 'core' ? 'Core Space' : 'eSpace',
+            vscode.TreeItemCollapsibleState.Expanded,
+          ) as vscode.TreeItem & { children?: vscode.TreeItem[] };
+          targetItem.description = `${targetContracts.length}`;
+          targetItem.iconPath = new vscode.ThemeIcon(target === 'core' ? 'symbol-key' : 'globe');
+          targetItem.children = targetContracts.map(makeContractItem);
+          return targetItem;
+        })
+        .filter((item): item is vscode.TreeItem => item !== undefined);
+      return networkItem;
+    }),
+  ];
 }
 
 function makeContractItem(contract: ContractTreeRecord): vscode.TreeItem {

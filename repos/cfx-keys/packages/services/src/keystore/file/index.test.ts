@@ -4,7 +4,12 @@ import { join } from 'node:path';
 import { KeystoreError } from '@cfxdevkit/core';
 import { deriveAccount } from '@cfxdevkit/core/wallet';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { changeFilePassphrase, createFileKeystore, initFileKeystore } from './index.js';
+import {
+  changeFilePassphrase,
+  createFileKeystore,
+  initFileKeystore,
+  readFileKeystoreMnemonic,
+} from './index.js';
 
 const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
 const PASS = 'correct horse battery staple';
@@ -65,6 +70,24 @@ describe('createFileKeystore', () => {
     }
     expect(err).toBeInstanceOf(KeystoreError);
     expect((err as KeystoreError).code).toBe('services/keystore/bad-passphrase');
+  });
+
+  it('reads an unlocked mnemonic without exposing it through list', {
+    timeout: 30_000,
+  }, async () => {
+    await initFileKeystore({ path, passphrase: PASS });
+    const ks = createFileKeystore({ path, unlock: async () => ({ passphrase: PASS }) });
+    const ref = { service: 'cfxdevkit', account: 'mnemonic-default' };
+    await ks.put?.({ ref, kind: 'mnemonic', secret: TEST_MNEMONIC });
+
+    const items = await ks.list();
+    expect(JSON.stringify(items)).not.toContain(TEST_MNEMONIC);
+    await expect(
+      readFileKeystoreMnemonic({ path, passphrase: 'WRONG', ref }),
+    ).rejects.toBeInstanceOf(KeystoreError);
+    await expect(readFileKeystoreMnemonic({ path, passphrase: PASS, ref })).resolves.toBe(
+      TEST_MNEMONIC,
+    );
   });
 
   it('changeFilePassphrase re-encrypts under the new passphrase', { timeout: 60_000 }, async () => {

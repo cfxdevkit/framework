@@ -19,7 +19,7 @@ export const DEFAULTS = {
   evmWsPort: 8546,
   accounts: 10,
   balanceCfx: '10000',
-  miningIntervalMs: 2000,
+  miningIntervalMs: 500,
   logging: false,
 } as const;
 
