@@ -49,6 +49,39 @@ jobs:
             if [ -n "${DOCS_IMAGE_TAG:-}" ]; then
               sed -i "s#ghcr.io/cfxdevkit/framework/docs-site:.*#ghcr.io/cfxdevkit/framework/docs-site:${DOCS_IMAGE_TAG}#" docker-compose.yml
             fi
+
+            # Capture current running image digest for rollback
+            PREVIOUS_DIGEST=$(docker inspect --format='{{.Id}}' cfxdevkit-docs-site 2>/dev/null || true)
+
             docker compose pull
-            docker compose up -d --remove-orphans
+
+            # Deploy with rollback on failure
+            if ! docker compose up -d --remove-orphans; then
+              echo "ERROR: docker compose up failed; attempting rollback" >&2
+              if [ -n "${PREVIOUS_DIGEST:-}" ]; then
+                docker tag "$PREVIOUS_DIGEST" ghcr.io/cfxdevkit/framework/docs-site:rollback
+                sed -i "s#ghcr.io/cfxdevkit/framework/docs-site:.*#ghcr.io/cfxdevkit/framework/docs-site:rollback#" docker-compose.yml
+                docker compose up -d --remove-orphans || true
+              fi
+              exit 1
+            fi
+
+            # Wait for healthcheck to pass (up to 60s)
+            for i in $(seq 1 12); do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' cfxdevkit-docs-site 2>/dev/null || echo "none")
+              if [ "$STATUS" = "healthy" ] || [ "$STATUS" = "none" ]; then
+                break
+              fi
+              if [ "$STATUS" = "unhealthy" ]; then
+                echo "ERROR: container unhealthy after deploy; attempting rollback" >&2
+                if [ -n "${PREVIOUS_DIGEST:-}" ]; then
+                  docker tag "$PREVIOUS_DIGEST" ghcr.io/cfxdevkit/framework/docs-site:rollback
+                  sed -i "s#ghcr.io/cfxdevkit/framework/docs-site:.*#ghcr.io/cfxdevkit/framework/docs-site:rollback#" docker-compose.yml
+                  docker compose up -d --remove-orphans || true
+                fi
+                exit 1
+              fi
+              sleep 5
+            done
+
             docker image prune -f

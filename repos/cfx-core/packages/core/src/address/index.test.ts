@@ -34,4 +34,15 @@ describe('address', () => {
     expect(testnet.startsWith('cfxtest:')).toBe(true);
     expect(base32ToHex(testnet).toLowerCase()).toBe(HEX);
   });
+
+  it('hexToBase32 with verbose: true returns the uppercase verbose form', () => {
+    const result = hexToBase32(HEX, 1029, { verbose: true });
+    expect(result).toBe(VERBOSE);
+  });
+
+  it('base32ToHex with strict: false accepts mixed-case input', () => {
+    // Passing strict: false exercises the opts?.strict branch in the wrapper
+    const hex = base32ToHex(BASE32.toLowerCase(), { strict: false });
+    expect(hex.toLowerCase()).toBe(HEX);
+  });
 });

@@ -146,6 +146,67 @@ describe('signerFromPrivateKey', () => {
   });
 });
 
+describe('signerFromPrivateKey / coreNetworkId', () => {
+  const { privateKey } = deriveAccount({ mnemonic: TEST_MNEMONIC, path: DEFAULT_CORE_PATH });
+
+  it('populates account.coreAddress when coreNetworkId is provided', () => {
+    const signer = signerFromPrivateKey(privateKey, 1029);
+    expect(signer.account.coreAddress).toBeDefined();
+    expect(signer.account.coreAddress?.startsWith('cfx:')).toBe(true);
+  });
+
+  it('does not set coreAddress when coreNetworkId is omitted', () => {
+    const signer = signerFromPrivateKey(privateKey);
+    expect(signer.account.coreAddress).toBeUndefined();
+  });
+
+  it('signMessage accepts a Uint8Array (raw bytes path)', async () => {
+    const signer = signerFromPrivateKey(privateKey);
+    const bytes = new TextEncoder().encode('hello bytes');
+    const sig = await signer.signMessage(bytes);
+    expect(sig).toMatch(/^0x[0-9a-f]{130}$/);
+  });
+
+  it('signTransaction with family: core delegates to Core Space signer', async () => {
+    const signer = signerFromPrivateKey(privateKey, 1);
+    const coreAddress = signer.account.coreAddress!;
+    const sig = await signer.signTransaction({
+      family: 'core',
+      chainId: 1,
+      nonce: 0,
+      gas: 21_000n,
+      storageLimit: 0n,
+      epochHeight: 0n,
+      to: coreAddress,
+      value: 0n,
+      coreType: 'legacy',
+      gasPrice: 1_000_000_000n,
+    });
+    expect(sig).toMatch(/^0x[0-9a-f]+$/i);
+  });
+
+  it('signTransaction wraps Core signing failure in WalletError via signRejected', async () => {
+    const signer = signerFromPrivateKey(privateKey);
+    // Missing required Core Space fields → signCoreTransaction throws, caught and re-wrapped
+    await expect(signer.signTransaction({ family: 'core', chainId: 1 })).rejects.toBeInstanceOf(
+      WalletError,
+    );
+  });
+
+  it('signTypedData wraps invalid typed data error in WalletError via signRejected', async () => {
+    const signer = signerFromPrivateKey(privateKey);
+    // primaryType 'Missing' is not in types → viem throws, caught and re-wrapped
+    await expect(
+      signer.signTypedData({
+        domain: { name: 'Test', version: '1', chainId: 1 },
+        types: { Mail: [{ name: 'from', type: 'address' }] },
+        primaryType: 'Missing' as never,
+        message: {},
+      }),
+    ).rejects.toBeInstanceOf(WalletError);
+  });
+});
+
 describe('coreAddressFromPrivateKey', () => {
   const { privateKey } = deriveAccount({
     mnemonic: TEST_MNEMONIC,

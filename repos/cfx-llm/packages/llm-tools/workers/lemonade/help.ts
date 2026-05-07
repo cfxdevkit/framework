@@ -12,9 +12,10 @@ Commands:
   config set action <name> <id>  Pin model for one repo action
   ask [--quick] "question"       Ask a repo-aware question
   docs-upkeep [flags] [prompt]   Refresh docs checks and upkeep markdown folder-by-folder
+                                   Scans .md and .mdx files; excludes GitNexus wiki content (content/wiki/)
     --scope <path>               Limit to one docs folder prefix; repeatable
     --max-folders <n>            Limit folder count for bounded local runs
-    --docs-only                  Only scan docs/ instead of every markdown file in the repo
+    --docs-only                  Only scan docs/ instead of every markdown/mdx file in the repo
     --write                      Apply complete-file markdown updates proposed by the local LLM
     --yes / -y                   Skip write confirmation prompt
     --quick                      Shorter per-folder artifact generation
@@ -48,17 +49,18 @@ Commands:
     --quick                      Short LLM calls (faster, less detail)
     --model <id>                 Override LLM model
   run <action> [--quick] [prompt] Run docs-upkeep, test-audit, repo-health, review, validation, changeset, release-readiness, ci-cd, docs-pipeline
-  test-upkeep [flags] [prompt]    Analyse test coverage per package, identify hotspots, and optionally write new test files:
+  test-upkeep [flags] [prompt]    Analyse test coverage per package and suggest/write new test files:
                                    1. Discover packages with vitest.config.ts
                                    2. Build deterministic test inventory (source vs test files)
                                    3. Run vitest per package and capture output
                                    4. LLM: identify hotspots, suggest new tests (sibling context propagated)
-                                   5. Optionally write missing test files directly to src/
+                                   5. Write missing test files to src/ only when --write is passed
+    --write                      Write LLM-suggested test files to src/ (new files only; source must exist)
+    --yes / -y                   Skip write confirmation prompt
+    --no-write / --dry-run       Analysis and artifact only (default)
     --scope <path>               Limit to packages under this path prefix; repeatable
     --max-packages <n>           Limit package count for bounded runs
     --skip-test-run              Skip vitest execution (inventory-only analysis)
-    --write                      Write LLM-suggested test files to src/ (new files only, skip existing)
-    --yes / -y                   Skip write confirmation prompt
     --quick                      Shorter LLM calls
     --agent <direct|pi-rpc>      Use direct Lemonade calls or Pi RPC for structured LLM steps
     --pi-provider <name>         Pi provider to use with --agent pi-rpc
@@ -87,10 +89,12 @@ Examples:
   pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
 
   pnpm run llm:test-upkeep
+  pnpm run llm:test-upkeep -- --scope repos/cfx-core/packages/core
   pnpm run llm:test-upkeep -- --quick --scope repos/cfx-core/packages/core
   pnpm run llm:test-upkeep -- --scope repos/cfx-keys --max-packages 3
   pnpm run llm:test-upkeep -- --write --yes --scope repos/cfx-core/packages/core
-  pnpm run llm:test-upkeep -- --agent pi-rpc --pi-provider lemonade --quick --max-packages 1
   pnpm run llm:test-upkeep -- --skip-test-run --quick
+  pnpm run llm:docs-upkeep -- --quick --scope repos/cfx-tools/packages/docs-site/content/packages
+  pnpm run llm:docs-upkeep -- --quick --write --yes --max-folders 3
 `);
 }

@@ -12,4 +12,4 @@ export default {
   'defi-react': '@cfxdevkit/defi-react',
   'wallet-connect': '@cfxdevkit/wallet-connect',
   theme: '@cfxdevkit/theme',
-}
+};

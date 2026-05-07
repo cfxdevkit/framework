@@ -24,7 +24,8 @@ export function parseTestUpkeepFlags(args) {
     else if (arg === '--pi-provider') piProvider = args[++i];
     else if (arg === '--pi-model') piModel = args[++i];
     else if (arg === '--quick') quick = true;
-    else if (arg === '--write') write = true;
+    else if (arg === '--write' || arg === '--write-tests') write = true;
+    else if (arg === '--no-write' || arg === '--dry-run') write = false;
     else if (arg === '--yes' || arg === '-y') yes = true;
     else if (arg === '--skip-test-run') skipTestRun = true;
     else if (arg === '--scope') scopes.push(args[++i]);

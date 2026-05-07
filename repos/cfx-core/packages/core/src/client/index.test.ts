@@ -10,8 +10,23 @@ describe('client / offline', () => {
     expect(t.kind).toBe('http');
   });
 
+  it('http() accepts url, headers, timeoutMs and retries options', () => {
+    const t = http({
+      url: 'https://evm.confluxrpc.com',
+      headers: { 'x-api-key': 'test' },
+      timeoutMs: 5_000,
+      retries: 2,
+    });
+    expect(t.kind).toBe('http');
+  });
+
   it('ws() builds an opaque transport', () => {
     const t = ws({ url: 'wss://example.invalid' });
+    expect(t.kind).toBe('ws');
+  });
+
+  it('ws() accepts reconnect and timeoutMs options', () => {
+    const t = ws({ url: 'wss://evm.confluxrpc.com/ws', reconnect: true, timeoutMs: 10_000 });
     expect(t.kind).toBe('ws');
   });
 

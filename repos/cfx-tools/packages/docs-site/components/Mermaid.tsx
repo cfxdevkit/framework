@@ -1,17 +1,17 @@
-'use client'
+'use client';
 
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react';
 
 interface MermaidProps {
-  chart: string
+  chart: string;
 }
 
 export function Mermaid({ chart }: MermaidProps) {
-  const id = useId().replace(/:/g, '')
-  const ref = useRef<HTMLDivElement>(null)
+  const id = useId().replace(/:/g, '');
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!ref.current) return
+    if (!ref.current) return;
     import('mermaid').then(({ default: mermaid }) => {
       mermaid.initialize({
         startOnLoad: false,
@@ -19,16 +19,16 @@ export function Mermaid({ chart }: MermaidProps) {
         securityLevel: 'loose',
         fontFamily: 'system-ui, sans-serif',
         fontSize: 14,
-      })
-      const diagramId = `mermaid-${id}`
+      });
+      const diagramId = `mermaid-${id}`;
       mermaid
         .render(diagramId, chart)
         .then(({ svg }) => {
-          if (ref.current) ref.current.innerHTML = svg
+          if (ref.current) ref.current.innerHTML = svg;
         })
-        .catch(console.error)
-    })
-  }, [chart, id])
+        .catch(console.error);
+    });
+  }, [chart, id]);
 
-  return <div ref={ref} className="mermaid-diagram" />
+  return <div ref={ref} className="mermaid-diagram" />;
 }

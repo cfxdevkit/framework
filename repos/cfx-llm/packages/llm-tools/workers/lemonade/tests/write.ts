@@ -17,6 +17,15 @@ export async function writeTestUpkeepSuggestions(pkg, result, _flags) {
     } catch {
       /* does not exist — safe to write */
     }
+    // Safety: verify the source module being tested actually exists
+    const sourceFile = suggestion.testFile.replace(/\.test\.tsx?$/, '.ts');
+    const sourcePath = join(root, pkg.dir, sourceFile);
+    try {
+      await stat(sourcePath);
+    } catch {
+      logInfo(`    ! skipped (source not found): ${suggestion.testFile} → ${sourceFile}`);
+      continue;
+    }
     await mkdir(dirname(destPath), { recursive: true });
     await writeFile(destPath, suggestion.content, 'utf8');
     written.push(suggestion.testFile);

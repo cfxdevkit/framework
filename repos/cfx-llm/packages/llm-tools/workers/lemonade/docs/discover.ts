@@ -117,10 +117,11 @@ export function docsUpkeepDepth(dir) {
 
 export async function collectDocsUpkeepFiles(docsOnly) {
   const files = [];
+  const isDocFile = (file) => file.endsWith('.md') || file.endsWith('.mdx');
   if (docsOnly) {
-    await walkDocsFiles(join(root, 'docs'), files, (file) => file.endsWith('.md'));
+    await walkDocsFiles(join(root, 'docs'), files, isDocFile);
   } else {
-    await walkDocsFiles(root, files, (file) => file.endsWith('.md'));
+    await walkDocsFiles(root, files, isDocFile);
   }
   return unique(files.map((file) => file.replace(`${root}/`, ''))).filter(
     (file) => !isIgnoredDocsPath(file),
@@ -155,7 +156,9 @@ export function isIgnoredDocsPath(file) {
     file.includes('/node_modules/') ||
     file.includes('/dist/') ||
     file.includes('/coverage/') ||
-    file.startsWith('.moon/')
+    file.startsWith('.moon/') ||
+    // GitNexus-generated wiki content — do not edit with docs-upkeep
+    file.startsWith('repos/cfx-tools/packages/docs-site/content/wiki/')
   );
 }
 

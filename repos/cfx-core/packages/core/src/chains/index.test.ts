@@ -87,4 +87,18 @@ describe('chains catalog', () => {
       }),
     ).toThrow(/HTTP RPC/);
   });
+
+  it('defineChain returns the input unchanged when it is valid', () => {
+    const chain = defineChain({
+      id: 9999,
+      name: 'custom-local',
+      displayName: 'Custom Local',
+      network: 'local',
+      family: 'espace',
+      nativeToken: { symbol: 'CFX', decimals: 18 },
+      rpc: { http: ['http://127.0.0.1:8545'] },
+    });
+    expect(chain.id).toBe(9999);
+    expect(chain.name).toBe('custom-local');
+  });
 });

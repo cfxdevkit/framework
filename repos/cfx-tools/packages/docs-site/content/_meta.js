@@ -16,8 +16,12 @@ export default {
     title: 'Architecture',
     type: 'page',
   },
+  coverage: {
+    title: 'Coverage',
+    type: 'page',
+  },
   wiki: {
     title: 'Code Wiki',
     type: 'page',
   },
-}
+};
