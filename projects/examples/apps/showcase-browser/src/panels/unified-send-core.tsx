@@ -1,6 +1,7 @@
 import { parseCFX } from '@cfxdevkit/core';
 import { ConnectWall, CopyButton, errMsg } from '@cfxdevkit/example-showcase-ui';
 import { useEffect, useState } from 'react';
+import { fromHex, toHex } from 'viem';
 import { getFluentProvider, useCoreWallet } from '../lib/use-core-wallet.js';
 
 interface TxStatus {
@@ -41,7 +42,7 @@ export function CoreSection() {
           hash: txStatus.hash,
           packed: tx.blockHash !== null,
           blockHash: tx.blockHash,
-          status: tx.status === null ? null : Number.parseInt(tx.status, 16),
+          status: tx.status === null ? null : fromHex(tx.status as `0x${string}`, 'number'),
         };
         setTxStatus((prev) => (prev?.hash === next.hash ? next : prev));
       } catch {
@@ -91,9 +92,7 @@ export function CoreSection() {
     try {
       const hash = (await p.request({
         method: 'cfx_sendTransaction',
-        params: [
-          { from: account, to: dest, value: `0x${value.toString(16)}`, data: data.trim() || '0x' },
-        ],
+        params: [{ from: account, to: dest, value: toHex(value), data: data.trim() || '0x' }],
       })) as string;
       setTxStatus({ hash, packed: false, blockHash: null, status: null });
     } catch (e) {

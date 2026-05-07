@@ -22,7 +22,7 @@ export function selectedSpace(this: ExtensionRuntime): ChainTarget {
 }
 
 export function selectedBackend(this: ExtensionRuntime): KeystoreBackend {
-  return this.context.workspaceState.get<KeystoreBackend>(STATE_KEYSTORE_BACKEND) ?? 'file';
+  return 'file';
 }
 
 export function selectedFileRef(this: ExtensionRuntime): SecretRef {
@@ -50,6 +50,11 @@ export async function setSelectedNetwork(
   network: NetworkSelection,
 ): Promise<void> {
   this.cachedSigner = null;
+  if (network !== 'local' && this.node?.isRunning()) {
+    await this.node.stop();
+    this.node = null;
+    this.log('Node stopped: switched to a non-local network.');
+  }
   await this.context.workspaceState.update(STATE_NETWORK, network);
   await this.refreshAll();
 }
@@ -62,12 +67,8 @@ export async function setSelectedBackend(
   this: ExtensionRuntime,
   backend: KeystoreBackend,
 ): Promise<void> {
-  if (backend !== this.selectedBackend()) {
-    this.unlockedPassphrase = null;
-    this.fileProvider = null;
-    this.cachedSigner = null;
-  }
-  await this.context.workspaceState.update(STATE_KEYSTORE_BACKEND, backend);
+  if (backend !== 'file') return;
+  await this.context.workspaceState.update(STATE_KEYSTORE_BACKEND, null);
   await this.refreshAll();
 }
 
@@ -182,13 +183,6 @@ export async function listFileWallets(this: ExtensionRuntime): Promise<StoredSec
 }
 
 export async function ensureFileBackend(this: ExtensionRuntime): Promise<boolean> {
-  if (this.selectedBackend() === 'file') return true;
-  const action = await vscode.window.showWarningMessage(
-    'This operation is available for the encrypted file keystore backend.',
-    'Switch to File',
-  );
-  if (action !== 'Switch to File') return false;
-  await this.setSelectedBackend('file');
   return true;
 }
 

@@ -44,6 +44,16 @@ tasks:
     options:
       cache: true
 
+  test-coverage:
+    command: 'pnpm exec vitest run --coverage --passWithNoTests'
+    inputs:
+      - '@group(sources)'
+      - '@group(tests)'
+      - '@group(configs)'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
   lint:
     command: 'pnpm exec biome check src'
     inputs:

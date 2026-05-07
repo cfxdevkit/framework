@@ -122,8 +122,8 @@ export async function importContractCommand(this: ExtensionRuntime): Promise<voi
     abi: abiText.trim() ? (JSON.parse(abiText) as unknown[]) : undefined,
   });
   await this.writeDeployments(deployments);
-  await vscode.window.showInformationMessage(
+  await this.refreshAll();
+  void vscode.window.showInformationMessage(
     `Imported ${name.trim()} on ${networkPick.label} ${targetPick.label}.`,
   );
-  await this.refreshAll();
 }

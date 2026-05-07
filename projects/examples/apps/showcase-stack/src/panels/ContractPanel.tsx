@@ -1,6 +1,7 @@
 import { errMsg, WalletPickerModal } from '@cfxdevkit/example-showcase-ui';
 import { useCallback, useMemo, useState } from 'react';
 import type { Abi, Address } from 'viem';
+import { isAddress } from 'viem';
 import { useAccount } from 'wagmi';
 import { parseFunctions, ReadForm, WriteForm } from './contract-forms.js';
 
@@ -28,7 +29,7 @@ export function ContractPanel() {
     () => (parsedAbi ? parseFunctions(parsedAbi) : { reads: [], writes: [] }),
     [parsedAbi],
   );
-  const isValidAddress = contractAddress.startsWith('0x') && contractAddress.length === 42;
+  const isValidAddress = isAddress(contractAddress);
 
   return (
     <div>

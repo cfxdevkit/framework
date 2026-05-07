@@ -3,7 +3,9 @@
 // biome-ignore format: shared helper import is intentionally kept compact for hotspot limits.
 import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createDevNode, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode } from './extension-helper-shared.js';
 
-export async function pickTemplateArtifact(this: ExtensionRuntime): Promise<Artifact | null> {
+export async function pickTemplateArtifact(
+  this: ExtensionRuntime,
+): Promise<{ artifact: Artifact; template: TemplateMeta } | null> {
   const templates = listTemplates();
   const picked = await vscode.window.showQuickPick(
     templates.map((template) => ({
@@ -15,14 +17,22 @@ export async function pickTemplateArtifact(this: ExtensionRuntime): Promise<Arti
   );
   if (!picked) return null;
 
-  const output = await compile({
-    sources: picked.template.sources,
-    solcVersion: picked.template.solcVersion,
-  });
-  return (
-    output.artifacts.find((artifact) => artifact.contractName === picked.template.contractName) ??
-    null
+  const output = await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: `Compiling ${picked.template.name}…`,
+    },
+    () =>
+      compile({
+        sources: picked.template.sources,
+        solcVersion: picked.template.solcVersion,
+        evmVersion: picked.template.evmVersion ?? 'paris',
+      }),
   );
+  const artifact =
+    output.artifacts.find((a) => a.contractName === picked.template.contractName) ?? null;
+  if (!artifact) return null;
+  return { artifact, template: picked.template };
 }
 
 export async function pickWorkspaceArtifact(this: ExtensionRuntime): Promise<Artifact | null> {
@@ -51,11 +61,19 @@ export async function pickWorkspaceArtifact(this: ExtensionRuntime): Promise<Art
     })) ?? '0.8.26';
 
   const content = await fs.readFile(picked.file.fsPath, 'utf8');
-  const output = await compile({
-    sources: [{ path: relative(workspace, picked.file.fsPath), content }],
-    solcVersion,
-    resolver: npmResolver({ rootDir: workspace }),
-  });
+  const output = await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: `Compiling ${picked.label}…`,
+    },
+    () =>
+      compile({
+        sources: [{ path: relative(workspace, picked.file.fsPath), content }],
+        solcVersion,
+        evmVersion: this.selectedNetwork() === 'local' ? 'paris' : undefined,
+        resolver: npmResolver({ rootDir: workspace }),
+      }),
+  );
 
   if (output.warnings.length) {
     this.log(output.warnings.map((warning) => warning.message).join('\n'));
@@ -77,6 +95,7 @@ export async function pickWorkspaceArtifact(this: ExtensionRuntime): Promise<Art
 export async function promptConstructorArgs(
   this: ExtensionRuntime,
   artifact: Artifact,
+  defaults?: ReadonlyArray<{ name?: string; type?: string; defaultValue?: string }>,
 ): Promise<unknown[] | null> {
   const constructorAbi = (
     artifact.abi as unknown as ReadonlyArray<{
@@ -87,11 +106,15 @@ export async function promptConstructorArgs(
   const inputs = constructorAbi?.inputs ?? [];
   const args: unknown[] = [];
 
-  for (const input of inputs) {
+  for (let i = 0; i < inputs.length; i++) {
+    const input = inputs[i];
+    if (!input) continue;
+    const defaultValue = defaults?.[i]?.defaultValue;
     const raw = await vscode.window.showInputBox({
       title: `${artifact.contractName} constructor`,
       prompt: `${input.name || '(arg)'}: ${input.type}`,
       placeHolder: input.type,
+      value: defaultValue,
       ignoreFocusOut: true,
     });
     if (raw === undefined) return null;

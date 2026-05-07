@@ -11,6 +11,7 @@
   "scripts": {
     "build": "moon run :build",
     "test": "moon run :test",
+    "test:cover": "pnpm -r --if-present test:coverage",
     "lint": "moon run :lint",
     "typecheck": "moon run :typecheck",
     "check": "moon run :check",
@@ -54,7 +55,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",
     "@changesets/cli": "^2.31.0",
-    "@moonrepo/cli": "^2.2.3",
+    "@moonrepo/cli": "^2.2.4",
     "gitnexus": "^1.6.3",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",

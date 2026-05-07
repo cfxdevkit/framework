@@ -38,33 +38,41 @@ export function StatusPanel() {
 
     // Core block
     const t0c = Date.now();
-    coreClient
-      .request<string>({ method: 'cfx_epochNumber', params: ['latest_mined'] })
-      .then((hex) => {
-        setCore({ blockNumber: BigInt(hex).toString(), latency: Date.now() - t0c, error: null });
-      })
-      .catch((e: unknown) => {
-        setCore({
-          blockNumber: null,
-          latency: null,
-          error: e instanceof Error ? e.message : String(e),
+    if (coreClient.family === 'core') {
+      coreClient
+        .getEpochNumber({ epochTag: 'latest_mined' })
+        .then((epoch) => {
+          setCore({ blockNumber: epoch.toString(), latency: Date.now() - t0c, error: null });
+        })
+        .catch((e: unknown) => {
+          setCore({
+            blockNumber: null,
+            latency: null,
+            error: e instanceof Error ? e.message : String(e),
+          });
         });
-      });
+    }
 
     // eSpace block
     const t0e = Date.now();
-    espaceClient
-      .request<string>({ method: 'eth_blockNumber', params: [] })
-      .then((hex) => {
-        setEspace({ blockNumber: BigInt(hex).toString(), latency: Date.now() - t0e, error: null });
-      })
-      .catch((e: unknown) => {
-        setEspace({
-          blockNumber: null,
-          latency: null,
-          error: e instanceof Error ? e.message : String(e),
+    if (espaceClient.family === 'espace') {
+      espaceClient
+        .getBlockNumber()
+        .then((blockNumber) => {
+          setEspace({
+            blockNumber: blockNumber.toString(),
+            latency: Date.now() - t0e,
+            error: null,
+          });
+        })
+        .catch((e: unknown) => {
+          setEspace({
+            blockNumber: null,
+            latency: null,
+            error: e instanceof Error ? e.message : String(e),
+          });
         });
-      });
+    }
   }, [coreClient, espaceClient]);
 
   useEffect(() => {

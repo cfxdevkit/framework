@@ -8,10 +8,9 @@ import { readDeployments, writeDeployments, chainsFor, currentChains, currentCha
 import { registerCommands } from './extension-command-registration.js';
 import { showAccountsQuickPick, showContractsQuickPick, copyAddress, deployContractCommand } from './extension-contract-command-helpers.js';
 import { importContractCommand } from './extension-contract-import-helpers.js';
-import { ensureHardwareSigner, connectOneKeySigner, connectSatoshiSigner } from './extension-hardware-helpers.js';
 import { createAppendOnlyAuditLogger, StaticTreeProvider, vscode } from './extension-helper-shared.js';
 import { startRuntime, getOrCreateNodeMnemonic, startNode, stopNode, restartNode, wipeNode, wipeNodeAndRestart, mineBlocks } from './extension-node-helpers.js';
-import { selectNetwork, selectKeystoreBackend, selectKeystoreFile } from './extension-selection-helpers.js';
+import { selectNetwork } from './extension-selection-helpers.js';
 import { workspaceRoot, config, selectedNetwork, selectedSpace, selectedBackend, selectedFileRef, selectedAccountIndex, derivationPath, setSelectedNetwork, setSelectedSpace, setSelectedBackend, keystorePath, keystorePathLabel, deploymentsPath, nodeDataDir, ensureWorkspaceDir, auditLogPath, log, keystoreExists, fileKeystore, refKey, walletTarget, promptKeystorePassphrase, promptNewKeystorePassphrase, listFileWallets, ensureFileBackend, ensureFileKeystoreUnlocked, currentCapability } from './extension-state-helpers.js';
 import { refreshAll, buildSnapshot, populateAccountBalances } from './extension-view-helpers.js';
 import { initializeWallet, addWallet, selectWallet, removeWallet } from './extension-wallet-helpers.js';
@@ -27,41 +26,14 @@ class ExtensionRuntime implements vscode.Disposable {
     onError: (error: unknown) => this.log(`Failed to write keystore audit event: ${String(error)}`),
   });
   private readonly output = vscode.window.createOutputChannel('Conflux DevKit');
-  private readonly networkStatus = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left,
-    100,
-  );
-  private readonly nodeStatus = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left,
-    99,
-  );
-  private readonly networkProvider = new StaticTreeProvider<vscode.TreeItem>();
-  private readonly nodeProvider = new StaticTreeProvider<vscode.TreeItem>();
-  private readonly accountsProvider = new StaticTreeProvider<vscode.TreeItem>();
-  private readonly contractsProvider = new StaticTreeProvider<vscode.TreeItem>();
+  private readonly mainProvider = new StaticTreeProvider<vscode.TreeItem>();
   private readonly disposables: vscode.Disposable[] = [];
 
   constructor(private readonly context: vscode.ExtensionContext) {
-    this.networkStatus.command = 'cfxdevkit.selectNetwork';
-    this.nodeStatus.command = 'cfxdevkit.nodeStart';
     this.disposables.push(
       this.output,
-      this.networkStatus,
-      this.nodeStatus,
-      vscode.window.createTreeView('cfxdevkit.networkView', {
-        treeDataProvider: this.networkProvider,
-        showCollapseAll: false,
-      }),
-      vscode.window.createTreeView('cfxdevkit.nodeView', {
-        treeDataProvider: this.nodeProvider,
-        showCollapseAll: false,
-      }),
-      vscode.window.createTreeView('cfxdevkit.accountsView', {
-        treeDataProvider: this.accountsProvider,
-        showCollapseAll: false,
-      }),
-      vscode.window.createTreeView('cfxdevkit.contractsView', {
-        treeDataProvider: this.contractsProvider,
+      vscode.window.createTreeView('cfxdevkit.mainView', {
+        treeDataProvider: this.mainProvider,
         showCollapseAll: false,
       }),
     );
@@ -69,16 +41,20 @@ class ExtensionRuntime implements vscode.Disposable {
 
   dispose(): void {
     for (const disposable of this.disposables) disposable.dispose();
+    // Node stop is handled by deactivate() which awaits it properly.
+    // dispose() is intentionally synchronous; don't fire-and-forget stop here.
+    this.node = null;
+  }
+
+  async stopNodeForDeactivation(): Promise<void> {
     if (this.node) {
-      void this.node.stop();
+      await this.node.stop().catch(() => {});
       this.node = null;
     }
   }
 
   async activate(): Promise<void> {
     this.registerCommands();
-    this.networkStatus.show();
-    this.nodeStatus.show();
     await this.refreshAll();
     if (this.selectedNetwork() === 'local' && this.config().get<boolean>('autoStartNode', false)) {
       await this.startNode().catch((error) => {
@@ -131,15 +107,10 @@ class ExtensionRuntime implements vscode.Disposable {
   private deriveRunningNodeAccounts(): AccountTreeRecord[] { return deriveRunningNodeAccounts.call(this); }
   private async walletSignerFor(target: ChainTarget): Promise<Signer> { return walletSignerFor.call(this, target); }
   private async ensureUnlockedWallet(): Promise<OpenLocalWalletResult> { return ensureUnlockedWallet.call(this); }
-  private async ensureHardwareSigner(): Promise<Signer> { return ensureHardwareSigner.call(this); }
-  private async connectOneKeySigner(): Promise<Signer> { return connectOneKeySigner.call(this); }
-  private async connectSatoshiSigner(): Promise<Signer> { return connectSatoshiSigner.call(this); }
   private async refreshAll(): Promise<void> { return refreshAll.call(this); }
   private async buildSnapshot(): Promise<ViewSnapshot> { return buildSnapshot.call(this); }
   private async populateAccountBalances(accounts: AccountTreeRecord[]): Promise<void> { return populateAccountBalances.call(this, accounts); }
   private async selectNetwork(network?: NetworkSelection): Promise<void> { return selectNetwork.call(this, network); }
-  private async selectKeystoreBackend(backend?: KeystoreBackend): Promise<void> { return selectKeystoreBackend.call(this, backend); }
-  private async selectKeystoreFile(): Promise<void> { return selectKeystoreFile.call(this); }
   private async initializeWallet(): Promise<void> { return initializeWallet.call(this); }
   private async addWallet(): Promise<void> { return addWallet.call(this); }
   private async selectWallet(target?: WalletCommandTarget): Promise<void> { return selectWallet.call(this, target); }
@@ -181,6 +152,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 }
 
 export async function deactivate(): Promise<void> {
+  // Await the node stop so ports are released before VS Code restarts the
+  // extension host (e.g. after a reload). Swallow errors so deactivation
+  // always completes cleanly.
+  await runtime?.stopNodeForDeactivation();
   runtime?.dispose();
   runtime = null;
 }

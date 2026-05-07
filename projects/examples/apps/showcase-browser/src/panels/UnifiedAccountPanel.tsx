@@ -10,6 +10,7 @@
 import { formatCFX, formatGDrip } from '@cfxdevkit/core';
 import { ConnectWall, CopyButton, errMsg, WalletPickerModal } from '@cfxdevkit/example-showcase-ui';
 import { useCallback, useEffect, useState } from 'react';
+import { formatUnits } from 'viem';
 import { useAccount, useBalance, useBlockNumber, useGasPrice } from 'wagmi';
 import { getFluentProvider, useCoreWallet } from '../lib/use-core-wallet.js';
 
@@ -58,7 +59,8 @@ function ESpaceSection() {
           address : {address} <CopyButton text={address ?? ''} />
           {'\n'}connector : {connector?.name ?? 'unknown'}
           {'\n'}chainId : {chainId ?? '—'}
-          {'\n'}balance : {balance ? `${balance.formatted} ${balance.symbol}` : '…'}
+          {'\n'}balance :{' '}
+          {balance ? `${formatUnits(balance.value, balance.decimals)} ${balance.symbol}` : '…'}
           {'\n'}blockNumber : {blockNumber !== undefined ? blockNumber.toString() : '…'}
           {'\n'}gasPrice : {gasPrice !== undefined ? `${gasPrice.toString()} wei` : '…'}
         </div>

@@ -4,7 +4,7 @@ export { isAbsolute, join, relative } from 'node:path';
 export { type Artifact, compile, listTemplates, npmResolver } from '@cfxdevkit/compiler';
 export { deployContract } from '@cfxdevkit/contracts/deploy';
 export { readContract } from '@cfxdevkit/contracts/read';
-export { sendWrite } from '@cfxdevkit/contracts/write';
+export { sendWrite, waitForReceipt } from '@cfxdevkit/contracts/write';
 export { hexToBase32 } from '@cfxdevkit/core/address';
 export {
   type ChainConfig,
@@ -32,7 +32,11 @@ export {
 export { createDevNode, type DevNode } from '@cfxdevkit/devnode';
 export { createAppendOnlyAuditLogger } from '@cfxdevkit/services';
 export type { KeystoreProvider, SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
-export { createFileKeystore, initFileKeystore } from '@cfxdevkit/services/keystore-file';
+export {
+  createFileKeystore,
+  initFileKeystore,
+  readFileKeystoreMnemonic,
+} from '@cfxdevkit/services/keystore-file';
 export { type OneKeySdkLike, signerFromOneKey } from '@cfxdevkit/wallet/hardware/onekey';
 export { signerFromSatochip } from '@cfxdevkit/wallet/hardware/satochip';
 export { type OpenLocalWalletResult, rotateLocalPassphrase } from '@cfxdevkit/wallet/init';
@@ -43,7 +47,9 @@ export {
   type ContractTreeRecord,
   makeAccountItems,
   makeContractItems,
+  makeMainItems,
   makeNetworkItems,
+  makeNetworkNodeRow,
   makeNodeItems,
   StaticTreeProvider,
   type ViewSnapshot,
@@ -122,4 +128,40 @@ export interface CachedSigner {
 export interface WalletCommandTarget {
   walletRef?: SecretRef;
   accountIndex?: number;
+}
+
+/** Format a drip-scale bigint balance to a CFX decimal string for display. */
+export function formatBalance(value: bigint): string {
+  const cfx = formatCFX(value);
+  // Trim trailing zeros after decimal point for readability
+  const trimmed = cfx.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+  return `${trimmed} CFX`;
+}
+
+/**
+ * Check whether an absolute `path` is located inside `workspaceRoot`.
+ * Both arguments must be absolute paths.
+ */
+export function isInsideWorkspace(path: string, workspaceRoot: string): boolean {
+  const root = workspaceRoot.endsWith('/') ? workspaceRoot : `${workspaceRoot}/`;
+  return path === workspaceRoot || path.startsWith(root);
+}
+
+/**
+ * Thin wrapper around `import()` for optional/runtime dependencies
+ * (e.g. hardware-wallet SDKs that may not be installed).
+ */
+export async function dynamicImport(moduleName: string): Promise<unknown> {
+  return import(moduleName);
+}
+
+/**
+ * Stringify any contract-read result to a human-readable string.
+ * BigInt values are serialised with a trailing `n` suffix.
+ */
+export function stringifyResult(value: unknown): string {
+  return (
+    JSON.stringify(value, (_key, val) => (typeof val === 'bigint' ? `${val}n` : val), 2) ??
+    String(value)
+  );
 }

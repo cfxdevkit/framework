@@ -1,52 +1,80 @@
 import * as vscode from 'vscode';
 import type { ViewSnapshot } from './views-model.js';
 
-export function makeNetworkItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
-  const current = new vscode.TreeItem(`Current: ${snapshot.selectedNetworkLabel}`);
-  current.description = `Core + eSpace active`;
-  current.iconPath = new vscode.ThemeIcon('globe');
-  current.command = {
+export function makeNetworkNodeRow(snapshot: ViewSnapshot): vscode.TreeItem {
+  const selected = snapshot.networkOptions.find((option) => option.selected);
+  const isLocal = snapshot.selectedNetwork === 'local';
+
+  const item = new vscode.TreeItem(snapshot.selectedNetworkLabel);
+
+  if (isLocal) {
+    if (snapshot.keystoreLocked) {
+      item.description = 'unlock wallet to control node';
+      item.tooltip =
+        'Local network selected. Unlock your wallet to start or control the local node.';
+      item.iconPath = new vscode.ThemeIcon('lock', new vscode.ThemeColor('descriptionForeground'));
+      item.contextValue = 'cfxLocalNodeLocked';
+    } else if (snapshot.nodeRunning) {
+      item.description = 'node running';
+      item.tooltip = 'Local Conflux dev node is running. Click to switch network.';
+      item.iconPath = new vscode.ThemeIcon(
+        'server-environment',
+        new vscode.ThemeColor('testing.iconPassed'),
+      );
+      item.contextValue = 'cfxLocalNodeRunning';
+    } else {
+      item.description = 'node stopped';
+      item.tooltip = 'Local Conflux dev node is stopped. Click to switch network.';
+      item.iconPath = new vscode.ThemeIcon(
+        'server',
+        new vscode.ThemeColor('descriptionForeground'),
+      );
+      item.contextValue = 'cfxLocalNodeStopped';
+    }
+  } else {
+    item.description = selected?.description ?? 'Core + eSpace';
+    item.tooltip = selected
+      ? `${selected.label}\n${selected.description}\nCore chainId ${selected.coreChainId}; eSpace chainId ${selected.espaceChainId}`
+      : 'Select the active Conflux network';
+    item.iconPath = new vscode.ThemeIcon(
+      snapshot.selectedNetwork === 'testnet' ? 'beaker' : 'globe',
+      new vscode.ThemeColor('testing.iconPassed'),
+    );
+    item.contextValue = 'cfxNonLocalNetwork';
+  }
+
+  item.command = {
     command: 'cfxdevkit.selectNetwork',
     title: 'Select Network',
   };
+  return item;
+}
 
-  const options = snapshot.networkOptions.map((option) => {
-    const item = new vscode.TreeItem(option.label);
-    item.description = option.selected ? 'active' : option.description;
-    item.tooltip = `${option.label}\n${option.description}`;
-    item.iconPath = new vscode.ThemeIcon(
-      option.network === 'local'
-        ? option.selected
-          ? 'server-environment'
-          : 'server'
-        : option.network === 'testnet'
-          ? 'beaker'
-          : 'globe',
-      new vscode.ThemeColor(option.selected ? 'testing.iconPassed' : 'descriptionForeground'),
-    );
-    item.contextValue = option.selected ? 'cfxNetworkSelected' : 'cfxNetworkOption';
-    if (!option.selected) {
-      item.command = {
-        command: 'cfxdevkit.selectNetwork',
-        title: `Switch to ${option.label}`,
-        arguments: [option.network],
-      };
-    }
-    return item;
-  });
+/** @deprecated Use makeNetworkNodeRow instead */
+export function makeNetworkRow(snapshot: ViewSnapshot): vscode.TreeItem {
+  return makeNetworkNodeRow(snapshot);
+}
 
-  return [current, ...options];
+/** @deprecated Node row is merged into makeNetworkNodeRow */
+export function makeNodeRow(snapshot: ViewSnapshot): vscode.TreeItem {
+  const item = new vscode.TreeItem('Node');
+  item.description = snapshot.keystoreLocked ? 'unlock wallet first' : snapshot.nodeStatusLabel;
+  item.contextValue = snapshot.keystoreLocked
+    ? 'cfxNodeLocked'
+    : snapshot.nodeRunning
+      ? 'cfxNodeRunning'
+      : 'cfxNodeStopped';
+  item.iconPath = new vscode.ThemeIcon(
+    snapshot.nodeRunning ? 'server-environment' : snapshot.keystoreLocked ? 'lock' : 'server',
+    new vscode.ThemeColor(snapshot.nodeRunning ? 'testing.iconPassed' : 'descriptionForeground'),
+  );
+  return item;
+}
+
+export function makeNetworkItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
+  return [makeNetworkNodeRow(snapshot)];
 }
 
 export function makeNodeItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
-  const status = new vscode.TreeItem(`Status: ${snapshot.nodeStatusLabel}`);
-  status.iconPath = new vscode.ThemeIcon('server');
-  const actions = snapshot.nodeActions.map((action) => {
-    const item = new vscode.TreeItem(action.label);
-    item.description = action.detail;
-    item.command = { command: action.command, title: action.label };
-    item.iconPath = new vscode.ThemeIcon('play-circle');
-    return item;
-  });
-  return [status, ...actions];
+  return [makeNetworkNodeRow(snapshot)];
 }

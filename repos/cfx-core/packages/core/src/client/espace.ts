@@ -1,6 +1,15 @@
 import { createPublicClient, type Chain as ViemChain, defineChain as viemDefineChain } from 'viem';
 import type { ChainConfig } from '../chains/index.js';
-import type { Address, Block, BlockTag, Hash, TxReceipt, TxRequest, Wei } from '../types/index.js';
+import type {
+  Address,
+  Block,
+  BlockTag,
+  Hash,
+  Hex,
+  TxReceipt,
+  TxRequest,
+  Wei,
+} from '../types/index.js';
 import { nullWhenNotFound, wrapRpc } from './errors.js';
 import type { CallOptions, EspaceClient, GetBalanceOptions, RpcRequest } from './index.js';
 import type { Transport } from './transport.js';
@@ -50,10 +59,37 @@ export function createEspaceClient(chain: ChainConfig, transport: Transport): Es
         { hash },
       );
     },
+    getTransaction(hash: Hash, _opts?: CallOptions): Promise<unknown | null> {
+      return wrapRpc(
+        nullWhenNotFound(publicClient.getTransaction({ hash }), 'TransactionNotFoundError'),
+        'core/rpc/get-transaction',
+        { hash },
+      );
+    },
     estimateGas(input: TxRequest, _opts?: CallOptions): Promise<bigint> {
       return wrapRpc(
         publicClient.estimateGas(input as Parameters<typeof publicClient.estimateGas>[0]),
         'core/rpc/estimate-gas',
+      );
+    },
+    getTransactionCount(address: Address, opts?: GetBalanceOptions): Promise<number> {
+      const blockTag = typeof opts?.blockTag === 'bigint' ? undefined : opts?.blockTag;
+      return wrapRpc(
+        publicClient.getTransactionCount({ address, blockTag }),
+        'core/rpc/get-transaction-count',
+        { address },
+      );
+    },
+    getGasPrice(_opts?: CallOptions): Promise<bigint> {
+      return wrapRpc(publicClient.getGasPrice(), 'core/rpc/get-gas-price');
+    },
+    sendRawTransaction(signedTx: Hex, _opts?: CallOptions): Promise<Hash> {
+      return wrapRpc(
+        publicClient.request({
+          method: 'eth_sendRawTransaction',
+          params: [signedTx],
+        }) as Promise<Hash>,
+        'core/rpc/send-raw-transaction',
       );
     },
   };

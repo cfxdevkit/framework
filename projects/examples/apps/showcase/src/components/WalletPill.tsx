@@ -3,14 +3,11 @@
  * wallet (address + native balance on the active space) and offers a
  * one-click connect / disconnect / switch-account.
  *
- * Balance is queried directly via the active client:
- *   - eSpace → `eth_getBalance(address, 'latest')`
- *   - Core   → `cfx_getBalance(coreAddress, 'latest_state')`
- *
+ * Balance is queried directly via the active client's typed `getBalance(address)` method.
  * Polled every 5 s while the wallet is connected (so the new balance after a
  * deploy / transfer surfaces without a manual refresh).
  */
-import { formatUnits, type Hex } from '@cfxdevkit/core';
+import { formatUnits } from '@cfxdevkit/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useKeystoreSession } from '../contexts/KeystoreSessionProvider.js';
 import { useNetwork } from '../contexts/NetworkProvider.js';
@@ -45,18 +42,12 @@ export function WalletPill() {
       }
       setLoading(true);
       try {
-        const hex =
-          space === 'core'
-            ? await activeClient.request<Hex>({
-                method: 'cfx_getBalance',
-                params: [address, 'latest_state'],
-              })
-            : await activeClient.request<Hex>({
-                method: 'eth_getBalance',
-                params: [address, 'latest'],
-              });
+        const balance =
+          activeClient.family === 'core'
+            ? await activeClient.getBalance(address)
+            : await activeClient.getBalance(address as `0x${string}`);
         if (signal?.aborted) return;
-        setBalance(BigInt(hex));
+        setBalance(balance);
         setBalanceErr(null);
       } catch (e) {
         if (signal?.aborted) return;
@@ -66,7 +57,7 @@ export function WalletPill() {
         if (!signal?.aborted) setLoading(false);
       }
     },
-    [address, space, activeClient],
+    [address, activeClient],
   );
 
   useEffect(() => {

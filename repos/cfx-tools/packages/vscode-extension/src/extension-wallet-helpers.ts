@@ -237,6 +237,6 @@ export async function removeWallet(
     await this.context.workspaceState.update(STATE_ACTIVE_ACCOUNT_INDEX, 0);
     this.localNodeMnemonic = null;
   }
-  await vscode.window.showInformationMessage(`Removed ${pick.label}.`);
   await this.refreshAll();
+  void vscode.window.showInformationMessage(`Removed ${pick.label}.`);
 }

@@ -28,6 +28,7 @@ import {
   changeFilePassphrase,
   createFileKeystore,
   initFileKeystore,
+  type KdfParams,
 } from '@cfxdevkit/services/keystore-file';
 
 const DEFAULT_SERVICE = 'cfxdevkit' as const;
@@ -58,6 +59,12 @@ export interface InitLocalWalletInput {
   mnemonicStrength?: 128 | 160 | 192 | 224 | 256;
   /** Optional BIP-39 passphrase (the "25th word"). */
   bip39Passphrase?: string;
+  /**
+   * Override Argon2id KDF parameters used to encrypt the keystore.
+   * **Leave unset in production.** For tests pass e.g. `{ memKiB: 64, iterations: 1 }`
+   * to reduce key-derivation time from ~5 s to < 10 ms.
+   */
+  kdf?: KdfParams;
 }
 
 export interface InitLocalWalletResult {
@@ -94,6 +101,7 @@ export async function initLocalWallet(input: InitLocalWalletInput): Promise<Init
     mnemonic: providedMnemonic,
     mnemonicStrength = 256,
     bip39Passphrase,
+    kdf,
   } = input;
 
   if (!passphrase || passphrase.length < 8) {
@@ -107,7 +115,7 @@ export async function initLocalWallet(input: InitLocalWalletInput): Promise<Init
   const account = label ?? DEFAULT_ACCOUNT;
   const ref: SecretRef = { service, account };
 
-  await initFileKeystore({ path, passphrase });
+  await initFileKeystore({ path, passphrase, ...(kdf !== undefined ? { kdf } : {}) });
 
   const provider = createFileKeystore({
     path,

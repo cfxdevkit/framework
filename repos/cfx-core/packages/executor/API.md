@@ -1,63 +1,79 @@
-# framework/executor — Public API
+# `@cfxdevkit/executor` — API Reference
 
-> Background job runner. **Generic**: knows nothing about DEX, games, or hardware.
-> Strategies (job definitions and handler registration) are defined in `@cfxdevkit/automation`.
+> Lightweight task execution engine with retry, timeout, abort, concurrency, and observable results.
+> Intended for tooling and SDK workflows, not persistent job queues.
 
-## Sub-paths
+## Exports
 
-| Sub-path | Concern |
-|----------|---------|
-| `@cfxdevkit/executor` | `Executor` interface + `createExecutor` |
-| `@cfxdevkit/executor/queues/memory` | in-memory queue |
-| `@cfxdevkit/executor/queues/redis` | Redis-backed queue |
-| `@cfxdevkit/executor/scheduler` | cron / interval triggers |
-| `@cfxdevkit/executor/observability` | metrics + structured logs |
-| `@cfxdevkit/executor/errors` | `ExecutorError` |
+```ts
+// Core execution
+async function execute<T>(
+  task: ExecutionTask<T>,
+  options?: ExecuteOptions,
+): Promise<ExecutionResult<T>>
 
----
+// Batch execution with configurable concurrency
+async function executeBatch<T>(
+  tasks: ReadonlyArray<ExecutionTask<T>>,
+  options?: BatchOptions,
+): Promise<Array<ExecutionResult<T>>>
 
-## `executor`
+// In-memory task queue
+function createTaskQueue(options?: TaskQueueOptions): TaskQueue
 
+// Exported types
+type ExecutionTask<T> = (context: ExecutionContext) => Promise<T> | T
+type ExecutionContext = { attempt: number; signal?: AbortSignal; metadata?: Record<string, unknown> }
+type ExecutionResult<T> =
+  | { ok: true; value: T; attempts: number; durationMs: number }
+  | { ok: false; error: unknown; attempts: number; durationMs: number }
+type ExecuteOptions = RetryPolicy & {
+  signal?: AbortSignal
+  timeoutMs?: number
+  metadata?: Record<string, unknown>
+}
+type BatchOptions = ExecuteOptions & { concurrency?: number; stopOnError?: boolean }
+type TaskQueueOptions = BatchOptions & { onResult?: <T>(result: ExecutionResult<T>, index: number) => void }
+type TaskQueue = { add<T>(task: ExecutionTask<T>): void; size(): number; run(): Promise<Array<ExecutionResult<unknown>>> }
+type RetryPolicy = {
+  attempts?: number                              // max attempts, default 1
+  delayMs?: number | ((attempt: number, error: unknown) => number)
+  shouldRetry?: (error: unknown, attempt: number) => boolean  // default: always retry
+}
 ```
-type JobInput<T> = {
-  id: string                      // idempotency key
-  kind: string                    // matches handler name
-  payload: T
-  notBefore?: Timestamp
-  maxAttempts?: number            // default 3
-  backoff?: { kind: 'fixed' | 'exponential'; baseMs: number; maxMs?: number }
-}
 
-type JobContext = {
-  attempt: number                 // 1-based
-  signal: AbortSignal
-  log: { info: (msg: string, meta?: object) => void; warn; error }
-  clock: () => Timestamp
-}
+## Usage
 
-type Handler<T, R> = (payload: T, ctx: JobContext) => Promise<R>
+```ts
+import { execute, executeBatch, createTaskQueue } from '@cfxdevkit/executor';
 
-type Queue = {
-  push<T>(job: JobInput<T>): Promise<{ id: string }>
-  pull(opts: { signal: AbortSignal }): Promise<{ id: string; kind: string; payload: unknown; attempt: number } | null>
-  ack(id: string): Promise<void>
-  nack(id: string, opts: { reason: string; retryAt?: Timestamp }): Promise<void>
-  size(): Promise<number>
-  close(): Promise<void>
-}
+// Retry a flaky RPC call up to 3 times
+const result = await execute(
+  async () => client.getBlockNumber(),
+  { attempts: 3, delayMs: 250 },
+);
+if (result.ok) console.log('Block:', result.value);
+else console.error('Failed after', result.attempts, 'attempts');
 
-type Executor = {
-  register<T, R>(kind: string, handler: Handler<T, R>): void
-  start(opts?: { concurrency?: number; signal?: AbortSignal }): Promise<void>
-  stop(opts?: { drainMs?: number; signal?: AbortSignal }): Promise<void>
-  enqueue<T>(job: JobInput<T>): Promise<{ id: string }>
-}
+// Deploy 5 contracts with 2 concurrent slots
+const results = await executeBatch(
+  contracts.map(c => () => deploy(c)),
+  { concurrency: 2, attempts: 2 },
+);
 
-function createExecutor(input: {
-  queue: Queue
-  clock?: () => Timestamp
-  log?: (event: ExecutorEvent) => void
-  metrics?: MetricsSink
+// Deferred batch collected before running
+const queue = createTaskQueue({ concurrency: 3 });
+queue.add(() => readBalance(addr1));
+queue.add(() => readBalance(addr2));
+const balances = await queue.run();
+```
+
+## Notes
+
+- All results are returned as discriminated unions — failures never throw from `execute` / `executeBatch`.
+- `timeoutMs` creates an internal `AbortController`; passing an external `signal` is additive.
+- `shouldRetry: () => false` disables retry after the first failure regardless of `attempts`.
+- `createTaskQueue` returns a single-use queue; call `add()` any number of times then `run()` once.
 }): Executor
 ```
 

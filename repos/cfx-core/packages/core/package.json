@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "@scure/bip32": "^1.5.0",
-    "@scure/bip39": "^1.4.0",
+    "@scure/bip39": "^2.2.0",
     "cive": "^0.8.1",
     "viem": "^2.21.0"
   },
@@ -69,7 +69,7 @@
     "@biomejs/biome": "^2.4.14",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
-    "@types/node": "^22.10.0",
+    "@types/node": "^25.6.0",
     "@vitest/coverage-v8": "^4.1.5",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",

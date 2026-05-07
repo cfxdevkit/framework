@@ -1,3 +1,5 @@
+import { toHex } from 'viem';
+
 export interface FluentProvider {
   isFluent?: boolean;
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -27,7 +29,7 @@ export interface ConfluxAddChainParams {
 export function normalizeCoreChainId(raw: string): string {
   if (!raw || raw === '0xNaN') return raw;
   const num = Number(raw);
-  if (!Number.isNaN(num) && num > 0) return `0x${num.toString(16)}`;
+  if (!Number.isNaN(num) && num > 0) return toHex(num);
   return raw.toLowerCase();
 }
 

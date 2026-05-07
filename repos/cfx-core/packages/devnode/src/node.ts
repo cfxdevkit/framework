@@ -36,6 +36,8 @@ export class DevNode {
   private miningTimer: ReturnType<typeof setInterval> | null = null;
   private mining: MiningStatus = { enabled: false, intervalMs: 0, ticks: 0 };
   private packing = false;
+  /** True while an auto-mine tick is in-flight — prevents concurrent mine calls. */
+  private autoMineInFlight = false;
 
   constructor(config: DevNodeConfig = {}) {
     this.config = resolveConfig(config);
@@ -90,6 +92,11 @@ export class DevNode {
       }
     } catch (cause) {
       this.status = 'error';
+      // Release ports if the server partially started before failing.
+      if (this.server) {
+        void Promise.resolve(this.server.stop()).catch(() => {});
+        this.server = null;
+      }
       throw new DevNodeError({
         code: 'devnode/start-failed',
         message: cause instanceof Error ? cause.message : String(cause),
@@ -172,14 +179,18 @@ export class DevNode {
     await this.requireTestClient();
     this.mining = { enabled: true, intervalMs: ms, ticks: 0, startedAt: new Date() };
     this.miningTimer = setInterval(() => {
-      // Skip if a manual packMine() is in flight to avoid concurrent RPCs.
-      if (this.packing || !this.testClient) return;
+      // Skip if a manual packMine() or another auto-mine tick is in flight —
+      // concurrent mine({ numTxs:1 }) calls can lock up slow containers.
+      if (this.packing || this.autoMineInFlight || !this.testClient) return;
+      this.autoMineInFlight = true;
       this.testClient.mine({ numTxs: 1 }).then(
         () => {
           this.mining.ticks += 1;
+          this.autoMineInFlight = false;
         },
         () => {
           // Swallow errors so a transient RPC blip doesn't crash the timer.
+          this.autoMineInFlight = false;
         },
       );
     }, ms);

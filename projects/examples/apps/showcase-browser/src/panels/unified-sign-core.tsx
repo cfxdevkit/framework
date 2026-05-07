@@ -1,5 +1,6 @@
 import { ConnectWall, CopyButton, errMsg } from '@cfxdevkit/example-showcase-ui';
 import { useMemo, useState } from 'react';
+import { fromHex } from 'viem';
 import { getFluentProvider, useCoreWallet } from '../lib/use-core-wallet.js';
 
 export function CoreSection() {
@@ -11,7 +12,7 @@ export function CoreSection() {
   const [pmErr, setPmErr] = useState<string | null>(null);
   const [pmBusy, setPmBusy] = useState(false);
   const numericChainId = useMemo(
-    () => (chainId ? Number.parseInt(chainId, 16) || 0 : 0),
+    () => (chainId ? fromHex(chainId as `0x${string}`, 'number') : 0),
     [chainId],
   );
   const cip23Template = useMemo(

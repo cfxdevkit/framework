@@ -43,26 +43,6 @@
         "icon": "$(globe)"
       },
       {
-        "command": "cfxdevkit.selectKeystoreBackend",
-        "title": "Conflux: Select Keystore Type",
-        "icon": "$(key)"
-      },
-      {
-        "command": "cfxdevkit.selectKeystoreFile",
-        "title": "Conflux: Select Keystore File",
-        "icon": "$(folder)"
-      },
-      {
-        "command": "cfxdevkit.serverStart",
-        "title": "Conflux: Start DevKit Runtime",
-        "icon": "$(debug-start)"
-      },
-      {
-        "command": "cfxdevkit.serverStop",
-        "title": "Conflux: Stop Node",
-        "icon": "$(debug-stop)"
-      },
-      {
         "command": "cfxdevkit.initializeSetup",
         "title": "Conflux: Initialize Keystore",
         "icon": "$(key)"
@@ -75,6 +55,11 @@
       {
         "command": "cfxdevkit.selectWallet",
         "title": "Conflux: Select Wallet",
+        "icon": "$(check)"
+      },
+      {
+        "command": "cfxdevkit.selectAccount",
+        "title": "Conflux: Select Account",
         "icon": "$(check)"
       },
       {
@@ -114,20 +99,18 @@
       },
       {
         "command": "cfxdevkit.nodeWipe",
-        "title": "Conflux: Wipe Node Data"
+        "title": "Conflux: Wipe Node Data",
+        "icon": "$(trash)"
       },
       {
         "command": "cfxdevkit.nodeWipeRestart",
-        "title": "Conflux: Wipe Data And Restart Node"
-      },
-      {
-        "command": "cfxdevkit.shutdown",
-        "title": "Conflux: Shut Down Stack",
-        "icon": "$(debug-stop)"
+        "title": "Conflux: Wipe Data And Restart Node",
+        "icon": "$(trash)"
       },
       {
         "command": "cfxdevkit.mineBlocks",
-        "title": "Conflux: Mine Blocks"
+        "title": "Conflux: Mine Blocks",
+        "icon": "$(flame)"
       },
       {
         "command": "cfxdevkit.viewAccounts",
@@ -183,94 +166,80 @@
     "views": {
       "cfxdevkit-sidebar": [
         {
-          "id": "cfxdevkit.networkView",
-          "name": "Network"
-        },
-        {
-          "id": "cfxdevkit.nodeView",
-          "name": "Node"
-        },
-        {
-          "id": "cfxdevkit.accountsView",
-          "name": "Wallets"
-        },
-        {
-          "id": "cfxdevkit.contractsView",
-          "name": "Contracts"
+          "id": "cfxdevkit.mainView",
+          "name": "Conflux DevKit"
         }
       ]
     },
     "viewsWelcome": [
       {
-        "view": "cfxdevkit.networkView",
-        "contents": "Select the active Conflux network.\n[Select Network](command:cfxdevkit.selectNetwork)"
-      },
-      {
-        "view": "cfxdevkit.nodeView",
-        "contents": "Start the local dev node when working against the local chain.\n[Start Node](command:cfxdevkit.nodeStart)"
-      },
-      {
-        "view": "cfxdevkit.accountsView",
-        "contents": "Choose a keystore type, then add or select a wallet before node and contract operations.\n[Select Keystore Type](command:cfxdevkit.selectKeystoreBackend)\n[Add Wallet](command:cfxdevkit.addWallet)\n[Unlock Keystore](command:cfxdevkit.unlockKeystore)"
-      },
-      {
-        "view": "cfxdevkit.contractsView",
-        "contents": "Deploy or import a contract from the active network and space.\n[Deploy Contract](command:cfxdevkit.deployContract)\n[Import Contract](command:cfxdevkit.importContract)"
+        "view": "cfxdevkit.mainView",
+        "contents": "Add or unlock a wallet to manage the local node, accounts, and contracts.\n[Add Wallet](command:cfxdevkit.addWallet)\n[Unlock Wallet](command:cfxdevkit.unlockKeystore)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "cfxdevkit.selectNetwork",
-          "when": "view == cfxdevkit.networkView",
-          "group": "navigation@1"
-        },
-        {
-          "command": "cfxdevkit.selectKeystoreBackend",
-          "when": "view == cfxdevkit.accountsView",
-          "group": "navigation@1"
-        },
-        {
-          "command": "cfxdevkit.nodeStart",
-          "when": "view == cfxdevkit.nodeView",
-          "group": "navigation@1"
-        },
-        {
           "command": "cfxdevkit.refreshAccounts",
-          "when": "view == cfxdevkit.accountsView",
-          "group": "navigation@2"
-        },
-        {
-          "command": "cfxdevkit.deployContract",
-          "when": "view == cfxdevkit.contractsView",
+          "when": "view == cfxdevkit.mainView",
           "group": "navigation@1"
-        },
-        {
-          "command": "cfxdevkit.importContract",
-          "when": "view == cfxdevkit.contractsView",
-          "group": "navigation@2"
-        },
-        {
-          "command": "cfxdevkit.refreshContracts",
-          "when": "view == cfxdevkit.contractsView",
-          "group": "navigation@3"
         }
       ],
       "view/item/context": [
         {
           "command": "cfxdevkit.unlockKeystore",
-          "when": "view == cfxdevkit.accountsView && viewItem == cfxWalletRootActiveLocked",
+          "when": "view == cfxdevkit.mainView && viewItem =~ /cfxWallet.*Locked/",
           "group": "inline@1"
         },
         {
           "command": "cfxdevkit.lockKeystore",
-          "when": "view == cfxdevkit.accountsView && viewItem == cfxWalletRootActiveReady",
+          "when": "view == cfxdevkit.mainView && viewItem == cfxWalletActiveReady",
           "group": "inline@1"
         },
         {
-          "command": "cfxdevkit.removeWallet",
-          "when": "view == cfxdevkit.accountsView && viewItem =~ /cfxWalletRoot/",
+          "command": "cfxdevkit.rotateKeystorePassphrase",
+          "when": "view == cfxdevkit.mainView && viewItem == cfxWalletActiveReady",
           "group": "inline@2"
+        },
+        {
+          "command": "cfxdevkit.removeWallet",
+          "when": "view == cfxdevkit.mainView && viewItem =~ /cfxWallet/",
+          "group": "inline@3"
+        },
+        {
+          "command": "cfxdevkit.selectAccount",
+          "when": "view == cfxdevkit.mainView && viewItem == cfxAccountItem",
+          "group": "inline@1"
+        },
+        {
+          "command": "cfxdevkit.nodeStart",
+          "when": "view == cfxdevkit.mainView && viewItem == cfxLocalNodeStopped",
+          "group": "inline@1"
+        },
+        {
+          "command": "cfxdevkit.nodeWipe",
+          "when": "view == cfxdevkit.mainView && viewItem == cfxLocalNodeStopped",
+          "group": "inline@2"
+        },
+        {
+          "command": "cfxdevkit.nodeStop",
+          "when": "view == cfxdevkit.mainView && viewItem == cfxLocalNodeRunning",
+          "group": "inline@1"
+        },
+        {
+          "command": "cfxdevkit.nodeRestart",
+          "when": "view == cfxdevkit.mainView && viewItem == cfxLocalNodeRunning",
+          "group": "inline@2"
+        },
+        {
+          "command": "cfxdevkit.nodeWipe",
+          "when": "view == cfxdevkit.mainView && viewItem == cfxLocalNodeRunning",
+          "group": "inline@3"
+        },
+        {
+          "command": "cfxdevkit.mineBlocks",
+          "when": "view == cfxdevkit.mainView && viewItem == cfxLocalNodeRunning",
+          "group": "inline@4"
         },
         {
           "command": "cfxdevkit.copyAddress",
@@ -296,11 +265,6 @@
           "type": "string",
           "default": ".cfxdevkit/keystore.json",
           "description": "Workspace-relative path to the encrypted keystore file."
-        },
-        "cfxdevkit.satoshiBridgeUrl": {
-          "type": "string",
-          "default": "http://127.0.0.1:8397",
-          "description": "Local Satoshi/Satochip bridge URL used by the Satoshi keystore backend."
         },
         "cfxdevkit.deploymentsPath": {
           "type": "string",
@@ -329,6 +293,8 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "biome check src",
+    "smoke:workflows": "node scripts/smoke-extension-workflows.mjs",
+    "smoke:deploy": "node scripts/smoke-extension-workflows.mjs --deploy",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -343,7 +309,7 @@
     "@biomejs/biome": "^2.4.14",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
-    "@types/node": "^22.10.0",
+    "@types/node": "^25.6.0",
     "@types/vscode": "^1.85.0",
     "typescript": "^6.0.3"
   }

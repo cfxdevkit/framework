@@ -1,4 +1,5 @@
 import { parseArgs } from './args.js';
+import { contractsExtractFromFlags } from './commands/contracts.js';
 import { deriveFromFlags } from './commands/derive.js';
 import { generateFromFlags } from './commands/generate.js';
 import { statusFromFlags } from './commands/status.js';
@@ -26,6 +27,10 @@ Commands:
 
   generate [--strength 128|256]     Print a fresh BIP-39 mnemonic
 
+  contracts extract                 Extract ABI + bytecode from Hardhat artifacts
+    [--artifacts <dir>]             Source directory (default: artifacts)
+    [--out <dir>]                   Output directory (default: src/generated/contracts)
+
 Global flags:
   --json                            Emit machine-readable JSON
   --help                            Print this help
@@ -35,6 +40,7 @@ Examples:
   cfx status --chain core-testnet
   cfx derive --generate --count 3 --core-network-id 1
   cfx derive --mnemonic "test test test test test test test test test test test junk"
+  cfx contracts extract --artifacts ./artifacts --out ./src/generated/contracts
 `;
 
 export interface RunOptions {
@@ -60,6 +66,14 @@ export async function run(argv: readonly string[], opts: RunOptions = {}): Promi
         return deriveFromFlags(parsed.flags, stdout);
       case 'generate':
         return generateFromFlags(parsed.flags, stdout);
+      case 'contracts': {
+        const subcommand = parsed.positionals[0] ?? '';
+        if (subcommand === 'extract') {
+          return await contractsExtractFromFlags(parsed.flags, opts);
+        }
+        stderr.write(`cfx contracts: unknown subcommand "${subcommand}"\n\n${HELP}`);
+        return 2;
+      }
       default:
         stderr.write(`cfx: unknown command "${parsed.command}"\n\n${HELP}`);
         return 2;

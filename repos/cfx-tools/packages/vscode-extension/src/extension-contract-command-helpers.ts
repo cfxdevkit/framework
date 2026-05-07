@@ -1,7 +1,7 @@
 // @ts-nocheck
 // biome-ignore-all lint/correctness/noUnusedImports: extension helper groups share the VS Code runtime surface.
 // biome-ignore format: shared helper import is intentionally kept compact for hotspot limits.
-import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createDevNode, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode } from './extension-helper-shared.js';
+import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createDevNode, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode, waitForReceipt } from './extension-helper-shared.js';
 
 export async function showAccountsQuickPick(this: ExtensionRuntime): Promise<void> {
   const snapshot = await this.buildSnapshot();
@@ -85,22 +85,35 @@ export async function deployContractCommand(this: ExtensionRuntime): Promise<voi
   );
   if (!source) return;
 
-  const artifact =
-    source.value === 'template'
-      ? await this.pickTemplateArtifact()
-      : await this.pickWorkspaceArtifact();
-  if (!artifact) return;
+  let artifact: Artifact;
+  let templateDefaults:
+    | ReadonlyArray<{ name?: string; type?: string; defaultValue?: string }>
+    | undefined;
+
+  if (source.value === 'template') {
+    const result = await this.pickTemplateArtifact();
+    if (!result) return;
+    artifact = result.artifact;
+    templateDefaults = result.template.constructorArgs;
+  } else {
+    const picked = await this.pickWorkspaceArtifact();
+    if (!picked) return;
+    artifact = picked;
+  }
 
   const target = await this.pickChainTarget(`Deploy ${artifact.contractName}`);
   if (!target) return;
 
-  const args = await this.promptConstructorArgs(artifact);
+  const args = await this.promptConstructorArgs(artifact, templateDefaults);
   if (!args) return;
 
   const client = await this.createClientFor(target);
   const signer = await this.walletSignerFor(target);
 
-  const result = await vscode.window.withProgress(
+  // Submit the transaction without waiting for receipt so we can immediately
+  // trigger a pack-mine on the local node, avoiding the receipt timeout on
+  // slow containers where auto-mining may be several seconds away.
+  const submitted = await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
       title: `Deploying ${artifact.contractName}…`,
@@ -112,31 +125,72 @@ export async function deployContractCommand(this: ExtensionRuntime): Promise<voi
         abi: artifact.abi as never,
         bytecode: artifact.bytecode as `0x${string}`,
         args: args as never,
-        waitForReceipt: true,
-        receiptTimeoutMs: this.selectedNetwork() === 'local' ? 30_000 : 120_000,
+        waitForReceipt: false,
       }),
   );
 
-  if (!result.address) throw new Error('Deployment completed without a contract address.');
+  // Confirm the deployment by advancing epochs until the receipt appears.
+  // On local, packMine() packs the tx then mine(1) advances deferred execution
+  // epochs — without advancing epochs the receipt never appears.
+  // On testnet/mainnet the network advances on its own, so fall back to polling.
+  let contractAddress: string | undefined;
+  if (this.selectedNetwork() === 'local' && this.node?.isRunning()) {
+    await this.node.packMine().catch(() => {});
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Confirming ${artifact.contractName}…`,
+      },
+      async () => {
+        for (let i = 0; i < 30; i++) {
+          const receipt = await (client.family === 'espace'
+            ? client.getTransactionReceipt(submitted.hash)
+            : client.request({ method: 'cfx_getTransactionReceipt', params: [submitted.hash] })
+          ).catch(() => null);
+          if (receipt) {
+            contractAddress =
+              (receipt as unknown as { contractAddress?: string }).contractAddress ?? undefined;
+            break;
+          }
+          await this.node?.mine(1).catch(() => {});
+          await new Promise<void>((r) => setTimeout(r, 300));
+        }
+      },
+    );
+  } else {
+    const receipt = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Waiting for ${artifact.contractName} deploy receipt…`,
+      },
+      () => waitForReceipt(client, submitted.hash, { pollIntervalMs: 1_000, timeoutMs: 120_000 }),
+    );
+    contractAddress =
+      (receipt as unknown as { contractAddress?: string }).contractAddress ?? undefined;
+  }
+
+  if (!contractAddress) throw new Error('Deployment completed without a contract address.');
 
   const deployments = await this.readDeployments();
   deployments.unshift({
     id: `${Date.now()}-${artifact.contractName}`,
     name: artifact.contractName,
-    address: result.address,
+    address: contractAddress,
     target,
     network: this.selectedNetwork(),
     chainId: this.currentChain(target).id,
-    txHash: result.hash,
+    txHash: submitted.hash,
     deployedAt: new Date().toISOString(),
     abi: artifact.abi as unknown[],
   });
   await this.writeDeployments(deployments);
   this.log(
-    `Deployed ${artifact.contractName} to ${this.selectedNetworkLabel()} ${target === 'core' ? 'Core Space' : 'eSpace'} at ${result.address}`,
+    `Deployed ${artifact.contractName} to ${this.selectedNetworkLabel()} ${target === 'core' ? 'Core Space' : 'eSpace'} at ${contractAddress}`,
   );
-  await vscode.window.showInformationMessage(
-    `Deployed ${artifact.contractName} at ${result.address}`,
-  );
+  // Refresh the tree immediately so the new contract appears without waiting
+  // for the notification to be dismissed.
   await this.refreshAll();
+  void vscode.window.showInformationMessage(
+    `Deployed ${artifact.contractName} at ${contractAddress}`,
+  );
 }

@@ -1,5 +1,6 @@
 import type { Hex } from '@cfxdevkit/core';
 import type { Abi } from 'viem';
+import { isHex } from 'viem';
 import { CompileError } from '../errors.js';
 import type {
   Artifact,
@@ -88,7 +89,7 @@ export function buildStandardJson(input: CompileInput): SolcStdInput {
 
 export function ensureHex(value: string | undefined): Hex {
   if (!value) return '0x' as Hex;
-  return (value.startsWith('0x') ? value : `0x${value}`) as Hex;
+  return (isHex(value) ? value : `0x${value}`) as Hex;
 }
 
 export function makeImportCallback(

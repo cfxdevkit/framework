@@ -9,6 +9,7 @@ import {
   useCoreWallet,
 } from '@cfxdevkit/example-showcase-ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toHex } from 'viem';
 import { useNetwork } from '../contexts/NetworkProvider.js';
 import { shortBase32 } from './wallet-format.js';
 
@@ -41,7 +42,7 @@ export function CorePill() {
     return () => clearInterval(timer);
   }, [account, status]);
 
-  const targetChainHex = `0x${network.core.id.toString(16)}`;
+  const targetChainHex = toHex(network.core.id);
   const targetCoreChain = useMemo<CoreChainConfig>(
     () => ({
       coreChainId: network.core.id,

@@ -1,71 +1,57 @@
-# @cfxdevkit/protocol — Protocol API
+# `@cfxdevkit/protocol` — API Reference
 
-> Protocol-level features specific to Conflux, intended for tooling and SDK consumers.
+> Protocol-level primitives for Conflux eSpace and Core Space.
+> Works with any `Client` from `@cfxdevkit/core`.
 
-## Packages
+## Exports
 
-| Sub-path | Concern |
-|----------|---------|
-| `@cfxdevkit/protocol/sponsor` | Sponsor mechanism (Core space) |
-| `@cfxdevkit/protocol/cross-space` | eSpace ↔ Core bridge |
-| `@cfxdevkit/protocol/staking` | PoS staking helpers |
-| `@cfxdevkit/protocol/storage` | Storage collateral helpers |
+```ts
+// Receipt polling
+async function waitForTransactionReceipt(
+  client: Client,
+  hash: Hash,
+  options?: WaitForReceiptOptions,
+): Promise<TxReceipt>
 
----
+// Receipt assertion
+function assertSuccessfulReceipt(receipt: TxReceipt, hash?: Hash): TxReceipt
+function isSuccessfulReceipt(receipt: TxReceipt): boolean
 
-## `@cfxdevkit/protocol/sponsor`
+// Chain head
+async function getChainProgress(client: Client): Promise<ChainProgress>
 
-```
-type SponsorInfo = {
-  gasSponsor: Address
-  gasSponsorBalance: Wei
-  collateralSponsor: Address
-  collateralSponsorBalance: Wei
-  upperBound: Wei
-}
+// Gas estimation (eSpace returns { gas }; Core Space also returns { storageCollateral })
+async function estimateTransaction(client: Client, request: TxRequest): Promise<GasEstimate>
 
-function readSponsorInfo(input: { client: Client; contract: Address; signal?: AbortSignal }): Promise<SponsorInfo>
-function setSponsorForGas(input: { client: Client; signer: Signer; contract: Address; upperBound: Wei; value: Wei; signal?: AbortSignal }): Promise<{ hash: Hash }>
-function setSponsorForCollateral(input: { client: Client; signer: Signer; contract: Address; value: Wei; signal?: AbortSignal }): Promise<{ hash: Hash }>
-function addPrivilege(input: { client: Client; signer: Signer; contract: Address; users: readonly Address[]; signal?: AbortSignal }): Promise<{ hash: Hash }>
-function removePrivilege(input: { client: Client; signer: Signer; contract: Address; users: readonly Address[]; signal?: AbortSignal }): Promise<{ hash: Hash }>
-```
+// Log collection (Core Space only)
+async function collectLogs(client: Client, filter: CoreLogFilter): Promise<CoreLog[]>
 
----
-
-## `@cfxdevkit/protocol/cross-space`
-
-```
-function transferEspaceToCore(input: { client: Client; signer: Signer; from: 'espace'; toCoreAddress: string; amount: Wei; signal?: AbortSignal }): Promise<{ hash: Hash }>
-function transferCoreToEspace(input: { client: Client; signer: Signer; from: 'core'; toEspaceAddress: Address; amount: Wei; signal?: AbortSignal }): Promise<{ hash: Hash }>
-function readBridgeState(input: { client: Client; signal?: AbortSignal }): Promise<{ paused: boolean; minAmount: Wei }>
+// Types
+type WaitForReceiptOptions = { intervalMs?: number; timeoutMs?: number; signal?: AbortSignal }
+type ChainProgress = { family: 'espace' | 'core'; chainId: number; height: bigint }
+type GasEstimate = { gas: bigint; storageCollateral?: bigint }
 ```
 
----
+## Usage
 
-## `@cfxdevkit/protocol/staking`
+```ts
+import { waitForTransactionReceipt, getChainProgress, estimateTransaction, collectLogs } from '@cfxdevkit/protocol';
 
+// Wait up to 60 s for confirmation
+const receipt = await waitForTransactionReceipt(client, hash, { intervalMs: 500 });
+
+// Compare chain heads across clients
+const [eSpace, core] = await Promise.all([getChainProgress(eClient), getChainProgress(cClient)]);
+
+// Estimate with storage collateral on Core Space
+const { gas, storageCollateral } = await estimateTransaction(coreClient, { to, data });
+
+// Collect contract event logs from Core Space
+const logs = await collectLogs(coreClient, { address, topics });
 ```
-function deposit(input: { client: Client; signer: Signer; amount: Wei; signal?: AbortSignal }): Promise<{ hash: Hash }>
-function withdraw(input: { client: Client; signer: Signer; amount: Wei; signal?: AbortSignal }): Promise<{ hash: Hash }>
-function getStakeBalance(input: { client: Client; address: Address; signal?: AbortSignal }): Promise<Wei>
-function getVotePower(input: { client: Client; address: Address; blockNumber?: bigint; signal?: AbortSignal }): Promise<bigint>
-```
-
----
-
-## `@cfxdevkit/protocol/storage`
-
-```
-function getCollateralForStorage(input: { client: Client; address: Address; signal?: AbortSignal }): Promise<Wei>
-function getSponsoredCollateral(input: { client: Client; contract: Address; signal?: AbortSignal }): Promise<Wei>
-```
-
----
 
 ## Notes
 
-- This package is **read-and-narrow-write**. Anything that involves orchestrating multiple calls
-  (e.g., "do these 5 calls in sequence to bootstrap a sponsorship") belongs in `domains/` or in a project's
-  own scripts — not here.
-- All errors are `ContractError` from `core/contract` (no new error class needed).
+- `waitForTransactionReceipt` throws if the receipt indicates revert (`status !== '0x0' / 'success'`).
+- `collectLogs` throws for eSpace clients — use `client.request` with `eth_getLogs` for eSpace.
+- Timeout defaults: `waitForTransactionReceipt` defaults to 60 000 ms; pass `{ timeoutMs: 0 }` to return immediately on missing receipt.

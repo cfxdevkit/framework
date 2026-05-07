@@ -14,6 +14,9 @@ const {
   mockGetLogs,
   mockGetSponsorInfo,
   mockGetAdmin,
+  mockGetGasPrice,
+  mockGetNextNonce,
+  mockSendRawTransaction,
 } = vi.hoisted(() => ({
   mockCiveClient: { request: vi.fn() },
   mockGetEpochNumber: vi.fn(),
@@ -24,6 +27,9 @@ const {
   mockGetLogs: vi.fn(),
   mockGetSponsorInfo: vi.fn(),
   mockGetAdmin: vi.fn(),
+  mockGetGasPrice: vi.fn(),
+  mockGetNextNonce: vi.fn(),
+  mockSendRawTransaction: vi.fn(),
 }));
 
 vi.mock('cive', async (importOriginal) => {
@@ -40,6 +46,9 @@ vi.mock('cive/actions', () => ({
   getLogs: mockGetLogs,
   GetSponsorInfo: mockGetSponsorInfo,
   getAdmin: mockGetAdmin,
+  getGasPrice: mockGetGasPrice,
+  getNextNonce: mockGetNextNonce,
+  sendRawTransaction: mockSendRawTransaction,
 }));
 
 vi.mock('cive/utils', () => ({
@@ -217,6 +226,53 @@ describe('createCoreClient', () => {
   it('request wraps errors in RpcError', async () => {
     mockCiveClient.request.mockRejectedValue(new Error('timeout'));
     await expect(client.request({ method: 'cfx_getStatus' })).rejects.toBeInstanceOf(RpcError);
+  });
+
+  it('getGasPrice returns the current gas price', async () => {
+    mockGetGasPrice.mockResolvedValue(1_000_000_000n);
+    expect(await client.getGasPrice()).toBe(1_000_000_000n);
+  });
+
+  it('getGasPrice wraps errors in RpcError', async () => {
+    mockGetGasPrice.mockRejectedValue(new Error('bad'));
+    await expect(client.getGasPrice()).rejects.toBeInstanceOf(RpcError);
+  });
+
+  it('getTransactionCount returns the nonce as a number', async () => {
+    mockGetNextNonce.mockResolvedValue(3n);
+    const count = await client.getTransactionCount(ADDR);
+    expect(count).toBe(3);
+  });
+
+  it('getTransactionCount passes epochTag when provided', async () => {
+    mockGetNextNonce.mockResolvedValue(0n);
+    await client.getTransactionCount(ADDR, { epochTag: 'latest_state' });
+    expect(mockGetNextNonce).toHaveBeenCalledWith(
+      mockCiveClient,
+      expect.objectContaining({ epochTag: 'latest_state' }),
+    );
+  });
+
+  it('getTransactionCount wraps errors in RpcError', async () => {
+    mockGetNextNonce.mockRejectedValue(new Error('bad'));
+    await expect(client.getTransactionCount(ADDR)).rejects.toBeInstanceOf(RpcError);
+  });
+
+  it('sendRawTransaction returns the tx hash', async () => {
+    mockSendRawTransaction.mockResolvedValue(HASH);
+    const hash = await client.sendRawTransaction('0xdeadbeef' as `0x${string}`);
+    expect(hash).toBe(HASH);
+    expect(mockSendRawTransaction).toHaveBeenCalledWith(
+      mockCiveClient,
+      expect.objectContaining({ serializedTransaction: '0xdeadbeef' }),
+    );
+  });
+
+  it('sendRawTransaction wraps errors in RpcError', async () => {
+    mockSendRawTransaction.mockRejectedValue(new Error('nonce too low'));
+    await expect(client.sendRawTransaction('0xdeadbeef' as `0x${string}`)).rejects.toBeInstanceOf(
+      RpcError,
+    );
   });
 });
 
