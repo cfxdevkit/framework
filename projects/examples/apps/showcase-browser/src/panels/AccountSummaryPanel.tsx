@@ -51,7 +51,8 @@ export function AccountSummaryPanel() {
         {'\n'}connector : {connector?.name ?? 'unknown'}
         {'\n'}ens : {ens ?? '(none)'}
         {'\n'}chainId : {chainId}
-        {'\n'}balance : {balance ? `${formatUnits(balance.value, balance.decimals)} ${balance.symbol}` : '…'}
+        {'\n'}balance :{' '}
+        {balance ? `${formatUnits(balance.value, balance.decimals)} ${balance.symbol}` : '…'}
         {'\n'}blockNumber : {blockNumber !== undefined ? blockNumber.toString() : '…'}
         {'\n'}gasPrice : {gasPrice !== undefined ? `${gasPrice.toString()} wei` : '…'}
       </div>

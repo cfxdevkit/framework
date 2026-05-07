@@ -59,7 +59,8 @@ function ESpaceSection() {
           address : {address} <CopyButton text={address ?? ''} />
           {'\n'}connector : {connector?.name ?? 'unknown'}
           {'\n'}chainId : {chainId ?? '—'}
-          {'\n'}balance : {balance ? `${formatUnits(balance.value, balance.decimals)} ${balance.symbol}` : '…'}
+          {'\n'}balance :{' '}
+          {balance ? `${formatUnits(balance.value, balance.decimals)} ${balance.symbol}` : '…'}
           {'\n'}blockNumber : {blockNumber !== undefined ? blockNumber.toString() : '…'}
           {'\n'}gasPrice : {gasPrice !== undefined ? `${gasPrice.toString()} wei` : '…'}
         </div>
