@@ -3,64 +3,36 @@
 ```
 mcp-server/
 ├── README.md
+├── API.md
+├── STRUCTURE.md
 ├── package.json                    @cfxdevkit/mcp-server
 ├── tsconfig.json
-├── vite.config.ts                  node target
+├── vite.config.ts
+├── vitest.config.ts
 ├── moon.yml
-├── bin/
-│   └── cfx-mcp                     CLI entry (registered in package.json bin)
 └── src/
-    ├── index.ts                    server bootstrap
-    │
-    ├── server/                     ── MCP transport ──
-    │   ├── index.ts
-    │   ├── stdio.ts
-    │   ├── sse.ts
-    │   └── ws.ts
-    │
-    ├── tools/                      ── One file per tool. Each declares allowlist + schema. ──
-    │   ├── index.ts                tool registry
-    │   ├── chain/
-    │   │   ├── get-block.ts
-    │   │   ├── get-balance.ts
-    │   │   └── call.ts
-    │   ├── contract/
-    │   │   ├── read.ts
-    │   │   ├── simulate.ts
-    │   │   ├── deploy.ts           write — requires confirmation
-    │   │   └── verify.ts
-    │   ├── wallet/
-    │   │   ├── list-accounts.ts
-    │   │   ├── issue-session-key.ts
-    │   │   └── revoke-session-key.ts
-    │   └── dev/
-    │       ├── start-devnode.ts
-    │       ├── compile.ts
-    │       └── scaffold.ts
-    │
-    ├── policy/                     ── Security policy enforcement ──
-    │   ├── index.ts
-    │   ├── allowlist.ts            tools enabled/disabled per-deployment
-    │   ├── confirm.ts              user-confirmation prompts for writes
-    │   └── audit.ts                per-tool audit log
-    │
-    ├── context/                    ── Server-side context ──
-    │   ├── index.ts
-    │   ├── client.ts               framework/core client per session
-    │   └── signer.ts               session-key only (never raw key)
-    │
-    └── internal/
-        └── schema.ts               JSON-schema helpers for tool args
+    ├── index.ts                    public barrel
+    ├── index.test.ts               registry and ledger tests
+    ├── operations.ts               in-memory operation ledger
+    └── tools/
+        ├── accounts.ts             account tool definitions
+        ├── blockchain.ts           blockchain read/write definitions
+        ├── compiler.ts             compiler tool definitions
+        ├── keystore.ts             keystore tool definitions
+        ├── node.ts                 dev node tool definitions
+        ├── registry.ts             combined registry helpers
+        ├── types.ts                registry types
+        └── wallet.ts               wallet utility definitions
 ```
 
 ### Public exports map
 
 ```
-".", "./tools", "./policy"
+"."
 ```
 
 ### Security
 
-- Default tool allowlist excludes every write tool.
-- Any write tool MUST go through `policy/confirm.ts`.
-- Signer is **always** a session key issued by `wallet/session-key`. Raw private keys are rejected at startup.
+- Tool definitions include `mutability` and `requiresConfirmation`.
+- Every `write` and `admin` tool must remain confirmation-gated when runtime handlers land.
+- Raw private keys are not accepted by the tool surface; writes should go through managed signer abstractions.

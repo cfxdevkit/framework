@@ -309,6 +309,17 @@ Pure. No network.
 
 ## `core/units`
 
+### Public constants
+
+```
+const MAX_UINT128: bigint
+const MAX_UINT256: bigint
+const ZERO_ADDRESS: Address
+```
+
+`MAX_UINT256` is useful for unlimited ERC-20 approvals. `ZERO_ADDRESS` is the canonical EVM zero address.
+
+
 ```
 function formatUnits(value: Wei, decimals: number): string    // "1.234500"
 function parseUnits(value: string, decimals: number): Wei     // throws on overflow / NaN

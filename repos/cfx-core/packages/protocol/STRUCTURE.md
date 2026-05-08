@@ -1,41 +1,29 @@
-# @cfxdevkit/protocol — Protocol Artifacts Structure
+# @cfxdevkit/protocol — Structure
 
-Lower-level than `@cfxdevkit/contracts`: raw artifacts for tooling consumers
-(indexers, explorers, MCP). No opinionated TS surface.
+Protocol-level helpers and constants for backend logic, tools, and MCP consumers.
 
 ```
 protocol/
 ├── README.md
+├── API.md
+├── STRUCTURE.md
 ├── package.json                    @cfxdevkit/protocol
 ├── tsconfig.json
 ├── vite.config.ts
+├── vitest.config.ts
 ├── moon.yml
 └── src/
-    ├── index.ts
-    │
-    ├── selectors/                  4-byte function selectors → human signature
-    │   ├── index.ts
-    │   ├── erc20.json
-    │   ├── erc721.json
-    │   └── conflux-internal.json
-    │
-    ├── events/                     event topic0 → schema
-    │   ├── index.ts
-    │   ├── erc20.json
-    │   └── swappi.json
-    │
-    ├── schemas/                    JSON schemas for on-chain payloads
-    │   ├── index.ts
-    │   └── ...
-    │
-    └── networks/                   network metadata (RPC endpoints, explorers, faucets)
-        ├── index.ts
-        ├── espace.json
-        └── core-space.json
+    ├── abi.ts                      DevKit contract ABI/bytecode re-exports
+    ├── generated.ts                generated DevKit contract constants
+    ├── index.ts                    helper functions + public barrel
+    ├── index.test.ts
+    ├── integration.test.ts
+    ├── precompiles.ts              Conflux precompile ABIs, WCFX ABI, and addresses
+    └── precompiles.test.ts
 ```
 
 ### Public exports map
 
 ```
-".", "./selectors", "./events", "./schemas", "./networks"
+"."
 ```

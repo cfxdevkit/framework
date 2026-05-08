@@ -8,6 +8,8 @@
 - Require user confirmation for any write operation
 - Never accept a raw private key; session keys only
 
-Depends on: `framework/core`, `framework/wallet`, `framework/compiler`, `framework/services`.
+The new implementation direction is direct-package wiring: MCP tools import and call reusable tier-0 packages (`@cfxdevkit/core`, `@cfxdevkit/contracts`, `@cfxdevkit/compiler`, `@cfxdevkit/devnode`, `@cfxdevkit/services`, `@cfxdevkit/wallet`) instead of proxying through a shared backend HTTP service.
+
+The current package exposes a typed tool registry plus an operation ledger scaffold. Runtime handlers will attach to those definitions in the next implementation pass.
 
 > **Note:** This package lives under `repos/cfx-tools/packages/mcp-server` but aligns with the `platform/` tier in the five-tier architecture. See [ARCHITECTURE.md](../../../../../docs/architecture/ARCHITECTURE.md) for tier definitions.

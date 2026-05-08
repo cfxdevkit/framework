@@ -19,12 +19,24 @@ contract-execution machinery.
 ```ts
 import {
   ERC20_ABI,
+  ERC20_EXTENDED_ABI,
+  ERC2612_ABI,
+  ERC4626_ABI,
   ERC721_ABI,
+  ERC721_EXTENDED_ABI,
   ERC1155_ABI,
   MULTICALL3_ABI,
   MULTICALL3_ADDRESS,
 } from '@cfxdevkit/abis';
 ```
+
+## Included Standards
+
+- ERC-20, ERC-721, ERC-1155, and Multicall3 from viem.
+- ERC-2612 permit for signature-based approvals.
+- ERC-4626 tokenized vaults.
+- ERC-165 interface detection, ERC-721 enumerable, and ERC-2981 royalties.
+- Extended ERC-20/ERC-721 bundles matching the OpenZeppelin-style DevKit template contracts.
 
 `@cfxdevkit/contracts/abis` re-exports everything from this package for
 back-compat.

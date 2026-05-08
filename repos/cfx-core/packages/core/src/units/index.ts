@@ -12,7 +12,16 @@
 export { formatUnits, parseUnits } from 'viem';
 
 import { formatUnits, parseUnits } from 'viem';
-import type { Wei } from '../types/index.js';
+import type { Address, Wei } from '../types/index.js';
+
+/** Maximum unsigned 256-bit integer, commonly used for unlimited ERC-20 approvals. */
+export const MAX_UINT256 = 2n ** 256n - 1n;
+
+/** Maximum unsigned 128-bit integer. */
+export const MAX_UINT128 = 2n ** 128n - 1n;
+
+/** Zero EVM address. */
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as Address;
 
 /** Format a wei-scale BigInt for a token, returning `"<amount> <symbol>"`. */
 export function formatToken(value: Wei, token: { decimals: number; symbol: string }): string {

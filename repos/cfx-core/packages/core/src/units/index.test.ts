@@ -5,11 +5,14 @@ import {
   formatGDrip,
   formatToken,
   formatUnits,
+  MAX_UINT128,
+  MAX_UINT256,
   parseCFX,
   parseDrip,
   parseGDrip,
   parseUnits,
   stringifyBigInt,
+  ZERO_ADDRESS,
 } from './index.js';
 
 describe('units', () => {
@@ -48,5 +51,11 @@ describe('units', () => {
   it('stringifyBigInt supports indent', () => {
     const out = stringifyBigInt({ a: 1n }, 2);
     expect(out).toContain('\n');
+  });
+
+  it('exports common EVM constants', () => {
+    expect(MAX_UINT128).toBe(2n ** 128n - 1n);
+    expect(MAX_UINT256).toBe(2n ** 256n - 1n);
+    expect(ZERO_ADDRESS).toBe('0x0000000000000000000000000000000000000000');
   });
 });

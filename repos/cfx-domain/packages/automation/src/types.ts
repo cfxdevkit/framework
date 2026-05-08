@@ -71,7 +71,7 @@ export type TWAPJob = BaseJob<'twap', TWAPParams>;
 export type SwapJob = BaseJob<'swap', SwapParams>;
 export type Job = LimitOrderJob | DCAJob | TWAPJob | SwapJob;
 
-export type ExecutableJob = LimitOrderJob | DCAJob;
+export type ExecutableJob = LimitOrderJob | DCAJob | TWAPJob | SwapJob;
 
 export type OnChainJobStatus = 'active' | 'executed' | 'cancelled' | 'expired';
 
@@ -96,5 +96,7 @@ export interface EvalResult {
 }
 
 export function isExecutableJob(job: Job): job is ExecutableJob {
-  return job.type === 'limit_order' || job.type === 'dca';
+  return (
+    job.type === 'limit_order' || job.type === 'dca' || job.type === 'twap' || job.type === 'swap'
+  );
 }

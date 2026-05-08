@@ -1,14 +1,49 @@
 # `@cfxdevkit/mcp-server` — API Reference
 
-> Status: **Phase A scaffold** — empty package. This document will be filled out as the implementation lands. See [STRUCTURE.md](./STRUCTURE.md) for the planned layout.
+> Direct-package MCP tool scaffold. Runtime handlers will call `@cfxdevkit/*` packages directly rather than proxying through a shared backend server.
 
 ## Public Exports
 
-_None yet — package currently exports only `__packageName` as a smoke marker._
+```ts
+const __packageName: '@cfxdevkit/mcp-server'
 
-## Planned Surface
+type McpToolGroup =
+  | 'node'
+  | 'accounts'
+  | 'blockchain-read'
+  | 'blockchain-write'
+  | 'compiler'
+  | 'keystore'
+  | 'wallet-utils'
 
-See the package's [STRUCTURE.md](./STRUCTURE.md) for the documented intent of each sub-folder. Once implemented, every public symbol will be re-exported from `./src/index.ts` and listed here with its signature, parameters, return type, errors, and a runnable example.
+type McpToolMutability = 'read' | 'write' | 'admin'
+
+interface McpToolDefinition
+const MCP_TOOL_DEFINITIONS: readonly McpToolDefinition[]
+type McpToolName = (typeof MCP_TOOL_DEFINITIONS)[number]['name']
+
+function listMcpTools(group?: McpToolGroup): readonly McpToolDefinition[]
+function getMcpTool(name: string): McpToolDefinition | undefined
+
+class OperationLedger
+```
+
+## Tool Surface
+
+The registry currently declares 33 tools across node, accounts, blockchain read/write, compiler, keystore, and wallet utility groups. Each definition records its mutability, confirmation requirement, source packages, and JSON-schema input shape.
+
+Runtime handlers are intentionally not implemented yet; the registry is the contract that the handler layer will attach to.
+
+## Operation Ledger
+
+```ts
+const ledger = new OperationLedger();
+const operation = ledger.startOperation('cfxdevkit_compiler_compile_solidity', { files: 1 });
+ledger.addOperationStep(operation.id, 'compiled');
+ledger.finishOperation(operation.id, 'succeeded');
+```
+
+The ledger is in-memory by design. Project-level backends can persist operation records separately if they need durable audit history.
 
 ## Internal Workspace Dependencies
 
@@ -18,6 +53,7 @@ See the package's [STRUCTURE.md](./STRUCTURE.md) for the documented intent of ea
   "@cfxdevkit/contracts": "workspace:^",
   "@cfxdevkit/core": "workspace:^",
   "@cfxdevkit/devnode": "workspace:^",
+  "@cfxdevkit/protocol": "workspace:^",
   "@cfxdevkit/services": "workspace:^",
   "@cfxdevkit/wallet": "workspace:^"
 }

@@ -15,6 +15,7 @@ const generatedDirs = new Set(
     ' ',
   ),
 );
+const generatedFileNames = new Set('generated.ts generated.js'.split(' '));
 const sourceExtensions = new Set('.cjs .css .js .jsx .mjs .mts .sol .ts .tsx'.split(' '));
 
 const flags = parseFlags(process.argv.slice(2));
@@ -242,7 +243,14 @@ function renderFileRows(files) {
 }
 
 function isGeneratedPath(path) {
-  return path.split('/').some((part) => generatedDirs.has(part));
+  const parts = path.split('/');
+  const basename = parts.at(-1) ?? '';
+  return (
+    parts.some((part) => generatedDirs.has(part)) ||
+    generatedFileNames.has(basename) ||
+    basename.endsWith('.generated.ts') ||
+    basename.endsWith('.generated.js')
+  );
 }
 
 function toRel(path) {

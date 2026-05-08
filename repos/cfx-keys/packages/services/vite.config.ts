@@ -12,6 +12,7 @@ export default defineConfig({
         'keystore/file/index': 'src/keystore/file/index.ts',
         'keystore/ledger/index': 'src/keystore/ledger/index.ts',
         'crypto/index': 'src/crypto/index.ts',
+        'embedded-wallet/index': 'src/embedded-wallet/index.ts',
       },
       formats: ['es'],
       fileName: (_format, entry) => `${entry}.js`,

@@ -75,6 +75,29 @@ await node.stop();
 - `createDevNodeFixture` wraps `createDevNode` from `@cfxdevkit/devnode`. Use `autoStart: true` for
   integration tests that need a real node, or leave it off and call `node.start()` in `beforeAll`.
 
+## Planned Mock Inventory
+
+`@cfxdevkit/testing` should own the reusable backend test doubles that are currently duplicated or package-local. Planned additions:
+
+```ts
+class MockJobRepository implements JobRepository {}
+class MockExecutionRepository implements ExecutionRepository {}
+class MockKeeperClient implements KeeperClient {}
+class MockPriceSource implements PriceSource {}
+
+function jobFactory(type: JobType, overrides?: Partial<Job>): Job
+function strategyFactory(type: Strategy['kind'], overrides?: Partial<Strategy>): Strategy
+```
+
+Also add Vitest matchers for chain-shaped values:
+
+```ts
+expect('0xabc...').toBeHexHash()
+expect('0x123...').toBeHexAddress()
+```
+
+When implemented, these helpers should depend on automation interfaces without pulling UI or MCP code into this package.
+
 ---
 
 ## `testing/clock`

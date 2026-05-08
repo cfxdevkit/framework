@@ -1,5 +1,6 @@
 export const __packageName = '@cfxdevkit/wallet' as const;
 
+export * from './batcher/index.js';
 export * from './errors/index.js';
 export * from './hardware/index.js';
 export * from './init/index.js';

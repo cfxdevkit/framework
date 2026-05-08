@@ -6,6 +6,7 @@ export default defineConfig({
     lib: {
       entry: {
         index: 'src/index.ts',
+        'batcher/index': 'src/batcher/index.ts',
         'signers/index': 'src/signers/index.ts',
         'errors/index': 'src/errors/index.ts',
         'hardware/index': 'src/hardware/index.ts',

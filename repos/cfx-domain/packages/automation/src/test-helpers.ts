@@ -1,4 +1,4 @@
-import type { DCAJob, LimitOrderJob } from './types.js';
+import type { DCAJob, LimitOrderJob, SwapJob, TWAPJob } from './types.js';
 
 export const OWNER = '0x0000000000000000000000000000000000000001' as const;
 export const TOKEN_IN = '0x0000000000000000000000000000000000000002' as const;
@@ -41,6 +41,52 @@ export function dcaJob(overrides: Partial<DCAJob> = {}): DCAJob {
       totalSwaps: 3,
       swapsCompleted: 0,
       nextExecution: 1_000,
+      slippageBps: 100,
+    },
+    createdAt: 1_000,
+    updatedAt: 1_000,
+    retries: 0,
+    maxRetries: 5,
+    ...overrides,
+  };
+}
+
+export function twapJob(overrides: Partial<TWAPJob> = {}): TWAPJob {
+  return {
+    id: 'twap-1',
+    owner: OWNER,
+    type: 'twap',
+    status: 'active',
+    params: {
+      tokenIn: TOKEN_IN,
+      tokenOut: TOKEN_OUT,
+      amountIn: 30n * 10n ** 18n,
+      minAmountOut: 27n * 10n ** 18n,
+      trancheCount: 3,
+      trancheIntervalSeconds: 3_600,
+      tranchesCompleted: 0,
+      nextExecution: 1_000,
+      slippageBps: 100,
+    },
+    createdAt: 1_000,
+    updatedAt: 1_000,
+    retries: 0,
+    maxRetries: 5,
+    ...overrides,
+  };
+}
+
+export function swapJob(overrides: Partial<SwapJob> = {}): SwapJob {
+  return {
+    id: 'swap-1',
+    owner: OWNER,
+    type: 'swap',
+    status: 'active',
+    params: {
+      tokenIn: TOKEN_IN,
+      tokenOut: TOKEN_OUT,
+      amountIn: 10n * 10n ** 18n,
+      minAmountOut: 9n * 10n ** 18n,
       slippageBps: 100,
     },
     createdAt: 1_000,

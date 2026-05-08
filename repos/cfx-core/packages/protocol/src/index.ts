@@ -2,6 +2,48 @@ import type { Client, CoreLog, CoreLogFilter, Hash, TxReceipt, TxRequest } from 
 
 export const __packageName = '@cfxdevkit/protocol' as const;
 
+export {
+  automationManagerAbi as AUTOMATION_MANAGER_ABI,
+  automationManagerAbi,
+  automationManagerAddress,
+  automationManagerBytecode,
+  automationManagerConfig,
+  permitHandlerAbi as PERMIT_HANDLER_ABI,
+  permitHandlerAbi,
+  permitHandlerAddress,
+  permitHandlerBytecode,
+  permitHandlerConfig,
+  swappiPriceAdapterAbi as SWAPPI_PRICE_ADAPTER_ABI,
+  swappiPriceAdapterAbi,
+  swappiPriceAdapterAddress,
+  swappiPriceAdapterBytecode,
+  swappiPriceAdapterConfig,
+} from './abi.js';
+export {
+  ADMIN_CONTROL_ABI,
+  adminControlAbi,
+  adminControlAddress,
+  CFX_NATIVE_ADDRESS,
+  CONFLUX_PRECOMPILE_ADDRESSES,
+  CONFLUX_PRECOMPILE_ADDRESSES as PRECOMPILE_ADDRESSES,
+  CROSS_SPACE_CALL_ABI,
+  crossSpaceCallAbi,
+  crossSpaceCallAddress,
+  POS_REGISTER_ABI,
+  posRegisterAbi,
+  posRegisterAddress,
+  SPONSOR_WHITELIST_ABI,
+  STAKING_ABI,
+  sponsorWhitelistAbi,
+  sponsorWhitelistAddress,
+  stakingAbi,
+  stakingAddress,
+  WCFX_ABI,
+  WCFX_ADDRESSES,
+  wcfxAbi,
+  wcfxAddresses,
+} from './precompiles.js';
+
 export interface WaitForReceiptOptions {
   intervalMs?: number;
   timeoutMs?: number;

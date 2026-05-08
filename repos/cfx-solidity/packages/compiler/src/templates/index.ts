@@ -7,6 +7,7 @@
 import type { Source } from '../types.js';
 import { EXAMPLE_COUNTER_PATH, EXAMPLE_COUNTER_SOURCE } from './counter/source.js';
 import { BASIC_ERC20_PATH, BASIC_ERC20_SOURCE } from './erc20/source.js';
+import { BASIC_ERC721_PATH, BASIC_ERC721_SOURCE } from './erc721/source.js';
 import { SIMPLE_STORAGE_PATH, SIMPLE_STORAGE_SOURCE } from './storage/source.js';
 import { PAYABLE_VAULT_PATH, PAYABLE_VAULT_SOURCE } from './vault/source.js';
 
@@ -46,6 +47,20 @@ const BASIC_ERC20: TemplateMeta = {
   sources: [{ path: BASIC_ERC20_PATH, content: BASIC_ERC20_SOURCE }],
 };
 
+const BASIC_ERC721: TemplateMeta = {
+  id: 'basic-erc721',
+  name: 'Basic ERC-721',
+  description: 'Self-contained ERC-721 NFT with owner-only safe minting and no external imports.',
+  contractName: 'BasicErc721',
+  solcVersion: '0.8.26',
+  evmVersion: 'paris',
+  constructorArgs: [
+    { name: 'name_', type: 'string', defaultValue: 'MyNFT' },
+    { name: 'symbol_', type: 'string', defaultValue: 'MNFT' },
+  ],
+  sources: [{ path: BASIC_ERC721_PATH, content: BASIC_ERC721_SOURCE }],
+};
+
 const EXAMPLE_COUNTER: TemplateMeta = {
   id: 'example-counter',
   name: 'Example Counter',
@@ -83,6 +98,7 @@ const PAYABLE_VAULT: TemplateMeta = {
 
 const REGISTRY = new Map<string, TemplateMeta>([
   [BASIC_ERC20.id, BASIC_ERC20],
+  [BASIC_ERC721.id, BASIC_ERC721],
   [EXAMPLE_COUNTER.id, EXAMPLE_COUNTER],
   [SIMPLE_STORAGE.id, SIMPLE_STORAGE],
   [PAYABLE_VAULT.id, PAYABLE_VAULT],
@@ -104,6 +120,7 @@ export function listTemplates(): readonly TemplateMeta[] {
 
 export {
   BASIC_ERC20 as basicErc20,
+  BASIC_ERC721 as basicErc721,
   EXAMPLE_COUNTER as exampleCounter,
   PAYABLE_VAULT as payableVault,
   SIMPLE_STORAGE as simpleStorage,

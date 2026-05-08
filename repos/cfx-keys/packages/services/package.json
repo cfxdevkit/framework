@@ -36,6 +36,10 @@
       "types": "./dist/crypto/index.d.ts",
       "import": "./dist/crypto/index.js"
     },
+    "./embedded-wallet": {
+      "types": "./dist/embedded-wallet/index.d.ts",
+      "import": "./dist/embedded-wallet/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

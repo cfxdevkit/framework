@@ -3,12 +3,22 @@ import type { PriceChecker } from './conditions/price.js';
 import { isExpired } from './conditions/time.js';
 import type { KeeperClient } from './keeper-client.js';
 import type { ExecutionRepository, JobRepository } from './repository.js';
+import { RetryQueue } from './retry-queue.js';
 import type { SafetyGuard } from './safety.js';
 import { DCAEvaluator } from './strategies/dca.js';
 import { LimitOrderEvaluator } from './strategies/limit-order.js';
+import { SwapEvaluator } from './strategies/swap.js';
+import { TWAPEvaluator } from './strategies/twap.js';
 import type { StrategyEvaluator } from './strategies/types.js';
-import type { DCAJob, ExecutableJob, Job, LimitOrderJob, TickResult } from './types.js';
-import { isExecutableJob } from './types.js';
+import type {
+  DCAJob,
+  ExecutableJob,
+  Job,
+  LimitOrderJob,
+  SwapJob,
+  TickResult,
+  TWAPJob,
+} from './types.js';
 
 export interface KeeperConfig {
   intervalMs?: number;
@@ -21,10 +31,13 @@ export interface KeeperDeps {
   safetyGuard: SafetyGuard;
   keeperClient: KeeperClient;
   executionRepository?: ExecutionRepository;
+  retryQueue?: RetryQueue;
   onHeartbeat?: (timestampMs: number) => Promise<void> | void;
   evaluators?: Partial<{
     limit_order: StrategyEvaluator<LimitOrderJob>;
     dca: StrategyEvaluator<DCAJob>;
+    twap: StrategyEvaluator<TWAPJob>;
+    swap: StrategyEvaluator<SwapJob>;
   }>;
 }
 
@@ -34,11 +47,14 @@ export class Keeper {
   readonly #safetyGuard: SafetyGuard;
   readonly #keeperClient: KeeperClient;
   readonly #executionRepository: ExecutionRepository | undefined;
+  readonly #retryQueue: RetryQueue;
   readonly #onHeartbeat: ((timestampMs: number) => Promise<void> | void) | undefined;
   readonly #concurrency: number;
   readonly #evaluators: {
     limit_order: StrategyEvaluator<LimitOrderJob>;
     dca: StrategyEvaluator<DCAJob>;
+    twap: StrategyEvaluator<TWAPJob>;
+    swap: StrategyEvaluator<SwapJob>;
   };
   readonly #poller;
 
@@ -48,11 +64,14 @@ export class Keeper {
     this.#safetyGuard = deps.safetyGuard;
     this.#keeperClient = deps.keeperClient;
     this.#executionRepository = deps.executionRepository;
+    this.#retryQueue = deps.retryQueue ?? new RetryQueue();
     this.#onHeartbeat = deps.onHeartbeat;
     this.#concurrency = Math.max(1, config.concurrency ?? 1);
     this.#evaluators = {
       limit_order: deps.evaluators?.limit_order ?? new LimitOrderEvaluator(),
       dca: deps.evaluators?.dca ?? new DCAEvaluator(),
+      twap: deps.evaluators?.twap ?? new TWAPEvaluator(),
+      swap: deps.evaluators?.swap ?? new SwapEvaluator(),
     };
     this.#poller = createPoller(async () => {
       await this.runAllTicks();
@@ -72,7 +91,11 @@ export class Keeper {
   }
 
   async runAllTicks(): Promise<TickResult[]> {
-    const jobs = await this.#repository.list({ status: 'active', type: ['limit_order', 'dca'] });
+    const activeJobs = await this.#repository.list({
+      status: 'active',
+      type: ['limit_order', 'dca', 'twap', 'swap'],
+    });
+    const jobs = mergeJobs(activeJobs, this.#retryQueue.drainDue());
     const tasks: Array<ExecutionTask<TickResult>> = jobs.map((job) => {
       return () => withLock(job.id, () => this.processTick(job));
     });
@@ -85,7 +108,6 @@ export class Keeper {
   }
 
   async processTick(job: Job): Promise<TickResult> {
-    if (!isExecutableJob(job)) return skipped(job.id, 'unsupported_job_type');
     const nowSec = Math.floor(Date.now() / 1_000);
     if (isExpired(job, nowSec)) {
       await this.#repository.update(job.id, { status: 'expired' });
@@ -111,23 +133,22 @@ export class Keeper {
   }
 
   async #evaluate(job: ExecutableJob, nowSec: number) {
-    if (job.type === 'limit_order') {
-      return this.#evaluators.limit_order.evaluate(job, {
-        nowSec,
-        priceChecker: this.#priceChecker,
-        safetyGuard: this.#safetyGuard,
-      });
-    }
-    return this.#evaluators.dca.evaluate(job, {
+    const context = {
       nowSec,
       priceChecker: this.#priceChecker,
       safetyGuard: this.#safetyGuard,
-    });
+    };
+    if (job.type === 'limit_order') return this.#evaluators.limit_order.evaluate(job, context);
+    if (job.type === 'dca') return this.#evaluators.dca.evaluate(job, context);
+    if (job.type === 'twap') return this.#evaluators.twap.evaluate(job, context);
+    return this.#evaluators.swap.evaluate(job, context);
   }
 
   async #execute(job: ExecutableJob) {
     if (job.type === 'limit_order') return this.#keeperClient.executeLimitOrder(job);
-    return this.#keeperClient.executeDCATick(job);
+    if (job.type === 'dca') return this.#keeperClient.executeDCATick(job);
+    if (job.type === 'twap') return this.#keeperClient.executeTWAPTick(job);
+    return this.#keeperClient.executeSwap(job);
   }
 
   async #recordExecution(job: ExecutableJob, result: NonNullable<TickResult['result']>) {
@@ -149,6 +170,18 @@ export class Keeper {
       return;
     }
 
+    if (job.type === 'twap') {
+      const tranchesCompleted = job.params.tranchesCompleted + 1;
+      const nextExecution =
+        result.nextExecutionSec ?? job.params.nextExecution + job.params.trancheIntervalSeconds;
+      await this.#repository.update(job.id, {
+        status: tranchesCompleted >= job.params.trancheCount ? 'executed' : 'active',
+        txHash: result.txHash,
+        params: { ...job.params, tranchesCompleted, nextExecution },
+      });
+      return;
+    }
+
     await this.#repository.markExecuted(job.id, result);
   }
 
@@ -159,6 +192,7 @@ export class Keeper {
       return skipped(job.id, 'max_retries_reached');
     }
     await this.#repository.incrementRetry(job.id, message);
+    this.#retryQueue.enqueue({ ...job, retries: job.retries + 1 });
     return skipped(job.id, message);
   }
 
@@ -170,6 +204,13 @@ export class Keeper {
 
 function skipped(jobId: string, reason: string): TickResult {
   return { jobId, skipped: true, reason };
+}
+
+function mergeJobs(activeJobs: Job[], retryJobs: Job[]): Job[] {
+  const jobs = new Map<string, Job>();
+  for (const job of activeJobs) jobs.set(job.id, job);
+  for (const job of retryJobs) jobs.set(job.id, job);
+  return Array.from(jobs.values());
 }
 
 function errorMessage(error: unknown): string {

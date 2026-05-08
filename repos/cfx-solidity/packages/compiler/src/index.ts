@@ -14,7 +14,13 @@ export { readArtifact, selectorsOf, writeArtifact } from './artifacts.js';
 export { CompileError, type CompileErrorCode } from './errors.js';
 export { compose, npmResolver, remappingResolver } from './resolver/index.js';
 export { compile, ensureSolc, listInstalledSolc, type SolcInstance } from './solc/index.js';
-export { basicErc20, getTemplate, listTemplates, type TemplateMeta } from './templates/index.js';
+export {
+  basicErc20,
+  basicErc721,
+  getTemplate,
+  listTemplates,
+  type TemplateMeta,
+} from './templates/index.js';
 export type {
   Artifact,
   CompileDiagnostic,

@@ -12,6 +12,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./db": {
+      "types": "./dist/db/index.d.ts",
+      "import": "./dist/db/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -32,7 +36,9 @@
     "@biomejs/biome": "^2.4.14",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.6.0",
+    "drizzle-kit": "^0.30.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",
     "vite-plugin-dts": "^5.0.0",
@@ -42,7 +48,23 @@
     "@cfxdevkit/contracts": "workspace:^",
     "@cfxdevkit/core": "workspace:^",
     "@cfxdevkit/executor": "workspace:^",
+    "@cfxdevkit/protocol": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
-    "@cfxdevkit/wallet": "workspace:^"
+    "@cfxdevkit/wallet": "workspace:^",
+    "better-sqlite3": "^11.7.0",
+    "drizzle-orm": "^0.38.0",
+    "viem": "^2.21.0"
+  },
+  "peerDependencies": {
+    "mysql2": "*",
+    "postgres": "*"
+  },
+  "peerDependenciesMeta": {
+    "mysql2": {
+      "optional": true
+    },
+    "postgres": {
+      "optional": true
+    }
   }
 }

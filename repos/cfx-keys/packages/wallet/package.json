@@ -12,6 +12,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./batcher": {
+      "types": "./dist/batcher/index.d.ts",
+      "import": "./dist/batcher/index.js"
+    },
     "./signers": {
       "types": "./dist/signers/index.d.ts",
       "import": "./dist/signers/index.js"
@@ -76,6 +80,7 @@
   },
   "dependencies": {
     "@cfxdevkit/core": "workspace:^",
+    "@cfxdevkit/executor": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
     "@noble/hashes": "^1.5.0",
     "viem": "^2.21.0"

@@ -1,7 +1,12 @@
-# @cfxdevkit/protocol — Protocol Artifacts
+# @cfxdevkit/protocol
 
-**Scope:** Raw on-chain protocol artifacts intended for tooling consumers (block explorers,
-indexers, MCP tools).
+**Scope:** Pure Conflux protocol helpers, precompile ABIs, and reusable DevKit contract metadata.
 
-Differs from `@cfxdevkit/contracts` in that this exposes lower-level / non-curated data
-(event signatures, selectors, raw schemas) without an opinionated TypeScript surface.
+This package is intentionally non-UI and has no RPC side effects. It gives backend services, MCP tools, CLIs, and tests a stable place to import:
+
+- receipt/chain helpers built around `@cfxdevkit/core` clients,
+- Conflux internal contract addresses and ABIs (`AdminControl`, `SponsorWhitelist`, `Staking`, `CrossSpaceCall`, `PoSRegister`),
+- WCFX ABI/address constants for app-level wrap, unwrap, and approval flows,
+- DevKit reusable contract ABIs, bytecode, and generated address maps (`AutomationManager`, `PermitHandler`, `SwappiPriceAdapter`).
+
+`ParamsControl` is included in `CONFLUX_PRECOMPILE_ADDRESSES`; the legacy DevKit source did not ship a verified ABI for it.

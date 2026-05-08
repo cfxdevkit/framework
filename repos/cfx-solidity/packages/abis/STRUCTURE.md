@@ -10,7 +10,8 @@ abis/
 ├── vite.config.ts
 ├── moon.yml
 └── src/
-    └── index.ts                    stable ABI constant re-exports from `viem`
+    ├── index.ts                    stable ABI constants and compatibility aliases
+    └── index.test.ts               ABI shape and signature assertions
 ```
 
 ### Public exports map
