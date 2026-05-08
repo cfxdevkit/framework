@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { __packageName, createTaskQueue, execute, executeBatch } from './index.js';
+import {
+  __packageName,
+  createPoller,
+  createTaskQueue,
+  execute,
+  executeBatch,
+  withLock,
+} from './index.js';
 
 describe('@cfxdevkit/executor', () => {
   it('exposes its package name', () => {
@@ -63,5 +70,38 @@ describe('@cfxdevkit/executor', () => {
     observedQueue.add(() => 'c');
     await observedQueue.run();
     expect(seen).toEqual([true]);
+  });
+
+  it('runs poller ticks until stopped', async () => {
+    let ticks = 0;
+    const poller = createPoller(() => {
+      ticks += 1;
+    }, 1);
+
+    poller.start();
+    expect(poller.isRunning()).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await poller.stop();
+
+    expect(poller.isRunning()).toBe(false);
+    expect(ticks).toBeGreaterThan(0);
+  });
+
+  it('serializes tasks sharing the same lock key', async () => {
+    const order: string[] = [];
+
+    await Promise.all([
+      withLock('job:1', async () => {
+        order.push('a:start');
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        order.push('a:end');
+      }),
+      withLock('job:1', () => {
+        order.push('b:start');
+        order.push('b:end');
+      }),
+    ]);
+
+    expect(order).toEqual(['a:start', 'a:end', 'b:start', 'b:end']);
   });
 });

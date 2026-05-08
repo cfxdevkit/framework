@@ -33,6 +33,20 @@ export interface TaskQueueOptions extends BatchOptions {
   onResult?: <T>(result: ExecutionResult<T>, taskIndex: number) => void;
 }
 
+export interface PollerContext {
+  signal: AbortSignal;
+}
+
+export type PollerTask = (context: PollerContext) => Promise<void> | void;
+
+export interface Poller {
+  start(): void;
+  stop(): Promise<void>;
+  isRunning(): boolean;
+}
+
+const keyedLocks = new Map<string, Promise<void>>();
+
 export async function execute<T>(
   task: ExecutionTask<T>,
   options: ExecuteOptions = {},
@@ -106,6 +120,60 @@ export function createTaskQueue(options: TaskQueueOptions = {}) {
       return results;
     },
   };
+}
+
+export function createPoller(task: PollerTask, intervalMs: number): Poller {
+  const interval = Math.max(0, intervalMs);
+  let controller: AbortController | undefined;
+  let loopPromise: Promise<void> | undefined;
+  let running = false;
+
+  async function loop(signal: AbortSignal): Promise<void> {
+    try {
+      while (!signal.aborted) {
+        await task({ signal });
+        if (!signal.aborted) await delay(interval, signal);
+      }
+    } catch (error) {
+      if (!signal.aborted) throw error;
+    } finally {
+      running = false;
+    }
+  }
+
+  return {
+    start(): void {
+      if (running) return;
+      controller = new AbortController();
+      running = true;
+      loopPromise = loop(controller.signal);
+    },
+    async stop(): Promise<void> {
+      controller?.abort(new Error('poller stopped'));
+      await loopPromise?.catch(() => undefined);
+    },
+    isRunning(): boolean {
+      return running;
+    },
+  };
+}
+
+export async function withLock<T>(key: string, task: () => Promise<T> | T): Promise<T> {
+  const previous = keyedLocks.get(key) ?? Promise.resolve();
+  let release: () => void = () => undefined;
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const chained = previous.catch(() => undefined).then(() => current);
+  keyedLocks.set(key, chained);
+
+  await previous.catch(() => undefined);
+  try {
+    return await task();
+  } finally {
+    release();
+    if (keyedLocks.get(key) === chained) keyedLocks.delete(key);
+  }
 }
 
 function failure(error: unknown, attempts: number, startedAt: number): ExecutionResult<never> {

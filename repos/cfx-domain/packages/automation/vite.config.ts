@@ -20,7 +20,7 @@ export default defineConfig({
       entryRoot: 'src',
       outDir: 'dist',
       include: ['src/**/*.ts', 'src/**/*.tsx'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+      exclude: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/test-helpers.ts'],
     }),
   ],
 });
