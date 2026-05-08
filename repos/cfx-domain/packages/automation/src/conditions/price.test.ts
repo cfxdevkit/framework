@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dcaJob, limitOrderJob } from '../test-helpers.js';
+import { dcaJob, limitOrderJob } from '../testHelpers.js';
 import { estimateUsdValue, PRICE_SCALE, PriceChecker, type PriceSource } from './price.js';
 
 class FixedPriceSource implements PriceSource {

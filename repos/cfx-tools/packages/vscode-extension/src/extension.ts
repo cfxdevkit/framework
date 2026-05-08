@@ -2,19 +2,7 @@
 // biome-ignore-all lint/correctness/noUnusedPrivateClassMembers: runtime state is accessed through extracted helper functions.
 // biome-ignore-all format: compact bridge imports and wrappers stay below hotspot limits.
 // biome-ignore-all assist/source/organizeImports: bridge imports are intentionally grouped by helper module.
-import { abiArgsPlaceholder, abiCallRead, abiCallWrite, parseArgValue, placeholderForSolidityType, promptAbiArgs, promptPayableValue } from './extension-abi-helpers.js';
-import { pickTemplateArtifact, pickWorkspaceArtifact, promptConstructorArgs } from './extension-artifact-helpers.js';
-import { readDeployments, writeDeployments, chainsFor, currentChains, currentChain, selectedNetworkLabel, pickChainTarget, createClientFor, withCoreAddress, deriveRunningNodeAccounts, walletSignerFor, ensureUnlockedWallet } from './extension-chain-helpers.js';
-import { registerCommands } from './extension-command-registration.js';
-import { showAccountsQuickPick, showContractsQuickPick, copyAddress, deployContractCommand } from './extension-contract-command-helpers.js';
-import { importContractCommand } from './extension-contract-import-helpers.js';
-import { createAppendOnlyAuditLogger, StaticTreeProvider, vscode } from './extension-helper-shared.js';
-import { startRuntime, getOrCreateNodeMnemonic, startNode, stopNode, restartNode, wipeNode, wipeNodeAndRestart, mineBlocks } from './extension-node-helpers.js';
-import { selectNetwork } from './extension-selection-helpers.js';
-import { workspaceRoot, config, selectedNetwork, selectedSpace, selectedBackend, selectedFileRef, selectedAccountIndex, derivationPath, setSelectedNetwork, setSelectedSpace, setSelectedBackend, keystorePath, keystorePathLabel, deploymentsPath, nodeDataDir, ensureWorkspaceDir, auditLogPath, log, keystoreExists, fileKeystore, refKey, walletTarget, promptKeystorePassphrase, promptNewKeystorePassphrase, listFileWallets, ensureFileBackend, ensureFileKeystoreUnlocked, currentCapability } from './extension-state-helpers.js';
-import { refreshAll, buildSnapshot, populateAccountBalances } from './extension-view-helpers.js';
-import { initializeWallet, addWallet, selectWallet, removeWallet } from './extension-wallet-helpers.js';
-import { lockKeystore, rotateKeystorePassphrase, sanitizeAccountName, unlockKeystore } from './extension-wallet-lock-helpers.js';
+import { abiArgsPlaceholder, abiCallRead, abiCallWrite, parseArgValue, placeholderForSolidityType, promptAbiArgs, promptPayableValue, pickTemplateArtifact, pickWorkspaceArtifact, promptConstructorArgs, readDeployments, writeDeployments, chainsFor, currentChains, currentChain, selectedNetworkLabel, pickChainTarget, createClientFor, withCoreAddress, deriveRunningNodeAccounts, walletSignerFor, ensureUnlockedWallet, registerCommands, showAccountsQuickPick, showContractsQuickPick, copyAddress, deployContractCommand, importContractCommand, createAppendOnlyAuditLogger, StaticTreeProvider, vscode, startRuntime, getOrCreateNodeMnemonic, startNode, stopNode, restartNode, wipeNode, wipeNodeAndRestart, mineBlocks, selectNetwork, workspaceRoot, config, selectedNetwork, selectedSpace, selectedBackend, selectedFileRef, selectedAccountIndex, derivationPath, setSelectedNetwork, setSelectedSpace, setSelectedBackend, keystorePath, keystorePathLabel, deploymentsPath, nodeDataDir, ensureWorkspaceDir, auditLogPath, log, keystoreExists, fileKeystore, refKey, walletTarget, promptKeystorePassphrase, promptNewKeystorePassphrase, listFileWallets, ensureFileBackend, ensureFileKeystoreUnlocked, currentCapability, refreshAll, buildSnapshot, populateAccountBalances, initializeWallet, addWallet, selectWallet, removeWallet, lockKeystore, rotateKeystorePassphrase, sanitizeAccountName, unlockKeystore } from './helpers/index.js';
 class ExtensionRuntime implements vscode.Disposable {
   private node: DevNode | null = null;
   private unlockedPassphrase: string | null = null;

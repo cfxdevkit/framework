@@ -6,9 +6,12 @@ const reactExternals = new Set(['react', 'react-dom', 'react/jsx-runtime']);
 export default defineConfig({
   build: {
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+        'siwe/index': 'src/siwe/index.ts',
+      },
       formats: ['es'],
-      fileName: () => 'index.js',
+      fileName: (_format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
       external: (id) => reactExternals.has(id) || (!id.startsWith('.') && !id.startsWith('/')),

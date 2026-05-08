@@ -12,6 +12,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./siwe": {
+      "types": "./dist/siwe/index.d.ts",
+      "import": "./dist/siwe/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -45,6 +49,7 @@
     "react": "^19.2.5"
   },
   "dependencies": {
-    "@cfxdevkit/core": "workspace:^"
+    "@cfxdevkit/core": "workspace:^",
+    "viem": "^2.21.0"
   }
 }

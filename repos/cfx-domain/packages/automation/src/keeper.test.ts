@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { PRICE_SCALE, PriceChecker, type PriceSource } from './conditions/price.js';
+import type { KeeperClient } from './keeper/index.js';
 import { Keeper } from './keeper.js';
-import type { KeeperClient } from './keeper-client.js';
 import { MemoryExecutionRepository, MemoryJobRepository } from './repository/memory.js';
-import { RetryQueue } from './retry-queue.js';
+import { RetryQueue } from './retryQueue.js';
 import { SafetyGuard } from './safety.js';
-import { dcaJob, limitOrderJob, swapJob, twapJob } from './test-helpers.js';
+import { dcaJob, limitOrderJob, swapJob, twapJob } from './testHelpers.js';
 import type { Job } from './types.js';
 
 class FixedPriceSource implements PriceSource {

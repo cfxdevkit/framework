@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SafetyGuard } from './safety.js';
-import { dcaJob, limitOrderJob } from './test-helpers.js';
+import { dcaJob, limitOrderJob } from './testHelpers.js';
 
 describe('SafetyGuard', () => {
   it('allows active jobs within limits', () => {

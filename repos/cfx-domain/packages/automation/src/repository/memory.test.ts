@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dcaJob, limitOrderJob, OWNER } from '../test-helpers.js';
+import { dcaJob, limitOrderJob, OWNER } from '../testHelpers.js';
 import { MemoryExecutionRepository, MemoryJobRepository } from './memory.js';
 
 describe('MemoryJobRepository', () => {

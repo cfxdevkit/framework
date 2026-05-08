@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PRICE_SCALE, PriceChecker, type PriceSource } from '../conditions/price.js';
 import { SafetyGuard } from '../safety.js';
-import { twapJob } from '../test-helpers.js';
+import { twapJob } from '../testHelpers.js';
 import { TWAPEvaluator } from './twap.js';
 
 class FixedPriceSource implements PriceSource {

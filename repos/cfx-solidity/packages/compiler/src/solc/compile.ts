@@ -8,7 +8,7 @@ import {
   makeImportCallback,
   preResolve,
   type SolcStdOutput,
-} from './compile-helpers.js';
+} from './helpers.js';
 import { ensureSolc } from './loader.js';
 
 export async function compile(input: CompileInput): Promise<CompileOutput> {

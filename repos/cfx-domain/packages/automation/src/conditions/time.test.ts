@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dcaJob, limitOrderJob } from '../test-helpers.js';
+import { dcaJob, limitOrderJob } from '../testHelpers.js';
 import { isDCADue, isExpired } from './time.js';
 
 describe('time conditions', () => {
