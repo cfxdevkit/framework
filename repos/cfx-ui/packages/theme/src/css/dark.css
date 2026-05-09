@@ -1,0 +1,39 @@
+/**
+ * @cfxdevkit/theme — dark theme overrides
+ * Import this file as a side-effect after the base CSS:
+ *   import '@cfxdevkit/theme/css'
+ *   import '@cfxdevkit/theme/dark'
+ * Activates when <html data-theme="dark"> is set (via ThemeProvider).
+ */
+
+[data-theme="dark"] {
+  /* ── Background ────────────────────────────────── */
+  --cfx-color-bg-default: #0d1117;
+  --cfx-color-bg-subtle: #161b22;
+  --cfx-color-bg-emphasis: #21262d;
+
+  /* ── Foreground ────────────────────────────────── */
+  --cfx-color-fg-default: #e6edf3;
+  --cfx-color-fg-subtle: #8b949e;
+  --cfx-color-fg-muted: #6e7681;
+  --cfx-color-fg-on-brand: #ffffff;
+
+  /* ── Brand ──────────────────────────────────────── */
+  --cfx-color-brand-primary: #4a9eff;
+  --cfx-color-brand-accent: #a78bfa;
+
+  /* ── Feedback ───────────────────────────────────── */
+  --cfx-color-feedback-success: #3fb950;
+  --cfx-color-feedback-warning: #d29922;
+  --cfx-color-feedback-danger: #f85149;
+  --cfx-color-feedback-info: #58a6ff;
+
+  /* ── Borders ────────────────────────────────────── */
+  --cfx-color-border-default: rgba(255, 255, 255, 0.12);
+  --cfx-color-border-subtle: rgba(255, 255, 255, 0.06);
+
+  /* ── Shadows (more pronounced in dark) ─────────── */
+  --cfx-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --cfx-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --cfx-shadow-lg: 0 16px 56px rgba(0, 0, 0, 0.5);
+}

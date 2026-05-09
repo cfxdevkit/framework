@@ -12,6 +12,7 @@ import {
   useState,
 } from 'react';
 import { useAccount, useChainId, useSignMessage } from 'wagmi';
+import { readTargetEspaceChain } from '../lib/ethereum';
 
 const DEFAULT_API_BASE = process.env.NEXT_PUBLIC_CAS_API_URL ?? 'http://127.0.0.1:3011';
 const DEFAULT_CHAIN_ID = readDefaultChainId();
@@ -158,7 +159,5 @@ function clearSession() {
 }
 
 function readDefaultChainId(): number {
-  if (process.env.NEXT_PUBLIC_CAS_NETWORK === 'mainnet') return 1030;
-  if (process.env.NEXT_PUBLIC_CAS_NETWORK === 'local') return 2030;
-  return 71;
+  return readTargetEspaceChain().chainId;
 }

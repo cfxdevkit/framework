@@ -5,6 +5,8 @@ import {
   ZERO_ADDRESS,
 } from '@cfxdevkit/cas-shared';
 import { formatUnits, parseUnits } from 'viem';
+import { MAINNET_AUTOMATION_MANAGER_ADDRESS, MAINNET_WCFX_ADDRESS } from './deployments';
+import { readTargetEspaceChain } from './ethereum';
 
 export const CFX_NATIVE_ADDRESS = ZERO_ADDRESS;
 
@@ -200,17 +202,24 @@ export function estimatedOutput(
 
 export function readContracts(): StrategyContracts {
   const saved = typeof window !== 'undefined' ? window.localStorage.getItem('cas.contracts') : null;
+  const defaults: StrategyContracts = {
+    automationManagerAddress: readEnvAddress(
+      process.env.NEXT_PUBLIC_AUTOMATION_MANAGER_ADDRESS,
+      MAINNET_AUTOMATION_MANAGER_ADDRESS,
+    ),
+    wcfxAddress: readEnvAddress(process.env.NEXT_PUBLIC_WCFX_ADDRESS, MAINNET_WCFX_ADDRESS),
+    rpcUrl: process.env.NEXT_PUBLIC_CONFLUX_ESPACE_RPC ?? readTargetEspaceChain().rpcUrl,
+  };
   if (saved) {
     try {
-      return JSON.parse(saved) as StrategyContracts;
+      return { ...defaults, ...(JSON.parse(saved) as Partial<StrategyContracts>) };
     } catch {
       /* ignore malformed storage */
     }
   }
-  return {
-    automationManagerAddress: (process.env.NEXT_PUBLIC_AUTOMATION_MANAGER_ADDRESS ??
-      ZERO_ADDRESS) as CasHexAddress,
-    wcfxAddress: (process.env.NEXT_PUBLIC_WCFX_ADDRESS ?? ZERO_ADDRESS) as CasHexAddress,
-    rpcUrl: process.env.NEXT_PUBLIC_CONFLUX_ESPACE_RPC ?? 'https://evmtestnet.confluxrpc.com',
-  };
+  return defaults;
+}
+
+function readEnvAddress(value: string | undefined, fallback: CasHexAddress): CasHexAddress {
+  return value?.startsWith('0x') ? (value as CasHexAddress) : fallback;
 }

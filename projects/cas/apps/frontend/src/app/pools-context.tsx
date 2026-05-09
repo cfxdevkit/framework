@@ -6,6 +6,7 @@ import {
   type CasTokenInfo,
   ZERO_ADDRESS,
 } from '@cfxdevkit/cas-shared';
+import { WCFX_ADDRESSES } from '@cfxdevkit/protocol';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { formatUnits } from 'viem';
 import { useAccount, usePublicClient } from 'wagmi';
@@ -91,7 +92,7 @@ export function PoolsProvider({ children }: { children: React.ReactNode }) {
   const { address: account } = useAccount();
   const publicClient = usePublicClient();
 
-  const wcfxAddress = (process.env.NEXT_PUBLIC_WCFX_ADDRESS ?? ZERO_ADDRESS) as CasHexAddress;
+  const wcfxAddress = readEnvAddress(process.env.NEXT_PUBLIC_WCFX_ADDRESS, WCFX_ADDRESSES.mainnet);
 
   const [rawPools, setRawPools] = useState<CasPoolsResponse | null>(null);
   const [baseTokens, setBaseTokens] = useState<TokenWithBalance[]>([]);
@@ -185,6 +186,10 @@ export function PoolsProvider({ children }: { children: React.ReactNode }) {
       {children}
     </PoolsContext.Provider>
   );
+}
+
+function readEnvAddress(value: string | undefined, fallback: CasHexAddress): CasHexAddress {
+  return value?.startsWith('0x') ? (value as CasHexAddress) : fallback;
 }
 
 export function usePoolsContext(): PoolsContextValue {

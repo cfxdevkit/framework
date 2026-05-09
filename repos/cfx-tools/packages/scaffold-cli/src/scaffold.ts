@@ -1,10 +1,13 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { getTemplate, renderFile } from './templates.js';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { getTemplate, getTemplateFiles, renderFile, type TemplateTarget } from './templates.js';
 
 export interface ScaffoldOptions {
   name: string;
+  version?: string;
+  description?: string;
+  target?: TemplateTarget;
   skipInstall?: boolean;
   force?: boolean;
   [key: string]: string | boolean | undefined;
@@ -21,16 +24,25 @@ export async function scaffoldProject(
     throw new Error(`Target directory already exists: ${projectDir}`);
   }
   mkdirSync(projectDir, { recursive: true });
-  const values = Object.fromEntries(
-    Object.entries(options)
-      .filter(([, value]) => typeof value === 'string')
-      .map(([key, value]) => [key, value as string]),
-  );
-  for (const file of template.files) {
-    const destination = resolve(projectDir, file);
-    const content = readFileSync(destination, 'utf8');
-    writeFileSync(destination, renderFile(content, values));
+
+  const values: Record<string, string> = {
+    name: options.name,
+    version: options.version ?? '0.1.0',
+    description: options.description ?? '',
+    ...Object.fromEntries(
+      Object.entries(options)
+        .filter(([, v]) => typeof v === 'string')
+        .map(([k, v]) => [k, v as string]),
+    ),
+  };
+
+  const files = getTemplateFiles(template, options.target ?? 'default');
+  for (const file of files) {
+    const dest = resolve(projectDir, file.path);
+    mkdirSync(dirname(dest), { recursive: true });
+    writeFileSync(dest, renderFile(file.content, values), 'utf8');
   }
+
   if (!options.skipInstall) {
     spawnSync('npm', ['install'], { stdio: 'inherit', cwd: projectDir });
   }

@@ -38,7 +38,10 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc --noEmit",
@@ -47,7 +50,9 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
-    "@cfxdevkit/automation": "workspace:*"
+    "@cfxdevkit/automation": "workspace:*",
+    "@cfxdevkit/core": "workspace:*",
+    "@cfxdevkit/protocol": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",

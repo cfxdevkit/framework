@@ -3,5 +3,6 @@
 export const __packageName = '@cfxdevkit/create' as const;
 export { parseArgs } from './args.js';
 export { scaffoldProject } from './scaffold.js';
-export { getTemplate, listTemplates, renderFile } from './templates.js';
+export type { TemplateDefinition, TemplateFile, TemplateTarget } from './templates.js';
+export { getTemplate, getTemplateFiles, listTemplates, renderFile } from './templates.js';
 export { validateName } from './validate.js';

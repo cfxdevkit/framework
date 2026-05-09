@@ -4,11 +4,22 @@ import dts from 'vite-plugin-dts';
 const reactExternals = new Set(['react', 'react-dom', 'react/jsx-runtime']);
 
 export default defineConfig({
+  esbuild: {
+    jsx: 'automatic',
+  },
   build: {
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+        'account/index': 'src/account.ts',
+        'balance/index': 'src/balance.ts',
+        'context/index': 'src/context.tsx',
+        'contract/index': 'src/contract.ts',
+        'events/index': 'src/events.ts',
+        'tx/index': 'src/tx.ts',
+      },
       formats: ['es'],
-      fileName: () => 'index.js',
+      fileName: (_format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
       external: (id) => reactExternals.has(id) || (!id.startsWith('.') && !id.startsWith('/')),

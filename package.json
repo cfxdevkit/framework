@@ -69,6 +69,8 @@
       "postcss": "^8.5.10",
       "tmp": "^0.2.4",
       "uuid": "^14.0.0",
+      "viem": "^2.21.0",
+      "wagmi": "^3.6.9",
       "zod": "4.3.4"
     },
     "onlyBuiltDependencies": [

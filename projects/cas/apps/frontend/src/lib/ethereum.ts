@@ -1,4 +1,9 @@
+import type { ChainConfig } from '@cfxdevkit/core/chains';
+import { espaceLocal, espaceMainnet, espaceTestnet } from '@cfxdevkit/core/chains';
 import { toHex } from 'viem';
+import { DEFAULT_CAS_NETWORK } from './deployments';
+
+export type CasNetwork = 'mainnet' | 'testnet' | 'local';
 
 export type EthereumProvider = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -12,28 +17,34 @@ export interface EspaceChainConfig {
   explorerUrl?: string;
 }
 
-export const ESPACE_CHAINS: Record<'mainnet' | 'testnet' | 'local', EspaceChainConfig> = {
-  mainnet: {
-    chainId: 1030,
-    chainIdHex: '0x406',
-    name: 'Conflux eSpace Mainnet',
-    rpcUrl: 'https://evm.confluxrpc.com',
-    explorerUrl: 'https://evm.confluxscan.io',
-  },
-  testnet: {
-    chainId: 71,
-    chainIdHex: '0x47',
-    name: 'Conflux eSpace Testnet',
-    rpcUrl: 'https://evmtestnet.confluxrpc.com',
-    explorerUrl: 'https://evmtestnet.confluxscan.io',
-  },
-  local: {
-    chainId: 2030,
-    chainIdHex: '0x7ee',
-    name: 'Conflux eSpace Local',
-    rpcUrl: 'http://127.0.0.1:8545',
-  },
+export const ESPACE_CHAINS: Record<CasNetwork, EspaceChainConfig> = {
+  mainnet: toEspaceChainConfig(espaceMainnet),
+  testnet: toEspaceChainConfig(espaceTestnet),
+  local: toEspaceChainConfig(espaceLocal),
 };
+
+export function readCasNetwork(): CasNetwork {
+  const configured = process.env.NEXT_PUBLIC_CAS_NETWORK;
+  if (configured === 'mainnet' || configured === 'local') return configured;
+  if (configured === 'testnet') return configured;
+  return DEFAULT_CAS_NETWORK;
+}
+
+export function readTargetEspaceChain(): EspaceChainConfig {
+  return ESPACE_CHAINS[readCasNetwork()];
+}
+
+function toEspaceChainConfig(chain: ChainConfig): EspaceChainConfig {
+  const rpcUrl = chain.rpc.http[0];
+  if (!rpcUrl) throw new Error(`Missing HTTP RPC endpoint for ${chain.name}`);
+  return {
+    chainId: chain.id,
+    chainIdHex: toHex(chain.id),
+    name: chain.displayName,
+    rpcUrl,
+    ...(chain.explorer?.url ? { explorerUrl: chain.explorer.url } : {}),
+  };
+}
 
 export function readEthereumProvider(): EthereumProvider {
   const candidate = window as Window & { ethereum?: EthereumProvider };

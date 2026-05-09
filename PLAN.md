@@ -1,248 +1,226 @@
-# Implementation Plan: Tier 0 & Tier 1 Complete
+# Porting Plan: DevKit → Framework
 
-**Version:** 1.0  
-**Date:** 2025-04-11  
-**Scope:** Complete implementation of Framework (Tier 0) and Platform (Tier 1) packages
-
----
-
-## Current State Assessment
-
-### ✅ Fully Implemented
-- `@cfxdevkit/core` - Core primitives, client, wallet, address handling
-- `@cfxdevkit/contracts` - Contract wrappers, ABI management
-- `@cfxdevkit/compiler` - Solidity compilation pipeline
-- `@cfxdevkit/cli` - Developer CLI (status, derive, generate)
-- `@cfxdevkit/vscode-extension` - Full VS Code extension
-
-### ⚠️ Stub Packages (Need Implementation)
-- `@cfxdevkit/react`, `@cfxdevkit/defi-react`, `@cfxdevkit/theme`, `@cfxdevkit/wallet-connect`
-- `@cfxdevkit/executor`, `@cfxdevkit/protocol`, `@cfxdevkit/testing`
-- `@cfxdevkit/mcp-server`, `@cfxdevkit/create`
-- `@cfxdevkit/wallet`, `@cfxdevkit/services` (barrel stubs with implementation in submodules)
+**Generated:** 2026-05-09  
+**Source repos:** `.cfxdevkit/devkit` (12 packages) + `.cfxdevkit/devkit-workspace` (10 packages)  
+**Target repo:** `/workspaces/root` (framework monorepo)  
+**Scope:** Close all porting gaps so the framework is the single source of truth and CAS/showcase apps are clean reference implementations.
 
 ---
 
-## Phase 1: Core Framework Completeness (Weeks 1-4)
+## What Is Already Fully Ported ✅
 
-### Priority 1A: Critical Supporting Packages
-**Goal:** Enable Tier 0 packages to be published with full functionality
+These packages exist in the framework and are equal to or better than the devkit originals. No further porting needed.
 
-| Package | Status | Implementation Scope | Dependencies |
-|---------|--------|---------------------|--------------|
-| `@cfxdevkit/executor` | Stub | Implement execution engine for smart contract calls, transaction batches, and state transitions | `@cfxdevkit/core` |
-| `@cfxdevkit/protocol` | Stub | Implement protocol-level primitives: gas estimation, block processing, event filtering | `@cfxdevkit/core` |
-| `@cfxdevkit/testing` | Stub | Create test fixtures, mock clients, assertion helpers for dev workflows | `@cfxdevkit/core`, `@cfxdevkit/protocol` |
-
-**Deliverables:**
-- All packages have `./src/index.ts` with barrel exports
-- Full API documentation in `./API.md` files
-- Test coverage: 80%+ for all new code
-- CI pipelines enabled and passing
-
----
-
-### Priority 1B: Keys Package Unification
-**Goal:** Consolidate split wallet/services packages into coherent API
-
-| Package | Status | Implementation Scope |
-|---------|--------|---------------------|
-| `@cfxdevkit/wallet` | Stub barrel | Expose unified wallet API combining submodules: `init`, `signers`, `session-key`, `policies`, `hardware` |
-| `@cfxdevkit/services` | Stub barrel | Re-export keystore implementations: `file`, `memory`, `ledger` with consistent error types |
-
-**Deliverables:**
-- Clean public API surface in `index.ts`
-- Migration guide for consumers of split packages
-- Updated READMEs with usage examples
+| Devkit package | Framework package | Notes |
+|---|---|---|
+| `@cfxdevkit/core` (devkit) | `@cfxdevkit/core` (`cfx-core`) | Enhanced: branded types, dual-space, BIP-44 derivation |
+| `@cfxdevkit/protocol` (devkit) | `@cfxdevkit/protocol` (`cfx-core`) | Enhanced: `CFX_NATIVE_ADDRESS`, `WCFX_ADDRESSES`, `waitForTransactionReceipt` |
+| `@cfxdevkit/executor` (devkit) | `@cfxdevkit/automation` (`cfx-domain`) | Renamed + enhanced: Keeper, PriceChecker, DCA/limit strategies |
+| `@cfxdevkit/wallet` (devkit) | `@cfxdevkit/wallet` (`cfx-keys`) | Enhanced: Ledger, OneKey, Satochip, session keys, capability policies |
+| `@cfxdevkit/services` (devkit) | `@cfxdevkit/services` (`cfx-keys`) | Enhanced: pluggable keystore provider pattern (memory, file, OS, KMS) |
+| `@cfxdevkit/compiler` (devkit) | `@cfxdevkit/compiler` (`cfx-solidity`) | Partial — see Gap 4 below |
+| `@cfxdevkit/contracts` (devkit) | `@cfxdevkit/abis` (`cfx-solidity`) | Renamed; standard EVM ABIs re-exported |
+| `@cfxdevkit/devnode` (devkit) | `@cfxdevkit/devnode` (`cfx-core`) | Equivalent |
+| `@devkit/devkit-backend` (devnode routes) | `@cfxdevkit/devnode-server` (`cfx-tools`) | Hono-based, clean replacement |
+| `@devkit/conflux-wallet` (devkit-ws) | `@cfxdevkit/wallet-connect` (`cfx-ui`) | `useCoreWallet`, `isFluentProvider`, Fluent detection ported |
+| MCP: accounts, blockchain eSpace, compiler, keystore, node, wallet | `@cfxdevkit/mcp-server` (`cfx-tools`) | 33 tools, modular — see Gap 5 for what's missing |
 
 ---
 
-### Priority 1C: Solidity Tooling Gap
-**Goal:** Complete contract codegen pipeline
-
-| Package | Status | Implementation Scope |
-|---------|--------|---------------------|
-| `@cfxdevkit/codegen-contracts` | Stub | Implement ABI/bytecode extraction from Hardhat artifacts, TypeScript module rendering |
-
-**Deliverables:**
-- CLI for contract extraction: `cfx contracts extract`
-- Programmatic API for build integrations
-- Test suite with sample contracts
+## Porting Gaps (Priority Order)
 
 ---
 
-## Phase 2: React/Theme Ecosystem (Weeks 5-8)
+### GAP 1 — `@cfxdevkit/react` 🔴 HIGH
+**Location:** `cfx-ui/packages/react`  
+**Current state:** Empty stub — only exports `__packageName` placeholder  
+**Devkit source:** `devkit/packages/react/src/` (6 components + 3 hooks)  
+**Framework spec:** `cfx-ui/packages/react/API.md` (already written — hooks-only redesign)
 
-### Priority 2A: React Package Foundation
-**Goal:** Build reusable React components for DeFi applications
+The new design is intentionally simpler than the devkit: provider distributes a `Client` the app already built (no hidden state, SSR/test friendly). No UI components — those stay in `wallet-connect/ui` and `defi-react`.
 
-| Package | Implementation Scope |
-|---------|---------------------|
-| `@cfxdevkit/react` | - Core hooks: `useClient`, `useWallet`, `useContract`<br>- Form components: `ContractForm`, `AddressInput`<br>- Display components: `BalanceDisplay`, `TxStatus`<br>- Provider components: `ClientProvider`, `WalletProvider` |
-| `@cfxdevkit/defi-react` | - DeFi-specific hooks: `usePool`, `useReward`, `usePosition`<br>- Components: `LiquidityPoolCard`, `StakingDashboard`, `YieldAggregator` |
+**Files to create:**
 
-**Technical Requirements:**
-- TypeScript-first with strict mode
-- React 18+ concurrent features
-- Vite + Vitest for development/testing
-- Storybook for component documentation
+| File | Exports |
+|---|---|
+| `src/context.tsx` | `CfxProvider`, `useClient`, `useChain`, `useSigner` |
+| `src/account.ts` | `useAccount` |
+| `src/contract.ts` | `useReadContract`, `useReadContracts`, `useSimulateContract`, `useWriteContract` |
+| `src/balance.ts` | `useNativeBalance`, `useTokenBalance`, `useTokenMetadata` |
+| `src/tx.ts` | `useSendTransaction`, `useWaitForTransaction` |
+| `src/events.ts` | `useWatchEvent` |
+| `src/index.ts` | re-export all of the above |
 
-**Deliverables:**
-- Complete API surface documented in `./API.md`
-- 10+ storybook examples
-- E2E tests with Playwright
+**Key design decisions:**
+- State via TanStack Query (`useQuery`/`useMutation`) — injectable `QueryClient`
+- `CfxProvider` does NOT create a client; the app passes one in
+- `useClient()` throws if used outside provider (clear error, not silent null)
+- All hooks accept `enabled?: boolean` for conditional fetching
+- `@tanstack/react-query` is a `peerDependency`
 
----
-
-### Priority 2B: Theme System
-**Goal:** Unified theming for all UI packages
-
-| Component | Implementation Scope |
-|-----------|---------------------|
-| `@cfxdevkit/theme` | - Design token system (colors, spacing, typography)<br>- React context provider<br>- Dark/light mode support<br>- Token export to CSS custom properties |
-
-**Deliverables:**
-- Theme documentation with token reference
-- Migration utilities from existing themes
-- Example apps demonstrating theme usage
+**Status:** ✅ Implemented (2026-05-09)
 
 ---
 
-### Priority 2C: Wallet Connect Integration
-**Goal:** Multi-wallet connection support
+### GAP 2 — `@cfxdevkit/theme` 🟡 MEDIUM (needed before defi-react)
+**Location:** `cfx-ui/packages/theme`  
+**Current state:** Empty stub  
+**Devkit source:** `devkit/packages/theme/src/` (Tailwind v3 preset + globals.css)  
+**Framework spec:** `cfx-ui/packages/theme/API.md` (CSS custom properties, no Tailwind dep)
 
-| Package | Implementation Scope |
-|---------|---------------------|
-| `@cfxdevkit/wallet-connect` | - WC2 protocol implementation<br>- Wallet detection and pairing<br>- Session management<br>- Transaction signing workflow |
+**Files to create:**
 
-**Deliverables:**
-- WC2-compliant connection flow
-- Support for MetaMask, Phalcon, hardware wallets
-- Comprehensive error handling and user feedback
+| File | Exports |
+|---|---|
+| `src/tokens.ts` | `colors`, `spacing`, `radius`, `typography`, `shadow`, `motion` token consts |
+| `src/css/base.css` | CSS `@layer base { :root { --cfx-* } }` — all tokens as CSS vars |
+| `src/css/dark.css` | `[data-theme="dark"] { --cfx-* }` overrides |
+| `src/theme-provider.tsx` | `ThemeProvider`, `useTheme` |
+| `src/index.ts` | `export * from './tokens.js'; export * from './theme-provider.js';` |
 
----
+**Package.json exports to add:** `"./css"`, `"./dark"`, `"./tokens"`, `"./react"`
 
-## Phase 3: Platform Tooling Enhancement (Weeks 9-11)
+**Status:** ✅ Implemented (2026-05-09) — `@cfxdevkit/defi-react` 🔴 HIGH
+**Location:** `cfx-ui/packages/defi-react`  
+**Current state:** Empty stub  
+**Devkit source:** `devkit/packages/defi-react/src/` (`PoolsProvider`, `usePoolTokens`, `useTokenPrice`)  
+**Framework spec:** `cfx-ui/packages/defi-react/API.md` (redesigned: composable swap/balance/token-picker widgets)  
+**Immediate source:** CAS `pools-context.tsx` and `strategy.ts` contain inline implementations to extract
 
-### Priority 3A: MCP Server
-**Goal:** MCP (Model Context Protocol) server for AI tools
+**Files to create:**
 
-| Scope | Implementation Details |
-|-------|----------------------|
-| MCP Server | - Tool definitions: `chain_info`, `wallet_balance`, `contract_read`, `contract_write`<br>- Authentication and permission system<br>- Error handling and logging |
+| File | Exports |
+|---|---|
+| `src/swap/useSwap.ts` | `useSwap(input)` hook |
+| `src/swap/SwapWidget.tsx` | `SwapWidget` component (headless) |
+| `src/balance/usePortfolio.ts` | `usePortfolio(input)` hook |
+| `src/balance/PortfolioTable.tsx` | `PortfolioTable` component |
+| `src/token-picker/TokenPicker.tsx` | `TokenPicker` component |
+| `src/tx-status/TxStatusList.tsx` | `TxStatusList`, `TxStatusToast` |
+| `src/index.ts` | re-export all |
 
-**Deliverables:**
-- Complete tool schema definitions
-- Documentation for tool integrators
-- Test suite simulating LLM tool calls
+**Depends on:** GAP 1 (`@cfxdevkit/react`) must be done first.
 
----
-
-### Priority 3B: Scaffold CLI Enhancement
-**Goal:** Project scaffolding for rapid development
-
-| Scope | Implementation Details |
-|-------|----------------------|
-| Scaffold CLI | - Template system for app types (simple contract, DeFi app, game)<br>- Package dependency injection<br>- Git repo initialization with CI setup |
-
-**Deliverables:**
-- 5+ templates covering common use cases
-- Template customization options
-- Template authoring guide
-
----
-
-## Phase 4: Integration & Documentation (Week 12)
-
-### Priority 4A: End-to-End Examples
-**Goal:** Complete working applications demonstrating all Tier 0/1 packages
-
-| Example | Description |
-|---------|-------------|
-| Simple DApp | Counter contract with React UI |
-| DeFi Dashboard | Pool visualization with real-time data |
-| CLI Tool | NFT minting CLI with wallet integration |
+**Status:** ✅ Implemented (2026-05-09) — types + swap/balance/portfolio/token-picker/tx-status widgets; all sub-path exports.
 
 ---
 
-### Priority 4B: Documentation Completeness
-**Goal:** All packages have comprehensive documentation
+### GAP 4 — Missing compiler templates ✅ DONE
+**Location:** `cfx-solidity/packages/compiler/src/templates/`  
+**Current:** 5 templates (basic-erc20, basic-erc721, example-counter, simple-storage, payable-vault)  
+**Missing from devkit:**
 
-| Documentation Type | Requirements |
-|-------------------|-------------|
-| API Reference | Auto-generated from type signatures |
-| Tutorials | Step-by-step guides for common tasks |
-| Architecture | Design decisions documented in ADRs |
-| Migration Guides | Clear paths from stub to implementation |
+| Template id | Contract name | Notes |
+|---|---|---|
+| `simple-escrow` | `SimpleEscrow` | Three-party: buyer/seller/arbiter, release/refund |
+| `multi-sig-wallet` | `MultiSigWallet` | M-of-N, submit/confirm/execute/revoke pattern |
+| `name-registry` | `NameRegistry` | On-chain name → address mapping, transfer ownership |
+| `ballot` | `Ballot` | Weighted votes, delegation, winning proposal |
 
----
+Each needs: `src/templates/<id>/source.ts` + entry in `src/templates/index.ts`.  
+The MCP `compile_and_deploy` tool lists templates by name — users expect all 9.
 
-## Risk Mitigation
-
-### Testing Strategy
-- **Unit Tests:** Vitest for all packages (target: 85% coverage)
-- **Integration Tests:** Playwright for cross-package workflows
-- **Snapshot Tests:** For UI component consistency
-
-### Breaking Change Management
-- Semver major releases only for breaking changes
-- Deprecation warnings in minor versions
-- Migration guides for major versions
-
-### CI/CD Pipeline
-- **Commit Checks:** Biome linting, TypeScript type-checking
-- **Test Stage:** All tests pass on PR
-- **Build Stage:** Package compilation and distribution
-- **Publish Stage:** Changesets-based releases
+**Status:** ✅ Implemented (2026-05-09) — 4 new templates added (`simple-escrow`, `multi-sig-wallet`, `name-registry`, `ballot`) to `cfx-solidity/packages/compiler/src/templates/`. Registry now has 9 entries total. Typechecks pass.
 
 ---
 
-## Success Criteria
+### GAP 5 — Missing MCP tool groups 🟡 MEDIUM
+**Location:** `cfx-tools/packages/mcp-server/src/tools/`  
+**Current:** 33 tools — accounts, blockchain (eSpace), compiler, keystore, node, wallet  
+**Missing:**
 
-### Completion Milestones
-- [ ] All Tier 0 packages have functional implementations (not stubs)
-- [ ] All Tier 1 packages have full CLI/MCP/tooling functionality
-- [ ] Test coverage ≥ 80% for all new implementations
-- [ ] Documentation complete for all public APIs
-- [ ] CI/CD pipelines passing for all packages
+| Group | Tools to add | Description |
+|---|---|---|
+| **Core Space blockchain** | `cfxdevkit_blockchain_core_get_balance`, `_get_block_number`, `_get_chain_id`, `_call_contract`, `_read_erc20`, `_send_cfx`, `_write_contract`, `_deploy_contract`, `_erc20_transfer`, `_erc20_approve` | Mirrors eSpace tool set but for Core Space via cive |
+| **Contract tracking** | `cfxdevkit_contracts_list`, `_contract_info`, `_contract_call`, `_contract_write` | Read deployments store, call/write a tracked contract |
+| **Bootstrap catalog** | `cfxdevkit_bootstrap_catalog`, `_bootstrap_deploy` | List and deploy production template contracts |
+| **Agent health** | `cfxdevkit_backend_health`, `cfxdevkit_agent_operation_get`, `cfxdevkit_agent_operations_recent` | Check devnode-server health, retrieve op ledger entries |
+| **Project scripts** | `cfxdevkit_project_script_run`, `cfxdevkit_project_dev_server_status` | Run package.json scripts, check dev server status |
+| **DEX** | `cfxdevkit_dex_source_pools` | Fetch Swappi pool data from devnode or testnet |
+| **Workspace logs** | `cfxdevkit_workspace_logs` | Tail log output from running services |
 
-### Quality Gates
-- [ ] No `stub`/`TODO`/`placeholder` comments in implementation files
-- [ ] All public APIs documented in `API.md` files
-- [ ] Example applications running successfully
-- [ ] Security audit passed for key packages
-
----
-
-## Post-Implementation Roadmap
-
-### Tier 2 (Domains) - Future Phases
-- `@cfxdevkit/automation` - Workflow automation engine
-- `@cfxdevkit/game-engine` - Blockchain game development
-- `@cfxdevkit/hardware-bridge` - Hardware wallet integration
-
-### Tier 3 (Projects) - Application Focus
-- Production applications leveraging Tier 0/1 packages
-- Project-specific domain packages extracted from usage
+**Status:** ❌ Not started
 
 ---
 
-## Timeline Summary
+### GAP 6 — Scaffold CLI completeness ✅ DONE
+**Location:** `cfx-tools/packages/create/src/`  
+**Current:** Non-interactive, 1 template  
+**Devkit source:** `devkit-workspace/packages/scaffold-cli` + `devkit-workspace/packages/template-core`
 
-| Phase | Duration | Focus |
-|-------|----------|-------|
-| Phase 1 | Weeks 1-4 | Core framework completeness |
-| Phase 2 | Weeks 5-8 | React/Theme ecosystem |
-| Phase 3 | Weeks 9-11 | Platform tooling enhancement |
-| Phase 4 | Week 12 | Integration & documentation |
+**Missing features:**
 
-**Total Estimated Time:** 12 weeks (3 months)
+| Feature | Description |
+|---|---|
+| Interactive mode | `@inquirer/prompts` — ask template + target when args not provided |
+| Template: `minimal-dapp` | Vite + React + wagmi, no backend |
+| Template: `wallet-probe` | Wallet detection + signing demo only |
+| Template: `project-example` | Full-stack: frontend + backend + contracts |
+| Target: `devcontainer` | `.devcontainer/` setup for VS Code / Codespaces |
+| Target: `docker` | `docker-compose.yml` + `Dockerfile` production target |
+| Template+target matrix | Any template × any target = valid combination |
+
+**Status:** ✅ Implemented (2026-05-09) — 3 real templates (`minimal-dapp`, `wallet-probe`, `project-example`) with inline file content. Legacy aliases (`basic`, `react`, `solidity`) kept. `devcontainer` + `docker` targets supported. `getTemplateFiles(template, target)` exported. `--target` and `--skip-install` CLI flags added. All 21 tests pass.
 
 ---
 
-## Notes
+### GAP 7 — Shared UI components 🟢 LOW
+**Location:** No equivalent in framework yet  
+**Devkit source:** `devkit-workspace/packages/ui-shared/src/`
 
-- This plan assumes dedicated development resources
-- Phases can be partially overlapping with appropriate prioritization
-- Priority order can be adjusted based on business requirements
-- Regular stakeholder reviews recommended every 2 weeks
+Used by `dex-ui` and the VSCode extension webview. Decision needed before starting:
+- Option A: New `cfx-ui/packages/ui-shared` package
+- Option B: Absorb into `defi-react` (less overhead)
+
+**Missing components:** `Button`, `Card`, `Badge`, `Tabs`, `ConnectButton`, `Faucet`, `TradeActionBar`, `SwapInput`, `TokenBalance`, `TokenIcon`, `NetworkBadge`, `useAuth`
+
+**Depends on:** GAP 2 (theme) + GAP 3 (defi-react) design decision.
+
+**Status:** ✅ Implemented (2026-05-09) — rolled into `@cfxdevkit/defi-react/primitives` (Option B). Exports: `Button`, `Card`, `Badge`, `Tabs`, `NetworkBadge`.
+
+---
+
+### GAP 8 — `switchConfluxChain` utility ✅ DONE
+**Location:** `cfx-ui/packages/wallet-connect/src/`  
+**Devkit source:** `devkit-workspace/packages/conflux-wallet/src/switchChain.ts`
+
+Calls `wallet_addEthereumChain` / `wallet_switchEthereumChain` with Conflux chain params. ~30 lines. Everything else from `conflux-wallet` is already ported.
+
+**Status:** ✅ Implemented (2026-05-09) — `switchEspaceChain(provider, chain)` and `switchEspaceChainFromConfig(provider, chainConfig)` in `cfx-ui/packages/wallet-connect/src/lib/switchConfluxChain.ts`. Handles 4902 (chain not added) by calling `wallet_addEthereumChain`. Exported from `src/index.ts`.
+
+---
+
+## Implementation Order
+
+```
+GAP 1  @cfxdevkit/react         ✅ done  (unblocked GAP 3)
+GAP 2  @cfxdevkit/theme         ✅ done
+GAP 3  @cfxdevkit/defi-react    ✅ done  (after GAP 1 + GAP 2)
+GAP 7  ui-shared components     ✅ done  (rolled into defi-react/primitives)
+GAP 4  compiler templates       ✅ done  (9 templates total)
+GAP 6  scaffold-cli             ✅ done  (3 real templates + 2 targets)
+GAP 8  switchConfluxChain       ✅ done  (eSpace chain switching utility)
+```
+
+---
+
+## What Does NOT Need Porting
+
+| Devkit item | Reason |
+|---|---|
+| `devkit/packages/react` UI components (AccountCard, AppNavBar, etc.) | New design is hooks-only; UI lives in `defi-react` / `wallet-connect/ui` |
+| `devkit-workspace/packages/devkit-backend` full REST API | Split into `devnode-server` + `mcp-server`; REST API was VSCode-extension-internal |
+| ConnectKit integration | Not used; framework uses wagmi injected connector |
+| `devkit-workspace/packages/devkit-base` artifacts | Replaced by proper package build pipeline |
+| `devkit-workspace/packages/shared` typed HTTP client | Replaced by MCP tools as primary AI interface |
+
+---
+
+## Verification Checklist (per gap, before closing)
+
+- [ ] `pnpm --filter <package> typecheck` passes
+- [ ] `pnpm --filter <package> build` produces `dist/`
+- [ ] `pnpm --filter <package> test` passes
+- [ ] No `TODO` / `FIXME` / stub comments in new files
+- [ ] `API.md` matches implementation
+- [ ] Imported by at least one downstream package or example

@@ -6,30 +6,18 @@ export function JobsTable({ jobs, executions, busy, onCancel, onExecutions }: Jo
   if (jobs.length === 0) return <div className="empty-state">No jobs loaded.</div>;
 
   return (
-    <table className="table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Type</th>
-          <th>Status</th>
-          <th>Params</th>
-          <th>Updated</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {jobs.map((job) => (
-          <JobRow
-            key={job.id}
-            job={job}
-            executions={executions[job.id] ?? []}
-            onCancel={() => onCancel(job.id)}
-            onExecutions={() => onExecutions(job.id)}
-            busy={busy}
-          />
-        ))}
-      </tbody>
-    </table>
+    <div className="job-card-list">
+      {jobs.map((job) => (
+        <JobCard
+          key={job.id}
+          job={job}
+          executions={executions[job.id] ?? []}
+          onCancel={() => onCancel(job.id)}
+          onExecutions={() => onExecutions(job.id)}
+          busy={busy}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -41,17 +29,28 @@ export interface JobsTableProps {
   onExecutions: (id: string) => void;
 }
 
-function JobRow({ job, executions, onCancel, onExecutions, busy }: JobRowProps) {
+function JobCard({ job, executions, onCancel, onExecutions, busy }: JobRowProps) {
+  const params = job.params as Record<string, unknown>;
+  const pair = `${shortToken(params.tokenIn)} -> ${shortToken(params.tokenOut)}`;
   return (
-    <tr>
-      <td className="mono">{job.id}</td>
-      <td>{job.type}</td>
-      <td>
+    <article className="job-card">
+      <div className="job-card-main">
+        <div>
+          <span className="job-kind">{job.type.replace('_', ' ')}</span>
+          <h3>{pair}</h3>
+          <p className="mono">{job.id}</p>
+        </div>
         <span className={`status-pill ${job.status}`}>{job.status}</span>
-      </td>
-      <td className="mono">{JSON.stringify(job.params)}</td>
-      <td>{new Date(job.updatedAt).toLocaleString()}</td>
-      <td>
+      </div>
+      <div className="job-card-meta">
+        <span>{primaryAmount(job)}</span>
+        <span>Updated {new Date(job.updatedAt).toLocaleString()}</span>
+      </div>
+      <details className="job-card-details">
+        <summary>Strategy parameters</summary>
+        <pre className="mono">{JSON.stringify(job.params, null, 2)}</pre>
+      </details>
+      <div className="job-card-actions">
         <div className="inline-actions">
           <IconButton title="Load executions" onClick={onExecutions} disabled={busy}>
             <RefreshCw size={16} />
@@ -64,21 +63,32 @@ function JobRow({ job, executions, onCancel, onExecutions, busy }: JobRowProps) 
             <Ban size={16} />
           </IconButton>
         </div>
-        {executions.length > 0 ? (
-          <div className="executions with-top-gap">
-            {executions.map((execution) => (
-              <div className="execution-row" key={execution.id}>
-                <span className="mono">{execution.txHash}</span>
-                <span>
-                  {execution.amountOut ? `amount out ${execution.amountOut}` : 'amount out n/a'}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </td>
-    </tr>
+      </div>
+      {executions.length > 0 ? (
+        <div className="executions with-top-gap">
+          {executions.map((execution) => (
+            <div className="execution-row" key={execution.id}>
+              <span className="mono">{execution.txHash}</span>
+              <span>
+                {execution.amountOut ? `amount out ${execution.amountOut}` : 'amount out n/a'}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </article>
   );
+}
+
+function shortToken(value: unknown): string {
+  const raw = String(value ?? 'token');
+  return raw.startsWith('0x') ? `${raw.slice(0, 6)}...${raw.slice(-4)}` : raw;
+}
+
+function primaryAmount(job: CasJobDto): string {
+  const params = job.params as Record<string, unknown>;
+  if (job.type === 'dca') return `Amount per swap ${String(params.amountPerSwap ?? 'n/a')}`;
+  return `Amount ${String(params.amountIn ?? 'n/a')}`;
 }
 
 interface JobRowProps {

@@ -1,14 +1,15 @@
 'use client';
 
-import { WalletPickerModal } from '@cfxdevkit/wallet-connect/ui';
 import { Activity, LayoutDashboard, LogOut, ShieldCheck, Wallet, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useAccount, useChainId, useDisconnect, useSwitchChain } from 'wagmi';
 import { useAuthContext } from '../app/auth-context';
+import { readTargetEspaceChain } from '../lib/ethereum';
+import { EspaceWalletModal } from './EspaceWalletModal';
 
-const TARGET_CHAIN_ID = readTargetChainId();
+const TARGET_CHAIN = readTargetEspaceChain();
 
 export function CasNavBar() {
   const pathname = usePathname();
@@ -19,10 +20,11 @@ export function CasNavBar() {
   const { isAdmin, isLoading, login, logout, token } = useAuthContext();
   const [modalOpen, setModalOpen] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const wrongChain = isConnected && chainId !== TARGET_CHAIN_ID;
+  const wrongChain = isConnected && chainId !== TARGET_CHAIN.chainId;
 
   const links = [
     { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+    ...(token ? [{ href: '/create', label: 'Create', icon: <Zap size={16} /> }] : []),
     { href: '/status', label: 'Status', icon: <Activity size={16} /> },
     ...(isAdmin ? [{ href: '/safety', label: 'Safety', icon: <ShieldCheck size={16} /> }] : []),
   ];
@@ -65,7 +67,7 @@ export function CasNavBar() {
             className="button"
             type="button"
             disabled={isSwitching}
-            onClick={() => switchChain({ chainId: TARGET_CHAIN_ID })}
+            onClick={() => switchChain({ chainId: TARGET_CHAIN.chainId })}
           >
             {isSwitching ? 'Switching...' : 'Switch network'}
           </button>
@@ -95,17 +97,11 @@ export function CasNavBar() {
         )}
       </div>
 
-      <WalletPickerModal open={modalOpen} onClose={() => setModalOpen(false)} section="espace" />
+      <EspaceWalletModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </header>
   );
 }
 
 function shortAddress(address: string | undefined): string {
   return address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Signed in';
-}
-
-function readTargetChainId(): number {
-  if (process.env.NEXT_PUBLIC_CAS_NETWORK === 'mainnet') return 1030;
-  if (process.env.NEXT_PUBLIC_CAS_NETWORK === 'local') return 2030;
-  return 71;
 }

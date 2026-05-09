@@ -5,6 +5,7 @@ export * from './config/index.js';
 export * from './hooks/index.js';
 export * from './lib/coreWalletPrimitives.js';
 export * from './lib/err.js';
+export * from './lib/switchConfluxChain.js';
 export * from './lib/walletState.js';
 export * from './siwe/index.js';
 export * from './ui/index.js';

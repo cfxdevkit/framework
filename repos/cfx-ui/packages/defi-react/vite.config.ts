@@ -4,13 +4,26 @@ import dts from 'vite-plugin-dts';
 const reactExternals = new Set(['react', 'react-dom', 'react/jsx-runtime']);
 
 export default defineConfig({
+  esbuild: {
+    jsx: 'automatic',
+  },
   build: {
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+        'swap/index': 'src/swap/index.ts',
+        'balance/index': 'src/balance/index.ts',
+        'token-picker/index': 'src/token-picker/index.ts',
+        'tx-status/index': 'src/tx-status/index.ts',
+        'primitives/index': 'src/primitives/index.tsx',
+      },
       formats: ['es'],
-      fileName: () => 'index.js',
     },
     rollupOptions: {
+      output: {
+        entryFileNames: '[name].js',
+        chunkFileNames: 'chunks/[name]-[hash].js',
+      },
       external: (id) => reactExternals.has(id) || (!id.startsWith('.') && !id.startsWith('/')),
     },
     sourcemap: true,

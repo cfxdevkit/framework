@@ -139,6 +139,18 @@ export class SqliteWorkerHeartbeatStore {
         : {}),
     };
   }
+
+  update(snapshot: WorkerHeartbeatSnapshot): void {
+    this.#sqlite
+      .prepare(
+        `INSERT INTO worker_heartbeat (id, last_seen_at, worker_pid)
+           VALUES (1, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             last_seen_at = excluded.last_seen_at,
+             worker_pid = excluded.worker_pid`,
+      )
+      .run(snapshot.lastSeenAt, snapshot.workerPid ?? null);
+  }
 }
 
 function initializeCasSqliteSchema(sqlite: SqliteHandle): void {
@@ -148,6 +160,12 @@ function initializeCasSqliteSchema(sqlite: SqliteHandle): void {
       address TEXT NOT NULL,
       expires_at INTEGER NOT NULL,
       used INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS worker_heartbeat (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      last_seen_at INTEGER NOT NULL,
+      worker_pid INTEGER
     );
   `);
 }

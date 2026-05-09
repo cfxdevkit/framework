@@ -5,9 +5,13 @@
  * minimal — for production use, callers can compile their own sources.
  */
 import type { Source } from '../types.js';
+import { BALLOT_PATH, BALLOT_SOURCE } from './ballot/source.js';
 import { EXAMPLE_COUNTER_PATH, EXAMPLE_COUNTER_SOURCE } from './counter/source.js';
 import { BASIC_ERC20_PATH, BASIC_ERC20_SOURCE } from './erc20/source.js';
 import { BASIC_ERC721_PATH, BASIC_ERC721_SOURCE } from './erc721/source.js';
+import { SIMPLE_ESCROW_PATH, SIMPLE_ESCROW_SOURCE } from './escrow/source.js';
+import { MULTI_SIG_WALLET_PATH, MULTI_SIG_WALLET_SOURCE } from './multisig/source.js';
+import { NAME_REGISTRY_PATH, NAME_REGISTRY_SOURCE } from './registry/source.js';
 import { SIMPLE_STORAGE_PATH, SIMPLE_STORAGE_SOURCE } from './storage/source.js';
 import { PAYABLE_VAULT_PATH, PAYABLE_VAULT_SOURCE } from './vault/source.js';
 
@@ -96,12 +100,70 @@ const PAYABLE_VAULT: TemplateMeta = {
   sources: [{ path: PAYABLE_VAULT_PATH, content: PAYABLE_VAULT_SOURCE }],
 };
 
+const SIMPLE_ESCROW: TemplateMeta = {
+  id: 'simple-escrow',
+  name: 'Simple Escrow',
+  description:
+    'Three-party escrow (buyer, seller, arbiter). Buyer deposits at deploy time; arbiter calls release() or refund().',
+  contractName: 'SimpleEscrow',
+  solcVersion: '0.8.26',
+  evmVersion: 'paris',
+  constructorArgs: [
+    { name: 'seller_', type: 'address' },
+    { name: 'arbiter_', type: 'address' },
+  ],
+  sources: [{ path: SIMPLE_ESCROW_PATH, content: SIMPLE_ESCROW_SOURCE }],
+};
+
+const MULTI_SIG_WALLET: TemplateMeta = {
+  id: 'multi-sig-wallet',
+  name: 'Multi-Sig Wallet',
+  description:
+    'M-of-N multi-signature wallet. Owners submit, confirm, revoke, and execute transactions.',
+  contractName: 'MultiSigWallet',
+  solcVersion: '0.8.26',
+  evmVersion: 'paris',
+  constructorArgs: [
+    { name: 'owners_', type: 'address[]' },
+    { name: 'required_', type: 'uint256', defaultValue: '2' },
+  ],
+  sources: [{ path: MULTI_SIG_WALLET_PATH, content: MULTI_SIG_WALLET_SOURCE }],
+};
+
+const NAME_REGISTRY: TemplateMeta = {
+  id: 'name-registry',
+  name: 'Name Registry',
+  description:
+    'On-chain name → address mapping. First-come-first-served. Supports update, ownership transfer, and release.',
+  contractName: 'NameRegistry',
+  solcVersion: '0.8.26',
+  evmVersion: 'paris',
+  constructorArgs: [],
+  sources: [{ path: NAME_REGISTRY_PATH, content: NAME_REGISTRY_SOURCE }],
+};
+
+const BALLOT: TemplateMeta = {
+  id: 'ballot',
+  name: 'Ballot',
+  description:
+    'Weighted-vote ballot with delegation. Chairperson grants rights; voters can delegate or cast their vote.',
+  contractName: 'Ballot',
+  solcVersion: '0.8.26',
+  evmVersion: 'paris',
+  constructorArgs: [{ name: 'proposalNames', type: 'bytes32[]' }],
+  sources: [{ path: BALLOT_PATH, content: BALLOT_SOURCE }],
+};
+
 const REGISTRY = new Map<string, TemplateMeta>([
   [BASIC_ERC20.id, BASIC_ERC20],
   [BASIC_ERC721.id, BASIC_ERC721],
   [EXAMPLE_COUNTER.id, EXAMPLE_COUNTER],
   [SIMPLE_STORAGE.id, SIMPLE_STORAGE],
   [PAYABLE_VAULT.id, PAYABLE_VAULT],
+  [SIMPLE_ESCROW.id, SIMPLE_ESCROW],
+  [MULTI_SIG_WALLET.id, MULTI_SIG_WALLET],
+  [NAME_REGISTRY.id, NAME_REGISTRY],
+  [BALLOT.id, BALLOT],
 ]);
 
 /** Look up a template by id. Throws if unknown. */

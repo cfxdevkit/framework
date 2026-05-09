@@ -167,3 +167,10 @@
   display: grid;
   gap: 12px;
 }
+
+.create-layout {
+  width: min(980px, calc(100% - 32px));
+  margin: 16px auto;
+  display: grid;
+  gap: 12px;
+}

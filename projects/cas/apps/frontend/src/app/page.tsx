@@ -1,10 +1,10 @@
 'use client';
 
-import { WalletPickerModal } from '@cfxdevkit/wallet-connect/ui';
 import { ArrowRight, ShieldCheck, Wallet, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
+import { EspaceWalletModal } from '../components/EspaceWalletModal';
 import { useAuthContext } from './auth-context';
 
 // biome-ignore lint/style/noDefaultExport: Next.js app router requires a default page export.
@@ -85,7 +85,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <WalletPickerModal open={walletOpen} onClose={() => setWalletOpen(false)} section="espace" />
+      <EspaceWalletModal open={walletOpen} onClose={() => setWalletOpen(false)} />
     </section>
   );
 }

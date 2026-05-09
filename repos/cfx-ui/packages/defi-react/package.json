@@ -12,6 +12,26 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./swap": {
+      "types": "./dist/swap/index.d.ts",
+      "import": "./dist/swap/index.js"
+    },
+    "./balance": {
+      "types": "./dist/balance/index.d.ts",
+      "import": "./dist/balance/index.js"
+    },
+    "./token-picker": {
+      "types": "./dist/token-picker/index.d.ts",
+      "import": "./dist/token-picker/index.js"
+    },
+    "./tx-status": {
+      "types": "./dist/tx-status/index.d.ts",
+      "import": "./dist/tx-status/index.js"
+    },
+    "./primitives": {
+      "types": "./dist/primitives/index.d.ts",
+      "import": "./dist/primitives/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -33,7 +53,9 @@
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/theme": "workspace:^",
     "@cfxdevkit/tsconfig": "workspace:*",
+    "@tanstack/react-query": "^5.100.9",
     "@types/node": "^25.6.0",
+    "viem": "^2.21.0",
     "@types/react": "^19.2.14",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",
@@ -42,12 +64,11 @@
   },
   "peerDependencies": {
     "@cfxdevkit/theme": "workspace:^",
+    "@tanstack/react-query": "^5.100.9",
     "react": "^19.2.5"
   },
   "dependencies": {
     "@cfxdevkit/core": "workspace:^",
-    "@cfxdevkit/react": "workspace:^",
-    "@cfxdevkit/services": "workspace:^",
-    "@cfxdevkit/wallet-connect": "workspace:^"
+    "@cfxdevkit/react": "workspace:^"
   }
 }

@@ -1,15 +1,14 @@
 'use client';
 
 import type { CasExecutionDto, CasHealthResponse, CasJobDto } from '@cfxdevkit/cas-shared';
-import { WalletPickerModal } from '@cfxdevkit/wallet-connect/ui';
-import { Activity, RefreshCw, Save } from 'lucide-react';
+import { Activity, Plus, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { useChainId, useSwitchChain } from 'wagmi';
 import { useAuthContext } from '../app/auth-context';
-import { ESPACE_CHAINS } from '../lib/ethereum';
+import { readTargetEspaceChain } from '../lib/ethereum';
+import { EspaceWalletModal } from './EspaceWalletModal';
 import { JobsTable } from './JobsTable';
-import { StrategyBuilder } from './StrategyBuilder';
-import { SystemAdminPanel } from './SystemAdminPanel';
 import {
   AppShell,
   IconButton,
@@ -23,20 +22,10 @@ import {
 } from './ui';
 import { WalletPanel } from './WalletPanel';
 
-const DEFAULT_NETWORK = process.env.NEXT_PUBLIC_CAS_NETWORK === 'mainnet' ? 'mainnet' : 'testnet';
-const TARGET_CHAIN = ESPACE_CHAINS[DEFAULT_NETWORK];
+const TARGET_CHAIN = readTargetEspaceChain();
 
 export function CasConsole() {
-  const {
-    address: account,
-    apiBase,
-    client,
-    isAdmin,
-    login,
-    logout,
-    setApiBase,
-    token,
-  } = useAuthContext();
+  const { address: account, apiBase, client, login, logout, token } = useAuthContext();
   const chainId = useChainId();
   const { switchChain: switchWagmiChain } = useSwitchChain();
   const [health, setHealth] = useState<CasHealthResponse | null>(null);
@@ -95,12 +84,6 @@ export function CasConsole() {
     return () => source.close();
   }, [client, token]);
 
-  const saveConnection = () => {
-    window.localStorage.setItem('cas.apiBase', apiBase);
-    setApiBase(apiBase);
-    setMessage('API base URL saved');
-  };
-
   const connectWallet = async () => {
     setWalletModalOpen(true);
   };
@@ -144,20 +127,15 @@ export function CasConsole() {
           brand={
             <>
               <h1>CAS Strategy Console</h1>
-              <span>Wallet, pools, on-chain registration, and keeper job tracking</span>
+              <span>Keeper jobs, execution history, and runtime health</span>
             </>
           }
           actions={
             <>
-              <input
-                className="input api-base-input"
-                aria-label="CAS API base URL"
-                value={apiBase}
-                onChange={(event) => setApiBase(event.target.value)}
-              />
-              <IconButton title="Save settings" onClick={saveConnection}>
-                <Save size={17} />
-              </IconButton>
+              <Link className="button primary" href="/create">
+                <Plus size={17} />
+                New strategy
+              </Link>
               <IconButton title="Refresh health" onClick={refreshHealth} disabled={busy}>
                 <RefreshCw size={17} />
               </IconButton>
@@ -175,7 +153,9 @@ export function CasConsole() {
                   <Metric label="Session" value={isAuthenticated ? 'signed in' : 'not signed in'} />
                 </StatusGrid>
                 <PanelBody>
-                  <Notice>{health?.storage.path ?? 'Backend health has not loaded yet.'}</Notice>
+                  <Notice>
+                    {health ? `API base: ${apiBase}` : 'Backend health has not loaded yet.'}
+                  </Notice>
                   {error ? (
                     <Notice tone="error">{error}</Notice>
                   ) : (
@@ -195,23 +175,10 @@ export function CasConsole() {
                 onSignIn={signIn}
                 onSignOut={signOut}
               />
-
-              <SystemAdminPanel
-                client={client}
-                isAuthenticated={isAuthenticated}
-                isAdmin={isAdmin}
-              />
             </>
           }
         >
           <div className="stack">
-            <StrategyBuilder
-              jobs={jobs}
-              onJobCreated={(job) =>
-                setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)])
-              }
-            />
-
             <Panel
               title="Jobs"
               actions={
@@ -237,7 +204,7 @@ export function CasConsole() {
           </div>
         </MainGrid>
       </AppShell>
-      <WalletPickerModal open={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
+      <EspaceWalletModal open={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
     </>
   );
 }

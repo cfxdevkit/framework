@@ -2,6 +2,7 @@ import type { CasPairInfo, CasPoolsResponse, CasTokenInfo } from '@cfxdevkit/cas
 import type { Router } from 'express';
 import express from 'express';
 import type { CasBackendState } from '../types.js';
+import { readFallbackPools } from './pool-fallback.js';
 
 const GECKO_BASE_URL = 'https://api.geckoterminal.com/api/v2';
 const GECKO_HEADERS = {
@@ -67,7 +68,7 @@ async function readPools(state: CasBackendState): Promise<CasPoolsResponse> {
 
 async function fetchPools(state: CasBackendState): Promise<CasPoolsResponse> {
   if (state.config.network === 'mainnet') return fetchPoolsFromGecko();
-  return { tokens: [], pairs: [], cachedAt: Date.now() };
+  return readFallbackPools({ network: state.config.network, rpcUrl: state.config.rpcUrl });
 }
 
 interface GeckoTokenResource {

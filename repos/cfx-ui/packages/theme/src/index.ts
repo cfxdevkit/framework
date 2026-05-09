@@ -1,3 +1,4 @@
-// Public surface for @cfxdevkit/theme.
-// Implementations land here as the package is filled in. See ./API.md.
+// Public surface for @cfxdevkit/theme — re-exports tokens and ThemeProvider.
 export const __packageName = '@cfxdevkit/theme' as const;
+export * from './react.js';
+export * from './tokens.js';

@@ -95,8 +95,9 @@ export function useStrategyBuilder(
       draft.tokenIn,
       contracts.wcfxAddress,
     );
-    if (options.length > 0 && options[0]!.address !== draft.tokenOut) {
-      setDraft((d) => ({ ...d, tokenOut: options[0]!.address }));
+    const nextTokenOut = options[0];
+    if (nextTokenOut && nextTokenOut.address !== draft.tokenOut) {
+      setDraft((d) => ({ ...d, tokenOut: nextTokenOut.address }));
     }
   }, [draft.tokenIn, draft.tokenOut, contracts.wcfxAddress, pairs, tokens]);
 
