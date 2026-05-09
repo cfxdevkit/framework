@@ -61,9 +61,9 @@ export function useWatchEvent(input: UseWatchEventInput): void {
     let stopped = false;
     let fromBlock: `0x${string}` = '0x0';
 
-    // Build topic filter for the specific event — cast to any to bypass viem's strict generic
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const topics = encodeEventTopics({ abi, eventName, args } as any) as Hex[];
+    // Build topic filter for the specific event — use inferred parameter type
+    type EncodeArgs = Parameters<typeof encodeEventTopics>[0];
+    const topics = encodeEventTopics({ abi, eventName, args } as EncodeArgs) as Hex[];
 
     const poll = async () => {
       if (stopped) return;

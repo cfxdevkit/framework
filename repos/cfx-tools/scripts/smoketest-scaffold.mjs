@@ -3,8 +3,7 @@
  * Scaffold smoketest: scaffolds minimal-dapp, installs deps, and builds.
  * Run via: node scripts/smoketest-scaffold.mjs
  */
-import { spawnSync } from 'node:child_process';
-import { mkdirSync, rmSync, existsSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { scaffoldProject } from '../packages/scaffold-cli/dist/scaffold.js';

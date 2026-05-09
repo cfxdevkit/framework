@@ -1,6 +1,6 @@
 import type { Hash, TxReceipt } from '@cfxdevkit/core/types';
 import { useWaitForTransaction } from '@cfxdevkit/react/tx';
-import type { TrackedTx, TxStatus } from '../types.js';
+import type { TxStatus } from '../types.js';
 
 export interface TxStatusToastProps {
   hash: Hash;

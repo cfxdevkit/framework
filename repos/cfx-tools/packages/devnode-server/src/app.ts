@@ -4,6 +4,7 @@ import { ContractRegistry } from './contracts.js';
 import { DevnodeServerController } from './controller.js';
 import { KeystoreService } from './keystore.js';
 import { NetworkState } from './network.js';
+import { createBootstrapRoutes } from './routes/bootstrap.js';
 import { createAccountsRoutes } from './routes/accounts.js';
 import { createContractsRoutes } from './routes/contracts.js';
 import { createKeystoreRoutes } from './routes/keystore.js';
@@ -70,6 +71,7 @@ export function createDevnodeServerApp(options: DevnodeServerAppOptions = {}): H
   app.route('/contracts', createContractsRoutes(contracts));
   app.route('/network', createNetworkRoutes(network));
   app.route('/mining', createMiningRoutes(controller));
+  app.route('/bootstrap', createBootstrapRoutes(controller, contracts));
 
   return app;
 }

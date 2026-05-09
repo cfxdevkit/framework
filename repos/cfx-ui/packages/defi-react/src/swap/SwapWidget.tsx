@@ -1,7 +1,7 @@
 import type { Address } from '@cfxdevkit/core/types';
 import { useAccount } from '@cfxdevkit/react/account';
 import { useTokenBalance } from '@cfxdevkit/react/balance';
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import type { DexAdapter, TokenInfo } from '../types.js';
 import { useSwap } from './useSwap.js';
 

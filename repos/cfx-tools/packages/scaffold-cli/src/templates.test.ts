@@ -36,17 +36,21 @@ describe('getTemplate', () => {
 
 describe('getTemplateFiles', () => {
   it('returns base files for default target', () => {
-    const template = getTemplate('minimal-dapp')!;
-    const files = getTemplateFiles(template, 'default');
+    const template = getTemplate('minimal-dapp');
+    expect(template).toBeDefined();
+    const template_ = template as NonNullable<typeof template>;
+    const files = getTemplateFiles(template_, 'default');
     expect(files.length).toBeGreaterThan(0);
     expect(files.every((f) => typeof f.path === 'string' && typeof f.content === 'string')).toBe(
       true,
     );
   });
   it('merges devcontainer extra files', () => {
-    const template = getTemplate('minimal-dapp')!;
-    const base = getTemplateFiles(template, 'default');
-    const dc = getTemplateFiles(template, 'devcontainer');
+    const template = getTemplate('minimal-dapp');
+    expect(template).toBeDefined();
+    const template_ = template as NonNullable<typeof template>;
+    const base = getTemplateFiles(template_, 'default');
+    const dc = getTemplateFiles(template_, 'devcontainer');
     expect(dc.length).toBeGreaterThan(base.length);
     expect(dc.some((f) => f.path.includes('devcontainer'))).toBe(true);
   });

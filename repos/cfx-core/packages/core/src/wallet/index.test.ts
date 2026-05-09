@@ -169,7 +169,7 @@ describe('signerFromPrivateKey / coreNetworkId', () => {
 
   it('signTransaction with family: core delegates to Core Space signer', async () => {
     const signer = signerFromPrivateKey(privateKey, 1);
-    const coreAddress = signer.account.coreAddress!;
+    const coreAddress = signer.account.coreAddress ?? '';
     const sig = await signer.signTransaction({
       family: 'core',
       chainId: 1,

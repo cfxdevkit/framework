@@ -7,6 +7,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "cfxdevkit-mcp": "./dist/bin/server.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -26,7 +29,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src",
-    "clean": "rm -rf dist .vitest coverage"
+    "clean": "rm -rf dist .vitest coverage",
+    "test:smoke": "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{},\"clientInfo\":{\"name\":\"smoke\",\"version\":\"1\"}}}' | node dist/bin/server.js"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",
@@ -39,12 +43,15 @@
     "vitest": "^4.1.5"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@cfxdevkit/compiler": "workspace:^",
     "@cfxdevkit/contracts": "workspace:^",
     "@cfxdevkit/core": "workspace:^",
+    "@cfxdevkit/create": "workspace:^",
     "@cfxdevkit/devnode": "workspace:^",
     "@cfxdevkit/protocol": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
-    "@cfxdevkit/wallet": "workspace:^"
+    "@cfxdevkit/wallet": "workspace:^",
+    "viem": "^2.0.0"
   }
 }

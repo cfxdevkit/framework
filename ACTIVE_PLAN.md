@@ -306,7 +306,7 @@ Only port if compatible with the framework's CSS-variable-based theme and the `D
 
 ## GAP E — ui-shared: Missing Components
 
-**Status:** 🟡 In Progress (Group 1 done; Groups 2-4 pending)  
+**Status:** ✅ Done  
 **Priority:** 5 (parallel to GAP J-partial)  
 **Location:** `repos/cfx-ui/packages/defi-react/src/primitives/` (extend existing) or new package
 
@@ -439,7 +439,7 @@ Wire as a moon task in `cfx-tools`.
 
 ## GAP C — VS Code Extension: Missing Tree Views
 
-**Status:** 🟡 In Progress (mining.start/stop done; tree views pending)  
+**Status:** 🟡 In Progress (mining.start/stop commands done; networkView, nodeView, accountsView tree views pending)  
 **Priority:** 6 (parallel to GAP F, after GAP B routes)  
 **Location:** `repos/cfx-tools/packages/vscode-extension/src/`  
 **Note:** DEX view (`cfxdevkit.dexView`) is **out of scope** — local DEX not in framework.
@@ -527,7 +527,7 @@ cd /tmp && npx @cfxdevkit/create@local my-dapp --template minimal-dapp && cd my-
 | G | SwapService (live Swappi DEX integration) | ✅ Done |
 | D | defi-react DEX hooks (usePoolTokens, useTokenPrice, SwappiAdapter) | ✅ Done |
 | J | LP creation widget (AddLiquidityWidget, PoolShareBadge) | ✅ Done |
-| E | ui-shared components (Input, CopyButton, ConnectButton, FaucetWidget, …) | 🟡 Group 1 done; Groups 2-4 pending |
+| E | ui-shared components (Input, CopyButton, ConnectButton, FaucetWidget, …) | ✅ Done |
 | F | Template fidelity (file-system templates, smoke-test target) | ✅ Done |
-| C | VS Code tree views (networkView, nodeView, accountsView) + commands | 🟡 mining.start/stop done; tree views pending |
+| C | VS Code tree views (networkView, nodeView, accountsView) + commands | 🟡 mining.start/stop done; networkView/nodeView/accountsView pending |
 | A | MCP tools (all groups) | ⏸ POSTPONED |

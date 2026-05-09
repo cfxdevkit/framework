@@ -1,5 +1,4 @@
 import type { Address, Wei } from '@cfxdevkit/core/types';
-import { useNativeBalance, useTokenBalance } from '@cfxdevkit/react/balance';
 import { useClient } from '@cfxdevkit/react/context';
 import { useQueries } from '@tanstack/react-query';
 import { decodeFunctionResult, encodeFunctionData } from 'viem';

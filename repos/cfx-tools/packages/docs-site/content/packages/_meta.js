@@ -1,3 +1,4 @@
+// biome-ignore lint: Nextra requires default export for meta files
 export default {
   index: 'Overview',
   core: '@cfxdevkit/core',

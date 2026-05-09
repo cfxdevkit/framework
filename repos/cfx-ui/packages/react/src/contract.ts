@@ -1,4 +1,4 @@
-import type { Address, BlockTag, Hash, TxReceipt, Wei } from '@cfxdevkit/core/types';
+import type { Address, BlockTag, Hash, Wei } from '@cfxdevkit/core/types';
 import type { UseQueryOptions } from '@tanstack/react-query';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { Abi } from 'viem';

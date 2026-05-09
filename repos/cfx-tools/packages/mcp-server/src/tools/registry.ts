@@ -3,6 +3,7 @@ import { blockchainReadTools, blockchainWriteTools } from './blockchain.js';
 import { compilerTools } from './compiler.js';
 import { keystoreTools } from './keystore.js';
 import { nodeTools } from './node.js';
+import { scaffoldTools } from './scaffold.js';
 import type { McpToolDefinition, McpToolGroup } from './types.js';
 import { walletTools } from './wallet.js';
 
@@ -14,6 +15,7 @@ export const MCP_TOOL_DEFINITIONS = [
   ...compilerTools,
   ...keystoreTools,
   ...walletTools,
+  ...scaffoldTools,
 ] satisfies readonly McpToolDefinition[];
 
 export type McpToolName = (typeof MCP_TOOL_DEFINITIONS)[number]['name'];

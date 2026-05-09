@@ -13,7 +13,7 @@ describe('@cfxdevkit/mcp-server', () => {
   });
 
   it('declares the direct-package MCP tool surface', () => {
-    expect(MCP_TOOL_DEFINITIONS).toHaveLength(33);
+    expect(MCP_TOOL_DEFINITIONS).toHaveLength(37);
     expect(listMcpTools('blockchain-write')).toHaveLength(6);
     expect(getMcpTool('cfxdevkit_compiler_compile_solidity')).toMatchObject({
       packageHints: ['@cfxdevkit/compiler'],

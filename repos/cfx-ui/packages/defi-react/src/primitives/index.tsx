@@ -14,4 +14,8 @@ export * from './devkit.js';
 export * from './feedback.js';
 export * from './form.js';
 export * from './layout.js';
+export * from './navbar.js';
+export * from './navbar-wallet.js';
+export * from './shell.js';
 export * from './trade.js';
+export * from './widgets.js';

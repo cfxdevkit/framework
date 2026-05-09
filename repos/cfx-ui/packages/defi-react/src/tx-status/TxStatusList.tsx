@@ -29,7 +29,7 @@ export function TxListProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const updateStatus = useCallback((hash: Hash, status: TrackedTx['status']) => {
+  const _updateStatus = useCallback((hash: Hash, status: TrackedTx['status']) => {
     setTxs((prev) => prev.map((t) => (t.hash === hash ? { ...t, status } : t)));
   }, []);
 

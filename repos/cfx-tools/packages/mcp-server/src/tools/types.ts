@@ -5,7 +5,8 @@ export type McpToolGroup =
   | 'blockchain-write'
   | 'compiler'
   | 'keystore'
-  | 'wallet-utils';
+  | 'wallet-utils'
+  | 'scaffold';
 
 export type McpToolMutability = 'read' | 'write' | 'admin';
 

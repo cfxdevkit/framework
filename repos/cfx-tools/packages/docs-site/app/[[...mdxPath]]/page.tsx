@@ -16,6 +16,7 @@ const Wrapper = getMDXComponents().wrapper as React.ComponentType<{
   children: React.ReactNode;
 }>;
 
+// biome-ignore lint: Next.js requires default export for pages
 export default async function Page(props: { params: Promise<{ mdxPath: string[] }> }) {
   const params = await props.params;
   const { default: MDXContent, toc, metadata, sourceCode } = await importPage(params.mdxPath);

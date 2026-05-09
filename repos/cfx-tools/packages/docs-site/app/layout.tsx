@@ -35,6 +35,7 @@ const footer = (
   </Footer>
 );
 
+// biome-ignore lint: Next.js requires default export for layout
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>

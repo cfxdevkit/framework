@@ -29,6 +29,8 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
+    "@cfxdevkit/compiler": "workspace:^",
+    "@cfxdevkit/core": "workspace:^",
     "@cfxdevkit/devnode": "workspace:^",
     "hono": "^4.10.8",
     "viem": "^2.21.0"
