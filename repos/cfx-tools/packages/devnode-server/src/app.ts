@@ -1,6 +1,14 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import { ContractRegistry } from './contracts.js';
 import { DevnodeServerController } from './controller.js';
+import { KeystoreService } from './keystore.js';
+import { NetworkState } from './network.js';
+import { createAccountsRoutes } from './routes/accounts.js';
+import { createContractsRoutes } from './routes/contracts.js';
+import { createKeystoreRoutes } from './routes/keystore.js';
+import { createMiningRoutes } from './routes/mining.js';
+import { createNetworkRoutes } from './routes/network.js';
 import type {
   DevnodeMineInput,
   DevnodeRestartInput,
@@ -11,10 +19,15 @@ import type {
 
 export interface DevnodeServerAppOptions extends DevnodeServerControllerOptions {
   controller?: DevnodeServerController;
+  keystorePath?: string;
 }
 
 export function createDevnodeServerApp(options: DevnodeServerAppOptions = {}): Hono {
   const controller = options.controller ?? new DevnodeServerController(options);
+  const keystore = new KeystoreService(options.keystorePath ?? '.devnode-keystore.json');
+  const contracts = new ContractRegistry();
+  const network = new NetworkState();
+
   const app = new Hono();
 
   app.onError((error, context) => {
@@ -51,6 +64,12 @@ export function createDevnodeServerApp(options: DevnodeServerAppOptions = {}): H
       node: await controller.mine(await readJson<DevnodeMineInput>(context)),
     }),
   );
+
+  app.route('/keystore', createKeystoreRoutes(keystore));
+  app.route('/accounts', createAccountsRoutes(controller));
+  app.route('/contracts', createContractsRoutes(contracts));
+  app.route('/network', createNetworkRoutes(network));
+  app.route('/mining', createMiningRoutes(controller));
 
   return app;
 }

@@ -113,6 +113,14 @@
         "icon": "$(flame)"
       },
       {
+        "command": "cfxdevkit.mining.start",
+        "title": "Conflux: Start Continuous Mining"
+      },
+      {
+        "command": "cfxdevkit.mining.stop",
+        "title": "Conflux: Stop Continuous Mining"
+      },
+      {
         "command": "cfxdevkit.viewAccounts",
         "title": "Conflux: View Accounts",
         "icon": "$(person)"

@@ -77,6 +77,12 @@ export function registerCommands(this: ExtensionRuntime): void {
     vscode.commands.registerCommand('cfxdevkit.mineBlocks', () =>
       guard('mineBlocks', () => this.mineBlocks()),
     ),
+    vscode.commands.registerCommand('cfxdevkit.mining.start', () =>
+      guard('mining.start', () => this.startMining()),
+    ),
+    vscode.commands.registerCommand('cfxdevkit.mining.stop', () =>
+      guard('mining.stop', () => this.stopMining()),
+    ),
     vscode.commands.registerCommand('cfxdevkit.viewAccounts', () =>
       guard('viewAccounts', () => this.showAccountsQuickPick()),
     ),

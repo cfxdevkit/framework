@@ -32,6 +32,18 @@
       "types": "./dist/primitives/index.d.ts",
       "import": "./dist/primitives/index.js"
     },
+    "./service": {
+      "types": "./dist/service/index.d.ts",
+      "import": "./dist/service/index.js"
+    },
+    "./pool": {
+      "types": "./dist/pool/index.d.ts",
+      "import": "./dist/pool/index.js"
+    },
+    "./lp": {
+      "types": "./src/lp/index.ts",
+      "import": "./src/lp/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -68,6 +80,7 @@
     "react": "^19.2.5"
   },
   "dependencies": {
+    "@cfxdevkit/abis": "workspace:^",
     "@cfxdevkit/core": "workspace:^",
     "@cfxdevkit/react": "workspace:^"
   }

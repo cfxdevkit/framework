@@ -27,6 +27,12 @@ export const llmCommands = [
     workerArgs: ['ask'],
   },
   {
+    name: 'precommit',
+    description: 'Run hotspot + quality gates only — no LLM call, no commit message',
+    worker: 'lemonade',
+    workerArgs: ['precommit'],
+  },
+  {
     name: 'commit',
     description: 'Run the hardened local LLM commit pipeline',
     worker: 'lemonade',

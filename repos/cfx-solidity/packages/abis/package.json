@@ -12,6 +12,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./swappi": {
+      "types": "./dist/swappi.d.ts",
+      "import": "./dist/swappi.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

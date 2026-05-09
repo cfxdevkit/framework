@@ -30,7 +30,8 @@
   },
   "dependencies": {
     "@cfxdevkit/devnode": "workspace:^",
-    "hono": "^4.10.8"
+    "hono": "^4.10.8",
+    "viem": "^2.21.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",

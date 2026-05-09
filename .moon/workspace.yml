@@ -25,6 +25,8 @@ projects:
   - 'repos/cfx-domain/packages/automation'
   - 'repos/cfx-domain/packages/hardware-bridge'
   - 'repos/cfx-tools/packages/mcp-server'
+  - 'repos/cfx-tools/packages/devnode-server'
+  - 'repos/cfx-tools/packages/client'
   - 'repos/cfx-llm/packages/llm-tools'
   - 'repos/cfx-tools/packages/scaffold-cli'
   - 'repos/cfx-tools/packages/cli'
@@ -39,7 +41,7 @@ projects:
 
 vcs:
   client: 'git'
-  defaultBranch: 'main'
+  defaultBranch: 'dev'
 
 pipeline:
   inheritColorsForPipedTasks: true

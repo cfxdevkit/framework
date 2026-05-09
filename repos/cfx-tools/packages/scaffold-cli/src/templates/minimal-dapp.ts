@@ -88,38 +88,46 @@ export default defineConfig({
 import { createEspaceClient } from '@cfxdevkit/core';
 import { CfxProvider } from '@cfxdevkit/react';
 import { espaceTestnet } from '@cfxdevkit/core/chains';
+import { createCfxConfig } from '@cfxdevkit/wallet-connect';
 import '@cfxdevkit/theme/css';
+import { WagmiProvider } from 'wagmi';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.js';
 
 const client = createEspaceClient({ chain: espaceTestnet });
 const queryClient = new QueryClient();
+const wagmiConfig = createCfxConfig({ appName: '{{name}}' });
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <CfxProvider client={client}>
-        <App />
-      </CfxProvider>
-    </QueryClientProvider>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <CfxProvider client={client}>
+          <App />
+        </CfxProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   </StrictMode>,
 );
 `,
     },
     {
       path: 'src/App.tsx',
-      content: `import { useNativeBalance } from '@cfxdevkit/react/balance';
+      content: `import { ConnectButton } from '@cfxdevkit/wallet-connect/ui';
+import { useAccount } from 'wagmi';
 import { useChain } from '@cfxdevkit/react/context';
 
 export function App() {
   const chain = useChain();
-  const { data: balance } = useNativeBalance({ address: undefined, enabled: false });
+  const { address, isConnected } = useAccount();
 
   return (
     <main style={{ fontFamily: 'var(--cfx-font-sans)', padding: 32 }}>
       <h1>{{name}}</h1>
-      <p>Connected to: <strong>{chain.name}</strong></p>
+      <ConnectButton />
+      {isConnected && <p>Connected: <code>{address}</code></p>}
+      <p>Chain: <strong>{chain.name}</strong></p>
     </main>
   );
 }

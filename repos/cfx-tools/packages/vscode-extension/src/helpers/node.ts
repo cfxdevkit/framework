@@ -133,3 +133,32 @@ export async function mineBlocks(this: ExtensionRuntime): Promise<void> {
   this.log(`Mined ${raw} block(s).`);
   await vscode.window.showInformationMessage(`Mined ${count} block(s).`);
 }
+
+export async function startMining(this: ExtensionRuntime): Promise<void> {
+  if (!this.node?.isRunning()) {
+    throw new Error('The local node must be running to start continuous mining.');
+  }
+  const raw = await vscode.window.showInputBox({
+    title: 'Conflux: Start Continuous Mining',
+    prompt: 'Enter mining interval in milliseconds',
+    value: '2000',
+    validateInput: (value) =>
+      /^\d+$/.test(value) && Number(value) >= 100 ? null : 'Enter a value ≥ 100 ms',
+  });
+  if (!raw) return;
+  const intervalMs = Number(raw);
+  await this.node.startMining(intervalMs);
+  this.log(`Continuous mining started (interval: ${intervalMs}ms).`);
+  void vscode.window.showInformationMessage(
+    `Continuous mining started (${intervalMs}ms interval).`,
+  );
+}
+
+export async function stopMining(this: ExtensionRuntime): Promise<void> {
+  if (!this.node?.isRunning()) {
+    throw new Error('The local node must be running to stop mining.');
+  }
+  await this.node.stopMining();
+  this.log('Continuous mining stopped.');
+  void vscode.window.showInformationMessage('Continuous mining stopped.');
+}

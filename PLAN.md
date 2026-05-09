@@ -1,226 +1,448 @@
 # Porting Plan: DevKit → Framework
 
-**Generated:** 2026-05-09  
+**Updated:** 2026-05-09  
 **Source repos:** `.cfxdevkit/devkit` (12 packages) + `.cfxdevkit/devkit-workspace` (10 packages)  
 **Target repo:** `/workspaces/root` (framework monorepo)  
-**Scope:** Close all porting gaps so the framework is the single source of truth and CAS/showcase apps are clean reference implementations.
+**Method:** Full gap analysis — every package, every tool, every component compared.
 
 ---
 
-## What Is Already Fully Ported ✅
+## Status Legend
 
-These packages exist in the framework and are equal to or better than the devkit originals. No further porting needed.
+| Symbol | Meaning |
+|--------|---------|
+| ✅ | Fully ported and equal-to or better than source |
+| 🟡 | Partially ported — core exists but features missing |
+| 🔴 | Not started — needs full implementation |
+| ⬛ | Intentionally not ported (obsolete / replaced) |
+
+---
+
+## Summary Scorecard
+
+| Domain | Source Items | Framework Status | Gap |
+|--------|-------------|-----------------|-----|
+| Core SDK packages | 12 devkit + 10 devkit-workspace | 22/22 packages exist | Functional gaps inside |
+| MCP tools | ~70 in devkit-workspace | 34 in framework | **36 missing** |
+| VS Code extension views | 5 tree views + DEX status bar | 1 view (mainView) | **4 tree views + DEX bar missing** |
+| VS Code commands | 40+ commands | present | **Stack/Docker/DEX commands missing** |
+| Scaffold templates | 3 real templates (full dir tree) | 3 inline templates | **Template fidelity gap** |
+| defi-react | DEX hooks, Swappi pool data | Swap/Portfolio/TokenPicker/TxStatus | **DEX pool data hooks missing** |
+| ui-shared components | 21 components + 4 trade widgets | Button/Card/Badge/Tabs/NetworkBadge | **16 components missing** |
+| devnode-server routes | 15+ routes (keystore/accounts/contracts/DEX) | 6 routes (node only) | **9+ route groups missing** |
+| DEX UI app | Full Swappi DEX (9 pages) | Not in framework | **Not ported** |
+| Template fidelity | Full project tree w/ scripts/MCP/CI | Minimal inline content | **Structural gaps** |
+
+---
+
+## Part 1 — Fully Ported ✅ (No Action Needed)
+
+These packages exist in the framework and are equal to or better than the devkit originals.
 
 | Devkit package | Framework package | Notes |
 |---|---|---|
 | `@cfxdevkit/core` (devkit) | `@cfxdevkit/core` (`cfx-core`) | Enhanced: branded types, dual-space, BIP-44 derivation |
-| `@cfxdevkit/protocol` (devkit) | `@cfxdevkit/protocol` (`cfx-core`) | Enhanced: `CFX_NATIVE_ADDRESS`, `WCFX_ADDRESSES`, `waitForTransactionReceipt` |
+| `@cfxdevkit/protocol` (devkit) | `@cfxdevkit/protocol` (`cfx-core`) | Enhanced: precompile ABIs, cross-space helpers |
 | `@cfxdevkit/executor` (devkit) | `@cfxdevkit/automation` (`cfx-domain`) | Renamed + enhanced: Keeper, PriceChecker, DCA/limit strategies |
 | `@cfxdevkit/wallet` (devkit) | `@cfxdevkit/wallet` (`cfx-keys`) | Enhanced: Ledger, OneKey, Satochip, session keys, capability policies |
-| `@cfxdevkit/services` (devkit) | `@cfxdevkit/services` (`cfx-keys`) | Enhanced: pluggable keystore provider pattern (memory, file, OS, KMS) |
-| `@cfxdevkit/compiler` (devkit) | `@cfxdevkit/compiler` (`cfx-solidity`) | Partial — see Gap 4 below |
-| `@cfxdevkit/contracts` (devkit) | `@cfxdevkit/abis` (`cfx-solidity`) | Renamed; standard EVM ABIs re-exported |
+| `@cfxdevkit/services` (devkit) | `@cfxdevkit/services` (`cfx-keys`) | Enhanced: pluggable keystore (memory, file, OS, KMS) |
+| `@cfxdevkit/contracts` (devkit ABIs) | `@cfxdevkit/abis` (`cfx-solidity`) | Renamed; standard EVM ABIs re-exported via viem |
 | `@cfxdevkit/devnode` (devkit) | `@cfxdevkit/devnode` (`cfx-core`) | Equivalent |
-| `@devkit/devkit-backend` (devnode routes) | `@cfxdevkit/devnode-server` (`cfx-tools`) | Hono-based, clean replacement |
-| `@devkit/conflux-wallet` (devkit-ws) | `@cfxdevkit/wallet-connect` (`cfx-ui`) | `useCoreWallet`, `isFluentProvider`, Fluent detection ported |
-| MCP: accounts, blockchain eSpace, compiler, keystore, node, wallet | `@cfxdevkit/mcp-server` (`cfx-tools`) | 33 tools, modular — see Gap 5 for what's missing |
+| `@cfxdevkit/react` (devkit — hooks layer) | `@cfxdevkit/react` (`cfx-ui`) | Framework version is hooks-only redesign ✅ |
+| `@cfxdevkit/theme` (devkit — Tailwind preset) | `@cfxdevkit/theme` (`cfx-ui`) | Framework version uses CSS variables (better arch) ✅ |
+| `@devkit/conflux-wallet` (devkit-ws) | `@cfxdevkit/wallet-connect` (`cfx-ui`) | Core+eSpace wallet, SIWE, useCoreWallet ported |
+| Compiler core | `@cfxdevkit/compiler` (`cfx-solidity`) | compile(), resolver, 9 templates ✅ |
+| `@cfxdevkit/testing` | `@cfxdevkit/testing` (`cfx-core`) | Equivalent |
 
 ---
 
-## Porting Gaps (Priority Order)
+## Part 2 — Porting Gaps (Action Required)
 
 ---
 
-### GAP 1 — `@cfxdevkit/react` 🔴 HIGH
-**Location:** `cfx-ui/packages/react`  
-**Current state:** Empty stub — only exports `__packageName` placeholder  
-**Devkit source:** `devkit/packages/react/src/` (6 components + 3 hooks)  
-**Framework spec:** `cfx-ui/packages/react/API.md` (already written — hooks-only redesign)
+### GAP A — MCP Server: Missing 36 Tools 🔴 HIGH
 
-The new design is intentionally simpler than the devkit: provider distributes a `Client` the app already built (no hidden state, SSR/test friendly). No UI components — those stay in `wallet-connect/ui` and `defi-react`.
+**Framework has:** 34 tools across 6 groups  
+**DevKit-workspace has:** 70+ tools across 12 groups
 
-**Files to create:**
+The framework MCP server is missing entire tool groups that AI agents rely on for the full dev loop.
 
-| File | Exports |
-|---|---|
-| `src/context.tsx` | `CfxProvider`, `useClient`, `useChain`, `useSigner` |
-| `src/account.ts` | `useAccount` |
-| `src/contract.ts` | `useReadContract`, `useReadContracts`, `useSimulateContract`, `useWriteContract` |
-| `src/balance.ts` | `useNativeBalance`, `useTokenBalance`, `useTokenMetadata` |
-| `src/tx.ts` | `useSendTransaction`, `useWaitForTransaction` |
-| `src/events.ts` | `useWatchEvent` |
-| `src/index.ts` | re-export all of the above |
+#### Missing Tool Groups
 
-**Key design decisions:**
-- State via TanStack Query (`useQuery`/`useMutation`) — injectable `QueryClient`
-- `CfxProvider` does NOT create a client; the app passes one in
-- `useClient()` throws if used outside provider (clear error, not silent null)
-- All hooks accept `enabled?: boolean` for conditional fetching
-- `@tanstack/react-query` is a `peerDependency`
+**Group 1: Workspace / Docker lifecycle** (5 tools)
 
-**Status:** ✅ Implemented (2026-05-09)
+| Tool ID | Description |
+|---------|-------------|
+| `workspace_status` | Check if the workspace stack (backend + node + DEX) is running |
+| `workspace_start` | Start full workspace stack via Docker Compose |
+| `workspace_stop` | Stop full workspace stack |
+| `workspace_logs` | Tail logs from a named service |
+| `docker_available` | Check if Docker/Podman is reachable |
+
+**Group 2: Backend API relay** (3 tools)
+
+| Tool ID | Description |
+|---------|-------------|
+| `backend_health` | Check devnode-server health |
+| `backend_api_catalog` | List all backend HTTP endpoints |
+| `backend_api_call` | Generic proxy for any backend route |
+
+**Group 3: DEX tools** (8 tools)
+
+| Tool ID | Description |
+|---------|-------------|
+| `dex_status` | Current DEX readiness and pool count |
+| `dex_deploy` | Deploy Swappi V2 contracts + seed liquidity |
+| `dex_manifest` | List all deployed DEX contracts |
+| `dex_translation_table` | Token address ↔ symbol mapping |
+| `dex_wcfx_price` | Price of WCFX in USDT |
+| `dex_reset` | Wipe and redeploy DEX |
+| `dex_source_pools` | Fetch live pool state (reserves, prices) |
+| `dex_seed_from_gecko` | Seed DEX prices from GeckoTerminal |
+
+**Group 4: Agent / Operations tracking** (7 tools)
+
+| Tool ID | Description |
+|---------|-------------|
+| `extension_capability_map` | Return map of all available MCP tool capabilities |
+| `agent_workspace_context` | Return full workspace context for AI agent orientation |
+| `agent_tool_contracts` | Return deployed contracts available to agent |
+| `agent_operation_get` | Retrieve a specific past operation by ID |
+| `agent_operations_recent` | List N most recent operations |
+| `agent_runbook_execute` | Execute a named runbook (e.g. `local_stack_doctor`) |
+| `local_stack_status` | Comprehensive readiness check of the full local stack |
+
+**Group 5: Project / Workspace management** (4 tools)
+
+| Tool ID | Description |
+|---------|-------------|
+| `project_info` | Return package.json metadata and workspace structure |
+| `project_doctor` | Run diagnostics and report problems |
+| `project_script_run` | Run a named package.json script |
+| `project_dev_server_status` | Check if Vite / backend dev server is listening |
+
+**Group 6: Extended Keystore / Wallet management** (5 tools — framework has 4, missing these)
+
+| Tool ID | Description |
+|---------|-------------|
+| `cfxdevkit_keystore_lock` | Lock the active keystore |
+| `cfxdevkit_wallet_add` | Add a new wallet/mnemonic |
+| `cfxdevkit_wallet_activate` | Set the active wallet |
+| `cfxdevkit_wallet_delete` | Remove a wallet |
+| `cfxdevkit_wallet_rename` | Rename a wallet |
+
+**Group 7: Extended Node lifecycle** (3 tools — framework has start/stop/status/mine, missing these)
+
+| Tool ID | Description |
+|---------|-------------|
+| `cfxdevkit_node_restart` | Restart node without wiping |
+| `cfxdevkit_node_wipe_restart` | Wipe chain state then restart |
+| `cfxdevkit_node_wipe` | Wipe chain state only |
+
+**Group 8: Bootstrap catalog (production contract deployment)** (5 tools)
+
+| Tool ID | Description |
+|---------|-------------|
+| `conflux_bootstrap_catalog` | List all known production token contracts |
+| `conflux_bootstrap_entry` | Get details for one bootstrap entry |
+| `conflux_bootstrap_prepare` | Prepare (compile) a bootstrap contract |
+| `conflux_bootstrap_deploy` | Deploy one bootstrap contract |
+| `conflux_bootstrap_deploy_multi` | Deploy multiple bootstrap contracts in sequence |
+
+**Location to add:** `repos/cfx-tools/packages/mcp-server/src/tools/`  
+**Effort:** Each tool group is 1 file, 100–300 lines. Groups 1–5 require devnode-server route additions first.
 
 ---
 
-### GAP 2 — `@cfxdevkit/theme` 🟡 MEDIUM (needed before defi-react)
-**Location:** `cfx-ui/packages/theme`  
-**Current state:** Empty stub  
-**Devkit source:** `devkit/packages/theme/src/` (Tailwind v3 preset + globals.css)  
-**Framework spec:** `cfx-ui/packages/theme/API.md` (CSS custom properties, no Tailwind dep)
+### GAP B — devnode-server: Missing Route Groups 🔴 HIGH
 
-**Files to create:**
+**Framework has:** 6 routes (node start/stop/restart/wipe/mine + health)  
+**DevKit-workspace backend has:** 15+ route groups
 
-| File | Exports |
-|---|---|
-| `src/tokens.ts` | `colors`, `spacing`, `radius`, `typography`, `shadow`, `motion` token consts |
-| `src/css/base.css` | CSS `@layer base { :root { --cfx-* } }` — all tokens as CSS vars |
-| `src/css/dark.css` | `[data-theme="dark"] { --cfx-* }` overrides |
-| `src/theme-provider.tsx` | `ThemeProvider`, `useTheme` |
-| `src/index.ts` | `export * from './tokens.js'; export * from './theme-provider.js';` |
+#### Missing Route Groups
 
-**Package.json exports to add:** `"./css"`, `"./dark"`, `"./tokens"`, `"./react"`
+| Route Group | Endpoints | Notes |
+|-------------|-----------|-------|
+| **Keystore** | `GET /keystore/status`, `POST /keystore/setup`, `POST /keystore/unlock`, `POST /keystore/lock`, `GET /keystore/wallets`, `POST /keystore/wallets`, `PUT /keystore/wallets/:id/activate`, `DELETE /keystore/wallets/:id`, `PATCH /keystore/wallets/:id/rename` | Full wallet management |
+| **Accounts** | `GET /accounts`, `POST /accounts/fund`, `GET /accounts/faucet` | Pre-funded genesis accounts |
+| **Contracts** | `GET /contracts`, `GET /contracts/:id`, `DELETE /contracts/:id`, `DELETE /contracts`, `POST /contracts/register`, `POST /contracts/call`, `POST /contracts/deploy` | Deployed contract registry |
+| **Network** | `GET /network/current`, `GET /network/capabilities`, `GET /network/config`, `POST /network/config`, `POST /network/set` | Network/chain switching |
+| **Mining** | `GET /mining/status`, `POST /mining/start`, `POST /mining/stop` | Continuous mining mode |
+| **Bootstrap** | `GET /bootstrap/catalog`, `POST /bootstrap/deploy`, `POST /bootstrap/deploy-multi` | Production contract catalog |
+| **DEX** | `GET /dex/status`, `POST /dex/deploy`, `GET /dex/pools`, `GET /dex/manifest`, `GET /dex/translation-table`, `POST /dex/reset`, `POST /dex/seed` | Swappi V2 lifecycle |
 
-**Status:** ✅ Implemented (2026-05-09) — `@cfxdevkit/defi-react` 🔴 HIGH
-**Location:** `cfx-ui/packages/defi-react`  
-**Current state:** Empty stub  
-**Devkit source:** `devkit/packages/defi-react/src/` (`PoolsProvider`, `usePoolTokens`, `useTokenPrice`)  
-**Framework spec:** `cfx-ui/packages/defi-react/API.md` (redesigned: composable swap/balance/token-picker widgets)  
-**Immediate source:** CAS `pools-context.tsx` and `strategy.ts` contain inline implementations to extract
-
-**Files to create:**
-
-| File | Exports |
-|---|---|
-| `src/swap/useSwap.ts` | `useSwap(input)` hook |
-| `src/swap/SwapWidget.tsx` | `SwapWidget` component (headless) |
-| `src/balance/usePortfolio.ts` | `usePortfolio(input)` hook |
-| `src/balance/PortfolioTable.tsx` | `PortfolioTable` component |
-| `src/token-picker/TokenPicker.tsx` | `TokenPicker` component |
-| `src/tx-status/TxStatusList.tsx` | `TxStatusList`, `TxStatusToast` |
-| `src/index.ts` | re-export all |
-
-**Depends on:** GAP 1 (`@cfxdevkit/react`) must be done first.
-
-**Status:** ✅ Implemented (2026-05-09) — types + swap/balance/portfolio/token-picker/tx-status widgets; all sub-path exports.
+**Location:** `repos/cfx-tools/packages/devnode-server/src/app.ts` (extend) + new route files  
+**Note:** Some routes need the `@cfxdevkit/services` keystore wired in. The devnode-server currently only wraps `@cfxdevkit/devnode`.
 
 ---
 
-### GAP 4 — Missing compiler templates ✅ DONE
-**Location:** `cfx-solidity/packages/compiler/src/templates/`  
-**Current:** 5 templates (basic-erc20, basic-erc721, example-counter, simple-storage, payable-vault)  
-**Missing from devkit:**
+### GAP C — VS Code Extension: Missing Tree Views and Commands 🔴 HIGH
 
-| Template id | Contract name | Notes |
-|---|---|---|
-| `simple-escrow` | `SimpleEscrow` | Three-party: buyer/seller/arbiter, release/refund |
-| `multi-sig-wallet` | `MultiSigWallet` | M-of-N, submit/confirm/execute/revoke pattern |
-| `name-registry` | `NameRegistry` | On-chain name → address mapping, transfer ownership |
-| `ballot` | `Ballot` | Weighted votes, delegation, winning proposal |
+**Framework has:** 1 tree view (`mainView`), full keystore/contract/node commands  
+**DevKit-workspace has:** 5 tree views + DEX status bar + Docker/stack commands
 
-Each needs: `src/templates/<id>/source.ts` + entry in `src/templates/index.ts`.  
-The MCP `compile_and_deploy` tool lists templates by name — users expect all 9.
+#### Missing Tree Views
 
-**Status:** ✅ Implemented (2026-05-09) — 4 new templates added (`simple-escrow`, `multi-sig-wallet`, `name-registry`, `ballot`) to `cfx-solidity/packages/compiler/src/templates/`. Registry now has 9 entries total. Typechecks pass.
+| View ID | Provider | Displays |
+|---------|----------|---------|
+| `cfxdevkit.networkView` | `NetworkProvider` | Selected network (Local/Testnet/Mainnet) with switch action |
+| `cfxdevkit.nodeView` | `NodeControlProvider` | Node status (running/stopped), start/stop/restart/wipe actions |
+| `cfxdevkit.accountsView` | `AccountsProvider` | Genesis accounts with eSpace+Core balances |
+| `cfxdevkit.dexView` | `DexPoolsProvider` | Deployed DEX pools with reserves and prices |
+
+**Note:** `cfxdevkit.contractsView` appears to already exist in the framework extension. The above 4 are missing.
+
+#### Missing Status Bars
+
+| Status Bar | Shows |
+|-----------|-------|
+| `registerDexUiStatusBar()` | DEX running state + "Start DEX UI" button |
+
+#### Missing Command Groups
+
+| Command Group | Commands | Source file |
+|-------------|---------|-------------|
+| **Stack (Docker)** | `cfxdevkit.stack.start`, `.stop`, `.logs`, `.status` | `conflux-stack-commands.ts` |
+| **Dev Container** | `cfxdevkit.devcontainer.rebuild`, `.open` | `conflux-devcontainer-commands.ts` |
+| **DEX** | `cfxdevkit.dex.deploy`, `.status`, `.openUI`, `.reset` | `conflux-dex-commands.ts` |
+| **Bootstrap** | `cfxdevkit.bootstrap.deploy`, `.catalog` | (new) |
+
+**Location:** `repos/cfx-tools/packages/vscode-extension/src/`
 
 ---
 
-### GAP 5 — Missing MCP tool groups 🟡 MEDIUM
-**Location:** `cfx-tools/packages/mcp-server/src/tools/`  
-**Current:** 33 tools — accounts, blockchain (eSpace), compiler, keystore, node, wallet  
+### GAP D — `@cfxdevkit/defi-react`: Missing DEX Data Hooks 🟡 MEDIUM
+
+**Framework has:** `SwapWidget`, `PortfolioTable`, `TokenPicker`, `TxStatusToast/List`, `Button/Card/Badge/Tabs/NetworkBadge`  
+**DevKit has:** `usePoolTokens()`, `useTokenPrice()`, `getPairedTokens()`, `PoolsProvider`
+
+The framework `defi-react` has DeFi UI widgets but no actual DEX data integration hooks. `SwapWidget` uses a `DexAdapter` interface that consumers must implement — the actual Swappi adapter is not included.
+
+#### Missing
+
+| Export | Description | Source |
+|--------|-------------|--------|
+| `usePoolTokens(address)` | Resolve pool token pair + user balances from Swappi | `devkit/packages/defi-react/src/` |
+| `useTokenPrice(address)` | Fetch price from Swappi oracle | same |
+| `getPairedTokens(tokens, address)` | Filter tokens involved in a pool pair | same |
+| `PoolsProvider` | Context provider for pool state | same |
+| `SwappiAdapter` | Concrete `DexAdapter` implementation for Swappi V2 | missing — needs devnode-server DEX routes |
+| `createSwappiAdapter(chainId)` | Factory to create a Swappi DexAdapter | missing |
+
+**Location:** `repos/cfx-ui/packages/defi-react/src/`
+
+---
+
+### GAP E — `ui-shared`: Missing 16 Components 🟡 MEDIUM
+
+**Framework has:** `Button`, `Card`, `Badge`, `Tabs`, `NetworkBadge` (in `defi-react/primitives`)  
+**DevKit-workspace `ui-shared` has:** 21 components including DEX trade widgets
+
+#### Missing Components
+
+| Component | Description | Used by |
+|-----------|-------------|---------|
+| `ConnectButton` | Full wallet connect button (shows address when connected) | dApp templates |
+| `CopyButton` | Icon button that copies text to clipboard | everywhere |
+| `AppToaster` | Toast notification container (wraps sonner/toast) | app layout |
+| `DevkitStatus` | Composite status panel (node + keystore + DEX) | dashboard |
+| `Faucet` / `FaucetWidget` | UI to request test tokens from devnode faucet | dApp templates |
+| `Input` | Styled text input with label + error state | forms |
+| `MetricCard` | KPI card (label + value + optional delta) | analytics |
+| `SectionHeader` | Section title with optional subtitle and action | layout |
+| `SegmentedControl` | Toggle between N named options | trade UI |
+| `SelectableListItem` | List item with radio/checkbox selection | wallet picker |
+| `SelectMenu` | Dropdown select with `SelectMenuOption` type | network/token selectors |
+| `ShellOverview` | Full-page overview panel (system health) | devkit dashboard |
+| `StatusBanner` | Inline status alert (info/warning/error/success) | connection states |
+| `TradeActionBar` | Swap/Provide action bar with slippage control | DEX |
+| `TradeSummaryGrid` | Route + price impact + fee summary table | DEX |
+| `TradeTokenField` | Token amount input with token picker trigger | DEX swap |
+
+**Also missing:**
+- `AuthProvider` + `useAuth()` hook — authentication state for dApp sessions
+
+**Location to add:** `repos/cfx-ui/packages/defi-react/src/primitives/` (extend existing) or new `repos/cfx-ui/packages/ui-shared/` package
+
+---
+
+### GAP F — Scaffold Templates: Fidelity Gap 🟡 MEDIUM
+
+**Framework templates** are inline string content (minimal files, simple structure)  
+**DevKit-workspace templates** are full directory trees with production infrastructure
+
+#### What the Real Templates Include (That Framework Doesn't)
+
+| File / Directory | Template | Description |
+|----------------|----------|-------------|
+| `.mcp.json` | all | MCP server config for Copilot/Claude/OpenCode agents |
+| `AGENTS.md` | project-example | AI agent instructions for the scaffolded project |
+| `CLAUDE.md` | all | Claude Code instructions |
+| `.vscode/` | all | VS Code settings + recommended extensions |
+| `.github/workflows/` | project-example | CI/CD workflows (build, test, deploy) |
+| `.opencode/` | project-example | OpenCode agent config |
+| `biome.json` | project-example | Biome linter config |
+| `pnpm-workspace.yaml` | project-example | pnpm workspace config |
+| `scripts/deploy-contract.mjs` | project-example | Contract deployment helper |
+| `scripts/sync-project-network.mjs` | project-example | Sync deployed addresses to dApp |
+| `scripts/doctor.mjs` | project-example | Project health check |
+| `scripts/list-contracts.mjs` | project-example | List deployed contracts |
+| `deployments/contracts.json` | project-example | Deployment tracking file |
+| `docker-compose.yml` | project-example | Full stack compose |
+| `vercel.json` | project-example | Vercel deployment config |
+| `dapp/wagmi.config.ts` | project-example | Wagmi + wagmi-cli code-gen config |
+| `dapp/src/components/` | project-example | Pre-built React components |
+
+**Current framework templates** only generate: package.json, tsconfig.json, vite.config.ts, index.html, src/main.tsx, src/App.tsx, README.md.
+
+**Recommendation:** Port the full template directory trees from devkit-workspace into the scaffold-cli `templates/` sub-files, or implement file-system-based template reading (disk templates that ship with the package).
+
+---
+
+### GAP G — `@cfxdevkit/defi-react`: SwapService / DEX Integration 🟡 MEDIUM
+
+**Devkit `@cfxdevkit/services`** exports a `SwapService` class that wraps Swappi DEX:
+- `getQuote(params)` — get swap quote with route
+- `executeSwap(params)` — execute swap with slippage
+- `getPoolTokens(pairAddress)` — resolve pair tokens + reserves
+- `getTokenPrice(address)` — price via Swappi router
+
+The framework has no concrete DEX service implementation. The `SwapWidget` uses a `DexAdapter` interface but no implementation ships with the framework.
+
 **Missing:**
+- `SwapService` class wrapping Swappi V2 Router/Factory ABIs
+- `createSwapService(client, config)` factory
+- Swappi V2 ABIs (Factory, Router, Pair) — currently only in devkit-workspace `contracts/`
 
-| Group | Tools to add | Description |
-|---|---|---|
-| **Core Space blockchain** | `cfxdevkit_blockchain_core_get_balance`, `_get_block_number`, `_get_chain_id`, `_call_contract`, `_read_erc20`, `_send_cfx`, `_write_contract`, `_deploy_contract`, `_erc20_transfer`, `_erc20_approve` | Mirrors eSpace tool set but for Core Space via cive |
-| **Contract tracking** | `cfxdevkit_contracts_list`, `_contract_info`, `_contract_call`, `_contract_write` | Read deployments store, call/write a tracked contract |
-| **Bootstrap catalog** | `cfxdevkit_bootstrap_catalog`, `_bootstrap_deploy` | List and deploy production template contracts |
-| **Agent health** | `cfxdevkit_backend_health`, `cfxdevkit_agent_operation_get`, `cfxdevkit_agent_operations_recent` | Check devnode-server health, retrieve op ledger entries |
-| **Project scripts** | `cfxdevkit_project_script_run`, `cfxdevkit_project_dev_server_status` | Run package.json scripts, check dev server status |
-| **DEX** | `cfxdevkit_dex_source_pools` | Fetch Swappi pool data from devnode or testnet |
-| **Workspace logs** | `cfxdevkit_workspace_logs` | Tail log output from running services |
-
-**Status:** ❌ Not started
+**Location:** `repos/cfx-ui/packages/defi-react/src/` or new `repos/cfx-core/packages/` package
 
 ---
 
-### GAP 6 — Scaffold CLI completeness ✅ DONE
-**Location:** `cfx-tools/packages/create/src/`  
-**Current:** Non-interactive, 1 template  
-**Devkit source:** `devkit-workspace/packages/scaffold-cli` + `devkit-workspace/packages/template-core`
+### GAP H — `@cfxdevkit/shared` HTTP Client 🟡 MEDIUM
 
-**Missing features:**
+**Devkit-workspace `@devkit/shared`** provides:
+- `ConfluxDevkitClient` — typed HTTP client for the devnode-server API
+- `DexFeed` / `DexMirror` utilities — DEX price feed, reserve sync
+- `DexSimulation` — local DEX trade simulation without on-chain calls
+- `DockerUtils` — `getComposeStatus()`, `runCompose()`, `isDockerAvailable()`
+- `WorkspaceDetector` — detect which project type is in cwd
+- `NetworkConfig` — typed network configuration
 
-| Feature | Description |
-|---|---|
-| Interactive mode | `@inquirer/prompts` — ask template + target when args not provided |
-| Template: `minimal-dapp` | Vite + React + wagmi, no backend |
-| Template: `wallet-probe` | Wallet detection + signing demo only |
-| Template: `project-example` | Full-stack: frontend + backend + contracts |
-| Target: `devcontainer` | `.devcontainer/` setup for VS Code / Codespaces |
-| Target: `docker` | `docker-compose.yml` + `Dockerfile` production target |
-| Template+target matrix | Any template × any target = valid combination |
+The framework has no equivalent. All tools (MCP, CLI) call the devnode-server directly via `fetch`. A typed client makes integration safer and enables the MCP workspace tools in GAP A.
 
-**Status:** ✅ Implemented (2026-05-09) — 3 real templates (`minimal-dapp`, `wallet-probe`, `project-example`) with inline file content. Legacy aliases (`basic`, `react`, `solidity`) kept. `devcontainer` + `docker` targets supported. `getTemplateFiles(template, target)` exported. `--target` and `--skip-install` CLI flags added. All 21 tests pass.
+**Missing:**
+- `@cfxdevkit/client` package (or add to existing package) with typed HTTP client for devnode-server
+- DEX simulation utilities (useful for local development without wallet)
+- Docker compose utilities (needed by MCP workspace tools and VS Code stack commands)
 
 ---
 
-### GAP 7 — Shared UI components 🟢 LOW
-**Location:** No equivalent in framework yet  
-**Devkit source:** `devkit-workspace/packages/ui-shared/src/`
+### GAP I — `@cfxdevkit/compiler` Templates: Remaining Gaps 🟢 LOW
 
-Used by `dex-ui` and the VSCode extension webview. Decision needed before starting:
-- Option A: New `cfx-ui/packages/ui-shared` package
-- Option B: Absorb into `defi-react` (less overhead)
+**Framework has:** 9 templates (simple-storage, counter, erc20, erc721, payable-vault, escrow, multisig, name-registry, ballot)  
+**Devkit has:** 8 templates (counter, erc721, voting, escrow, multisig, registry + simple-storage + TestToken)
 
-**Missing components:** `Button`, `Card`, `Badge`, `Tabs`, `ConnectButton`, `Faucet`, `TradeActionBar`, `SwapInput`, `TokenBalance`, `TokenIcon`, `NetworkBadge`, `useAuth`
+The framework template coverage is broader. The only devkit templates not ported:
+- `getTestTokenContract()` — pre-configured ERC-20 for testing (mint-on-demand)
+- `getVotingContract()` — convenience alias for Ballot (different name in devkit)
 
-**Depends on:** GAP 2 (theme) + GAP 3 (defi-react) design decision.
-
-**Status:** ✅ Implemented (2026-05-09) — rolled into `@cfxdevkit/defi-react/primitives` (Option B). Exports: `Button`, `Card`, `Badge`, `Tabs`, `NetworkBadge`.
+These are minor and low priority.
 
 ---
 
-### GAP 8 — `switchConfluxChain` utility ✅ DONE
-**Location:** `cfx-ui/packages/wallet-connect/src/`  
-**Devkit source:** `devkit-workspace/packages/conflux-wallet/src/switchChain.ts`
+### GAP J — DEX UI App: Not Ported 🔴 (Tracked Separately)
 
-Calls `wallet_addEthereumChain` / `wallet_switchEthereumChain` with Conflux chain params. ~30 lines. Everything else from `conflux-wallet` is already ported.
+**DevKit-workspace has:** A full standalone DEX UI (`apps/dex-ui`) built with React + Vite, featuring:
+- Swap interface (multi-hop route aggregation)
+- Portfolio view (token balances)
+- Pools management (add/remove liquidity, `AddLiquidity.tsx`, `Pools.tsx`)
+- Analytics (pair reserves, price impact)
+- Faucet widget
+- Token icon manager (`TokenIconManager.tsx`)
+- Local DEX status panel
+- Vault operations (`Vault.tsx`)
 
-**Status:** ✅ Implemented (2026-05-09) — `switchEspaceChain(provider, chain)` and `switchEspaceChainFromConfig(provider, chainConfig)` in `cfx-ui/packages/wallet-connect/src/lib/switchConfluxChain.ts`. Handles 4902 (chain not added) by calling `wallet_addEthereumChain`. Exported from `src/index.ts`.
+**Framework has:** `SwapWidget`, `PortfolioTable` as embeddable components in `defi-react`, but no standalone DEX app.
+
+**Assessment:** The DEX UI app is used in the devkit-workspace devcontainer to provide a local trading interface. Porting it would go into `projects/` or a new `repos/cfx-ui/apps/dex-ui/`. Lower priority than MCP/server gaps but important for the full "local DEX" experience.
 
 ---
 
-## Implementation Order
+### GAP K — `@cfxdevkit/protocol`: Swappi Contract ABIs 🟢 LOW
+
+**Devkit `@cfxdevkit/protocol`** re-exports production contract ABIs:
+- `automationManagerAbi`, `permitHandlerAbi`, `swappiPriceAdapterAbi`
+- `automationManagerAddress`, `permitHandlerAddress`, `swappiPriceAdapterAddress`
+
+These are needed by the DEX service (GAP G) and the automation strategies. The framework `@cfxdevkit/protocol` has only precompile ABIs. The Swappi adapter ABIs should be added here.
+
+---
+
+## Part 3 — Implementation Order
+
+Ordered by dependency and user impact:
 
 ```
-GAP 1  @cfxdevkit/react         ✅ done  (unblocked GAP 3)
-GAP 2  @cfxdevkit/theme         ✅ done
-GAP 3  @cfxdevkit/defi-react    ✅ done  (after GAP 1 + GAP 2)
-GAP 7  ui-shared components     ✅ done  (rolled into defi-react/primitives)
-GAP 4  compiler templates       ✅ done  (9 templates total)
-GAP 6  scaffold-cli             ✅ done  (3 real templates + 2 targets)
-GAP 8  switchConfluxChain       ✅ done  (eSpace chain switching utility)
+Priority 1 — Core infrastructure (unblocks everything else):
+  GAP B  devnode-server routes     🔴 HIGH  keystore/accounts/contracts/network/mining
+  GAP A  MCP tools (groups 1-5)   🔴 HIGH  requires GAP B routes first
+
+Priority 2 — AI agent experience:
+  GAP A  MCP tools (groups 6-8)   🔴 HIGH  keystore/wallet/bootstrap/DEX tools
+  GAP C  VS Code extension views  🔴 HIGH  network/node/accounts/DEX tree views
+
+Priority 3 — DeFi / DEX completeness:
+  GAP G  SwapService / DEX ABIs   🟡 MEDIUM  Swappi V2 integration
+  GAP D  defi-react DEX hooks     🟡 MEDIUM  usePoolTokens/useTokenPrice/SwappiAdapter
+  GAP J  DEX UI app               🔴 MEDIUM  standalone trading interface
+
+Priority 4 — DX / scaffolding:
+  GAP F  Template fidelity        🟡 MEDIUM  full file trees with scripts/MCP/CI
+  GAP E  ui-shared components     🟡 MEDIUM  ConnectButton/Faucet/TradeWidgets
+
+Priority 5 — Polish:
+  GAP H  Shared HTTP client       🟡 MEDIUM  typed devnode-server client
+  GAP I  Compiler templates       🟢 LOW     TestToken/Voting templates
+  GAP K  Protocol ABIs            🟢 LOW     Swappi adapter ABIs
 ```
 
 ---
 
-## What Does NOT Need Porting
+## Part 4 — Already Ported (Detailed)
 
-| Devkit item | Reason |
-|---|---|
-| `devkit/packages/react` UI components (AccountCard, AppNavBar, etc.) | New design is hooks-only; UI lives in `defi-react` / `wallet-connect/ui` |
-| `devkit-workspace/packages/devkit-backend` full REST API | Split into `devnode-server` + `mcp-server`; REST API was VSCode-extension-internal |
-| ConnectKit integration | Not used; framework uses wagmi injected connector |
-| `devkit-workspace/packages/devkit-base` artifacts | Replaced by proper package build pipeline |
-| `devkit-workspace/packages/shared` typed HTTP client | Replaced by MCP tools as primary AI interface |
+All items below require no further action.
 
----
+### `cfx-core` packages
+- `@cfxdevkit/core` — RPC clients, address utils, chains, BIP-44 derivation, Wei type
+- `@cfxdevkit/devnode` — local dual-space node lifecycle via `@xcfx/node`
+- `@cfxdevkit/automation` — generic async job runner (replaces devkit executor; enhanced with DCA/limit/TWAP/Keeper)
+- `@cfxdevkit/protocol` — precompile ABIs (adminControl, sponsorWhitelist, staking, crossSpaceCall, posRegister)
+- `@cfxdevkit/testing` — test fixtures, mock client, waitFor utilities
 
-## Verification Checklist (per gap, before closing)
+### `cfx-keys` packages
+- `@cfxdevkit/services` — KeystoreProvider (file/memory/Ledger/OS/KMS), auth tokens
+- `@cfxdevkit/wallet` — signerFromKeystore, hardware wallets (Ledger/OneKey/Satochip), session keys, batcher
 
-- [ ] `pnpm --filter <package> typecheck` passes
-- [ ] `pnpm --filter <package> build` produces `dist/`
-- [ ] `pnpm --filter <package> test` passes
-- [ ] No `TODO` / `FIXME` / stub comments in new files
-- [ ] `API.md` matches implementation
-- [ ] Imported by at least one downstream package or example
+### `cfx-domain` packages
+- `@cfxdevkit/automation` — DCA/LimitOrder/TWAP strategies, Keeper, PriceChecker, RetryQueue, SafetyGuard
+
+### `cfx-solidity` packages
+- `@cfxdevkit/compiler` — compile(), 9 Solidity templates, resolver composition
+- `@cfxdevkit/abis` — ERC-20/721/1155/4626, Multicall3 (viem re-exports)
+- `@cfxdevkit/contracts` — contract read/write/deploy facades
+
+### `cfx-ui` packages
+- `@cfxdevkit/react` — hooks-only redesign (useAccount, useBalance, useContract, useTx, useWatchEvent, CfxProvider)
+- `@cfxdevkit/theme` — CSS variable tokens, ThemeProvider, dark mode, design tokens
+- `@cfxdevkit/wallet-connect` — wagmi config, useCoreWallet, useEspaceConnectors, SIWE, WalletPickerModal, switchEspaceChain
+- `@cfxdevkit/defi-react` — SwapWidget, PortfolioTable, TokenPicker, TxStatusToast, DexAdapter interface, Button/Card/Badge/Tabs/NetworkBadge
+
+### `cfx-tools` packages
+- `@cfxdevkit/cli` — `cfx status`, `cfx derive`, `cfx generate` CLI
+- `@cfxdevkit/create` (scaffold-cli) — project scaffolder, 3 templates, target system
+- `@cfxdevkit/devnode-server` — Hono REST control plane (node lifecycle — 6 routes)
+- `@cfxdevkit/mcp-server` — 34 MCP tools (node, accounts, blockchain R/W, keystore, compiler, wallet)
+- VS Code extension — node mgmt, keystore, contract deploy/call, account derivation, tree view
+
+### `cfx-llm` packages
+- `@cfxdevkit/llm-tools` — LLM commit quality gates, hotspot detection, test/lint/typecheck runner

@@ -1,5 +1,12 @@
 import { rm } from 'node:fs/promises';
-import { createDevNode, type DevNode, type DevNodeConfig } from '@cfxdevkit/devnode';
+import {
+  createDevNode,
+  type DevNode,
+  type DevNodeAccount,
+  type DevNodeConfig,
+  type DevNodeUrls,
+  type MiningStatus,
+} from '@cfxdevkit/devnode';
 import type {
   DevnodeMineInput,
   DevnodeRestartInput,
@@ -78,6 +85,32 @@ export class DevnodeServerController {
       await this.#node.mine(blocks);
     }
     return this.status();
+  }
+
+  accounts(): readonly DevNodeAccount[] {
+    return this.#node?.accounts ?? [];
+  }
+
+  faucet(): DevNodeAccount | undefined {
+    return this.#node?.faucet;
+  }
+
+  async startMining(intervalMs = 2000): Promise<void> {
+    if (!this.#node?.isRunning()) throw new Error('dev node is not running');
+    await this.#node.startMining(intervalMs);
+  }
+
+  async stopMining(): Promise<void> {
+    if (!this.#node?.isRunning()) throw new Error('dev node is not running');
+    await this.#node.stopMining();
+  }
+
+  miningStatus(): MiningStatus {
+    return this.#node?.getMiningStatus() ?? { enabled: false, intervalMs: 0, ticks: 0 };
+  }
+
+  nodeUrls(): DevNodeUrls | undefined {
+    return this.#node?.urls;
   }
 }
 

@@ -17,6 +17,37 @@ import { detectChangedScopes } from './scope.ts';
 
 export { changedFilesList, detectChangedScopes, resolveScope } from './scope.ts';
 
+/**
+ * Precommit gate — runs hotspot + quality checks only.
+ * No LLM call, no commit message, no staging.
+ * Use this instead of `commit --dry-run` to validate changes without
+ * burning LLM tokens on a throwaway message.
+ */
+export async function runPrecommit(args) {
+  if (args[0] === '--') args.shift();
+  const flags = parseCommitFlags(args);
+  const total = 1;
+
+  logStep(1, total, 'Quality gates');
+  const hotspotsPassed = await runCodeHotspotGate();
+  if (!hotspotsPassed) {
+    logInfo('\n  ✗ Precommit failed: code files exceed the hard size budget.');
+    logInfo(
+      '  Split oversized modules before committing. This gate cannot be bypassed with --force.',
+    );
+    process.exit(1);
+  }
+  const gatesPassed = await runQualityGates(flags);
+  if (!gatesPassed && !flags.force) {
+    logInfo('\n  ✗ Precommit failed: quality gate failures. Use --force to bypass.');
+    process.exit(1);
+  }
+  if (!gatesPassed && flags.force) {
+    logInfo('  ⚠ --force: proceeding despite gate failures');
+  }
+  logInfo('\n  ✓ All precommit gates passed. Run `llm commit` when ready.');
+}
+
 export async function runCommit(args) {
   if (args[0] === '--') args.shift();
   const flags = parseCommitFlags(args);
