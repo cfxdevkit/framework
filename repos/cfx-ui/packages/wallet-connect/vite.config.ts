@@ -7,8 +7,11 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
+        'config/index': 'src/config/index.ts',
+        'hooks/index': 'src/hooks/index.ts',
         index: 'src/index.ts',
         'siwe/index': 'src/siwe/index.ts',
+        'ui/index': 'src/ui/index.ts',
       },
       formats: ['es'],
       fileName: (_format, entryName) => `${entryName}.js`,

@@ -1,0 +1,15 @@
+{
+  "extends": "@cfxdevkit/tsconfig/app-web.json",
+  "compilerOptions": {
+    "allowJs": false,
+    "jsx": "preserve",
+    "lib": ["DOM", "DOM.Iterable", "ES2023", "ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "plugins": [{ "name": "next" }],
+    "types": ["node", "react", "react-dom"]
+  },
+  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

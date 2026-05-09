@@ -5,6 +5,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
+        'auth/index': 'src/auth/index.ts',
         index: 'src/index.ts',
         'keystore/index': 'src/keystore/index.ts',
         'keystore/audit': 'src/keystore/audit.ts',

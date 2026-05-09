@@ -3,47 +3,33 @@
 ```
 cas/
 ├── README.md
-├── package.json
-├── pnpm-workspace.yaml             scopes the project's internal packages
-├── moon.yml
-├── .env.example
 │
 ├── apps/
-│   ├── frontend/                   ── Next.js 15 user UI ──
+│   ├── frontend/                   ── Next.js 16 local user UI ──
 │   │   ├── package.json
-│   │   ├── next.config.ts          (kept on Next; CAS already deployed there)
-│   │   ├── moon.yml
+│   │   ├── next.config.ts
 │   │   ├── src/
-│   │   │   ├── app/                App router
-│   │   │   ├── features/
-│   │   │   │   ├── orders/
-│   │   │   │   ├── dashboard/
-│   │   │   │   └── auth/
-│   │   │   ├── components/
-│   │   │   ├── lib/
-│   │   │   └── styles/
-│   │   └── public/
+│   │   │   └── app/
+│   │   │       ├── globals.css     Operational dashboard styling
+│   │   │       ├── layout.tsx
+│   │   │       └── page.tsx        SIWE sign-in, job form, job table
+│   │   └── tsconfig.json
 │   │
-│   ├── backend/                    ── Express API ──
+│   ├── backend/                    ── Express API, SQLite local dev ──
 │   │   ├── package.json
-│   │   ├── vite.config.ts          node target, SSR build
-│   │   ├── moon.yml
+│   │   ├── tsconfig.json
 │   │   └── src/
 │   │       ├── index.ts            bootstrap
-│   │       ├── routes/
-│   │       │   ├── orders.ts
-│   │       │   ├── auth.ts         SIWE via @cfxdevkit/wallet-connect/siwe
-│   │       │   ├── history.ts
-│   │       │   └── health.ts
 │   │       ├── db/
-│   │       │   ├── client.ts       Postgres client
-│   │       │   ├── migrations/
-│   │       │   └── repositories/
-│   │       ├── services/
-│   │       │   └── order-service.ts
-│   │       └── middleware/
-│   │           ├── auth.ts
-│   │           └── rate-limit.ts
+│   │       │   └── sqlite.ts       automation schema + CAS auth nonce table
+│   │       ├── routes/
+│   │       │   ├── auth.ts         SIWE via @cfxdevkit/wallet-connect/siwe
+│   │       │   ├── health.ts
+│   │       │   ├── jobs.ts         job creation/list/cancel/history
+│   │       │   └── session.ts      bearer session helper
+│   │       ├── app.ts              app factory for tests/runtime
+│   │       ├── config.ts           env resolution
+│   │       └── types.ts
 │   │
 │   └── worker/                     ── Keeper (migrates last, behind feature flag) ──
 │       ├── package.json
@@ -62,13 +48,14 @@ cas/
 ├── packages/
 │   └── shared/                     ── CAS-only types/utils ──
 │       ├── package.json
-│       ├── moon.yml
+│       ├── tsconfig.json
+│       ├── vite.config.ts
 │       └── src/
 │           ├── index.ts
-│           ├── api-types.ts        OpenAPI-derived types
-│           └── domain/
-│               ├── order.ts        CAS-specific order shape
-│               └── execution.ts
+│           ├── client.ts           fetch client and API response contracts
+│           ├── client.test.ts
+│           ├── jobs.ts             request/response DTOs and serializers
+│           └── jobs.test.ts
 │
 ├── contracts/                      ── Solidity sources + deployments ──
 │   ├── README.md
@@ -96,10 +83,13 @@ cas/
 
 ### Framework usage
 
-- `@cfxdevkit/core`, `@cfxdevkit/wallet`, `@cfxdevkit/wallet-connect`,
-  `@cfxdevkit/services` (KMS keystore in production), `@cfxdevkit/executor`,
-  `@cfxdevkit/automation` (domains).
+- `@cfxdevkit/automation` provides SQLite schema, job repository and execution repository.
+- `@cfxdevkit/services/auth` provides reusable bearer session-token helpers.
+- `@cfxdevkit/wallet-connect/siwe` provides SIWE parsing/verification.
+- `@cfxdevkit/wallet-connect` provides the no-ConnectKit frontend wallet layer.
+- `@cfxdevkit/cas-shared` provides the frontend/backend API contracts and client.
 
 ### Migration risk
 
-**High** — live mainnet system. Worker migrates last, behind a feature flag.
+**Medium until worker integration begins** — the local UI/backend slice is testable, while worker
+execution and production persistence still migrate after frontend/backend contracts stabilize.

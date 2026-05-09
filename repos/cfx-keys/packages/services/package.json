@@ -12,6 +12,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./auth": {
+      "types": "./dist/auth/index.d.ts",
+      "import": "./dist/auth/index.js"
+    },
     "./keystore": {
       "types": "./dist/keystore/index.d.ts",
       "import": "./dist/keystore/index.js"
@@ -68,11 +72,11 @@
   },
   "dependencies": {
     "@cfxdevkit/core": "workspace:^",
+    "@noble/ciphers": "^2.2.0",
+    "@noble/hashes": "^1.8.0",
     "@ledgerhq/hw-app-eth": "^7.8.1",
     "@ledgerhq/hw-transport-node-hid": "^6.33.1",
     "cive": "^0.8.1",
-    "@noble/ciphers": "^2.2.0",
-    "@noble/hashes": "^1.8.0",
     "viem": "^2.21.0"
   }
 }

@@ -1,0 +1,74 @@
+/* ── Navigation bar ──────────────────────────────────────────────────────── */
+
+.cas-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(16, 20, 24, 0.96);
+  backdrop-filter: blur(12px);
+}
+
+.cas-nav-logo,
+.cas-nav-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cas-nav-logo {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.cas-nav-mark {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #34d399, #60a5fa);
+  color: #071014;
+}
+
+.cas-nav-links,
+.cas-nav-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cas-nav-link {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.cas-nav-link:hover,
+.cas-nav-link.active {
+  color: var(--text);
+  background: var(--panel-2);
+}
+
+.cas-nav-actions {
+  justify-content: flex-end;
+}
+
+.cas-nav-error {
+  max-width: 260px;
+  color: var(--danger);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
