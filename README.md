@@ -43,7 +43,7 @@ to.
 ## Target architecture
 
 The long-term topology remains the five-tier architecture described in
-[ARCHITECTURE.md](ARCHITECTURE.md) and [MIGRATION.md](MIGRATION.md). It is a
+[ARCHITECTURE.md](ARCHITECTURE.md). It is a
 planning model, not the literal top-level folder structure that exists today.
 
 ```
@@ -117,14 +117,11 @@ Use this mapping when working in the current repository:
 | `conflux-phaser/*` | `projects/conflux-phaser/` |
 | `Electro/*` | `projects/electro/` |
 
-Detailed mapping and planned end-state sequencing live in [MIGRATION.md](MIGRATION.md).
-
 ---
 
 ## Documents in this folder
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — design rationale, dependency rules, boundary contracts.
-- [MIGRATION.md](MIGRATION.md) — phase-2 plan: how to move existing code without breaking consumers.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — workflow, tier ownership, PR conventions.
 - [SECURITY.md](SECURITY.md) — secrets, key handling, supply-chain, threat model surface per tier.
 - [.devcontainer/README.md](.devcontainer/README.md) — root devcontainer setup for the monorepo toolchain.

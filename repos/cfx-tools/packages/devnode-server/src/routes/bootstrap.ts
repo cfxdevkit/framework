@@ -1,14 +1,14 @@
-import { Hono } from 'hono';
 import { compile, getTemplate, listTemplates } from '@cfxdevkit/compiler';
 import {
   createClient,
+  type EspaceClient,
   espaceLocal,
   http,
   signerFromPrivateKey,
-  type EspaceClient,
 } from '@cfxdevkit/core';
-import type { DevnodeServerController } from '../controller.js';
+import { Hono } from 'hono';
 import type { ContractRegistry } from '../contracts.js';
+import type { DevnodeServerController } from '../controller.js';
 
 export function createBootstrapRoutes(
   controller: DevnodeServerController,
@@ -104,7 +104,7 @@ export function createBootstrapRoutes(
     let artifact: { bytecode: `0x${string}`; abi: unknown[] };
     try {
       const output = await compile({
-        sources: [{ path: `${tmpl.contractName}.sol`, content: tmpl.sources[0]?.content }],
+        sources: [{ path: `${tmpl.contractName}.sol`, content: tmpl.sources[0]?.content ?? '' }],
         solcVersion: tmpl.solcVersion,
       });
       const found = output.artifacts.find((a) => a.contractName === tmpl.contractName);
