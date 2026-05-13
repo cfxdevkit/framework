@@ -32,7 +32,7 @@
     "@cfxdevkit/compiler": "workspace:^",
     "@cfxdevkit/core": "workspace:^",
     "@cfxdevkit/devnode": "workspace:^",
-    "hono": "^4.10.8",
+    "hono": "^4.12.18",
     "viem": "^2.21.0"
   },
   "devDependencies": {
