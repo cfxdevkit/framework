@@ -63,6 +63,6 @@
   "dependencies": {
     "@cfxdevkit/core": "workspace:^",
     "solc": "^0.8.26",
-    "viem": "^2.21.0"
+    "viem": "^2.48.11"
   }
 }

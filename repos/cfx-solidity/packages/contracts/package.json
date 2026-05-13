@@ -69,6 +69,6 @@
   "dependencies": {
     "@cfxdevkit/abis": "workspace:^",
     "@cfxdevkit/core": "workspace:^",
-    "viem": "^2.21.0"
+    "viem": "^2.48.11"
   }
 }
