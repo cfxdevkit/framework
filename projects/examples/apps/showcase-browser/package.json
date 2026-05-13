@@ -21,8 +21,8 @@
     "@cfxdevkit/services": "workspace:*",
     "@cfxdevkit/wallet": "workspace:*",
     "@cfxjs/use-wallet-react": "^0.0.9",
-    "@tanstack/react-query": "^5.100.9",
-    "react": "^19.2.5",
+    "@tanstack/react-query": "^5.62.0",
+    "react": "^19.2.6",
     "react-dom": "^18.3.0",
     "viem": "^2.21.0",
     "wagmi": "^3.6.9"

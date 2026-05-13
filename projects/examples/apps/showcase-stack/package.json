@@ -23,7 +23,7 @@
     "@cfxjs/use-wallet-react": "^0.0.9",
     "@tanstack/react-query": "^5.100.9",
     "buffer": "^6.0.3",
-    "react": "^19.2.5",
+    "react": "^19.2.6",
     "react-dom": "^18.3.0",
     "siwe": "^2.3.2",
     "viem": "^2.21.0",
