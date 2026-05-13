@@ -42,12 +42,12 @@
     "@cfxdevkit/tsconfig": "workspace:*",
     "@types/node": "^25.6.0",
     "@cfxdevkit/biome-config": "workspace:*",
-    "@biomejs/biome": "^2.4.14",
+    "@biomejs/biome": "^2.4.15",
     "typescript": "^6.0.3",
-    "vite": "^8.0.10",
+    "vite": "^8.0.12",
     "vite-plugin-dts": "^5.0.0",
-    "vitest": "^4.1.5",
-    "@types/react": "^19.2.14"
+    "vitest": "^4.1.6",
+    "@types/react": "^19.0.0"
   },
   "peerDependencies": {
     "react": "^19.2.5"
