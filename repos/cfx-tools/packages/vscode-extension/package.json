@@ -340,7 +340,7 @@
     "@cfxdevkit/wallet": "workspace:^"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.14",
+    "@biomejs/biome": "^2.4.15",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
     "@types/node": "^22.10.0",

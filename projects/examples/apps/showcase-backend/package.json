@@ -27,7 +27,7 @@
     "viem": "^2.21.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.14",
+    "@biomejs/biome": "^2.4.15",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
     "@types/cors": "^2.8.17",
@@ -37,8 +37,8 @@
     "supertest": "^7.0.0",
     "tsx": "^4.19.0",
     "typescript": "^6.0.3",
-    "vite": "^8.0.10",
+    "vite": "^8.0.12",
     "vite-plugin-dts": "^5.0.0",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.6"
   }
 }
