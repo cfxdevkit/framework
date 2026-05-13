@@ -22,7 +22,7 @@
     "@cfxdevkit/wallet": "workspace:*",
     "buffer": "^6.0.3",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0",
+    "react-dom": "^19.2.6",
     "siwe": "^2.3.2",
     "viem": "^2.21.0"
   },
@@ -31,7 +31,7 @@
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
     "@types/react": "^18.3.0",
-    "@types/react-dom": "^18.3.0",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",
