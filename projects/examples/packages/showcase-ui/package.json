@@ -19,7 +19,7 @@
     "@cfxjs/use-wallet-react": "^0.0.9",
     "react": "^18.3.0",
     "viem": "^2.21.0",
-    "wagmi": "^2.14.0"
+    "wagmi": "^3.6.14"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",
@@ -34,6 +34,6 @@
     "vite": "^8.0.10",
     "vite-plugin-dts": "^5.0.0",
     "vitest": "^4.1.5",
-    "wagmi": "^2.14.0"
+    "wagmi": "^3.6.14"
   }
 }
