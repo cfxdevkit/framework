@@ -40,7 +40,7 @@ Define a single **`KeystoreProvider`** interface in `framework/services` and shi
 
 - `keytar` (unmaintained).
 - Plain-text key files anywhere in the repo.
-- Logging key material (enforced by a Biome lint rule shipped in `tools/biome-config`).
+- Logging key material (enforced by a Biome lint rule shipped in `repos/cfx-config/packages/biome-config`).
 - Long-lived private keys in CI secrets — use OIDC-issued short-lived tokens.
 
 ## Consequences

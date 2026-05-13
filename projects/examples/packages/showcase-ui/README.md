@@ -29,7 +29,7 @@ Shared theme, shell, backend controls, and wallet UI primitives for the example 
 
 - React
 - Wagmi and Viem peer integrations where needed by example UI components
-- Workspace tooling from `tools/tsconfig` and `tools/biome-config`
+- Workspace tooling from `repos/cfx-config/packages/tsconfig` and `repos/cfx-config/packages/biome-config`
 
 ## Commands
 

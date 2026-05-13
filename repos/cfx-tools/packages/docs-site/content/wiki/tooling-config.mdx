@@ -53,7 +53,7 @@ flowchart TD
 
 ### 1. Shared Configuration Packages
 
-#### `@cfxdevkit/tsconfig` (`tools/tsconfig/`)
+#### `@cfxdevkit/tsconfig` (`repos/cfx-config/packages/tsconfig/`)
 A config-only package providing TypeScript compiler presets for different project types.
 
 | File | Purpose |
@@ -70,7 +70,7 @@ A config-only package providing TypeScript compiler presets for different projec
 }
 ```
 
-#### `@cfxdevkit/biome-config` (`tools/biome-config/`)
+#### `@cfxdevkit/biome-config` (`repos/cfx-config/packages/biome-config/`)
 A config-only package defining shared formatting and linting rules.
 
 Key features:
@@ -83,11 +83,11 @@ Key features:
 ```json
 {
   "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
-  "extends": ["./tools/biome-config/biome.json"]
+  "extends": ["./repos/cfx-config/packages/biome-config/biome.json"]
 }
 ```
 
-#### `@cfxdevkit/moon-config` (`tools/moon-config/`)
+#### `@cfxdevkit/moon-config` (`repos/cfx-config/packages/moon-config/`)
 A config-only package providing reusable Moon task templates.
 
 | Template | Purpose |
@@ -202,7 +202,7 @@ The root `package.json` and `biome.json` act as the **orchestrator**, delegating
 // biome.json
 {
   "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
-  "extends": ["./tools/biome-config/biome.json"]
+  "extends": ["./repos/cfx-config/packages/biome-config/biome.json"]
 }
 ```
 
@@ -228,7 +228,7 @@ pnpm run security:check # audit + secret scan
 ```
 
 ### Updating Tooling Config
-1. Edit `tools/tsconfig/base.json`, `tools/biome-config/biome.json`, etc.
+1. Edit `repos/cfx-config/packages/tsconfig/base.json`, `repos/cfx-config/packages/biome-config/biome.json`, etc.
 2. Run `pnpm run check` to verify no regressions
 3. Commit changes — all packages inherit automatically
 
@@ -253,8 +253,8 @@ pnpm run security:check # audit + secret scan
 ## Future-Proofing & Extensibility
 
 - **New tooling?** Add a new `tools/<tool>/` package — extend existing patterns
-- **New language?** Add `tools/tsconfig/app-<lang>.json`
+- **New language?** Add `repos/cfx-config/packages/tsconfig/app-<lang>.json`
 - **New security rule?** Extend `scripts/check-secret-leaks.mjs`
-- **New task?** Add to `tools/moon-config/templates/`
+- **New task?** Add to `repos/cfx-config/packages/moon-config/templates/`
 
 The module is designed to scale with the monorepo — every addition follows the same principles: **shared, dev-only, workspace-consumed**.

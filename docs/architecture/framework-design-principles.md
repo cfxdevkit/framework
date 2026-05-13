@@ -38,7 +38,7 @@
 | Cyclomatic complexity per function | 6 | 10 |
 
 A module that approaches the hard limit must be split before merge. Enforced via a
-Biome rule shipped in `tools/biome-config/`.
+Biome rule shipped in `repos/cfx-config/packages/biome-config/`.
 
 ## 4. Prefer functions over classes
 

@@ -3,9 +3,10 @@ $schema: 'https://moonrepo.dev/schemas/workspace.json'
 # Explicit list — avoids false-positive matches of README.md / STRUCTURE.md
 # at tier-root level (those are documentation, not projects).
 projects:
-  - 'tools/tsconfig'
-  - 'tools/biome-config'
-  - 'tools/moon-config'
+  - 'repos/cfx-config/packages/tsconfig'
+  - 'repos/cfx-config/packages/biome-config'
+  - 'repos/cfx-config/packages/moon-config'
+  - 'repos/cfx-meta/packages/arch-rules'
   - 'repos/cfx-core/packages/core'
   - 'repos/cfx-core/packages/protocol'
   - 'repos/cfx-core/packages/executor'

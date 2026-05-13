@@ -78,10 +78,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../../repos/cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../../repos/cfx-config/packages/tsconfig
       '@types/cors':
         specifier: ^2.8.17
         version: 2.8.19
@@ -144,17 +144,17 @@ importers:
         version: 2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4)
       wagmi:
         specifier: ^3.6.9
-        version: 3.6.9(@coinbase/wallet-sdk@4.3.6(@types/react@19.2.14)(bufferutil@4.1.0)(immer@11.1.5)(react@19.2.5)(typescript@6.0.3)(use-sync-external-store@1.6.0(react@19.2.5))(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-provider@0.18.6(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-sdk@9.1.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@tanstack/query-core@5.100.9)(@tanstack/react-query@5.100.9(react@19.2.5))(@types/react@19.2.14)(@walletconnect/ethereum-provider@2.21.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(immer@11.1.5)(porto@0.2.35)(react@19.2.5)(typescript@6.0.3)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))
+        version: 3.6.9(@coinbase/wallet-sdk@4.3.6(@types/react@19.2.14)(bufferutil@4.1.0)(immer@11.1.5)(react@19.2.5)(typescript@6.0.3)(use-sync-external-store@1.4.0(react@19.2.5))(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-provider@0.18.6(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-sdk@9.1.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@tanstack/query-core@5.100.9)(@tanstack/react-query@5.100.9(react@19.2.5))(@types/react@19.2.14)(@walletconnect/ethereum-provider@2.21.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(immer@11.1.5)(porto@0.2.35)(react@19.2.5)(typescript@6.0.3)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.4.14
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../../repos/cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../../repos/cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -185,10 +185,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../../repos/cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../../repos/cfx-config/packages/tsconfig
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -240,10 +240,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../../repos/cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../../repos/cfx-config/packages/tsconfig
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
@@ -301,10 +301,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../../repos/cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../../repos/cfx-config/packages/tsconfig
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
@@ -362,10 +362,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../../repos/cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../../repos/cfx-config/packages/tsconfig
       '@types/cors':
         specifier: ^2.8.17
         version: 2.8.19
@@ -438,10 +438,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../../repos/cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../../repos/cfx-config/packages/tsconfig
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
@@ -478,10 +478,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../../repos/cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../../repos/cfx-config/packages/tsconfig
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
@@ -548,10 +548,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../../repos/cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../../repos/cfx-config/packages/tsconfig
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
@@ -578,13 +578,13 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../../repos/cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../../repos/cfx-config/packages/tsconfig
       '@cfxjs/use-wallet-react':
         specifier: ^0.0.9
-        version: 0.0.9(decimal.js@10.6.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zustand@5.0.12(@types/react@19.2.14)(immer@11.1.5)(react@19.2.5)(use-sync-external-store@1.4.0(react@19.2.5)))
+        version: 0.0.9(decimal.js@10.6.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zustand@5.0.12(@types/react@19.2.14)(immer@11.1.5)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5)))
       '@tanstack/react-query':
         specifier: ^5.100.9
         version: 5.100.9(react@19.2.5)
@@ -611,7 +611,13 @@ importers:
         version: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.7)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.4))
       wagmi:
         specifier: ^3.6.9
-        version: 3.6.9(@coinbase/wallet-sdk@4.3.6(@types/react@19.2.14)(bufferutil@4.1.0)(immer@11.1.5)(react@19.2.5)(typescript@6.0.3)(use-sync-external-store@1.4.0(react@19.2.5))(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-provider@0.18.6(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-sdk@9.1.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@tanstack/query-core@5.100.9)(@tanstack/react-query@5.100.9(react@19.2.5))(@types/react@19.2.14)(@walletconnect/ethereum-provider@2.21.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(immer@11.1.5)(porto@0.2.35)(react@19.2.5)(typescript@6.0.3)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))
+        version: 3.6.9(@coinbase/wallet-sdk@4.3.6(@types/react@19.2.14)(bufferutil@4.1.0)(immer@11.1.5)(react@19.2.5)(typescript@6.0.3)(use-sync-external-store@1.6.0(react@19.2.5))(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-provider@0.18.6(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-sdk@9.1.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@tanstack/query-core@5.100.9)(@tanstack/react-query@5.100.9(react@19.2.5))(@types/react@19.2.14)(@walletconnect/ethereum-provider@2.21.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(immer@11.1.5)(porto@0.2.35)(react@19.2.5)(typescript@6.0.3)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))
+
+  repos/cfx-config/packages/biome-config: {}
+
+  repos/cfx-config/packages/moon-config: {}
+
+  repos/cfx-config/packages/tsconfig: {}
 
   repos/cfx-core/packages/core:
     dependencies:
@@ -633,10 +639,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -673,10 +679,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -704,10 +710,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -738,13 +744,13 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/devnode':
         specifier: workspace:*
         version: link:../devnode
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -781,10 +787,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -845,10 +851,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/better-sqlite3':
         specifier: ^7.6.13
         version: 7.6.13
@@ -885,10 +891,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -916,10 +922,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -943,7 +949,7 @@ importers:
         version: link:../../../cfx-core/packages/core
       '@ledgerhq/hw-app-eth':
         specifier: ^7.8.1
-        version: 7.8.1(react@19.0.0)
+        version: 7.8.1(react@19.2.5)
       '@ledgerhq/hw-transport-node-hid':
         specifier: ^6.33.1
         version: 6.33.1
@@ -965,10 +971,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1008,10 +1014,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1042,10 +1048,37 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
+      '@types/node':
+        specifier: ^25.6.0
+        version: 25.6.0
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.0.10
+        version: 8.0.10(@types/node@25.6.0)(esbuild@0.27.7)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.4)
+      vite-plugin-dts:
+        specifier: ^5.0.0
+        version: 5.0.0(@microsoft/api-extractor@7.58.7(@types/node@25.6.0))(esbuild@0.27.7)(rollup@4.60.2)(typescript@6.0.3)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.7)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.4))
+      vitest:
+        specifier: ^4.1.5
+        version: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.7)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.4))
+
+  repos/cfx-meta/packages/arch-rules:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.4.14
+        version: 2.4.14
+      '@cfxdevkit/biome-config':
+        specifier: workspace:*
+        version: link:../../../cfx-config/packages/biome-config
+      '@cfxdevkit/tsconfig':
+        specifier: workspace:*
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1073,10 +1106,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1110,7 +1143,7 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/contracts':
         specifier: workspace:*
         version: link:../contracts
@@ -1119,7 +1152,7 @@ importers:
         version: link:../../../cfx-core/packages/devnode
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1153,10 +1186,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1183,10 +1216,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1220,10 +1253,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1247,10 +1280,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1290,10 +1323,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1382,10 +1415,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1409,10 +1442,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1455,10 +1488,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1489,13 +1522,13 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/theme':
         specifier: workspace:^
         version: link:../theme
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@tanstack/react-query':
         specifier: ^5.100.9
         version: 5.100.9(react@19.2.5)
@@ -1535,10 +1568,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@cfxdevkit/wallet':
         specifier: workspace:^
         version: link:../../../cfx-keys/packages/wallet
@@ -1578,10 +1611,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -1624,10 +1657,10 @@ importers:
         version: 2.4.14
       '@cfxdevkit/biome-config':
         specifier: workspace:*
-        version: link:../../../../tools/biome-config
+        version: link:../../../cfx-config/packages/biome-config
       '@cfxdevkit/tsconfig':
         specifier: workspace:*
-        version: link:../../../../tools/tsconfig
+        version: link:../../../cfx-config/packages/tsconfig
       '@cfxdevkit/wallet':
         specifier: workspace:^
         version: link:../../../cfx-keys/packages/wallet
@@ -1649,12 +1682,6 @@ importers:
       vitest:
         specifier: ^4.1.5
         version: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.7)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.4))
-
-  tools/biome-config: {}
-
-  tools/moon-config: {}
-
-  tools/tsconfig: {}
 
 packages:
 
@@ -9002,12 +9029,12 @@ snapshots:
       react-dom: 18.3.1(react@19.2.5)
       zustand: 5.0.12(@types/react@19.2.14)(immer@11.1.5)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5))
 
-  '@cfxjs/use-wallet-react@0.0.9(decimal.js@10.6.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zustand@5.0.12(@types/react@19.2.14)(immer@11.1.5)(react@19.2.5)(use-sync-external-store@1.4.0(react@19.2.5)))':
+  '@cfxjs/use-wallet-react@0.0.9(decimal.js@10.6.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zustand@5.0.12(@types/react@19.2.14)(immer@11.1.5)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5)))':
     dependencies:
       decimal.js: 10.6.0
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
-      zustand: 5.0.12(@types/react@19.2.14)(immer@11.1.5)(react@19.2.5)(use-sync-external-store@1.4.0(react@19.2.5))
+      zustand: 5.0.12(@types/react@19.2.14)(immer@11.1.5)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5))
 
   '@changesets/apply-release-plan@7.1.1':
     dependencies:
@@ -9860,26 +9887,6 @@ snapshots:
       crypto-js: 4.2.0
     transitivePeerDependencies:
       - debug
-
-  '@ledgerhq/hw-app-eth@7.8.1(react@19.0.0)':
-    dependencies:
-      '@ethersproject/abi': 5.8.0
-      '@ethersproject/rlp': 5.8.0
-      '@ethersproject/transactions': 5.8.0
-      '@ledgerhq/domain-service': 1.8.1
-      '@ledgerhq/errors': 6.34.0
-      '@ledgerhq/evm-tools': 1.12.4
-      '@ledgerhq/hw-transport': 6.35.1
-      '@ledgerhq/hw-transport-mocker': 6.34.1
-      '@ledgerhq/logs': 6.17.0
-      '@ledgerhq/types-live': 6.106.0(react@19.0.0)
-      axios: 1.15.2
-      bignumber.js: 9.3.1
-      semver: 7.7.3
-    transitivePeerDependencies:
-      - debug
-      - react
-      - react-redux
 
   '@ledgerhq/hw-app-eth@7.8.1(react@19.2.5)':
     dependencies:
@@ -17287,6 +17294,7 @@ snapshots:
       immer: 11.1.5
       react: 19.2.5
       use-sync-external-store: 1.4.0(react@19.2.5)
+    optional: true
 
   zustand@5.0.12(@types/react@19.2.14)(immer@11.1.5)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5)):
     optionalDependencies:

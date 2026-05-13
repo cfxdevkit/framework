@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "lifecycle": "pre-release",
+  "cross-cutting": {
+    "id": "cross-cutting",
+    "level": -1,
+    "crossCutting": true,
+    "description": "Cross-cutting architecture and build configuration packages. These may be consumed as devDependencies by any tier and must not be runtime dependencies.",
+    "paths": [
+      "repos/cfx-meta/packages/**",
+      "repos/cfx-config/packages/**"
+    ]
+  },
+  "tiers": [
+    {
+      "id": "framework",
+      "level": 0,
+      "description": "Tier 0 reusable framework packages.",
+      "paths": [
+        "repos/cfx-core/packages/**",
+        "repos/cfx-keys/packages/**",
+        "repos/cfx-ui/packages/**",
+        "repos/cfx-solidity/packages/**"
+      ]
+    },
+    {
+      "id": "platform",
+      "level": 1,
+      "description": "Tier 1 developer platform packages.",
+      "paths": [
+        "repos/cfx-tools/packages/**"
+      ]
+    },
+    {
+      "id": "domains",
+      "level": 2,
+      "description": "Tier 2 reusable domain packages.",
+      "paths": [
+        "repos/cfx-domain/packages/**"
+      ]
+    },
+    {
+      "id": "projects",
+      "level": 3,
+      "description": "Tier 3 applications and project-local packages.",
+      "paths": [
+        "projects/**"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "no-upward-imports",
+      "enforce": "always",
+      "severity": "error",
+      "scope": "all",
+      "description": "A package must not import from or depend on a higher-numbered tier. Cross-cutting packages are allowed only as devDependencies."
+    },
+    {
+      "id": "no-internal-reach",
+      "enforce": "always",
+      "severity": "error",
+      "scope": "all",
+      "description": "A package must not import another package's src/internal implementation files."
+    },
+    {
+      "id": "no-default-exports",
+      "enforce": "always",
+      "severity": "error",
+      "scope": ["framework", "domains"],
+      "description": "Published framework and domain packages must use named exports only."
+    },
+    {
+      "id": "framework-requires-exports-map",
+      "enforce": "on-release",
+      "severity": "warning",
+      "scope": ["framework", "domains"],
+      "description": "Framework and domain packages must declare package.json exports maps for every public entrypoint."
+    },
+    {
+      "id": "platform-uses-semver-for-framework",
+      "enforce": "on-release",
+      "severity": "warning",
+      "scope": ["platform"],
+      "description": "Platform packages should depend on released framework packages by semver range, not workspace:* once releases exist."
+    },
+    {
+      "id": "requires-moon-yml",
+      "enforce": "always",
+      "severity": "error",
+      "scope": ["framework", "platform", "domains"],
+      "description": "Every framework, platform, and domain package must have a moon.yml project file."
+    },
+    {
+      "id": "requires-src-index",
+      "enforce": "always",
+      "severity": "error",
+      "scope": ["framework", "domains"],
+      "description": "Framework and domain packages must expose a src/index.ts public entrypoint."
+    },
+    {
+      "id": "requires-readme",
+      "enforce": "always",
+      "severity": "warning",
+      "scope": "all",
+      "description": "Workspace packages should include a README.md describing package scope and public surface."
+    },
+    {
+      "id": "requires-changelog",
+      "enforce": "on-release",
+      "severity": "warning",
+      "scope": ["framework"],
+      "description": "Framework packages should include a CHANGELOG.md before release."
+    },
+    {
+      "id": "file-size-hard-limit",
+      "enforce": "always",
+      "severity": "error",
+      "scope": ["framework", "platform", "domains"],
+      "description": "Source files must stay within the framework hard file-size budget.",
+      "params": {
+        "max_lines": 300
+      }
+    },
+    {
+      "id": "no-ts-nocheck",
+      "enforce": "always",
+      "severity": "error",
+      "scope": ["framework", "platform", "domains"],
+      "description": "Source files must not use // @ts-nocheck; fix or model the types instead."
+    },
+    {
+      "id": "no-js-mjs-source-files",
+      "enforce": "always",
+      "severity": "error",
+      "scope": ["framework", "platform", "domains"],
+      "description": "Source files must be TypeScript (.ts or .tsx), not JavaScript (.js, .mjs, or .cjs)."
+    }
+  ]
+}

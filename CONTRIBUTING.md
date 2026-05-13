@@ -32,7 +32,7 @@ plus `projects/*`.
 ## Conventions
 
 - **Language:** TypeScript strict everywhere except firmware (`projects/electro/apps/firmware/` — C++).
-- **Style:** Biome, config in `tools/biome-config/`.
+- **Style:** Biome, config in `repos/cfx-config/packages/biome-config/`.
 - **Commits:** Conventional Commits.
 - **Branches:** trunk-based, short-lived feature branches.
 - **PR scope:** one tier per PR; cross-tier changes require explicit justification.
@@ -46,7 +46,7 @@ plus `projects/*`.
 5. If the directory is an app or a slice root, README coverage is sufficient unless that unit exposes a documented library API.
 6. Register in the root `pnpm-workspace.yaml`.
 7. Register the package in `.moon/workspace.yml`.
-8. Inherit `tsconfig` from `tools/tsconfig/`.
+8. Inherit `tsconfig` from `repos/cfx-config/packages/tsconfig/`.
 9. If publishable, add changeset config and CI publish hook.
 
 ## Adding a new project

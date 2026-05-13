@@ -1,5 +1,6 @@
 packages:
-  - "tools/*"
+  - "repos/cfx-config/packages/*"
+  - "repos/cfx-meta/packages/*"
   - "repos/*/packages/*"
   - "repos/cfx-tools/devtools/*"
   - "repos/cfx-tools/templates/*"

@@ -4,17 +4,23 @@ This document describes the architectural rules that govern the current
 workspace. The repository is physically organized as `repos/cfx-*` slices plus
 `projects/*`, but those slices map onto the tier model below.
 
+The machine-readable source of truth for tier paths, lifecycle state, and
+validation rules is `repos/cfx-meta/arch-rules.yaml`. Keep this document aligned
+with that file; validation tooling should consume `@cfxdevkit/arch-rules` rather
+than parsing prose from this document.
+
 ## Current operating model
 
 Agents and contributors should treat the current workspace like this:
 
 | Current path | Architectural role | Conceptual tier name |
 |---|---|---|
+| `repos/cfx-meta`, `repos/cfx-config` | Cross-cutting architecture/config packages | `cross-cutting/` |
 | `repos/cfx-core`, `repos/cfx-keys`, `repos/cfx-ui`, `repos/cfx-solidity` | Tier 0 reusable packages | `framework/` |
 | `repos/cfx-tools` | Tier 1 developer platform | `platform/` |
 | `repos/cfx-domain` | Tier 2 reusable domains | `domains/` |
 | `projects/*` | Tier 3 applications and project-local code | `projects/` |
-| `tools/*`, `docs/*`, `infrastructure/*` | Cross-cutting support | (literal paths) |
+| `docs/*`, `infrastructure/*` | Cross-cutting support | (literal paths) |
 
 > **Note for documentation tooling:** When this document uses `framework/`, `platform/`,
 > or `domains/` as shorthand tier names, those are **conceptual labels only** — the actual
@@ -46,10 +52,12 @@ Conceptual target:
 │  platform/     devcontainer │ mcp │ scaffold │ vscode-ext   │  Tier 1
 ├─────────────────────────────────────────────────────────────┤
 │  framework/    core │ react │ wallet-connect │ contracts …  │  Tier 0
+├─────────────────────────────────────────────────────────────┤
+│  cross-cutting meta │ config                                │  Tier -1
 └─────────────────────────────────────────────────────────────┘
                 ▲          ▲           ▲          ▲
                 │          │           │          │
-            tools/   infrastructure/  docs/   (cross-cutting)
+         cfx-config/ infrastructure/  docs/   (cross-cutting)
 ```
 
 Current implementation:
@@ -63,13 +71,21 @@ Current implementation:
 │  repos/cfx-tools   mcp │ scaffold │ cli │ editor tooling   │  Tier 1
 ├─────────────────────────────────────────────────────────────┤
 │  repos/cfx-*       core │ keys │ ui │ solidity             │  Tier 0
+├─────────────────────────────────────────────────────────────┤
+│  repos/cfx-meta │ repos/cfx-config                         │  Tier -1
 └─────────────────────────────────────────────────────────────┘
                 ▲          ▲           ▲          ▲
                 │          │           │          │
-            tools/   infrastructure/  docs/   (cross-cutting)
+         cfx-config/ infrastructure/  docs/   (cross-cutting)
 ```
 
 ## Boundary contracts
+
+### cross-cutting/  (Tier -1)
+- Owns architecture metadata, docs orchestration, and build configuration.
+- May be consumed as `devDependencies` by any tier.
+- **MUST NOT** be a runtime dependency of framework, platform, domain, or project packages.
+- **Current location:** `repos/cfx-meta`, `repos/cfx-config`.
 
 ### framework/  (Tier 0)
 - **MUST** be tree-shakeable, side-effect free where possible.

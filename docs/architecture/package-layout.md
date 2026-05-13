@@ -8,7 +8,7 @@ Every TypeScript package in `framework/`, `platform/`, `domains/`, and project-i
 ├── README.md                Scope, public API, dependencies, examples
 ├── CHANGELOG.md             Changesets-managed (framework/* only)
 ├── package.json             Name, exports map, peer deps, scripts
-├── tsconfig.json            Extends tools/tsconfig/<flavor>.json
+├── tsconfig.json            Extends @cfxdevkit/tsconfig/<flavor>.json
 ├── vite.config.ts           Library mode build (framework/, domains/) or app build (apps)
 ├── moon.yml                 Task definitions (build, test, typecheck, lint)
 ├── src/
