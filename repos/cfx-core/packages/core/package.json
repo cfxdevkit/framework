@@ -59,7 +59,7 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
-    "@scure/bip32": "^1.5.0",
+    "@scure/bip32": "^2.2.0",
     "@scure/bip39": "^1.4.0",
     "cive": "^0.8.1",
     "viem": "^2.21.0"
