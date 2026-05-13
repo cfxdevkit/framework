@@ -83,6 +83,6 @@
     "@cfxdevkit/executor": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
     "@noble/hashes": "^1.5.0",
-    "viem": "^2.21.0"
+    "viem": "^2.48.11"
   }
 }

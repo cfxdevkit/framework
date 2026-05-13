@@ -63,7 +63,7 @@
     "@scure/bip32": "^1.5.0",
     "@scure/bip39": "^2.2.0",
     "cive": "^0.8.1",
-    "viem": "^2.21.0"
+    "viem": "^2.48.11"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",
