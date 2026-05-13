@@ -1,0 +1,90 @@
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+layer: 'application'
+language: 'typescript'
+
+tasks:
+  check-secrets:
+    command: 'pnpm exec tsx src/bin/check-secrets.ts'
+    inputs:
+      - '/repos/**/*'
+      - '/projects/**/*'
+      - '/scripts/**/*'
+      - 'src/**/*'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
+  check-hotspots:
+    command: 'pnpm exec tsx src/bin/check-hotspots.ts --fail-on-hard'
+    inputs:
+      - '/repos/**/*'
+      - '/projects/**/*'
+      - '/scripts/**/*'
+      - 'src/**/*'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
+  check-ci:
+    command: 'pnpm exec tsx src/bin/check-ci.ts'
+    inputs:
+      - '/.github/workflows/**/*'
+      - '/infrastructure/**/*'
+      - '/scripts/**/*'
+      - '/repos/cfx-tools/packages/docs-site/**/*'
+      - 'src/**/*'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
+  check-docs:
+    command: 'pnpm exec tsx src/bin/check-docs.ts'
+    inputs:
+      - '/**/*.md'
+      - '/.moon/workspace.yml'
+      - '/repos/**/package.json'
+      - '/projects/**/package.json'
+      - 'src/**/*'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
+  check-corpus:
+    command: 'pnpm exec tsx src/bin/check-corpus.ts'
+    inputs:
+      - '/README.md'
+      - '/ARCHITECTURE.md'
+      - '/CONTRIBUTING.md'
+      - '/SECURITY.md'
+      - '/docs/**/*'
+      - '/infrastructure/**/*'
+      - '/projects/**/*'
+      - '/repos/**/*'
+      - '/scripts/**/*'
+      - 'src/**/*'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
+  check-eval:
+    command: 'pnpm exec tsx src/bin/check-eval.ts'
+    inputs:
+      - '/artifacts/llm/reports/**/*'
+      - 'src/**/*'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
+  arch-check:
+    command: 'pnpm exec tsx src/bin/arch-check.ts'
+    inputs:
+      - '/repos/**/*'
+      - '/projects/**/*'
+      - '/repos/cfx-meta/arch-rules.yaml'
+      - '/pnpm-workspace.yaml'
+      - '/.moon/workspace.yml'
+      - 'src/**/*'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false

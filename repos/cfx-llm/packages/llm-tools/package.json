@@ -2,7 +2,7 @@
   "name": "@cfxdevkit/llm-tools",
   "version": "0.0.0",
   "private": false,
-  "description": "Local LLM automation tools for repository upkeep, validation, and Lemonade/Pi workflows.",
+  "description": "CLI dispatcher for local LLM automation workflows.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -34,7 +34,8 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
-    "@mariozechner/pi-coding-agent": "^0.73.0",
+    "@cfxdevkit/llm-agents": "workspace:*",
+    "@cfxdevkit/llm-client": "workspace:*",
     "tsx": "^4.20.6"
   },
   "devDependencies": {

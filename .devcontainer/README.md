@@ -81,7 +81,6 @@ usually provide `host.containers.internal` automatically.
 After rebuilding or reopening the container, verify connectivity:
 
 ```bash
-pnpm run llm:serve-check
 pnpm run llm:models
 pnpm run llm:ask -- --quick "Is Lemonade reachable from the devcontainer?"
 ```

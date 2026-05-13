@@ -6,7 +6,9 @@
 
 | Package | npm | Surface |
 |---------|-----|---------|
-| `llm-tools` | `@cfxdevkit/llm-tools` | Local Lemonade/Pi automation for corpus, docs, validation, review, hotspot scanning, and commit workflows |
+| `llm-client` | `@cfxdevkit/llm-client` | Typed provider chain for Lemonade, OpenAI-compatible endpoints, and GitHub Models |
+| `llm-agents` | `@cfxdevkit/llm-agents` | Orchestrated developer workflows for commit, docs, test upkeep, and deterministic review |
+| `llm-tools` | `@cfxdevkit/llm-tools` | CLI dispatcher that routes root `llm:*` scripts into `llm-client` and `llm-agents` |
 
 ## Why standalone
 

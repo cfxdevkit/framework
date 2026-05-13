@@ -1,4 +1,4 @@
-export type LlmWorker = 'lemonade' | 'deterministic' | 'hotspots';
+export type LlmWorker = 'lemonade' | 'deterministic';
 
 export interface LlmCommandDefinition {
   readonly name: string;
@@ -40,13 +40,13 @@ export const llmCommands = [
   },
   {
     name: 'action',
-    description: 'Run a named delegated Lemonade/Pi action',
+    description: 'Run a named delegated LLM action',
     worker: 'lemonade',
     workerArgs: ['run'],
   },
   {
     name: 'actions',
-    description: 'List delegated Lemonade/Pi actions',
+    description: 'List delegated LLM actions',
     worker: 'lemonade',
     workerArgs: ['actions'],
   },
@@ -109,51 +109,15 @@ export const llmCommands = [
   },
   {
     name: 'all',
-    description: 'Run all deterministic repo upkeep agents',
+    description: 'Run all LLM repo upkeep agents',
     worker: 'deterministic',
     workerArgs: ['all'],
-  },
-  {
-    name: 'ci',
-    description: 'Run deterministic CI/CD and docs deploy readiness checks',
-    worker: 'deterministic',
-    workerArgs: ['ci'],
-  },
-  {
-    name: 'corpus',
-    description: 'Build local repo corpus metadata for LLM context',
-    worker: 'deterministic',
-    workerArgs: ['corpus'],
-  },
-  {
-    name: 'docs',
-    description: 'Run deterministic documentation alignment checks',
-    worker: 'deterministic',
-    workerArgs: ['docs'],
-  },
-  {
-    name: 'eval',
-    description: 'Summarize deterministic agent gates',
-    worker: 'deterministic',
-    workerArgs: ['eval'],
   },
   {
     name: 'review',
     description: 'Run deterministic changed-file review and validation suggestions',
     worker: 'deterministic',
     workerArgs: ['review'],
-  },
-  {
-    name: 'hotspots',
-    description: 'Scan source file sizes and churn against the framework budget',
-    worker: 'hotspots',
-    workerArgs: [],
-  },
-  {
-    name: 'serve-check',
-    description: 'Check Lemonade Server reachability',
-    worker: 'deterministic',
-    workerArgs: ['serve-check'],
   },
 ] as const satisfies readonly LlmCommandDefinition[];
 

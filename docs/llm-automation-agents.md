@@ -15,13 +15,12 @@ pnpm run llm:actions
 pnpm run llm:config -- show
 pnpm run llm:action -- review
 pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
-pnpm run llm:corpus
-pnpm run llm:ci
-pnpm run llm:docs
+pnpm run check:corpus
+pnpm run check:ci
+pnpm run check:docs
 pnpm run llm:review
-pnpm run llm:hotspots
-pnpm run llm:eval
-pnpm run llm:serve-check
+pnpm run check:hotspots
+pnpm run check:eval
 pnpm run llm:changeset
 pnpm run llm:release
 pnpm run llm:ci-cd
@@ -35,13 +34,12 @@ Commit only small schemas, manifests, or report excerpts intentionally.
 
 | Agent | Purpose | Output |
 |-------|---------|--------|
-| `llm:corpus` | Build safe repository metadata for retrieval and later eval seeds | `artifacts/llm/corpus/*.jsonl` |
-| `llm:ci` | Check CI/CD workflow, docs image, release, and VPS deploy wiring | `artifacts/llm/reports/ci-cd.*` |
-| `llm:docs` | Detect broken documentation references, Moon registration drift, package export drift, and current/planned wording risk | `artifacts/llm/reports/docs-alignment.*` |
+| `check:corpus` | Build safe repository metadata for retrieval and later eval seeds | `artifacts/llm/corpus/*.jsonl` |
+| `check:ci` | Check CI/CD workflow, docs image, release, and VPS deploy wiring | `artifacts/llm/reports/ci-cd.*` |
+| `check:docs` | Detect broken documentation references, Moon registration drift, package export drift, and current/planned wording risk | `artifacts/llm/reports/docs-alignment.*` |
 | `llm:review` | Inspect current git changes and suggest targeted validation commands | `artifacts/llm/reports/review.*` |
-| `llm:hotspots` | Scan source file size and recent churn against the framework component budget | `artifacts/llm/reports/code-hotspots.*` |
-| `llm:eval` | Summarize deterministic gates from the generated reports | `artifacts/llm/reports/eval.*` |
-| `llm:serve-check` | Probe Lemonade Server reachability and model-list endpoints, including `http://localhost:13305/` by default | `artifacts/llm/reports/serve-check.*` |
+| `check:hotspots` | Scan source file size and recent churn against the framework component budget | `artifacts/llm/reports/code-hotspots.*` |
+| `check:eval` | Summarize deterministic gates from the generated reports | `artifacts/llm/reports/eval.*` |
 
 ## Lemonade CLI
 
@@ -57,8 +55,7 @@ workstation and the container uses host networking, so `http://localhost:13305/`
 should resolve to the same service inside and outside the container. The CLI also
 probes `host.docker.internal` and `host.containers.internal` for container
 backends that expose host aliases. After rebuilding or reopening the
-devcontainer, run `pnpm run llm:serve-check` or `pnpm run llm:models` to verify
-connectivity.
+devcontainer, run `pnpm run llm:models` to verify connectivity.
 
 Useful commands:
 

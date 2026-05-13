@@ -1,0 +1,19 @@
+{
+  "extends": "@cfxdevkit/tsconfig/lib.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "outDir": "dist",
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "allowImportingTsExtensions": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "exactOptionalPropertyTypes": false,
+    "useUnknownInCatchVariables": false,
+    "paths": {
+      "@cfxdevkit/llm-client": ["../llm-client/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "workers/**/*"],
+  "exclude": ["dist", "node_modules", "**/*.test.ts"]
+}

@@ -324,40 +324,34 @@ Recommended separation:
 
 Repository automation services:
 
-- `llm:corpus`: build corpus metadata and chunks.
+- `check:corpus`: build corpus metadata and chunks.
 - Dataset generation: deferred until there is a reviewed promotion path for
   train/eval JSONL examples.
-- `llm:ci`: check CI/CD, docs image, release, and VPS deploy wiring.
-- `llm:eval`: run completion, review, doc-alignment, and agent-task benchmarks.
+- `check:ci`: check CI/CD, docs image, release, and VPS deploy wiring.
+- `check:eval`: run completion, review, doc-alignment, and agent-task benchmarks.
 - `llm:review`: produce a review report for current changes using retrieval and
   the selected local model.
-- `llm:docs`: detect documentation drift and propose patches.
-- `llm:hotspots`: scan source file size and churn against the framework
+- `check:docs`: detect documentation drift and propose patches.
+- `check:hotspots`: scan source file size and churn against the framework
   component budget.
-- `llm:serve-check`: verify Lemonade Server reachability and model inventory.
 
 Initial implementation status:
 
 - `@cfxdevkit/llm-tools` in `repos/cfx-llm` implements the first deterministic
   upkeep agents.
-- `pnpm run llm:corpus` writes file, chunk, and documentation-heading metadata
+- `pnpm run check:corpus` writes file, chunk, and documentation-heading metadata
   under `artifacts/llm/corpus/`.
-- `pnpm run llm:docs` checks Markdown path references, package export coverage,
+- `pnpm run check:docs` checks Markdown path references, package export coverage,
   Moon project registration, and current-vs-planned structure language.
 - `pnpm run llm:review` inspects uncommitted changes, flags security-sensitive
   surfaces, and suggests validation commands.
-- `pnpm run llm:ci` checks docs image publishing, deploy workflow, Changesets
+- `pnpm run check:ci` checks docs image publishing, deploy workflow, Changesets
   release workflow, npm publish helper, and Ansible deployment scaffolding.
-- `pnpm run llm:eval` summarizes deterministic gates from the generated reports.
-- `pnpm run llm:serve-check` probes Lemonade Server from `LEMONADE_URL`, then
-  auto-discovers common local and devcontainer host endpoints including
-  `http://localhost:13305/`, `http://host.docker.internal:13305/`, and
-  `http://host.containers.internal:13305/`, and records model inventory without
-  starting training.
+- `pnpm run check:eval` summarizes deterministic gates from the generated reports.
 - `pnpm run llm:models`, `pnpm run llm:config`, `pnpm run llm:ask`, and
   `pnpm run llm:action -- <action>` provide a simple Lemonade-backed CLI for
   model discovery, per-action model configuration, and repo-specific actions.
-- `pnpm run llm:all` runs the full no-training upkeep loop.
+- `pnpm run llm:all` runs the LLM review upkeep loop.
 - Fine-tuning remains intentionally unimplemented until these agents produce
   useful reports and eval evidence.
 

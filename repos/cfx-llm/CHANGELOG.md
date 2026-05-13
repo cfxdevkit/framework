@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased] - 2026-05-13
+### Added
+- Added `@cfxdevkit/llm-client` with typed provider resolution for Lemonade, OpenAI-compatible endpoints, and GitHub Models.
+- Added `@cfxdevkit/llm-agents` for commit, docs, test-upkeep, and deterministic review workflows.
+
+### Changed
+- Slimmed `@cfxdevkit/llm-tools` to a CLI dispatcher that composes `llm-client` and `llm-agents`.
+
+### Removed
+- Removed the experimental Pi RPC provider path and its dependency.
+
 ## [Unreleased] - 2026-05-05
 ### Changed
 - Increased soft file line limit from 150 to 250 and hard file line limit from 250 to 300 in `code-hotspots.ts`, `models.ts`, and `code-hotspots.json`

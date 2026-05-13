@@ -28,7 +28,8 @@
       "level": 1,
       "description": "Tier 1 developer platform packages.",
       "paths": [
-        "repos/cfx-tools/packages/**"
+        "repos/cfx-tools/packages/**",
+        "repos/cfx-llm/packages/**"
       ]
     },
     {
