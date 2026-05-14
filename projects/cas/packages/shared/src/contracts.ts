@@ -1,10 +1,10 @@
-import type { CasHexAddress } from './jobs.js';
 import { ZERO_ADDRESS as _ZERO_ADDRESS } from '@cfxdevkit/core';
+import type { CasHexAddress } from './jobs.js';
 
 // ── Re-exports from framework packages ───────────────────────────────────────
 
-export { ZERO_ADDRESS, MAX_UINT256 } from '@cfxdevkit/core';
-export { WCFX_ABI, AUTOMATION_MANAGER_ABI } from '@cfxdevkit/protocol';
+export { MAX_UINT256, ZERO_ADDRESS } from '@cfxdevkit/core';
+export { AUTOMATION_MANAGER_ABI, WCFX_ABI } from '@cfxdevkit/protocol';
 
 const ZERO_ADDRESS = _ZERO_ADDRESS as CasHexAddress;
 

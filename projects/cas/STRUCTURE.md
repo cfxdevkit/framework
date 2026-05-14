@@ -3,81 +3,110 @@
 ```
 cas/
 ├── README.md
+├── STRUCTURE.md
+├── CHANGELOG.md
+├── AUDITS.md
+├── .gitignore
 │
 ├── apps/
-│   ├── frontend/                   ── Next.js 16 local user UI ──
-│   │   ├── package.json
-│   │   ├── next.config.ts
-│   │   ├── src/
-│   │   │   └── app/
-│   │   │       ├── globals.css     Operational dashboard styling
-│   │   │       ├── layout.tsx
-│   │   │       └── page.tsx        SIWE sign-in, job form, job table
-│   │   └── tsconfig.json
-│   │
-│   ├── backend/                    ── Express API, SQLite local dev ──
+│   ├── backend/                    ── Express API + embedded keeper ──
 │   │   ├── package.json
 │   │   ├── tsconfig.json
+│   │   ├── .env.example            template — copy to .env before running
 │   │   └── src/
-│   │       ├── index.ts            bootstrap
+│   │       ├── index.ts            bootstrap: load config, start HTTP server, start keeper
+│   │       ├── app.ts              Express app factory used by both runtime and tests
+│   │       ├── config.ts           resolveCasBackendConfig() — reads all env vars
+│   │       ├── types.ts            CasBackendState interface
+│   │       ├── worker.ts           embedded keeper factory (createKeeperWorker)
 │   │       ├── db/
-│   │       │   └── sqlite.ts       automation schema + CAS auth nonce table
+│   │       │   └── sqlite.ts       SQLite runtime: automation schema + nonce table
 │   │       ├── routes/
-│   │       │   ├── auth.ts         SIWE via @cfxdevkit/wallet-connect/siwe
-│   │       │   ├── health.ts
-│   │       │   ├── jobs.ts         job creation/list/cancel/history
-│   │       │   └── session.ts      bearer session helper
-│   │       ├── app.ts              app factory for tests/runtime
-│   │       ├── config.ts           env resolution
-│   │       └── types.ts
+│   │       │   ├── admin.ts        GET|POST /admin/status|pause|resume|jobs|safety
+│   │       │   ├── auth.ts         GET /auth/nonce, POST /auth/verify, GET /auth/me
+│   │       │   ├── health.ts       GET /health
+│   │       │   ├── job-validators.ts  Zod validators for job creation payloads
+│   │       │   ├── jobs.ts         GET|POST /jobs, GET|POST|DELETE /jobs/:id, GET /jobs/:id/executions
+│   │       │   ├── pool-fallback.ts   static pool list used when price source is unavailable
+│   │       │   ├── pools.ts        GET /pools, POST /pools/refresh
+│   │       │   ├── session.ts      bearer token extraction helper
+│   │       │   ├── sse.ts          GET /sse/jobs — Server-Sent Events for job updates
+│   │       │   └── system.ts       GET /system/status
+│   │       ├── sse/
+│   │       │   └── events.ts       SSE connection management and event broadcast helpers
+│   │       ├── app.test-helpers.ts shared test utilities (accounts, signIn, app/state factories)
+│   │       ├── app.auth.test.ts    auth route tests
+│   │       ├── app.jobs.test.ts    job CRUD route tests
+│   │       ├── app.admin.test.ts   admin route tests
+│   │       └── app.pools.test.ts   pools and system status tests
 │   │
-│   └── worker/                     ── Keeper (migrates last, behind feature flag) ──
-│       ├── package.json
-│       ├── vite.config.ts          node target
-│       ├── moon.yml
-│       └── src/
-│           ├── index.ts            bootstrap
-│           ├── runner.ts           wraps framework/executor
-│           ├── strategies/         binds domains/automation strategies to CAS persistence
-│           │   └── index.ts
-│           ├── signers/
-│           │   └── session-key.ts  uses framework/wallet/session-key
-│           └── observability/
-│               └── metrics.ts
-│
-├── packages/
-│   └── shared/                     ── CAS-only types/utils ──
+│   └── frontend/                   ── Next.js 16 dashboard ──
 │       ├── package.json
 │       ├── tsconfig.json
-│       ├── vite.config.ts
+│       ├── next.config.ts
+│       ├── .env.local.example      template — copy to .env.local before running
 │       └── src/
-│           ├── index.ts
-│           ├── client.ts           fetch client and API response contracts
-│           ├── client.test.ts
-│           ├── jobs.ts             request/response DTOs and serializers
-│           └── jobs.test.ts
+│           ├── app/
+│           │   ├── layout.tsx          root layout — NavBar + Providers + main wrapper
+│           │   ├── page.tsx            home page — full state machine (not connected → wrong network → auto-sign → authenticated)
+│           │   ├── globals.css         Tailwind v4 + @theme conflux color scale
+│           │   ├── auth-context.tsx    SIWE session state, CasApiClient, auto-sign on connect
+│           │   ├── pools-context.tsx   token and pool list with balances
+│           │   ├── providers.tsx       top-level provider tree
+│           │   ├── api/
+│           │   │   └── [...path]/
+│           │   │       └── route.ts    Next.js API proxy — forwards requests to the backend
+│           │   ├── create/
+│           │   │   └── page.tsx        redirect('/')
+│           │   ├── dashboard/
+│           │   │   └── page.tsx        redirect('/')
+│           │   ├── safety/
+│           │   │   └── page.tsx        admin safety config panel
+│           │   └── status/
+│           │       └── page.tsx        system and keeper status panel
+│           ├── components/
+│           │   ├── shared/
+│           │   │   ├── NavBar.tsx             sticky top nav with logo + admin links + WalletConnect
+│           │   │   └── WalletConnect.tsx      connect/switch-network/sign-in/disconnect chip
+│           │   ├── Dashboard/
+│           │   │   └── Dashboard.tsx          jobs list with SSE real-time updates
+│           │   ├── StrategyBuilder/
+│           │   │   └── WcfxWrapModal.tsx      CFX ↔ wCFX wrap/unwrap modal
+│           │   ├── ApprovalWidget.tsx         ERC-20 allowance manager
+│           │   ├── JobForm.tsx                legacy job creation form
+│           │   ├── JobsTable.tsx              job list with token symbols and logos
+│           │   ├── StrategyBuilder.tsx        multi-step strategy builder (limit/DCA)
+│           │   ├── StrategyBuilderParts.tsx   strategy builder sub-components
+│           │   ├── SystemAdminPanel.tsx       admin status and safety panel
+│           │   └── ui.tsx                     shared UI primitives
+│           ├── hooks/
+│           │   ├── use-strategy-builder.ts    strategy builder form state
+│           │   ├── useIsAdmin.ts              checks NEXT_PUBLIC_ADMIN_ADDRESSES whitelist
+│           │   └── useNetworkSwitch.ts        wrong-network detection and switch handler
+│           └── lib/
+│               ├── deployments.ts    default contract addresses from framework packages
+│               ├── ethereum.ts       chain config, ESPACE_CHAINS, readTargetEspaceChain()
+│               ├── strategy.ts       StrategyDraft types, readContracts()
+│               ├── strategy-chain.ts on-chain job creation: wrap → approve → createLimitOrder/createDCAJob
+│               └── strategy-wrap.ts  native CFX → WCFX wrap helper
 │
-├── contracts/                      ── Solidity sources + deployments ──
-│   ├── README.md
-│   ├── hardhat.config.ts
-│   ├── moon.yml
-│   ├── contracts/
-│   │   ├── OrderVault.sol
-│   │   ├── Executor.sol
-│   │   └── interfaces/
-│   ├── test/
-│   ├── scripts/
-│   │   └── deploy.ts
-│   ├── deployments/
-│   │   ├── espace-mainnet.json
-│   │   └── espace-testnet.json
-│   └── AUDITS.md                   audit history
-│
-└── e2e/
-    ├── README.md
-    ├── playwright.config.ts
-    └── tests/
-        ├── place-order.spec.ts
+└── packages/
+    └── shared/                     ── CAS-only types and HTTP client ──
+        ├── package.json
+        ├── tsconfig.json
+        └── src/
+            ├── index.ts
+            ├── admin.ts            admin status and safety config types
+            ├── client.ts           CasApiClient — typed fetch wrappers for all API routes
+            ├── contracts.ts        on-chain types used by frontend (JobCreated event, etc.)
+            ├── jobs.ts             job request/response DTOs and serializers
+            ├── pools.ts            pool and token list types
+            ├── sse.ts              SSE event types
+            ├── system.ts           system status response types
+            ├── client.test.ts
+            └── jobs.test.ts
+```
+
         └── execution.spec.ts
 ```
 

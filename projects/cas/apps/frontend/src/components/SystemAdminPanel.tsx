@@ -1,11 +1,13 @@
 import type {
   CasAdminStatusResponse,
   CasApiClient,
+  CasSafetyConfigPatchRequest,
+  CasSafetyConfigResponse,
   CasSystemStatusResponse,
 } from '@cfxdevkit/cas-shared';
 import { Pause, Play, RefreshCw, ServerCog } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { IconButton, Metric, Notice, Panel, PanelBody, StatusGrid } from './ui';
+import { Field, IconButton, Metric, Notice, Panel, PanelBody, StatusGrid } from './ui';
 
 export interface SystemAdminPanelProps {
   client: CasApiClient;
@@ -16,6 +18,7 @@ export interface SystemAdminPanelProps {
 export function SystemAdminPanel({ client, isAuthenticated, isAdmin }: SystemAdminPanelProps) {
   const [status, setStatus] = useState<CasSystemStatusResponse | null>(null);
   const [admin, setAdmin] = useState<CasAdminStatusResponse | null>(null);
+  const [safety, setSafety] = useState<CasSafetyConfigResponse | null>(null);
   const [message, setMessage] = useState('System status not loaded.');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -26,13 +29,14 @@ export function SystemAdminPanel({ client, isAuthenticated, isAdmin }: SystemAdm
     try {
       setStatus(await client.systemStatus());
       if (isAuthenticated) setAdmin(await client.adminStatus());
+      if (isAdmin) setSafety(await client.adminSafetyConfig());
       setMessage('System status refreshed.');
     } catch (error) {
       setError(error instanceof Error ? error.message : String(error));
     } finally {
       setBusy(false);
     }
-  }, [client, isAuthenticated]);
+  }, [client, isAdmin, isAuthenticated]);
 
   useEffect(() => {
     void refresh();
@@ -42,7 +46,9 @@ export function SystemAdminPanel({ client, isAuthenticated, isAdmin }: SystemAdm
     setBusy(true);
     setError(null);
     try {
-      setAdmin(paused ? await client.adminPause() : await client.adminResume());
+      const next = paused ? await client.adminPause() : await client.adminResume();
+      setAdmin(next);
+      setSafety((current) => (current ? { ...current, globalPause: next.paused } : current));
       setMessage(paused ? 'CAS paused.' : 'CAS resumed.');
     } catch (error) {
       setError(error instanceof Error ? error.message : String(error));
@@ -98,7 +104,114 @@ export function SystemAdminPanel({ client, isAuthenticated, isAdmin }: SystemAdm
             Resume
           </button>
         </div>
+        {isAdmin ? (
+          <SafetyConfigForm
+            config={safety}
+            busy={busy}
+            onSave={async (patch) => {
+              setBusy(true);
+              setError(null);
+              try {
+                setSafety(await client.adminPatchSafetyConfig(patch));
+                setMessage('Safety config updated.');
+              } catch (error) {
+                setError(error instanceof Error ? error.message : String(error));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          />
+        ) : null}
       </PanelBody>
     </Panel>
   );
+}
+
+function SafetyConfigForm({ config, busy, onSave }: SafetyConfigFormProps) {
+  const [maxSwapUsd, setMaxSwapUsd] = useState('');
+  const [slippageBps, setSlippageBps] = useState('');
+  const [maxRetries, setMaxRetries] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!config) return;
+    setMaxSwapUsd(config.maxSwapUsd === null ? '' : String(config.maxSwapUsd));
+    setSlippageBps(String(config.slippageBps));
+    setMaxRetries(String(config.maxRetries));
+  }, [config]);
+
+  const save = async () => {
+    const nextSlippage = Number(slippageBps);
+    if (!Number.isInteger(nextSlippage) || nextSlippage < 0 || nextSlippage > 10_000) {
+      setError('slippageBps must be between 0 and 10000');
+      return;
+    }
+    const nextRetries = Number(maxRetries);
+    if (!Number.isInteger(nextRetries) || nextRetries < 0) {
+      setError('maxRetries must be a non-negative integer');
+      return;
+    }
+    const nextMaxSwapUsd = maxSwapUsd.trim() === '' ? null : Number(maxSwapUsd);
+    if (nextMaxSwapUsd !== null && (!Number.isFinite(nextMaxSwapUsd) || nextMaxSwapUsd < 0)) {
+      setError('maxSwapUsd must be a non-negative number or empty');
+      return;
+    }
+    setError(null);
+    await onSave({
+      maxSwapUsd: nextMaxSwapUsd,
+      slippageBps: nextSlippage,
+      maxRetries: nextRetries,
+    });
+  };
+
+  return (
+    <div className="safety-form">
+      {error ? <Notice tone="error">{error}</Notice> : null}
+      <div className="field-grid three">
+        <Field label="Max swap USD">
+          <input
+            className="input"
+            type="number"
+            min="0"
+            placeholder="No cap"
+            value={maxSwapUsd}
+            onChange={(event) => setMaxSwapUsd(event.target.value)}
+          />
+        </Field>
+        <Field label="Slippage bps">
+          <input
+            className="input"
+            type="number"
+            min="0"
+            max="10000"
+            value={slippageBps}
+            onChange={(event) => setSlippageBps(event.target.value)}
+          />
+        </Field>
+        <Field label="Max retries">
+          <input
+            className="input"
+            type="number"
+            min="0"
+            value={maxRetries}
+            onChange={(event) => setMaxRetries(event.target.value)}
+          />
+        </Field>
+      </div>
+      <button
+        className="button"
+        type="button"
+        disabled={busy || !config}
+        onClick={() => void save()}
+      >
+        Save safety config
+      </button>
+    </div>
+  );
+}
+
+interface SafetyConfigFormProps {
+  config: CasSafetyConfigResponse | null;
+  busy: boolean;
+  onSave: (patch: CasSafetyConfigPatchRequest) => Promise<void>;
 }

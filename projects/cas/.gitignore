@@ -2,3 +2,7 @@
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+# Local env files — copy from .env.example / .env.local.example, never commit real secrets
+.env
+.env.local

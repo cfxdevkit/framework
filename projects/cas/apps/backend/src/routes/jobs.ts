@@ -10,7 +10,7 @@ import {
   parseCreateJobInput,
   readRouteParam,
 } from './job-validators.js';
-import { requireSession } from './session.js';
+import { isAdminAddress, requireSession } from './session.js';
 
 export function createJobsRouter(state: CasBackendState): Router {
   const router = express.Router();
@@ -105,7 +105,28 @@ export function createJobsRouter(state: CasBackendState): Router {
   };
 
   router.post('/:id/cancel', cancelHandler);
-  router.delete('/:id', cancelHandler);
+
+  router.delete('/:id', async (req: Request, res: Response) => {
+    const session = requireSession(req, res, state);
+    if (!session) return;
+
+    const id = readRouteParam(req.params.id);
+    if (!id) {
+      res.status(400).json({ error: 'job id is required' });
+      return;
+    }
+
+    const job = await state.db.jobs.get(id);
+    const isAdmin = session.claims?.isAdmin === true || isAdminAddress(session.address, state);
+    if (!job || (job.owner.toLowerCase() !== session.address && !isAdmin)) {
+      res.status(404).json({ error: 'job not found' });
+      return;
+    }
+
+    state.db.sqlite.prepare(`DELETE FROM executions WHERE job_id = ?`).run(id);
+    state.db.sqlite.prepare(`DELETE FROM jobs WHERE id = ?`).run(id);
+    res.json({ job: jobToCasDto(job) });
+  });
 
   router.get('/:id/executions', async (req: Request, res: Response) => {
     const session = requireSession(req, res, state);

@@ -1,0 +1,12 @@
+{
+  "name": "@cfxdevkit/cas",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Conflux Automation Site — monorepo project root.",
+  "scripts": {
+    "setup": "pnpm --filter @cfxdevkit/cas-setup start",
+    "dev": "pnpm --parallel --filter @cfxdevkit/cas-backend --filter @cfxdevkit/cas-frontend run dev",
+    "build": "pnpm --filter @cfxdevkit/cas-backend --filter @cfxdevkit/cas-frontend run build",
+    "start": "pnpm --parallel --filter @cfxdevkit/cas-backend --filter @cfxdevkit/cas-frontend run start"
+  }
+}

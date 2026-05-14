@@ -21,6 +21,8 @@ export interface CasSqliteRuntime extends AutomationSqlite {
 }
 
 const DEFAULT_NONCE_TTL_MS = 5 * 60 * 1000;
+const DEFAULT_SAFETY_SLIPPAGE_BPS = 0;
+const DEFAULT_SAFETY_MAX_RETRIES = 3;
 
 type SqliteHandle = AutomationSqlite['sqlite'];
 type JobRepositoryDb = ConstructorParameters<typeof DrizzleJobRepository>[0];
@@ -111,6 +113,42 @@ export class SqliteSettingsStore {
     this.set('paused', 'false');
     return false;
   }
+
+  getMaxSwapUsd(): number | null {
+    return readNullableNumber(this.get('safetyMaxSwapUsd'));
+  }
+
+  setMaxSwapUsd(value: number | null): void {
+    this.set('safetyMaxSwapUsd', value === null ? 'null' : String(value));
+  }
+
+  getSlippageBps(): number {
+    return readNumber(this.get('safetySlippageBps'), DEFAULT_SAFETY_SLIPPAGE_BPS);
+  }
+
+  setSlippageBps(value: number): void {
+    this.set('safetySlippageBps', String(value));
+  }
+
+  getMaxRetries(): number {
+    return readNumber(this.get('safetyMaxRetries'), DEFAULT_SAFETY_MAX_RETRIES);
+  }
+
+  setMaxRetries(value: number): void {
+    this.set('safetyMaxRetries', String(value));
+  }
+}
+
+function readNumber(value: string | null, fallback: number): number {
+  if (value === null) return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function readNullableNumber(value: string | null): number | null {
+  if (value === null || value === 'null') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 export interface WorkerHeartbeatSnapshot {

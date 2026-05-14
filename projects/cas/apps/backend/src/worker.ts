@@ -5,6 +5,7 @@ import {
   KeeperClientImpl,
   PriceChecker,
   type PriceSource,
+  type SafetyConfig,
   SafetyGuard,
   SWAPPI_ADDRESSES,
   SWAPPI_ROUTER_ABI,
@@ -70,13 +71,23 @@ export function createCasWorker(state: CasBackendState): Keeper | null {
 
 class DatabaseSafetyGuard extends SafetyGuard {
   constructor(readonly state: CasBackendState) {
-    super({ globalPause: state.db.settings.isPaused() });
+    super(readSafetyConfig(state));
   }
 
   override check(...args: Parameters<SafetyGuard['check']>): ReturnType<SafetyGuard['check']> {
-    this.updateConfig({ globalPause: this.state.db.settings.isPaused() });
+    this.updateConfig(readSafetyConfig(this.state));
     return super.check(...args);
   }
+}
+
+function readSafetyConfig(state: CasBackendState): Partial<SafetyConfig> {
+  const maxSwapUsd = state.db.settings.getMaxSwapUsd();
+  return {
+    maxSwapUsd: maxSwapUsd ?? Number.POSITIVE_INFINITY,
+    maxSlippageBps: state.db.settings.getSlippageBps(),
+    maxRetries: state.db.settings.getMaxRetries(),
+    globalPause: state.db.settings.isPaused(),
+  };
 }
 
 function createPriceSource(options: {

@@ -6,6 +6,10 @@ import { isAddress } from 'viem';
 import type { CasBackendState } from '../types.js';
 import { isAdminAddress, readSession } from './session.js';
 
+function expectedChainId(network: 'testnet' | 'mainnet'): number {
+  return network === 'mainnet' ? 1030 : 71;
+}
+
 export function createAuthRouter(state: CasBackendState): Router {
   const router = express.Router();
 
@@ -35,6 +39,7 @@ export function createAuthRouter(state: CasBackendState): Router {
       const verification = await verifySiweMessage({
         message,
         signature: signature as `0x${string}`,
+        expectedChainId: expectedChainId(state.config.network),
       });
       if (!verification.ok || !verification.address) {
         res.status(401).json({ error: verification.error ?? 'siwe verify failed' });

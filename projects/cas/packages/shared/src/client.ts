@@ -1,4 +1,9 @@
-import type { CasAdminJobsResponse, CasAdminStatusResponse } from './admin.js';
+import type {
+  CasAdminJobsResponse,
+  CasAdminStatusResponse,
+  CasSafetyConfigPatchRequest,
+  CasSafetyConfigResponse,
+} from './admin.js';
 import type {
   CasCreateJobRequest,
   CasExecutionDto,
@@ -156,6 +161,14 @@ export class CasApiClient {
     return this.#request(`/admin/jobs${suffix}`, { auth: true });
   }
 
+  adminSafetyConfig(): Promise<CasSafetyConfigResponse> {
+    return this.#request('/admin/safety', { auth: true });
+  }
+
+  adminPatchSafetyConfig(body: CasSafetyConfigPatchRequest): Promise<CasSafetyConfigResponse> {
+    return this.#request('/admin/safety', { method: 'PATCH', auth: true, body });
+  }
+
   pools(): Promise<CasPoolsResponse> {
     return this.#request('/pools');
   }
@@ -193,7 +206,7 @@ export class CasApiClient {
 }
 
 interface CasRequestOptions {
-  method?: 'GET' | 'POST' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   auth?: boolean;
   body?: unknown;
   headers?: HeadersInit;

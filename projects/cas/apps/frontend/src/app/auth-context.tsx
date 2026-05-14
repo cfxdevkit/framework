@@ -9,6 +9,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useAccount, useChainId, useSignMessage } from 'wagmi';
@@ -38,6 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { signMessageAsync } = useSignMessage();
   const [apiBase, setApiBaseState] = useState(DEFAULT_API_BASE);
   const [token, setToken] = useState('');
+
+  // Auto-sign guards: fire login() once per connected address, reset on switch.
+  const autoSignedForRef = useRef<string | null>(null);
+  const prevAddressRef = useRef<string | null>(null);
+  const mountedRef = useRef(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,10 +89,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async () => {
     if (!normalizedAddress) throw new Error('Connect an eSpace wallet before signing in.');
+
+    // Task 2.1: Block SIWE attempt if wallet is on the wrong network
+    if (chainId && chainId !== DEFAULT_CHAIN_ID) {
+      setError(
+        `Wrong network — switch your wallet to ${readTargetEspaceChain().name} (chain ${DEFAULT_CHAIN_ID}) and try again`,
+      );
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
-      const { nonce } = await client.nonce(normalizedAddress);
+      // Task 3.1: Catch network errors on nonce fetch
+      let nonce: string;
+      try {
+        const nonceRes = await client.nonce(normalizedAddress);
+        nonce = nonceRes.nonce;
+      } catch (err) {
+        if (err instanceof TypeError) {
+          setError(`Cannot reach CAS backend at ${apiBase} — check NEXT_PUBLIC_CAS_API_URL`);
+          return;
+        }
+        throw err;
+      }
+
       const message = createSiweMessage({
         domain: window.location.host,
         address: normalizedAddress,
@@ -96,8 +123,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         nonce,
         issuedAt: new Date().toISOString(),
       });
-      const signature = await signMessageAsync({ message });
-      const session = await client.verify({ message, signature });
+
+      // Task 3.2: Detect wallet rejection
+      let signature: `0x${string}`;
+      try {
+        signature = await signMessageAsync({ message });
+      } catch (err) {
+        const name = err instanceof Error ? err.name : '';
+        if (name === 'UserRejectedRequestError' || name.includes('UserRejected')) {
+          setError('Wallet signature rejected — click Sign In to try again');
+          return;
+        }
+        throw err;
+      }
+
+      // Task 3.3: Handle non-200 verify response
+      let session: Awaited<ReturnType<typeof client.verify>>;
+      try {
+        session = await client.verify({ message, signature });
+      } catch (err) {
+        if (err instanceof Error && err.name === 'CasApiError' && 'status' in err) {
+          setError(`Sign-in verification failed — the backend returned ${(err as { status: number }).status}`);
+          return;
+        }
+        throw err;
+      }
+
       setToken(session.token);
       setIsAdmin(session.isAdmin === true);
       window.localStorage.setItem('cas.token', session.token);
@@ -109,12 +160,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [chainId, client, normalizedAddress, signMessageAsync]);
+  }, [apiBase, chainId, client, normalizedAddress, signMessageAsync]);
+
+  // Detect address switch; clear JWT and reset auto-sign guard when wallet changes.
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      if (address) prevAddressRef.current = address;
+      return;
+    }
+    if (address) {
+      if (prevAddressRef.current && prevAddressRef.current !== address) {
+        setToken('');
+        clearSession();
+        autoSignedForRef.current = null;
+      }
+      prevAddressRef.current = address;
+    }
+  }, [address]);
+
+  // Auto-sign: fire login() once per connected address when no JWT exists.
+  useEffect(() => {
+    if (address && !token && !isLoading && autoSignedForRef.current !== address) {
+      autoSignedForRef.current = address;
+      void login();
+    }
+  }, [address, token, isLoading, login]);
 
   const logout = useCallback(() => {
     clearSession();
     setToken('');
     setIsAdmin(false);
+    autoSignedForRef.current = null;
   }, []);
 
   const value = useMemo<AuthContextValue>(

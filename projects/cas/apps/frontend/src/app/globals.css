@@ -1,3 +1,31 @@
+@import "tailwindcss";
+
+/* ── Conflux brand color scale (available as conflux-50 … conflux-900) ─── */
+@theme {
+  --color-conflux-50: #e8f4fd;
+  --color-conflux-100: #c5e5fa;
+  --color-conflux-200: #9dd4f7;
+  --color-conflux-300: #70c2f3;
+  --color-conflux-400: #47b0ee;
+  --color-conflux-500: #1e9de9;
+  --color-conflux-600: #0078c8;
+  --color-conflux-700: #0060a0;
+  --color-conflux-800: #004a7c;
+  --color-conflux-900: #00345a;
+
+  /* Modal + shimmer animations */
+  --animate-modal-in: modal-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-shimmer: shimmer 1.5s infinite;
+
+  @keyframes modal-in {
+    0% { transform: scale(0.95); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+}
+
 /* ── Design tokens ───────────────────────────────────────────────────────── */
 
 :root {
@@ -65,3 +93,9 @@ select:focus-visible {
   font-family: var(--font-mono);
   font-size: 12px;
 }
+
+/* ── Component styles (split for readability) ────────────────────────────── */
+@import "./styles/layout.css";
+@import "./styles/controls.css";
+@import "./styles/forms.css";
+@import "./styles/entities.css";

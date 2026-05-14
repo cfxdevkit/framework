@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased] - 2026-05-14
+### Added
+- Added `DELETE /jobs/:id` hard-delete route to permanently remove a job record.
+- Added `GET /admin/safety` and `PATCH /admin/safety` routes for runtime safety config management
+  (gas price cap, keeper concurrency).
+- Added `ApprovalWidget` component — ERC-20 allowance manager for approving the AutomationManager
+  before job creation.
+- Added token symbol and logo display in `JobsTable` (sourced from the pools API).
+- Added Next.js API proxy at `app/api/[...path]/route.ts` to forward frontend requests to the
+  backend without exposing the backend URL to the browser.
+- Added `apps/backend/.env.example` and `apps/frontend/.env.local.example` configuration templates.
+
 ## [Unreleased] - 2026-05-08
 ### Added
 - Added `apps/backend` as a SQLite-backed Express API with health, SIWE auth, job, and execution-history routes.

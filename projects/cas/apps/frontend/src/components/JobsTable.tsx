@@ -1,8 +1,16 @@
 import type { CasExecutionDto, CasJobDto } from '@cfxdevkit/cas-shared';
 import { Ban, RefreshCw } from 'lucide-react';
+import { useMemo } from 'react';
+import { type TokenWithBalance, usePoolsContext } from '../app/pools-context';
 import { IconButton } from './ui';
 
 export function JobsTable({ jobs, executions, busy, onCancel, onExecutions }: JobsTableProps) {
+  const { tokens } = usePoolsContext();
+  const tokenMap = useMemo(
+    () => new Map(tokens.map((token) => [token.address.toLowerCase(), token])),
+    [tokens],
+  );
+
   if (jobs.length === 0) return <div className="empty-state">No jobs loaded.</div>;
 
   return (
@@ -15,6 +23,7 @@ export function JobsTable({ jobs, executions, busy, onCancel, onExecutions }: Jo
           onCancel={() => onCancel(job.id)}
           onExecutions={() => onExecutions(job.id)}
           busy={busy}
+          tokenMap={tokenMap}
         />
       ))}
     </div>
@@ -29,15 +38,20 @@ export interface JobsTableProps {
   onExecutions: (id: string) => void;
 }
 
-function JobCard({ job, executions, onCancel, onExecutions, busy }: JobRowProps) {
+function JobCard({ job, executions, onCancel, onExecutions, busy, tokenMap }: JobRowProps) {
   const params = job.params as Record<string, unknown>;
-  const pair = `${shortToken(params.tokenIn)} -> ${shortToken(params.tokenOut)}`;
+  const tokenIn = tokenMeta(params.tokenIn, tokenMap);
+  const tokenOut = tokenMeta(params.tokenOut, tokenMap);
   return (
     <article className="job-card">
       <div className="job-card-main">
         <div>
           <span className="job-kind">{job.type.replace('_', ' ')}</span>
-          <h3>{pair}</h3>
+          <h3 className="token-pair">
+            <TokenChip token={tokenIn} />
+            <span aria-hidden="true">-&gt;</span>
+            <TokenChip token={tokenOut} />
+          </h3>
           <p className="mono">{job.id}</p>
         </div>
         <span className={`status-pill ${job.status}`}>{job.status}</span>
@@ -80,9 +94,31 @@ function JobCard({ job, executions, onCancel, onExecutions, busy }: JobRowProps)
   );
 }
 
-function shortToken(value: unknown): string {
+function tokenMeta(value: unknown, tokenMap: Map<string, TokenWithBalance>): TokenDisplay {
   const raw = String(value ?? 'token');
-  return raw.startsWith('0x') ? `${raw.slice(0, 6)}...${raw.slice(-4)}` : raw;
+  const token = tokenMap.get(raw.toLowerCase());
+  if (token) {
+    return { symbol: token.symbol, ...(token.logoURI ? { logoURI: token.logoURI } : {}) };
+  }
+  return { symbol: raw.startsWith('0x') ? `${raw.slice(0, 6)}...${raw.slice(-4)}` : raw };
+}
+
+function TokenChip({ token }: { token: TokenDisplay }) {
+  return (
+    <span className="token-chip">
+      {token.logoURI ? (
+        // biome-ignore lint/performance/noImgElement: dynamic token logo URLs are not known at build time.
+        <img
+          src={token.logoURI}
+          alt=""
+          onError={(event) => {
+            event.currentTarget.style.display = 'none';
+          }}
+        />
+      ) : null}
+      <span>{token.symbol}</span>
+    </span>
+  );
 }
 
 function primaryAmount(job: CasJobDto): string {
@@ -97,4 +133,10 @@ interface JobRowProps {
   onCancel: () => void;
   onExecutions: () => void;
   busy: boolean;
+  tokenMap: Map<string, TokenWithBalance>;
+}
+
+interface TokenDisplay {
+  symbol: string;
+  logoURI?: string;
 }

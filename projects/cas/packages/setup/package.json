@@ -1,0 +1,37 @@
+{
+  "name": "@cfxdevkit/cas-setup",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Interactive CLI wizard for setting up a CAS instance.",
+  "bin": {
+    "cas-setup": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "test": "vitest run",
+    "clean": "rm -rf dist .vitest coverage"
+  },
+  "dependencies": {
+    "@cfxdevkit/contracts": "workspace:*",
+    "@cfxdevkit/core": "workspace:*",
+    "@cfxdevkit/protocol": "workspace:*",
+    "@inquirer/prompts": "^7.5.2",
+    "commander": "^14.0.0",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.14",
+    "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/tsconfig": "workspace:*",
+    "@types/node": "^25.6.0",
+    "tsup": "^8.5.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
+  }
+}
