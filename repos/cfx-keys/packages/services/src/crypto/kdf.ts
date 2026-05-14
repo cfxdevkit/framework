@@ -1,6 +1,6 @@
-import { argon2idAsync } from '@noble/hashes/argon2';
-import { hkdf } from '@noble/hashes/hkdf';
-import { sha256 } from '@noble/hashes/sha2';
+import { argon2idAsync } from '@noble/hashes/argon2.js';
+import { hkdf } from '@noble/hashes/hkdf.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { AES_KEY_LEN } from './constants.js';
 import { CryptoError } from './errors.js';
 import { type AesGcmKey, brandKey } from './keys.js';

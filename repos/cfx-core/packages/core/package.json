@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "@scure/bip32": "^2.2.0",
-    "@scure/bip39": "^1.4.0",
+    "@scure/bip39": "^2.2.0",
     "cive": "^0.8.1",
     "viem": "^2.48.11"
   },

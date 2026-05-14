@@ -1,4 +1,4 @@
-import { randomBytes as nobleRandomBytes } from '@noble/hashes/utils';
+import { randomBytes as nobleRandomBytes } from '@noble/hashes/utils.js';
 import { CryptoError } from './errors.js';
 
 /** N bytes of cryptographically-secure randomness. */

@@ -217,7 +217,7 @@ function generatePrivateKey(): Hex {
 }
 
 async function sha256Hex(input: string): Promise<Hex> {
-  const { sha256 } = await import('@noble/hashes/sha256');
+  const { sha256 } = await import('@noble/hashes/sha2.js');
   const out = sha256(new TextEncoder().encode(input));
   let hex = '0x';
   for (let i = 0; i < out.length; i++) {
