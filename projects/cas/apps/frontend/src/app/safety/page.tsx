@@ -2,15 +2,6 @@
 
 import type { CasAdminStatusResponse, CasSystemStatusResponse } from '@cfxdevkit/cas-shared';
 import {
-  Activity,
-  PauseCircle,
-  PlayCircle,
-  RefreshCw,
-  ShieldAlert,
-  ShieldCheck,
-} from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import {
   AppShell,
   IconButton,
   Metric,
@@ -19,7 +10,16 @@ import {
   PanelBody,
   StatusGrid,
   Topbar,
-} from '../../components/ui';
+} from '@cfxdevkit/ui';
+import {
+  Activity,
+  PauseCircle,
+  PlayCircle,
+  RefreshCw,
+  ShieldAlert,
+  ShieldCheck,
+} from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '../auth-context';
 
 function timeAgo(ts: number | null): string {

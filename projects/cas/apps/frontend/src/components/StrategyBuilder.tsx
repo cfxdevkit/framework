@@ -1,6 +1,7 @@
 'use client';
 
 import type { CasJobDto } from '@cfxdevkit/cas-shared';
+import { Field, IconButton, Notice, Panel, PanelBody } from '@cfxdevkit/ui';
 import { ArrowDownUp, RefreshCw, Zap } from 'lucide-react';
 import { useStrategyBuilder } from '../hooks/use-strategy-builder';
 import { pairedTokens } from '../lib/strategy';
@@ -10,7 +11,6 @@ import {
   TokenAmountPanel,
   WcfxConvertPanel,
 } from './StrategyBuilderParts';
-import { Field, IconButton, Notice, Panel, PanelBody } from './ui';
 
 export interface StrategyBuilderProps {
   jobs: CasJobDto[];
@@ -118,7 +118,7 @@ export function StrategyBuilder({ jobs, onJobCreated }: StrategyBuilderProps) {
 
         {draft.kind === 'limit_order' ? (
           <div className="field-row">
-            <Field label="Target price">
+            <Field className="field" label="Target price">
               <input
                 className="input"
                 value={draft.targetPrice}
@@ -126,7 +126,7 @@ export function StrategyBuilder({ jobs, onJobCreated }: StrategyBuilderProps) {
                 placeholder="1 token in = token out"
               />
             </Field>
-            <Field label="Trigger">
+            <Field className="field" label="Trigger">
               <select
                 className="select"
                 value={draft.direction}
@@ -139,7 +139,7 @@ export function StrategyBuilder({ jobs, onJobCreated }: StrategyBuilderProps) {
           </div>
         ) : (
           <div className="field-row">
-            <Field label="Interval seconds">
+            <Field className="field" label="Interval seconds">
               <input
                 className="input"
                 type="number"
@@ -148,7 +148,7 @@ export function StrategyBuilder({ jobs, onJobCreated }: StrategyBuilderProps) {
                 onChange={(e) => patch({ intervalSeconds: Number(e.target.value) })}
               />
             </Field>
-            <Field label="Total swaps">
+            <Field className="field" label="Total swaps">
               <input
                 className="input"
                 type="number"
@@ -161,7 +161,7 @@ export function StrategyBuilder({ jobs, onJobCreated }: StrategyBuilderProps) {
         )}
 
         <div className="field-row">
-          <Field label="Slippage bps">
+          <Field className="field" label="Slippage bps">
             <input
               className="input"
               type="number"
@@ -171,7 +171,7 @@ export function StrategyBuilder({ jobs, onJobCreated }: StrategyBuilderProps) {
               onChange={(e) => patch({ slippageBps: Number(e.target.value) })}
             />
           </Field>
-          <Field label="Expiry days">
+          <Field className="field" label="Expiry days">
             <input
               className="input"
               type="number"

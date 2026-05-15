@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../../../../../../repos/cfx-ui/packages/ui/src";
 @import "./styles/layout.css";
 @import "./styles/controls.css";
 @import "./styles/forms.css";

@@ -1,12 +1,12 @@
 'use client';
 
 import type { CasJobDto } from '@cfxdevkit/cas-shared';
+import { AppShell, IconButton, Notice, Topbar } from '@cfxdevkit/ui';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { AppShell, IconButton, Notice, Topbar } from '../../components/ui';
 import { useAuthContext } from '../auth-context';
 
 const StrategyBuilder = dynamic(

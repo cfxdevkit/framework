@@ -1,17 +1,19 @@
 'use client';
 
 import type { CasSystemStatusResponse } from '@cfxdevkit/cas-shared';
-import { Activity, Database, RefreshCw, ServerCog, Wifi } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
 import {
+  AppShell,
   IconButton,
+  MainGrid,
   Metric,
   Notice,
   Panel,
   PanelBody,
   StatusGrid,
   Topbar,
-} from '../../components/ui';
+} from '@cfxdevkit/ui';
+import { Activity, Database, RefreshCw, ServerCog, Wifi } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '../auth-context';
 
 // biome-ignore lint/style/noDefaultExport: Next.js app router requires a default page export.
@@ -38,7 +40,7 @@ export default function StatusPage() {
   }, [refresh]);
 
   return (
-    <main className="app-shell">
+    <AppShell>
       <Topbar
         brand={
           <>
@@ -52,27 +54,29 @@ export default function StatusPage() {
           </IconButton>
         }
       />
-      <section className="main-grid">
-        <div className="stack">
-          <Panel title="Backend" icon={<ServerCog size={16} />}>
-            <StatusGrid>
-              <Metric label="Status" value={status?.backend.ok ? 'online' : 'unknown'} />
-              <Metric label="Uptime" value={status?.backend.uptimeHuman ?? 'n/a'} />
-              <Metric label="Network" value={status?.network ?? 'n/a'} />
-            </StatusGrid>
-          </Panel>
-          <Panel title="Database" icon={<Database size={16} />}>
-            <StatusGrid>
-              <Metric label="Jobs" value={status ? String(status.database.jobCount) : 'n/a'} />
-              <Metric
-                label="Executions"
-                value={status ? String(status.database.executionCount) : 'n/a'}
-              />
-              <Metric label="Failed" value={status ? String(status.database.failed) : 'n/a'} />
-            </StatusGrid>
-          </Panel>
-        </div>
-
+      <MainGrid
+        sidebar={
+          <>
+            <Panel title="Backend" icon={<ServerCog size={16} />}>
+              <StatusGrid>
+                <Metric label="Status" value={status?.backend.ok ? 'online' : 'unknown'} />
+                <Metric label="Uptime" value={status?.backend.uptimeHuman ?? 'n/a'} />
+                <Metric label="Network" value={status?.network ?? 'n/a'} />
+              </StatusGrid>
+            </Panel>
+            <Panel title="Database" icon={<Database size={16} />}>
+              <StatusGrid>
+                <Metric label="Jobs" value={status ? String(status.database.jobCount) : 'n/a'} />
+                <Metric
+                  label="Executions"
+                  value={status ? String(status.database.executionCount) : 'n/a'}
+                />
+                <Metric label="Failed" value={status ? String(status.database.failed) : 'n/a'} />
+              </StatusGrid>
+            </Panel>
+          </>
+        }
+      >
         <div className="stack">
           <Panel title="RPC" icon={<Wifi size={16} />}>
             <StatusGrid>
@@ -102,7 +106,7 @@ export default function StatusPage() {
             </PanelBody>
           </Panel>
         </div>
-      </section>
-    </main>
+      </MainGrid>
+    </AppShell>
   );
 }

@@ -5,9 +5,9 @@ import type {
   CasSafetyConfigResponse,
   CasSystemStatusResponse,
 } from '@cfxdevkit/cas-shared';
+import { Field, IconButton, Metric, Notice, Panel, PanelBody, StatusGrid } from '@cfxdevkit/ui';
 import { Pause, Play, RefreshCw, ServerCog } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { Field, IconButton, Metric, Notice, Panel, PanelBody, StatusGrid } from './ui';
 
 export interface SystemAdminPanelProps {
   client: CasApiClient;
@@ -168,7 +168,7 @@ function SafetyConfigForm({ config, busy, onSave }: SafetyConfigFormProps) {
     <div className="safety-form">
       {error ? <Notice tone="error">{error}</Notice> : null}
       <div className="field-grid three">
-        <Field label="Max swap USD">
+        <Field className="field" label="Max swap USD">
           <input
             className="input"
             type="number"
@@ -178,7 +178,7 @@ function SafetyConfigForm({ config, busy, onSave }: SafetyConfigFormProps) {
             onChange={(event) => setMaxSwapUsd(event.target.value)}
           />
         </Field>
-        <Field label="Slippage bps">
+        <Field className="field" label="Slippage bps">
           <input
             className="input"
             type="number"
@@ -188,7 +188,7 @@ function SafetyConfigForm({ config, busy, onSave }: SafetyConfigFormProps) {
             onChange={(event) => setSlippageBps(event.target.value)}
           />
         </Field>
-        <Field label="Max retries">
+        <Field className="field" label="Max retries">
           <input
             className="input"
             type="number"

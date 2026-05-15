@@ -1,5 +1,5 @@
 import type { CasJobType } from '@cfxdevkit/cas-shared';
-import { Field } from './ui';
+import { Field } from '@cfxdevkit/ui';
 
 const DEFAULT_TOKEN_IN = '0x0000000000000000000000000000000000000002';
 const DEFAULT_TOKEN_OUT = '0x0000000000000000000000000000000000000003';
@@ -43,7 +43,7 @@ export function JobForm({ draft, onChange }: JobFormProps) {
   return (
     <div className="field-grid">
       <div className="field-row">
-        <Field label="Type">
+        <Field className="field" label="Type">
           <select
             className="select"
             value={draft.type}
@@ -55,7 +55,7 @@ export function JobForm({ draft, onChange }: JobFormProps) {
             <option value="twap">TWAP</option>
           </select>
         </Field>
-        <Field label="Direction">
+        <Field className="field" label="Direction">
           <select
             className="select"
             value={draft.direction}
@@ -67,14 +67,14 @@ export function JobForm({ draft, onChange }: JobFormProps) {
           </select>
         </Field>
       </div>
-      <Field label="Token in">
+      <Field className="field" label="Token in">
         <input
           className="input mono"
           value={draft.tokenIn}
           onChange={(event) => patch({ tokenIn: event.target.value })}
         />
       </Field>
-      <Field label="Token out">
+      <Field className="field" label="Token out">
         <input
           className="input mono"
           value={draft.tokenOut}
@@ -82,7 +82,7 @@ export function JobForm({ draft, onChange }: JobFormProps) {
         />
       </Field>
       <div className="field-row">
-        <Field label={draft.type === 'dca' ? 'Amount per swap' : 'Amount in'}>
+        <Field className="field" label={draft.type === 'dca' ? 'Amount per swap' : 'Amount in'}>
           <input
             className="input mono"
             value={draft.type === 'dca' ? draft.amountPerSwap : draft.amountIn}
@@ -93,7 +93,7 @@ export function JobForm({ draft, onChange }: JobFormProps) {
             }
           />
         </Field>
-        <Field label="Min amount out">
+        <Field className="field" label="Min amount out">
           <input
             className="input mono"
             value={draft.minAmountOut}
@@ -103,7 +103,7 @@ export function JobForm({ draft, onChange }: JobFormProps) {
         </Field>
       </div>
       {draft.type === 'limit_order' ? (
-        <Field label="Target price">
+        <Field className="field" label="Target price">
           <input
             className="input mono"
             value={draft.targetPrice}
@@ -113,7 +113,10 @@ export function JobForm({ draft, onChange }: JobFormProps) {
       ) : null}
       {draft.type === 'dca' || draft.type === 'twap' ? (
         <div className="field-row">
-          <Field label={draft.type === 'dca' ? 'Interval seconds' : 'Tranche interval'}>
+          <Field
+            className="field"
+            label={draft.type === 'dca' ? 'Interval seconds' : 'Tranche interval'}
+          >
             <input
               className="input"
               type="number"
@@ -126,7 +129,7 @@ export function JobForm({ draft, onChange }: JobFormProps) {
               }
             />
           </Field>
-          <Field label={draft.type === 'dca' ? 'Total swaps' : 'Tranches'}>
+          <Field className="field" label={draft.type === 'dca' ? 'Total swaps' : 'Tranches'}>
             <input
               className="input"
               type="number"

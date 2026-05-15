@@ -1,8 +1,8 @@
 import type { CasExecutionDto, CasJobDto } from '@cfxdevkit/cas-shared';
+import { IconButton } from '@cfxdevkit/ui';
 import { Ban, RefreshCw } from 'lucide-react';
 import { useMemo } from 'react';
 import { type TokenWithBalance, usePoolsContext } from '../app/pools-context';
-import { IconButton } from './ui';
 
 export function JobsTable({ jobs, executions, busy, onCancel, onExecutions }: JobsTableProps) {
   const { tokens } = usePoolsContext();
