@@ -1,0 +1,30 @@
+.cfx-demo-card {
+  background: var(--cfx-color-bg-subtle);
+  border: 1px solid var(--cfx-color-border-default);
+  border-radius: var(--cfx-radius-md);
+  overflow: hidden;
+  margin-bottom: var(--cfx-space-4);
+}
+
+.cfx-demo-card-header {
+  padding: var(--cfx-space-4) var(--cfx-space-6);
+  border-bottom: 1px solid var(--cfx-color-border-subtle);
+}
+
+.cfx-demo-card-title {
+  margin: 0 0 var(--cfx-space-1);
+  font-size: var(--cfx-text-base);
+  font-weight: 600;
+  color: var(--cfx-color-fg-default);
+}
+
+.cfx-demo-card-desc {
+  margin: 0;
+  font-size: var(--cfx-text-sm);
+  color: var(--cfx-color-fg-subtle);
+  line-height: 1.5;
+}
+
+.cfx-demo-card-body {
+  padding: var(--cfx-space-4) var(--cfx-space-6);
+}

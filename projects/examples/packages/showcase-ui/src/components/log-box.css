@@ -1,0 +1,43 @@
+.cfx-log-box {
+  background: var(--cfx-color-bg-emphasis);
+  border: 1px solid var(--cfx-color-border-default);
+  border-radius: var(--cfx-radius-sm);
+  font-family: var(--cfx-font-mono);
+  font-size: var(--cfx-text-xs);
+  max-height: 240px;
+  overflow-y: auto;
+  padding: var(--cfx-space-2);
+}
+
+.cfx-log-box--empty {
+  color: var(--cfx-color-fg-muted);
+  font-family: var(--cfx-font-sans);
+  font-size: var(--cfx-text-sm);
+  padding: var(--cfx-space-3);
+  text-align: center;
+}
+
+.cfx-log-entry {
+  display: flex;
+  gap: var(--cfx-space-2);
+  padding: 2px 0;
+  line-height: 1.4;
+}
+
+.cfx-log-ts {
+  flex-shrink: 0;
+  color: var(--cfx-color-fg-muted);
+}
+
+.cfx-log-msg {
+  color: var(--cfx-color-fg-default);
+  word-break: break-all;
+}
+
+.cfx-log-entry--warn .cfx-log-msg {
+  color: var(--cfx-color-feedback-warning);
+}
+
+.cfx-log-entry--error .cfx-log-msg {
+  color: var(--cfx-color-feedback-danger);
+}

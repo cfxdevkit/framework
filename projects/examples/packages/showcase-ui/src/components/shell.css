@@ -1,0 +1,82 @@
+.cfx-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--cfx-color-bg-default);
+  color: var(--cfx-color-fg-default);
+  font-family: var(--cfx-font-sans);
+}
+
+.cfx-shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--cfx-space-6);
+  height: 56px;
+  background: var(--cfx-color-bg-subtle);
+  border-bottom: 1px solid var(--cfx-color-border-default);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.cfx-shell-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--cfx-space-6);
+}
+
+.cfx-shell-title {
+  font-size: var(--cfx-text-base);
+  font-weight: 600;
+  color: var(--cfx-color-fg-default);
+  white-space: nowrap;
+}
+
+.cfx-shell-nav {
+  display: flex;
+  gap: var(--cfx-space-4);
+}
+
+.cfx-shell-nav-link {
+  font-size: var(--cfx-text-sm);
+  color: var(--cfx-color-fg-subtle);
+  text-decoration: none;
+  padding: var(--cfx-space-1) var(--cfx-space-2);
+  border-radius: var(--cfx-radius-sm);
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.cfx-shell-nav-link:hover {
+  color: var(--cfx-color-fg-default);
+  background: var(--cfx-color-bg-emphasis);
+}
+
+.cfx-shell-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--cfx-space-3);
+}
+
+.cfx-shell-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.cfx-shell-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--cfx-color-bg-subtle);
+  border-right: 1px solid var(--cfx-color-border-default);
+  overflow-y: auto;
+  padding: var(--cfx-space-4) 0;
+}
+
+.cfx-shell-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--cfx-space-6);
+}

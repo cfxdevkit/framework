@@ -23,6 +23,8 @@ const overlayStyle = {
 } as const;
 
 const dialogStyle = {
+  position: 'relative',
+  zIndex: 1,
   width: 'min(720px, 100%)',
   borderRadius: 20,
   background: '#111824',

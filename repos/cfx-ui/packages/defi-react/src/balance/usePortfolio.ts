@@ -73,6 +73,7 @@ export function usePortfolio(input: UsePortfolioInput): UsePortfolioReturn {
           method: 'eth_call',
           params: [{ to: token.address, data: calldata }, 'latest'],
         });
+        if (!raw || raw === '0x') return 0n as Wei;
         return decodeFunctionResult({
           abi: ERC20_BALANCE_ABI,
           functionName: 'balanceOf',

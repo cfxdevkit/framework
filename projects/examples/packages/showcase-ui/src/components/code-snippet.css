@@ -1,0 +1,51 @@
+.cfx-code-snippet {
+  background: var(--cfx-color-bg-emphasis);
+  border: 1px solid var(--cfx-color-border-default);
+  border-radius: var(--cfx-radius-sm);
+  overflow: hidden;
+}
+
+.cfx-code-snippet-label {
+  padding: var(--cfx-space-1) var(--cfx-space-3);
+  font-size: var(--cfx-text-xs);
+  color: var(--cfx-color-fg-muted);
+  background: var(--cfx-color-bg-subtle);
+  border-bottom: 1px solid var(--cfx-color-border-subtle);
+}
+
+.cfx-code-snippet-body {
+  position: relative;
+}
+
+.cfx-code-snippet-pre {
+  margin: 0;
+  padding: var(--cfx-space-3) var(--cfx-space-4);
+  font-family: var(--cfx-font-mono);
+  font-size: var(--cfx-text-xs);
+  color: var(--cfx-color-fg-default);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.cfx-code-snippet-copy {
+  position: absolute;
+  top: var(--cfx-space-2);
+  right: var(--cfx-space-2);
+  padding: var(--cfx-space-1) var(--cfx-space-2);
+  font-size: var(--cfx-text-xs);
+  font-family: var(--cfx-font-sans);
+  color: var(--cfx-color-fg-muted);
+  background: var(--cfx-color-bg-subtle);
+  border: 1px solid var(--cfx-color-border-default);
+  border-radius: var(--cfx-radius-sm);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.cfx-code-snippet-copy:hover {
+  color: var(--cfx-color-fg-default);
+  background: var(--cfx-color-bg-emphasis);
+}

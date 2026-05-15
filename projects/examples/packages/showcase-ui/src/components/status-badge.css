@@ -1,0 +1,29 @@
+.cfx-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--cfx-space-2);
+  font-size: var(--cfx-text-xs);
+  font-weight: 500;
+  border-radius: var(--cfx-radius-pill);
+  white-space: nowrap;
+}
+
+.cfx-status-badge--ok {
+  background: color-mix(in srgb, var(--cfx-color-feedback-success) 15%, transparent);
+  color: var(--cfx-color-feedback-success);
+}
+
+.cfx-status-badge--error {
+  background: color-mix(in srgb, var(--cfx-color-feedback-danger) 15%, transparent);
+  color: var(--cfx-color-feedback-danger);
+}
+
+.cfx-status-badge--pending {
+  background: color-mix(in srgb, var(--cfx-color-feedback-warning) 15%, transparent);
+  color: var(--cfx-color-feedback-warning);
+}
+
+.cfx-status-badge--info {
+  background: color-mix(in srgb, var(--cfx-color-feedback-info) 15%, transparent);
+  color: var(--cfx-color-feedback-info);
+}

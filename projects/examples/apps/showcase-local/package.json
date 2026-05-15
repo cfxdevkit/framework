@@ -1,0 +1,40 @@
+{
+  "name": "@cfxdevkit/example-showcase-local",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Conflux framework local showcase — Next.js app for devnode, keystore, compiler, deploy, and session-key demos.",
+  "scripts": {
+    "dev": "next dev --port 3011",
+    "build": "next build",
+    "start": "next start --port 3011",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check app",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "@cfxdevkit/compiler": "workspace:*",
+    "@cfxdevkit/core": "workspace:*",
+    "@cfxdevkit/devnode": "workspace:*",
+    "@cfxdevkit/example-showcase-ui": "workspace:*",
+    "@cfxdevkit/react": "workspace:*",
+    "@cfxdevkit/services": "workspace:*",
+    "@cfxdevkit/theme": "workspace:*",
+    "@cfxdevkit/wallet": "workspace:*",
+    "@cfxdevkit/wallet-connect": "workspace:*",
+    "@tanstack/react-query": "^5.100.9",
+    "next": "^16.0.0",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "viem": "^2.21.0",
+    "wagmi": "^3.6.9"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/tsconfig": "workspace:*",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.3"
+  }
+}

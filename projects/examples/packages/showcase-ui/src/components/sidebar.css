@@ -1,0 +1,51 @@
+.cfx-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cfx-sidebar-group {
+  padding: var(--cfx-space-2) 0;
+  border-bottom: 1px solid var(--cfx-color-border-subtle);
+}
+
+.cfx-sidebar-group:last-child {
+  border-bottom: none;
+}
+
+.cfx-sidebar-group-label {
+  font-size: var(--cfx-text-xs);
+  font-weight: 600;
+  color: var(--cfx-color-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: var(--cfx-space-1) var(--cfx-space-4);
+  margin-bottom: var(--cfx-space-1);
+}
+
+.cfx-sidebar-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--cfx-space-2) var(--cfx-space-4);
+  font-size: var(--cfx-text-sm);
+  color: var(--cfx-color-fg-subtle);
+  background: none;
+  border: none;
+  border-radius: var(--cfx-radius-sm);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.cfx-sidebar-item:hover {
+  color: var(--cfx-color-fg-default);
+  background: var(--cfx-color-bg-emphasis);
+}
+
+.cfx-sidebar-item.active {
+  color: var(--cfx-color-brand-primary);
+  background: var(--cfx-color-bg-emphasis);
+  font-weight: 500;
+}

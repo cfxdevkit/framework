@@ -1,28 +1,16 @@
-/**
- * Reusable little log-rendering box. Newest entry on top.
- */
-import type { LogEntry } from '../lib/log.js';
+import type { LogEntry } from '../lib/log';
+import './log-box.css';
 
 export function LogBox({ entries, empty }: { entries: LogEntry[]; empty?: string }) {
   if (entries.length === 0) {
-    return <div className="result muted">{empty ?? '— no events yet —'}</div>;
+    return <div className="cfx-log-box cfx-log-box--empty">{empty ?? '— no events yet —'}</div>;
   }
   return (
-    <div className="result" style={{ maxHeight: 240, overflow: 'auto' }}>
+    <div className="cfx-log-box">
       {entries.map((e) => (
-        <div
-          key={e.id}
-          style={{
-            color:
-              e.level === 'error'
-                ? 'var(--err)'
-                : e.level === 'warn'
-                  ? 'var(--warn)'
-                  : 'var(--text)',
-            padding: '2px 0',
-          }}
-        >
-          <span style={{ opacity: 0.55 }}>{e.ts}</span> {e.msg}
+        <div key={e.id} className={`cfx-log-entry cfx-log-entry--${e.level}`}>
+          <span className="cfx-log-ts">{e.ts}</span>
+          <span className="cfx-log-msg">{e.msg}</span>
         </div>
       ))}
     </div>

@@ -3,10 +3,9 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "noEmit": false,
-    "emitDeclarationOnly": true,
+    "noEmit": true,
     "jsx": "react-jsx",
-    "types": [],
+    "types": ["react"],
     "module": "ESNext",
     "moduleResolution": "bundler"
   },

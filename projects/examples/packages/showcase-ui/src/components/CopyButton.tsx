@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { copy } from '../lib/copy.js';
+import { copy } from '../lib/copy';
 
 interface Props {
   text: string;

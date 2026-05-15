@@ -1,40 +1,39 @@
-// lib
+// Framework re-exports
 
-export { ConnectWall } from './components/ConnectWall.js';
-// components
-export { CopyButton } from './components/CopyButton.js';
-export { LogBox } from './components/LogBox.js';
-export { WalletPickerModal } from './components/WalletPickerModal.js';
-export type { SharedDevNodeStatus } from './devnode.js';
-export { SharedDevNodePill, ShowcaseOpsPanel, useShowcaseBackend } from './devnode.js';
-export { copy } from './lib/copy.js';
-export { errMsg } from './lib/err.js';
-export type { LogEntry, LogLevel } from './lib/log.js';
-export { makeEntry, useLogList } from './lib/log.js';
-export type { CoreChainConfig, FluentProvider, WalletStatus } from './lib/use-core-wallet.js';
+export type { CoreChainConfig, CoreWalletStatus } from '@cfxdevkit/wallet-connect';
 export {
-  buildAddChainParams,
   CORE_CHAIN_CONFIGS,
-  detectFluentCore,
-  formatProviderError,
-  getCoreChainConfig,
-  getFluentCoreProvider,
-  normalizeCoreChainId,
-  rpcCoreAccounts,
-  rpcCoreChainId,
-  rpcRequestCoreAccounts,
-  switchConfluxChain,
-  useCoreWallet,
-  waitForCoreChain,
-} from './lib/use-core-wallet.js';
-export type { CorePillState, CoreWalletStatus, ESpacePillState } from './lib/wallet-state.js';
-// wallet state
-export {
   coreChainLabel,
   deriveCoreState,
-  deriveESpaceState,
-  espaceChainLabel,
-  needsESpaceSwitch,
-} from './lib/wallet-state.js';
-export type { PanelGroupLike, PanelLike, ShowcaseSectionLink } from './shell.js';
-export { PanelSidebar, ShowcaseNav, useActivePanelState } from './shell.js';
+  getFluentCoreProvider,
+  useCoreWallet,
+} from '@cfxdevkit/wallet-connect';
+export { ConnectButton, WalletPickerModal } from '@cfxdevkit/wallet-connect/ui';
+
+// Components
+export type { CodeSnippetProps } from './components/CodeSnippet';
+export { CodeSnippet } from './components/CodeSnippet';
+export { ConnectWall } from './components/ConnectWall';
+export { CopyButton } from './components/CopyButton';
+export type { DemoCardProps } from './components/DemoCard';
+export { DemoCard } from './components/DemoCard';
+export { LogBox } from './components/LogBox';
+export type { NavItem, PanelGroupLike, PanelLike, ShellProps } from './components/Shell';
+export {
+  PanelSidebar,
+  SharedDevNodePill,
+  Shell,
+  ShowcaseNav,
+  ShowcaseOpsPanel,
+  useActivePanelState,
+} from './components/Shell';
+export type { SidebarGroup, SidebarItem, SidebarProps } from './components/Sidebar';
+export { Sidebar } from './components/Sidebar';
+export type { BadgeStatus, StatusBadgeProps } from './components/StatusBadge';
+export { StatusBadge } from './components/StatusBadge';
+
+// Utilities
+export { copy } from './lib/copy';
+export { errMsg } from './lib/err';
+export type { LogEntry, LogLevel } from './lib/log';
+export { makeEntry, useLogList } from './lib/log';

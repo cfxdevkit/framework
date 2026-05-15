@@ -8,7 +8,7 @@ import {
 } from '@cfxdevkit/abis/swappi';
 import type { EspaceClient } from '@cfxdevkit/core/client';
 import type { Address } from '@cfxdevkit/core/types';
-import { type Abi, decodeFunctionResult, encodeFunctionData } from 'viem';
+import { type Abi, decodeFunctionResult, encodeFunctionData, getAddress } from 'viem';
 import type { DexAdapter, Quote, SwapCalldata } from '../types.js';
 
 /** Configuration for `SwapService`. */
@@ -65,9 +65,10 @@ export class SwapService implements DexAdapter {
       throw new Error(`SwapService: unsupported chainId ${config.chainId}. Supported: 1030, 71.`);
     }
 
-    this.#factory = factoryAddr;
-    this.#router = routerAddr;
-    this.#wcfx = wcfxAddr;
+    // Normalize to EIP-55 checksum format so viem's encodeFunctionData accepts them.
+    this.#factory = getAddress(factoryAddr);
+    this.#router = getAddress(routerAddr);
+    this.#wcfx = getAddress(wcfxAddr);
   }
 
   // ── DexAdapter ────────────────────────────────────────────────────────────
@@ -79,7 +80,9 @@ export class SwapService implements DexAdapter {
     slippageBps?: number;
     deadlineMs?: number;
   }): Promise<Quote> {
-    const { tokenIn, tokenOut, amountIn } = params;
+    const tokenIn = getAddress(params.tokenIn);
+    const tokenOut = getAddress(params.tokenOut);
+    const { amountIn } = params;
     const slippageBps = params.slippageBps ?? DEFAULT_SLIPPAGE_BPS;
     const deadlineMs = params.deadlineMs ?? Date.now() + DEFAULT_DEADLINE_MS;
 
