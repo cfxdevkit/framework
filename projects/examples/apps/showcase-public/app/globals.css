@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@source "../../../../../repos/cfx-ui/packages/ui/src";
+
 *,
 *::before,
 *::after {

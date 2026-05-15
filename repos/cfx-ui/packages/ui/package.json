@@ -1,0 +1,46 @@
+{
+  "name": "@cfxdevkit/ui",
+  "version": "0.0.0",
+  "private": false,
+  "description": "Tailwind-first reusable Conflux UI primitives built on @cfxdevkit/ui-core.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "clean": "rm -rf dist .vitest coverage"
+  },
+  "dependencies": {
+    "@cfxdevkit/ui-core": "workspace:^"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/tsconfig": "workspace:*",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.14",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.12",
+    "vite-plugin-dts": "^5.0.0",
+    "vitest": "^4.1.6"
+  },
+  "peerDependencies": {
+    "react": "^19.2.5",
+    "wagmi": "^3.6.9"
+  }
+}

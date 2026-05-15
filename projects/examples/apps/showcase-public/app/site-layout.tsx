@@ -1,6 +1,6 @@
 'use client';
 
-import { WalletPickerModal } from '@cfxdevkit/example-showcase-ui';
+import { WalletPickerModal, WalletStatusChip } from '@cfxdevkit/example-showcase-ui';
 import { useCoreWallet } from '@cfxdevkit/wallet-connect/hooks';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -16,10 +16,6 @@ const NAV = [
   { label: 'DeFi', href: '/defi' },
   { label: 'UI Kit', href: '/ui-kit' },
 ];
-
-function truncate(addr: string) {
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
 
 const BTN_BASE: React.CSSProperties = {
   display: 'inline-flex',
@@ -47,15 +43,6 @@ const BTN_CONNECTED: React.CSSProperties = {
   ...BTN_BASE,
   background: 'var(--cfx-color-bg-emphasis)',
   color: 'var(--cfx-color-fg-default)',
-};
-
-const DOT: React.CSSProperties = {
-  width: 7,
-  height: 7,
-  borderRadius: '50%',
-  background: 'var(--cfx-color-feedback-success)',
-  display: 'inline-block',
-  flexShrink: 0,
 };
 
 /** Full-page layout used by every showcase page. Provides sticky header with
@@ -170,8 +157,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               title="Click to disconnect eSpace"
               style={BTN_CONNECTED}
             >
-              <span style={DOT} />
-              {truncate(address)}
+              <WalletStatusChip address={address} className="pointer-events-none" />
             </button>
           ) : (
             <button type="button" onClick={() => setEspaceOpen(true)} style={BTN_CONNECT}>
@@ -187,8 +173,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               title="Click to disconnect Core"
               style={BTN_CONNECTED}
             >
-              <span style={DOT} />
-              {truncate(core.address)}
+              <WalletStatusChip address={core.address} className="pointer-events-none" />
             </button>
           ) : core.status === 'not-installed' ? null : core.status === 'detecting' ? null : (
             <button

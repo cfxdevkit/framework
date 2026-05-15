@@ -8,7 +8,11 @@
     "moduleResolution": "bundler",
     "noEmit": true,
     "plugins": [{ "name": "next" }],
-    "types": ["node", "react", "react-dom"]
+    "types": ["node", "react", "react-dom"],
+    "paths": {
+      "@cfxdevkit/ui": ["../../../../repos/cfx-ui/packages/ui/src/index.ts"],
+      "@cfxdevkit/ui-core": ["../../../../repos/cfx-ui/packages/ui-core/src/index.ts"]
+    }
   },
   "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]

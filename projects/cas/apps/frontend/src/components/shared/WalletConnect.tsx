@@ -1,10 +1,11 @@
 'use client';
 
+import { WalletStatusChip } from '@cfxdevkit/ui';
 import { AlertTriangle, Check, Copy, Loader2, Power, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { injected, useAccount, useConnect } from 'wagmi';
-import { EXPECTED_CHAIN_NAME, useNetworkSwitch } from '../../hooks/useNetworkSwitch';
 import { useAuthContext } from '../../app/auth-context';
+import { EXPECTED_CHAIN_NAME, useNetworkSwitch } from '../../hooks/useNetworkSwitch';
 
 // ─── Copy-to-clipboard address chip with inline status dot ───────────────────
 
@@ -20,39 +21,22 @@ function AddressChip({ address, status }: { address: string; status: SignStatus 
     });
   }
 
-  const dotEl =
-    status === 'loading' ? (
-      <svg
-        aria-label="Signing in…"
-        className="h-2.5 w-2.5 animate-spin text-slate-400 flex-shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-      >
-        <path
-          d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
-          strokeLinecap="round"
-        />
-      </svg>
-    ) : status === 'signed' ? (
-      <span className="h-2 w-2 rounded-full bg-green-400 shadow-[0_0_5px_#4ade80] flex-shrink-0" />
-    ) : (
-      <span className="h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_5px_#fb923c] flex-shrink-0" />
-    );
+  const chipStatus =
+    status === 'loading' ? 'connecting' : status === 'signed' ? 'connected' : 'disconnected';
 
   return (
     <button
       type="button"
       onClick={handleCopy}
       title={copied ? 'Copied!' : address}
-      className="group flex items-center gap-1.5 rounded-lg border border-slate-600 bg-slate-800
-                 px-2.5 py-1 transition-colors hover:border-conflux-500 hover:bg-slate-700"
+      className="group flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-2 py-1
+                 transition-colors hover:border-conflux-500 hover:bg-slate-800"
     >
-      {dotEl}
-      <span className="font-mono text-xs text-slate-200">
-        {address.slice(0, 6)}…{address.slice(-4)}
-      </span>
+      <WalletStatusChip
+        address={address}
+        status={chipStatus}
+        className="pointer-events-none border-0 bg-transparent px-1 py-0 text-slate-200 shadow-none"
+      />
       {copied ? (
         <Check className="h-3 w-3 text-green-400 flex-shrink-0" strokeWidth={3} />
       ) : (

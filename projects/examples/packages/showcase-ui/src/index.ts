@@ -1,5 +1,32 @@
 // Framework re-exports
 
+export type {
+  AssetConversionPanelProps,
+  NetworkSwitchNoticeProps,
+  SegmentedControlOption,
+  SegmentedControlProps,
+  TokenAmountFieldProps,
+  TokenPairSelectorProps,
+  TokenSelectOption,
+  TokenSelectProps,
+  WalletButtonProps,
+  WalletPickerModalProps,
+  WalletProviderCardProps,
+  WalletProviderCardStatus,
+  WalletStatusChipProps,
+} from '@cfxdevkit/ui';
+export {
+  AssetConversionPanel,
+  NetworkSwitchNotice,
+  SegmentedControl,
+  TokenAmountField,
+  TokenPairSelector,
+  TokenSelect,
+  WalletButton,
+  WalletPickerModal,
+  WalletProviderCard,
+  WalletStatusChip,
+} from '@cfxdevkit/ui';
 export type { CoreChainConfig, CoreWalletStatus } from '@cfxdevkit/wallet-connect';
 export {
   CORE_CHAIN_CONFIGS,
@@ -8,7 +35,7 @@ export {
   getFluentCoreProvider,
   useCoreWallet,
 } from '@cfxdevkit/wallet-connect';
-export { ConnectButton, WalletPickerModal } from '@cfxdevkit/wallet-connect/ui';
+export { ConnectButton } from '@cfxdevkit/wallet-connect/ui';
 
 // Components
 export type { CodeSnippetProps } from './components/CodeSnippet';

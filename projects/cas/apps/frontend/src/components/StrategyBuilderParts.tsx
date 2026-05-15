@@ -4,6 +4,7 @@
  */
 
 import type { CasHexAddress } from '@cfxdevkit/cas-shared';
+import { AssetConversionPanel, TokenSelect } from '@cfxdevkit/ui';
 import { CheckCircle2 } from 'lucide-react';
 import { parseUnits } from 'viem';
 import type { StrategyDraft, StrategyStep, TokenWithBalance } from '../lib/strategy';
@@ -56,17 +57,13 @@ export function TokenAmountPanel({
           onChange={(e) => onAmountChange(e.target.value)}
           placeholder="0.0"
         />
-        <select
-          className="select token-select"
+        <TokenSelect
+          className="min-w-[180px]"
+          selectClassName="select token-select"
+          options={tokens}
           value={selectedToken}
-          onChange={(e) => onTokenChange(e.target.value as CasHexAddress)}
-        >
-          {tokens.map((t) => (
-            <option key={t.address} value={t.address}>
-              {t.symbol}
-            </option>
-          ))}
-        </select>
+          onChange={(token) => onTokenChange(token as CasHexAddress)}
+        />
       </div>
       <div className="mono token-address">{selectedToken}</div>
     </div>
@@ -111,40 +108,19 @@ export function WcfxConvertPanel({
   onConvert,
 }: WcfxConvertPanelProps) {
   return (
-    <div className="subpanel">
-      <div className="subpanel-header">
-        <strong>CFX / WCFX</strong>
-      </div>
-      <div className="segmented">
-        <button
-          className={wrapMode === 'wrap' ? 'active' : ''}
-          type="button"
-          onClick={() => onModeChange('wrap')}
-        >
-          Wrap
-        </button>
-        <button
-          className={wrapMode === 'unwrap' ? 'active' : ''}
-          type="button"
-          onClick={() => onModeChange('unwrap')}
-        >
-          Unwrap
-        </button>
-      </div>
-      <div className="field-row">
-        <Field label="Amount">
-          <input
-            className="input"
-            value={wrapAmount}
-            onChange={(e) => onAmountChange(e.target.value)}
-            placeholder="0.0"
-          />
-        </Field>
-        <button className="button" type="button" onClick={onConvert} disabled={busy}>
-          Convert
-        </button>
-      </div>
-    </div>
+    <AssetConversionPanel
+      title="CFX / WCFX"
+      amount={wrapAmount}
+      busy={busy}
+      className="subpanel"
+      fromAssetLabel="CFX"
+      mode={wrapMode}
+      onAmountChange={onAmountChange}
+      onModeChange={onModeChange}
+      onSubmit={onConvert}
+      submitLabel={wrapMode === 'wrap' ? 'Convert CFX to WCFX' : 'Convert WCFX to CFX'}
+      toAssetLabel="WCFX"
+    />
   );
 }
 

@@ -21,6 +21,8 @@ projects:
   - 'repos/cfx-ui/packages/react'
   - 'repos/cfx-ui/packages/defi-react'
   - 'repos/cfx-ui/packages/theme'
+  - 'repos/cfx-ui/packages/ui-core'
+  - 'repos/cfx-ui/packages/ui'
   - 'repos/cfx-ui/packages/wallet-connect'
   - 'repos/cfx-domain/packages/game-engine'
   - 'repos/cfx-domain/packages/automation'

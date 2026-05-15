@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@cfxdevkit/theme": "workspace:*",
+    "@cfxdevkit/ui": "workspace:*",
     "@cfxdevkit/wallet-connect": "workspace:*"
   },
   "peerDependencies": {

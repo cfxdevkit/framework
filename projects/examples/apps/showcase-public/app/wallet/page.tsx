@@ -41,8 +41,8 @@ function chainBtn(active: boolean, disabled: boolean): React.CSSProperties {
 const ESPACE_SNIPPET = `// 1. Wrap your app with ConfluxWagmiProviders (done in providers.tsx)
 import { ConfluxWagmiProviders } from '@cfxdevkit/wallet-connect';
 
-// 2. Open WalletPickerModal (section="espace") to trigger browser wallet
-import { WalletPickerModal } from '@cfxdevkit/wallet-connect/ui';
+// 2. Use the shared wallet UI primitives from @cfxdevkit/ui
+import { WalletButton, WalletPickerModal, WalletStatusChip } from '@cfxdevkit/ui';
 
 // 3. Read wallet state with wagmi hooks
 import { useAccount, useBalance, useChainId, useSwitchChain } from 'wagmi';
@@ -51,6 +51,10 @@ const { address, isConnected, chain } = useAccount();
 const { data: balance } = useBalance({ address });
 const chainId = useChainId();
 const { switchChain } = useSwitchChain();
+
+<WalletButton />
+<WalletStatusChip address={address} />
+<WalletPickerModal open={open} onClose={() => setOpen(false)} />
 
 switchChain({ chainId: 71 });  // → eSpace testnet
 switchChain({ chainId: 1030 }); // → eSpace mainnet`;
@@ -86,7 +90,7 @@ export default function WalletPage() {
       {/* ── eSpace Account ── */}
       <DemoCard
         title="eSpace Account"
-        description="useAccount + useBalance via wagmi. Click the eSpace button in the header to connect MetaMask or any EIP-6963 wallet."
+        description="Shared wallet UI on top of wagmi. Use the header wallet picker, then read account state with useAccount and useBalance."
       >
         {isConnected ? (
           <table

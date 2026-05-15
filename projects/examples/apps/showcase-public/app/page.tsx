@@ -13,7 +13,7 @@ const CHAPTERS = [
   {
     href: '/wallet',
     title: 'Wallet',
-    description: 'ConnectButton, useAccount, useBalance, chain switching.',
+    description: 'Shared wallet UI, wagmi account state, and chain switching flows.',
   },
   {
     href: '/keys',
@@ -33,7 +33,7 @@ const CHAPTERS = [
   {
     href: '/ui-kit',
     title: 'UI Kit',
-    description: 'ThemeProvider, design tokens, and component catalog.',
+    description: 'Tailwind UI foundation: wallet, token, network, and conversion widgets.',
   },
 ];
 

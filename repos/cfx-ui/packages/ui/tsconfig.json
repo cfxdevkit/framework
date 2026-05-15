@@ -1,0 +1,14 @@
+{
+  "extends": "@cfxdevkit/tsconfig/lib.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@cfxdevkit/ui-core": ["../ui-core/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.test.tsx"]
+}

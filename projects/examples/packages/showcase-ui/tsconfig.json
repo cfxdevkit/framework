@@ -1,13 +1,17 @@
 {
   "extends": "@cfxdevkit/tsconfig/lib.json",
   "compilerOptions": {
-    "rootDir": "src",
+    "rootDir": "../../../../",
     "outDir": "dist",
     "noEmit": true,
     "jsx": "react-jsx",
     "types": ["react"],
     "module": "ESNext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "paths": {
+      "@cfxdevkit/ui": ["../../../../repos/cfx-ui/packages/ui/src/index.ts"],
+      "@cfxdevkit/ui-core": ["../../../../repos/cfx-ui/packages/ui-core/src/index.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.test.tsx"]

@@ -1,0 +1,9 @@
+
+> @cfxdevkit/cas-frontend@0.0.0 lint /workspaces/root/projects/cas/apps/frontend
+> biome check src
+
+Checked 37 files in 10ms. No fixes applied.
+Found 12 errors.
+/workspaces/root/projects/cas/apps/frontend:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @cfxdevkit/cas-frontend@0.0.0 lint: `biome check src`
+Exit status 1
