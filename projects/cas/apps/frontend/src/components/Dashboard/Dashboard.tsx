@@ -46,39 +46,42 @@ export function Dashboard({ onCreateNew }: DashboardProps) {
         | { type: 'job_update'; job: CasJobDto };
       if (payload.type === 'snapshot') setJobs(payload.jobs);
       if (payload.type === 'job_update') {
-        setJobs((current) => [
-          payload.job,
-          ...current.filter((j) => j.id !== payload.job.id),
-        ]);
+        setJobs((current) => [payload.job, ...current.filter((j) => j.id !== payload.job.id)]);
       }
     };
     source.onerror = () => source.close();
     return () => source.close();
   }, [client, token]);
 
-  const cancelJob = useCallback(async (id: string) => {
-    setBusy(true);
-    try {
-      const res = await client.cancelJob(id);
-      setJobs((current) => current.map((j) => (j.id === id ? res.job : j)));
-    } catch (e: unknown) {
-      setError((e as Error).message ?? 'Cancel failed');
-    } finally {
-      setBusy(false);
-    }
-  }, [client]);
+  const cancelJob = useCallback(
+    async (id: string) => {
+      setBusy(true);
+      try {
+        const res = await client.cancelJob(id);
+        setJobs((current) => current.map((j) => (j.id === id ? res.job : j)));
+      } catch (e: unknown) {
+        setError((e as Error).message ?? 'Cancel failed');
+      } finally {
+        setBusy(false);
+      }
+    },
+    [client],
+  );
 
-  const loadExecutions = useCallback(async (id: string) => {
-    setBusy(true);
-    try {
-      const res = await client.executions(id);
-      setExecutions((current) => ({ ...current, [id]: res.executions }));
-    } catch (e: unknown) {
-      setError((e as Error).message ?? 'Failed to load executions');
-    } finally {
-      setBusy(false);
-    }
-  }, [client]);
+  const loadExecutions = useCallback(
+    async (id: string) => {
+      setBusy(true);
+      try {
+        const res = await client.executions(id);
+        setExecutions((current) => ({ ...current, [id]: res.executions }));
+      } catch (e: unknown) {
+        setError((e as Error).message ?? 'Failed to load executions');
+      } finally {
+        setBusy(false);
+      }
+    },
+    [client],
+  );
 
   if (!token) return null;
 

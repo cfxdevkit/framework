@@ -2,7 +2,12 @@ import { createSiweMessage } from '@cfxdevkit/wallet-connect/siwe';
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { __poolsTest } from './routes/pools.js';
-import { TEST_ACCOUNT, createCasBackendApp, createCasBackendState, makeConfig } from './app.test-helpers.js';
+import {
+  TEST_ACCOUNT,
+  createCasBackendApp,
+  createCasBackendState,
+  makeConfig,
+} from './app.test-helpers.js';
 
 describe('CAS backend – auth', () => {
   afterEach(() => {

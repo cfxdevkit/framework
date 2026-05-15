@@ -67,16 +67,20 @@ export async function configureKeeper(state: WizardState): Promise<WizardState> 
   if (registered) {
     console.log('  ✓ Already registered as keeper');
   } else {
-    console.log('  Signer is not registered. Registration requires calling setKeeper() as the contract owner.');
+    console.log(
+      '  Signer is not registered. Registration requires calling setKeeper() as the contract owner.',
+    );
     const ownerKey = await password({
       message: 'Owner private key (0x-prefixed, masked):',
     });
     const ownerPrivateKey = ownerKey.trim() as Hex;
 
     const baseChain =
-      state.network === 'mainnet' ? espaceMainnet
-      : state.network === 'testnet' ? espaceTestnet
-      : espaceLocal;
+      state.network === 'mainnet'
+        ? espaceMainnet
+        : state.network === 'testnet'
+          ? espaceTestnet
+          : espaceLocal;
     const chain = { ...baseChain, rpc: { ...baseChain.rpc, http: [state.rpcUrl] as const } };
 
     const client = createClient({ chain, transport: http(state.rpcUrl) });

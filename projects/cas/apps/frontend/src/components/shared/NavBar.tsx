@@ -15,10 +15,7 @@ export function NavBar() {
     <nav className="sticky top-0 z-40 border-b border-slate-800/50 bg-slate-950/70 backdrop-blur-md px-4 py-4">
       <div className="mx-auto max-w-7xl flex items-center justify-between">
         {/* Logo */}
-        <Link
-          href="/"
-          className="text-lg font-bold text-white flex items-center gap-2 group"
-        >
+        <Link href="/" className="text-lg font-bold text-white flex items-center gap-2 group">
           <div className="bg-gradient-to-br from-conflux-500 to-blue-600 p-1.5 rounded-lg shadow-[0_0_15px_rgba(0,120,200,0.5)] group-hover:shadow-[0_0_25px_rgba(0,120,200,0.8)] transition-all">
             <Zap className="h-4 w-4 text-white fill-white" />
           </div>

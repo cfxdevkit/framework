@@ -24,9 +24,11 @@ const SWAPPI_FACTORY: Record<'testnet' | 'mainnet', string> = {
 
 function chainConfigForState(state: WizardState): ChainConfig {
   const base =
-    state.network === 'mainnet' ? espaceMainnet
-    : state.network === 'testnet' ? espaceTestnet
-    : espaceLocal;
+    state.network === 'mainnet'
+      ? espaceMainnet
+      : state.network === 'testnet'
+        ? espaceTestnet
+        : espaceLocal;
   // Override the RPC with the user-supplied URL
   return { ...base, rpc: { ...base.rpc, http: [state.rpcUrl] as const } };
 }
@@ -53,13 +55,17 @@ async function deployFresh(state: WizardState): Promise<WizardState> {
   let swappiFactory: string;
   if (state.network === 'local') {
     console.log('  Local devnode detected — Swappi is not pre-deployed here.');
-    swappiRouter = (await input({
-      message: 'Swappi router address (or any mock router):',
-      default: SWAPPI_ROUTER,
-    })).trim();
-    swappiFactory = (await input({
-      message: 'Swappi factory address (or any mock factory):',
-    })).trim();
+    swappiRouter = (
+      await input({
+        message: 'Swappi router address (or any mock router):',
+        default: SWAPPI_ROUTER,
+      })
+    ).trim();
+    swappiFactory = (
+      await input({
+        message: 'Swappi factory address (or any mock factory):',
+      })
+    ).trim();
   } else {
     swappiRouter = SWAPPI_ROUTER;
     swappiFactory = SWAPPI_FACTORY[state.network];
@@ -134,7 +140,10 @@ export async function contractMode(state: WizardState): Promise<WizardState> {
   const mode = await select<'deploy' | 'manual'>({
     message: `Contract mode for ${networkLabel}:`,
     choices: [
-      { name: 'Deploy my own contracts (you become the owner, can register a keeper)', value: 'deploy' },
+      {
+        name: 'Deploy my own contracts (you become the owner, can register a keeper)',
+        value: 'deploy',
+      },
       { name: 'Enter existing contract addresses manually', value: 'manual' },
     ],
   });

@@ -11,7 +11,9 @@ export async function checkRpc(url: string): Promise<string> {
   while (true) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => { controller.abort(); }, 5000);
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 5000);
       const res = await fetch(currentUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

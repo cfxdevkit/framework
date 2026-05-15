@@ -84,11 +84,7 @@ export function generateFrontendEnv(state: WizardState): string {
   return lines.join('\n');
 }
 
-async function writeWithGuard(
-  filePath: string,
-  content: string,
-  force: boolean,
-): Promise<void> {
+async function writeWithGuard(filePath: string, content: string, force: boolean): Promise<void> {
   if (existsSync(filePath) && !force) {
     const overwrite = await confirm({
       message: `${filePath} already exists. Overwrite?`,

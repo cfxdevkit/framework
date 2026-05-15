@@ -49,8 +49,8 @@ export default function HomePage() {
             DeFi
           </h1>
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-light">
-            Non-custodial limit orders and DCA strategies on Conflux eSpace. Your keys, your
-            tokens — executed automatically by decentralized keepers.
+            Non-custodial limit orders and DCA strategies on Conflux eSpace. Your keys, your tokens
+            — executed automatically by decentralized keepers.
           </p>
         </div>
         <button
@@ -95,9 +95,7 @@ export default function HomePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[75vh] text-center gap-6">
         <div className="w-10 h-10 rounded-full border-2 border-conflux-500 border-t-transparent animate-spin" />
-        <p className="text-slate-400 text-lg">
-          Check your wallet — sign the message to continue.
-        </p>
+        <p className="text-slate-400 text-lg">Check your wallet — sign the message to continue.</p>
         <p className="text-xs text-slate-500 font-mono">
           {address?.slice(0, 6)}…{address?.slice(-4)}
         </p>

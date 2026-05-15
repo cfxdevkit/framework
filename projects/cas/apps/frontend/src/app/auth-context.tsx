@@ -143,7 +143,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session = await client.verify({ message, signature });
       } catch (err) {
         if (err instanceof Error && err.name === 'CasApiError' && 'status' in err) {
-          setError(`Sign-in verification failed — the backend returned ${(err as { status: number }).status}`);
+          setError(
+            `Sign-in verification failed — the backend returned ${(err as { status: number }).status}`,
+          );
           return;
         }
         throw err;

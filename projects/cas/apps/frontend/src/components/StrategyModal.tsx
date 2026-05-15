@@ -39,7 +39,13 @@ export function StrategyModal({
         aria-label="Close dialog"
         className={`absolute inset-0 w-full h-full bg-black/70 backdrop-blur-sm border-0 ${txInProgress ? 'cursor-not-allowed' : 'cursor-pointer'}`}
         onClick={txInProgress ? undefined : onClose}
-        onKeyDown={txInProgress ? undefined : (e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}
+        onKeyDown={
+          txInProgress
+            ? undefined
+            : (e) => {
+                if (e.key === 'Enter' || e.key === ' ') onClose();
+              }
+        }
       />
       <div className="relative z-10 w-full max-w-xl max-h-[90vh] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden animate-[modal-in_0.2s_cubic-bezier(0.16,1,0.3,1)]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 shrink-0">

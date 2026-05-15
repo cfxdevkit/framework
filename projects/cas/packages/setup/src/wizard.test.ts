@@ -17,7 +17,10 @@ describe('runWizard orchestrator', () => {
       };
 
     const mockCheckEnv = makePhase('checkEnv', {});
-    const mockSelectNetwork = makePhase('selectNetwork', { network: 'testnet', rpcUrl: 'https://evmtestnet.confluxrpc.com' });
+    const mockSelectNetwork = makePhase('selectNetwork', {
+      network: 'testnet',
+      rpcUrl: 'https://evmtestnet.confluxrpc.com',
+    });
     const mockContractMode = makePhase('contractMode', { automationManagerAddress: '0xAM' });
     const mockConfigureKeeper = makePhase('configureKeeper', { keeperEnabled: false });
     const mockWriteEnv = makePhase('writeEnv', {});
@@ -57,7 +60,9 @@ describe('runWizard orchestrator', () => {
       },
     }));
     vi.doMock('./steps/contract-mode.js', () => ({ contractMode: async (s: WizardState) => s }));
-    vi.doMock('./steps/configure-keeper.js', () => ({ configureKeeper: async (s: WizardState) => s }));
+    vi.doMock('./steps/configure-keeper.js', () => ({
+      configureKeeper: async (s: WizardState) => s,
+    }));
     vi.doMock('./steps/write-env.js', () => ({ writeEnv: async (s: WizardState) => s }));
     vi.doMock('./steps/launch.js', () => ({ launch: async (s: WizardState) => s }));
 

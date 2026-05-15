@@ -10,7 +10,6 @@ function makeViemChain(rpcUrl: string, chainId: number) {
   } as const;
 }
 
-
 async function getPublicClient(rpcUrl: string, networkChainId: number): Promise<PublicClient> {
   const chain = makeViemChain(rpcUrl, networkChainId);
   return createPublicClient({ chain, transport: http(rpcUrl) }) as unknown as PublicClient;

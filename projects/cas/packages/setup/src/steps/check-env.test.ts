@@ -5,9 +5,11 @@ import { EMPTY_STATE } from '../wizard.js';
 
 describe('checkEnv — Node version check', () => {
   it('exits with code 1 when Node < 24', async () => {
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code?: number | string | null | undefined) => {
-      throw new Error(`process.exit(${_code})`);
-    });
+    const exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation((_code?: number | string | null | undefined) => {
+        throw new Error(`process.exit(${_code})`);
+      });
 
     const originalVersion = process.version;
     Object.defineProperty(process, 'version', { value: 'v22.0.0', configurable: true });
@@ -20,9 +22,11 @@ describe('checkEnv — Node version check', () => {
   });
 
   it('passes when Node >= 24', async () => {
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code?: number | string | null | undefined) => {
-      throw new Error(`unexpected process.exit(${_code})`);
-    });
+    const exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation((_code?: number | string | null | undefined) => {
+        throw new Error(`unexpected process.exit(${_code})`);
+      });
 
     const originalVersion = process.version;
     Object.defineProperty(process, 'version', { value: 'v24.0.0', configurable: true });
@@ -60,9 +64,11 @@ describe('checkRpc — RPC connectivity check', () => {
   it('exits when RPC is unreachable and user provides no alternate', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED')) as typeof fetch;
 
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code?: number | string | null | undefined) => {
-      throw new Error(`process.exit(${_code})`);
-    });
+    const exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation((_code?: number | string | null | undefined) => {
+        throw new Error(`process.exit(${_code})`);
+      });
 
     // Mock @inquirer/prompts to simulate blank input (abort)
     vi.doMock('@inquirer/prompts', () => ({

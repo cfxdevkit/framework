@@ -42,6 +42,8 @@ projects:
   - 'projects/examples/apps/hardware-wallet-showcase'
   - 'projects/examples/apps/showcase-stack'
   - 'projects/examples/packages/showcase-ui'
+  - 'projects/examples/apps/showcase-public'
+  - 'projects/examples/apps/showcase-local'
 
 vcs:
   client: 'git'

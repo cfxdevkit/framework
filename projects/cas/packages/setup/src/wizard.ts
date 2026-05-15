@@ -1,4 +1,3 @@
-
 export type Network = 'testnet' | 'mainnet' | 'local';
 
 export interface WizardState {

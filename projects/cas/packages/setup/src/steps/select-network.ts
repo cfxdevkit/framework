@@ -71,7 +71,12 @@ export async function selectNetwork(state: WizardState): Promise<WizardState> {
   const addresses =
     network === 'testnet' || network === 'mainnet'
       ? addressesForNetwork(network)
-      : { automationManagerAddress: '', permitHandlerAddress: '', priceAdapterAddress: '', wcfxAddress: '' };
+      : {
+          automationManagerAddress: '',
+          permitHandlerAddress: '',
+          priceAdapterAddress: '',
+          wcfxAddress: '',
+        };
 
   return {
     ...state,

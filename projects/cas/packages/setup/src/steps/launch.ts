@@ -13,8 +13,8 @@ export async function launch(state: WizardState): Promise<WizardState> {
 
   if (!shouldLaunch) {
     console.log('\nTo start CAS manually, run from the projects/cas/ directory:');
-    console.log("  pnpm --filter @cfxdevkit/cas-backend start");
-    console.log("  pnpm --filter @cfxdevkit/cas-frontend start");
+    console.log('  pnpm --filter @cfxdevkit/cas-backend start');
+    console.log('  pnpm --filter @cfxdevkit/cas-frontend start');
     return state;
   }
 
@@ -40,7 +40,9 @@ export async function launch(state: WizardState): Promise<WizardState> {
   startProcesses(casRoot);
 
   // Keep the wizard process alive — exit is handled via SIGINT in runner.ts
-  await new Promise<never>(() => { /* stays alive until SIGINT */ });
+  await new Promise<never>(() => {
+    /* stays alive until SIGINT */
+  });
 
   return state;
 }

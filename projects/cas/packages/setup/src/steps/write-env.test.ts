@@ -67,7 +67,9 @@ describe('generateFrontendEnv', () => {
   it('contains testnet values for testnet state', () => {
     const env = generateFrontendEnv(TESTNET_STATE);
     expect(env).toContain('NEXT_PUBLIC_CAS_NETWORK=testnet');
-    expect(env).toContain('NEXT_PUBLIC_AUTOMATION_MANAGER_ADDRESS=0x33e5E5B262e5d8eBC443E1c6c9F14215b020554d');
+    expect(env).toContain(
+      'NEXT_PUBLIC_AUTOMATION_MANAGER_ADDRESS=0x33e5E5B262e5d8eBC443E1c6c9F14215b020554d',
+    );
     expect(env).toContain('NEXT_PUBLIC_WCFX_ADDRESS=0x2ED3dddae5B2F321AF0806181FBFA6D049Be47d8');
     expect(env).toContain('NEXT_PUBLIC_CONFLUX_ESPACE_RPC=https://evmtestnet.confluxrpc.com');
   });

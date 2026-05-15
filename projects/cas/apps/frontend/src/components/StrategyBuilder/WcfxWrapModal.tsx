@@ -38,9 +38,7 @@ export function WcfxWrapModal({ open, onClose }: { open: boolean; onClose: () =>
   const contracts = readContracts();
   const wcfxAddr = contracts.wcfxAddress as `0x${string}`;
   const wcfxInfo = tokens.find((t) => t.address.toLowerCase() === wcfxAddr.toLowerCase());
-  const cfxInfo = tokens.find(
-    (t) => t.address.toLowerCase() === CFX_NATIVE_ADDRESS.toLowerCase(),
-  );
+  const cfxInfo = tokens.find((t) => t.address.toLowerCase() === CFX_NATIVE_ADDRESS.toLowerCase());
 
   async function handleWrap() {
     setError(null);
@@ -49,7 +47,10 @@ export function WcfxWrapModal({ open, onClose }: { open: boolean; onClose: () =>
     setBusy(true);
     try {
       const amount = parseUnits(wrapInput.trim() || '0', 18);
-      if (amount <= 0n) { setError('Enter an amount.'); return; }
+      if (amount <= 0n) {
+        setError('Enter an amount.');
+        return;
+      }
       const feeData = await publicClient.estimateFeesPerGas();
       const mfpg = (feeData.maxFeePerGas * 120n) / 100n;
       const mpfpg = (feeData.maxPriorityFeePerGas * 120n) / 100n;
@@ -69,7 +70,11 @@ export function WcfxWrapModal({ open, onClose }: { open: boolean; onClose: () =>
         maxFeePerGas: mfpg,
         maxPriorityFeePerGas: mpfpg,
       });
-      await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 2_000, timeout: 120_000 });
+      await publicClient.waitForTransactionReceipt({
+        hash,
+        pollingInterval: 2_000,
+        timeout: 120_000,
+      });
       setSuccess(`${wrapInput} CFX wrapped to wCFX.`);
       setWrapInput('');
       refresh();
@@ -87,7 +92,10 @@ export function WcfxWrapModal({ open, onClose }: { open: boolean; onClose: () =>
     setBusy(true);
     try {
       const amount = parseUnits(unwrapInput.trim() || '0', 18);
-      if (amount <= 0n) { setError('Enter an amount.'); return; }
+      if (amount <= 0n) {
+        setError('Enter an amount.');
+        return;
+      }
       const feeData = await publicClient.estimateFeesPerGas();
       const mfpg = (feeData.maxFeePerGas * 120n) / 100n;
       const mpfpg = (feeData.maxPriorityFeePerGas * 120n) / 100n;
@@ -107,7 +115,11 @@ export function WcfxWrapModal({ open, onClose }: { open: boolean; onClose: () =>
         maxFeePerGas: mfpg,
         maxPriorityFeePerGas: mpfpg,
       });
-      await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 2_000, timeout: 120_000 });
+      await publicClient.waitForTransactionReceipt({
+        hash,
+        pollingInterval: 2_000,
+        timeout: 120_000,
+      });
       setSuccess(`${unwrapInput} wCFX unwrapped to CFX.`);
       setUnwrapInput('');
       refresh();
@@ -140,7 +152,13 @@ export function WcfxWrapModal({ open, onClose }: { open: boolean; onClose: () =>
         aria-label="Close dialog"
         className={`absolute inset-0 w-full h-full bg-black/70 backdrop-blur-sm border-0 ${busy ? 'cursor-not-allowed' : 'cursor-pointer'}`}
         onClick={busy ? undefined : onClose}
-        onKeyDown={busy ? undefined : (e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}
+        onKeyDown={
+          busy
+            ? undefined
+            : (e) => {
+                if (e.key === 'Enter' || e.key === ' ') onClose();
+              }
+        }
       />
 
       {/* Modal panel */}
@@ -168,7 +186,11 @@ export function WcfxWrapModal({ open, onClose }: { open: boolean; onClose: () =>
               <button
                 key={t}
                 type="button"
-                onClick={() => { setTab(t); setError(null); setSuccess(null); }}
+                onClick={() => {
+                  setTab(t);
+                  setError(null);
+                  setSuccess(null);
+                }}
                 className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
                   tab === t
                     ? 'bg-conflux-600 text-white shadow-md'
@@ -234,7 +256,9 @@ export function WcfxWrapModal({ open, onClose }: { open: boolean; onClose: () =>
             className="w-full bg-conflux-600 hover:bg-conflux-500 disabled:opacity-40 disabled:cursor-not-allowed
                        text-white font-semibold py-3 rounded-xl transition-colors"
           >
-            {busy ? 'Processing…' : `${tab === 'wrap' ? 'Wrap' : 'Unwrap'} ${fromLabel} → ${toLabel}`}
+            {busy
+              ? 'Processing…'
+              : `${tab === 'wrap' ? 'Wrap' : 'Unwrap'} ${fromLabel} → ${toLabel}`}
           </button>
         </div>
       </div>

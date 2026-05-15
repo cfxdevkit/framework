@@ -38,8 +38,18 @@ function spawnService(label: string, command: string, args: string[], cwd: strin
 }
 
 export function startProcesses(cwd: string): void {
-  const backend = spawnService('backend', 'pnpm', ['--filter', '@cfxdevkit/cas-backend', 'start'], cwd);
-  const frontend = spawnService('frontend', 'pnpm', ['--filter', '@cfxdevkit/cas-frontend', 'start'], cwd);
+  const backend = spawnService(
+    'backend',
+    'pnpm',
+    ['--filter', '@cfxdevkit/cas-backend', 'start'],
+    cwd,
+  );
+  const frontend = spawnService(
+    'frontend',
+    'pnpm',
+    ['--filter', '@cfxdevkit/cas-frontend', 'start'],
+    cwd,
+  );
 
   children.push({ label: 'backend', proc: backend });
   children.push({ label: 'frontend', proc: frontend });
@@ -65,6 +75,8 @@ export function startProcesses(cwd: string): void {
       });
     }
     // Force exit after 5 s
-    setTimeout(() => { process.exit(1); }, 5000).unref();
+    setTimeout(() => {
+      process.exit(1);
+    }, 5000).unref();
   });
 }
