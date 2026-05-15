@@ -1,0 +1,820 @@
+// Generated from .cfxdevkit/devkit-workspace/apps/dex-ui/public/known-tokens.json.
+// Keep this snapshot in sync with the curated dex-ui catalog until a subgraph replaces it.
+
+export const GENERATED_MAINNET_TOKENS = [
+  {
+    address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/25557/large/conflux.png?1696524689',
+    name: 'Conflux',
+    symbol: 'CFX',
+  },
+  {
+    address: '0x889138644274a7dc602f25a7e7d53ff40e6d0091',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/29213/large/xCFX.png?1696528171',
+    name: 'X nucleon CFX',
+    symbol: 'xCFX',
+  },
+  {
+    address: '0xc6156867a903c8fe1f31336d70d62a09bc48a2b9',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xc6156867a903c8fe1f31336d70d62a09bc48a2b9.svg',
+    name: 'Go Conflux Network',
+    symbol: 'GCFX',
+  },
+  {
+    address: '0x1858a8d367e69cd9e23d0da4169885a47f05f1be',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/35446/large/sCFX.png?1709115985',
+    name: 'Shui CFX',
+    symbol: 'sCFX',
+  },
+  {
+    address: '0x1f545487c62e5acfea45dcadd9c627361d1616d8',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/39558/large/wbtc.png?1722898375',
+    name: 'Wrapped BTC',
+    symbol: 'WBTC',
+  },
+  {
+    address: '0x22f41abf77905f50df398f21213290597e7414dd',
+    chainId: 1030,
+    decimals: 18,
+    logoURI:
+      'https://coin-images.coingecko.com/coins/images/25019/large/512_lightmodeRound.png?1696524171',
+    name: 'Swappi Token',
+    symbol: 'PPI',
+  },
+  {
+    address: '0x905f2202003453006eaf975699545f2e909079b8',
+    chainId: 1030,
+    decimals: 18,
+    logoURI:
+      'https://coin-images.coingecko.com/coins/images/29845/large/ABC_PoS_Pool-2.png?1696528772',
+    name: 'ABC PoS Pool',
+    symbol: 'ABC',
+  },
+  {
+    address: '0xa47f43de2f9623acb395ca4905746496d2014d57',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/39718/large/WETH.PNG?1723732211',
+    name: 'Ethereum Token',
+    symbol: 'ETH',
+  },
+  {
+    address: '0x564ff017cb60977fffb3ccc4750eff47e5e37fd6',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x564ff017cb60977fffb3ccc4750eff47e5e37fd6.svg',
+    name: 'GAD',
+    symbol: 'GAD',
+  },
+  {
+    address: '0x9caf5c4be5c07f98fb2c0dfd5f02661a94180f16',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x9caf5c4be5c07f98fb2c0dfd5f02661a94180f16.svg',
+    name: 'InterworkingChain',
+    symbol: 'IWK',
+  },
+  {
+    address: '0xf102a59574d58626c2c4a6c1dce8831fe408f890',
+    chainId: 1030,
+    decimals: 6,
+    logoURI: 'https://effigy.im/a/0xf102a59574d58626c2c4a6c1dce8831fe408f890.svg',
+    name: 'worldmobiletoken',
+    symbol: 'WMT',
+  },
+  {
+    address: '0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e',
+    chainId: 1030,
+    decimals: 6,
+    logoURI:
+      'https://coin-images.coingecko.com/coins/images/70634/large/AnchorX_logo_RGB-01.png?1762887300',
+    name: 'AxCNH',
+    symbol: 'AxCNH',
+  },
+  {
+    address: '0xa11ad495c3bf53c19368313a894ba49bc26e7f92',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xa11ad495c3bf53c19368313a894ba49bc26e7f92.svg',
+    name: 'PoS Compound CFX',
+    symbol: 'cCFX',
+  },
+  {
+    address: '0x94bd7a37d2ce24cc597e158facaa8d601083ffec',
+    chainId: 1030,
+    decimals: 18,
+    logoURI:
+      'https://coin-images.coingecko.com/coins/images/53070/large/wrapped_bnb.png?1735264554',
+    name: 'BNB',
+    symbol: 'BNB',
+  },
+  {
+    address: '0xeb2fee0bb26cc33f63f4bd45b9b5f6e4f50f76a8',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xeb2fee0bb26cc33f63f4bd45b9b5f6e4f50f76a8.svg',
+    name: 'Pokon',
+    symbol: 'Pokon',
+  },
+  {
+    address: '0x8cbb19d5a1ebb5436795d96a9ed6d9fa0d4d0e8e',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x8cbb19d5a1ebb5436795d96a9ed6d9fa0d4d0e8e.svg',
+    name: 'CFL',
+    symbol: 'CFL',
+  },
+  {
+    address: '0x26fb0c4288449efc7d38cda4eb3a23ef7b532a11',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x26fb0c4288449efc7d38cda4eb3a23ef7b532a11.svg',
+    name: 'Confi',
+    symbol: 'Confi',
+  },
+  {
+    address: '0xfb16f7405d26c5da7fa41e6f373b57953a121ff2',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://assets.geckoterminal.com/fye7ftb786rkb10oadfxe5k0etbw',
+    name: 'ConfiDoge',
+    symbol: 'CONFID',
+  },
+  {
+    address: '0x15b838867b92c2b30e3e93ba0eb357b8ab6cbfb1',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://assets.geckoterminal.com/9ltduipbbefg1ubnjnkak3to43xq',
+    name: 'Dragon Coin',
+    symbol: 'DRAGON',
+  },
+  {
+    address: '0x13db4686f3d1d9ec918a70ae8fbd52f82949906c',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x13db4686f3d1d9ec918a70ae8fbd52f82949906c.svg',
+    name: 'PHX Governance Token',
+    symbol: 'PHX',
+  },
+  {
+    address: '0x9cd6839db580a3037a310ed0eb965435c0972a2e',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x9cd6839db580a3037a310ed0eb965435c0972a2e.svg',
+    name: 'Aspike foundation',
+    symbol: 'APK',
+  },
+  {
+    address: '0xf1f6e3aa98bac6c13230051e452065df299a78a7',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/36354/large/SHUI_token.png?1711561276',
+    name: 'Shui Token',
+    symbol: 'SHUI',
+  },
+  {
+    address: '0x0a93f9c0a0fbdddd6f83c833f1e74963ce52120f',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://assets.geckoterminal.com/nbpk4encz1tf59pdc0en5ip5mdcz',
+    name: 'ConFi Coin',
+    symbol: 'CONFI',
+  },
+  {
+    address: '0xb4ca1cb2651a822bf65c614c880a26fd124932a3',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xb4ca1cb2651a822bf65c614c880a26fd124932a3.svg',
+    name: 'Long Mai coin',
+    symbol: 'LOM',
+  },
+  {
+    address: '0xfe197e7968807b311d476915db585831b43a7e3b',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/29144/large/NUT.png?1696528104',
+    name: 'Nucleon Governance Token',
+    symbol: 'NUT',
+  },
+  {
+    address: '0xff33b107a0e2c0794ac43c3ffaf637fcea3697cf',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xff33b107a0e2c0794ac43c3ffaf637fcea3697cf.svg',
+    name: 'AUSD Stablecoin',
+    symbol: 'AUSD',
+  },
+  {
+    address: '0x444449e9e35d51e5742bf52207879047946526d2',
+    chainId: 1030,
+    decimals: 1,
+    logoURI: 'https://effigy.im/a/0x444449e9e35d51e5742bf52207879047946526d2.svg',
+    name: '我国第三代自主超导量子计算机“本源悟空”成功装备国内首个PQC“抗量子攻击护盾”——PQC（Post Quantum Cryptography，后量子密码）混合加密方法。这将使“本源悟空”更好抵御其他量子计算机的攻击，确保运行数据安全。 ​ 量子计算机是一种利用量子力学原理进行信息处理的计算机。与传统计算机相比，量子计算机在处理某些特定问题时具有显著的优势，特别是在密码学领域。 创造价值1美元的加密货币比特币、以太坊、莱特币和门罗币的平均能耗分别为17、7、7和14兆焦耳。研究人员将此与开采价值1美元的不同金属，包括铝（122兆焦耳）、铜银（4兆焦耳）、金（5兆焦耳）、铂金（7兆焦耳）以及手机和其他电子产品中使用的稀土氧化物（9兆焦耳）所需的能源成本相比较，发现除了铝之外，加密货币挖矿的能源成本与实体金属采矿的能源成本相当甚至更大，且这一成本会随加密货币使用、购买、挖矿人数的增加而上升。孙悟空BG2LKT给唐老鸭打电话。说要请唐老鸭吃烤鸭。唐老鸭不想吃烤鸭。那应该请唐老鸭吃面吗？还是请他来家吃饺子吧。大家帮忙说吃烤鸭还是吃面还是吃饺子 ​。美国长期主导的国际体系是监听盟国政要“棱镜计划”“怒角计划”“强健计划”“上游计划”……美方名目众多的窃密监听行动一次又一次地证明：美国正是全球最大的网络攻击者，是名副其实的黑客帝国、窃听帝国、间谍帝国。',
+    symbol: 'BTC',
+  },
+  {
+    address: '0xe51e6da8f5d10bd4edc7c700fdff4a7ff7a9b851',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xe51e6da8f5d10bd4edc7c700fdff4a7ff7a9b851.svg',
+    name: 'Chinese Dog',
+    symbol: 'Cdog',
+  },
+  {
+    address: '0xb747a3317259e0aafe5a242c8e3f042a4b83627a',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xb747a3317259e0aafe5a242c8e3f042a4b83627a.svg',
+    name: 'CFXs ERC20',
+    symbol: 'CFXs',
+  },
+  {
+    address: '0x53aa2b7bead41614577ba5b636c482790c5f54c5',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x53aa2b7bead41614577ba5b636c482790c5f54c5.svg',
+    name: 'dForce',
+    symbol: 'DF',
+  },
+  {
+    address: '0xb25480abfd2e17aa9ab4e7bc660aa45403743045',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xb25480abfd2e17aa9ab4e7bc660aa45403743045.svg',
+    name: 'Daruma Doll',
+    symbol: 'DOLL',
+  },
+  {
+    address: '0xba2289fee4673ef00ee8d8dae260965ab543b68f',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xba2289fee4673ef00ee8d8dae260965ab543b68f.svg',
+    name: 'FansCoin',
+    symbol: 'FC',
+  },
+  {
+    address: '0x9b36f165bab9ebe611d491180418d8de4b8f3a1f',
+    chainId: 1030,
+    decimals: 9,
+    logoURI: 'https://effigy.im/a/0x9b36f165bab9ebe611d491180418d8de4b8f3a1f.svg',
+    name: 'FLOKI',
+    symbol: 'FLOKI',
+  },
+  {
+    address: '0x19aae9e4269ab47ff291125b5c0c2f7296a635ab',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/32474/large/goledo.jpg?1698261790',
+    name: 'Goledo Token Version 2',
+    symbol: 'GOL',
+  },
+  {
+    address: '0xa4b59aa3de2af57959c23e2c9c89a2fcb408ce6a',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://assets.coingecko.com/coins/images/28689/small/goledo_%281%29.jpg?1696527672',
+    name: 'Goledo Token',
+    symbol: 'GOL',
+  },
+  {
+    address: '0x0737dacea5f4e212525e7fba2e7ecaa069dedd28',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x0737dacea5f4e212525e7fba2e7ecaa069dedd28.svg',
+    name: 'HydraSF',
+    symbol: 'HSF',
+  },
+  {
+    address: '0x72952d09c19044059ce48007b289570b3320c8b6',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x72952d09c19044059ce48007b289570b3320c8b6.svg',
+    name: 'Hydroxyl Token',
+    symbol: 'HYT',
+  },
+  {
+    address: '0xd3cf900b0ec2194b418760e1494653449327692c',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xd3cf900b0ec2194b418760e1494653449327692c.svg',
+    name: 'Meta Interstellar Token',
+    symbol: 'MIT',
+  },
+  {
+    address: '0x9fb9a33956351cf4fa040f65a13b835a3c8764e3',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x9fb9a33956351cf4fa040f65a13b835a3c8764e3.svg',
+    name: 'Multichain',
+    symbol: 'MULTI',
+  },
+  {
+    address: '0xbecd75bde87020a4f0d3084bcce9cde794547660',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xbecd75bde87020a4f0d3084bcce9cde794547660.svg',
+    name: 'Maneki-Neko',
+    symbol: 'NEKO',
+  },
+  {
+    address: '0xe669e77b2a9311efbea22ae8e5f6824ae20941a7',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xe669e77b2a9311efbea22ae8e5f6824ae20941a7.svg',
+    name: 'OverSwap Token',
+    symbol: 'OVER',
+  },
+  {
+    address: '0x0debbc26fcad98eda1415c407b44f54a769db7ac',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x0debbc26fcad98eda1415c407b44f54a769db7ac.svg',
+    name: 'Study',
+    symbol: 'Study',
+  },
+  {
+    address: '0x6138c1073e3cd4a4cf71bcbc8dbf0aaf0cd8e0ca',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x6138c1073e3cd4a4cf71bcbc8dbf0aaf0cd8e0ca.svg',
+    name: 'TriAngle DAO',
+    symbol: 'TAD',
+  },
+  {
+    address: '0x6963efed0ab40f6c3d7bda44a05dcf1437c44372',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/35228/large/USDC.jpg?1707924447',
+    name: 'USD Coin',
+    symbol: 'USDC',
+  },
+  {
+    address: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/35054/large/USDT.png?1707233721',
+    name: 'Tether USD',
+    symbol: 'USDT',
+  },
+  {
+    address: '0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff',
+    chainId: 1030,
+    decimals: 6,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/53705/large/usdt0.jpg?1737086183',
+    name: 'USDT0',
+    symbol: 'USDT0',
+  },
+  {
+    address: '0x422a86f57b6b6f1e557d406331c25eeed075e7aa',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x422a86f57b6b6f1e557d406331c25eeed075e7aa.svg',
+    name: 'dForce USD',
+    symbol: 'USX',
+  },
+  {
+    address: '0x3b6564b5da73a41d3a66e6558a98fd0e9e1e77ad',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x3b6564b5da73a41d3a66e6558a98fd0e9e1e77ad.svg',
+    name: 'Unitus',
+    symbol: 'UTS',
+  },
+  {
+    address: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://coin-images.coingecko.com/coins/images/25557/large/conflux.png?1696524689',
+    name: 'Wrapped Conflux',
+    symbol: 'WCFX',
+  },
+  {
+    address: '0x82e541a07af18633d990136b422fdad3a237d54e',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0x82e541a07af18633d990136b422fdad3a237d54e.svg',
+    name: 'ConfiX',
+    symbol: 'X',
+  },
+  {
+    address: '0xf65050e2ac003569a4b18e612b86cc833afe5960',
+    chainId: 1030,
+    decimals: 18,
+    logoURI: 'https://effigy.im/a/0xf65050e2ac003569a4b18e612b86cc833afe5960.svg',
+    name: 'X Libra USD',
+    symbol: 'xUSD',
+  },
+] as const;
+
+export const GENERATED_MAINNET_PAIRS = [
+  {
+    token0: '0x889138644274a7dc602f25a7e7d53ff40e6d0091',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0xc6156867a903c8fe1f31336d70d62a09bc48a2b9',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x1858a8d367e69cd9e23d0da4169885a47f05f1be',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+    token1: '0x6963efed0ab40f6c3d7bda44a05dcf1437c44372',
+  },
+  {
+    token0: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+    token1: '0x1f545487c62e5acfea45dcadd9c627361d1616d8',
+  },
+  {
+    token0: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+    token1: '0x22f41abf77905f50df398f21213290597e7414dd',
+  },
+  {
+    token0: '0x905f2202003453006eaf975699545f2e909079b8',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+    token1: '0xa47f43de2f9623acb395ca4905746496d2014d57',
+  },
+  {
+    token0: '0x6963efed0ab40f6c3d7bda44a05dcf1437c44372',
+    token1: '0x9caf5c4be5c07f98fb2c0dfd5f02661a94180f16',
+  },
+  {
+    token0: '0x564ff017cb60977fffb3ccc4750eff47e5e37fd6',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x9caf5c4be5c07f98fb2c0dfd5f02661a94180f16',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0xa47f43de2f9623acb395ca4905746496d2014d57',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0xf102a59574d58626c2c4a6c1dce8831fe408f890',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x1f545487c62e5acfea45dcadd9c627361d1616d8',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e',
+    token1: '0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff',
+  },
+  {
+    token0: '0xa11ad495c3bf53c19368313a894ba49bc26e7f92',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0xc6156867a903c8fe1f31336d70d62a09bc48a2b9',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+    token1: '0x94bd7a37d2ce24cc597e158facaa8d601083ffec',
+  },
+  {
+    token0: '0xeb2fee0bb26cc33f63f4bd45b9b5f6e4f50f76a8',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x8cbb19d5a1ebb5436795d96a9ed6d9fa0d4d0e8e',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x22f41abf77905f50df398f21213290597e7414dd',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x26fb0c4288449efc7d38cda4eb3a23ef7b532a11',
+    token1: '0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e',
+  },
+  {
+    token0: '0x22f41abf77905f50df398f21213290597e7414dd',
+    token1: '0x6963efed0ab40f6c3d7bda44a05dcf1437c44372',
+  },
+  {
+    token0: '0xfb16f7405d26c5da7fa41e6f373b57953a121ff2',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x15b838867b92c2b30e3e93ba0eb357b8ab6cbfb1',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x13db4686f3d1d9ec918a70ae8fbd52f82949906c',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x9cd6839db580a3037a310ed0eb965435c0972a2e',
+    token1: '0x6963efed0ab40f6c3d7bda44a05dcf1437c44372',
+  },
+  {
+    token0: '0x22f41abf77905f50df398f21213290597e7414dd',
+    token1: '0xa47f43de2f9623acb395ca4905746496d2014d57',
+  },
+  {
+    token0: '0x6963efed0ab40f6c3d7bda44a05dcf1437c44372',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0xf1f6e3aa98bac6c13230051e452065df299a78a7',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x0a93f9c0a0fbdddd6f83c833f1e74963ce52120f',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0xb4ca1cb2651a822bf65c614c880a26fd124932a3',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0xfe197e7968807b311d476915db585831b43a7e3b',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0xe51e6da8f5d10bd4edc7c700fdff4a7ff7a9b851',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x889138644274a7dc602f25a7e7d53ff40e6d0091',
+    token1: '0xfe197e7968807b311d476915db585831b43a7e3b',
+  },
+  {
+    token0: '0x422a86f57b6b6f1e557d406331c25eeed075e7aa',
+    token1: '0x53aa2b7bead41614577ba5b636c482790c5f54c5',
+  },
+  {
+    token0: '0xfe197e7968807b311d476915db585831b43a7e3b',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x564ff017cb60977fffb3ccc4750eff47e5e37fd6',
+    token1: '0x0debbc26fcad98eda1415c407b44f54a769db7ac',
+  },
+  {
+    token0: '0x19aae9e4269ab47ff291125b5c0c2f7296a635ab',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0xd3cf900b0ec2194b418760e1494653449327692c',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x72952d09c19044059ce48007b289570b3320c8b6',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x26fb0c4288449efc7d38cda4eb3a23ef7b532a11',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x422a86f57b6b6f1e557d406331c25eeed075e7aa',
+    token1: '0x6963efed0ab40f6c3d7bda44a05dcf1437c44372',
+  },
+  {
+    token0: '0x22f41abf77905f50df398f21213290597e7414dd',
+    token1: '0x905f2202003453006eaf975699545f2e909079b8',
+  },
+  {
+    token0: '0x0737dacea5f4e212525e7fba2e7ecaa069dedd28',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x9b36f165bab9ebe611d491180418d8de4b8f3a1f',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0xa4b59aa3de2af57959c23e2c9c89a2fcb408ce6a',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x1f545487c62e5acfea45dcadd9c627361d1616d8',
+    token1: '0x6963efed0ab40f6c3d7bda44a05dcf1437c44372',
+  },
+  {
+    token0: '0xff33b107a0e2c0794ac43c3ffaf637fcea3697cf',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0xbecd75bde87020a4f0d3084bcce9cde794547660',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x22f41abf77905f50df398f21213290597e7414dd',
+    token1: '0x889138644274a7dc602f25a7e7d53ff40e6d0091',
+  },
+  {
+    token0: '0xb747a3317259e0aafe5a242c8e3f042a4b83627a',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x905f2202003453006eaf975699545f2e909079b8',
+    token1: '0xd3cf900b0ec2194b418760e1494653449327692c',
+  },
+  {
+    token0: '0x82e541a07af18633d990136b422fdad3a237d54e',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0xba2289fee4673ef00ee8d8dae260965ab543b68f',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x1f545487c62e5acfea45dcadd9c627361d1616d8',
+    token1: '0x94bd7a37d2ce24cc597e158facaa8d601083ffec',
+  },
+  {
+    token0: '0x1f545487c62e5acfea45dcadd9c627361d1616d8',
+    token1: '0xa47f43de2f9623acb395ca4905746496d2014d57',
+  },
+  {
+    token0: '0x94bd7a37d2ce24cc597e158facaa8d601083ffec',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e',
+    token1: '0xe51e6da8f5d10bd4edc7c700fdff4a7ff7a9b851',
+  },
+  {
+    token0: '0x94bd7a37d2ce24cc597e158facaa8d601083ffec',
+    token1: '0xa47f43de2f9623acb395ca4905746496d2014d57',
+  },
+  {
+    token0: '0x6963efed0ab40f6c3d7bda44a05dcf1437c44372',
+    token1: '0xa47f43de2f9623acb395ca4905746496d2014d57',
+  },
+  {
+    token0: '0xb747a3317259e0aafe5a242c8e3f042a4b83627a',
+    token1: '0xfe197e7968807b311d476915db585831b43a7e3b',
+  },
+  {
+    token0: '0x94bd7a37d2ce24cc597e158facaa8d601083ffec',
+    token1: '0x6963efed0ab40f6c3d7bda44a05dcf1437c44372',
+  },
+  {
+    token0: '0x9fb9a33956351cf4fa040f65a13b835a3c8764e3',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x1858a8d367e69cd9e23d0da4169885a47f05f1be',
+    token1: '0xf1f6e3aa98bac6c13230051e452065df299a78a7',
+  },
+  {
+    token0: '0x0debbc26fcad98eda1415c407b44f54a769db7ac',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+    token1: '0x9fb9a33956351cf4fa040f65a13b835a3c8764e3',
+  },
+  {
+    token0: '0x444449e9e35d51e5742bf52207879047946526d2',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x905f2202003453006eaf975699545f2e909079b8',
+    token1: '0xb747a3317259e0aafe5a242c8e3f042a4b83627a',
+  },
+  {
+    token0: '0xff33b107a0e2c0794ac43c3ffaf637fcea3697cf',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0xe669e77b2a9311efbea22ae8e5f6824ae20941a7',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x22f41abf77905f50df398f21213290597e7414dd',
+    token1: '0x72952d09c19044059ce48007b289570b3320c8b6',
+  },
+  {
+    token0: '0x1f545487c62e5acfea45dcadd9c627361d1616d8',
+    token1: '0x22f41abf77905f50df398f21213290597e7414dd',
+  },
+  {
+    token0: '0x22f41abf77905f50df398f21213290597e7414dd',
+    token1: '0xbecd75bde87020a4f0d3084bcce9cde794547660',
+  },
+  {
+    token0: '0xe669e77b2a9311efbea22ae8e5f6824ae20941a7',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0xb747a3317259e0aafe5a242c8e3f042a4b83627a',
+    token1: '0xbecd75bde87020a4f0d3084bcce9cde794547660',
+  },
+  {
+    token0: '0xb747a3317259e0aafe5a242c8e3f042a4b83627a',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x19aae9e4269ab47ff291125b5c0c2f7296a635ab',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x9caf5c4be5c07f98fb2c0dfd5f02661a94180f16',
+    token1: '0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff',
+  },
+  {
+    token0: '0xa4b59aa3de2af57959c23e2c9c89a2fcb408ce6a',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x22f41abf77905f50df398f21213290597e7414dd',
+    token1: '0x94bd7a37d2ce24cc597e158facaa8d601083ffec',
+  },
+  {
+    token0: '0x1f545487c62e5acfea45dcadd9c627361d1616d8',
+    token1: '0xe669e77b2a9311efbea22ae8e5f6824ae20941a7',
+  },
+  {
+    token0: '0x6138c1073e3cd4a4cf71bcbc8dbf0aaf0cd8e0ca',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0xaf37e8b6c9ed7f6318979f56fc287d76c30847ff',
+    token1: '0xb4ca1cb2651a822bf65c614c880a26fd124932a3',
+  },
+  {
+    token0: '0xb747a3317259e0aafe5a242c8e3f042a4b83627a',
+    token1: '0x889138644274a7dc602f25a7e7d53ff40e6d0091',
+  },
+  {
+    token0: '0x3b6564b5da73a41d3a66e6558a98fd0e9e1e77ad',
+    token1: '0x422a86f57b6b6f1e557d406331c25eeed075e7aa',
+  },
+  {
+    token0: '0x3b6564b5da73a41d3a66e6558a98fd0e9e1e77ad',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x70bfd7f7eadf9b9827541272589a6b2bb760ae2e',
+    token1: '0xb4ca1cb2651a822bf65c614c880a26fd124932a3',
+  },
+  {
+    token0: '0xb4ca1cb2651a822bf65c614c880a26fd124932a3',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0xb25480abfd2e17aa9ab4e7bc660aa45403743045',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0x22f41abf77905f50df398f21213290597e7414dd',
+    token1: '0x6138c1073e3cd4a4cf71bcbc8dbf0aaf0cd8e0ca',
+  },
+  {
+    token0: '0x9b36f165bab9ebe611d491180418d8de4b8f3a1f',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0xf65050e2ac003569a4b18e612b86cc833afe5960',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+  {
+    token0: '0xb25480abfd2e17aa9ab4e7bc660aa45403743045',
+    token1: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+  },
+  {
+    token0: '0x72952d09c19044059ce48007b289570b3320c8b6',
+    token1: '0xfe97e85d13abd9c1c33384e796f10b73905637ce',
+  },
+] as const;

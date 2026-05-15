@@ -2,9 +2,14 @@
 
 export type {
   AssetConversionPanelProps,
+  FieldProps,
+  MetricProps,
   NetworkSwitchNoticeProps,
+  NoticeProps,
+  NoticeTone,
   SegmentedControlOption,
   SegmentedControlProps,
+  StatusGridProps,
   TokenAmountFieldProps,
   TokenPairSelectorProps,
   TokenSelectOption,
@@ -17,8 +22,12 @@ export type {
 } from '@cfxdevkit/ui';
 export {
   AssetConversionPanel,
+  Field,
+  Metric,
   NetworkSwitchNotice,
+  Notice,
   SegmentedControl,
+  StatusGrid,
   TokenAmountField,
   TokenPairSelector,
   TokenSelect,

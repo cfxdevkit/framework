@@ -1,13 +1,13 @@
 import { createSiweMessage } from '@cfxdevkit/wallet-connect/siwe';
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { __poolsTest } from './routes/pools.js';
 import {
-  TEST_ACCOUNT,
   createCasBackendApp,
   createCasBackendState,
   makeConfig,
+  TEST_ACCOUNT,
 } from './app.test-helpers.js';
+import { __poolsTest } from './routes/pools.js';
 
 describe('CAS backend – auth', () => {
   afterEach(() => {
@@ -144,7 +144,7 @@ describe('CAS backend – auth', () => {
       const signature = await TEST_ACCOUNT.signMessage({ message });
 
       // Tamper: append extra text to the message after signing
-      const tamperedMessage = message + '\ntampered';
+      const tamperedMessage = `${message}\ntampered`;
 
       const verifyRes = await request(app)
         .post('/auth/verify')

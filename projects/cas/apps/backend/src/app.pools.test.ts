@@ -1,8 +1,8 @@
 import { WCFX_ADDRESSES } from '@cfxdevkit/protocol';
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { __poolsTest } from './routes/pools.js';
 import { createCasBackendApp, createCasBackendState, makeConfig } from './app.test-helpers.js';
+import { __poolsTest } from './routes/pools.js';
 
 describe('CAS backend – pools & system', () => {
   afterEach(() => {

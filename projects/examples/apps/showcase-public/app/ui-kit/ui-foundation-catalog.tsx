@@ -1,11 +1,13 @@
 'use client';
 
 import {
-  AssetConversionPanel,
   CodeSnippet,
   DemoCard,
-  NetworkSwitchNotice,
+  Field,
+  Metric,
+  Notice,
   SegmentedControl,
+  StatusGrid,
   TokenAmountField,
   TokenPairSelector,
   TokenSelect,
@@ -14,48 +16,94 @@ import {
   WalletProviderCard,
   WalletStatusChip,
 } from '@cfxdevkit/example-showcase-ui';
+import { useTokenBalance } from '@cfxdevkit/react';
 import {
   CFX_NATIVE_ADDRESS,
+  DEFAULT_MAINNET_DISPLAY_TOKENS,
+  DEFAULT_MAINNET_PAIRS,
   getPairedTokens,
   normalizeAddress,
   wcfxAddress,
 } from '@cfxdevkit/ui-core';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { formatUnits } from 'viem';
+import { useAccount, useBalance, useChainId, usePublicClient, useWalletClient } from 'wagmi';
+import { UiFoundationNetworkConversion } from './ui-foundation-network-conversion';
 
-const SAMPLE_TOKENS = [
-  { address: CFX_NATIVE_ADDRESS, name: 'Conflux', symbol: 'CFX' },
-  { address: wcfxAddress('testnet'), name: 'Wrapped Conflux', symbol: 'WCFX' },
-  { address: '0x1111111111111111111111111111111111111111', name: 'Tether', symbol: 'USDT' },
-  { address: '0x2222222222222222222222222222222222222222', name: 'Ether', symbol: 'ETH' },
-] as const;
+type MainnetToken = (typeof DEFAULT_MAINNET_DISPLAY_TOKENS)[number];
 
-const SAMPLE_PAIRS = [
-  { token0: CFX_NATIVE_ADDRESS, token1: wcfxAddress('testnet') },
-  { token0: wcfxAddress('testnet'), token1: '0x1111111111111111111111111111111111111111' },
-  { token0: wcfxAddress('testnet'), token1: '0x2222222222222222222222222222222222222222' },
-] as const;
+const ESPACE_MAINNET_CHAIN_ID = 1030;
+const DEFAULT_INPUT_TOKEN_ADDRESS =
+  DEFAULT_MAINNET_DISPLAY_TOKENS[0]?.address ?? CFX_NATIVE_ADDRESS;
+const DEFAULT_OUTPUT_TOKEN_ADDRESS =
+  DEFAULT_MAINNET_DISPLAY_TOKENS.find((token) => token.address !== DEFAULT_INPUT_TOKEN_ADDRESS)
+    ?.address ?? DEFAULT_INPUT_TOKEN_ADDRESS;
 
-type SampleToken = (typeof SAMPLE_TOKENS)[number];
+function formatBalanceLabel(value: bigint | undefined, symbol: string): string | undefined {
+  if (value === undefined) return undefined;
+  return `${Number(formatUnits(value, 18)).toFixed(4)} ${symbol}`;
+}
 
 export function UiFoundationCatalog() {
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [networkId, setNetworkId] = useState<'mainnet' | 'testnet' | 'local'>('testnet');
-  const [singleToken, setSingleToken] = useState<string>(SAMPLE_TOKENS[0].address);
-  const [amountToken, setAmountToken] = useState<string>(SAMPLE_TOKENS[0].address);
+  const [networkId, setNetworkId] = useState<'mainnet' | 'testnet' | 'local'>('mainnet');
+  const [singleToken, setSingleToken] = useState<string>(DEFAULT_INPUT_TOKEN_ADDRESS);
+  const [amountToken, setAmountToken] = useState<string>(DEFAULT_INPUT_TOKEN_ADDRESS);
   const [amount, setAmount] = useState('12.5');
-  const [tokenIn, setTokenIn] = useState<string>(SAMPLE_TOKENS[0].address);
-  const [tokenOut, setTokenOut] = useState<string>(SAMPLE_TOKENS[1].address);
-  const [conversionMode, setConversionMode] = useState<'wrap' | 'unwrap'>('wrap');
-  const [conversionAmount, setConversionAmount] = useState('1.0');
-  const [conversionMessage, setConversionMessage] = useState<string | null>(null);
+  const [tokenIn, setTokenIn] = useState<string>(DEFAULT_INPUT_TOKEN_ADDRESS);
+  const [tokenOut, setTokenOut] = useState<string>(DEFAULT_OUTPUT_TOKEN_ADDRESS);
+
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
+  const validHexAddress = address?.startsWith('0x') ? (address as `0x${string}`) : undefined;
+  const mainnetWcfxAddress = wcfxAddress('mainnet') as `0x${string}`;
+  const nativeBalance = useBalance({ address: validHexAddress });
+  const wrappedBalance = useTokenBalance({
+    enabled: Boolean(validHexAddress),
+    owner: validHexAddress,
+    token: mainnetWcfxAddress,
+  });
+
+  const walletChainLabel =
+    chainId === ESPACE_MAINNET_CHAIN_ID
+      ? 'eSpace Mainnet (1030)'
+      : chainId
+        ? `Connected chain ${chainId}`
+        : 'Connect an eSpace wallet';
+
+  const pairedTokens = useMemo(
+    () =>
+      getPairedTokens<MainnetToken>(
+        DEFAULT_MAINNET_PAIRS,
+        DEFAULT_MAINNET_DISPLAY_TOKENS,
+        tokenIn,
+        { wrappedNativeAddress: wcfxAddress('mainnet') },
+      ),
+    [tokenIn],
+  );
+
+  useEffect(() => {
+    if (!pairedTokens.length) return;
+
+    const hasSelectedOutput = pairedTokens.some(
+      (token) => normalizeAddress(token.address) === normalizeAddress(tokenOut),
+    );
+    const fallbackOutput = pairedTokens[0];
+
+    if (!hasSelectedOutput && fallbackOutput) {
+      setTokenOut(fallbackOutput.address);
+    }
+  }, [pairedTokens, tokenOut]);
 
   const pairPreview = useMemo(
     () =>
-      getPairedTokens<SampleToken>(SAMPLE_PAIRS, SAMPLE_TOKENS, tokenIn).map((token) => ({
+      pairedTokens.map((token) => ({
         address: normalizeAddress(token.address),
         symbol: token.symbol,
       })),
-    [tokenIn],
+    [pairedTokens],
   );
 
   return (
@@ -71,7 +119,7 @@ export function UiFoundationCatalog() {
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <WalletButton />
-              <WalletStatusChip address="0x1234567890abcdef1234567890abcdef12345678" />
+              <WalletStatusChip address={address ?? null} />
               <button
                 type="button"
                 onClick={() => setPickerOpen(true)}
@@ -85,17 +133,18 @@ export function UiFoundationCatalog() {
           <WalletProviderCard
             title="Injected wallet card"
             space="espace"
-            status="active"
-            account="0x1234567890abcdef1234567890abcdef12345678"
-            chainLabel="eSpace Testnet (71) via MetaMask"
+            status={isConnected ? 'active' : 'not-active'}
+            account={address ?? null}
+            chainLabel={walletChainLabel}
             providerPresent={true}
-            providerDescription="Connection shell extracted from the browser wallet provider matrix so other apps can reuse the same status presentation."
+            providerDescription="Connection shell extracted from the browser wallet provider matrix so other apps can reuse the same status presentation on live mainnet sessions."
             actions={
               <button
                 type="button"
+                onClick={() => setPickerOpen(true)}
                 className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-semibold text-slate-100 transition-colors hover:border-slate-500 hover:bg-slate-800"
               >
-                Disconnect
+                {isConnected ? 'Manage wallet' : 'Open picker'}
               </button>
             }
           />
@@ -120,7 +169,7 @@ export function UiFoundationCatalog() {
                   value: 'mainnet',
                 },
                 {
-                  description: 'Public testnet used by the public showcase.',
+                  description: 'Legacy public testnet examples stay secondary.',
                   label: 'Testnet',
                   value: 'testnet',
                 },
@@ -153,28 +202,36 @@ export function UiFoundationCatalog() {
       >
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-4">
-            <TokenSelect options={SAMPLE_TOKENS} value={singleToken} onChange={setSingleToken} />
+            <TokenSelect
+              options={DEFAULT_MAINNET_DISPLAY_TOKENS}
+              value={singleToken}
+              onChange={setSingleToken}
+            />
             <TokenAmountField
               amount={amount}
-              balance="42.0000 CFX"
+              balance={
+                amountToken === CFX_NATIVE_ADDRESS
+                  ? (formatBalanceLabel(nativeBalance.data?.value, 'CFX') ??
+                    'Connect wallet for live balance')
+                  : amountToken === wcfxAddress('mainnet')
+                    ? (formatBalanceLabel(wrappedBalance.data, 'WCFX') ??
+                      'Connect wallet for live balance')
+                    : 'Shared mainnet token defaults with live icon metadata'
+              }
               label="Input amount"
               onAmountChange={setAmount}
               onTokenChange={setAmountToken}
-              tokens={SAMPLE_TOKENS}
+              tokens={DEFAULT_MAINNET_DISPLAY_TOKENS}
               tokenValue={amountToken}
             />
           </div>
 
           <div className="space-y-4">
             <TokenPairSelector
-              inputOptions={SAMPLE_TOKENS}
-              onSwap={() => {
-                setTokenIn(tokenOut);
-                setTokenOut(tokenIn);
-              }}
+              inputOptions={DEFAULT_MAINNET_DISPLAY_TOKENS}
               onTokenInChange={setTokenIn}
               onTokenOutChange={setTokenOut}
-              outputOptions={SAMPLE_TOKENS}
+              outputOptions={pairedTokens}
               tokenInValue={tokenIn}
               tokenOutValue={tokenOut}
             />
@@ -186,44 +243,53 @@ export function UiFoundationCatalog() {
         </div>
       </DemoCard>
 
+      <UiFoundationNetworkConversion
+        address={validHexAddress}
+        chainId={chainId}
+        mainnetWcfxAddress={mainnetWcfxAddress}
+        nativeBalanceValue={nativeBalance.data?.value}
+        onRefetchBalances={() => Promise.all([nativeBalance.refetch(), wrappedBalance.refetch()])}
+        publicClient={publicClient}
+        walletClient={walletClient}
+        wrappedBalanceValue={wrappedBalance.data}
+      />
+
       <DemoCard
-        title="Network And Conversion"
-        description="The network warning and CFX/WCFX conversion panel are now reusable components instead of app-local widgets."
+        title="Page Primitives"
+        description="Field, Notice, StatusGrid, and Metric now live in the shared Tailwind package instead of staying duplicated inside CAS and older UI packages."
       >
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-4">
-            <NetworkSwitchNotice
-              chainName="Conflux eSpace Testnet"
-              expectedChainId={71}
-              message="Preview: shared network notice when the active chain does not match your app."
-              preview={{ error: 'Demo mode: connect and switch in-app.', isSwitching: false }}
-            />
-            <CodeSnippet
-              label="Normalization example"
-              code={`normalizeAddress('${CFX_NATIVE_ADDRESS}')\n// => ${normalizeAddress(CFX_NATIVE_ADDRESS)}`}
-            />
+            <Field
+              label="RPC endpoint"
+              hint="Validation, persistence, and confirmation flows stay app-level; the shell styling is now shared."
+            >
+              <input
+                className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-blue-500"
+                defaultValue="https://evm.confluxrpc.com"
+              />
+            </Field>
+            <Notice tone="warning">
+              Switching RPC endpoints should stay behind app-level confirmation, but the warning
+              shell no longer needs a one-off implementation.
+            </Notice>
+            <Notice tone="ok">
+              CAS-style status notices and metric grids now come from the shared package.
+            </Notice>
           </div>
 
-          <AssetConversionPanel
-            title="CFX / WCFX"
-            amount={conversionAmount}
-            fromAssetLabel="CFX"
-            maxAmountLabel="Max: 4.2000 CFX"
-            mode={conversionMode}
-            onAmountChange={setConversionAmount}
-            onMax={() => setConversionAmount('4.2')}
-            onModeChange={(mode) => {
-              setConversionMode(mode);
-              setConversionMessage(null);
-            }}
-            onSubmit={() => {
-              setConversionMessage(
-                `${conversionMode === 'wrap' ? 'Wrapped' : 'Unwrapped'} ${conversionAmount || '0'} ${conversionMode === 'wrap' ? 'CFX' : 'WCFX'}`,
-              );
-            }}
-            success={conversionMessage}
-            toAssetLabel="WCFX"
-          />
+          <StatusGrid columns={2}>
+            <Metric label="Wallet session" value={isConnected ? 'Connected' : 'Disconnected'} />
+            <Metric label="Connected chain" value={walletChainLabel} />
+            <Metric
+              label="CFX balance"
+              value={formatBalanceLabel(nativeBalance.data?.value, 'CFX') ?? 'Unavailable'}
+            />
+            <Metric
+              label="WCFX balance"
+              value={formatBalanceLabel(wrappedBalance.data, 'WCFX') ?? 'Unavailable'}
+            />
+          </StatusGrid>
         </div>
       </DemoCard>
     </>

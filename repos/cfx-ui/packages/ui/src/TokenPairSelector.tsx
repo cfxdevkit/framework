@@ -15,6 +15,10 @@ function joinClasses(...classNames: Array<string | undefined>): string {
   return classNames.filter(Boolean).join(' ');
 }
 
+function sameAddress(left: string, right: string): boolean {
+  return left.toLowerCase() === right.toLowerCase();
+}
+
 export function TokenPairSelector<TToken extends TokenSelectOption = TokenSelectOption>({
   className,
   inputOptions,
@@ -25,6 +29,32 @@ export function TokenPairSelector<TToken extends TokenSelectOption = TokenSelect
   tokenInValue,
   tokenOutValue,
 }: TokenPairSelectorProps<TToken>) {
+  const handleTokenInChange = (address: string) => {
+    if (sameAddress(address, tokenOutValue) && !sameAddress(address, tokenInValue)) {
+      onTokenOutChange(tokenInValue);
+    }
+
+    onTokenInChange(address);
+  };
+
+  const handleTokenOutChange = (address: string) => {
+    if (sameAddress(address, tokenInValue) && !sameAddress(address, tokenOutValue)) {
+      onTokenInChange(tokenOutValue);
+    }
+
+    onTokenOutChange(address);
+  };
+
+  const handleSwap = () => {
+    if (onSwap) {
+      onSwap();
+      return;
+    }
+
+    onTokenInChange(tokenOutValue);
+    onTokenOutChange(tokenInValue);
+  };
+
   return (
     <div
       className={joinClasses(
@@ -32,15 +62,15 @@ export function TokenPairSelector<TToken extends TokenSelectOption = TokenSelect
         className,
       )}
     >
-      <TokenSelect options={inputOptions} value={tokenInValue} onChange={onTokenInChange} />
+      <TokenSelect options={inputOptions} value={tokenInValue} onChange={handleTokenInChange} />
       <button
         type="button"
-        onClick={onSwap}
+        onClick={handleSwap}
         className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 transition-colors hover:border-slate-500 hover:bg-slate-800"
       >
         ⇄
       </button>
-      <TokenSelect options={outputOptions} value={tokenOutValue} onChange={onTokenOutChange} />
+      <TokenSelect options={outputOptions} value={tokenOutValue} onChange={handleTokenOutChange} />
     </div>
   );
 }

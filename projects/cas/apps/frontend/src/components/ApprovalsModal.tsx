@@ -1,8 +1,8 @@
 'use client';
 
+import type { CasJobDto } from '@cfxdevkit/cas-shared';
 import { ShieldCheck, X } from 'lucide-react';
 import { useEffect } from 'react';
-import type { CasJobDto } from '@cfxdevkit/cas-shared';
 import { ApprovalWidget } from './ApprovalWidget';
 
 export function ApprovalsModal({

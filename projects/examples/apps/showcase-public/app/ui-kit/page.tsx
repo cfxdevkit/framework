@@ -1,216 +1,192 @@
 'use client';
 
-import { DemoCard, StatusBadge } from '@cfxdevkit/example-showcase-ui';
-import { useTheme } from '@cfxdevkit/theme/react';
+import {
+  CodeSnippet,
+  DemoCard,
+  Metric,
+  Notice,
+  SegmentedControl,
+  StatusGrid,
+  WalletButton,
+} from '@cfxdevkit/example-showcase-ui';
 import { SiteLayout } from '../site-layout';
 import { UiFoundationCatalog } from './ui-foundation-catalog';
-import { COLOR_TOKENS, RADIUS_TOKENS, SPACE_TOKENS } from './ui-kit-tokens';
+
+const TAILWIND_THEME_SNIPPET = `@import "tailwindcss";
+@source "../../../../../repos/cfx-ui/packages/ui/src";
+
+@theme {
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-surface-950: #020617;
+  --radius-panel: 1.5rem;
+  --font-ui: "Satoshi", sans-serif;
+}`;
+
+const APP_CUSTOMIZATION_SNIPPET = `import {
+  Notice,
+  SegmentedControl,
+  StatusGrid,
+  Metric,
+  WalletButton,
+} from '@cfxdevkit/ui';
+
+export function PortfolioHeader() {
+  return (
+    <section className="grid gap-5 rounded-[2rem] border border-stone-900/10 bg-[linear-gradient(135deg,#fff4dd_0%,#ffd9b8_52%,#ffb57c_100%)] p-6 text-stone-900 shadow-[0_24px_60px_rgba(120,53,15,0.16)] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]">
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-stone-600">
+            Treasury cockpit
+          </p>
+          <WalletButton
+            connectLabel="Authorize desk"
+            disconnectedClassName="bg-stone-900 text-[#fff4dd] hover:bg-stone-800"
+            connectedClassName="border-stone-900/15 bg-white/65 text-stone-900 hover:bg-white/80"
+          />
+        </div>
+        <div className="space-y-2">
+          <h2 className="max-w-xl text-3xl font-semibold tracking-[-0.04em]">
+            Shared primitives can still feel like a bespoke treasury workspace.
+          </h2>
+          <p className="max-w-lg text-sm leading-6 text-stone-700">
+            Layout, motion, copy, and visual hierarchy stay app-level while the reusable controls
+            keep the implementation surface shared.
+          </p>
+        </div>
+        <SegmentedControl
+          className="w-full border-stone-900/10 bg-white/55"
+          activeOptionClassName="bg-stone-900 text-[#fff4dd]"
+          inactiveOptionClassName="text-stone-700 hover:bg-white/70"
+          options={[
+            { label: 'Mainnet', value: 'mainnet' },
+            { label: 'Treasury', value: 'treasury' },
+            { label: 'Yield', value: 'yield' },
+          ]}
+          onChange={() => undefined}
+          value="treasury"
+        />
+        <Notice className="border-stone-900/10 bg-white/60 text-stone-800" tone="neutral">
+          Approval rules, workflow routing, analytics, and operator policy still belong to the
+          product wrapper.
+        </Notice>
+      </div>
+      <div className="space-y-3 rounded-[1.5rem] border border-white/60 bg-white/45 p-4 backdrop-blur">
+        <StatusGrid columns={2}>
+          <Metric
+            className="border-stone-900/10 bg-white/80"
+            label="Portfolio"
+            value="$12.4k"
+            delta="+4.2%"
+          />
+          <Metric
+            className="border-stone-900/10 bg-white/80"
+            label="Gas runway"
+            value="18 days"
+          />
+          <Metric
+            className="border-stone-900/10 bg-white/80"
+            label="Settlement"
+            value="4 queues live"
+          />
+        </StatusGrid>
+        <div className="rounded-[1.25rem] border border-dashed border-stone-900/15 px-4 py-3 text-xs uppercase tracking-[0.24em] text-stone-600">
+          Warm palette, editorial copy block, stacked metrics, and different control treatment all
+          come from app-level composition.
+        </div>
+      </div>
+    </section>
+  );
+}`;
 
 // biome-ignore lint/style/noDefaultExport: Next.js page requires default export.
 export default function UiKitPage() {
-  const { theme, resolved, set } = useTheme();
-
   return (
     <SiteLayout>
-      {/* Theme Toggle */}
       <DemoCard
-        title="Theme Toggle"
-        description="useTheme() — switch between light, dark, and system themes."
+        title="Tailwind Theme Syntax"
+        description="The shared UI package is Tailwind-first. The old --cfx-color token table was stale documentation from the pre-foundation theme layer, not the current shared-ui contract."
       >
-        <div
-          style={{
-            display: 'flex',
-            gap: 'var(--cfx-space-3)',
-            flexWrap: 'wrap',
-            marginBottom: 'var(--cfx-space-3)',
-          }}
-        >
-          {(['light', 'dark', 'system'] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => set(t)}
-              style={{
-                padding: 'var(--cfx-space-2) var(--cfx-space-4)',
-                background:
-                  theme === t ? 'var(--cfx-color-brand-primary)' : 'var(--cfx-color-bg-emphasis)',
-                color: theme === t ? '#fff' : 'var(--cfx-color-fg-default)',
-                border: '1px solid var(--cfx-color-border-default)',
-                borderRadius: 'var(--cfx-radius-md)',
-                cursor: 'pointer',
-                fontSize: 'var(--cfx-text-sm)',
-                textTransform: 'capitalize',
-              }}
-            >
-              {t}
-            </button>
-          ))}
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <CodeSnippet label="app/globals.css" code={TAILWIND_THEME_SNIPPET} />
+          <div className="rounded-[1.5rem] border border-slate-800 bg-slate-950/80 p-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Theme preview</p>
+            <div className="mt-4 grid grid-cols-3 gap-3">
+              <div className="h-16 rounded-2xl border border-emerald-400/20 bg-emerald-400/20" />
+              <div className="h-16 rounded-2xl border border-blue-400/20 bg-blue-400/20" />
+              <div className="h-16 rounded-2xl border border-amber-300/20 bg-amber-300/20" />
+            </div>
+            <Notice className="mt-4">
+              Apps own their Tailwind theme values and brand wrappers. `@cfxdevkit/ui` only ships
+              reusable components expressed in utility classes.
+            </Notice>
+          </div>
         </div>
-        <StatusBadge status="ok" label={`Active: ${theme} (resolved: ${resolved})`} />
       </DemoCard>
 
       <UiFoundationCatalog />
 
-      {/* Color Tokens */}
       <DemoCard
-        title="Color Tokens"
-        description="CSS variables from @cfxdevkit/theme — resolved at runtime via data-theme attribute."
+        title="App-level Customization"
+        description="Compose the shared components in local wrappers for product copy, auth boundaries, analytics, and layout. Customize the visuals with Tailwind class props instead of reviving the old token catalog."
       >
-        <table
-          style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--cfx-text-sm)' }}
-        >
-          <thead>
-            <tr>
-              {['Swatch', 'Variable', 'Category'].map((h) => (
-                <th
-                  key={h}
-                  style={{
-                    textAlign: 'left',
-                    padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-                    color: 'var(--cfx-color-fg-subtle)',
-                    fontWeight: 600,
-                    borderBottom: '1px solid var(--cfx-color-border-default)',
-                  }}
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {COLOR_TOKENS.map(({ name, category }) => (
-              <tr key={name} style={{ borderBottom: '1px solid var(--cfx-color-border-subtle)' }}>
-                <td style={{ padding: 'var(--cfx-space-2) var(--cfx-space-3)' }}>
-                  <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 'var(--cfx-radius-sm)',
-                      background: `var(${name})`,
-                      border: '1px solid var(--cfx-color-border-default)',
-                    }}
-                  />
-                </td>
-                <td
-                  style={{
-                    padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-                    fontFamily: 'monospace',
-                  }}
-                >
-                  {name}
-                </td>
-                <td
-                  style={{
-                    padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-                    color: 'var(--cfx-color-fg-subtle)',
-                  }}
-                >
-                  {category}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </DemoCard>
-
-      {/* Spacing & Radius Tokens */}
-      <DemoCard
-        title="Spacing & Radius Tokens"
-        description="Space and radius CSS variables from the design system."
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--cfx-space-4)' }}>
-          <div>
-            <p
-              style={{
-                fontSize: 'var(--cfx-text-xs)',
-                color: 'var(--cfx-color-fg-subtle)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: 'var(--cfx-space-3)',
-              }}
-            >
-              Spacing
-            </p>
-            <div
-              style={{
-                display: 'flex',
-                gap: 'var(--cfx-space-4)',
-                flexWrap: 'wrap',
-                alignItems: 'flex-end',
-              }}
-            >
-              {SPACE_TOKENS.map((v) => (
-                <div
-                  key={v}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 'var(--cfx-space-1)',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `var(${v})`,
-                      height: `var(${v})`,
-                      background: 'var(--cfx-color-brand-primary)',
-                      borderRadius: 2,
-                    }}
-                  />
-                  <span
-                    style={{ fontSize: 'var(--cfx-text-xs)', color: 'var(--cfx-color-fg-muted)' }}
-                  >
-                    {v.replace('--cfx-space-', '')}
-                  </span>
-                </div>
-              ))}
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <CodeSnippet label="PortfolioHeader.tsx" code={APP_CUSTOMIZATION_SNIPPET} />
+          <div className="grid gap-5 rounded-[2rem] border border-stone-900/10 bg-[linear-gradient(135deg,#fff4dd_0%,#ffd9b8_52%,#ffb57c_100%)] p-6 text-stone-900 shadow-[0_24px_60px_rgba(120,53,15,0.16)]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-stone-600">
+                Treasury cockpit
+              </p>
+              <WalletButton
+                connectLabel="Authorize desk"
+                disconnectedClassName="bg-stone-900 text-[#fff4dd] hover:bg-stone-800"
+                connectedClassName="border-stone-900/15 bg-white/65 text-stone-900 hover:bg-white/80"
+              />
             </div>
-          </div>
-          <div>
-            <p
-              style={{
-                fontSize: 'var(--cfx-text-xs)',
-                color: 'var(--cfx-color-fg-subtle)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: 'var(--cfx-space-3)',
-              }}
-            >
-              Border Radius
-            </p>
-            <div
-              style={{
-                display: 'flex',
-                gap: 'var(--cfx-space-4)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
-            >
-              {RADIUS_TOKENS.map((v) => (
-                <div
-                  key={v}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 'var(--cfx-space-1)',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 48,
-                      height: 32,
-                      background: 'var(--cfx-color-brand-accent)',
-                      borderRadius: `var(${v})`,
-                    }}
-                  />
-                  <span
-                    style={{ fontSize: 'var(--cfx-text-xs)', color: 'var(--cfx-color-fg-muted)' }}
-                  >
-                    {v.replace('--cfx-radius-', '')}
-                  </span>
-                </div>
-              ))}
+            <div className="space-y-2">
+              <h3 className="text-3xl font-semibold tracking-[-0.04em]">
+                The same shared controls can anchor a completely different product surface.
+              </h3>
+              <p className="text-sm leading-6 text-stone-700">
+                This variation swaps the dark dashboard shell for a warm treasury briefing layout,
+                keeps the reusable primitives, and leaves orchestration logic in the app wrapper.
+              </p>
+            </div>
+            <SegmentedControl
+              value="treasury"
+              onChange={() => undefined}
+              className="w-full border-stone-900/10 bg-white/55"
+              activeOptionClassName="bg-stone-900 text-[#fff4dd]"
+              inactiveOptionClassName="text-stone-700 hover:bg-white/70"
+              options={[
+                { label: 'Mainnet', value: 'mainnet' },
+                { label: 'Treasury', value: 'treasury' },
+                { label: 'Yield', value: 'yield' },
+              ]}
+            />
+            <Notice className="border-stone-900/10 bg-white/60 text-stone-800" tone="neutral">
+              App wrappers keep approval policy, product copy, auth rules, and event orchestration
+              local while the shared package owns the reusable shell components.
+            </Notice>
+            <div className="rounded-[1.5rem] border border-white/60 bg-white/45 p-4 backdrop-blur">
+              <StatusGrid columns={2}>
+                <Metric
+                  className="border-stone-900/10 bg-white/80"
+                  label="Portfolio"
+                  value="$12.4k"
+                  delta="+4.2%"
+                />
+                <Metric
+                  className="border-stone-900/10 bg-white/80"
+                  label="Gas runway"
+                  value="18 days"
+                />
+                <Metric
+                  className="border-stone-900/10 bg-white/80"
+                  label="Settlement"
+                  value="4 queues live"
+                />
+              </StatusGrid>
             </div>
           </div>
         </div>

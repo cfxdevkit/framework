@@ -1,0 +1,362 @@
+Scope: 48 of 49 workspace projects
+../../../../repos/cfx-core/packages/core lint$ biome check src
+.../../repos/cfx-llm/packages/llm-client lint$ biome check src workers
+.../repos/cfx-meta/packages/arch-rules lint$ biome check src
+.../../repos/cfx-solidity/packages/abis lint$ biome check src
+.../repos/cfx-meta/packages/arch-rules lint: Checked 4 files in 4ms. No fixes applied.
+.../../repos/cfx-llm/packages/llm-client lint: Checked 19 files in 8ms. No fixes applied.
+.../../repos/cfx-solidity/packages/abis lint: Checked 12 files in 9ms. No fixes applied.
+../../../../repos/cfx-core/packages/core lint: Checked 25 files in 10ms. No fixes applied.
+.../repos/cfx-meta/packages/arch-rules lint: Done
+.../packages/contracts-extract lint$ biome check src
+../../../../repos/cfx-core/packages/core lint: Done
+.../../repos/cfx-llm/packages/llm-client lint: Done
+.../../repos/cfx-solidity/packages/abis lint: Done
+.../../repos/cfx-tools/packages/client lint$ biome check src
+.../cfx-tools/packages/scaffold-cli lint$ biome check src
+../../../../repos/cfx-ui/packages/theme lint$ biome check src
+../../../../repos/cfx-ui/packages/theme lint: Checked 6 files in 4ms. No fixes applied.
+.../packages/contracts-extract lint: Checked 2 files in 5ms. No fixes applied.
+../../../../repos/cfx-ui/packages/theme lint: Done
+.../../../repos/cfx-ui/packages/ui-core lint$ biome check src
+.../packages/contracts-extract lint: Done
+.../../repos/cfx-tools/packages/client lint: Checked 6 files in 6ms. No fixes applied.
+.../cfx-tools/packages/scaffold-cli lint: Checked 17 files in 6ms. No fixes applied.
+.../../repos/cfx-tools/packages/client lint: Done
+.../cfx-tools/packages/scaffold-cli lint: Done
+.../../../repos/cfx-ui/packages/ui-core lint: Checked 6 files in 5ms. No fixes applied.
+.../../../repos/cfx-ui/packages/ui-core lint: Done
+.../../repos/cfx-core/packages/devnode lint$ biome check src
+.../../repos/cfx-core/packages/executor lint$ biome check src
+.../cfx-domain/packages/hardware-bridge lint$ biome check src
+.../../repos/cfx-keys/packages/services lint$ biome check src
+.../../repos/cfx-core/packages/devnode lint: Checked 11 files in 7ms. No fixes applied.
+.../../repos/cfx-keys/packages/services lint: Checked 42 files in 10ms. No fixes applied.
+.../cfx-domain/packages/hardware-bridge lint: Checked 2 files in 2ms. No fixes applied.
+.../../repos/cfx-core/packages/devnode lint: Done
+.../cfx-solidity/packages/contracts lint$ biome check src
+.../../repos/cfx-core/packages/executor lint: Checked 2 files in 6ms. No fixes applied.
+.../cfx-domain/packages/hardware-bridge lint: Done
+.../repos/cfx-tools/packages/arch-check lint$ biome check src
+.../../repos/cfx-keys/packages/services lint: Done
+.../../repos/cfx-core/packages/executor lint: Done
+../../../../repos/cfx-tools/packages/cli lint$ biome check src
+../../../../repos/cfx-ui/packages/ui lint$ biome check src
+.../cfx-solidity/packages/contracts lint: Checked 31 files in 7ms. No fixes applied.
+.../cfx-solidity/packages/contracts lint: Done
+../../../../repos/cfx-ui/packages/ui lint: Checked 16 files in 6ms. No fixes applied.
+../../../../repos/cfx-tools/packages/cli lint: Checked 14 files in 8ms. No fixes applied.
+../../../../repos/cfx-ui/packages/ui lint: Done
+.../repos/cfx-tools/packages/arch-check lint: Checked 16 files in 13ms. No fixes applied.
+../../../../repos/cfx-tools/packages/cli lint: Done
+.../repos/cfx-tools/packages/arch-check lint: Done
+.../../repos/cfx-core/packages/protocol lint$ biome check src
+.../../repos/cfx-core/packages/testing lint$ biome check src
+.../cfx-domain/packages/game-engine lint$ biome check src
+.../../../repos/cfx-keys/packages/wallet lint$ biome check src
+.../../repos/cfx-core/packages/testing lint: Checked 2 files in 4ms. No fixes applied.
+.../../../repos/cfx-keys/packages/wallet lint: Checked 27 files in 9ms. No fixes applied.
+.../../repos/cfx-core/packages/protocol lint: Checked 15 files in 9ms. No fixes applied.
+.../../repos/cfx-core/packages/testing lint: Done
+.../../repos/cfx-llm/packages/llm-agents lint$ biome check src workers
+.../cfx-domain/packages/game-engine lint: Checked 2 files in 3ms. No fixes applied.
+.../../../repos/cfx-keys/packages/wallet lint: Done
+.../../repos/cfx-core/packages/protocol lint: Done
+.../repos/cfx-solidity/packages/compiler lint$ biome check src
+.../cfx-domain/packages/game-engine lint: Done
+.../../repos/cfx-llm/packages/llm-agents lint: Checked 34 files in 10ms. No fixes applied.
+.../repos/cfx-solidity/packages/compiler lint: Checked 32 files in 10ms. No fixes applied.
+.../../repos/cfx-llm/packages/llm-agents lint: Done
+.../repos/cfx-solidity/packages/compiler lint: Done
+../../packages/setup lint$ biome check src
+../../../examples/apps/showcase-backend lint$ biome check src
+.../repos/cfx-domain/packages/automation lint$ biome check src
+.../../repos/cfx-llm/packages/llm-tools lint$ biome check src workers
+.../../repos/cfx-llm/packages/llm-tools lint: Checked 6 files in 4ms. No fixes applied.
+.../../repos/cfx-llm/packages/llm-tools lint: Done
+../../packages/setup lint: Checked 13 files in 11ms. No fixes applied.
+../../../examples/apps/showcase-backend lint: Checked 18 files in 12ms. No fixes applied.
+.../cfx-tools/packages/devnode-server lint$ biome check src
+.../repos/cfx-domain/packages/automation lint: Checked 52 files in 13ms. No fixes applied.
+../../packages/setup lint: Done
+.../repos/cfx-tools/packages/mcp-server lint$ biome check src
+../../../examples/apps/showcase-backend lint: Done
+.../cfx-tools/packages/vscode-extension lint$ biome check src
+.../repos/cfx-domain/packages/automation lint: Done
+../../../../repos/cfx-ui/packages/react lint$ biome check src
+.../cfx-tools/packages/devnode-server lint: Checked 14 files in 8ms. No fixes applied.
+.../cfx-tools/packages/vscode-extension lint: Checked 23 files in 10ms. No fixes applied.
+.../cfx-tools/packages/devnode-server lint: Done
+.../repos/cfx-ui/packages/wallet-connect lint$ biome check src
+../../../../repos/cfx-ui/packages/react lint: Checked 8 files in 8ms. No fixes applied.
+.../repos/cfx-tools/packages/mcp-server lint: Checked 28 files in 9ms. No fixes applied.
+.../cfx-tools/packages/vscode-extension lint: Done
+../../../../repos/cfx-ui/packages/react lint: Done
+.../repos/cfx-tools/packages/mcp-server lint: Done
+.../repos/cfx-ui/packages/wallet-connect lint: Checked 26 files in 8ms. No fixes applied.
+.../repos/cfx-ui/packages/wallet-connect lint: Done
+../../packages/shared lint$ biome check src
+.../../repos/cfx-ui/packages/defi-react lint$ biome check src
+../../../examples/packages/showcase-ui lint$ biome check src
+../../../examples/packages/showcase-ui lint: Checked 19 files in 7ms. No fixes applied.
+../../packages/shared lint: Checked 10 files in 8ms. No fixes applied.
+../../packages/shared lint: Done
+../../../examples/packages/showcase-ui lint: Done
+.../../repos/cfx-ui/packages/defi-react lint: Checked 36 files in 12ms. No fixes applied.
+.../../repos/cfx-ui/packages/defi-react lint: Done
+../frontend lint$ biome check src
+. lint$ biome check src
+.../apps/hardware-wallet-showcase lint$ biome check src
+../../../examples/apps/showcase lint$ biome check src
+.../apps/hardware-wallet-showcase lint: Checked 28 files in 10ms. No fixes applied.
+../../../examples/apps/showcase lint: Checked 48 files in 19ms. No fixes applied.
+. lint: Checked 22 files in 19ms. No fixes applied.
+../frontend lint: src/components/StrategyBuilderParts.tsx:12:8 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━━━
+../frontend lint:   ! This import is unused.
+../frontend lint:   
+../frontend lint:     10 │ import type { StrategyDraft, StrategyStep, TokenWithBalance } from '../lib/strategy';
+../frontend lint:     11 │ import { tokenDecimals } from '../lib/strategy';
+../frontend lint:   > 12 │ import { Field } from './ui';
+../frontend lint:        │        ^^^^^^^^^
+../frontend lint:     13 │ 
+../frontend lint:     14 │ // ── TokenAmountPanel ──────────────────────────────────────────────────────────
+../frontend lint:   
+../frontend lint:   i Unused imports might be the result of an incomplete refactoring.
+../frontend lint:   
+../frontend lint:   i Unsafe fix: Remove the unused imports.
+../frontend lint:   
+../frontend lint:      10  10 │   import type { StrategyDraft, StrategyStep, TokenWithBalance } from '../lib/strategy';
+../frontend lint:      11  11 │   import { tokenDecimals } from '../lib/strategy';
+../frontend lint:      12     │ - import·{·Field·}·from·'./ui';
+../frontend lint:      13  12 │   
+../frontend lint:      14  13 │   // ── TokenAmountPanel ──────────────────────────────────────────────────────────
+../frontend lint:   
+../frontend lint: src/app/globals.css:98:2 lint/correctness/noInvalidPositionAtImportRule ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+../frontend lint:   × This @import is in the wrong position.
+../frontend lint:   
+../frontend lint:      97 │ /* ── Component styles (split for readability) ────────────────────────────── */
+../frontend lint:    > 98 │ @import "./styles/layout.css";
+.../apps/hardware-wallet-showcase lint: Done
+../frontend lint:         │  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../frontend lint:      99 │ @import "./styles/controls.css";
+../frontend lint:     100 │ @import "./styles/forms.css";
+../frontend lint:   
+../frontend lint:   i Any @import rules must precede all other valid at-rules and style rules in a stylesheet (ignoring @charset and @layer), or else the @import rule is invalid.
+../frontend lint:   
+../frontend lint:   i Consider moving import position.
+../frontend lint:   
+../frontend lint: src/app/globals.css:99:2 lint/correctness/noInvalidPositionAtImportRule ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+../frontend lint:   × This @import is in the wrong position.
+../frontend lint:   
+../frontend lint:      97 │ /* ── Component styles (split for readability) ────────────────────────────── */
+../../../examples/apps/showcase-browser lint$ biome check src
+../frontend lint:      98 │ @import "./styles/layout.css";
+../frontend lint:    > 99 │ @import "./styles/controls.css";
+../frontend lint:         │  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../frontend lint:     100 │ @import "./styles/forms.css";
+../frontend lint:     101 │ @import "./styles/entities.css";
+../frontend lint:   
+../frontend lint:   i Any @import rules must precede all other valid at-rules and style rules in a stylesheet (ignoring @charset and @layer), or else the @import rule is invalid.
+../frontend lint:   
+../frontend lint:   i Consider moving import position.
+../frontend lint:   
+../frontend lint: src/app/globals.css:100:2 lint/correctness/noInvalidPositionAtImportRule ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+../frontend lint:   × This @import is in the wrong position.
+../frontend lint:   
+../frontend lint:      98 │ @import "./styles/layout.css";
+../frontend lint:      99 │ @import "./styles/controls.css";
+../frontend lint:   > 100 │ @import "./styles/forms.css";
+../frontend lint:         │  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+. lint: Done
+../frontend lint:     101 │ @import "./styles/entities.css";
+../frontend lint:     102 │ 
+../frontend lint:   
+../../../examples/apps/showcase lint: Done
+../frontend lint:   i Any @import rules must precede all other valid at-rules and style rules in a stylesheet (ignoring @charset and @layer), or else the @import rule is invalid.
+../frontend lint:   
+../frontend lint:   i Consider moving import position.
+../frontend lint:   
+../frontend lint: src/app/globals.css:101:2 lint/correctness/noInvalidPositionAtImportRule ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+../../../examples/apps/showcase-gateway lint$ biome check src
+../frontend lint:   × This @import is in the wrong position.
+../frontend lint:   
+../frontend lint:      99 │ @import "./styles/controls.css";
+../frontend lint:     100 │ @import "./styles/forms.css";
+../frontend lint:   > 101 │ @import "./styles/entities.css";
+../frontend lint:         │  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../examples/apps/showcase-local lint$ biome check app
+../frontend lint:     102 │ 
+../frontend lint:   
+../frontend lint:   i Any @import rules must precede all other valid at-rules and style rules in a stylesheet (ignoring @charset and @layer), or else the @import rule is invalid.
+../frontend lint:   
+../frontend lint:   i Consider moving import position.
+../frontend lint:   
+../frontend lint: src/app/globals.css format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+../frontend lint:   × Formatter would have printed the following content:
+../frontend lint:   
+../frontend lint:      19  19 │   
+../frontend lint:      20  20 │     @keyframes modal-in {
+../frontend lint:      21     │ - ····0%·{·transform:·scale(0.95);·opacity:·0;·}
+../frontend lint:      22     │ - ····100%·{·transform:·scale(1);·opacity:·1;·}
+../frontend lint:          21 │ + ····0%·{
+../frontend lint:          22 │ + ······transform:·scale(0.95);
+../frontend lint:          23 │ + ······opacity:·0;
+../frontend lint:          24 │ + ····}
+../frontend lint:          25 │ + ····100%·{
+../frontend lint:          26 │ + ······transform:·scale(1);
+../frontend lint:          27 │ + ······opacity:·1;
+../frontend lint:          28 │ + ····}
+../frontend lint:      23  29 │     }
+../frontend lint:      24  30 │     @keyframes shimmer {
+../frontend lint:      25     │ - ····100%·{·transform:·translateX(100%);·}
+../frontend lint:          31 │ + ····100%·{
+../frontend lint:          32 │ + ······transform:·translateX(100%);
+../frontend lint:          33 │ + ····}
+../frontend lint:      26  34 │     }
+../frontend lint:      27  35 │   }
+../frontend lint:   
+../frontend lint: src/app/page.tsx:3:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+../frontend lint:   × The imports and exports are not sorted.
+../frontend lint:   
+../frontend lint:     1 │ 'use client';
+../frontend lint:     2 │ 
+../frontend lint:   > 3 │ import { Plus, RefreshCcw, ShieldCheck } from 'lucide-react';
+../frontend lint:       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../frontend lint:     4 │ import { useCallback, useEffect, useState } from 'react';
+../frontend lint:     5 │ import { injected, useAccount, useConnect } from 'wagmi';
+../frontend lint:   
+../frontend lint:   i Safe fix: Organize Imports (Biome)
+../frontend lint:   
+../frontend lint:       1   1 │   'use client';
+../frontend lint:       2   2 │   
+../frontend lint:       3     │ - import·{·Plus,·RefreshCcw,·ShieldCheck·}·from·'lucide-react';
+../frontend lint:       4     │ - import·{·useCallback,·useEffect,·useState·}·from·'react';
+../frontend lint:       5     │ - import·{·injected,·useAccount,·useConnect·}·from·'wagmi';
+../frontend lint:       6     │ - import·type·{·CasJobDto·}·from·'@cfxdevkit/cas-shared';
+../frontend lint:           3 │ + import·type·{·CasJobDto·}·from·'@cfxdevkit/cas-shared';
+../frontend lint:           4 │ + import·{·Plus,·RefreshCcw,·ShieldCheck·}·from·'lucide-react';
+../frontend lint:           5 │ + import·{·useCallback,·useEffect,·useState·}·from·'react';
+../frontend lint:           6 │ + import·{·injected,·useAccount,·useConnect·}·from·'wagmi';
+../frontend lint:       7   7 │   import { ApprovalsModal } from '../components/ApprovalsModal';
+../frontend lint:       8   8 │   import { Dashboard } from '../components/Dashboard/Dashboard';
+../frontend lint:       9     │ - import·{·StrategyModal·}·from·'../components/StrategyModal';
+../frontend lint:      10     │ - import·{·WcfxWrapModal·}·from·'../components/StrategyBuilder/WcfxWrapModal';
+../frontend lint:           9 │ + import·{·WcfxWrapModal·}·from·'../components/StrategyBuilder/WcfxWrapModal';
+../frontend lint:          10 │ + import·{·StrategyModal·}·from·'../components/StrategyModal';
+../frontend lint:      11  11 │   import { EXPECTED_CHAIN_NAME, useNetworkSwitch } from '../hooks/useNetworkSwitch';
+../frontend lint:      12  12 │   import { useAuthContext } from './auth-context';
+../frontend lint:   
+../frontend lint: src/components/ApprovalsModal.tsx:3:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━
+../frontend lint:   × The imports and exports are not sorted.
+../frontend lint:   
+../frontend lint:     1 │ 'use client';
+../frontend lint:     2 │ 
+../frontend lint:   > 3 │ import { ShieldCheck, X } from 'lucide-react';
+../frontend lint:       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../frontend lint:     4 │ import { useEffect } from 'react';
+../frontend lint:     5 │ import type { CasJobDto } from '@cfxdevkit/cas-shared';
+../frontend lint:   
+../frontend lint:   i Safe fix: Organize Imports (Biome)
+../frontend lint:   
+../frontend lint:      1  1 │   'use client';
+../frontend lint:      2  2 │   
+../frontend lint:      3    │ - import·{·ShieldCheck,·X·}·from·'lucide-react';
+../frontend lint:      4    │ - import·{·useEffect·}·from·'react';
+../frontend lint:      5    │ - import·type·{·CasJobDto·}·from·'@cfxdevkit/cas-shared';
+../frontend lint:         3 │ + import·type·{·CasJobDto·}·from·'@cfxdevkit/cas-shared';
+../frontend lint:         4 │ + import·{·ShieldCheck,·X·}·from·'lucide-react';
+../frontend lint:         5 │ + import·{·useEffect·}·from·'react';
+../frontend lint:      6  6 │   import { ApprovalWidget } from './ApprovalWidget';
+../frontend lint:      7  7 │   
+../frontend lint:   
+../frontend lint: src/components/StrategyBuilder/WcfxWrapModal.tsx:3:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+../frontend lint:   × The imports and exports are not sorted.
+../frontend lint:   
+../frontend lint:     1 │ 'use client';
+../frontend lint:     2 │ 
+../frontend lint:   > 3 │ import { RefreshCcw, X } from 'lucide-react';
+../frontend lint:       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../frontend lint:     4 │ import { useState } from 'react';
+../frontend lint:     5 │ import { parseUnits } from 'viem';
+../frontend lint:   
+../frontend lint:   i Safe fix: Organize Imports (Biome)
+../frontend lint:   
+../frontend lint:       1   1 │   'use client';
+../frontend lint:       2   2 │   
+../frontend lint:       3     │ - import·{·RefreshCcw,·X·}·from·'lucide-react';
+../frontend lint:       4     │ - import·{·useState·}·from·'react';
+../frontend lint:       5     │ - import·{·parseUnits·}·from·'viem';
+../frontend lint:       6     │ - import·{·usePublicClient,·useWriteContract·}·from·'wagmi';
+../frontend lint:       7     │ - import·{·WCFX_ABI·}·from·'@cfxdevkit/cas-shared';
+../frontend lint:           3 │ + import·{·WCFX_ABI·}·from·'@cfxdevkit/cas-shared';
+../frontend lint:           4 │ + import·{·RefreshCcw,·X·}·from·'lucide-react';
+../frontend lint:           5 │ + import·{·useState·}·from·'react';
+../frontend lint:           6 │ + import·{·parseUnits·}·from·'viem';
+../frontend lint:           7 │ + import·{·usePublicClient,·useWriteContract·}·from·'wagmi';
+../frontend lint:       8   8 │   import { useAuthContext } from '../../app/auth-context';
+../frontend lint:       9     │ - import·{·usePoolsContext·}·from·'../../app/pools-context';
+../frontend lint:      10     │ - import·{·readContracts·}·from·'../../lib/strategy';
+../frontend lint:      11     │ - import·{·CFX_NATIVE_ADDRESS·}·from·'../../app/pools-context';
+../frontend lint:           9 │ + import·{·CFX_NATIVE_ADDRESS,·usePoolsContext·}·from·'../../app/pools-context';
+../frontend lint:          10 │ + import·{·readContracts·}·from·'../../lib/strategy';
+../frontend lint:      12  11 │   
+../frontend lint:      13  12 │   function fmtBalance(val: string) {
+../frontend lint:   
+../frontend lint: src/components/StrategyModal.tsx:3:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━
+../frontend lint:   × The imports and exports are not sorted.
+../frontend lint:   
+../frontend lint:     1 │ 'use client';
+../frontend lint:     2 │ 
+../frontend lint:   > 3 │ import { X } from 'lucide-react';
+../frontend lint:       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../frontend lint:     4 │ import { useEffect, useState } from 'react';
+../frontend lint:     5 │ import type { CasJobDto } from '@cfxdevkit/cas-shared';
+../frontend lint:   
+../frontend lint:   i Safe fix: Organize Imports (Biome)
+../frontend lint:   
+../frontend lint:      1  1 │   'use client';
+../frontend lint:      2  2 │   
+../frontend lint:      3    │ - import·{·X·}·from·'lucide-react';
+../frontend lint:      4    │ - import·{·useEffect,·useState·}·from·'react';
+../frontend lint:      5    │ - import·type·{·CasJobDto·}·from·'@cfxdevkit/cas-shared';
+../frontend lint:         3 │ + import·type·{·CasJobDto·}·from·'@cfxdevkit/cas-shared';
+../frontend lint:         4 │ + import·{·X·}·from·'lucide-react';
+../frontend lint:         5 │ + import·{·useEffect,·useState·}·from·'react';
+../frontend lint:      6  6 │   import { StrategyBuilder } from './StrategyBuilder';
+../frontend lint:      7  7 │   
+../frontend lint:   
+../frontend lint: src/components/ui.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+../frontend lint:   × Formatter would have printed the following content:
+../frontend lint:   
+../frontend lint:      1    │ - import·{·Field·as·SharedField,·Metric·as·SharedMetric,·Notice·as·SharedNotice,·StatusGrid·as·SharedStatusGrid·}·from·'@cfxdevkit/ui';
+../frontend lint:         1 │ + import·{
+../frontend lint:         2 │ + ··Field·as·SharedField,
+../frontend lint:         3 │ + ··Metric·as·SharedMetric,
+../frontend lint:         4 │ + ··Notice·as·SharedNotice,
+../frontend lint:         5 │ + ··StatusGrid·as·SharedStatusGrid,
+../frontend lint:         6 │ + }·from·'@cfxdevkit/ui';
+../frontend lint:      2  7 │   import type { ReactNode } from 'react';
+../frontend lint:      3  8 │   
+../frontend lint:     ····· │ 
+../frontend lint:     48 53 │   
+../frontend lint:     49 54 │   export function Field({ label, children }: { label: string; children: ReactNode }) {
+../frontend lint:     50    │ - ··return·<SharedField·label={label}·className="field">{children}</SharedField>;
+../frontend lint:        55 │ + ··return·(
+../frontend lint:        56 │ + ····<SharedField·label={label}·className="field">
+../frontend lint:        57 │ + ······{children}
+../frontend lint:        58 │ + ····</SharedField>
+../frontend lint:        59 │ + ··);
+../frontend lint:     51 60 │   }
+../frontend lint:     52 61 │   
+../frontend lint:   
+../frontend lint: Checked 37 files in 20ms. No fixes applied.
+../frontend lint: Found 10 errors.
+../frontend lint: Found 1 warning.
+../frontend lint: check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+../frontend lint:   × Some errors were emitted while running checks.
+../frontend lint:   
+../frontend lint: Failed
+/workspaces/root/projects/cas/apps/frontend:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @cfxdevkit/cas-frontend@0.0.0 lint: `biome check src`
+Exit status 1
+../../../examples/apps/showcase-public lint$ biome check app

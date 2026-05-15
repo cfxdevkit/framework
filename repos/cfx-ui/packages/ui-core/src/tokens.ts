@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
+import { GENERATED_MAINNET_PAIRS, GENERATED_MAINNET_TOKENS } from './mainnet-catalog.generated.js';
 
 export const CFX_NATIVE_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const MAINNET_TOKEN_BLOCKLIST = new Set([
+  // The upstream curated snapshot currently includes this spam token entry.
+  '0x444449e9e35d51e5742bf52207879047946526d2',
+]);
 
 export const WCFX_ADDRESSES = {
   mainnet: '0x14b2D3bC65e74DAE1030EAFd8ac30c533c976A9b',
@@ -16,10 +21,32 @@ export interface SelectableTokenLike {
   address: string;
 }
 
+export interface TokenMetadata extends SelectableTokenLike {
+  chainId: number;
+  decimals: number;
+  logoURI?: string;
+  name: string;
+  symbol: string;
+}
+
 export interface TokenSelectionOptions {
   nativeAddress?: string;
   wrappedNativeAddress?: string;
 }
+
+export const DEFAULT_MAINNET_TOKENS = GENERATED_MAINNET_TOKENS.filter(
+  (token) => !MAINNET_TOKEN_BLOCKLIST.has(token.address.toLowerCase()),
+) satisfies readonly TokenMetadata[];
+
+export const DEFAULT_MAINNET_ERC20_TOKENS = DEFAULT_MAINNET_TOKENS.filter(
+  (token) => token.address.toLowerCase() !== CFX_NATIVE_ADDRESS.toLowerCase(),
+);
+
+export const DEFAULT_MAINNET_PAIRS = GENERATED_MAINNET_PAIRS.filter(
+  (pair) =>
+    !MAINNET_TOKEN_BLOCKLIST.has(pair.token0.toLowerCase()) &&
+    !MAINNET_TOKEN_BLOCKLIST.has(pair.token1.toLowerCase()),
+) satisfies readonly PairLike[];
 
 export interface UseSelectableTokensOptions<TToken extends SelectableTokenLike> {
   options?: TokenSelectionOptions;
@@ -45,6 +72,42 @@ export function resolveTokenAddress(
     ? wrappedNativeAddress
     : address;
 }
+
+export function resolveDisplayTokenAddress(
+  address: string,
+  wrappedNativeAddress = wcfxAddress(),
+  nativeAddress = CFX_NATIVE_ADDRESS,
+): string {
+  return normalizeAddress(address) === normalizeAddress(wrappedNativeAddress)
+    ? nativeAddress
+    : address;
+}
+
+export function getDisplayTokens<TToken extends SelectableTokenLike>(
+  tokens: readonly TToken[],
+  options: TokenSelectionOptions = {},
+): TToken[] {
+  const nativeAddress = normalizeAddress(options.nativeAddress ?? CFX_NATIVE_ADDRESS);
+  const wrappedNativeAddress = normalizeAddress(options.wrappedNativeAddress ?? wcfxAddress());
+  const unique = new Map<string, TToken>();
+
+  for (const token of tokens) {
+    const normalized = normalizeAddress(token.address);
+    if (normalized === wrappedNativeAddress) continue;
+    if (normalized === nativeAddress && unique.has(nativeAddress)) continue;
+    unique.set(normalized, token);
+  }
+
+  return Array.from(unique.values());
+}
+
+export const DEFAULT_MAINNET_DISPLAY_TOKENS = getDisplayTokens(DEFAULT_MAINNET_TOKENS, {
+  wrappedNativeAddress: WCFX_ADDRESSES.mainnet,
+});
+
+export const DEFAULT_MAINNET_DISPLAY_ERC20_TOKENS = DEFAULT_MAINNET_DISPLAY_TOKENS.filter(
+  (token) => normalizeAddress(token.address) !== normalizeAddress(CFX_NATIVE_ADDRESS),
+);
 
 export function getPairedTokens<TToken extends SelectableTokenLike>(
   pairs: readonly PairLike[],

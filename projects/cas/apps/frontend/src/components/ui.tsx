@@ -1,3 +1,9 @@
+import {
+  Field as SharedField,
+  Metric as SharedMetric,
+  Notice as SharedNotice,
+  StatusGrid as SharedStatusGrid,
+} from '@cfxdevkit/ui';
 import type { ReactNode } from 'react';
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -47,20 +53,18 @@ export function PanelBody({ children }: { children: ReactNode }) {
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    // biome-ignore lint/a11y/noLabelWithoutControl: Field wraps form controls passed as children.
-    <label className="field">
-      <span>{label}</span>
+    <SharedField label={label} className="field">
       {children}
-    </label>
+    </SharedField>
   );
 }
 
 export function Notice({ tone = 'neutral', children }: NoticeProps) {
-  return <div className={`notice ${tone === 'neutral' ? '' : tone}`}>{children}</div>;
+  return <SharedNotice tone={tone}>{children}</SharedNotice>;
 }
 
 export interface NoticeProps {
-  tone?: 'neutral' | 'ok' | 'error';
+  tone?: 'neutral' | 'ok' | 'warning' | 'error';
   children: ReactNode;
 }
 
@@ -80,14 +84,9 @@ export type IconButtonProps = Omit<
 };
 
 export function StatusGrid({ children }: { children: ReactNode }) {
-  return <div className="status-grid">{children}</div>;
+  return <SharedStatusGrid>{children}</SharedStatusGrid>;
 }
 
 export function Metric({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="metric">
-      <span>{label}</span>
-      <span>{value}</span>
-    </div>
-  );
+  return <SharedMetric label={label} value={value} />;
 }

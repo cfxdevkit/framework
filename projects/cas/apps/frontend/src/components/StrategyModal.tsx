@@ -1,8 +1,8 @@
 'use client';
 
+import type { CasJobDto } from '@cfxdevkit/cas-shared';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { CasJobDto } from '@cfxdevkit/cas-shared';
 import { StrategyBuilder } from './StrategyBuilder';
 
 export function StrategyModal({

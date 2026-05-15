@@ -1,13 +1,13 @@
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { __poolsTest } from './routes/pools.js';
 import {
-  OTHER_ACCOUNT,
   createCasBackendApp,
   createCasBackendState,
   makeConfig,
+  OTHER_ACCOUNT,
   signIn,
 } from './app.test-helpers.js';
+import { __poolsTest } from './routes/pools.js';
 
 describe('CAS backend – admin', () => {
   afterEach(() => {

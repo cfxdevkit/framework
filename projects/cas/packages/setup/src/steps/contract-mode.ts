@@ -1,4 +1,9 @@
-import { input, password, select } from '@inquirer/prompts';
+import { deployContract } from '@cfxdevkit/contracts/deploy';
+import type { Hex } from '@cfxdevkit/core';
+import type { ChainConfig } from '@cfxdevkit/core/chains';
+import { espaceLocal, espaceMainnet, espaceTestnet } from '@cfxdevkit/core/chains';
+import { createClient, http } from '@cfxdevkit/core/client';
+import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
 import {
   automationManagerAbi,
   automationManagerBytecode,
@@ -7,17 +12,14 @@ import {
   swappiPriceAdapterAbi,
   swappiPriceAdapterBytecode,
 } from '@cfxdevkit/protocol';
-import { deployContract } from '@cfxdevkit/contracts/deploy';
-import { createClient, http } from '@cfxdevkit/core/client';
-import { espaceLocal, espaceMainnet, espaceTestnet } from '@cfxdevkit/core/chains';
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
-import type { ChainConfig } from '@cfxdevkit/core/chains';
-import type { Hex } from '@cfxdevkit/core';
+import { input, password, select } from '@inquirer/prompts';
 import type { WizardState } from '../wizard.js';
+
+type AddressHex = `0x${string}`;
 
 // Swappi DEX addresses (same router on both networks)
 const SWAPPI_ROUTER = '0x62b0873055Bf896DD869e172119871ac24aEA305' as const;
-const SWAPPI_FACTORY: Record<'testnet' | 'mainnet', string> = {
+const SWAPPI_FACTORY: Record<'testnet' | 'mainnet', AddressHex> = {
   testnet: '0x8D0D1C7C32D8a395c817b22ff3Bd6fFa2a7EbE08',
   mainnet: '0x36b83f9D614A06AbF5388f4D14cc64E5Ff96892f',
 };
@@ -44,15 +46,15 @@ async function deployFresh(state: WizardState): Promise<WizardState> {
   const privateKey = rawKey.trim() as Hex;
 
   const chain = chainConfigForState(state);
-  const transport = http(state.rpcUrl);
+  const transport = http({ url: state.rpcUrl });
   const client = createClient({ chain, transport });
   const signer = signerFromPrivateKey(privateKey);
   const deployerAddress = signer.account.address;
 
   // Resolve Swappi router/factory addresses for the target network.
   // On local devnodes Swappi is not deployed, so prompt the user.
-  let swappiRouter: string;
-  let swappiFactory: string;
+  let swappiRouter: AddressHex;
+  let swappiFactory: AddressHex;
   if (state.network === 'local') {
     console.log('  Local devnode detected — Swappi is not pre-deployed here.');
     swappiRouter = (
@@ -60,12 +62,12 @@ async function deployFresh(state: WizardState): Promise<WizardState> {
         message: 'Swappi router address (or any mock router):',
         default: SWAPPI_ROUTER,
       })
-    ).trim();
+    ).trim() as AddressHex;
     swappiFactory = (
       await input({
         message: 'Swappi factory address (or any mock factory):',
       })
-    ).trim();
+    ).trim() as AddressHex;
   } else {
     swappiRouter = SWAPPI_ROUTER;
     swappiFactory = SWAPPI_FACTORY[state.network];
@@ -81,7 +83,7 @@ async function deployFresh(state: WizardState): Promise<WizardState> {
     args: [swappiRouter, swappiFactory, deployerAddress],
     waitForReceipt: true,
   });
-  const paAddress = paResult.address;
+  const paAddress = paResult.address as AddressHex | undefined;
   if (!paAddress) throw new Error('SwappiPriceAdapter deploy returned no address');
   console.log(`  ✓ SwappiPriceAdapter: ${paAddress}`);
 
@@ -95,7 +97,7 @@ async function deployFresh(state: WizardState): Promise<WizardState> {
     args: [paAddress, deployerAddress],
     waitForReceipt: true,
   });
-  const amAddress = amResult.address;
+  const amAddress = amResult.address as AddressHex | undefined;
   if (!amAddress) throw new Error('AutomationManager deploy returned no address');
   console.log(`  ✓ AutomationManager: ${amAddress}`);
 
@@ -108,7 +110,7 @@ async function deployFresh(state: WizardState): Promise<WizardState> {
     bytecode: permitHandlerBytecode as Hex,
     waitForReceipt: true,
   });
-  const phAddress = phResult.address;
+  const phAddress = phResult.address as AddressHex | undefined;
   if (!phAddress) throw new Error('PermitHandler deploy returned no address');
   console.log(`  ✓ PermitHandler: ${phAddress}`);
 

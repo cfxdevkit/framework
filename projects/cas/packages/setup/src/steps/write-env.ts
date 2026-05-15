@@ -1,6 +1,6 @@
 import { existsSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { join, dirname } from 'node:path';
 import { confirm } from '@inquirer/prompts';
 import type { WizardState } from '../wizard.js';
 

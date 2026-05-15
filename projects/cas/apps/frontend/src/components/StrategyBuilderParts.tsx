@@ -9,7 +9,6 @@ import { CheckCircle2 } from 'lucide-react';
 import { parseUnits } from 'viem';
 import type { StrategyDraft, StrategyStep, TokenWithBalance } from '../lib/strategy';
 import { tokenDecimals } from '../lib/strategy';
-import { Field } from './ui';
 
 // ── TokenAmountPanel ──────────────────────────────────────────────────────────
 

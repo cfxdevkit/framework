@@ -1,6 +1,12 @@
 import type { Address, Wei } from '@cfxdevkit/core/types';
 import { useNativeBalance } from '@cfxdevkit/react/balance';
 import { useClient } from '@cfxdevkit/react/context';
+import {
+  CFX_NATIVE_ADDRESS,
+  normalizeAddress,
+  resolveDisplayTokenAddress,
+  wcfxAddress,
+} from '@cfxdevkit/ui-core';
 import { useQueries } from '@tanstack/react-query';
 import { decodeFunctionResult, encodeFunctionData } from 'viem';
 import type { PortfolioRow, TokenInfo } from '../types.js';
@@ -28,14 +34,33 @@ const ERC20_BALANCE_ABI = [
   },
 ] as const;
 
+const MAINNET_CHAIN_ID = 1030;
+
 function formatBigInt(value: Wei, decimals: number): string {
   if (value === 0n) return '0';
-  const factor = BigInt(10 ** decimals);
+  const factor = 10n ** BigInt(decimals);
   const whole = value / factor;
   const frac = value % factor;
   if (frac === 0n) return whole.toString();
   const fracStr = frac.toString().padStart(decimals, '0').replace(/0+$/, '');
   return `${whole}.${fracStr.slice(0, 6)}`;
+}
+
+function wrappedNativeAddressForChainId(chainId: number): Address {
+  return (
+    chainId === MAINNET_CHAIN_ID ? wcfxAddress('mainnet') : wcfxAddress('testnet')
+  ) as Address;
+}
+
+function nativePortfolioToken(chainId: number, logoURI?: string): TokenInfo {
+  return {
+    address: CFX_NATIVE_ADDRESS as Address,
+    symbol: 'CFX',
+    name: 'Conflux',
+    decimals: 18,
+    chainId,
+    ...(logoURI ? { logoURI } : {}),
+  };
 }
 
 /**
@@ -45,6 +70,8 @@ function formatBigInt(value: Wei, decimals: number): string {
 export function usePortfolio(input: UsePortfolioInput): UsePortfolioReturn {
   const client = useClient();
   const { address, tokens, refreshMs = 15_000 } = input;
+  const wrappedNativeAddress = wrappedNativeAddressForChainId(client.chain.id);
+  const nativeDisplayAddress = normalizeAddress(CFX_NATIVE_ADDRESS);
 
   // Native CFX balance
   const {
@@ -89,18 +116,12 @@ export function usePortfolio(input: UsePortfolioInput): UsePortfolioReturn {
     (tokenQueries.find((q) => q.error)?.error as Error | null) ??
     null;
 
-  // Build rows — include native CFX row if balance available
-  const rows: PortfolioRow[] = [];
+  // Build rows — merge wrapped-native balances into the native CFX row.
+  const rowsByAddress = new Map<string, PortfolioRow>();
 
   if (nativeBalance !== undefined) {
-    rows.push({
-      token: {
-        address: '0x0000000000000000000000000000000000000000',
-        symbol: 'CFX',
-        name: 'Conflux',
-        decimals: 18,
-        chainId: client.chain.id,
-      },
+    rowsByAddress.set(nativeDisplayAddress, {
+      token: nativePortfolioToken(client.chain.id),
       balance: nativeBalance,
       formatted: formatBigInt(nativeBalance, 18),
     });
@@ -108,14 +129,32 @@ export function usePortfolio(input: UsePortfolioInput): UsePortfolioReturn {
 
   tokens.forEach((token, i) => {
     const bal = tokenQueries[i]?.data;
-    if (bal !== undefined) {
-      rows.push({
-        token,
-        balance: bal,
-        formatted: formatBigInt(bal, token.decimals),
+    if (bal === undefined) return;
+
+    const displayAddress = normalizeAddress(
+      resolveDisplayTokenAddress(token.address, wrappedNativeAddress, CFX_NATIVE_ADDRESS),
+    );
+
+    if (displayAddress === nativeDisplayAddress) {
+      const existing = rowsByAddress.get(nativeDisplayAddress);
+      const nextBalance = ((existing?.balance ?? 0n) + bal) as Wei;
+
+      rowsByAddress.set(nativeDisplayAddress, {
+        token: existing?.token ?? nativePortfolioToken(client.chain.id, token.logoURI),
+        balance: nextBalance,
+        formatted: formatBigInt(nextBalance, 18),
       });
+      return;
     }
+
+    rowsByAddress.set(displayAddress, {
+      token,
+      balance: bal,
+      formatted: formatBigInt(bal, token.decimals),
+    });
   });
+
+  const rows = Array.from(rowsByAddress.values());
 
   // Sort by balance descending (larger balances first)
   rows.sort((a, b) => (a.balance > b.balance ? -1 : a.balance < b.balance ? 1 : 0));

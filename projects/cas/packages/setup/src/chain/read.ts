@@ -1,5 +1,5 @@
-import { createPublicClient, http, type PublicClient } from 'viem';
 import { automationManagerAbi } from '@cfxdevkit/protocol';
+import { createPublicClient, http, type PublicClient } from 'viem';
 
 function makeViemChain(rpcUrl: string, chainId: number) {
   return {

@@ -1,13 +1,13 @@
 'use client';
 
+import type { CasJobDto } from '@cfxdevkit/cas-shared';
 import { Plus, RefreshCcw, ShieldCheck } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { injected, useAccount, useConnect } from 'wagmi';
-import type { CasJobDto } from '@cfxdevkit/cas-shared';
 import { ApprovalsModal } from '../components/ApprovalsModal';
 import { Dashboard } from '../components/Dashboard/Dashboard';
-import { StrategyModal } from '../components/StrategyModal';
 import { WcfxWrapModal } from '../components/StrategyBuilder/WcfxWrapModal';
+import { StrategyModal } from '../components/StrategyModal';
 import { EXPECTED_CHAIN_NAME, useNetworkSwitch } from '../hooks/useNetworkSwitch';
 import { useAuthContext } from './auth-context';
 

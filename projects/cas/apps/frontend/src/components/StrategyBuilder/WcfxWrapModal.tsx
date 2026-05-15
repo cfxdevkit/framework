@@ -1,14 +1,13 @@
 'use client';
 
+import { WCFX_ABI } from '@cfxdevkit/cas-shared';
 import { RefreshCcw, X } from 'lucide-react';
 import { useState } from 'react';
 import { parseUnits } from 'viem';
 import { usePublicClient, useWriteContract } from 'wagmi';
-import { WCFX_ABI } from '@cfxdevkit/cas-shared';
 import { useAuthContext } from '../../app/auth-context';
-import { usePoolsContext } from '../../app/pools-context';
+import { CFX_NATIVE_ADDRESS, usePoolsContext } from '../../app/pools-context';
 import { readContracts } from '../../lib/strategy';
-import { CFX_NATIVE_ADDRESS } from '../../app/pools-context';
 
 function fmtBalance(val: string) {
   const n = parseFloat(val);

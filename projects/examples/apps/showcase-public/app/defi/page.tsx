@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient, espaceTestnet, http } from '@cfxdevkit/core';
+import { createClient, espaceMainnet, http } from '@cfxdevkit/core';
 import type { EspaceClient } from '@cfxdevkit/core/client';
 import {
   createSwappiAdapter,
@@ -11,61 +11,69 @@ import {
 } from '@cfxdevkit/defi-react';
 import { CodeSnippet, DemoCard, StatusBadge } from '@cfxdevkit/example-showcase-ui';
 import { CfxProvider } from '@cfxdevkit/react';
+import {
+  CFX_NATIVE_ADDRESS,
+  DEFAULT_MAINNET_DISPLAY_TOKENS,
+  DEFAULT_MAINNET_ERC20_TOKENS,
+  DEFAULT_MAINNET_PAIRS,
+  getPairedTokens,
+  wcfxAddress,
+} from '@cfxdevkit/ui-core';
 import { useMemo, useState } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
 import { SiteLayout } from '../site-layout';
 
-const ESPACE_TESTNET_CHAIN_ID = 71;
+const ESPACE_MAINNET_CHAIN_ID = 1030;
 
-// eSpace testnet client for read-only calls and the Swappi adapter.
-const espaceClient = createClient({ chain: espaceTestnet, transport: http() });
+// eSpace mainnet client for read-only calls and the Swappi adapter.
+const espaceClient = createClient({ chain: espaceMainnet, transport: http() });
 
-// Known testnet token addresses on Conflux eSpace testnet (chainId 71).
-const STATIC_TOKENS = [
-  {
-    address: '0x2Ed3dddae5B2F321AF0806181FBFA6D049Be47d8' as `0x${string}`,
-    symbol: 'WCFX',
-    name: 'Wrapped CFX',
-    decimals: 18,
-    chainId: ESPACE_TESTNET_CHAIN_ID,
-  },
-  {
-    address: '0x349298b0e20df67defd6efb8f3170cf4a32722ef' as `0x${string}`,
-    symbol: 'cUSDT',
-    name: 'Tether USD (Conflux)',
-    decimals: 18,
-    chainId: ESPACE_TESTNET_CHAIN_ID,
-  },
-];
+const TOKEN_REGISTRY = createTokenRegistry(DEFAULT_MAINNET_DISPLAY_TOKENS);
+const DEFAULT_SWAP_TOKEN_IN = DEFAULT_MAINNET_DISPLAY_TOKENS[0];
+const DEFAULT_SWAP_OUTPUT_OPTIONS = getPairedTokens(
+  DEFAULT_MAINNET_PAIRS,
+  DEFAULT_MAINNET_DISPLAY_TOKENS,
+  DEFAULT_SWAP_TOKEN_IN?.address ?? CFX_NATIVE_ADDRESS,
+  { wrappedNativeAddress: wcfxAddress('mainnet') },
+);
+const DEFAULT_SWAP_TOKEN_OUT = DEFAULT_SWAP_OUTPUT_OPTIONS[0] ?? DEFAULT_MAINNET_DISPLAY_TOKENS[1];
 
-const TOKEN_REGISTRY = createTokenRegistry(STATIC_TOKENS);
-
-const PORTFOLIO_SNIPPET = `import { PortfolioTable, createTokenRegistry } from '@cfxdevkit/defi-react';
-
-const tokens = [
-  { address: '0x2Ed3…', symbol: 'WCFX', name: 'Wrapped CFX', decimals: 18, chainId: 71 },
-  { address: '0x349…',  symbol: 'cUSDT', name: 'Tether USD', decimals: 18, chainId: 71 },
-];
+const PORTFOLIO_SNIPPET = `import { PortfolioTable } from '@cfxdevkit/defi-react';
+import { DEFAULT_MAINNET_ERC20_TOKENS } from '@cfxdevkit/ui-core';
 
 function Portfolio({ address }) {
-  return <PortfolioTable tokens={tokens} address={address} />;
+  return <PortfolioTable tokens={DEFAULT_MAINNET_ERC20_TOKENS} address={address} />;
 }`;
 
 const SWAP_SNIPPET = `import { SwapWidget, createSwappiAdapter } from '@cfxdevkit/defi-react';
-import { createClient, http, espaceTestnet } from '@cfxdevkit/core';
+import { createClient, http, espaceMainnet } from '@cfxdevkit/core';
 import { CfxProvider } from '@cfxdevkit/react';
+import {
+  CFX_NATIVE_ADDRESS,
+  DEFAULT_MAINNET_DISPLAY_TOKENS,
+  DEFAULT_MAINNET_PAIRS,
+  getPairedTokens,
+  wcfxAddress,
+} from '@cfxdevkit/ui-core';
 
-const client = createClient({ chain: espaceTestnet, transport: http() });
-const adapter = createSwappiAdapter({ chainId: 71, client });
+const client = createClient({ chain: espaceMainnet, transport: http() });
+const adapter = createSwappiAdapter({ chainId: 1030, client });
+const defaultTokenIn = DEFAULT_MAINNET_DISPLAY_TOKENS[0]?.address ?? CFX_NATIVE_ADDRESS;
+const defaultTokenOut =
+  getPairedTokens(DEFAULT_MAINNET_PAIRS, DEFAULT_MAINNET_DISPLAY_TOKENS, defaultTokenIn, {
+    wrappedNativeAddress: wcfxAddress('mainnet'),
+  })[0]?.address ?? DEFAULT_MAINNET_DISPLAY_TOKENS[1].address;
 
 function Swap({ signer }) {
   return (
     <CfxProvider client={client} signer={signer}>
       <SwapWidget
         adapter={adapter}
-        tokens={tokens}
-        defaultTokenIn={WCFX_ADDRESS}
-        defaultTokenOut={CUSDT_ADDRESS}
+        tokens={DEFAULT_MAINNET_DISPLAY_TOKENS}
+        pairs={DEFAULT_MAINNET_PAIRS}
+        tokenSelectionOptions={{ wrappedNativeAddress: wcfxAddress('mainnet') }}
+        defaultTokenIn={defaultTokenIn}
+        defaultTokenOut={defaultTokenOut}
       />
     </CfxProvider>
   );
@@ -116,12 +124,14 @@ function DefiProviderBridge({ children }: { children: React.ReactNode }) {
 // biome-ignore lint/style/noDefaultExport: Next.js page requires default export.
 export default function DefiPage() {
   const { address, isConnected } = useAccount();
-  const [selectedToken, setSelectedToken] = useState<(typeof STATIC_TOKENS)[number] | null>(null);
+  const [selectedToken, setSelectedToken] = useState<
+    (typeof DEFAULT_MAINNET_DISPLAY_TOKENS)[number] | null
+  >(null);
 
   const swappiAdapter = useMemo(
     () =>
       createSwappiAdapter({
-        chainId: ESPACE_TESTNET_CHAIN_ID,
+        chainId: ESPACE_MAINNET_CHAIN_ID,
         client: espaceClient as EspaceClient,
       }),
     [],
@@ -137,9 +147,9 @@ export default function DefiPage() {
         >
           <TokenPicker
             registry={TOKEN_REGISTRY}
-            chainId={ESPACE_TESTNET_CHAIN_ID}
+            chainId={ESPACE_MAINNET_CHAIN_ID}
             {...(selectedToken ? { selected: selectedToken.address } : {})}
-            onSelect={(t) => setSelectedToken(t as (typeof STATIC_TOKENS)[number])}
+            onSelect={(t) => setSelectedToken(t as (typeof DEFAULT_MAINNET_DISPLAY_TOKENS)[number])}
           />
           {selectedToken && (
             <div
@@ -164,7 +174,7 @@ export default function DefiPage() {
           description="PortfolioTable + usePortfolio — live token balances for the connected wallet."
         >
           {isConnected ? (
-            <PortfolioTable tokens={STATIC_TOKENS} address={address ?? null} />
+            <PortfolioTable tokens={DEFAULT_MAINNET_ERC20_TOKENS} address={address ?? null} />
           ) : (
             <StatusBadge status="pending" label="Connect an eSpace wallet to see token balances" />
           )}
@@ -176,13 +186,15 @@ export default function DefiPage() {
         {/* Swap Widget */}
         <DemoCard
           title="Swap (Swappi V2)"
-          description="SwapWidget backed by createSwappiAdapter — live quotes via Swappi V2 on eSpace testnet."
+          description="SwapWidget backed by createSwappiAdapter — live quotes via Swappi V2 on eSpace mainnet."
         >
           <SwapWidget
             adapter={swappiAdapter}
-            tokens={STATIC_TOKENS}
-            {...(STATIC_TOKENS[0] ? { defaultTokenIn: STATIC_TOKENS[0].address } : {})}
-            {...(STATIC_TOKENS[1] ? { defaultTokenOut: STATIC_TOKENS[1].address } : {})}
+            tokens={DEFAULT_MAINNET_DISPLAY_TOKENS}
+            pairs={DEFAULT_MAINNET_PAIRS}
+            tokenSelectionOptions={{ wrappedNativeAddress: wcfxAddress('mainnet') }}
+            {...(DEFAULT_SWAP_TOKEN_IN ? { defaultTokenIn: DEFAULT_SWAP_TOKEN_IN.address } : {})}
+            {...(DEFAULT_SWAP_TOKEN_OUT ? { defaultTokenOut: DEFAULT_SWAP_TOKEN_OUT.address } : {})}
             onSwapSubmitted={(tx) => console.info('Swap submitted:', tx.hash)}
           />
           <div style={{ marginTop: 'var(--cfx-space-3)' }}>

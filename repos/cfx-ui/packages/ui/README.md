@@ -18,8 +18,21 @@ Tailwind-first reusable Conflux UI components built on `@cfxdevkit/ui-core`.
 ## Setup
 
 - Ensure the consuming app already compiles Tailwind utility classes.
+- Include `@cfxdevkit/ui` in the app's Tailwind source scan.
 - Provide the wagmi wallet context before rendering wallet or network components.
 - Use app-level wrappers when an app needs product-specific copy, layout, or auth flows.
+
+```css
+@import "tailwindcss";
+@source "../node_modules/@cfxdevkit/ui/dist";
+
+@theme {
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --radius-panel: 1.25rem;
+  --font-ui: "Satoshi", sans-serif;
+}
+```
 
 ## Default theming
 
@@ -30,6 +43,10 @@ Tailwind-first reusable Conflux UI components built on `@cfxdevkit/ui-core`.
 ## Current surfaces
 
 - `SegmentedControl`
+- `Field`
+- `Notice`
+- `StatusGrid`
+- `Metric`
 - `WalletButton`
 - `WalletStatusChip`
 - `WalletProviderCard`
@@ -44,8 +61,12 @@ Tailwind-first reusable Conflux UI components built on `@cfxdevkit/ui-core`.
 
 ```tsx
 import {
+  Field,
+  Metric,
   NetworkSwitchNotice,
+  Notice,
   SegmentedControl,
+  StatusGrid,
   TokenAmountField,
   WalletButton,
 } from '@cfxdevkit/ui';
@@ -63,6 +84,7 @@ export function SwapHeader({ chainId, tokens }: { chainId: number; tokens: Array
       />
       <WalletButton className="w-full" connectLabel="Connect eSpace wallet" />
       <NetworkSwitchNotice chainName="Conflux eSpace" expectedChainId={chainId} />
+      <Notice tone="warning">Product copy and auth gating stay in your wrapper layer.</Notice>
       <TokenAmountField
         amount=""
         onAmountChange={() => undefined}
@@ -70,6 +92,13 @@ export function SwapHeader({ chainId, tokens }: { chainId: number; tokens: Array
         tokens={tokens}
         tokenValue={tokens[0]?.address ?? ''}
       />
+      <Field label="RPC endpoint" hint="Validation and persistence stay app-level.">
+        <input className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2" />
+      </Field>
+      <StatusGrid columns={2}>
+        <Metric label="Portfolio" value="$12.4k" delta="+4.2%" />
+        <Metric label="Gas budget" value="$42.80" />
+      </StatusGrid>
     </div>
   );
 }
@@ -78,10 +107,29 @@ export function SwapHeader({ chainId, tokens }: { chainId: number; tokens: Array
 ## Customization example
 
 ```tsx
-<WalletStatusChip
-  address={address}
-  className="border-cyan-400/40 bg-cyan-400/10 text-cyan-100"
-/>
+function PortfolioHeader() {
+  return (
+    <div className="rounded-[1.5rem] border border-emerald-400/20 bg-slate-950/90 p-5">
+      <SegmentedControl
+        className="bg-slate-900/80"
+        activeOptionClassName="bg-emerald-400 text-slate-950"
+        options={[
+          { label: 'Mainnet', value: 'mainnet' },
+          { label: 'Testnet', value: 'testnet' },
+        ]}
+        onChange={() => undefined}
+        value="testnet"
+      />
+      <WalletButton
+        connectLabel="Connect portfolio"
+        disconnectedClassName="bg-emerald-400 text-slate-950 hover:bg-emerald-300"
+      />
+      <Notice tone="warning" className="mt-4 border-amber-300/20 bg-amber-300/10 text-amber-50">
+        Product-specific messaging stays local while the shared package owns the shell styling.
+      </Notice>
+    </div>
+  );
+}
 ```
 
 ## Boundary

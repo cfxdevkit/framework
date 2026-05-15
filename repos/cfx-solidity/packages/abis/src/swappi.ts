@@ -20,13 +20,13 @@ export { SWAPPI_ROUTER_ABI } from './swappi-router.js';
 
 /** Swappi V2 Factory deployed addresses keyed by eSpace chain ID. */
 export const SWAPPI_FACTORY_ADDRESS = {
-  1030: '0x8B2aEfa5a5C8a31D6984BAEb73AE96E96a5d0d93' as const,
+  1030: '0xe2a6f7c0ce4d5d300f97aa7e125455f5cd3342f5' as const,
   71: '0xf22a40f0d158e0e78A58fc4dFEC24f94EA87F879' as const,
 } as const;
 
 /** Swappi V2 Router02 deployed addresses keyed by eSpace chain ID. */
 export const SWAPPI_ROUTER_ADDRESS = {
-  1030: '0x62B0873055Bf896CD869C3bf8d1FD8abDFC73f58' as const,
+  1030: '0xE37B52296b0bAA91412cD0Cd97975B0805037B84' as const,
   71: '0x873789AaF553Fd0B4252d0D2B72C6331c7aDB0C3' as const,
 } as const;
 

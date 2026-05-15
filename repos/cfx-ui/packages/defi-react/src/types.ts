@@ -30,7 +30,7 @@ export interface Quote {
   amountOutMin: Wei;
   /** Price impact in basis points. */
   priceImpactBps: number;
-  /** Human-readable hop path, e.g. `["WCFX", "USDT"]`. */
+  /** Execution hop path as token addresses, e.g. `[WCFX, USDT]`. */
   route: string[];
   /** Expiry as unix ms. */
   deadlineMs: number;
@@ -43,6 +43,11 @@ export interface SwapCalldata {
   data: `0x${string}`;
   /** Native value to attach (for CFX → token swaps). */
   value?: Wei;
+}
+
+export interface BuildSwapCalldataOptions {
+  /** Wallet receiving the swap output. */
+  recipient?: Address;
 }
 
 export class DexError extends Error {
@@ -76,7 +81,13 @@ export interface DexAdapter {
    * Encode the swap transaction. Returns the calldata ready to be submitted.
    * Does NOT submit — `useSwap` handles submission via `useSendTransaction`.
    */
-  buildCalldata(quote: Quote): Promise<SwapCalldata>;
+  buildCalldata(quote: Quote, options?: BuildSwapCalldataOptions): Promise<SwapCalldata>;
+
+  /**
+   * ERC-20 spender that must be approved before token-in swaps.
+   * Native CFX swaps do not require approvals.
+   */
+  getSpenderAddress?(): Address;
 }
 
 // ── Token registry ────────────────────────────────────────────────────────

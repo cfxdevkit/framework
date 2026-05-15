@@ -20,6 +20,13 @@ apps
 | `@cfxdevkit/ui` | Tailwind-only reusable web3 UI and generic primitives | app-specific orchestration, inline styles, component CSS files |
 | app-level wrappers | product copy, auth-specific flows, layout composition, app-specific visual language | reusable controller logic duplicated from `ui-core` |
 
+## Design token strategy
+
+- `@cfxdevkit/ui` no longer documents or depends on an app-facing `--cfx-color-*` token catalog.
+- Shared components are authored with Tailwind utility classes and expect the consuming app to provide any brand-level theme values through Tailwind configuration or `@theme` blocks.
+- Legacy theme CSS variables may still exist in older apps, but they are not the contract for the shared UI foundation.
+- When documenting customization, prefer `@theme`, app wrappers, and `className` overrides over raw CSS-variable lookup tables.
+
 ## Migration guidance
 
 - `showcase-ui`: act as a wrapper and re-export layer over `@cfxdevkit/ui` instead of becoming the shared foundation.
@@ -48,9 +55,13 @@ apps
 | Network switching | `@cfxdevkit/ui-core` + `@cfxdevkit/ui` | CAS network switch helper | headless controller plus styled notice |
 | Token registry | `@cfxdevkit/ui-core` | DeFi and CAS token sources | normalized helpers only |
 | Token selection | `@cfxdevkit/ui-core` + `@cfxdevkit/ui` | CAS strategy builder and showcase token pickers | shared controller plus styled selects |
+| Field shell | `@cfxdevkit/ui` | CAS and `defi-react` form wrappers | shared labelled input shell; validation stays app-level |
+| Notice banner | `@cfxdevkit/ui` | CAS notices and `defi-react` widgets | shared alert/status shell with app-owned copy |
+| Status grid + metric | `@cfxdevkit/ui` | CAS status pages and `defi-react` primitives | reusable KPI/status layout for dashboards and safety pages |
 | Wallet status chip | `@cfxdevkit/ui` | CAS wallet widget | styled reusable wallet state surface |
 | Wallet picker modal | app-level for now | `@cfxdevkit/wallet-connect/ui` | keep separate until generalized |
 | Auth sign-in CTA | app-level | CAS wallet widget | tied to app auth flow |
+| Modal shell | candidate for `@cfxdevkit/ui` | CAS approvals modal, older showcase dialogs | extract after shared focus management and animation API are defined |
 | Approvals | app-level for now | CAS approvals modal | revisit after broader extraction work |
 | Swap and liquidity builders | app-level for now | DeFi and CAS strategy surfaces | wait for broader domain extraction |
 
@@ -59,4 +70,4 @@ apps
 - `@cfxdevkit/ui-core` typechecks cleanly.
 - `@cfxdevkit/ui` typechecks cleanly.
 - `showcase-ui` consumes the foundation as a wrapper layer.
-- CAS pilots the shared foundation on wallet status and token-selection surfaces.
+- CAS pilots the shared foundation on wallet status, token-selection, form-shell, and status-surface primitives.

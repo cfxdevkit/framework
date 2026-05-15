@@ -1,82 +1,67 @@
 import type { Address } from '@cfxdevkit/core/types';
 import { useAccount } from '@cfxdevkit/react/account';
-import { useTokenBalance } from '@cfxdevkit/react/balance';
-import { useState } from 'react';
-import type { DexAdapter, TokenInfo } from '../types.js';
+import { useNativeBalance, useTokenBalance } from '@cfxdevkit/react/balance';
+import {
+  CFX_NATIVE_ADDRESS,
+  getPairedTokens,
+  type PairLike,
+  type TokenSelectionOptions,
+} from '@cfxdevkit/ui-core';
+import { useEffect, useMemo, useState } from 'react';
+import { TokenPicker } from '../token-picker/TokenPicker.js';
+import { createTokenRegistry, type DexAdapter, type TokenInfo } from '../types.js';
+import {
+  amountInputStyle,
+  cardStyle,
+  closeButtonStyle,
+  errorTextStyle,
+  inputRowStyle,
+  invertButtonStyle,
+  mutedTextStyle,
+  pickerCardStyle,
+  pickerHeaderStyle,
+  pickerOverlayStyle,
+  pickerTitleStyle,
+  swapButtonStyle,
+  tokenButtonStyle,
+} from './SwapWidget.styles.js';
+import { EMPTY_ADDRESS, formatAmount, parseAmountInput, sameAddress } from './SwapWidget.utils.js';
 import { useSwap } from './useSwap.js';
 
 export interface SwapWidgetProps {
   adapter: DexAdapter;
   /** Selectable tokens. If not provided the widget shows only a swap button. */
   tokens?: TokenInfo[];
+  pairs?: readonly PairLike[];
+  tokenSelectionOptions?: TokenSelectionOptions;
   defaultTokenIn?: Address;
   defaultTokenOut?: Address;
   onSwapSubmitted?: (tx: { hash: `0x${string}` }) => void;
 }
 
-// ── Inline styles (uses CSS variables from @cfxdevkit/theme/css) ──────────
-
-const cardStyle = {
-  background: 'var(--cfx-color-bg-subtle)',
-  border: '1px solid var(--cfx-color-border-default)',
-  borderRadius: 'var(--cfx-radius-lg)',
-  padding: 'var(--cfx-space-4)',
-  display: 'grid',
-  gap: 'var(--cfx-space-3)',
-  fontFamily: 'var(--cfx-font-sans)',
-  color: 'var(--cfx-color-fg-default)',
-} as const;
-
-const inputRowStyle = {
-  display: 'flex',
-  gap: 'var(--cfx-space-2)',
-  alignItems: 'center',
-} as const;
-
-const amountInputStyle = {
-  flex: 1,
-  background: 'var(--cfx-color-bg-default)',
-  border: '1px solid var(--cfx-color-border-subtle)',
-  borderRadius: 'var(--cfx-radius-md)',
-  padding: '8px 12px',
-  fontFamily: 'var(--cfx-font-mono)',
-  fontSize: 'var(--cfx-text-base)',
-  color: 'var(--cfx-color-fg-default)',
-  outline: 'none',
-} as const;
-
-const selectStyle = {
-  background: 'var(--cfx-color-bg-default)',
-  border: '1px solid var(--cfx-color-border-subtle)',
-  borderRadius: 'var(--cfx-radius-md)',
-  padding: '8px 12px',
-  fontSize: 'var(--cfx-text-sm)',
-  color: 'var(--cfx-color-fg-default)',
-  cursor: 'pointer',
-} as const;
-
-const swapButtonStyle = {
-  background: 'var(--cfx-color-brand-primary)',
-  color: 'var(--cfx-color-fg-on-brand)',
-  border: 'none',
-  borderRadius: 'var(--cfx-radius-md)',
-  padding: '10px 16px',
-  fontFamily: 'var(--cfx-font-sans)',
-  fontSize: 'var(--cfx-text-base)',
-  fontWeight: 600,
-  cursor: 'pointer',
-  width: '100%',
-} as const;
-
-const mutedTextStyle = {
-  fontSize: 'var(--cfx-text-sm)',
-  color: 'var(--cfx-color-fg-muted)',
-} as const;
-
-const errorTextStyle = {
-  fontSize: 'var(--cfx-text-sm)',
-  color: 'var(--cfx-color-feedback-danger)',
-} as const;
+function TokenPill({ token }: { token: TokenInfo | undefined }) {
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--cfx-space-2)' }}>
+      {token?.logoURI ? (
+        <img
+          src={token.logoURI}
+          alt={token.symbol}
+          width={20}
+          height={20}
+          style={{ borderRadius: '50%', flexShrink: 0 }}
+          onError={(event) => {
+            (event.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      ) : (
+        <span style={{ fontSize: 'var(--cfx-text-xs)', color: 'var(--cfx-color-fg-muted)' }}>
+          •
+        </span>
+      )}
+      <span>{token?.symbol ?? 'Select token'}</span>
+    </span>
+  );
+}
 
 /**
  * Headless-styled swap widget. Uses CSS variables from `@cfxdevkit/theme/css`.
@@ -85,6 +70,8 @@ const errorTextStyle = {
 export function SwapWidget({
   adapter,
   tokens = [],
+  pairs,
+  tokenSelectionOptions,
   defaultTokenIn,
   defaultTokenOut,
   onSwapSubmitted,
@@ -94,51 +81,104 @@ export function SwapWidget({
     defaultTokenOut ?? tokens[1]?.address,
   );
   const [rawAmount, setRawAmount] = useState('');
+  const [activePicker, setActivePicker] = useState<'in' | 'out' | null>(null);
 
   const { address } = useAccount();
 
-  // Parse amountIn as bigint (assume 18 decimals for simplicity; production adapters should handle this)
-  const amountIn = (() => {
-    const parsed = Number.parseFloat(rawAmount);
-    if (!Number.isFinite(parsed) || parsed <= 0) return 0n;
-    try {
-      return BigInt(Math.floor(parsed * 1e18));
-    } catch {
-      return 0n;
+  const selectableOutputTokens = useMemo(
+    () =>
+      pairs && tokenIn ? getPairedTokens(pairs, tokens, tokenIn, tokenSelectionOptions) : tokens,
+    [pairs, tokenIn, tokenSelectionOptions, tokens],
+  );
+
+  const pickerTokens = activePicker === 'out' ? selectableOutputTokens : tokens;
+  const tokenRegistry = useMemo(() => createTokenRegistry(pickerTokens), [pickerTokens]);
+
+  useEffect(() => {
+    if (!selectableOutputTokens.length) return;
+
+    const hasSelectedOutput = selectableOutputTokens.some((token) =>
+      sameAddress(token.address as Address, tokenOut),
+    );
+    const fallbackOutput = selectableOutputTokens[0];
+
+    if (!hasSelectedOutput && fallbackOutput) {
+      setTokenOut(fallbackOutput.address as Address);
     }
-  })();
+  }, [selectableOutputTokens, tokenOut]);
 
   const tokenInInfo = tokens.find((t) => t.address === tokenIn);
   const tokenOutInfo = tokens.find((t) => t.address === tokenOut);
+  const isNativeIn = sameAddress(tokenIn, CFX_NATIVE_ADDRESS as Address);
+  const amountIn = parseAmountInput(rawAmount, tokenInInfo?.decimals ?? 18);
 
-  const { data: tokenInBalance } = useTokenBalance({
-    token: tokenIn ?? ('0x' as Address),
+  const { data: nativeTokenInBalance } = useNativeBalance({
+    address: address ?? undefined,
+    enabled: isNativeIn && !!address,
+  });
+
+  const { data: erc20TokenInBalance } = useTokenBalance({
+    token: tokenIn ?? EMPTY_ADDRESS,
     owner: address,
-    enabled: !!tokenIn && !!address,
+    enabled: !isNativeIn && !!tokenIn && !!address,
   });
 
-  const { quote, isQuoting, quoteError, swapAsync, isSwapping, swapError } = useSwap({
+  const tokenInBalance = isNativeIn ? nativeTokenInBalance : erc20TokenInBalance;
+
+  const {
+    quote,
+    isQuoting,
+    quoteError,
+    approveAsync,
+    needsApproval,
+    isApproving,
+    approvalError,
+    swapAsync,
+    isSwapping,
+    swapError,
+  } = useSwap({
     adapter,
-    tokenIn: tokenIn ?? ('0x' as Address),
-    tokenOut: tokenOut ?? ('0x' as Address),
+    tokenIn: tokenIn ?? EMPTY_ADDRESS,
+    tokenOut: tokenOut ?? EMPTY_ADDRESS,
     amountIn,
-    enabled: !!tokenIn && !!tokenOut && amountIn > 0n,
+    enabled: !!tokenIn && !!tokenOut && !sameAddress(tokenIn, tokenOut) && amountIn > 0n,
   });
 
-  const canSwap = !!quote && !isSwapping && !!address;
+  const canSubmit = !!quote && !!address && !isApproving && !isSwapping;
 
-  const handleSwap = async () => {
+  const selectToken = (side: 'in' | 'out', nextToken: TokenInfo) => {
+    if (side === 'in') {
+      if (sameAddress(nextToken.address, tokenOut)) {
+        setTokenOut(tokenIn);
+      }
+      setTokenIn(nextToken.address);
+    } else {
+      if (sameAddress(nextToken.address, tokenIn)) {
+        setTokenIn(tokenOut);
+      }
+      setTokenOut(nextToken.address);
+    }
+
+    setActivePicker(null);
+  };
+
+  const invertTokens = () => {
+    setTokenIn(tokenOut);
+    setTokenOut(tokenIn);
+  };
+
+  const handlePrimaryAction = async () => {
     try {
+      if (needsApproval) {
+        await approveAsync();
+        return;
+      }
+
       const tx = await swapAsync();
       onSwapSubmitted?.(tx);
     } catch {
-      // error is surfaced via swapError
+      // error is surfaced via hook state
     }
-  };
-
-  const formatBalance = (bal: bigint, decimals = 18) => {
-    const factor = 10 ** decimals;
-    return (Number(bal) / factor).toFixed(4);
   };
 
   return (
@@ -154,47 +194,34 @@ export function SwapWidget({
             style={amountInputStyle}
           />
           {tokens.length > 0 && (
-            <select
-              value={tokenIn}
-              onChange={(e) => setTokenIn(e.target.value as Address)}
-              style={selectStyle}
-            >
-              {tokens.map((t) => (
-                <option key={t.address} value={t.address}>
-                  {t.symbol}
-                </option>
-              ))}
-            </select>
+            <button type="button" onClick={() => setActivePicker('in')} style={tokenButtonStyle}>
+              <TokenPill token={tokenInInfo} />
+              <span style={{ color: 'var(--cfx-color-fg-muted)' }}>▾</span>
+            </button>
           )}
         </div>
         {tokenInBalance !== undefined && tokenInInfo && (
           <p style={mutedTextStyle}>
-            Balance: {formatBalance(tokenInBalance, tokenInInfo.decimals)} {tokenInInfo.symbol}
+            Balance: {formatAmount(tokenInBalance, tokenInInfo.decimals)} {tokenInInfo.symbol}
           </p>
         )}
       </div>
 
-      {/* Arrow */}
-      <div style={{ textAlign: 'center', color: 'var(--cfx-color-fg-muted)' }}>↓</div>
+      <button type="button" onClick={invertTokens} style={invertButtonStyle}>
+        ⇅
+      </button>
 
       {/* Token Out */}
       <div>
         <div style={inputRowStyle}>
           <span style={{ ...amountInputStyle, flex: 1, display: 'block', opacity: 0.7 }}>
-            {quote ? formatBalance(quote.amountOut, tokenOutInfo?.decimals) : '—'}
+            {quote ? formatAmount(quote.amountOut, tokenOutInfo?.decimals ?? 18) : '—'}
           </span>
           {tokens.length > 0 && (
-            <select
-              value={tokenOut}
-              onChange={(e) => setTokenOut(e.target.value as Address)}
-              style={selectStyle}
-            >
-              {tokens.map((t) => (
-                <option key={t.address} value={t.address}>
-                  {t.symbol}
-                </option>
-              ))}
-            </select>
+            <button type="button" onClick={() => setActivePicker('out')} style={tokenButtonStyle}>
+              <TokenPill token={tokenOutInfo} />
+              <span style={{ color: 'var(--cfx-color-fg-muted)' }}>▾</span>
+            </button>
           )}
         </div>
       </div>
@@ -209,18 +236,50 @@ export function SwapWidget({
       {/* Swap button */}
       <button
         type="button"
-        disabled={!canSwap}
-        onClick={handleSwap}
+        disabled={!canSubmit}
+        onClick={handlePrimaryAction}
         style={{
           ...swapButtonStyle,
-          opacity: canSwap ? 1 : 0.5,
-          cursor: canSwap ? 'pointer' : 'not-allowed',
+          opacity: canSubmit ? 1 : 0.5,
+          cursor: canSubmit ? 'pointer' : 'not-allowed',
         }}
       >
-        {isSwapping ? 'Swapping…' : !address ? 'Connect wallet' : 'Swap'}
+        {!address
+          ? 'Connect wallet'
+          : isApproving
+            ? 'Approving…'
+            : needsApproval
+              ? 'Approve'
+              : isSwapping
+                ? 'Swapping…'
+                : 'Swap'}
       </button>
 
+      {approvalError && <p style={errorTextStyle}>{approvalError.message}</p>}
       {swapError && <p style={errorTextStyle}>{swapError.message}</p>}
+
+      {activePicker && (
+        <div style={pickerOverlayStyle} role="dialog" aria-modal="true">
+          <div style={pickerCardStyle}>
+            <div style={pickerHeaderStyle}>
+              <p style={pickerTitleStyle}>
+                {activePicker === 'in' ? 'Select input token' : 'Select output token'}
+              </p>
+              <button type="button" onClick={() => setActivePicker(null)} style={closeButtonStyle}>
+                Close
+              </button>
+            </div>
+            <TokenPicker
+              registry={tokenRegistry}
+              chainId={pickerTokens[0]?.chainId ?? tokens[0]?.chainId ?? 1030}
+              {...((activePicker === 'in' ? tokenIn : tokenOut)
+                ? { selected: (activePicker === 'in' ? tokenIn : tokenOut) as Address }
+                : {})}
+              onSelect={(token) => selectToken(activePicker, token)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -15,6 +15,7 @@
     "@cfxdevkit/core": "workspace:*",
     "@cfxdevkit/defi-react": "workspace:*",
     "@cfxdevkit/example-showcase-ui": "workspace:*",
+    "@cfxdevkit/protocol": "workspace:*",
     "@cfxdevkit/react": "workspace:*",
     "@cfxdevkit/theme": "workspace:*",
     "@cfxdevkit/ui-core": "workspace:^",

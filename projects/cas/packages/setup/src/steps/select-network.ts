@@ -1,9 +1,9 @@
-import { input, select } from '@inquirer/prompts';
 import {
   automationManagerAddress,
   permitHandlerAddress,
   swappiPriceAdapterAddress,
 } from '@cfxdevkit/protocol';
+import { input, select } from '@inquirer/prompts';
 import type { Network, WizardState } from '../wizard.js';
 import { checkRpc } from './check-env.js';
 

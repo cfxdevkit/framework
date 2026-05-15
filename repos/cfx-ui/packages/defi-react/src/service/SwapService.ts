@@ -8,8 +8,15 @@ import {
 } from '@cfxdevkit/abis/swappi';
 import type { EspaceClient } from '@cfxdevkit/core/client';
 import type { Address } from '@cfxdevkit/core/types';
+import { CFX_NATIVE_ADDRESS, normalizeAddress, resolveTokenAddress } from '@cfxdevkit/ui-core';
 import { type Abi, decodeFunctionResult, encodeFunctionData, getAddress } from 'viem';
-import type { DexAdapter, Quote, SwapCalldata } from '../types.js';
+import {
+  type BuildSwapCalldataOptions,
+  type DexAdapter,
+  DexError,
+  type Quote,
+  type SwapCalldata,
+} from '../types.js';
 
 /** Configuration for `SwapService`. */
 export interface SwapServiceConfig {
@@ -30,6 +37,14 @@ export interface PoolTokens {
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
 const DEFAULT_SLIPPAGE_BPS = 50; // 0.5 %
 const DEFAULT_DEADLINE_MS = 20 * 60 * 1000; // 20 minutes
+
+function isNativeToken(address: Address): boolean {
+  return normalizeAddress(address) === normalizeAddress(CFX_NATIVE_ADDRESS);
+}
+
+function normalizeQuotedToken(address: Address): Address {
+  return isNativeToken(address) ? (CFX_NATIVE_ADDRESS as Address) : getAddress(address);
+}
 
 /**
  * Swappi V2 DEX integration that implements `DexAdapter`.
@@ -73,6 +88,10 @@ export class SwapService implements DexAdapter {
 
   // ── DexAdapter ────────────────────────────────────────────────────────────
 
+  getSpenderAddress(): Address {
+    return this.#router;
+  }
+
   async getQuote(params: {
     tokenIn: Address;
     tokenOut: Address;
@@ -80,13 +99,24 @@ export class SwapService implements DexAdapter {
     slippageBps?: number;
     deadlineMs?: number;
   }): Promise<Quote> {
-    const tokenIn = getAddress(params.tokenIn);
-    const tokenOut = getAddress(params.tokenOut);
+    const tokenIn = normalizeQuotedToken(params.tokenIn);
+    const tokenOut = normalizeQuotedToken(params.tokenOut);
     const { amountIn } = params;
     const slippageBps = params.slippageBps ?? DEFAULT_SLIPPAGE_BPS;
     const deadlineMs = params.deadlineMs ?? Date.now() + DEFAULT_DEADLINE_MS;
 
-    const path = await this.#buildPath(tokenIn, tokenOut);
+    const executionTokenIn = getAddress(
+      resolveTokenAddress(tokenIn, this.#wcfx, CFX_NATIVE_ADDRESS),
+    );
+    const executionTokenOut = getAddress(
+      resolveTokenAddress(tokenOut, this.#wcfx, CFX_NATIVE_ADDRESS),
+    );
+
+    if (normalizeAddress(executionTokenIn) === normalizeAddress(executionTokenOut)) {
+      throw new DexError('Select two different tokens before swapping.', 'SAME_TOKEN');
+    }
+
+    const path = await this.#buildPath(executionTokenIn, executionTokenOut);
     const amounts = await this.#getAmountsOut(amountIn, path);
     const amountOut = amounts[amounts.length - 1] ?? 0n;
 
@@ -109,22 +139,54 @@ export class SwapService implements DexAdapter {
     };
   }
 
-  async buildCalldata(quote: Quote): Promise<SwapCalldata> {
+  async buildCalldata(quote: Quote, options: BuildSwapCalldataOptions = {}): Promise<SwapCalldata> {
     const deadline = BigInt(Math.ceil(quote.deadlineMs / 1000));
+    const recipient = options.recipient ? getAddress(options.recipient) : undefined;
 
-    // Reconstruct path from route (route stores addresses or length signals hops)
-    const path =
-      quote.route.length >= 2 ? (quote.route as Address[]) : [quote.tokenIn, quote.tokenOut];
+    if (!recipient) {
+      throw new DexError(
+        'Swap recipient is required before encoding calldata.',
+        'MISSING_RECIPIENT',
+      );
+    }
 
-    // Placeholder recipient — callers must override with the actual wallet address.
-    // For DexAdapter usage, the recipient is typically the connected wallet
-    // address which is applied at the call-site by the `useSwap` hook.
-    const to = ZERO_ADDRESS;
+    const path = quote.route as Address[];
+
+    if (path.length < 2) {
+      throw new DexError('Swap route is incomplete.', 'INVALID_PATH');
+    }
+
+    const nativeIn = isNativeToken(quote.tokenIn);
+    const nativeOut = isNativeToken(quote.tokenOut);
+
+    if (nativeIn && nativeOut) {
+      throw new DexError('Native-to-native swaps are not supported.', 'INVALID_SWAP');
+    }
+
+    if (nativeIn) {
+      const data = encodeFunctionData({
+        abi: SWAPPI_ROUTER_ABI,
+        functionName: 'swapExactETHForTokens',
+        args: [quote.amountOutMin, path, recipient, deadline],
+      });
+
+      return { to: this.#router, data, value: quote.amountIn };
+    }
+
+    if (nativeOut) {
+      const data = encodeFunctionData({
+        abi: SWAPPI_ROUTER_ABI,
+        functionName: 'swapExactTokensForETH',
+        args: [quote.amountIn, quote.amountOutMin, path, recipient, deadline],
+      });
+
+      return { to: this.#router, data };
+    }
 
     const data = encodeFunctionData({
       abi: SWAPPI_ROUTER_ABI,
       functionName: 'swapExactTokensForTokens',
-      args: [quote.amountIn, quote.amountOutMin, path, to, deadline],
+      args: [quote.amountIn, quote.amountOutMin, path, recipient, deadline],
     });
 
     return { to: this.#router, data };
@@ -172,10 +234,22 @@ export class SwapService implements DexAdapter {
   // ── Private helpers ───────────────────────────────────────────────────────
 
   async #buildPath(tokenIn: Address, tokenOut: Address): Promise<Address[]> {
+    if (normalizeAddress(tokenIn) === normalizeAddress(tokenOut)) {
+      throw new DexError('Select two different tokens before swapping.', 'SAME_TOKEN');
+    }
+
     const pair = await this.getPair(tokenIn, tokenOut);
     if (pair.toLowerCase() !== ZERO_ADDRESS.toLowerCase()) {
       return [tokenIn, tokenOut];
     }
+
+    if (
+      normalizeAddress(tokenIn) === normalizeAddress(this.#wcfx) ||
+      normalizeAddress(tokenOut) === normalizeAddress(this.#wcfx)
+    ) {
+      throw new DexError('No direct Swappi route exists for the selected pair.', 'NO_ROUTE');
+    }
+
     // Multi-hop via WCFX
     return [tokenIn, this.#wcfx, tokenOut];
   }

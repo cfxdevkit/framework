@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EMPTY_STATE } from '../wizard.js';
 
 // We test checkEnv and checkRpc in isolation by mocking process.version and fetch.

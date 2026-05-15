@@ -83,7 +83,7 @@ export function TokenPicker({
   const [query, setQuery] = useState('');
 
   const results = useMemo(
-    () => (query.trim() ? registry.search(query, chainId) : registry.list(chainId).slice(0, 50)),
+    () => (query.trim() ? registry.search(query, chainId) : registry.list(chainId)),
     [registry, chainId, query],
   );
 

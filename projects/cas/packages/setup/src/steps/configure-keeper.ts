@@ -1,12 +1,12 @@
-import { confirm, password } from '@inquirer/prompts';
-import { automationManagerAbi } from '@cfxdevkit/protocol';
-import { createClient, http } from '@cfxdevkit/core/client';
-import { espaceLocal, espaceMainnet, espaceTestnet } from '@cfxdevkit/core/chains';
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
 import { sendWrite } from '@cfxdevkit/contracts/write';
 import type { Hex } from '@cfxdevkit/core';
-import type { WizardState } from '../wizard.js';
+import { espaceLocal, espaceMainnet, espaceTestnet } from '@cfxdevkit/core/chains';
+import { createClient, http } from '@cfxdevkit/core/client';
+import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
+import { automationManagerAbi } from '@cfxdevkit/protocol';
+import { confirm, password } from '@inquirer/prompts';
 import { getBalance, isKeeper } from '../chain/read.js';
+import type { WizardState } from '../wizard.js';
 
 function chainIdForState(network: string): number {
   if (network === 'testnet') return espaceTestnet.id;
@@ -83,7 +83,7 @@ export async function configureKeeper(state: WizardState): Promise<WizardState> 
           : espaceLocal;
     const chain = { ...baseChain, rpc: { ...baseChain.rpc, http: [state.rpcUrl] as const } };
 
-    const client = createClient({ chain, transport: http(state.rpcUrl) });
+    const client = createClient({ chain, transport: http({ url: state.rpcUrl }) });
     const ownerSigner = signerFromPrivateKey(ownerPrivateKey);
 
     console.log('  Calling setKeeper(signer, true)…');
