@@ -27,6 +27,13 @@ and light integration coverage for the public API surface.
 - [`apps/showcase-stack/`](apps/showcase-stack/) — Tier 3 full-stack example frontend
   that talks to the showcase backend.
 
+- [`apps/showcase-local/`](apps/showcase-local/) — Tier 3 local-runtime showcase
+  that runs the shared `@cfxdevkit/devnode-server` backend in-process and exposes
+  the same control plane expected by showcase, the VS Code extension, and MCP.
+  The backend owns the active network profile per wallet, supports switching
+  between `local`, `testnet`, and `mainnet`, keeps tracked contracts isolated by
+  wallet, and preserves generic ABI routes alongside tracked contract calls by id.
+
 - [`apps/showcase-backend/`](apps/showcase-backend/) — Tier 1 backend service used by
   the stack example.
 
@@ -54,10 +61,13 @@ The gateway presents the examples as a single path through the current codebase:
 2. `/stack/` — backend-backed flows: `@cfxdevkit/devnode`, backend SIWE,
   session-key delegation, compiler endpoints, contract deployment, and local
   RPC proxying.
-3. `/browser/` — external wallet coverage: Fluent Core, non-Fluent eSpace
+3. `/showcase-local/` — shared backend control plane: wallet-scoped keystore,
+  local/public network profile switching, tracked contract persistence, deploy,
+  read, write, and tracked contract call-by-id flows.
+4. `/browser/` — external wallet coverage: Fluent Core, non-Fluent eSpace
   providers, wagmi, raw injected provider diagnostics, signing, and transfer
   flows.
-4. `/keystores/` — keystore management coverage: memory, encrypted file, Ledger,
+5. `/keystores/` — keystore management coverage: memory, encrypted file, Ledger,
   and reserved OneKey/Satochip backend slots, plus Core/eSpace transfer and
   deploy flows through the active managed signer.
 

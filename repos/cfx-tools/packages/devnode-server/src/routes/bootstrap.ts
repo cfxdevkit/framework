@@ -7,7 +7,7 @@ import {
   signerFromPrivateKey,
 } from '@cfxdevkit/core';
 import { Hono } from 'hono';
-import type { ContractRegistry } from '../contracts.js';
+import { type ContractRegistry, chainIdForContractNetwork } from '../contracts.js';
 import type { DevnodeServerController } from '../controller.js';
 
 export function createBootstrapRoutes(
@@ -168,10 +168,12 @@ export function createBootstrapRoutes(
       // Register in ContractRegistry if address was obtained
       let contractRecord = null;
       if (contractAddress) {
-        contractRecord = registry.register({
+        contractRecord = await registry.register({
           name: tmpl.contractName,
           address: contractAddress,
           abi: artifact.abi,
+          chainId: chainIdForContractNetwork('local', 'espace'),
+          network: 'local',
           space: 'espace',
         });
       }

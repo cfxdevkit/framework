@@ -7,10 +7,17 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "cfxdevkit-devnode-server": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
     },
     "./package.json": "./package.json"
   },
@@ -22,6 +29,7 @@
   ],
   "scripts": {
     "build": "vite build",
+    "start": "node ./dist/cli.js serve",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -30,8 +38,12 @@
   },
   "dependencies": {
     "@cfxdevkit/compiler": "workspace:^",
+    "@cfxdevkit/contracts": "workspace:^",
     "@cfxdevkit/core": "workspace:^",
     "@cfxdevkit/devnode": "workspace:^",
+    "@cfxdevkit/services": "workspace:^",
+    "@cfxdevkit/wallet": "workspace:^",
+    "@hono/node-server": "^1.19.14",
     "hono": "^4.12.18",
     "viem": "^2.21.0"
   },

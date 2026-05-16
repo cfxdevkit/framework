@@ -36,6 +36,14 @@ export function createKeystoreRoutes(keystore: KeystoreService): Hono {
     return c.json({ ok: true });
   });
 
+  app.get('/active', async (c) => {
+    try {
+      return c.json({ ok: true, wallet: await keystore.activeWallet() });
+    } catch (err) {
+      return c.json({ ok: false, error: errMsg(err), wallet: null }, 403);
+    }
+  });
+
   app.get('/wallets', (c) => {
     try {
       return c.json({ ok: true, wallets: keystore.listWallets() });
@@ -45,22 +53,54 @@ export function createKeystoreRoutes(keystore: KeystoreService): Hono {
   });
 
   app.post('/wallets', async (c) => {
-    const { mnemonic, name } = await readBody<{ mnemonic?: string; name?: string }>(c);
+    const { mnemonic, name, accountCount, derivationBase } = await readBody<{
+      mnemonic?: string;
+      name?: string;
+      accountCount?: number;
+      derivationBase?: string;
+    }>(c);
     if (!mnemonic || !name) {
       return c.json({ ok: false, error: 'mnemonic and name are required' }, 400);
     }
     try {
-      const wallet = await keystore.addWallet(mnemonic, name);
+      const wallet = await keystore.addWallet(mnemonic, name, {
+        ...(accountCount === undefined ? {} : { accountCount }),
+        ...(derivationBase === undefined ? {} : { derivationBase }),
+      });
       return c.json({ ok: true, wallet });
     } catch (err) {
       return c.json({ ok: false, error: errMsg(err) }, 400);
     }
   });
 
-  app.put('/wallets/:id/activate', async (c) => {
+  app.get('/wallets/:id/accounts', async (c) => {
     const id = c.req.param('id');
     try {
-      await keystore.activateWallet(id);
+      return c.json({ ok: true, accounts: await keystore.listAccounts(id) });
+    } catch (err) {
+      return c.json({ ok: false, error: errMsg(err) }, 404);
+    }
+  });
+
+  app.put('/wallets/:id/activate', async (c) => {
+    const id = c.req.param('id');
+    const { accountIndex } = await readBody<{ accountIndex?: number }>(c);
+    try {
+      await keystore.activateWallet(id, accountIndex);
+      return c.json({ ok: true });
+    } catch (err) {
+      return c.json({ ok: false, error: errMsg(err) }, 404);
+    }
+  });
+
+  app.put('/wallets/:id/accounts/:index/activate', async (c) => {
+    const id = c.req.param('id');
+    const index = Number(c.req.param('index'));
+    if (!Number.isInteger(index) || index < 0) {
+      return c.json({ ok: false, error: 'index must be a non-negative integer' }, 400);
+    }
+    try {
+      await keystore.activateAccount(id, index);
       return c.json({ ok: true });
     } catch (err) {
       return c.json({ ok: false, error: errMsg(err) }, 404);
@@ -89,7 +129,54 @@ export function createKeystoreRoutes(keystore: KeystoreService): Hono {
     }
   });
 
+  app.post('/reveal/request', async (c) => {
+    const { walletId, passphrase, kind, accountIndex, ttlMs } = await readBody<{
+      walletId?: string;
+      passphrase?: string;
+      kind?: 'mnemonic' | 'private-key';
+      accountIndex?: number;
+      ttlMs?: number;
+    }>(c);
+    if (!walletId) return c.json({ ok: false, error: 'walletId is required' }, 400);
+    if (!passphrase) return c.json({ ok: false, error: 'passphrase is required' }, 400);
+    if (kind !== 'mnemonic' && kind !== 'private-key') {
+      return c.json({ ok: false, error: 'kind must be mnemonic or private-key' }, 400);
+    }
+
+    try {
+      noStore(c);
+      const request = await keystore.createRevealRequest({
+        walletId,
+        passphrase,
+        kind,
+        ...(accountIndex === undefined ? {} : { accountIndex }),
+        ...(ttlMs === undefined ? {} : { ttlMs }),
+      });
+      return c.json({ ok: true, request });
+    } catch (err) {
+      return c.json({ ok: false, error: errMsg(err) }, 401);
+    }
+  });
+
+  app.post('/reveal/consume', async (c) => {
+    const { token } = await readBody<{ token?: string }>(c);
+    if (!token) return c.json({ ok: false, error: 'token is required' }, 400);
+
+    try {
+      noStore(c);
+      const reveal = keystore.consumeRevealRequest(token);
+      return c.json({ ok: true, reveal });
+    } catch (err) {
+      return c.json({ ok: false, error: errMsg(err) }, 404);
+    }
+  });
+
   return app;
+}
+
+function noStore(c: { header: (name: string, value: string) => void }) {
+  c.header('Cache-Control', 'no-store');
+  c.header('Pragma', 'no-cache');
 }
 
 async function readBody<T>(c: { req: { json: () => Promise<unknown> } }): Promise<T> {

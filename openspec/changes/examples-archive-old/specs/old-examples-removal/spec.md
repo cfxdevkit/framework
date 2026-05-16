@@ -14,11 +14,11 @@ THEN none of `apps/showcase`, `apps/showcase-stack`, `apps/showcase-browser`, `a
 
 ### Requirement: Showcase backend is removed
 
-The directory `apps/showcase-backend` SHALL be deleted from `projects/examples/apps/`.
+The directory `apps/showcase-backend` SHALL be deleted from `projects/examples/apps/` once its remaining local-runtime responsibilities are covered by the shared control-plane replacement.
 
-**Reason:** Its functionality (devnode management, keystore, session-key, compile, deploy) is re-implemented as Next.js API routes in `apps/showcase-local`.
+**Reason:** Its functionality (devnode management, keystore, session-key, compile, deploy) is superseded by the shared local-runtime control plane consumed by `apps/showcase-local` and other tooling.
 
-**Migration:** See `examples-showcase-local` for the replacement implementation.
+**Migration:** See `local-runtime-control-plane` and `examples-showcase-local` for the replacement implementation.
 
 #### Scenario: showcase-backend directory does not exist after archive
 WHEN the file system is inspected after this change is applied

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import './shell.css';
+import './sidebar.css';
 
 export interface NavItem {
   label: string;
@@ -88,18 +89,48 @@ export function PanelSidebar<TGroup extends string, TPanel extends PanelLike<TGr
   onSelect(id: string): void;
   renderMeta?: (panel: TPanel) => ReactNode;
 }) {
+  const groupedPanels = useMemo(() => {
+    const map = new Map<TGroup, TPanel[]>();
+    for (const panel of props.panels) {
+      const current = map.get(panel.group) ?? [];
+      current.push(panel);
+      map.set(panel.group, current);
+    }
+    return map;
+  }, [props.panels]);
+
   return (
-    <aside>
-      {props.panels.map((p) => (
-        <button
-          key={p.id}
-          type="button"
-          onClick={() => props.onSelect(p.id)}
-          style={{ fontWeight: p.id === props.active ? 'bold' : 'normal' }}
-        >
-          {p.label}
-        </button>
-      ))}
+    <aside className="cfx-sidebar" aria-label="Showcase panels">
+      {props.groups.map((group) => {
+        const panels = groupedPanels.get(group.id) ?? [];
+        if (panels.length === 0) {
+          return null;
+        }
+
+        return (
+          <div key={group.id} className="cfx-sidebar-group">
+            <div className="cfx-sidebar-group-label">{group.label}</div>
+            {panels.map((panel) => (
+              <button
+                key={panel.id}
+                type="button"
+                className={`cfx-sidebar-item${props.active === panel.id ? ' active' : ''}`}
+                onClick={() => props.onSelect(panel.id)}
+                aria-current={props.active === panel.id ? 'page' : undefined}
+                style={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  gap: 'var(--cfx-space-2)',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span>{panel.label}</span>
+                {props.renderMeta?.(panel)}
+              </button>
+            ))}
+          </div>
+        );
+      })}
     </aside>
   );
 }

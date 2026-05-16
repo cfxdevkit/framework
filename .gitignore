@@ -51,6 +51,7 @@ pnpm-debug.log*
 # Temp
 *.tmp
 .tmp/
+projects/examples/apps/showcase-local/.local-data/
 
 # Local LLM automation artifacts
 artifacts/llm/

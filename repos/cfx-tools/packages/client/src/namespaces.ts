@@ -1,5 +1,28 @@
 import type { HttpClient } from './http.js';
-import type { NodeStatus, OkResponse } from './types.js';
+import type {
+  ContractReadResponse,
+  ContractRecord,
+  ContractWriteResponse,
+  NodeStatus,
+  OkResponse,
+  Space,
+  TrackedContractCallResponse,
+} from './types.js';
+
+export type {
+  CompilerNamespace,
+  DeployNamespace,
+  MiningNamespace,
+  NetworkNamespace,
+  SessionKeysNamespace,
+} from './namespaces-runtime.js';
+export {
+  createCompilerNamespace,
+  createDeployNamespace,
+  createMiningNamespace,
+  createNetworkNamespace,
+  createSessionKeysNamespace,
+} from './namespaces-runtime.js';
 
 export interface NodeStartInput {
   config?: Record<string, unknown>;
@@ -111,79 +134,84 @@ export function createAccountsNamespace(http: HttpClient): AccountsNamespace {
 }
 
 export interface ContractsNamespace {
-  list(): Promise<{ ok: boolean; contracts: ContractRecord[] }>;
+  list(input?: {
+    chainId?: number;
+    network?: 'local' | 'testnet' | 'mainnet';
+    space?: Space;
+  }): Promise<{ ok: boolean; contracts: ContractRecord[] }>;
   get(id: string): Promise<{ ok: boolean; contract: ContractRecord }>;
   register(input: {
     address: string;
     abi: unknown[];
+    chainId?: number;
+    constructorArgs?: unknown[];
+    deployer?: string;
+    metadata?: Record<string, unknown>;
     name: string;
-    space?: 'core' | 'espace';
+    network?: 'local' | 'testnet' | 'mainnet';
+    space?: Space;
+    txHash?: string;
   }): Promise<{ ok: boolean; contract: ContractRecord }>;
+  read(input: {
+    abi: unknown[];
+    address: string;
+    args?: unknown[];
+    blockTag?: 'latest' | 'pending' | 'earliest' | 'finalized' | 'safe' | string | number;
+    epochTag?: string;
+    from?: string;
+    functionName: string;
+    network?: 'local' | 'testnet' | 'mainnet';
+    space?: Space;
+  }): Promise<ContractReadResponse>;
+  write(input: {
+    accountIndex?: number;
+    abi: unknown[];
+    address: string;
+    args?: unknown[];
+    functionName: string;
+    network?: 'local' | 'testnet' | 'mainnet';
+    privateKey?: string;
+    space?: Space;
+    value?: number | string;
+    waitForReceipt?: boolean;
+  }): Promise<ContractWriteResponse>;
+  call(
+    id: string,
+    input: {
+      accountIndex?: number;
+      args?: unknown[];
+      functionName: string;
+      privateKey?: string;
+      value?: number | string;
+      waitForReceipt?: boolean;
+    },
+  ): Promise<TrackedContractCallResponse>;
   delete(id: string): Promise<OkResponse>;
   clear(): Promise<{ ok: boolean; cleared: number }>;
 }
 
-interface ContractRecord {
-  id: string;
-  name: string;
-  address: string;
-  abi: unknown[];
-  space: 'core' | 'espace';
-  deployedAt: number;
-}
-
 export function createContractsNamespace(http: HttpClient): ContractsNamespace {
   return {
-    list: () => http.get('/contracts'),
+    list: (input) => {
+      const searchParams = new URLSearchParams();
+      if (input?.network) {
+        searchParams.set('network', input.network);
+      }
+      if (input?.space) {
+        searchParams.set('space', input.space);
+      }
+      if (input?.chainId !== undefined) {
+        searchParams.set('chainId', String(input.chainId));
+      }
+      const query = searchParams.toString();
+      return http.get(query ? `/contracts?${query}` : '/contracts');
+    },
     get: (id) => http.get(`/contracts/${encodeURIComponent(id)}`),
     register: (input) => http.post('/contracts/register', input),
+    read: (input) => http.post('/contracts/read', input),
+    write: (input) => http.post('/contracts/write', input),
+    call: (id, input) => http.post(`/contracts/${encodeURIComponent(id)}/call`, input),
     delete: (id) => http.delete(`/contracts/${encodeURIComponent(id)}`),
     clear: () => http.delete('/contracts'),
-  };
-}
-
-export interface NetworkNamespace {
-  current(): Promise<{
-    ok: boolean;
-    network: 'local' | 'testnet' | 'mainnet';
-    espaceRpc: string;
-    coreRpc: string;
-  }>;
-  capabilities(): Promise<{ ok: boolean; capabilities: { faucet: boolean; mining: boolean } }>;
-  config(): Promise<{ ok: boolean; config: { espaceRpc: string; coreRpc: string } }>;
-  setConfig(key: 'espaceRpc' | 'coreRpc', value: string): Promise<OkResponse>;
-  set(network: 'local' | 'testnet' | 'mainnet'): Promise<{
-    ok: boolean;
-    network: 'local' | 'testnet' | 'mainnet';
-    espaceRpc: string;
-    coreRpc: string;
-  }>;
-}
-
-export function createNetworkNamespace(http: HttpClient): NetworkNamespace {
-  return {
-    current: () => http.get('/network/current'),
-    capabilities: () => http.get('/network/capabilities'),
-    config: () => http.get('/network/config'),
-    setConfig: (key, value) => http.post('/network/config', { key, value }),
-    set: (network) => http.post('/network/set', { network }),
-  };
-}
-
-export interface MiningNamespace {
-  status(): Promise<{ ok: boolean; running: boolean; intervalMs: number | null }>;
-  start(input?: { intervalMs?: number }): Promise<{
-    ok: boolean;
-    running: boolean;
-    intervalMs: number | null;
-  }>;
-  stop(): Promise<{ ok: boolean; running: boolean; intervalMs: number | null }>;
-}
-
-export function createMiningNamespace(http: HttpClient): MiningNamespace {
-  return {
-    status: () => http.get('/mining/status'),
-    start: (input?) => http.post('/mining/start', input ?? {}),
-    stop: () => http.post('/mining/stop'),
   };
 }

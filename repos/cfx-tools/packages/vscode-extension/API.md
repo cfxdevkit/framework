@@ -62,6 +62,20 @@ The network selector follows the old extension model and exposes exactly three a
 
 Both Core Space and eSpace are available inside the active network. Contract deployment and import commands ask for the target space, and stored contracts are grouped by network and space in the Contracts view.
 
+The shared backend contract now distinguishes between `local` and `public`
+mode internally:
+
+- `local` maps to the local devnode and enables mining plus faucet behavior.
+- `testnet` and `mainnet` map to `public` mode and use backend-owned RPC and
+	chain-id configuration.
+- The effective profile is wallet-scoped, so changing the active wallet can
+	change the selected public RPCs, chain IDs, and tracked contracts.
+
+Tracked contracts are no longer just a local tree-view cache. The canonical
+runtime supports both generic ABI calls and tracked contract calls by id via
+`POST /contracts/:id/call`, and deploy responses may include runtime metadata
+such as `contractId`, `mode`, and public signer provenance.
+
 ## Keystore backends
 
 - `file`: encrypted workspace keystore, supports mnemonic-root creation/import, unlock, eSpace signing, and Core Space signing.

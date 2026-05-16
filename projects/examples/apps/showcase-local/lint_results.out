@@ -1,0 +1,344 @@
+
+> @cfxdevkit/example-showcase-local@0.0.0 lint /workspaces/root/projects/examples/apps/showcase-local
+> biome check app
+
+app/api/session-key/[...path]/route.ts:14:11 lint/correctness/noUnusedVariables ━━━━━━━━━━
+
+  ! This interface IssueBody is unused.
+  
+    12 │ }
+    13 │ 
+  > 14 │ interface IssueBody {
+       │           ^^^^^^^^^
+    15 │   capability?: CapabilityBody;
+    16 │ }
+  
+  i Unused variables are often the result of typos, incomplete refactors, or other sources of bugs.
+  
+
+app/api/session-key/[...path]/route.ts:18:11 lint/correctness/noUnusedVariables ━━━━━━━━━━
+
+  ! This interface VerifyBody is unused.
+  
+    16 │ }
+    17 │ 
+  > 18 │ interface VerifyBody {
+       │           ^^^^^^^^^^
+    19 │   capability?: CapabilityBody;
+    20 │   parent?: string;
+  
+  i Unused variables are often the result of typos, incomplete refactors, or other sources of bugs.
+  
+
+app/showcase-workspace-keystore-actions.ts:29:31 lint/suspicious/noExplicitAny ━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    27 │ import type { ShowcaseWorkspaceKeystoreRuntime } from './showcase-workspace-keystore-runtime';
+    28 │ 
+  > 29 │ type WorkspaceLog = (...args: any[]) => void;
+       │                               ^^^
+    30 │ 
+    31 │ export function useShowcaseWorkspaceKeystoreActions({
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+app/showcase-workspace-keystore-helpers.ts:10:31 lint/suspicious/noExplicitAny ━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+     8 │ import type { LocalFundResponse } from './showcase-workspace-shared';
+     9 │ 
+  > 10 │ type WorkspaceLog = (...args: any[]) => void;
+       │                               ^^^
+    11 │ 
+    12 │ export async function runDevnodeAction(params: {
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+app/showcase-workspace-shell.tsx:51:12 lint/suspicious/noExplicitAny ━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    49 │   compose: ShowcaseWorkspaceCompose;
+    50 │   drafts: ShowcaseWorkspaceDrafts;
+  > 51 │   entries: any;
+       │            ^^^
+    52 │   keystore: ShowcaseWorkspaceKeystoreRuntime;
+    53 │   keystoreActions: ShowcaseWorkspaceKeystoreActions;
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+app/showcase-workspace.tsx:12:3 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    10 │ import { useShowcaseWorkspaceKeystoreRuntime } from './showcase-workspace-keystore-runtime';
+    11 │ import type {
+  > 12 │   CompileArtifact,
+       │   ^^^^^^^^^^^^^^^^
+  > 13 │   CustomBlockNumberResponse,
+        ...
+  > 17 │   SessionKeyVerifyResponse,
+  > 18 │   SpaceId,
+       │   ^^^^^^^
+    19 │   WorkspaceDialogId,
+    20 │   WorkspaceSectionId,
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+     10 10 │   import { useShowcaseWorkspaceKeystoreRuntime } from './showcase-workspace-keystore-runtime';
+     11 11 │   import type {
+     12    │ - ··CompileArtifact,
+     13    │ - ··CustomBlockNumberResponse,
+     14    │ - ··DeployResponse,
+     15    │ - ··NetworkId,
+     16    │ - ··SessionKeyIssueResponse,
+     17    │ - ··SessionKeyVerifyResponse,
+     18    │ - ··SpaceId,
+     19 12 │     WorkspaceDialogId,
+     20 13 │     WorkspaceSectionId,
+  
+
+app/workspace-panels-shared.tsx:53:12 lint/suspicious/noExplicitAny ━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    51 │   devnodeBusy: 'refresh' | 'start' | 'restart' | 'stop' | 'mine' | null;
+    52 │   devnodeError: string | null;
+  > 53 │   entries: any;
+       │            ^^^
+    54 │   environmentFaucets: ReadonlyArray<{ href: string; label: string }>;
+    55 │   faucet: DevnodeAccountSummary | null;
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+app/workspace-tree.tsx:120:63 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    118 │     onPrimaryAction: (item) => handleNodeAction(item.getItemData(), props),
+    119 │     dataLoader: {
+  > 120 │       getItem: (itemId) => treeModel.nodesById.get(itemId) ?? treeModel.nodesById.get('root')!,
+        │                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    121 │       getChildren: (itemId) => treeModel.childrenById.get(itemId) ?? [],
+    122 │     },
+  
+
+app/workspace-tree.tsx:64:7 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This variable treeHeaderStyle is unused.
+  
+    62 │ } as const;
+    63 │ 
+  > 64 │ const treeHeaderStyle = {
+       │       ^^^^^^^^^^^^^^^
+    65 │   color: 'var(--cfx-color-fg-subtle)',
+    66 │   fontFamily: 'var(--cfx-font-mono)',
+  
+  i Unused variables are often the result of typos, incomplete refactors, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend treeHeaderStyle with an underscore.
+  
+     62  62 │   } as const;
+     63  63 │   
+     64     │ - const·treeHeaderStyle·=·{
+         64 │ + const·_treeHeaderStyle·=·{
+     65  65 │     color: 'var(--cfx-color-fg-subtle)',
+     66  66 │     fontFamily: 'var(--cfx-font-mono)',
+  
+
+app/ide-layout.tsx:89:11 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    87 │           title="Explorer"
+    88 │         >
+  > 89 │           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+       │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    90 │             <path d="M3 3h18v18H3zM3 9h18M9 21V9" />
+    91 │           </svg>
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+app/ide-layout.tsx:97:11 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    95 │           title="Search"
+    96 │         >
+  > 97 │           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+       │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    98 │             <circle cx="11" cy="11" r="8" />
+    99 │             <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+app/ide-layout.tsx:114:11 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    112 │           title="Settings"
+    113 │         >
+  > 114 │           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    115 │             <circle cx="12" cy="12" r="3" />
+    116 │             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+app/ide-layout.tsx:152:15 lint/a11y/useKeyWithClickEvents ━━━━━━━━━━━━━━━━━━━━━━
+
+  × Enforce to have the onClick mouse event with the onKeyUp, the onKeyDown, or the onKeyPress keyboard event.
+  
+    150 │               <div style={{ opacity: 0.5, cursor: 'pointer' }}>DEBUG CONSOLE</div>
+    151 │               <div style={{ flex: 1 }} />
+  > 152 │               <div
+        │               ^^^^
+  > 153 │                 style={{ cursor: 'pointer', opacity: 0.8 }}
+  > 154 │                 onClick={() => setPanelOpen(false)}
+  > 155 │                 title="Close Panel"
+  > 156 │               >
+        │               ^
+    157 │                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+    158 │                   <path d="M14 7v2H2V7h12z" />
+  
+  i Actions triggered using mouse events should have corresponding keyboard events to account for keyboard-only navigation.
+  
+
+app/ide-layout.tsx:152:15 lint/a11y/noStaticElementInteractions ━━━━━━━━━━━━━━━━
+
+  × Static Elements should not be interactive.
+  
+    150 │               <div style={{ opacity: 0.5, cursor: 'pointer' }}>DEBUG CONSOLE</div>
+    151 │               <div style={{ flex: 1 }} />
+  > 152 │               <div
+        │               ^^^^
+  > 153 │                 style={{ cursor: 'pointer', opacity: 0.8 }}
+  > 154 │                 onClick={() => setPanelOpen(false)}
+  > 155 │                 title="Close Panel"
+  > 156 │               >
+        │               ^
+    157 │                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+    158 │                   <path d="M14 7v2H2V7h12z" />
+  
+  i To add interactivity such as a mouse or key event listener to a static element, give the element an appropriate role value.
+  
+
+app/ide-layout.tsx:157:17 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    155 │                 title="Close Panel"
+    156 │               >
+  > 157 │                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        │                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    158 │                   <path d="M14 7v2H2V7h12z" />
+    159 │                 </svg>
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+app/workspace-tree.tsx:140:13 lint/a11y/useKeyWithClickEvents ━━━━━━━━━━━━━━━━━━
+
+  × Enforce to have the onClick mouse event with the onKeyUp, the onKeyDown, or the onKeyPress keyboard event.
+  
+    139 │           return (
+  > 140 │             <div
+        │             ^^^^
+  > 141 │               key={item.getId()}
+         ...
+  > 163 │               }}
+  > 164 │             >
+        │             ^
+    165 │               {isFolder ? (
+    166 │                 <button
+  
+  i Actions triggered using mouse events should have corresponding keyboard events to account for keyboard-only navigation.
+  
+
+app/workspace-tree.tsx:140:13 lint/a11y/noStaticElementInteractions ━━━━━━━━━━━━
+
+  × Static Elements should not be interactive.
+  
+    139 │           return (
+  > 140 │             <div
+        │             ^^^^
+  > 141 │               key={item.getId()}
+         ...
+  > 163 │               }}
+  > 164 │             >
+        │             ^
+    165 │               {isFolder ? (
+    166 │                 <button
+  
+  i To add interactivity such as a mouse or key event listener to a static element, give the element an appropriate role value.
+  
+
+app/workspace-tree.tsx:171:19 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    169 │                   style={toggleStyle}
+    170 │                 >
+  > 171 │                   <svg
+        │                   ^^^^
+  > 172 │                     viewBox="0 0 16 16"
+         ...
+  > 179 │                     }}
+  > 180 │                   >
+        │                   ^
+    181 │                     <path d="M5.5 3L11 8l-5.5 5v-10z" />
+    182 │                   </svg>
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+app/workspace-tree.tsx:189:19 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    187 │               <div style={itemLabelStyle}>
+    188 │                 {isFolder ? (
+  > 189 │                   <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" opacity="0.8">
+        │                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    190 │                     {isExpanded ? (
+    191 │                       <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9zm1.5-.5a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5H9c-.52 0-1.015-.352-1.425-.816C7.16 3.56 6.542 3 5.264 3H2.5zM2 6h12v7H2V6z" />
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+app/workspace-tree.tsx:197:19 lint/a11y/noSvgWithoutTitle ━━━━━━━━━━━━━━━━━━━━━━
+
+  × Alternative text title element cannot be empty
+  
+    195 │                   </svg>
+    196 │                 ) : (
+  > 197 │                   <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" opacity="0.6">
+        │                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    198 │                     <path d="M13.71 4.29l-3-3L10 1H3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5l-.29-.71zM10 2.41L12.59 5H10V2.41zM3 14V2h6v4h4v8H3z" />
+    199 │                   </svg>
+  
+  i For accessibility purposes, SVGs should have an alternative text, provided via title element. If the svg element has role="img", you should add the aria-label or aria-labelledby attribute.
+  
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 6.
+Checked 69 files in 14ms. No fixes applied.
+Found 15 errors.
+Found 11 warnings.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
+ ELIFECYCLE  Command failed with exit code 1.

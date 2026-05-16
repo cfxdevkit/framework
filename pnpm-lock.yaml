@@ -159,7 +159,7 @@ importers:
         version: 2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4)
       wagmi:
         specifier: ^3.6.9
-        version: 3.6.9(@coinbase/wallet-sdk@4.3.6(@types/react@19.2.14)(bufferutil@4.1.0)(immer@11.1.5)(react@19.2.5)(typescript@6.0.3)(use-sync-external-store@1.4.0(react@19.2.5))(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-provider@0.18.6(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-sdk@9.1.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@tanstack/query-core@5.100.9)(@tanstack/react-query@5.100.9(react@19.2.5))(@types/react@19.2.14)(@walletconnect/ethereum-provider@2.21.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(immer@11.1.5)(porto@0.2.35)(react@19.2.5)(typescript@6.0.3)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))
+        version: 3.6.9(@coinbase/wallet-sdk@4.3.6(@types/react@19.2.14)(bufferutil@4.1.0)(immer@11.1.5)(react@19.2.5)(typescript@6.0.3)(use-sync-external-store@1.6.0(react@19.2.5))(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-provider@0.18.6(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-sdk@9.1.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@tanstack/query-core@5.100.9)(@tanstack/react-query@5.100.9(react@19.2.5))(@types/react@19.2.14)(@walletconnect/ethereum-provider@2.21.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(immer@11.1.5)(porto@0.2.35)(react@19.2.5)(typescript@6.0.3)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.4.14
@@ -564,18 +564,21 @@ importers:
       '@cfxdevkit/compiler':
         specifier: workspace:*
         version: link:../../../../repos/cfx-solidity/packages/compiler
+      '@cfxdevkit/contracts':
+        specifier: workspace:*
+        version: link:../../../../repos/cfx-solidity/packages/contracts
       '@cfxdevkit/core':
         specifier: workspace:*
         version: link:../../../../repos/cfx-core/packages/core
       '@cfxdevkit/devnode':
         specifier: workspace:*
         version: link:../../../../repos/cfx-core/packages/devnode
+      '@cfxdevkit/devnode-server':
+        specifier: workspace:*
+        version: link:../../../../repos/cfx-tools/packages/devnode-server
       '@cfxdevkit/example-showcase-ui':
         specifier: workspace:*
         version: link:../../packages/showcase-ui
-      '@cfxdevkit/react':
-        specifier: workspace:*
-        version: link:../../../../repos/cfx-ui/packages/react
       '@cfxdevkit/services':
         specifier: workspace:*
         version: link:../../../../repos/cfx-keys/packages/services
@@ -585,12 +588,12 @@ importers:
       '@cfxdevkit/wallet':
         specifier: workspace:*
         version: link:../../../../repos/cfx-keys/packages/wallet
-      '@cfxdevkit/wallet-connect':
-        specifier: workspace:*
-        version: link:../../../../repos/cfx-ui/packages/wallet-connect
-      '@tanstack/react-query':
-        specifier: ^5.100.9
-        version: 5.100.9(react@19.2.5)
+      '@headless-tree/core':
+        specifier: ^1.6.3
+        version: 1.6.3
+      '@headless-tree/react':
+        specifier: ^1.6.3
+        version: 1.6.3(@headless-tree/core@1.6.3)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       next:
         specifier: ^16.0.0
         version: 16.2.6(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -603,9 +606,6 @@ importers:
       viem:
         specifier: ^2.21.0
         version: 2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4)
-      wagmi:
-        specifier: ^3.6.9
-        version: 3.6.9(@coinbase/wallet-sdk@4.3.6(@types/react@19.2.14)(bufferutil@4.1.0)(immer@11.1.5)(react@19.2.5)(typescript@6.0.3)(use-sync-external-store@1.6.0(react@19.2.5))(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-provider@0.18.6(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-sdk@9.1.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@tanstack/query-core@5.100.9)(@tanstack/react-query@5.100.9(react@19.2.5))(@types/react@19.2.14)(@walletconnect/ethereum-provider@2.21.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(immer@11.1.5)(porto@0.2.35)(react@19.2.5)(typescript@6.0.3)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.4.15
@@ -1133,7 +1133,7 @@ importers:
         version: link:../../../cfx-core/packages/core
       '@ledgerhq/hw-app-eth':
         specifier: ^7.8.1
-        version: 7.8.1(react@18.3.1)
+        version: 7.8.1(react@19.0.0)
       '@ledgerhq/hw-transport-node-hid':
         specifier: ^6.33.1
         version: 6.33.1
@@ -1583,12 +1583,24 @@ importers:
       '@cfxdevkit/compiler':
         specifier: workspace:^
         version: link:../../../cfx-solidity/packages/compiler
+      '@cfxdevkit/contracts':
+        specifier: workspace:^
+        version: link:../../../cfx-solidity/packages/contracts
       '@cfxdevkit/core':
         specifier: workspace:^
         version: link:../../../cfx-core/packages/core
       '@cfxdevkit/devnode':
         specifier: workspace:^
         version: link:../../../cfx-core/packages/devnode
+      '@cfxdevkit/services':
+        specifier: workspace:^
+        version: link:../../../cfx-keys/packages/services
+      '@cfxdevkit/wallet':
+        specifier: workspace:^
+        version: link:../../../cfx-keys/packages/wallet
+      '@hono/node-server':
+        specifier: ^1.19.14
+        version: 1.19.14(hono@4.12.18)
       hono:
         specifier: ^4.12.18
         version: 4.12.18
@@ -1962,7 +1974,7 @@ importers:
         version: 19.2.5
       wagmi:
         specifier: ^3.6.9
-        version: 3.6.9(@coinbase/wallet-sdk@4.3.6(@types/react@19.2.14)(bufferutil@4.1.0)(immer@11.1.5)(react@19.2.5)(typescript@6.0.3)(use-sync-external-store@1.6.0(react@19.2.5))(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-provider@0.18.6(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-sdk@9.1.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@tanstack/query-core@5.100.9)(@tanstack/react-query@5.100.9(react@19.2.5))(@types/react@19.2.14)(@walletconnect/ethereum-provider@2.21.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(immer@11.1.5)(porto@0.2.35)(react@19.2.5)(typescript@6.0.3)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))
+        version: 3.6.9(@coinbase/wallet-sdk@4.3.6(@types/react@19.2.14)(bufferutil@4.1.0)(immer@11.1.5)(react@19.2.5)(typescript@6.0.3)(use-sync-external-store@1.4.0(react@19.2.5))(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-provider@0.18.6(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@safe-global/safe-apps-sdk@9.1.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(@tanstack/query-core@5.100.9)(@tanstack/react-query@5.100.9(react@19.2.5))(@types/react@19.2.14)(@walletconnect/ethereum-provider@2.21.1(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))(immer@11.1.5)(porto@0.2.35)(react@19.2.5)(typescript@6.0.3)(viem@2.48.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.4))
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.4.15
@@ -2520,6 +2532,16 @@ packages:
 
   '@formatjs/intl-localematcher@0.6.2':
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
+
+  '@headless-tree/core@1.6.3':
+    resolution: {integrity: sha512-en0EOaZfiCRF2B8DEnhGhSaUf3hVr9Bauye8G8aswPbHOKSyhJiN4bsczz1GvqF4Xb7Ga3LP0vLA6Zih7YLoyw==}
+
+  '@headless-tree/react@1.6.3':
+    resolution: {integrity: sha512-aiRwG6e2EPBSec9uLLy9GlTvAuCtSTouU30Nwcr5ZTsYjG/i7B/ouC8f8Zu4unzo/v1h5ztbemp+EH2TPTKh+g==}
+    peerDependencies:
+      '@headless-tree/core': '*'
+      react: '*'
+      react-dom: '*'
 
   '@headlessui/react@2.2.10':
     resolution: {integrity: sha512-5pVLNK9wlpxTUTy9GpgbX/SdcRh+HBnPktjM2wbiLTH4p+2EPHBO1aoSryUCuKUIItdDWO9ITlhUL8UnUN/oIA==}
@@ -8934,6 +8956,14 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
+  '@headless-tree/core@1.6.3': {}
+
+  '@headless-tree/react@1.6.3(@headless-tree/core@1.6.3)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+    dependencies:
+      '@headless-tree/core': 1.6.3
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
+
   '@headlessui/react@2.2.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@floating-ui/react': 0.26.28(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -9310,6 +9340,26 @@ snapshots:
       '@ledgerhq/hw-transport-mocker': 6.34.1
       '@ledgerhq/logs': 6.17.0
       '@ledgerhq/types-live': 6.106.0(react@18.3.1)
+      axios: 1.15.2
+      bignumber.js: 9.3.1
+      semver: 7.7.3
+    transitivePeerDependencies:
+      - debug
+      - react
+      - react-redux
+
+  '@ledgerhq/hw-app-eth@7.8.1(react@19.0.0)':
+    dependencies:
+      '@ethersproject/abi': 5.8.0
+      '@ethersproject/rlp': 5.8.0
+      '@ethersproject/transactions': 5.8.0
+      '@ledgerhq/domain-service': 1.8.1
+      '@ledgerhq/errors': 6.34.0
+      '@ledgerhq/evm-tools': 1.12.4
+      '@ledgerhq/hw-transport': 6.35.1
+      '@ledgerhq/hw-transport-mocker': 6.34.1
+      '@ledgerhq/logs': 6.17.0
+      '@ledgerhq/types-live': 6.106.0(react@19.0.0)
       axios: 1.15.2
       bignumber.js: 9.3.1
       semver: 7.7.3
@@ -11069,7 +11119,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(vite@8.0.12(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.8.4))
+      vitest: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.8.4))
     optional: true
 
   '@vitest/expect@4.1.5':

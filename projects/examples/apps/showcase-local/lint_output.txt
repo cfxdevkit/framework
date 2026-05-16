@@ -1,0 +1,299 @@
+▮▮▮▮ hardware-bridge:lint (6893097e)
+▮▮▮▮ core:lint (d5c838ab)
+▮▮▮▮ showcase-stack:lint (5807ed40)
+▮▮▮▮ contracts:lint (903e0d87)
+▮▮▮▮ llm-agents:lint (deebae90)
+▮▮▮▮ abis:lint (f14514d5)
+▮▮▮▮ showcase-browser:lint (d0ca8a7f)
+▮▮▮▮ executor:lint (e5227835)
+▮▮▮▮ testing:lint (0136e6e6)
+▮▮▮▮ wallet:lint (d477c75e)
+▮▮▮▮ showcase-local:lint (43ef2adc)
+▮▮▮▮ tsconfig:lint (no op, 5f60163c)
+▮▮▮▮ automation:lint (333201d4)
+▮▮▮▮ ui-core:lint (79a15b9e)
+▮▮▮▮ client:lint (e85dd366)
+▮▮▮▮ defi-react:lint (1664d493)
+▮▮▮▮ react:lint (fab87d1e)
+▮▮▮▮ scaffold-cli:lint (e09e1172)
+▮▮▮▮ showcase-backend:lint (063ce91a)
+▮▮▮▮ biome-config:lint (no op, e0690c67)
+▮▮▮▮ showcase-public:lint (114bd8bd)
+▮▮▮▮ ui:lint (d8fae593)
+▮▮▮▮ showcase-gateway:lint (6e68f276)
+▮▮▮▮ game-engine:lint (5989cd98)
+▮▮▮▮ llm-client:lint (fac954cf)
+▮▮▮▮ wallet-connect:lint (aae09ff4)
+▮▮▮▮ showcase:lint (a62be7f5)
+▮▮▮▮ services:lint (a6d41a3a)
+▮▮▮▮ theme:lint (a4711565)
+▮▮▮▮ vscode-extension:lint (3e72dfcb)
+▮▮▮▮ arch-rules:lint (2683da4a)
+▮▮▮▮ compiler:lint (5b38f00b)
+▮▮▮▮ protocol:lint (b261ccaf)
+▮▮▮▮ moon-config:lint (no op, 4f1f70f9)
+▮▮▮▮ cli:lint (f4bb89ab)
+         hardware-bridge:lint | Checked 2 files in 12ms. No fixes applied.
+              llm-agents:lint | Checked 1 file in 5ms. No fixes applied.
+▮▮▮▮ hardware-bridge:lint (502ms, 6893097e)
+▮▮▮▮ mcp-server:lint (63f6c1bb)
+                    abis:lint | Checked 12 files in 25ms. No fixes applied.
+                executor:lint | Checked 2 files in 30ms. No fixes applied.
+▮▮▮▮ llm-agents:lint (524ms, deebae90)
+                 testing:lint | Checked 2 files in 14ms. No fixes applied.
+▮▮▮▮ hardware-wallet-showcase:lint (361898b9)
+                    core:lint | Checked 25 files in 39ms. No fixes applied.
+          showcase-stack:lint | Checked 32 files in 64ms. No fixes applied.
+               contracts:lint | Checked 31 files in 50ms. No fixes applied.
+            scaffold-cli:lint | Checked 17 files in 32ms. No fixes applied.
+        showcase-browser:lint | Checked 45 files in 77ms. No fixes applied.
+                   react:lint | Checked 8 files in 56ms. No fixes applied.
+                  wallet:lint | Checked 27 files in 23ms. No fixes applied.
+          showcase-local:lint | /workspaces/root/projects/examples/apps/showcase-local/biome internalError/io  INTERNAL  ━━━━━━━━━━
+
+          showcase-local:lint |   × No such file or directory (os error 2)
+          showcase-local:lint |   
+          showcase-local:lint |   ! This diagnostic was derived from an internal Biome error. Potential bug, please report it if necessary.
+          showcase-local:lint |   
+
+          showcase-local:lint | /workspaces/root/projects/examples/apps/showcase-local/check internalError/io  INTERNAL  ━━━━━━━━━━
+
+          showcase-local:lint |   × No such file or directory (os error 2)
+          showcase-local:lint |   
+          showcase-local:lint |   ! This diagnostic was derived from an internal Biome error. Potential bug, please report it if necessary.
+          showcase-local:lint |   
+
+          showcase-local:lint | /workspaces/root/projects/examples/apps/showcase-local/exec internalError/io  INTERNAL  ━━━━━━━━━━
+
+          showcase-local:lint |   × No such file or directory (os error 2)
+          showcase-local:lint |   
+          showcase-local:lint |   ! This diagnostic was derived from an internal Biome error. Potential bug, please report it if necessary.
+          showcase-local:lint |   
+
+          showcase-local:lint | /workspaces/root/projects/examples/apps/showcase-local/src internalError/io  INTERNAL  ━━━━━━━━━━
+
+          showcase-local:lint |   × No such file or directory (os error 2)
+          showcase-local:lint |   
+          showcase-local:lint |   ! This diagnostic was derived from an internal Biome error. Potential bug, please report it if necessary.
+          showcase-local:lint |   
+
+▮▮▮▮ executor:lint (556ms, e5227835)
+              automation:lint | Checked 52 files in 31ms. No fixes applied.
+          showcase-local:lint | Checked 82 files in 48ms. No fixes applied.
+             game-engine:lint | Checked 2 files in 11ms. No fixes applied.
+▮▮▮▮ testing:lint (570ms, 0136e6e6)
+▮▮▮▮ showcase-stack:lint (588ms, 5807ed40)
+▮▮▮▮ abis:lint (579ms, f14514d5)
+▮▮▮▮ contracts:lint (588ms, 903e0d87)
+▮▮▮▮ core:lint (595ms, d5c838ab)
+▮▮▮▮ contracts-extract:lint (5c3bd1da)
+▮▮▮▮ devnode:lint (d69330ab)
+▮▮▮▮ scaffold-cli:lint (555ms, e09e1172)
+▮▮▮▮ wallet:lint (574ms, d477c75e)
+                  client:lint | src/index.contracts.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                  client:lint |   × Formatter would have printed the following content:
+                  client:lint |   
+▮▮▮▮ showcase-browser:lint (597ms, d0ca8a7f)
+▮▮▮▮ automation:lint (582ms, 333201d4)
+▮▮▮▮ react:lint (556ms, fab87d1e)
+              llm-client:lint | Checked 9 files in 13ms. No fixes applied.
+▮▮▮▮ arch-check:lint (61c75889)
+                 ui-core:lint | Checked 6 files in 18ms. No fixes applied.
+          wallet-connect:lint | Checked 26 files in 21ms. No fixes applied.
+                  client:lint |     108 108 │               ok: true,
+                  client:lint |     109 109 │               attestation: { digest: 'd', message: 'm', signature: '0xsig' },
+                  client:lint |     110     │ - ············capability:·{·chains:·[2030],·contracts:·null,·maxValuePerTx:·'0',·notAfter:·1,·selectors:·null·},
+                  client:lint |         110 │ + ············capability:·{
+                  client:lint |         111 │ + ··············chains:·[2030],
+                  client:lint |         112 │ + ··············contracts:·null,
+                  client:lint |         113 │ + ··············maxValuePerTx:·'0',
+                  client:lint |         114 │ + ··············notAfter:·1,
+                  client:lint |         115 │ + ··············selectors:·null,
+                  client:lint |         116 │ + ············},
+▮▮▮▮ showcase-local:lint (593ms, 43ef2adc)
+                  client:lint |     111 117 │               parent: '0xparent',
+                  client:lint |     112 118 │               session: '0xsession',
+                  client:lint |     ······· │ 
+                  client:lint |     157 163 │       });
+                  client:lint |     158 164 │     });
+                  client:lint |     159     │ - });
+                  client:lint |         165 │ + });
+                  client:lint |         166 │ + 
+                  client:lint |   
+
+                  client:lint | src/index.namespaces.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                  client:lint |   × Formatter would have printed the following content:
+                  client:lint |   
+                  client:lint |     80 80 │       });
+                  client:lint |     81 81 │     });
+                  client:lint |     82    │ - });
+                  client:lint |        82 │ + });
+                  client:lint |        83 │ + 
+                  client:lint |   
+
+                  client:lint | src/index.network.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                  client:lint |   × Formatter would have printed the following content:
+                  client:lint |   
+                  client:lint |     147 147 │       });
+                  client:lint |     148 148 │     });
+                  client:lint |     149     │ - });
+                  client:lint |         149 │ + });
+                  client:lint |         150 │ + 
+                  client:lint |   
+
+                  client:lint | src/namespaces-runtime.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                  client:lint |   × Formatter would have printed the following content:
+                  client:lint |   
+                  client:lint |     113 113 │       stop: () => http.post('/mining/stop'),
+                  client:lint |     114 114 │     };
+                  client:lint |     115     │ - }
+                  client:lint |         115 │ + }
+                  client:lint |         116 │ + 
+                  client:lint |   
+
+                  client:lint | src/namespaces.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━
+
+                  client:lint |   × The imports and exports are not sorted.
+                  client:lint |   
+                  client:lint |   > 1 │ import type { HttpClient } from './http.js';
+                  client:lint |       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  client:lint |     2 │ import type {
+                  client:lint |     3 │   ContractRecord,
+                  client:lint |   
+                  client:lint |   i Safe fix: Organize Imports (Biome)
+                  client:lint |   
+                  client:lint |       1   1 │   import type { HttpClient } from './http.js';
+                  client:lint |       2   2 │   import type {
+                  client:lint |       3     │ - ··ContractRecord,
+                  client:lint |       4     │ - ··ContractReadResponse,
+                  client:lint |           3 │ + ··ContractReadResponse,
+                  client:lint |           4 │ + ··ContractRecord,
+                  client:lint |       5   5 │     ContractWriteResponse,
+                  client:lint |       6   6 │     NodeStatus,
+                  client:lint |     ······· │ 
+                  client:lint |       9   9 │     TrackedContractCallResponse,
+                  client:lint |      10  10 │   } from './types.js';
+                  client:lint |      11     │ - export·{
+                  client:lint |      12     │ - ··createCompilerNamespace,
+                  client:lint |      13     │ - ··createDeployNamespace,
+                  client:lint |      14     │ - ··createMiningNamespace,
+                  client:lint |      15     │ - ··createNetworkNamespace,
+                  client:lint |      16     │ - ··createSessionKeysNamespace,
+                  client:lint |          11 │ + export·type·{
+                  client:lint |          12 │ + ··CompilerNamespace,
+                  client:lint |          13 │ + ··DeployNamespace,
+                  client:lint |          14 │ + ··MiningNamespace,
+                  client:lint |          15 │ + ··NetworkNamespace,
+                  client:lint |          16 │ + ··SessionKeysNamespace,
+                  client:lint |      17  17 │   } from './namespaces-runtime.js';
+                  client:lint |      18     │ - export·type·{
+                  client:lint |      19     │ - ··CompilerNamespace,
+                  client:lint |      20     │ - ··DeployNamespace,
+                  client:lint |      21     │ - ··MiningNamespace,
+                  client:lint |      22     │ - ··NetworkNamespace,
+                  client:lint |      23     │ - ··SessionKeysNamespace,
+                  client:lint |          18 │ + export·{
+                  client:lint |          19 │ + ··createCompilerNamespace,
+                  client:lint |          20 │ + ··createDeployNamespace,
+                  client:lint |          21 │ + ··createMiningNamespace,
+                  client:lint |          22 │ + ··createNetworkNamespace,
+                  client:lint |          23 │ + ··createSessionKeysNamespace,
+                  client:lint |      24  24 │   } from './namespaces-runtime.js';
+                  client:lint |      25  25 │   
+                  client:lint |   
+
+                  client:lint | src/namespaces.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                  client:lint |   × Formatter would have printed the following content:
+                  client:lint |   
+                  client:lint |     216 216 │   }
+                  client:lint |     217 217 │   
+                  client:lint |     218     │ - 
+                  client:lint |   
+
+                  client:lint | src/test-helpers.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                  client:lint |   × Formatter would have printed the following content:
+                  client:lint |   
+                  client:lint |     16 16 │       });
+                  client:lint |     17 17 │     };
+                  client:lint |     18    │ - }
+▮▮▮▮ game-engine:lint (546ms, 5989cd98)
+                      ui:lint | Checked 19 files in 17ms. No fixes applied.
+▮▮▮▮ showcase-ui:lint (37be9f78)
+                  client:lint | Checked 11 files in 14ms. No fixes applied.
+                  client:lint | Found 7 errors.
+▮▮▮▮ llm-tools:lint (d60fe9b0)
+              defi-react:lint | Checked 36 files in 24ms. No fixes applied.
+                compiler:lint | Checked 32 files in 18ms. No fixes applied.
+▮▮▮▮ devnode-server:lint (688b293b)
+                  client:lint |        18 │ + }
+                  client:lint |        19 │ + 
+                  client:lint |   
+
+                  client:lint | check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                  client:lint |   × Some errors were emitted while running checks.
+                  client:lint |   
+
+▮▮▮▮ llm-client:lint (561ms, fac954cf)
+▮▮▮▮ ui-core:lint (609ms, 79a15b9e)
+▮▮▮▮ ui:lint (577ms, d8fae593)
+▮▮▮▮ wallet-connect:lint (566ms, aae09ff4)
+        showcase-gateway:lint | Checked 4 files in 8ms. No fixes applied.
+        vscode-extension:lint | Checked 23 files in 16ms. No fixes applied.
+▮▮▮▮ compiler:lint (546ms, 5b38f00b)
+▮▮▮▮ client:lint (626ms, e85dd366)
+▮▮▮▮ contracts-extract:lint (65ms, 5c3bd1da)
+▮▮▮▮ devnode-server:lint (24ms, 688b293b)
+▮▮▮▮ llm-tools:lint (33ms, d60fe9b0)
+▮▮▮▮ arch-check:lint (51ms, 61c75889)
+▮▮▮▮ devnode:lint (63ms, d69330ab)
+▮▮▮▮ showcase-ui:lint (42ms, 37be9f78)
+▮▮▮▮ defi-react:lint (634ms, 1664d493)
+▮▮▮▮ showcase-gateway:lint (596ms, 6e68f276)
+▮▮▮▮ mcp-server:lint (152ms, 63f6c1bb)
+▮▮▮▮ vscode-extension:lint (570ms, 3e72dfcb)
+                showcase:lint | Checked 48 files in 29ms. No fixes applied.
+                   theme:lint | Checked 6 files in 6ms. No fixes applied.
+▮▮▮▮ arch-rules:lint (570ms, 2683da4a)
+         showcase-public:lint | /workspaces/root/projects/examples/apps/showcase-public/biome internalError/io  INTERNAL  ━━━━━━━━━━
+
+         showcase-public:lint |   × No such file or directory (os error 2)
+         showcase-public:lint |   
+         showcase-public:lint |   ! This diagnostic was derived from an internal Biome error. Potential bug, please report it if necessary.
+         showcase-public:lint |   
+
+         showcase-public:lint | /workspaces/root/projects/examples/apps/showcase-public/check internalError/io  INTERNAL  ━━━━━━━━━━
+
+         showcase-public:lint |   × No such file or directory (os error 2)
+         showcase-public:lint |   
+         showcase-public:lint |   ! This diagnostic was derived from an internal Biome error. Potential bug, please report it if necessary.
+         showcase-public:lint |   
+
+         showcase-public:lint | /workspaces/root/projects/examples/apps/showcase-public/exec internalError/io  INTERNAL  ━━━━━━━━━━
+▮▮▮▮ hardware-wallet-showcase:lint (135ms, 361898b9)
+         showcase-public:lint | Checked 18 files in 11ms. No fixes applied.
+
+         showcase-public:lint |   × No such file or directory (os error 2)
+         showcase-public:lint |   
+         showcase-public:lint |   ! This diagnostic was derived from an internal Biome error. Potential bug, please report it if necessary.
+         showcase-public:lint |   
+
+▮▮▮▮ theme:lint (588ms, a4711565)
+▮▮▮▮ showcase:lint (592ms, a62be7f5)
+▮▮▮▮ showcase-public:lint (618ms, 114bd8bd)
+▮▮▮▮ protocol:lint (538ms, b261ccaf)
+▮▮▮▮ services:lint (593ms, a6d41a3a)
+▮▮▮▮ cli:lint (514ms, f4bb89ab)
+        showcase-backend:lint | Checked 18 files in 8ms. No fixes applied.
+▮▮▮▮ showcase-backend:lint (629ms, 063ce91a)
+Error: task_runner::run_failed
+
+  × Task client:lint failed to run.
+  ╰─▶ Process pnpm failed: exit code 1
+

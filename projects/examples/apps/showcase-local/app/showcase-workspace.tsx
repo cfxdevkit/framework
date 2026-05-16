@@ -1,0 +1,91 @@
+'use client';
+
+import { useLogList } from '@cfxdevkit/example-showcase-ui';
+import { useEffect, useMemo, useState } from 'react';
+import { getPanel } from './panels/registry';
+import { useShowcaseWorkspaceCompose } from './showcase-workspace-compose';
+import { ShowcaseWorkspaceDialogs } from './showcase-workspace-dialogs';
+import { useShowcaseWorkspaceDrafts } from './showcase-workspace-drafts';
+import { useShowcaseWorkspaceKeystoreActions } from './showcase-workspace-keystore-actions';
+import { useShowcaseWorkspaceKeystoreRuntime } from './showcase-workspace-keystore-runtime';
+import type { WorkspaceDialogId, WorkspaceSectionId } from './showcase-workspace-shared';
+import { ShowcaseWorkspaceLoadingShell, ShowcaseWorkspaceShell } from './showcase-workspace-shell';
+
+export type {
+  CompileArtifact,
+  CustomBlockNumberResponse,
+  DeployResponse,
+  NetworkId,
+  SessionKeyIssueResponse,
+  SessionKeyVerifyResponse,
+  SpaceId,
+  WorkspaceSectionId,
+} from './showcase-workspace-shared';
+
+export function ShowcaseWorkspace() {
+  const drafts = useShowcaseWorkspaceDrafts();
+  const [activeDialog, setActiveDialog] = useState<WorkspaceDialogId>(null);
+  const { clear, entries, log } = useLogList();
+  const activePanel = useMemo(
+    () => getPanel(drafts.activeSection, drafts.network),
+    [drafts.activeSection, drafts.network],
+  );
+  const keystore = useShowcaseWorkspaceKeystoreRuntime({
+    log,
+    network: drafts.network,
+    space: drafts.space,
+  });
+  const keystoreActions = useShowcaseWorkspaceKeystoreActions({ drafts, log, runtime: keystore });
+  const compose = useShowcaseWorkspaceCompose({
+    closeDialog: () => setActiveDialog(null),
+    drafts,
+    log,
+  });
+
+  useEffect(() => {
+    if (drafts.network !== 'local' && drafts.activeSection === 'devnode') {
+      drafts.setActiveSection('setup');
+    }
+  }, [drafts.activeSection, drafts.network, drafts.setActiveSection]);
+
+  useEffect(() => {
+    if (!activePanel) {
+      drafts.setActiveSection('setup');
+    }
+  }, [activePanel, drafts.setActiveSection]);
+
+  if (!drafts.storageReady) {
+    return <ShowcaseWorkspaceLoadingShell />;
+  }
+
+  const selectSection = (section: WorkspaceSectionId) => {
+    if (section === 'devnode' && drafts.network !== 'local') {
+      drafts.setActiveSection('setup');
+      return;
+    }
+    drafts.setActiveSection(section);
+  };
+
+  return (
+    <>
+      <ShowcaseWorkspaceShell
+        activePanel={activePanel}
+        clearLog={clear}
+        compose={compose}
+        drafts={drafts}
+        entries={entries}
+        keystore={keystore}
+        keystoreActions={keystoreActions}
+        onOpenDialog={setActiveDialog}
+        onSelectSection={selectSection}
+      />
+      <ShowcaseWorkspaceDialogs
+        activeDialog={activeDialog}
+        activeWalletName={keystore.activeWallet?.name ?? null}
+        compose={compose}
+        drafts={drafts}
+        onClose={() => setActiveDialog(null)}
+      />
+    </>
+  );
+}

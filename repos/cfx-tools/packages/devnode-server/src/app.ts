@@ -1,15 +1,21 @@
+import { join, resolve } from 'node:path';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { ContractRegistry } from './contracts.js';
 import { DevnodeServerController } from './controller.js';
 import { KeystoreService } from './keystore.js';
 import { NetworkState } from './network.js';
+import { NodeProfileService } from './profiles.js';
 import { createAccountsRoutes } from './routes/accounts.js';
 import { createBootstrapRoutes } from './routes/bootstrap.js';
+import { createCompilerRoutes } from './routes/compiler.js';
 import { createContractsRoutes } from './routes/contracts.js';
+import { createDeployRoutes } from './routes/deploy.js';
 import { createKeystoreRoutes } from './routes/keystore.js';
 import { createMiningRoutes } from './routes/mining.js';
 import { createNetworkRoutes } from './routes/network.js';
+import { createNodeProfileRoutes } from './routes/node-profile.js';
+import { createSessionKeyRoutes } from './routes/session-key.js';
 import type {
   DevnodeMineInput,
   DevnodeRestartInput,
@@ -20,39 +26,113 @@ import type {
 
 export interface DevnodeServerAppOptions extends DevnodeServerControllerOptions {
   controller?: DevnodeServerController;
+  contracts?: ContractRegistry;
+  extendApp?: (app: Hono, context: DevnodeServerExtensionContext) => void;
+  keystore?: KeystoreService;
   keystorePath?: string;
+  network?: NetworkState;
+  nodeProfileDataRoot?: string;
+  profiles?: NodeProfileService;
+}
+
+export interface DevnodeServerExtensionContext {
+  controller: DevnodeServerController;
+  contracts: ContractRegistry;
+  keystore: KeystoreService;
+  network: NetworkState;
+  profiles: NodeProfileService;
 }
 
 export function createDevnodeServerApp(options: DevnodeServerAppOptions = {}): Hono {
   const controller = options.controller ?? new DevnodeServerController(options);
-  const keystore = new KeystoreService(options.keystorePath ?? '.devnode-keystore.json');
-  const contracts = new ContractRegistry();
-  const network = new NetworkState();
+  const keystorePath = options.keystorePath ?? '.devnode-keystore.json';
+  const keystore = options.keystore ?? new KeystoreService(keystorePath);
+  const contracts =
+    options.contracts ??
+    new ContractRegistry({
+      storagePath: join(runtimeStateRootFor(keystorePath), 'contracts.json'),
+    });
+  const network =
+    options.network ??
+    new NetworkState({
+      storagePath: join(runtimeStateRootFor(keystorePath), 'network-profiles.json'),
+    });
+  const profiles =
+    options.profiles ??
+    new NodeProfileService({
+      isNodeRunning: () => controller.status().running,
+      keystore,
+      ...(options.nodeProfileDataRoot ? { dataDirRoot: options.nodeProfileDataRoot } : {}),
+    });
 
   const app = new Hono();
+
+  const syncRuntimeContext = async () => {
+    try {
+      const wallet = keystore.listWallets().find((entry) => entry.active);
+      await contracts.syncWallet(wallet?.id ?? null);
+      await network.syncWallet(wallet?.id ?? null);
+    } catch {
+      await contracts.syncWallet(null);
+      await network.syncWallet(null);
+    }
+  };
 
   app.onError((error, context) => {
     if (error instanceof HTTPException) return error.getResponse();
     return context.json({ ok: false, error: error.message }, 500);
   });
 
+  app.use('*', async (_context, next) => {
+    await syncRuntimeContext();
+    await next();
+  });
+
   app.get('/health', (context) => context.json({ ok: true }));
   app.get('/node/status', (context) => context.json({ ok: true, node: controller.status() }));
-  app.post('/node/start', async (context) =>
-    context.json({
+  app.post('/node/start', async (context) => {
+    if (!network.isLocalMode()) {
+      return context.json(
+        { ok: false, error: 'local devnode can only start when network mode is local' },
+        409,
+      );
+    }
+
+    const input = await readJson<DevnodeStartInput>(context);
+    return context.json({
       ok: true,
-      node: await controller.start(await readJson<DevnodeStartInput>(context)),
-    }),
-  );
+      node: await controller.start({
+        ...input,
+        config: await profiles.resolveNodeConfig(input.config ?? {}),
+      }),
+    });
+  });
   app.post('/node/stop', async (context) =>
     context.json({ ok: true, node: await controller.stop() }),
   );
-  app.post('/node/restart', async (context) =>
-    context.json({
+  app.post('/node/restart', async (context) => {
+    if (!network.isLocalMode()) {
+      return context.json(
+        { ok: false, error: 'local devnode can only restart when network mode is local' },
+        409,
+      );
+    }
+
+    const input = await readJson<DevnodeRestartInput>(context);
+    const shouldResolveProfile = Boolean(input.config) || !controller.status().running;
+
+    return context.json({
       ok: true,
-      node: await controller.restart(await readJson<DevnodeRestartInput>(context)),
-    }),
-  );
+      node: await controller.restart(
+        shouldResolveProfile
+          ? {
+              ...input,
+              config: await profiles.resolveNodeConfig(input.config ?? {}),
+            }
+          : input,
+      ),
+    });
+  });
   app.post('/node/wipe', async (context) =>
     context.json({
       ok: true,
@@ -66,12 +146,27 @@ export function createDevnodeServerApp(options: DevnodeServerAppOptions = {}): H
     }),
   );
 
+  app.route('/node/profile', createNodeProfileRoutes(profiles));
   app.route('/keystore', createKeystoreRoutes(keystore));
   app.route('/accounts', createAccountsRoutes(controller));
-  app.route('/contracts', createContractsRoutes(contracts));
-  app.route('/network', createNetworkRoutes(network));
+  app.route('/compiler', createCompilerRoutes());
+  app.route('/contracts', createContractsRoutes(contracts, controller, keystore, network));
+  app.route('/deploy', createDeployRoutes(controller, keystore, contracts, network));
+  app.route(
+    '/network',
+    createNetworkRoutes(network, { isNodeRunning: () => controller.status().running }),
+  );
   app.route('/mining', createMiningRoutes(controller));
   app.route('/bootstrap', createBootstrapRoutes(controller, contracts));
+  app.route('/session-key', createSessionKeyRoutes(keystore));
+
+  options.extendApp?.(app, {
+    controller,
+    contracts,
+    keystore,
+    network,
+    profiles,
+  });
 
   return app;
 }
@@ -83,4 +178,8 @@ async function readJson<T>(context: { req: { json: () => Promise<unknown> } }): 
   } catch {
     return {} as T;
   }
+}
+
+function runtimeStateRootFor(keystorePath: string): string {
+  return resolve(`${keystorePath}.runtime`);
 }

@@ -1,11 +1,33 @@
 import { Hono } from 'hono';
-import { type ContractRecord, type ContractRegistry, detectSpace } from '../contracts.js';
+import type { ContractRegistry } from '../contracts.js';
+import type { DevnodeServerController } from '../controller.js';
+import type { KeystoreService } from '../keystore.js';
+import type { NetworkState } from '../network.js';
+import { attachContractActionRoutes } from './contracts-actions.js';
+import { normalizeChainId, normalizeNetwork, normalizeSpace } from './contracts-helpers.js';
 
-export function createContractsRoutes(registry: ContractRegistry): Hono {
+export function createContractsRoutes(
+  registry: ContractRegistry,
+  controller: DevnodeServerController,
+  keystore: KeystoreService,
+  networkState: NetworkState,
+): Hono {
   const app = new Hono();
 
   app.get('/', (c) => {
-    return c.json({ ok: true, contracts: registry.list() });
+    const url = new URL(c.req.url);
+    const network = normalizeNetwork(url.searchParams.get('network'));
+    const space = normalizeSpace(url.searchParams.get('space'));
+    const chainId = normalizeChainId(url.searchParams.get('chainId'));
+
+    return c.json({
+      ok: true,
+      contracts: registry.list({
+        ...(network === undefined ? {} : { network }),
+        ...(space === undefined ? {} : { space }),
+        ...(chainId === undefined ? {} : { chainId }),
+      }),
+    });
   });
 
   app.get('/:id', (c) => {
@@ -13,42 +35,18 @@ export function createContractsRoutes(registry: ContractRegistry): Hono {
     if (!contract) return c.json({ ok: false, error: 'contract not found' }, 404);
     return c.json({ ok: true, contract });
   });
+  attachContractActionRoutes(app, { controller, keystore, networkState, registry });
 
-  app.post('/register', async (c) => {
-    const body = await readBody<Partial<ContractRecord>>(c);
-    if (!body.address) return c.json({ ok: false, error: 'address is required' }, 400);
-    if (!body.name) return c.json({ ok: false, error: 'name is required' }, 400);
-    if (!Array.isArray(body.abi)) return c.json({ ok: false, error: 'abi must be an array' }, 400);
-
-    const space = body.space ?? detectSpace(body.address);
-    const contract = registry.register({
-      name: body.name,
-      address: body.address,
-      abi: body.abi,
-      space,
-    });
-    return c.json({ ok: true, contract }, 201);
-  });
-
-  app.delete('/:id', (c) => {
-    const deleted = registry.delete(c.req.param('id'));
+  app.delete('/:id', async (c) => {
+    const deleted = await registry.delete(c.req.param('id'));
     if (!deleted) return c.json({ ok: false, error: 'contract not found' }, 404);
     return c.json({ ok: true });
   });
 
-  app.delete('/', (c) => {
-    const cleared = registry.clear();
+  app.delete('/', async (c) => {
+    const cleared = await registry.clear();
     return c.json({ ok: true, cleared });
   });
 
   return app;
-}
-
-async function readBody<T>(c: { req: { json: () => Promise<unknown> } }): Promise<T> {
-  try {
-    const body = await c.req.json();
-    return (body && typeof body === 'object' ? body : {}) as T;
-  } catch {
-    return {} as T;
-  }
 }

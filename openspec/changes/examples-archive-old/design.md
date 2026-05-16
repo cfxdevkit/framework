@@ -1,12 +1,12 @@
 ## Context
 
-The old examples suite was built before the framework packages stabilized. It consists of five Vite SPAs that each partially re-implement framework primitives, plus an Express backend (`showcase-backend`) that pre-dates the `@cfxdevkit/devnode-server` pattern. Once the new Next.js apps are live and verified, these old apps are pure dead weight. This change removes them cleanly.
+The old examples suite was built before the framework packages stabilized. It consists of five Vite SPAs that each partially re-implement framework primitives, plus an Express backend (`showcase-backend`) that pre-dates the shared local-runtime control-plane direction around `@cfxdevkit/devnode-server`. Once the new Next.js apps and the shared local runtime are live and verified, these old apps are pure dead weight. This change removes them cleanly.
 
 ## Goals / Non-Goals
 
 **Goals:**
 - All five old Vite app directories are deleted
-- `apps/showcase-backend/` is deleted (its logic re-implemented in `showcase-local` API routes)
+- `apps/showcase-backend/` is deleted only after its remaining logic is covered by the shared local-runtime control plane consumed by `showcase-local`
 - The old `packages/showcase-ui/` is deleted (rebuilt in `examples-shared-foundation`)
 - `projects/examples/.moon/workspace.yml` and `pnpm-workspace.yaml` updated to remove all old references
 - Workspace-level `pnpm install` runs cleanly after removal
@@ -14,7 +14,7 @@ The old examples suite was built before the framework packages stabilized. It co
 
 **Non-Goals:**
 - Archiving the old code to a separate git branch or tag (git history preserves it)
-- Keeping any part of `showcase-backend` as reference (it's superseded)
+- Keeping any part of `showcase-backend` as a long-term runtime dependency (its responsibilities must move into the shared local-runtime control plane first)
 
 ## Decisions
 

@@ -1,73 +1,65 @@
 ## ADDED Requirements
 
-### Requirement: Devnode API routes manage DevNode lifecycle
+### Requirement: Showcase-local same-origin routes are thin adapters over the shared runtime
 
-The `/api/devnode/start`, `/api/devnode/stop`, and `/api/devnode/mine` routes SHALL manage the `DevNode` singleton from `@cfxdevkit/devnode`. All routes SHALL declare `export const runtime = 'nodejs'`.
+The `/api/*` routes in showcase-local SHALL act as browser-facing adapters over the canonical local-runtime control plane. They SHALL not own a second runtime implementation. All stateful runtime routes SHALL declare `export const runtime = 'nodejs'`.
 
-#### Scenario: Start creates and starts the DevNode singleton
-WHEN POST `/api/devnode/start` is called and no DevNode is running
-THEN `createDevNode()` is called, `devNode.start()` resolves, and `{ status: 'running', rpcUrl: string }` is returned
+#### Scenario: App route delegates a runtime action
+WHEN the browser calls a showcase-local runtime route
+THEN the route forwards the request to the shared control plane and returns the canonical response shape rather than re-implementing the operation locally
 
-#### Scenario: Start is idempotent when already running
-WHEN POST `/api/devnode/start` is called and a DevNode is already running
-THEN `{ status: 'running', rpcUrl: string }` is returned without starting a second process
+### Requirement: Backend owns wallet and account logic
 
-#### Scenario: Stop halts the DevNode
-WHEN POST `/api/devnode/stop` is called
-THEN `devNode.stop()` is called and `{ status: 'stopped' }` is returned
+Wallet roots, derived accounts, active account selection, reveal flows, funding flows, and signer resolution SHALL be owned by the backend. The UI SHALL call backend routes for these behaviors instead of deriving or mutating account state locally.
 
-#### Scenario: Mine produces blocks
-WHEN POST `/api/devnode/mine` is called with `{ count: 5 }`
-THEN the devnode mines 5 blocks and `{ blockNumber: number }` is returned
+#### Scenario: User selects or reveals an account
+WHEN the UI needs account activation, derived account details, or protected secret reveal behavior
+THEN the request is served through backend-owned logic exposed by the shared control plane
 
-#### Scenario: Status endpoint returns current state
-WHEN GET `/api/devnode/status` is called
-THEN `{ status: 'running' | 'stopped', blockNumber?: number }` is returned
+### Requirement: Showcase-local adapters expose the full reusable command surface
 
-### Requirement: Keystore API routes manage accounts
+The showcase-local app SHALL expose thin adapters for the shared command families needed by the workspace: network selection, node lifecycle, wallet and account management, deployed-contract tracking, compiler/template flows, session-key flows, deploy/interact flows, funding/account hooks needed by the backend model, and custom extension routes.
 
-The `/api/keystore/*` routes SHALL manage accounts using `@cfxdevkit/services` file keystore provider. All routes SHALL declare `export const runtime = 'nodejs'`.
+#### Scenario: Compiler, session-key, or deploy action is triggered
+WHEN the browser calls `/api/compile/*`, `/api/session-key/*`, or `/api/deploy/*`
+THEN those routes proxy to the shared runtime surface instead of owning bespoke implementation logic inside the app
 
-#### Scenario: Create account returns new address
-WHEN POST `/api/keystore/accounts` is called with `{ label?: string }`
-THEN a new account is created, stored in the keystore, and `{ address: string }` is returned
+#### Scenario: Contract interaction is triggered
+WHEN the browser calls a contract read or write action
+THEN the request includes explicit network and space context and the backend returns a structured result compatible with the shared client contract
 
-#### Scenario: List accounts returns all addresses
-WHEN GET `/api/keystore/accounts` is called
-THEN an array of `{ address: string, label?: string }` objects is returned
+### Requirement: First-pass contract adapters focus on deployed contract workflows
 
-### Requirement: Session key API route issues attestations
+The first showcase-local adapter pass SHALL focus on deployed contract workflows rather than generic manual contract import.
 
-The `/api/session-key/issue` route SHALL use `createSessionKey()` and `signerFromKeystore()` from `@cfxdevkit/wallet` to issue a capability-scoped attestation JWT. The route SHALL declare `export const runtime = 'nodejs'`.
+#### Scenario: Browser requests tracked contracts
+WHEN the browser asks for tracked contracts in the current environment
+THEN the adapter returns deployed contracts produced through the shared backend workflows for that environment
 
-#### Scenario: Attestation is issued for a managed signer
-WHEN POST `/api/session-key/issue` is called with `{ signerAddress, policy: { allowedContracts, allowedMethods, spendLimit? } }`
-THEN a session key is created and an attestation JWT is returned
+### Requirement: Contract operations are network-aware and space-aware
 
-### Requirement: Compile API routes run solc
+Contract list, deploy, import, read, and write routes SHALL preserve selected network and selected space as first-class request context.
 
-The `/api/compile/contract` POST route and `/api/compile/status` GET route SHALL use `@cfxdevkit/compiler`'s `compile()` and `ensureSolc()`. All routes SHALL declare `export const runtime = 'nodejs'`.
+#### Scenario: User switches environment
+WHEN the selected network or space changes
+THEN subsequent contract operations and tracked contract results are scoped to that environment instead of leaking across unrelated networks
 
-#### Scenario: Compile returns ABI and bytecode
-WHEN POST `/api/compile/contract` is called with `{ source: string, contractName: string }`
-THEN `compile(source, contractName)` is called and `{ abi, bytecode }` is returned
+### Requirement: Showcase-local can expose project-specific runtime extensions
 
-#### Scenario: Status returns ready when solc is available
-WHEN GET `/api/compile/status` is called and `ensureSolc()` has completed
-THEN `{ ready: true, version: string }` is returned
+The app SHALL be able to mount custom runtime-backed routes that reuse shared services and remain callable programmatically.
 
-### Requirement: Deploy API routes deploy and interact
+#### Scenario: Project defines a custom route
+WHEN a project attaches a custom showcase route on top of the shared runtime app
+THEN that route can reuse shared backend state and services and is invokable both through the browser-facing adapter layer and through direct programmatic clients
 
-The `/api/deploy/contract`, `/api/deploy/call`, and `/api/deploy/send` routes SHALL deploy contracts and execute calls/sends using `@cfxdevkit/wallet`'s managed signer against the local devnode RPC. All routes SHALL declare `export const runtime = 'nodejs'`.
+#### Scenario: The first custom route returns block number
+WHEN the showcase mounts its first custom runtime extension route
+THEN that route returns the current block number through the shared backend model and remains callable both from the UI and other programmatic consumers
 
-#### Scenario: Contract is deployed and address returned
-WHEN POST `/api/deploy/contract` is called with `{ abi, bytecode, constructorArgs?, signerAddress }`
-THEN the contract is deployed via the managed signer and `{ address: string, txHash: string }` is returned
+### Requirement: Command payloads align with extension and MCP consumers
 
-#### Scenario: Read call returns decoded result
-WHEN POST `/api/deploy/call` is called with `{ contractAddress, abi, method, args }`
-THEN the function is called and the decoded return value is returned as `{ result: unknown }`
+Showcase-local runtime adapters SHALL use payload and response shapes that can also support the VS Code extension and MCP consumers.
 
-#### Scenario: Write send returns receipt
-WHEN POST `/api/deploy/send` is called with `{ contractAddress, abi, method, args, signerAddress }`
-THEN the transaction is signed by the managed signer, submitted, and `{ txHash: string, receipt: object }` is returned
+#### Scenario: Another consumer adopts the same backend route
+WHEN the VS Code extension or MCP needs the same operation family
+THEN the operation can reuse the same command model and backend semantics instead of requiring a showcase-specific translation layer

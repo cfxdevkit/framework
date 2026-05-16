@@ -1,55 +1,41 @@
-## 1. Devnode chapter + API
+The original chapter checklist is obsolete. The remaining work is a backend-first convergence and a full workspace UI rewrite.
 
-- [ ] 1.1 Implement `lib/devnode-instance.ts`: module-level `DevNode | null` singleton with `getOrCreate()` and `getInstance()` helpers
-- [ ] 1.2 Implement `app/api/devnode/start/route.ts` (`runtime = 'nodejs'`): call `createDevNode()`, `devNode.start()`, return status + rpcUrl
-- [ ] 1.3 Implement `app/api/devnode/stop/route.ts` (`runtime = 'nodejs'`): call `devNode.stop()`, return status
-- [ ] 1.4 Implement `app/api/devnode/mine/route.ts` (`runtime = 'nodejs'`): accept `count`, mine blocks, return new blockNumber
-- [ ] 1.5 Implement `app/api/devnode/status/route.ts` (`runtime = 'nodejs'`): return `{ status, blockNumber? }`
-- [ ] 1.6 Implement `app/devnode/page.tsx`: Shell layout with sections — status, start/stop controls, mine controls, block log
-- [ ] 1.7 Status section: poll GET `/api/devnode/status` on mount and after actions; show StatusBadge (running/stopped/error)
-- [ ] 1.8 Mine section: number input (1–100) + "Mine" button → POST `/api/devnode/mine`; show block numbers in LogBox
-- [ ] 1.9 Handle binary-not-found error from start API: show error StatusBadge with explanatory message
+## 1. Complete the reusable backend surface
 
-## 2. Keystore chapter + API
+- [ ] 1.1 Audit the current showcase-local, VS Code extension, and MCP command surfaces and define the shared operations matrix
+- [x] 1.2 Move remaining app-local runtime logic for compiler, session-key, deploy, and contract interaction into the shared local-runtime control plane
+- [x] 1.3 Add backend-owned wallet account operations: list derived accounts, activate account, reveal protected material through the two-step flow, and keep account/funding logic reusable for the later faucet exploration
+- [x] 1.4 Make the shared contract surface cover deploy, track deployed contracts in the first pass, and expose read and write operations with explicit network and space context
+- [x] 1.5 Add a supported extension mechanism so a project can attach custom routes or route groups to the runtime app while reusing shared services
+- [x] 1.6 Extend the typed client contract so the showcase, VS Code extension, and MCP can all consume the same backend surface
 
-- [ ] 2.1 Implement `lib/keystore-instance.ts`: file keystore provider via `@cfxdevkit/services`, path from `LOCAL_KEYSTORE_PATH` env or `.local-data/keystore/` default
-- [ ] 2.2 Implement `app/api/keystore/accounts/route.ts` (`runtime = 'nodejs'`): GET returns account list; POST creates account
-- [ ] 2.3 Implement `app/keystore/page.tsx`: Shell layout with sections — provider toggle, create account, account list
-- [ ] 2.4 Provider toggle: memory vs file keystore; switch updates API behavior
-- [ ] 2.5 Create account section: optional label input + "Create Account" → POST `/api/keystore/accounts`; refresh list
-- [ ] 2.6 Account list section: GET `/api/keystore/accounts` on mount; render each address with CopyButton and label
+## 2. Reduce showcase-local to thin adapters
 
-## 3. Session key chapter + API
+- [x] 2.1 Replace any remaining app-local backend ownership in `app/api/compile/*`, `app/api/session-key/*`, and `app/api/deploy/*` with thin adapters to the shared runtime contract
+- [x] 2.2 Add thin adapters for backend-owned account selection, reveal flows, template/bootstrap flows, contract interaction, deployed-contract tracking, and the custom block-number extension route
+- [x] 2.3 Ensure all same-origin routes are `runtime = 'nodejs'` and return payloads matching the typed shared client surface
 
-- [ ] 3.1 Implement `app/api/session-key/issue/route.ts` (`runtime = 'nodejs'`): accept `signerAddress` + `policy`; call `signerFromKeystore()` + `createSessionKey()`; return attestation JWT
-- [ ] 3.2 Implement `app/session-key/page.tsx`: Shell layout with sections — signer select, policy builder, attestation
-- [ ] 3.3 Signer select section: dropdown populated from GET `/api/keystore/accounts`
-- [ ] 3.4 Policy builder section: `allowedContracts` textarea, `allowedMethods` textarea, optional `spendLimit` input
-- [ ] 3.5 Attestation section: "Issue Session Key" → POST `/api/session-key/issue`; show decoded header/payload in DemoCard and raw JWT in CodeSnippet
+## 3. Rewrite the UI/UX around a tree workspace
 
-## 4. Compiler chapter + API
+- [x] 3.1 Replace the current stacked-card structure with one unified tree-style left rail and a focused detail pane
+- [x] 3.2 Model the unified tree after the VS Code extension mental model: network selection, node controls, wallets, derived accounts, and tracked deployed contracts
+- [x] 3.3 Move mutation-heavy flows into modal or command-sheet interactions so the main view stays uncluttered
+- [x] 3.4 Keep a persistent audit/event log visible as shared operational context
+- [x] 3.5 Show selected resource detail in the main pane: node status, wallet metadata, account details, contract ABI/actions, and custom operation results
 
-- [ ] 4.1 Implement `app/api/compile/status/route.ts` (`runtime = 'nodejs'`): call `ensureSolc()` if not ready, return `{ ready, version }`
-- [ ] 4.2 Implement `app/api/compile/contract/route.ts` (`runtime = 'nodejs'`): accept `{ source, contractName }`, call `compile()`, return `{ abi, bytecode }`
-- [ ] 4.3 Implement `app/compiler/page.tsx`: Shell layout with sections — status, template selector, editor, output
-- [ ] 4.4 Status section: GET `/api/compile/status` on mount; show "Downloading compiler…" (pending) or "Ready" (ok) StatusBadge
-- [ ] 4.5 Template selector: dropdown with `basicErc20`, `basicErc721`; "Load Template" calls `getTemplate()` on the server via API or uses a client-side helper; loads source into editor
-- [ ] 4.6 Editor section: `<textarea>` for Solidity source + contract name input + "Compile" button → POST `/api/compile/contract`
-- [ ] 4.7 Output section: ABI in collapsible CodeSnippet (JSON); bytecode in CodeSnippet; "Send to Deploy" button stores in sessionStorage
+## 4. Match extension operations and expose a custom backend extension example
 
-## 5. Deploy chapter + API
+- [ ] 4.1 Ensure the showcase demonstrates the complete agreed operational surface already required for shared backend parity: network switch, keystore lifecycle, wallet root selection, derived account selection, node lifecycle, deployed-contract tracking, compile, session-key flows, deploy, ABI-driven interaction, and secret reveal flows
+- [x] 4.2 Add one showcase-specific example operation implemented as a custom backend route that reuses shared runtime services and returns the current block number
+- [x] 4.3 Surface that custom operation in the UI and document how it can also be called programmatically by other consumers
 
-- [ ] 5.1 Implement `app/api/deploy/contract/route.ts` (`runtime = 'nodejs'`): deploy via managed signer, return `{ address, txHash }`
-- [ ] 5.2 Implement `app/api/deploy/call/route.ts` (`runtime = 'nodejs'`): call read function, return `{ result }`
-- [ ] 5.3 Implement `app/api/deploy/send/route.ts` (`runtime = 'nodejs'`): send write transaction, return `{ txHash, receipt }`
-- [ ] 5.4 Implement `app/deploy/page.tsx`: Shell layout with sections — contract input, deploy, interact
-- [ ] 5.5 Contract input section: ABI textarea + bytecode textarea (pre-filled from sessionStorage if set by compiler chapter) + signer dropdown + constructor args input
-- [ ] 5.6 Deploy section: "Deploy" → POST `/api/deploy/contract`; show deployed address and txHash in LogBox
-- [ ] 5.7 Interact section: function selector from parsed ABI; args inputs; "Call" or "Send" based on function mutability; show result/receipt in LogBox
+## 5. Documentation and validation
 
-## 6. Validation
-
-- [ ] 6.1 `pnpm --filter @cfxdevkit/example-showcase-local tsc --noEmit` passes with no errors
-- [ ] 6.2 `pnpm --filter @cfxdevkit/example-showcase-local build` succeeds (standard server mode, no static export)
-- [ ] 6.3 `pnpm run check:hotspots` shows no new hard violations
-- [ ] 6.4 Verify `.local-data/` is in `.gitignore` at `projects/examples` level
+- [x] 5.1 Rewrite the showcase-local OpenSpec proposal, design, specs, and tasks to match the workspace product rather than the old chapter app
+- [x] 5.2 Update docs to make the backend-first ownership model explicit: UI is client, backend owns logic, and MCP aligns to the same shared backend contract
+- [x] 5.3 Verify `.local-data/` is ignored in the repository where showcase-local writes local state
+- [x] 5.4 Validate `pnpm --filter @cfxdevkit/devnode-server test`
+- [x] 5.5 Validate `pnpm --filter @cfxdevkit/devnode-server build`
+- [x] 5.6 Validate `pnpm --filter @cfxdevkit/example-showcase-local typecheck`
+- [x] 5.7 Validate `pnpm --filter @cfxdevkit/example-showcase-local build`
+- [ ] 5.8 Validate the final command surface against the VS Code extension and MCP integration matrix

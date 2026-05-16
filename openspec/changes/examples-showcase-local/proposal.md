@@ -2,23 +2,38 @@
 
 ## Why
 
-The framework's local developer tooling — `@cfxdevkit/devnode` (embedded Conflux node), `@cfxdevkit/compiler` (Solidity compilation via solc), `@cfxdevkit/services` (file keystore), `@cfxdevkit/wallet` (managed signer, session keys) — has no cohesive demonstration. The old `apps/showcase-stack` and `apps/showcase` Vite apps showed these capabilities in isolation across separate UIs, each with their own Express backend (`apps/showcase-backend`). This change fills all chapter content in the `apps/showcase-local` skeleton and implements the backing API routes, creating a single Next.js app that covers the complete local dev workflow.
+The current showcase-local OpenSpec artifacts describe an older product: five separate chapter pages for a local-only demo. The implementation and the product direction have already moved past that shape.
+
+The actual target product is a backend-management workspace:
+
+- the UI is a client of the local runtime backend, not a second backend implementation
+- the command surface should match the operations needed by showcase-local, the VS Code extension, and MCP
+- the left side should behave like one unified VS Code-style tree for network selection, wallet and account management, and contract tracking so the same logic can be reused across consumers
+- mutating operations should open modal flows instead of filling the page with inline forms
+- the first pass should already implement the complete agreed operational surface rather than placeholder branches or partial demos
+- the first pass should track deployed contracts only; deeper contract import workflows can follow later
+- the showcase should demonstrate both the shared runtime operations and one simple project-defined custom operation extending the backend
+- MCP should align with the same shared backend contract because orchestrated backend state is easier to keep in sync across extension, MCP, showcase, and user-driven workflows
+
+The current UI is still structurally chaotic and the OpenSpec docs are now stale. This change rewrites the specification around the intended backend-first product and a full UI rewrite.
 
 ## What Changes
 
-- **`apps/showcase-local/app/devnode/page.tsx`** — start/stop/mine a local Conflux node; view node status, block number, and connected peer count
-- **`apps/showcase-local/app/keystore/page.tsx`** — create memory/file keystore; add accounts; list managed accounts; import/export (file provider only)
-- **`apps/showcase-local/app/session-key/page.tsx`** — create session key from managed signer; define capability policy (contract + method allowlist, spend limit); issue and inspect attestation
-- **`apps/showcase-local/app/compiler/page.tsx`** — select from template catalog (ERC-20, ERC-721); edit Solidity source; compile via `/api/compile`; inspect ABI and bytecode
-- **`apps/showcase-local/app/deploy/page.tsx`** — deploy compiled contract to local devnode via managed signer; interact (call + send); inspect events
-- **API routes**: implement `/api/devnode/*`, `/api/keystore/*`, `/api/session-key/*`, `/api/compile/*`, `/api/deploy/*` (all `runtime = 'nodejs'`)
+- Replace the chapter-first product definition with one workspace at `/` that acts as a local/backend wallet and node management client
+- Rewrite the UI/UX around a tree-structured command surface on the left and a focused detail pane on the right
+- Keep essential logic in the backend: network state, node lifecycle, wallet roots, derived accounts, active signer/account selection, contract tracking, compiler/deploy/session flows, and secret reveal flows
+- Reduce the Next.js app to thin same-origin adapters and presentation logic where browser access requires it
+- Align the showcase command surface with the VS Code extension's operational model and the MCP model built on the same backend contract
+- Demonstrate backend extensibility by including one custom project operation exposed as an attached API route and callable both from the UI and programmatically; the first example is a simple current-block-number action
 
-## New Capabilities
+## Updated Capabilities
 
-- `showcase-local-chapters`: five chapter pages (devnode, keystore, session-key, compiler, deploy) with live demos against local runtime
-- `showcase-local-api`: full API implementation backing all chapter demos
+- `showcase-local-chapters`: retained capability name, but now defines the single workspace UI instead of separate chapter pages
+- `showcase-local-api`: thin app adapters over the shared runtime control plane, plus any showcase-specific extension routes
 
 ## Dependencies
 
-- Depends on: `examples-shared-foundation` (apps/showcase-local skeleton + packages/showcase-ui)
-- Packages used: `@cfxdevkit/devnode`, `@cfxdevkit/compiler`, `@cfxdevkit/services`, `@cfxdevkit/wallet`, `@cfxdevkit/core`, `@cfxdevkit/react`, `@cfxdevkit/example-showcase-ui`
+- Depends on: `examples-shared-foundation` for the existing app shell and UI package
+- Depends on: `local-runtime-control-plane` for the canonical backend contract and reusable runtime services
+- Mirrors: the VS Code extension command surface for network, wallet, account, node, and contract operations
+- Prepares parity with: MCP runtime handlers so the showcase reflects the same backend-owned capabilities that agents will call programmatically

@@ -9,3 +9,19 @@ body {
   margin: 0;
   padding: 0;
 }
+
+html {
+  background:
+    radial-gradient(circle at top left, rgba(53, 91, 255, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(8, 201, 172, 0.14), transparent 32%), #070c17;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: transparent;
+}
+
+a {
+  color: inherit;
+}

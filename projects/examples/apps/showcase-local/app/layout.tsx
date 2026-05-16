@@ -6,9 +6,9 @@ import type { ReactNode } from 'react';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: 'Conflux Local Showcase',
+  title: 'Conflux Backend Showcase',
   description:
-    'Local-only interactive examples — devnode, keystore, compiler, deploy, session-key.',
+    'Single-page backend-driven showcase for keystore, local devnode, session keys, compile, and deploy across local, testnet, and mainnet.',
 };
 
 // biome-ignore lint/style/noDefaultExport: Next.js app router requires a default layout export.

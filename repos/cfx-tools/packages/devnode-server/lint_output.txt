@@ -1,0 +1,1141 @@
+
+> @cfxdevkit/devnode-server@0.0.0 lint /workspaces/root/repos/cfx-tools/packages/devnode-server
+> biome check src --max-diagnostics\=100
+
+src/network.ts:226:41 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    225 │   return {
+  > 226 │     ...(Number.isInteger(value.core) && value.core! > 0 ? { core: value.core } : {}),
+        │                                         ^^^^^^^^^^^
+    227 │     ...(Number.isInteger(value.espace) && value.espace! > 0 ? { espace: value.espace } : {}),
+    228 │   };
+  
+
+src/network.ts:227:43 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    225 │   return {
+    226 │     ...(Number.isInteger(value.core) && value.core! > 0 ? { core: value.core } : {}),
+  > 227 │     ...(Number.isInteger(value.espace) && value.espace! > 0 ? { espace: value.espace } : {}),
+        │                                           ^^^^^^^^^^^^^
+    228 │   };
+    229 │ }
+  
+
+src/routes/contracts.ts:3:3 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    1 │ import { Hono } from 'hono';
+    2 │ import {
+  > 3 │   chainIdForContractNetwork,
+      │   ^^^^^^^^^^^^^^^^^^^^^^^^^
+    4 │   type ContractRegistry,
+    5 │ } from '../contracts.js';
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+     1  1 │   import { Hono } from 'hono';
+     2  2 │   import {
+     3    │ - ··chainIdForContractNetwork,
+     4  3 │     type ContractRegistry,
+     5  4 │   } from '../contracts.js';
+  
+
+src/routes/contracts.ts:9:8 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! This import is unused.
+  
+     7 │ import type { KeystoreService } from '../keystore.js';
+     8 │ import type { NetworkState } from '../network.js';
+   > 9 │ import { resolveNetworkContext } from '../runtime-operations.js';
+       │        ^^^^^^^^^^^^^^^^^^^^^^^^^
+    10 │ import { attachContractActionRoutes } from './contracts-actions.js';
+    11 │ import {
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+     7  7 │   import type { KeystoreService } from '../keystore.js';
+     8  8 │   import type { NetworkState } from '../network.js';
+     9    │ - import·{·resolveNetworkContext·}·from·'../runtime-operations.js';
+    10  9 │   import { attachContractActionRoutes } from './contracts-actions.js';
+    11 10 │   import {
+  
+
+src/routes/deploy.ts:42:9 lint/complexity/useOptionalChain  FIXABLE  ━━━━━━━━━━━
+
+  ! Change to an optional chain.
+  
+    40 │       return context.json({ ok: false, error: 'abi must be an array' }, 400);
+    41 │     }
+  > 42 │     if (!body.bytecode || !body.bytecode.startsWith('0x')) {
+       │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    43 │       return context.json(
+    44 │         { ok: false, error: 'bytecode must be a 0x-prefixed hex string' },
+  
+  i Unsafe fix: Change to an optional chain.
+  
+     40  40 │         return context.json({ ok: false, error: 'abi must be an array' }, 400);
+     41  41 │       }
+     42     │ - ····if·(!body.bytecode·||·!body.bytecode.startsWith('0x'))·{
+         42 │ + ····if·(!body.bytecode?.startsWith('0x'))·{
+     43  43 │         return context.json(
+     44  44 │           { ok: false, error: 'bytecode must be a 0x-prefixed hex string' },
+  
+
+src/app.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { join, resolve } from 'node:path';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { Hono } from 'hono';
+    3 │ import { HTTPException } from 'hono/http-exception';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     10  10 │   import { createBootstrapRoutes } from './routes/bootstrap.js';
+     11  11 │   import { createCompilerRoutes } from './routes/compiler.js';
+     12     │ - import·{·createDeployRoutes·}·from·'./routes/deploy.js';
+     13     │ - import·{·createContractsRoutes·}·from·'./routes/contracts.js';
+         12 │ + import·{·createContractsRoutes·}·from·'./routes/contracts.js';
+         13 │ + import·{·createDeployRoutes·}·from·'./routes/deploy.js';
+     14  14 │   import { createKeystoreRoutes } from './routes/keystore.js';
+     15  15 │   import { createMiningRoutes } from './routes/mining.js';
+  
+
+src/app.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    153 153 │     app.route('/contracts', createContractsRoutes(contracts, controller, keystore, network));
+    154 154 │     app.route('/deploy', createDeployRoutes(controller, keystore, contracts, network));
+    155     │ - ··app.route('/network',·createNetworkRoutes(network,·{·isNodeRunning:·()·=>·controller.status().running·}));
+        155 │ + ··app.route(
+        156 │ + ····'/network',
+        157 │ + ····createNetworkRoutes(network,·{·isNodeRunning:·()·=>·controller.status().running·}),
+        158 │ + ··);
+    156 159 │     app.route('/mining', createMiningRoutes(controller));
+    157 160 │     app.route('/bootstrap', createBootstrapRoutes(controller, contracts));
+  
+
+src/cli-helpers.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     5  5 │   }
+     6  6 │   
+     7    │ - export·function·renderHelp(defaults:·{
+     8    │ - ··baseUrl:·string;
+     9    │ - ··host:·string;
+    10    │ - ··port:·number;
+    11    │ - }):·string·{
+        7 │ + export·function·renderHelp(defaults:·{·baseUrl:·string;·host:·string;·port:·number·}):·string·{
+    12  8 │     return `cfxdevkit-devnode-server - local Conflux runtime control plane
+    13  9 │   
+    ····· │ 
+    93 89 │   function ensureTrailingSlash(value: string): string {
+    94 90 │     return value.endsWith('/') ? value : `${value}/`;
+    95    │ - }
+       91 │ + }
+       92 │ + 
+  
+
+src/cli.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    162 162 │         ]);
+    163 163 │   
+    164     │ - ······const·healthRecord·=
+    165     │ - ········health·&&·typeof·health·===·'object'·?·(health·as·{·ok?:·unknown·})·:·{};
+        164 │ + ······const·healthRecord·=·health·&&·typeof·health·===·'object'·?·(health·as·{·ok?:·unknown·})·:·{};
+    166 165 │         return {
+    167 166 │           health: { ok: healthRecord.ok === true },
+  
+
+src/contracts.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     70  70 │   
+     71  71 │     async register(
+     72     │ - ····input:·Omit<ContractRecord,·'id'·|·'deployedAt'>·&·Partial<Pick<ContractRecord,·'id'·|·'deployedAt'>>,
+         72 │ + ····input:·Omit<ContractRecord,·'id'·|·'deployedAt'>·&
+         73 │ + ······Partial<Pick<ContractRecord,·'id'·|·'deployedAt'>>,
+     73  74 │     ): Promise<ContractRecord> {
+     74  75 │       const id = input.id ?? crypto.randomUUID();
+    ······· │ 
+    190 191 │       ...(Array.isArray(record.constructorArgs) ? { constructorArgs: record.constructorArgs } : {}),
+    191 192 │       ...(typeof record.deployer === 'string' ? { deployer: record.deployer } : {}),
+    192     │ - ····...(record.metadata·&&·typeof·record.metadata·===·'object'·?·{·metadata:·record.metadata·}·:·{}),
+        193 │ + ····...(record.metadata·&&·typeof·record.metadata·===·'object'
+        194 │ + ······?·{·metadata:·record.metadata·}
+        195 │ + ······:·{}),
+    193 196 │       ...(typeof record.txHash === 'string' ? { txHash: record.txHash } : {}),
+    194 197 │     };
+  
+
+src/index.basics.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { rm } from 'node:fs/promises';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from 'node:os';
+    3 │ import { join } from 'node:path';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      3   3 │   import { join } from 'node:path';
+      4   4 │   import { describe, expect, it } from 'vitest';
+      5     │ - import·{·TEST_MNEMONIC,·createMockNode·}·from·'./index.test-support.js';
+      6     │ - import·{·createDevnodeServerApp,·DevnodeServerController·}·from·'./index.js';
+          5 │ + import·{·createDevnodeServerApp,·DevnodeServerController·}·from·'./index.js';
+          6 │ + import·{·createMockNode,·TEST_MNEMONIC·}·from·'./index.test-support.js';
+      7   7 │   
+      8   8 │   describe('@cfxdevkit/devnode-server basics', () => {
+  
+
+src/index.basics.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    169 169 │       }
+    170 170 │     }, 20000);
+    171     │ - });
+        171 │ + });
+        172 │ + 
+  
+
+src/index.contracts-persistence.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { rm } from 'node:fs/promises';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from 'node:os';
+    3 │ import { join } from 'node:path';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      3   3 │   import { join } from 'node:path';
+      4   4 │   import { describe, expect, it } from 'vitest';
+      5     │ - import·{
+      6     │ - ··SECOND_TEST_MNEMONIC,
+      7     │ - ··TEST_MNEMONIC,
+      8     │ - ··createMockNode,
+      9     │ - ··readContractMock,
+     10     │ - ··sendCoreFundsMock,
+     11     │ - ··sendWriteMock,
+     12     │ - }·from·'./index.test-support.js';
+     13     │ - import·{·createDevnodeServerApp·}·from·'./index.js';
+          5 │ + import·{·createDevnodeServerApp·}·from·'./index.js';
+          6 │ + import·{
+          7 │ + ··createMockNode,
+          8 │ + ··readContractMock,
+          9 │ + ··SECOND_TEST_MNEMONIC,
+         10 │ + ··sendCoreFundsMock,
+         11 │ + ··sendWriteMock,
+         12 │ + ··TEST_MNEMONIC,
+         13 │ + }·from·'./index.test-support.js';
+     14  14 │   
+     15  15 │   describe('@cfxdevkit/devnode-server contracts persistence', () => {
+  
+
+src/index.contracts-persistence.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    181 181 │       await expect(response.json()).resolves.toMatchObject({ ok: true, pong: true });
+    182 182 │     });
+    183     │ - });
+        183 │ + });
+        184 │ + 
+  
+
+src/index.deploy.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { rm } from 'node:fs/promises';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from 'node:os';
+    3 │ import { join } from 'node:path';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      3   3 │   import { join } from 'node:path';
+      4   4 │   import { describe, expect, it } from 'vitest';
+      5     │ - import·{
+      6     │ - ··TEST_MNEMONIC,
+      7     │ - ··createMockNode,
+      8     │ - ··deployContractMock,
+      9     │ - ··readContractMock,
+     10     │ - ··sendWriteMock,
+     11     │ - }·from·'./index.test-support.js';
+     12     │ - import·{·createDevnodeServerApp·}·from·'./index.js';
+          5 │ + import·{·createDevnodeServerApp·}·from·'./index.js';
+          6 │ + import·{
+          7 │ + ··createMockNode,
+          8 │ + ··deployContractMock,
+          9 │ + ··readContractMock,
+         10 │ + ··sendWriteMock,
+         11 │ + ··TEST_MNEMONIC,
+         12 │ + }·from·'./index.test-support.js';
+     13  13 │   
+     14  14 │   describe('@cfxdevkit/devnode-server deploy and writes', () => {
+  
+
+src/index.deploy.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    205 205 │       }
+    206 206 │     }, 10000);
+    207     │ - });
+        207 │ + });
+        208 │ + 
+  
+
+src/index.keystore.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { rm } from 'node:fs/promises';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from 'node:os';
+    3 │ import { join } from 'node:path';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      4   4 │   import { deriveAccount } from '@cfxdevkit/core';
+      5   5 │   import { describe, expect, it } from 'vitest';
+      6     │ - import·{·TEST_MNEMONIC,·createMockNode·}·from·'./index.test-support.js';
+      7     │ - import·{·createDevnodeServerApp·}·from·'./index.js';
+          6 │ + import·{·createDevnodeServerApp·}·from·'./index.js';
+          7 │ + import·{·createMockNode,·TEST_MNEMONIC·}·from·'./index.test-support.js';
+      8   8 │   
+      9   9 │   describe('@cfxdevkit/devnode-server keystore flows', () => {
+  
+
+src/index.keystore.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     58  58 │         expect(accountsJson.accounts[2]).toMatchObject({ index: 2, active: false });
+     59  59 │   
+     60     │ - ······const·activateAccount·=·await·app.request(`/keystore/wallets/${wallet.id}/accounts/2/activate`,·{
+     61     │ - ········method:·'PUT',
+     62     │ - ······});
+         60 │ + ······const·activateAccount·=·await·app.request(
+         61 │ + ········`/keystore/wallets/${wallet.id}/accounts/2/activate`,
+         62 │ + ········{
+         63 │ + ··········method:·'PUT',
+         64 │ + ········},
+         65 │ + ······);
+     63  66 │         await expect(activateAccount.json()).resolves.toMatchObject({ ok: true });
+     64  67 │   
+    ······· │ 
+    161 164 │       }
+    162 165 │     }, 20000);
+    163     │ - });
+        166 │ + });
+        167 │ + 
+  
+
+src/index.network.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      2   2 │   import { tmpdir } from 'node:os';
+      3   3 │   import { describe, expect, it } from 'vitest';
+      4     │ - import·{
+      5     │ - ··SECOND_TEST_MNEMONIC,
+      6     │ - ··TEST_MNEMONIC,
+      7     │ - ··createMockNode,
+      8     │ - }·from·'./index.test-support.js';
+          4 │ + import·{·SECOND_TEST_MNEMONIC,·TEST_MNEMONIC,·createMockNode·}·from·'./index.test-support.js';
+      9   5 │   import { createDevnodeServerApp } from './index.js';
+     10   6 │   
+    ······· │ 
+     67  63 │         const secondary = (await secondaryAdd.json()) as { ok: boolean; wallet: { id: string } };
+     68  64 │   
+     69     │ - ······const·activateSecondary·=·await·app.request(`/keystore/wallets/${secondary.wallet.id}/activate`,·{
+     70     │ - ········method:·'PUT',
+     71     │ - ······});
+         65 │ + ······const·activateSecondary·=·await·app.request(
+         66 │ + ········`/keystore/wallets/${secondary.wallet.id}/activate`,
+         67 │ + ········{
+         68 │ + ··········method:·'PUT',
+         69 │ + ········},
+         70 │ + ······);
+     72  71 │         await expect(activateSecondary.json()).resolves.toMatchObject({ ok: true });
+     73  72 │   
+    ······· │ 
+    117 116 │       }
+    118 117 │     }, 20000);
+    119     │ - });
+        118 │ + });
+        119 │ + 
+  
+
+src/index.network.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { rm } from 'node:fs/promises';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from 'node:os';
+    3 │ import { describe, expect, it } from 'vitest';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      2   2 │   import { tmpdir } from 'node:os';
+      3   3 │   import { describe, expect, it } from 'vitest';
+      4     │ - import·{
+      5     │ - ··SECOND_TEST_MNEMONIC,
+      6     │ - ··TEST_MNEMONIC,
+      7     │ - ··createMockNode,
+      8     │ - }·from·'./index.test-support.js';
+      9     │ - import·{·createDevnodeServerApp·}·from·'./index.js';
+          4 │ + import·{·createDevnodeServerApp·}·from·'./index.js';
+          5 │ + import·{
+          6 │ + ··createMockNode,
+          7 │ + ··SECOND_TEST_MNEMONIC,
+          8 │ + ··TEST_MNEMONIC,
+          9 │ + }·from·'./index.test-support.js';
+     10  10 │   
+     11  11 │   describe('@cfxdevkit/devnode-server network profiles', () => {
+  
+
+src/index.node-profiles.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { rm } from 'node:fs/promises';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from 'node:os';
+    3 │ import { join } from 'node:path';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     3  3 │   import { join } from 'node:path';
+     4  4 │   import { describe, expect, it } from 'vitest';
+     5    │ - import·{
+     6    │ - ··SECOND_TEST_MNEMONIC,
+     7    │ - ··TEST_MNEMONIC,
+     8    │ - ··createMockNode,
+     9    │ - }·from·'./index.test-support.js';
+    10    │ - import·{·createDevnodeServerApp·}·from·'./index.js';
+        5 │ + import·{·createDevnodeServerApp·}·from·'./index.js';
+        6 │ + import·{
+        7 │ + ··createMockNode,
+        8 │ + ··SECOND_TEST_MNEMONIC,
+        9 │ + ··TEST_MNEMONIC,
+       10 │ + }·from·'./index.test-support.js';
+    11 11 │   
+    12 12 │   describe('@cfxdevkit/devnode-server node profiles', () => {
+  
+
+src/index.node-profiles.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     3  3 │   import { join } from 'node:path';
+     4  4 │   import { describe, expect, it } from 'vitest';
+     5    │ - import·{
+     6    │ - ··SECOND_TEST_MNEMONIC,
+     7    │ - ··TEST_MNEMONIC,
+     8    │ - ··createMockNode,
+     9    │ - }·from·'./index.test-support.js';
+        5 │ + import·{·SECOND_TEST_MNEMONIC,·TEST_MNEMONIC,·createMockNode·}·from·'./index.test-support.js';
+    10  6 │   import { createDevnodeServerApp } from './index.js';
+    11  7 │   
+    ····· │ 
+    95 91 │       }
+    96 92 │     }, 20000);
+    97    │ - });
+       93 │ + });
+       94 │ + 
+  
+
+src/index.test-support.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    72 72 │       stopMining: async () => {},
+    73 73 │     } as unknown as DevNode;
+    74    │ - }
+       74 │ + }
+       75 │ + 
+  
+
+src/index.test-support.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import type { DevNode, DevNodeConfig } from '@cfxdevkit/devnode';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { vi, type Mock } from 'vitest';
+    3 │ 
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     1  1 │   import type { DevNode, DevNodeConfig } from '@cfxdevkit/devnode';
+     2    │ - import·{·vi,·type·Mock·}·from·'vitest';
+        2 │ + import·{·type·Mock,·vi·}·from·'vitest';
+     3  3 │   
+     4  4 │   export const deployContractMock: Mock = vi.fn();
+  
+
+src/keystore-domain.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    133 133 │     }
+    134 134 │     return new Error('invalid passphrase or corrupted keystore');
+    135     │ - }
+        135 │ + }
+        136 │ + 
+  
+
+src/keystore-operations.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { randomUUID } from 'node:crypto';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import type { Signer } from '@cfxdevkit/core';
+    3 │ import { deriveAccount } from '@cfxdevkit/core';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      6   6 │   import type {
+      7   7 │     ActiveWalletSummary,
+      8     │ - ··RevealKind,
+      9     │ - ··RevealRequestSummary,
+     10     │ - ··RevealedSecret,
+          8 │ + ··RevealedSecret,
+          9 │ + ··RevealKind,
+         10 │ + ··RevealRequestSummary,
+     11  11 │     WalletAccountSummary,
+     12  12 │   } from './keystore.js';
+     13  13 │   import {
+     14     │ - ··META_ACTIVE_ACCOUNT_INDEX_KEY,
+     15     │ - ··META_ACTIVE_KEY,
+     16     │ - ··META_ACCOUNT_COUNT_KEY,
+     17     │ - ··META_DERIVATION_BASE_KEY,
+     18     │ - ··META_FIRST_ADDRESS_KEY,
+     19     │ - ··META_NAME_KEY,
+     20     │ - ··REVEAL_WARNING,
+     21     │ - ··assertAccountIndex,
+     22     │ - ··createPrivateKeyReveal,
+     23     │ - ··isActiveWallet,
+         14 │ + ··assertAccountIndex,
+         15 │ + ··createPrivateKeyReveal,
+         16 │ + ··isActiveWallet,
+         17 │ + ··META_ACCOUNT_COUNT_KEY,
+         18 │ + ··META_ACTIVE_ACCOUNT_INDEX_KEY,
+         19 │ + ··META_ACTIVE_KEY,
+         20 │ + ··META_DERIVATION_BASE_KEY,
+         21 │ + ··META_FIRST_ADDRESS_KEY,
+         22 │ + ··META_NAME_KEY,
+     24  23 │     normalizeAccountCount,
+     25  24 │     normalizeDerivationBase,
+     26  25 │     normalizeRevealTtl,
+     27  26 │     normalizeUnlockError,
+     28     │ - ··toWalletSummary,
+     29     │ - ··walletActiveAccountIndex,
+         27 │ + ··REVEAL_WARNING,
+         28 │ + ··toWalletSummary,
+     30  29 │     walletAccountCount,
+     31     │ - ··walletDerivationPath,
+         30 │ + ··walletActiveAccountIndex,
+         31 │ + ··walletDerivationPath,
+     32  32 │     walletMeta,
+     33  33 │     walletRef,
+  
+
+src/keystore-operations.ts:5:8 lint/style/useImportType  FIXABLE  ━━━━━━━━━━━━━━
+
+  × Some named imports are only used as types.
+  
+    3 │ import { deriveAccount } from '@cfxdevkit/core';
+    4 │ import type { SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
+  > 5 │ import { createFileKeystore, readFileKeystoreMnemonic } from '@cfxdevkit/services/keystore-file';
+      │        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    6 │ import type {
+    7 │   ActiveWalletSummary,
+  
+  i This import is only used as a type.
+  
+    3 │ import { deriveAccount } from '@cfxdevkit/core';
+    4 │ import type { SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
+  > 5 │ import { createFileKeystore, readFileKeystoreMnemonic } from '@cfxdevkit/services/keystore-file';
+      │          ^^^^^^^^^^^^^^^^^^
+    6 │ import type {
+    7 │   ActiveWalletSummary,
+  
+  i Importing the types with import type ensures that they are removed by the compilers and avoids loading unnecessary modules.
+  
+  i Safe fix: Add inline type keywords.
+  
+    5 │ import·{·type·createFileKeystore,·readFileKeystoreMnemonic·}·from·'@cfxdevkit/services/keystore-file';
+      │          +++++                                                                                        
+
+src/keystore-operations.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    211 211 │   }
+    212 212 │   
+    213     │ - export·async·function·removeWallet(state:·LoadedKeystoreState,·target:·StoredSecret):·Promise<boolean>·{
+        213 │ + export·async·function·removeWallet(
+        214 │ + ··state:·LoadedKeystoreState,
+        215 │ + ··target:·StoredSecret,
+        216 │ + ):·Promise<boolean>·{
+    214 217 │     const wasActive = isActiveWallet(target);
+    215 218 │     await state.provider.remove?.(target.ref);
+    ······· │ 
+    223 226 │   ): Promise<void> {
+    224 227 │     await state.provider.updateMeta?.(wallet.ref, walletMeta(wallet, { [META_NAME_KEY]: name }));
+    225     │ - }
+        228 │ + }
+        229 │ + 
+  
+
+src/keystore-runtime.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { access } from 'node:fs/promises';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { generateMnemonic } from '@cfxdevkit/core';
+    3 │ import type { SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      6   6 │     ActiveWalletSummary,
+      7   7 │     KeystoreStatus,
+      8     │ - ··RevealKind,
+      9     │ - ··RevealRequestSummary,
+     10     │ - ··RevealedSecret,
+          8 │ + ··RevealedSecret,
+          9 │ + ··RevealKind,
+         10 │ + ··RevealRequestSummary,
+     11  11 │     WalletAccountSummary,
+     12  12 │     WalletSummary,
+     13  13 │   } from './keystore.js';
+     14  14 │   import {
+     15     │ - ··UNLOCK_PROBE_REF,
+     16     │ - ··isActiveWallet,
+     17     │ - ··isMnemonicSecret,
+     18     │ - ··toWalletSummary,
+         15 │ + ··isActiveWallet,
+         16 │ + ··isMnemonicSecret,
+         17 │ + ··toWalletSummary,
+         18 │ + ··UNLOCK_PROBE_REF,
+     19  19 │     walletActiveAccountIndex,
+     20  20 │   } from './keystore-domain.js';
+    ······· │ 
+     22  22 │     addWalletSecret,
+     23  23 │     createRevealSession,
+     24     │ - ··listWalletAccounts,
+     25     │ - ··loadActiveSigner,
+     26     │ - ··loadActiveWalletSummary,
+     27     │ - ··readStoredMnemonic,
+     28     │ - ··readWalletMnemonicFromState,
+     29     │ - ··removeWallet,
+     30     │ - ··renameWallet,
+     31     │ - ··type·KeystoreProvider,
+     32     │ - ··type·LoadedKeystoreState,
+     33     │ - ··type·RevealSession,
+         24 │ + ··type·KeystoreProvider,
+         25 │ + ··type·LoadedKeystoreState,
+         26 │ + ··listWalletAccounts,
+         27 │ + ··loadActiveSigner,
+         28 │ + ··loadActiveWalletSummary,
+         29 │ + ··type·RevealSession,
+         30 │ + ··readStoredMnemonic,
+         31 │ + ··readWalletMnemonicFromState,
+         32 │ + ··removeWallet,
+         33 │ + ··renameWallet,
+     34  34 │     updateActiveWallet,
+     35  35 │   } from './keystore-operations.js';
+  
+
+src/keystore-runtime.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    249 249 │       }
+    250 250 │     }
+    251     │ - }
+        251 │ + }
+        252 │ + 
+  
+
+src/profiles.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    155 155 │       };
+    156 156 │     }
+    157     │ - }
+        157 │ + }
+        158 │ + 
+  
+
+src/routes/accounts-funding.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    89 89 │     });
+    90 90 │     return client.sendRawTransaction(signedTx as Hex);
+    91    │ - }
+       91 │ + }
+       92 │ + 
+  
+
+src/routes/accounts-funding.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+   > 1 │ import {
+       │ ^^^^^^^^
+   > 2 │   createClient,
+   > 3 │   coreSpaceLocal,
+   > 4 │   defineChain,
+        ...
+  > 10 │   http,
+  > 11 │ } from '@cfxdevkit/core';
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^
+    12 │ import type { Hex } from 'viem';
+    13 │ 
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     1  1 │   import {
+     2    │ - ··createClient,
+        2 │ + ··type·CoreSpaceClient,
+     3  3 │     coreSpaceLocal,
+     4    │ - ··defineChain,
+     5    │ - ··espaceLocal,
+     6    │ - ··parseCFX,
+     7    │ - ··signerFromPrivateKey,
+     8    │ - ··type·CoreSpaceClient,
+     9    │ - ··type·EspaceClient,
+    10    │ - ··http,
+        4 │ + ··createClient,
+        5 │ + ··defineChain,
+        6 │ + ··type·EspaceClient,
+        7 │ + ··espaceLocal,
+        8 │ + ··http,
+        9 │ + ··parseCFX,
+       10 │ + ··signerFromPrivateKey,
+    11 11 │   } from '@cfxdevkit/core';
+    12 12 │   import type { Hex } from 'viem';
+  
+
+src/routes/bootstrap.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { compile, getTemplate, listTemplates } from '@cfxdevkit/compiler';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import {
+    3 │   createClient,
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      8   8 │   } from '@cfxdevkit/core';
+      9   9 │   import { Hono } from 'hono';
+     10     │ - import·{·chainIdForContractNetwork,·type·ContractRegistry·}·from·'../contracts.js';
+         10 │ + import·{·type·ContractRegistry,·chainIdForContractNetwork·}·from·'../contracts.js';
+     11  11 │   import type { DevnodeServerController } from '../controller.js';
+     12  12 │   
+  
+
+src/routes/compiler.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    76 76 │       return {} as T;
+    77 77 │     }
+    78    │ - }
+       78 │ + }
+       79 │ + 
+  
+
+src/routes/contracts-actions.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     40  40 │       const runtime = resolveNetworkContext(networkState, body.network);
+     41  41 │       const network = normalizeNetwork(body.network) ?? runtime.network;
+     42     │ - ····const·chainId·=·body.chainId·??·(space·===·'core'·?·runtime.chainIds.core·:·runtime.chainIds.espace);
+         42 │ + ····const·chainId·=
+         43 │ + ······body.chainId·??·(space·===·'core'·?·runtime.chainIds.core·:·runtime.chainIds.espace);
+     43  44 │       const contract = await registry.register({
+     44  45 │         name: body.name,
+    ······· │ 
+    148 149 │   
+    149 150 │       const body = await readBody<
+    150     │ - ······Omit<ContractWriteRequest,·'abi'·|·'address'·|·'network'·|·'space'>·&·{·functionName?:·string·}
+        151 │ + ······Omit<ContractWriteRequest,·'abi'·|·'address'·|·'network'·|·'space'>·&·{
+        152 │ + ········functionName?:·string;
+        153 │ + ······}
+    151 154 │       >(c);
+    152 155 │       if (!body.functionName?.trim()) {
+    ······· │ 
+    225 228 │       }
+    226 229 │     });
+    227     │ - }
+        230 │ + }
+        231 │ + 
+  
+
+src/routes/contracts-actions.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { readContract } from '@cfxdevkit/contracts/read';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { sendWrite } from '@cfxdevkit/contracts/write';
+    3 │ import type { Hono } from 'hono';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      2   2 │   import { sendWrite } from '@cfxdevkit/contracts/write';
+      3   3 │   import type { Hono } from 'hono';
+      4     │ - import·{·type·ContractRecord,·detectSpace,·type·ContractRegistry·}·from·'../contracts.js';
+          4 │ + import·{·type·ContractRecord,·type·ContractRegistry,·detectSpace·}·from·'../contracts.js';
+      5   5 │   import type { DevnodeServerController } from '../controller.js';
+      6   6 │   import type { KeystoreService } from '../keystore.js';
+    ······· │ 
+     12  12 │   } from '../runtime-operations.js';
+     13  13 │   import {
+     14     │ - ··functionMutability,
+     15     │ - ··normalizeBlockTag,
+     16     │ - ··normalizeNetwork,
+     17     │ - ··readBody,
+     18     │ - ··type·ContractReadRequest,
+     19     │ - ··type·ContractWriteRequest,
+         14 │ + ··type·ContractReadRequest,
+         15 │ + ··type·ContractWriteRequest,
+         16 │ + ··functionMutability,
+         17 │ + ··normalizeBlockTag,
+         18 │ + ··normalizeNetwork,
+         19 │ + ··readBody,
+     20  20 │     toJsonValue,
+     21  21 │   } from './contracts-helpers.js';
+  
+
+src/routes/contracts-actions.ts:101:9 lint/suspicious/noImplicitAnyLet ━━━━━━━━━━
+
+  × This variable implicitly has the any type.
+  
+     99 │     const space = body.space ?? detectSpace(body.address);
+    100 │ 
+  > 101 │     let signer;
+        │         ^^^^^^
+    102 │     try {
+    103 │       signer = await resolveRouteSigner({
+  
+  i Variable declarations without type annotation and initialization implicitly have the any type. Declare a type or initialize the variable with some value.
+  
+
+src/routes/contracts-actions.ts:184:9 lint/suspicious/noImplicitAnyLet ━━━━━━━━━━
+
+  × This variable implicitly has the any type.
+  
+    182 │     }
+    183 │ 
+  > 184 │     let signer;
+        │         ^^^^^^
+    185 │     try {
+    186 │       signer = await resolveRouteSigner({
+  
+  i Variable declarations without type annotation and initialization implicitly have the any type. Declare a type or initialize the variable with some value.
+  
+
+src/routes/contracts-helpers.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    87 87 │   
+    88 88 │     return value;
+    89    │ - }
+       89 │ + }
+       90 │ + 
+  
+
+src/routes/contracts.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     1  1 │   import { Hono } from 'hono';
+     2    │ - import·{
+     3    │ - ··chainIdForContractNetwork,
+     4    │ - ··type·ContractRegistry,
+     5    │ - }·from·'../contracts.js';
+        2 │ + import·{·chainIdForContractNetwork,·type·ContractRegistry·}·from·'../contracts.js';
+     6  3 │   import type { DevnodeServerController } from '../controller.js';
+     7  4 │   import type { KeystoreService } from '../keystore.js';
+    ····· │ 
+     9  6 │   import { resolveNetworkContext } from '../runtime-operations.js';
+    10  7 │   import { attachContractActionRoutes } from './contracts-actions.js';
+    11    │ - import·{
+    12    │ - ··normalizeChainId,
+    13    │ - ··normalizeNetwork,
+    14    │ - ··normalizeSpace,
+    15    │ - }·from·'./contracts-helpers.js';
+        8 │ + import·{·normalizeChainId,·normalizeNetwork,·normalizeSpace·}·from·'./contracts-helpers.js';
+    16  9 │   
+    17 10 │   export function createContractsRoutes(
+  
+
+src/routes/contracts.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { Hono } from 'hono';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import {
+    3 │   chainIdForContractNetwork,
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     1  1 │   import { Hono } from 'hono';
+     2  2 │   import {
+     3    │ - ··chainIdForContractNetwork,
+     4    │ - ··type·ContractRegistry,
+        3 │ + ··type·ContractRegistry,
+        4 │ + ··chainIdForContractNetwork,
+     5  5 │   } from '../contracts.js';
+     6  6 │   import type { DevnodeServerController } from '../controller.js';
+  
+
+src/routes/deploy.ts:52:9 lint/suspicious/noImplicitAnyLet ━━━━━━━━━━━━━━━━━━━━━
+
+  × This variable implicitly has the any type.
+  
+    50 │     const runtime = resolveNetworkContext(networkState, body.network);
+    51 │ 
+  > 52 │     let signer;
+       │         ^^^^^^
+    53 │     try {
+    54 │       signer = await resolveRouteSigner({
+  
+  i Variable declarations without type annotation and initialization implicitly have the any type. Declare a type or initialize the variable with some value.
+  
+
+src/routes/deploy.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     41  41 │       }
+     42  42 │       if (!body.bytecode || !body.bytecode.startsWith('0x')) {
+     43     │ - ······return·context.json(
+     44     │ - ········{·ok:·false,·error:·'bytecode·must·be·a·0x-prefixed·hex·string'·},
+     45     │ - ········400,
+     46     │ - ······);
+         43 │ + ······return·context.json({·ok:·false,·error:·'bytecode·must·be·a·0x-prefixed·hex·string'·},·400);
+     47  44 │       }
+     48  45 │   
+    ······· │ 
+    171 168 │       return {} as T;
+    172 169 │     }
+    173     │ - }
+        170 │ + }
+        171 │ + 
+  
+
+src/routes/deploy.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { deployContract } from '@cfxdevkit/contracts/deploy';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { Hono } from 'hono';
+    3 │ import type { Abi } from 'viem';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      2   2 │   import { Hono } from 'hono';
+      3   3 │   import type { Abi } from 'viem';
+      4     │ - import·{·chainIdForContractNetwork,·type·ContractRegistry·}·from·'../contracts.js';
+          4 │ + import·{·type·ContractRegistry,·chainIdForContractNetwork·}·from·'../contracts.js';
+      5   5 │   import type { DevnodeServerController } from '../controller.js';
+      6   6 │   import type { KeystoreService } from '../keystore.js';
+  
+
+src/routes/network.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    32 32 │         );
+    33 33 │       }
+    34    │ - ····if·((body.key·===·'coreChainId'·||·body.key·===·'espaceChainId')·&&·!isPositiveInteger(body.value))·{
+       34 │ + ····if·(
+       35 │ + ······(body.key·===·'coreChainId'·||·body.key·===·'espaceChainId')·&&
+       36 │ + ······!isPositiveInteger(body.value)
+       37 │ + ····)·{
+    35 38 │         return c.json({ ok: false, error: `${body.key} must be a positive integer` }, 400);
+    36 39 │       }
+    ····· │ 
+    65 68 │   
+    66 69 │   function isConfigKey(value: string): value is PersistedNetworkConfigKey {
+    67    │ - ··return·value·===·'coreRpc'·||·value·===·'espaceRpc'·||·value·===·'coreChainId'·||·value·===·'espaceChainId';
+       70 │ + ··return·(
+       71 │ + ····value·===·'coreRpc'·||
+       72 │ + ····value·===·'espaceRpc'·||
+       73 │ + ····value·===·'coreChainId'·||
+       74 │ + ····value·===·'espaceChainId'
+       75 │ + ··);
+    68 76 │   }
+    69 77 │   
+  
+
+src/routes/node-profile.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    38 38 │     if (/not found/i.test(message)) return 404;
+    39 39 │     return 400;
+    40    │ - }
+       40 │ + }
+       41 │ + 
+  
+
+src/routes/session-key.ts:34:9 lint/suspicious/noImplicitAnyLet ━━━━━━━━━━━━━━━━
+
+  × This variable implicitly has the any type.
+  
+    32 │     const capability = parseCapability(body.capability);
+    33 │ 
+  > 34 │     let parent;
+       │         ^^^^^^
+    35 │     try {
+    36 │       parent = await keystore.activeSigner();
+  
+  i Variable declarations without type annotation and initialization implicitly have the any type. Declare a type or initialize the variable with some value.
+  
+
+src/routes/session-key.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     63  63 │   
+     64  64 │       if (!body.parent || !body.session || !body.signature) {
+     65     │ - ······return·context.json(
+     66     │ - ········{·ok:·false,·error:·'parent,·session,·and·signature·are·required'·},
+     67     │ - ········400,
+     68     │ - ······);
+         65 │ + ······return·context.json({·ok:·false,·error:·'parent,·session,·and·signature·are·required'·},·400);
+     69  66 │       }
+     70  67 │   
+    ······· │ 
+    138 135 │       return {} as T;
+    139 136 │     }
+    140     │ - }
+        137 │ + }
+        138 │ + 
+  
+
+src/runtime-operations.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+   > 1 │ import {
+       │ ^^^^^^^^
+   > 2 │   coreSpaceLocal,
+   > 3 │   createClient,
+   > 4 │   defineChain,
+        ...
+  > 11 │   type Signer,
+  > 12 │ } from '@cfxdevkit/core';
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^
+    13 │ import type { DevnodeServerController } from './controller.js';
+    14 │ import type { KeystoreService } from './keystore.js';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      1   1 │   import {
+      2     │ - ··coreSpaceLocal,
+          2 │ + ··type·ChainConfig,
+          3 │ + ··type·Client,
+          4 │ + ··coreSpaceLocal,
+      3   5 │     createClient,
+      4   6 │     defineChain,
+      5   7 │     deriveAccount,
+      6   8 │     espaceLocal,
+      7     │ - ··http,
+      8     │ - ··signerFromPrivateKey,
+      9     │ - ··type·ChainConfig,
+     10     │ - ··type·Client,
+     11     │ - ··type·Signer,
+          9 │ + ··http,
+         10 │ + ··type·Signer,
+         11 │ + ··signerFromPrivateKey,
+     12  12 │   } from '@cfxdevkit/core';
+     13  13 │   import type { DevnodeServerController } from './controller.js';
+  
+
+src/runtime-operations.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    129 129 │   
+    130 130 │   export function signerAddress(signer: Signer, space: RuntimeSpace): string {
+    131     │ - ··return·space·===·'core'·?·signer.account.coreAddress·??·signer.account.address·:·signer.account.address;
+        131 │ + ··return·space·===·'core'
+        132 │ + ····?·(signer.account.coreAddress·??·signer.account.address)
+        133 │ + ····:·signer.account.address;
+    132 134 │   }
+    133 135 │   
+    ······· │ 
+    155 157 │   function envOverrideFor(space: RuntimeSpace): string | undefined {
+    156 158 │     return space === 'core'
+    157     │ - ····?·process.env.CFXDEVKIT_PUBLIC_CORE_PRIVATE_KEY·??·process.env.CFXDEVKIT_PUBLIC_PRIVATE_KEY
+    158     │ - ····:·process.env.CFXDEVKIT_PUBLIC_EVM_PRIVATE_KEY·??·process.env.CFXDEVKIT_PUBLIC_PRIVATE_KEY;
+        159 │ + ····?·(process.env.CFXDEVKIT_PUBLIC_CORE_PRIVATE_KEY·??·process.env.CFXDEVKIT_PUBLIC_PRIVATE_KEY)
+        160 │ + ····:·(process.env.CFXDEVKIT_PUBLIC_EVM_PRIVATE_KEY·??·process.env.CFXDEVKIT_PUBLIC_PRIVATE_KEY);
+    159 161 │   }
+    160 162 │   
+    ······· │ 
+    182 184 │   
+    183 185 │     const resolvedAccountIndex = accountIndex ?? wallet.activeAccountIndex;
+    184     │ - ··if·(!Number.isInteger(resolvedAccountIndex)·||·resolvedAccountIndex·<·0·||·resolvedAccountIndex·>=·wallet.accountCount)·{
+        186 │ + ··if·(
+        187 │ + ····!Number.isInteger(resolvedAccountIndex)·||
+        188 │ + ····resolvedAccountIndex·<·0·||
+        189 │ + ····resolvedAccountIndex·>=·wallet.accountCount
+        190 │ + ··)·{
+    185 191 │       throw new Error(`account index out of range: ${String(resolvedAccountIndex)}`);
+    186 192 │     }
+    ······· │ 
+    229 235 │       ...(accountIndex === undefined ? {} : { accountIndex }),
+    230 236 │     });
+    231     │ - }
+        237 │ + }
+        238 │ + 
+  
+
+Checked 36 files in 11ms. No fixes applied.
+Found 46 errors.
+Found 5 warnings.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
+ ELIFECYCLE  Command failed with exit code 1.

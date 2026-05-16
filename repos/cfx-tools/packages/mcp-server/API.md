@@ -1,6 +1,6 @@
 # `@cfxdevkit/mcp-server` — API Reference
 
-> Direct-package MCP tool scaffold. Runtime handlers will call `@cfxdevkit/*` packages directly rather than proxying through a shared backend server.
+> MCP tool scaffold aligned to the shared local-runtime control plane. Runtime handlers should target the same backend contract used by showcase-local and the VS Code extension.
 
 ## Public Exports
 
@@ -32,7 +32,37 @@ class OperationLedger
 
 The registry currently declares 33 tools across node, accounts, blockchain read/write, compiler, keystore, and wallet utility groups. Each definition records its mutability, confirmation requirement, source packages, and JSON-schema input shape.
 
-Runtime handlers are intentionally not implemented yet; the registry is the contract that the handler layer will attach to.
+Runtime handlers are intentionally not fully implemented yet; the registry is the contract that the handler layer will attach to.
+
+## Planned Runtime Integration
+
+MCP should align to the shared local-runtime backend contract rather than own an independent lifecycle model.
+
+```text
+MCP tools
+  └─ MCP handler layer
+      └─ shared local-runtime contract
+          ├─ HTTP via @cfxdevkit/client
+          └─ or a matching in-process adapter
+```
+
+The goal is one orchestrated runtime state model that can be fetched consistently by showcase-local, the VS Code extension, MCP, and user-driven tooling.
+
+The current shared backend contract expects MCP consumers to model these
+surfaces explicitly:
+
+- `GET /network/current`, `GET /network/capabilities`, `GET /network/config`,
+  `POST /network/config`, and `POST /network/set` for wallet-scoped local/public
+  profile management
+- `POST /deploy/run` for local or public deploys, with deploy responses that
+  may include `contractId`, `mode`, and public signer provenance
+- `GET /contracts`, `GET /contracts/:id`, `POST /contracts/register`,
+  `POST /contracts/read`, `POST /contracts/write`, and
+  `POST /contracts/:id/call` for generic and tracked contract operations
+
+If MCP exposes these flows through tool handlers, the tool contract should not
+re-implement its own notion of active network, tracked contract storage, or
+signer precedence.
 
 ## Operation Ledger
 
@@ -58,6 +88,8 @@ The ledger is in-memory by design. Project-level backends can persist operation 
   "@cfxdevkit/wallet": "workspace:^"
 }
 ```
+
+The current package dependencies still reflect the existing scaffold. As runtime alignment progresses, MCP should consume the shared backend contract directly or through a matching adapter rather than documenting a separate package-local lifecycle model.
 
 ## Tier
 

@@ -1,0 +1,142 @@
+▮▮▮▮ client:lint (e85dd366)
+src/index.contracts.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    108 108 │               ok: true,
+    109 109 │               attestation: { digest: 'd', message: 'm', signature: '0xsig' },
+    110     │ - ············capability:·{·chains:·[2030],·contracts:·null,·maxValuePerTx:·'0',·notAfter:·1,·selectors:·null·},
+        110 │ + ············capability:·{
+        111 │ + ··············chains:·[2030],
+        112 │ + ··············contracts:·null,
+        113 │ + ··············maxValuePerTx:·'0',
+        114 │ + ··············notAfter:·1,
+        115 │ + ··············selectors:·null,
+        116 │ + ············},
+    111 117 │               parent: '0xparent',
+    112 118 │               session: '0xsession',
+    ······· │ 
+    157 163 │       });
+    158 164 │     });
+    159     │ - });
+        165 │ + });
+        166 │ + 
+  
+
+src/index.namespaces.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    80 80 │       });
+    81 81 │     });
+    82    │ - });
+       82 │ + });
+       83 │ + 
+  
+
+src/index.network.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    147 147 │       });
+    148 148 │     });
+    149     │ - });
+        149 │ + });
+        150 │ + 
+  
+
+src/namespaces-runtime.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    113 113 │       stop: () => http.post('/mining/stop'),
+    114 114 │     };
+    115     │ - }
+        115 │ + }
+        116 │ + 
+  
+
+src/namespaces.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import type { HttpClient } from './http.js';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import type {
+    3 │   ContractRecord,
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      1   1 │   import type { HttpClient } from './http.js';
+      2   2 │   import type {
+      3     │ - ··ContractRecord,
+      4     │ - ··ContractReadResponse,
+          3 │ + ··ContractReadResponse,
+          4 │ + ··ContractRecord,
+      5   5 │     ContractWriteResponse,
+      6   6 │     NodeStatus,
+    ······· │ 
+      9   9 │     TrackedContractCallResponse,
+     10  10 │   } from './types.js';
+     11     │ - export·{
+     12     │ - ··createCompilerNamespace,
+     13     │ - ··createDeployNamespace,
+     14     │ - ··createMiningNamespace,
+     15     │ - ··createNetworkNamespace,
+     16     │ - ··createSessionKeysNamespace,
+         11 │ + export·type·{
+         12 │ + ··CompilerNamespace,
+         13 │ + ··DeployNamespace,
+         14 │ + ··MiningNamespace,
+         15 │ + ··NetworkNamespace,
+         16 │ + ··SessionKeysNamespace,
+     17  17 │   } from './namespaces-runtime.js';
+     18     │ - export·type·{
+     19     │ - ··CompilerNamespace,
+     20     │ - ··DeployNamespace,
+     21     │ - ··MiningNamespace,
+     22     │ - ··NetworkNamespace,
+     23     │ - ··SessionKeysNamespace,
+         18 │ + export·{
+         19 │ + ··createCompilerNamespace,
+         20 │ + ··createDeployNamespace,
+         21 │ + ··createMiningNamespace,
+         22 │ + ··createNetworkNamespace,
+         23 │ + ··createSessionKeysNamespace,
+     24  24 │   } from './namespaces-runtime.js';
+Checked 11 files in 5ms. No fixes applied.
+Found 7 errors.
+     25  25 │   
+  
+
+src/namespaces.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    216 216 │   }
+    217 217 │   
+    218     │ - 
+  
+
+src/test-helpers.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    16 16 │       });
+    17 17 │     };
+    18    │ - }
+       18 │ + }
+       19 │ + 
+  
+
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
+▮▮▮▮ client:lint (324ms, e85dd366)
+Error: task_runner::run_failed
+
+  × Task client:lint failed to run.
+  ╰─▶ Process pnpm failed: exit code 1
+
