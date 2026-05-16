@@ -2,14 +2,14 @@
 
 import { useLogList } from '@cfxdevkit/example-showcase-ui';
 import { useEffect, useMemo, useState } from 'react';
+import { ShowcaseWorkspaceDialogs } from './dialogs';
 import { getPanel } from './panels/registry';
-import { useShowcaseWorkspaceCompose } from './showcase-workspace-compose';
-import { ShowcaseWorkspaceDialogs } from './showcase-workspace-dialogs';
-import { useShowcaseWorkspaceDrafts } from './showcase-workspace-drafts';
-import { useShowcaseWorkspaceKeystoreActions } from './showcase-workspace-keystore-actions';
-import { useShowcaseWorkspaceKeystoreRuntime } from './showcase-workspace-keystore-runtime';
-import type { WorkspaceDialogId, WorkspaceSectionId } from './showcase-workspace-shared';
-import { ShowcaseWorkspaceLoadingShell, ShowcaseWorkspaceShell } from './showcase-workspace-shell';
+import { ShowcaseWorkspaceLoadingShell, ShowcaseWorkspaceShell } from './shell';
+import { useShowcaseWorkspaceCompose } from './workspace/compose';
+import { useShowcaseWorkspaceDrafts } from './workspace/drafts';
+import { useShowcaseWorkspaceKeystoreActions } from './workspace/keystore/actions';
+import { useShowcaseWorkspaceKeystoreRuntime } from './workspace/keystore/runtime';
+import type { WorkspaceDialogId, WorkspaceSectionId } from './workspace/shared';
 
 export type {
   CompileArtifact,
@@ -20,7 +20,7 @@ export type {
   SessionKeyVerifyResponse,
   SpaceId,
   WorkspaceSectionId,
-} from './showcase-workspace-shared';
+} from './workspace/shared';
 
 export function ShowcaseWorkspace() {
   const drafts = useShowcaseWorkspaceDrafts();
