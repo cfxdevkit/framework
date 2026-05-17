@@ -97,9 +97,10 @@ export function modelScore(model) {
   if (model.suggested) score += 10;
   if (text.includes('coder')) score += 8;
   if (text.includes('coding')) score += 6;
+  if (text.includes('reasoning')) score += 5;
   if (text.includes('tool')) score += 4;
   if (text.includes('qwen')) score += 3;
-  if (text.includes('hot')) score += 2;
+  if (text.includes('flm')) score += 2;
   return score;
 }
 
