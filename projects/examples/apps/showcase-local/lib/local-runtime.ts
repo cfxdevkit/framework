@@ -6,9 +6,9 @@ import {
   ContractRegistry,
   createDevnodeServerApp,
   DevnodeServerController,
+  type DevnodeServerStatus,
   KeystoreService,
   NetworkState,
-  type DevnodeServerStatus,
 } from '@cfxdevkit/devnode-server';
 import type { DevnodeMiningStatus, DevnodeStatusResponse, DevnodeUrls } from './devnode-types';
 import type { KeystoreActiveWalletSummary } from './keystore-types';
@@ -16,9 +16,9 @@ import {
   mapDevnodeStatus,
   normalizeRuntimeNetwork,
   normalizeRuntimeSpace,
-  resolveRuntimeChain,
   type RuntimeNetworkId,
   type RuntimeSpaceId,
+  resolveRuntimeChain,
 } from './local-runtime-helpers';
 
 const keystorePath =

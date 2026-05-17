@@ -25,7 +25,7 @@ The original chapter checklist is obsolete. The remaining work is a backend-firs
 
 ## 4. Match extension operations and expose a custom backend extension example
 
-- [ ] 4.1 Ensure the showcase demonstrates the complete agreed operational surface already required for shared backend parity: network switch, keystore lifecycle, wallet root selection, derived account selection, node lifecycle, deployed-contract tracking, compile, session-key flows, deploy, ABI-driven interaction, and secret reveal flows
+- [x] 4.1 Ensure the showcase demonstrates the complete agreed operational surface already required for shared backend parity: network switch, keystore lifecycle, wallet root selection, derived account selection, node lifecycle, deployed-contract tracking, compile, session-key flows, deploy, ABI-driven interaction, and secret reveal flows
 - [x] 4.2 Add one showcase-specific example operation implemented as a custom backend route that reuses shared runtime services and returns the current block number
 - [x] 4.3 Surface that custom operation in the UI and document how it can also be called programmatically by other consumers
 

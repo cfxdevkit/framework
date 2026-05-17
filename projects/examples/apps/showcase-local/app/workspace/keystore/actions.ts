@@ -1,5 +1,6 @@
 'use client';
 
+import { generateMnemonic } from '@cfxdevkit/core';
 import type {
   KeystoreWalletAccountSummary,
   KeystoreWalletSummary,
@@ -12,15 +13,6 @@ import {
   stopDevnode,
   wipeDevnode,
 } from '../../devnode/devnode-client';
-import {
-  activateKeystoreAccount,
-  activateKeystoreWallet,
-  createKeystoreWallet,
-  deleteKeystoreWallet,
-  renameKeystoreWallet,
-  setupKeystore,
-  unlockKeystore,
-} from '../../keystore/client';
 import type { ShowcaseWorkspaceDrafts } from '../drafts';
 import { runDevnodeAction, runLocalFund, runLock, runPassphraseAction } from './helpers';
 import type { ShowcaseWorkspaceKeystoreRuntime } from './runtime';
@@ -40,137 +32,79 @@ export function useShowcaseWorkspaceKeystoreActions({
     const nextMnemonic = drafts.mnemonicDraft.trim();
     const accountCount = readWalletAccountCount(drafts.walletAccountCount);
     if (!nextMnemonic) {
-      const message = 'Mnemonic is required for import.';
-      runtime.setKeystoreError(message);
-      log(message, 'error');
+      log('Mnemonic is required for import.', 'error');
       return;
     }
     if (accountCount === null) {
-      const message = 'Account count must be an integer between 1 and 50.';
-      runtime.setKeystoreError(message);
-      log(message, 'error');
+      log('Account count must be an integer between 1 and 50.', 'error');
       return;
     }
     const name = drafts.walletName.trim() || `Mnemonic ${runtime.wallets.length + 1}`;
-    runtime.setKeystoreBusy('import');
-    runtime.setKeystoreError(null);
     try {
-      await createKeystoreWallet({ mnemonic: nextMnemonic, name, accountCount });
+      await runtime.addWallet({ mnemonic: nextMnemonic, name, accountCount });
       drafts.setWalletName('');
-      await runtime.refreshKeystore({ silent: true });
       log(`Imported mnemonic ${name} into the backend keystore.`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      runtime.setKeystoreError(message);
-      log(message, 'error');
-    } finally {
-      runtime.setKeystoreBusy(null);
+      log(error instanceof Error ? error.message : String(error), 'error');
     }
   };
 
   const runCreateWallet = async () => {
     const accountCount = readWalletAccountCount(drafts.walletAccountCount);
     if (accountCount === null) {
-      const message = 'Account count must be an integer between 1 and 50.';
-      runtime.setKeystoreError(message);
-      log(message, 'error');
+      log('Account count must be an integer between 1 and 50.', 'error');
       return;
     }
     const name = drafts.walletName.trim() || `Mnemonic ${runtime.wallets.length + 1}`;
-    runtime.setKeystoreBusy('create');
-    runtime.setKeystoreError(null);
     try {
-      await createKeystoreWallet({ name, accountCount });
+      await runtime.addWallet({ mnemonic: generateMnemonic(128), name, accountCount });
       drafts.setWalletName('');
-      await runtime.refreshKeystore({ silent: true });
       log(`Generated mnemonic ${name} in the backend keystore.`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      runtime.setKeystoreError(message);
-      log(message, 'error');
-    } finally {
-      runtime.setKeystoreBusy(null);
+      log(error instanceof Error ? error.message : String(error), 'error');
     }
   };
 
   const runRenameWallet = async (wallet: KeystoreWalletSummary) => {
     const nextName = (runtime.walletNameDrafts[wallet.id] ?? '').trim();
     if (!nextName) {
-      const message = 'Mnemonic label is required.';
-      runtime.setKeystoreError(message);
-      log(message, 'error');
+      log('Mnemonic label is required.', 'error');
       return;
     }
     if (nextName === wallet.name) return;
-    runtime.setKeystoreBusy('rename');
-    runtime.setWalletActionId(wallet.id);
-    runtime.setKeystoreError(null);
     try {
-      await renameKeystoreWallet(wallet.id, nextName);
-      await runtime.refreshKeystore({ silent: true });
+      await runtime.renameWallet(wallet.id, nextName);
       log(`Renamed mnemonic ${wallet.name} to ${nextName}.`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      runtime.setKeystoreError(message);
-      log(message, 'error');
-    } finally {
-      runtime.setKeystoreBusy(null);
-      runtime.setWalletActionId(null);
+      log(error instanceof Error ? error.message : String(error), 'error');
     }
   };
 
   const runActivateWallet = async (wallet: KeystoreWalletSummary) => {
-    runtime.setKeystoreBusy('activate');
-    runtime.setWalletActionId(wallet.id);
-    runtime.setKeystoreError(null);
     try {
-      await activateKeystoreWallet(wallet.id);
-      await runtime.refreshKeystore({ silent: true });
+      await runtime.activateWallet(wallet.id);
       log(`Activated wallet ${wallet.name}.`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      runtime.setKeystoreError(message);
-      log(message, 'error');
-    } finally {
-      runtime.setKeystoreBusy(null);
-      runtime.setWalletActionId(null);
+      log(error instanceof Error ? error.message : String(error), 'error');
     }
   };
 
   const runActivateAccount = async (account: KeystoreWalletAccountSummary) => {
     if (!runtime.activeWallet) return;
-    runtime.setAccountsBusy('activate');
-    runtime.setAccountActionIndex(account.index);
-    runtime.setAccountsError(null);
     try {
-      await activateKeystoreAccount(runtime.activeWallet.id, account.index);
-      await runtime.refreshKeystore({ silent: true });
+      await runtime.activateAccount(runtime.activeWallet.id, account.index);
       log(`Activated account #${account.index} for ${runtime.activeWallet.name}.`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      runtime.setAccountsError(message);
-      log(message, 'error');
-    } finally {
-      runtime.setAccountsBusy(null);
-      runtime.setAccountActionIndex(null);
+      log(error instanceof Error ? error.message : String(error), 'error');
     }
   };
 
   const runDeleteWallet = async (wallet: KeystoreWalletSummary) => {
-    runtime.setKeystoreBusy('delete');
-    runtime.setWalletActionId(wallet.id);
-    runtime.setKeystoreError(null);
     try {
-      await deleteKeystoreWallet(wallet.id);
-      await runtime.refreshKeystore({ silent: true });
+      await runtime.deleteWallet(wallet.id);
       log(`Removed wallet ${wallet.name}.`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      runtime.setKeystoreError(message);
-      log(message, 'error');
-    } finally {
-      runtime.setKeystoreBusy(null);
-      runtime.setWalletActionId(null);
+      log(error instanceof Error ? error.message : String(error), 'error');
     }
   };
 
@@ -223,7 +157,7 @@ export function useShowcaseWorkspaceKeystoreActions({
         action: 'setup',
         drafts,
         log,
-        request: setupKeystore,
+        request: (passphrase) => runtime.setup(passphrase),
         runtime,
         successMessage: 'Keystore setup completed',
       }),
@@ -256,7 +190,7 @@ export function useShowcaseWorkspaceKeystoreActions({
         action: 'unlock',
         drafts,
         log,
-        request: unlockKeystore,
+        request: (passphrase) => runtime.unlock(passphrase),
         runtime,
         successMessage: 'Keystore unlocked',
       }),

@@ -1,9 +1,9 @@
 // Core wallet/keystore types — canonical source is @cfxdevkit/client
 export type {
-  KeystoreStatus as KeystoreStatusResponse,
-  WalletSummary as KeystoreWalletSummary,
   ActiveWalletSummary as KeystoreActiveWalletSummary,
+  KeystoreStatus as KeystoreStatusResponse,
   WalletAccountSummary as KeystoreWalletAccountSummary,
+  WalletSummary as KeystoreWalletSummary,
 } from '@cfxdevkit/client';
 
 import type { ActiveWalletSummary, WalletAccountSummary, WalletSummary } from '@cfxdevkit/client';

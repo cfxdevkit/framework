@@ -2,10 +2,11 @@
 
 import { LogBox } from '@cfxdevkit/example-showcase-ui';
 import type { WorkspaceSectionId } from '../workspace/shared';
+import { ShellHeader } from './header';
 import { ShowcaseWorkspacePanelStage, type ShowcaseWorkspaceShellProps } from './stage';
 
 // Sections accessible regardless of keystore phase
-const GATE_EXEMPT: readonly WorkspaceSectionId[] = ['keystore', 'setup'];
+const GATE_EXEMPT: readonly WorkspaceSectionId[] = ['keystore', 'setup', 'reveal'];
 
 interface NavItem {
   id: WorkspaceSectionId;
@@ -46,6 +47,7 @@ const NAV: readonly NavGroup[] = [
     items: [
       { id: 'session-key', label: 'Session Key' },
       { id: 'custom-operation', label: 'Custom Op' },
+      { id: 'reveal', label: 'Secret Reveal' },
     ],
   },
 ];
@@ -85,7 +87,9 @@ export function ShowcaseWorkspaceShell({
   onSelectSection,
 }: ShowcaseWorkspaceShellProps) {
   const keystorePhase = keystore.keystorePhase;
-  const isGated = keystorePhase !== null && keystorePhase !== 'active-wallet';
+  // Only gate when the keystore is strictly blank or locked — 'unlocked' (no wallet yet)
+  // and connected states still allow access to node setup and other sections.
+  const isGated = keystorePhase === 'blank' || keystorePhase === 'locked';
 
   return (
     <div
@@ -100,34 +104,12 @@ export function ShowcaseWorkspaceShell({
       }}
     >
       {/* ── Header ── */}
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 20px',
-          height: '44px',
-          borderBottom: '1px solid #2a2a2a',
-          backgroundColor: '#111',
-          flexShrink: 0,
-          gap: '12px',
-        }}
-      >
-        <h1
-          style={{
-            margin: 0,
-            fontSize: '14px',
-            fontWeight: 600,
-            letterSpacing: '-0.01em',
-            color: '#d0d0d0',
-          }}
-        >
-          cfxdevkit &middot; showcase-local
-        </h1>
-        <div style={{ flex: 1 }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {keystore.keystoreBadge}
-        </div>
-      </header>
+      <ShellHeader
+        network={drafts.network}
+        onSetNetwork={drafts.setNetwork}
+        activeWallet={keystore.activeWallet}
+        keystoreBadge={keystore.keystoreBadge}
+      />
 
       {/* ── Body: sidebar + main ── */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>

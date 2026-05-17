@@ -5,4 +5,5 @@ export * from './balance.js';
 export * from './context.js';
 export * from './contract.js';
 export * from './events.js';
+export * from './keystore/index.js';
 export * from './tx.js';

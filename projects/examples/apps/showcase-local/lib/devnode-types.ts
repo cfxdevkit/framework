@@ -1,8 +1,8 @@
 // Profile types — canonical source is @cfxdevkit/client
 export type {
-  NodeProfileSummary as DevnodeProfileSummary,
-  NodeProfileState as DevnodeProfileStateResponse,
   NodeProfileSelection as DevnodeProfileSelectionResponse,
+  NodeProfileState as DevnodeProfileStateResponse,
+  NodeProfileSummary as DevnodeProfileSummary,
 } from '@cfxdevkit/client';
 
 // These types differ structurally from @cfxdevkit/client NodeStatus and are

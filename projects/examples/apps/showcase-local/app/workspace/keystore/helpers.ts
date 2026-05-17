@@ -2,7 +2,6 @@
 
 import type { DevnodeStatusResponse } from '../../../lib/devnode-types';
 import { isErrorWithPayload } from '../../devnode/devnode-client';
-import { lockKeystore } from '../../keystore/client';
 import type { ShowcaseWorkspaceDrafts } from '../drafts';
 import type { LocalFundResponse } from '../shared';
 import type { ShowcaseWorkspaceKeystoreRuntime } from './runtime';
@@ -44,41 +43,28 @@ export async function runPassphraseAction(params: {
   runtime: ShowcaseWorkspaceKeystoreRuntime;
   successMessage: string;
 }) {
-  const { action, drafts, log, request, runtime, successMessage } = params;
+  const { drafts, log, request, successMessage } = params;
   const nextPassphrase = drafts.passphrase.trim();
   if (!nextPassphrase) {
-    runtime.setKeystoreError('Passphrase is required.');
     log('Passphrase is required.', 'error');
     return;
   }
-  runtime.setKeystoreBusy(action);
-  runtime.setKeystoreError(null);
   try {
     await request(nextPassphrase);
-    await runtime.refreshKeystore({ silent: true });
     log(successMessage);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    runtime.setKeystoreError(message);
     log(message, 'error');
-  } finally {
-    runtime.setKeystoreBusy(null);
   }
 }
 
 export async function runLock(log: WorkspaceLog, runtime: ShowcaseWorkspaceKeystoreRuntime) {
-  runtime.setKeystoreBusy('lock');
-  runtime.setKeystoreError(null);
   try {
-    await lockKeystore();
-    await runtime.refreshKeystore({ silent: true });
+    await runtime.lock();
     log('Locked keystore.');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    runtime.setKeystoreError(message);
     log(message, 'error');
-  } finally {
-    runtime.setKeystoreBusy(null);
   }
 }
 

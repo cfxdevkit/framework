@@ -19,6 +19,7 @@
     "@cfxdevkit/devnode": "workspace:*",
     "@cfxdevkit/devnode-server": "workspace:*",
     "@cfxdevkit/example-showcase-ui": "workspace:*",
+    "@cfxdevkit/react": "workspace:*",
     "@cfxdevkit/services": "workspace:*",
     "@cfxdevkit/theme": "workspace:*",
     "@cfxdevkit/wallet": "workspace:*",

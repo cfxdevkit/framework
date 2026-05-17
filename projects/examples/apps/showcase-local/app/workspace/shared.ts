@@ -12,7 +12,8 @@ export type WorkspaceSectionId =
   | 'compiler'
   | 'deploy'
   | 'contract-context'
-  | 'custom-operation';
+  | 'custom-operation'
+  | 'reveal';
 
 export type WorkspaceDialogId = 'compiler' | 'deploy' | 'session-key' | 'custom-operation' | null;
 
@@ -26,6 +27,7 @@ const WORKSPACE_SECTIONS = [
   'deploy',
   'contract-context',
   'custom-operation',
+  'reveal',
 ] as const satisfies readonly WorkspaceSectionId[];
 
 export const WORKSPACE_STEPS = [

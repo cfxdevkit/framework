@@ -1,113 +1,169 @@
 'use client';
 
+import { KeystoreShell } from '@cfxdevkit/react/keystore';
 import { KEYSTORE_API_SNIPPET } from '../../../lib/showcase-guide';
-import { buttonRowStyle, errorStyle } from '../../devnode/devnode-ui';
+import {
+  buttonRowStyle,
+  errorStyle,
+  inputStyle,
+  labelStyle,
+  stackStyle,
+} from '../../devnode/devnode-ui';
 import { CollapsibleCodeExample, type ShowcaseWorkspacePanelsProps, sectionStyle } from '../shared';
-import { ActiveWalletCard, DerivedAccountsList } from './active-wallet';
-import { SetupCard } from './setup-card';
-import { WalletsSection } from './wallets';
+import { KeystoreIdentityCard } from './identity-card';
+import { cardStyle } from './styles';
+import { WalletManagement } from './wallet-management';
 
 export function KeystorePanel(props: ShowcaseWorkspacePanelsProps) {
-  const phase = props.keystoreStatus?.phase;
-  const isUnlocked = phase === 'unlocked' || phase === 'active-wallet';
-
   return (
     <section
       id="keystore"
       style={props.activeSection === 'keystore' ? sectionStyle : { display: 'none' }}
     >
       <div style={{ padding: '24px', display: 'grid', gap: '20px' }}>
-        {phase === undefined ? (
-          <div
-            style={{
-              color: 'var(--cfx-color-fg-subtle)',
-              fontSize: 'var(--cfx-text-sm)',
-              padding: '24px 0',
-            }}
-          >
-            Loading keystore status…
-          </div>
-        ) : null}
-
-        {phase === 'blank' || phase === 'locked' ? <SetupCard {...props} /> : null}
-
-        {isUnlocked ? (
-          <>
-            {/* Status bar */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 'var(--cfx-space-3)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--cfx-space-2)' }}>
-                {props.keystoreBadge}
-                <span
-                  style={{ fontSize: 'var(--cfx-text-sm)', color: 'var(--cfx-color-fg-subtle)' }}
+        <KeystoreShell
+          blankSlot={({ setup, isBusy, error }) => (
+            <div style={cardStyle}>
+              <div>
+                <h2
+                  style={{
+                    fontSize: '20px',
+                    fontWeight: 600,
+                    color: 'var(--cfx-color-fg-default)',
+                    margin: '0 0 8px 0',
+                  }}
                 >
-                  {props.wallets.length} wallet{props.wallets.length !== 1 ? 's' : ''}
-                  {phase === 'active-wallet' ? ' · signer ready' : ''}
-                </span>
+                  Create keystore
+                </h2>
+                <p
+                  style={{
+                    color: 'var(--cfx-color-fg-subtle)',
+                    fontSize: 'var(--cfx-text-sm)',
+                    lineHeight: 1.5,
+                    margin: 0,
+                  }}
+                >
+                  Choose a passphrase to protect your wallet keys. You will need it to unlock the
+                  keystore in future sessions.
+                </p>
               </div>
+              {error ? <div style={errorStyle}>{error}</div> : null}
+              <label style={stackStyle}>
+                <span style={labelStyle}>Passphrase</span>
+                <input
+                  type="password"
+                  style={inputStyle}
+                  placeholder="Choose a new passphrase"
+                  value={props.passphrase}
+                  onChange={(e) => props.onSetPassphrase(e.target.value)}
+                />
+              </label>
               <div style={buttonRowStyle}>
                 <button
                   type="button"
-                  disabled={props.keystoreBusy !== null}
-                  onClick={props.onRunLock}
+                  disabled={isBusy || !props.passphrase.trim()}
+                  onClick={() => void setup(props.passphrase)}
                 >
-                  {props.keystoreBusy === 'lock' ? 'Locking…' : 'Lock'}
+                  {isBusy ? 'Creating…' : 'Create keystore'}
                 </button>
-                <button
-                  type="button"
-                  disabled={props.keystoreBusy !== null}
-                  onClick={props.onRefreshKeystore}
-                >
-                  Refresh
+                <button type="button" disabled={isBusy} onClick={props.onRefreshKeystore}>
+                  {isBusy ? 'Refreshing…' : 'Refresh'}
                 </button>
               </div>
             </div>
-
-            {props.keystoreError ? <div style={errorStyle}>{props.keystoreError}</div> : null}
-
-            <ActiveWalletCard activeWallet={props.activeWallet} wallets={props.wallets} />
-
-            <DerivedAccountsList
-              walletAccounts={props.walletAccounts}
-              activeWallet={props.activeWallet}
-              accountsBusy={props.accountsBusy}
-              accountActionIndex={props.accountActionIndex}
-              onActivateAccount={props.onActivateAccount}
-            />
-
-            <WalletsSection {...props} />
-
-            {props.keystoreStatus?.reset ? (
-              <div
-                style={{
-                  fontSize: 'var(--cfx-text-xs)',
-                  color: 'var(--cfx-color-fg-muted)',
-                  lineHeight: 1.5,
-                  padding: '8px 0',
-                }}
-              >
-                <strong>Operator reset:</strong> {props.keystoreStatus.reset.warning} Remove these
-                paths after stopping the node:{' '}
-                {props.keystoreStatus.reset.paths.map((path) => (
-                  <span key={path}>
-                    <code>{path}</code>{' '}
-                  </span>
-                ))}
+          )}
+          lockedSlot={({ unlock, isBusy, error }) => (
+            <div style={cardStyle}>
+              <div>
+                <h2
+                  style={{
+                    fontSize: '20px',
+                    fontWeight: 600,
+                    color: 'var(--cfx-color-fg-default)',
+                    margin: '0 0 8px 0',
+                  }}
+                >
+                  Keystore locked
+                </h2>
+                <p
+                  style={{
+                    color: 'var(--cfx-color-fg-subtle)',
+                    fontSize: 'var(--cfx-text-sm)',
+                    lineHeight: 1.5,
+                    margin: 0,
+                  }}
+                >
+                  Enter your passphrase to unlock the keystore and access your mnemonic wallets.
+                </p>
               </div>
-            ) : null}
+              {error ? <div style={errorStyle}>{error}</div> : null}
+              <label style={stackStyle}>
+                <span style={labelStyle}>Passphrase</span>
+                <input
+                  type="password"
+                  style={inputStyle}
+                  placeholder="Enter your passphrase"
+                  value={props.passphrase}
+                  onChange={(e) => props.onSetPassphrase(e.target.value)}
+                />
+              </label>
+              <div style={buttonRowStyle}>
+                <button
+                  type="button"
+                  disabled={isBusy || !props.passphrase.trim()}
+                  onClick={() => void unlock(props.passphrase)}
+                >
+                  {isBusy ? 'Unlocking…' : 'Unlock'}
+                </button>
+                <button type="button" disabled={isBusy} onClick={props.onRefreshKeystore}>
+                  {isBusy ? 'Refreshing…' : 'Refresh'}
+                </button>
+              </div>
+            </div>
+          )}
+          noWalletSlot={
+            <>
+              <WalletManagement props={props} />
+              <CollapsibleCodeExample
+                code={KEYSTORE_API_SNIPPET}
+                label="Backend keystore route surface"
+              />
+            </>
+          }
+          activeSlot={
+            <>
+              <KeystoreIdentityCard onLock={props.onRunLock} />
 
-            <CollapsibleCodeExample
-              code={KEYSTORE_API_SNIPPET}
-              label="Backend keystore route surface"
-            />
-          </>
-        ) : null}
+              {/* Wallet management — add / import wallets */}
+              <WalletManagement props={props} />
+
+              {/* Reset guidance */}
+              {props.keystoreStatus?.reset ? (
+                <div
+                  style={{
+                    fontSize: 'var(--cfx-text-xs)',
+                    color: 'var(--cfx-color-fg-muted)',
+                    lineHeight: 1.5,
+                    padding: '8px 0',
+                  }}
+                >
+                  <strong>Operator reset:</strong> {props.keystoreStatus.reset.warning} Remove these
+                  paths after stopping the node:{' '}
+                  {props.keystoreStatus.reset.paths.map((path) => (
+                    <span key={path}>
+                      <code>{path}</code>{' '}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+
+              <CollapsibleCodeExample
+                code={KEYSTORE_API_SNIPPET}
+                label="Backend keystore route surface"
+              />
+            </>
+          }
+        />
       </div>
     </section>
   );

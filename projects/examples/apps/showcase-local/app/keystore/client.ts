@@ -103,3 +103,66 @@ export async function fetchDevnodeAccounts(): Promise<DevnodeAccountsResponse> {
     ...(faucet ? { faucet } : {}),
   };
 }
+
+// ── Secret reveal helpers ─────────────────────────────────────────────────────
+
+export interface RevealRequestInput {
+  walletId: string;
+  passphrase: string;
+  kind: 'mnemonic' | 'private-key';
+  accountIndex?: number;
+  ttlMs?: number;
+}
+
+export interface RevealRequestResponse {
+  ok: boolean;
+  request?: { token: string };
+  error?: string;
+}
+
+export interface RevealConsumeResponse {
+  ok: boolean;
+  reveal?: { secret: string };
+  error?: string;
+}
+
+export interface RevealSecretResponse {
+  ok: boolean;
+  secret?: string;
+  error?: string;
+}
+
+/**
+ * Single-call helper: requests a one-time token then immediately consumes it.
+ * The two-step backend protocol is an implementation detail hidden here.
+ */
+export async function revealSecret(input: RevealRequestInput): Promise<RevealSecretResponse> {
+  // Step 1 — obtain a one-time token
+  const reqRes = await fetch('/api/keystore/reveal/request', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  const req = (await reqRes.json()) as RevealRequestResponse;
+  if (!req.ok || !req.request?.token) {
+    return { ok: false, ...(req.error !== undefined ? { error: req.error } : {}) };
+  }
+
+  // Step 2 — consume the token immediately
+  const conRes = await fetch('/api/keystore/reveal/consume', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: req.request.token }),
+  });
+  // Backend returns `reveal.mnemonic` or `reveal.privateKey` depending on kind.
+  const con = (await conRes.json()) as {
+    ok: boolean;
+    reveal?: { mnemonic?: string; privateKey?: string };
+    error?: string;
+  };
+  if (!con.ok) {
+    return { ok: false, ...(con.error !== undefined ? { error: con.error } : {}) };
+  }
+  const secret = con.reveal?.mnemonic ?? con.reveal?.privateKey;
+  return { ok: true, ...(secret !== undefined ? { secret } : {}) };
+}

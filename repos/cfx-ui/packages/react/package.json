@@ -36,6 +36,10 @@
       "types": "./dist/tx.d.ts",
       "import": "./dist/tx/index.js"
     },
+    "./keystore": {
+      "types": "./dist/keystore/index.d.ts",
+      "import": "./dist/keystore/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -57,8 +61,10 @@
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
     "@cfxdevkit/wallet": "workspace:^",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.14",
+    "happy-dom": "^20.9.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.12",
     "vite-plugin-dts": "^5.0.0",

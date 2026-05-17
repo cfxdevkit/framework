@@ -7,6 +7,7 @@ import { CustomOperationPanel } from './custom-operation';
 import { DeployPanel } from './deploy';
 import { DevnodePanel } from './devnode';
 import { KeystorePanel } from './keystore';
+import { RevealPanel } from './reveal';
 import { EnvironmentSetupPanel } from './setup';
 import type { ShowcaseWorkspacePanelsProps } from './shared';
 
@@ -30,6 +31,7 @@ export function ShowcaseWorkspacePanels(props: ShowcaseWorkspacePanelsProps) {
           <DeployPanel {...props} />
           <ContractContextPanel {...props} />
           <CustomOperationPanel {...props} />
+          <RevealPanel {...props} />
         </div>
       </div>
     </div>

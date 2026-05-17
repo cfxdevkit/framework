@@ -9,7 +9,8 @@ export type LocalPanelId =
   | 'compiler'
   | 'deploy'
   | 'contract-context'
-  | 'custom-operation';
+  | 'custom-operation'
+  | 'reveal';
 
 export interface LocalPanelSpec {
   id: LocalPanelId;
@@ -97,6 +98,13 @@ export const PANELS: readonly LocalPanelSpec[] = Object.freeze([
     label: 'Custom Backend Action',
     blurb:
       'Exercise the showcase-specific backend extension hook using the active network and selected family.',
+  },
+  {
+    id: 'reveal',
+    group: 'auth',
+    label: 'Secret Reveal',
+    blurb:
+      'Two-step flow to reveal a wallet mnemonic or account private key through the backend keystore using a one-time token.',
   },
 ]);
 
