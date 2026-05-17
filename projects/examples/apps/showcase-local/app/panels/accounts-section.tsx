@@ -54,7 +54,9 @@ export function AccountsPanel(props: ShowcaseWorkspacePanelsProps) {
             <DevnodeStat
               label="Path"
               mono
-              value={props.activeWallet?.derivationPath ?? 'unlock and activate a wallet root'}
+              value={
+                props.activeWallet?.espaceDerivationPath ?? 'unlock and activate a wallet root'
+              }
             />
           </div>
 
@@ -81,13 +83,13 @@ export function AccountsPanel(props: ShowcaseWorkspacePanelsProps) {
                       {account.active ? <StatusBadge label="active" status="ok" /> : null}
                     </div>
                     <div style={noteStyle}>
-                      Path: <code>{account.derivationPath}</code>
+                      Path: <code>{account.espaceDerivationPath}</code>
                     </div>
                     <div style={noteStyle}>
-                      eSpace: <code>{account.address}</code>
+                      eSpace: <code>{account.espaceAddress}</code>
                     </div>
                     <div style={noteStyle}>
-                      Core: <code>{account.coreAddress ?? 'n/a'}</code>
+                      Core: <code>{account.coreAddress}</code>
                     </div>
                     <div style={buttonRowStyle}>
                       <button
@@ -102,7 +104,7 @@ export function AccountsPanel(props: ShowcaseWorkspacePanelsProps) {
                             ? 'Active account'
                             : 'Activate account'}
                       </button>
-                      <CopyButton label="copy eSpace" text={account.address} />
+                      <CopyButton label="copy eSpace" text={account.espaceAddress} />
                       {account.coreAddress ? (
                         <CopyButton label="copy Core" text={account.coreAddress} />
                       ) : null}
@@ -174,7 +176,9 @@ export function AccountsPanel(props: ShowcaseWorkspacePanelsProps) {
                   {props.activeWallet ? (
                     <button
                       type="button"
-                      onClick={() => props.onSetFaucetAddress(props.activeWallet?.address ?? '')}
+                      onClick={() =>
+                        props.onSetFaucetAddress(props.activeWallet?.espaceAddress ?? '')
+                      }
                     >
                       Use active eSpace
                     </button>

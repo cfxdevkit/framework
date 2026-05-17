@@ -1,12 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import {
-  coreAddressFromPrivateKey,
-  deriveAccount,
-  generateMnemonic,
-  validateMnemonic,
-} from '@cfxdevkit/core';
+import { deriveDualAccount, generateMnemonic, validateMnemonic } from '@cfxdevkit/core';
 import { DevNodeError } from './errors.js';
 import type { DevNodeAccount, DevNodeConfig } from './types.js';
 
@@ -70,25 +65,30 @@ export function createAccounts(config: ResolvedDevNodeConfig): {
 } {
   const accounts: DevNodeAccount[] = [];
   for (let index = 0; index < config.accounts; index++) {
-    accounts.push(makeAccount(config, `m/44'/60'/0'/0/${index}`, index, config.balanceCfx));
+    accounts.push(makeAccount(config, index, config.balanceCfx, 'standard'));
   }
-  return { accounts, faucet: makeAccount(config, "m/44'/60'/1'/0/0", 0, config.balanceCfx) };
+  return { accounts, faucet: makeAccount(config, 0, config.balanceCfx, 'mining') };
 }
 
 function makeAccount(
   config: ResolvedDevNodeConfig,
-  path: string,
   index: number,
   balanceCfx: string,
+  accountType: 'standard' | 'mining',
 ): DevNodeAccount {
-  const { account, privateKey } = deriveAccount({ mnemonic: config.mnemonic, path });
+  const dual = deriveDualAccount({
+    mnemonic: config.mnemonic,
+    index,
+    accountType,
+    coreNetworkId: config.chainId,
+  });
   return {
     index,
-    evmAddress: account.address,
-    coreAddress: coreAddressFromPrivateKey(privateKey, config.chainId),
-    publicKey: account.publicKey,
-    privateKey,
-    paths: { evm: path, core: path },
+    evmAddress: dual.evmAddress,
+    coreAddress: dual.coreAddress,
+    publicKey: dual.publicKey,
+    privateKey: dual.privateKey,
+    paths: dual.paths,
     initialBalanceCfx: balanceCfx,
   };
 }

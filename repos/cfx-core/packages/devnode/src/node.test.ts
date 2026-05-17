@@ -37,12 +37,14 @@ describe('createDevNode (offline)', () => {
     expect(node.faucet.paths.evm).toBe("m/44'/60'/1'/0/0");
   });
 
-  it('encodes Core and EVM addresses from the SAME private key (so xcfx funds both)', () => {
+  it('derives Core and EVM addresses from separate BIP-44 coin types (503 vs 60)', () => {
     const node = createDevNode({ mnemonic: TEST_MNEMONIC });
     for (const a of node.accounts) {
-      // Both addresses share the same key — ensures genesisSecrets +
-      // genesisEvmSecrets fund the displayed addresses, not phantom ones.
-      expect(a.paths.evm).toBe(a.paths.core);
+      // eSpace uses coin type 60: m/44'/60'/...
+      // Core uses coin type 503: m/44'/503'/...
+      expect(a.paths.evm).toMatch(/^m\/44'\/60'\//);
+      expect(a.paths.core).toMatch(/^m\/44'\/503'\//);
+      expect(a.paths.evm).not.toBe(a.paths.core);
     }
   });
 

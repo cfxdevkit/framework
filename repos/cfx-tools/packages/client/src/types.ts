@@ -18,21 +18,23 @@ export interface WalletSummary {
   active: boolean;
   accountCount: number;
   activeAccountIndex: number;
-  derivationBase: string;
-  firstAddress?: string;
+  accountType: 'standard' | 'mining';
+  firstEspaceAddress?: string;
 }
 
 export interface ActiveWalletSummary extends WalletSummary {
-  address: string;
-  coreAddress?: string;
-  derivationPath: string;
+  espaceAddress: string;
+  coreAddress: string;
+  espaceDerivationPath: string;
+  coreDerivationPath: string;
 }
 
 export interface WalletAccountSummary {
   index: number;
-  derivationPath: string;
-  address: string;
-  coreAddress?: string;
+  espaceDerivationPath: string;
+  espaceAddress: string;
+  coreAddress: string;
+  coreDerivationPath: string;
   active: boolean;
 }
 

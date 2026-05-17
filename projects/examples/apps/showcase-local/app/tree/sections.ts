@@ -82,7 +82,7 @@ export function addAccountNodes(props: WorkspaceTreeProps, addNode: AddTreeNode)
       {
         id: `account:${props.activeWallet.id}:${account.index}`,
         label: `${props.activeWallet.name} #${account.index}`,
-        meta: `${shortAddress(account.address)} / ${shortAddress(account.coreAddress)}${account.active ? ' · active' : ''}`,
+        meta: `${shortAddress(account.espaceAddress)} / ${shortAddress(account.coreAddress)}${account.active ? ' · active' : ''}`,
         section: 'accounts',
         action: { type: 'section', section: 'accounts' },
       },

@@ -1,0 +1,471 @@
+
+> @cfxdevkit/framework@0.0.0 test /workspaces/root
+> moon run :test --concurrency 1
+
+                executor:test | RUN  v4.1.6 /workspaces/root/repos/cfx-core/packages/executor
+                executor:test | 
+                executor:test |  ✓ src/index.test.ts (9 tests) 16ms
+                executor:test | 
+                executor:test |  Test Files  1 passed (1)
+                executor:test |       Tests  9 passed (9)
+                executor:test |    Start at  11:51:29
+                executor:test |    Duration  113ms (transform 19ms, setup 0ms, import 27ms, tests 16ms, environment 0ms)
+▮▮▮▮ executor:test (cached, 403078e2)
+        showcase-browser:test | RUN  v4.1.6 /workspaces/root/projects/examples/apps/showcase-browser
+        showcase-browser:test | 
+        showcase-browser:test |  ✓ src/wiring.test.ts (4 tests) 3ms
+        showcase-browser:test | 
+        showcase-browser:test |  Test Files  1 passed (1)
+        showcase-browser:test |       Tests  4 passed (4)
+        showcase-browser:test |    Start at  11:51:26
+        showcase-browser:test |    Duration  122ms (transform 21ms, setup 0ms, import 33ms, tests 3ms, environment 0ms)
+▮▮▮▮ showcase-browser:test (cached, d532a10a)
+          showcase-stack:test | RUN  v4.1.6 /workspaces/root/projects/examples/apps/showcase-stack
+          showcase-stack:test | 
+          showcase-stack:test |  ✓ src/wiring.test.ts (4 tests) 3ms
+          showcase-stack:test | 
+          showcase-stack:test |  Test Files  1 passed (1)
+          showcase-stack:test |       Tests  4 passed (4)
+          showcase-stack:test |    Start at  11:51:26
+          showcase-stack:test |    Duration  107ms (transform 23ms, setup 0ms, import 31ms, tests 3ms, environment 0ms)
+▮▮▮▮ showcase-stack:test (cached, 9b218fc8)
+              llm-agents:test | RUN  v4.1.5 /workspaces/root/repos/cfx-llm/packages/llm-agents
+              llm-agents:test | 
+              llm-agents:test |  ✓ workers/commit/index.test.ts (5 tests) 4ms
+              llm-agents:test | 
+              llm-agents:test |  Test Files  1 passed (1)
+              llm-agents:test |       Tests  5 passed (5)
+              llm-agents:test |    Start at  11:51:28
+              llm-agents:test |    Duration  169ms (transform 67ms, setup 0ms, import 88ms, tests 4ms, environment 0ms)
+▮▮▮▮ llm-agents:test (cached, 39e20468)
+                    core:test | RUN  v4.1.6 /workspaces/root/repos/cfx-core/packages/core
+                    core:test | 
+                    core:test |  ✓ src/chains/index.test.ts (10 tests) 6ms
+                    core:test |  ✓ src/errors/index.test.ts (5 tests) 5ms
+                    core:test |  ✓ src/client/errors.test.ts (9 tests) 8ms
+                    core:test |  ✓ src/units/index.test.ts (8 tests) 3ms
+                    core:test |  ✓ src/address/index.test.ts (7 tests) 4ms
+                    core:test |  ✓ src/client/core.test.ts (34 tests) 9ms
+                    core:test |  ✓ src/index.test.ts (1 test) 2ms
+                    core:test |  ✓ src/client/index.test.ts (14 tests | 6 skipped) 5ms
+                    core:test |  ✓ src/client/espace.test.ts (28 tests) 8ms
+                    core:test |  ✓ src/wallet/signing.test.ts (12 tests) 8ms
+                    core:test |  ✓ src/wallet/index.test.ts (29 tests) 156ms
+                    core:test | 
+                    core:test |  Test Files  11 passed (11)
+                    core:test |       Tests  151 passed | 6 skipped (157)
+                    core:test |    Start at  11:51:18
+                    core:test |    Duration  532ms (transform 298ms, setup 0ms, import 1.79s, tests 214ms, environment 1ms)
+▮▮▮▮ core:test (cached, 9166d2cb)
+               contracts:test | RUN  v4.1.6 /workspaces/root/repos/cfx-solidity/packages/contracts
+               contracts:test | 
+               contracts:test |  ✓ src/test/mocks.test.ts (1 test) 4ms
+               contracts:test |  ✓ src/abis/index.test.ts (1 test) 3ms
+               contracts:test |  ✓ src/abis/abis.test.ts (3 tests) 4ms
+               contracts:test |  ✓ src/errors/index.test.ts (1 test) 2ms
+               contracts:test |  ✓ src/read/read.test.ts (5 tests) 9ms
+               contracts:test |  ✓ src/erc20/erc20.test.ts (3 tests) 9ms
+               contracts:test |  ✓ src/write/write.test.ts (8 tests) 9ms
+               contracts:test |  ✓ src/deploy/deploy.test.ts (5 tests) 5ms
+               contracts:test |  ✓ src/bridge/index.test.ts (1 test) 2ms
+               contracts:test |  ✓ src/write/index.test.ts (1 test) 2ms
+               contracts:test |  ✓ src/index.test.ts (1 test) 2ms
+               contracts:test |  ✓ src/erc20/index.test.ts (1 test) 2ms
+               contracts:test |  ✓ src/deploy/index.test.ts (1 test) 2ms
+               contracts:test |  ✓ src/bridge/bridge.test.ts (10 tests) 9ms
+               contracts:test |  ✓ src/read/index.test.ts (1 test) 2ms
+               contracts:test | 
+               contracts:test |  Test Files  15 passed (15)
+               contracts:test |       Tests  43 passed (43)
+               contracts:test |    Start at  11:51:15
+               contracts:test |    Duration  412ms (transform 411ms, setup 0ms, import 3.49s, tests 66ms, environment 1ms)
+▮▮▮▮ contracts:test (cached, 07a224e9)
+▮▮▮▮ biome-config:test (no op, ebe509e0)
+                 testing:test | RUN  v4.1.6 /workspaces/root/repos/cfx-core/packages/testing
+                 testing:test | 
+                 testing:test |  ✓ src/index.test.ts (7 tests) 79ms
+                 testing:test | 
+                 testing:test |  Test Files  1 passed (1)
+                 testing:test |       Tests  7 passed (7)
+                 testing:test |    Start at  11:51:16
+                 testing:test |    Duration  338ms (transform 49ms, setup 0ms, import 189ms, tests 79ms, environment 0ms)
+▮▮▮▮ testing:test (cached, 6d95b27d)
+          showcase-local:test | RUN  v4.1.6 /workspaces/root/projects/examples/apps/showcase-local
+          showcase-local:test | 
+          showcase-local:test | No test files found, exiting with code 0
+▮▮▮▮ showcase-local:test (cached, fe1c961c)
+          showcase-local:test | include: **/*.{test,spec}.?(c|m)[jt]s?(x)
+          showcase-local:test | exclude:  **/node_modules/**, **/.git/**
+             game-engine:test | RUN  v4.1.6 /workspaces/root/repos/cfx-domain/packages/game-engine
+             game-engine:test | 
+             game-engine:test |  ✓ src/index.test.ts (1 test) 2ms
+             game-engine:test | 
+             game-engine:test |  Test Files  1 passed (1)
+             game-engine:test |       Tests  1 passed (1)
+             game-engine:test |    Start at  11:51:18
+             game-engine:test |    Duration  107ms (transform 13ms, setup 0ms, import 21ms, tests 2ms, environment 0ms)
+▮▮▮▮ game-engine:test (cached, 640923eb)
+              arch-rules:test | RUN  v4.1.5 /workspaces/root/repos/cfx-meta/packages/arch-rules
+              arch-rules:test | 
+              arch-rules:test |  ✓ src/index.test.ts (5 tests) 3ms
+              arch-rules:test | 
+              arch-rules:test |  Test Files  1 passed (1)
+              arch-rules:test |       Tests  5 passed (5)
+              arch-rules:test |    Start at  11:51:16
+              arch-rules:test |    Duration  99ms (transform 20ms, setup 0ms, import 28ms, tests 3ms, environment 0ms)
+▮▮▮▮ arch-rules:test (cached, ff925b62)
+                   react:test | RUN  v4.1.6 /workspaces/root/repos/cfx-ui/packages/react
+                   react:test | 
+                   react:test |  ✓ src/index.test.ts (1 test) 1ms
+                   react:test | 
+                   react:test |  Test Files  1 passed (1)
+                   react:test |       Tests  1 passed (1)
+                   react:test |    Start at  11:51:19
+                   react:test |    Duration  229ms (transform 47ms, setup 0ms, import 146ms, tests 1ms, environment 0ms)
+▮▮▮▮ react:test (cached, 4fde4829)
+▮▮▮▮ tsconfig:test (no op, 41a386f5)
+              automation:test | RUN  v4.1.6 /workspaces/root/repos/cfx-domain/packages/automation
+              automation:test | 
+              automation:test |  ✓ src/repository/memory.test.ts (4 tests) 7ms
+              automation:test |  ✓ src/strategies/limitOrder.test.ts (2 tests) 3ms
+              automation:test |  ✓ src/priceSources/geckoTerminal.test.ts (1 test) 32ms
+              automation:test |  ✓ src/strategies/twap.test.ts (3 tests) 4ms
+              automation:test |  ✓ src/retryQueue.test.ts (6 tests) 4ms
+              automation:test |  ✓ src/conditions/price.test.ts (3 tests) 5ms
+              automation:test |  ✓ src/conditions/time.test.ts (3 tests) 3ms
+              automation:test |  ✓ src/safety.test.ts (4 tests) 4ms
+              automation:test |  ✓ src/priceSources/swappi.test.ts (1 test) 2ms
+              automation:test |  ✓ src/keeper.test.ts (7 tests) 11ms
+              automation:test |  ✓ src/strategies/input.test.ts (2 tests) 2ms
+              automation:test |  ✓ src/strategies/dca.test.ts (2 tests) 3ms
+              automation:test |  ✓ src/strategies/swap.test.ts (1 test) 3ms
+              automation:test |  ✓ src/swap/executor.test.ts (2 tests) 9ms
+              automation:test |  ✓ src/keeper/client.test.ts (2 tests) 8ms
+              automation:test |  ✓ src/swap/calldata.test.ts (1 test) 4ms
+              automation:test |  ✓ src/index.test.ts (1 test) 2ms
+              automation:test |  ✓ src/db/executionRepository.test.ts (2 tests) 8ms
+              automation:test |  ✓ src/db/jobRepository.test.ts (5 tests) 12ms
+              automation:test | 
+              automation:test |  Test Files  19 passed (19)
+              automation:test |       Tests  52 passed (52)
+              automation:test |    Start at  11:51:20
+              automation:test |    Duration  436ms (transform 594ms, setup 0ms, import 1.89s, tests 126ms, environment 2ms)
+▮▮▮▮ automation:test (cached, a357cfa0)
+              defi-react:test | RUN  v4.1.6 /workspaces/root/repos/cfx-ui/packages/defi-react
+              defi-react:test | 
+              defi-react:test |  ✓ src/index.test.ts (1 test) 1ms
+              defi-react:test | 
+              defi-react:test |  Test Files  1 passed (1)
+              defi-react:test |       Tests  1 passed (1)
+              defi-react:test |    Start at  14:58:26
+              defi-react:test |    Duration  322ms (transform 114ms, setup 0ms, import 253ms, tests 1ms, environment 0ms)
+▮▮▮▮ defi-react:test (cached, f39927ff)
+                  wallet:test | RUN  v4.1.6 /workspaces/root/repos/cfx-keys/packages/wallet
+                  wallet:test | 
+                  wallet:test |  ✓ src/batcher/index.test.ts (3 tests) 9ms
+                  wallet:test |  ✓ src/errors/index.test.ts (1 test) 2ms
+                  wallet:test |  ✓ src/hardware/types.test.ts (14 tests) 7ms
+                  wallet:test |  ✓ src/policies/index.test.ts (12 tests) 6ms
+                  wallet:test |  ✓ src/hardware/onekey/index.test.ts (6 tests) 12ms
+                  wallet:test |  ✓ src/session-key/index.test.ts (7 tests) 44ms
+                  wallet:test |  ✓ src/hardware/satochip/index.test.ts (7 tests) 26ms
+                  wallet:test |  ✓ src/hardware/index.test.ts (1 test) 3ms
+                  wallet:test |  ✓ src/hardware/ledger/index.test.ts (1 test) 4ms
+                  wallet:test |  ✓ src/index.test.ts (1 test) 2ms
+                  wallet:test |  ✓ src/signers/index.test.ts (3 tests) 87ms
+                  wallet:test |  ✓ src/init/index.test.ts (5 tests) 142ms
+                  wallet:test | 
+                  wallet:test |  Test Files  12 passed (12)
+                  wallet:test |       Tests  61 passed (61)
+                  wallet:test |    Start at  11:51:22
+                  wallet:test |    Duration  508ms (transform 402ms, setup 0ms, import 2.99s, tests 345ms, environment 1ms)
+▮▮▮▮ wallet:test (cached, 4b1b2c49)
+                    abis:test | RUN  v4.1.6 /workspaces/root/repos/cfx-solidity/packages/abis
+                    abis:test | 
+                    abis:test |  ✓ src/index.test.ts (8 tests) 3ms
+                    abis:test | 
+                    abis:test |  Test Files  1 passed (1)
+                    abis:test |       Tests  8 passed (8)
+                    abis:test |    Start at  14:47:13
+                    abis:test |    Duration  175ms (transform 29ms, setup 0ms, import 103ms, tests 3ms, environment 0ms)
+▮▮▮▮ abis:test (cached, 8a7a83a1)
+                  client:test | RUN  v4.1.5 /workspaces/root/repos/cfx-tools/packages/client
+                  client:test | 
+                  client:test |  ✓ src/index.test.ts (1 test) 1ms
+                  client:test |  ✓ src/http.test.ts (1 test) 14ms
+                  client:test |  ✓ src/index.contracts.test.ts (9 tests) 14ms
+                  client:test |  ✓ src/index.network.test.ts (10 tests) 14ms
+                  client:test |  ✓ src/index.namespaces.test.ts (9 tests) 15ms
+                  client:test | 
+                  client:test |  Test Files  5 passed (5)
+                  client:test |       Tests  30 passed (30)
+                  client:test |    Start at  08:29:42
+                  client:test |    Duration  127ms (transform 66ms, setup 0ms, import 118ms, tests 58ms, environment 0ms)
+▮▮▮▮ client:test (cached, 5dbc1ef1)
+        showcase-backend:test | RUN  v4.1.6 /workspaces/root/projects/examples/apps/showcase-backend
+        showcase-backend:test | 
+        showcase-backend:test |  ✓ src/compile/router.test.ts (4 tests) 34ms
+        showcase-backend:test |  ✓ src/devnode/router.test.ts (9 tests) 33ms
+        showcase-backend:test |  ✓ src/app.test.ts (5 tests) 92ms
+        showcase-backend:test | 
+        showcase-backend:test |  Test Files  3 passed (3)
+        showcase-backend:test |       Tests  18 passed (18)
+        showcase-backend:test |    Start at  11:51:24
+        showcase-backend:test |    Duration  651ms (transform 250ms, setup 0ms, import 1.07s, tests 160ms, environment 0ms)
+▮▮▮▮ showcase-backend:test (cached, 0bdd3ddf)
+                      ui:test | RUN  v4.1.6 /workspaces/root/repos/cfx-ui/packages/ui
+                      ui:test | 
+                      ui:test |  ✓ src/components.test.tsx (12 tests) 6ms
+                      ui:test | 
+                      ui:test |  Test Files  1 passed (1)
+                      ui:test |       Tests  12 passed (12)
+                      ui:test |    Start at  07:00:31
+                      ui:test |    Duration  149ms (transform 40ms, setup 0ms, import 55ms, tests 6ms, environment 0ms)
+▮▮▮▮ ui:test (cached, c89318f9)
+         hardware-bridge:test | RUN  v4.1.6 /workspaces/root/repos/cfx-domain/packages/hardware-bridge
+         hardware-bridge:test | 
+         hardware-bridge:test |  ✓ src/index.test.ts (1 test) 1ms
+         hardware-bridge:test | 
+         hardware-bridge:test |  Test Files  1 passed (1)
+         hardware-bridge:test |       Tests  1 passed (1)
+         hardware-bridge:test |    Start at  11:51:31
+         hardware-bridge:test |    Duration  98ms (transform 13ms, setup 0ms, import 21ms, tests 1ms, environment 0ms)
+▮▮▮▮ hardware-bridge:test (cached, 97147bb2)
+                      ui:test | Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic' }`
+            scaffold-cli:test | RUN  v4.1.6 /workspaces/root/repos/cfx-tools/packages/scaffold-cli
+            scaffold-cli:test | 
+            scaffold-cli:test |  ✓ src/validate.test.ts (2 tests) 2ms
+            scaffold-cli:test |  ✓ src/args.test.ts (7 tests) 2ms
+            scaffold-cli:test |  ✓ src/index.test.ts (1 test) 1ms
+            scaffold-cli:test |  ✓ src/templates.test.ts (8 tests) 3ms
+            scaffold-cli:test |  ✓ src/scaffold.test.ts (3 tests) 6ms
+            scaffold-cli:test | 
+            scaffold-cli:test |  Test Files  5 passed (5)
+            scaffold-cli:test |       Tests  21 passed (21)
+            scaffold-cli:test |    Start at  11:51:28
+            scaffold-cli:test |    Duration  127ms (transform 113ms, setup 0ms, import 196ms, tests 15ms, environment 0ms)
+▮▮▮▮ scaffold-cli:test (cached, e0dca409)
+                 ui-core:test | RUN  v4.1.6 /workspaces/root/repos/cfx-ui/packages/ui-core
+                 ui-core:test | 
+                 ui-core:test |  ✓ src/tokens.test.ts (7 tests) 2ms
+                 ui-core:test | 
+                 ui-core:test |  Test Files  1 passed (1)
+                 ui-core:test |       Tests  7 passed (7)
+                 ui-core:test |    Start at  07:00:32
+                 ui-core:test |    Duration  103ms (transform 25ms, setup 0ms, import 34ms, tests 2ms, environment 0ms)
+▮▮▮▮ ui-core:test (cached, e9649741)
+▮▮▮▮ moon-config:test (no op, be01a64a)
+        showcase-gateway:test | RUN  v4.1.6 /workspaces/root/projects/examples/apps/showcase-gateway
+        showcase-gateway:test | 
+        showcase-gateway:test |  ✓ src/App.test.ts (1 test) 2ms
+        showcase-gateway:test | 
+        showcase-gateway:test |  Test Files  1 passed (1)
+        showcase-gateway:test |       Tests  1 passed (1)
+        showcase-gateway:test |    Start at  11:51:33
+        showcase-gateway:test |    Duration  487ms (transform 100ms, setup 0ms, import 397ms, tests 2ms, environment 0ms)
+▮▮▮▮ showcase-gateway:test (cached, 25725376)
+                protocol:test | RUN  v4.1.6 /workspaces/root/repos/cfx-core/packages/protocol
+                protocol:test | 
+                protocol:test |  ✓ src/precompiles.test.ts (4 tests) 3ms
+                protocol:test |  ✓ src/index.test.ts (9 tests) 5ms
+                protocol:test |  ↓ src/integration.test.ts (3 tests | 3 skipped)
+                protocol:test | 
+                protocol:test |  Test Files  2 passed | 1 skipped (3)
+                protocol:test |       Tests  13 passed | 3 skipped (16)
+                protocol:test |    Start at  11:51:30
+                protocol:test |    Duration  267ms (transform 136ms, setup 0ms, import 320ms, tests 8ms, environment 0ms)
+▮▮▮▮ protocol:test (cached, 45b2d9d0)
+                     cli:test | RUN  v4.1.6 /workspaces/root/repos/cfx-tools/packages/cli
+                     cli:test | 
+                     cli:test |  ✓ src/args.test.ts (10 tests) 4ms
+                     cli:test |  ✓ src/commands/derive.test.ts (1 test) 2ms
+                     cli:test |  ✓ src/commands/status.test.ts (1 test) 2ms
+                     cli:test |  ✓ src/commands/generate.test.ts (1 test) 2ms
+                     cli:test |  ✓ src/run.test.ts (1 test) 2ms
+                     cli:test |  ✓ src/index.test.ts (18 tests) 228ms
+                     cli:test | 
+                     cli:test |  Test Files  6 passed (6)
+                     cli:test |       Tests  32 passed (32)
+                     cli:test |    Start at  11:51:34
+                     cli:test |    Duration  516ms (transform 233ms, setup 0ms, import 1.05s, tests 238ms, environment 0ms)
+▮▮▮▮ cli:test (cached, ea478225)
+       contracts-extract:test | RUN  v4.1.6 /workspaces/root/repos/cfx-solidity/packages/contracts-extract
+       contracts-extract:test | 
+       contracts-extract:test | stdout | src/index.test.ts > @cfxdevkit/codegen-contracts > runs the CLI extractor
+       contracts-extract:test | Extracted 1 contract artifact(s) from ../../../../../../tmp/cfx-cli-codegen-oq2N2I/artifacts
+       contracts-extract:test | 
+       contracts-extract:test |  ✓ src/index.test.ts (5 tests) 7ms
+       contracts-extract:test | 
+       contracts-extract:test |  Test Files  1 passed (1)
+       contracts-extract:test |       Tests  5 passed (5)
+       contracts-extract:test |    Start at  11:51:36
+       contracts-extract:test |    Duration  106ms (transform 18ms, setup 0ms, import 27ms, tests 7ms, environment 0ms)
+▮▮▮▮ contracts-extract:test (cached, 9ea7f503)
+              llm-client:test | RUN  v4.1.5 /workspaces/root/repos/cfx-llm/packages/llm-client
+              llm-client:test | 
+              llm-client:test | No test files found, exiting with code 0
+▮▮▮▮ llm-client:test (cached, 2e64524c)
+         showcase-public:test | RUN  v4.1.6 /workspaces/root/projects/examples/apps/showcase-public
+         showcase-public:test | 
+         showcase-public:test | No test files found, exiting with code 0
+▮▮▮▮ showcase-public:test (cached, aa8cb8b2)
+▮▮▮▮ vscode-extension:test (8ff01eb7)
+        vscode-extension:test | no tests
+                 ui-core:test | Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic' }`
+              llm-client:test | include: **/*.{test,spec}.?(c|m)[jt]s?(x)
+              llm-client:test | exclude:  **/node_modules/**, **/.git/**
+         showcase-public:test | include: **/*.{test,spec}.?(c|m)[jt]s?(x)
+         showcase-public:test | exclude:  **/node_modules/**, **/.git/**
+▮▮▮▮ vscode-extension:test (3ms, 8ff01eb7)
+              mcp-server:test | RUN  v4.1.6 /workspaces/root/repos/cfx-tools/packages/mcp-server
+              mcp-server:test | 
+              mcp-server:test |  ✓ src/index.test.ts (4 tests) 3ms
+              mcp-server:test | 
+              mcp-server:test |  Test Files  1 passed (1)
+              mcp-server:test |       Tests  4 passed (4)
+              mcp-server:test |    Start at  11:51:32
+              mcp-server:test |    Duration  440ms (transform 151ms, setup 0ms, import 371ms, tests 3ms, environment 0ms)
+▮▮▮▮ mcp-server:test (cached, 3e753b19)
+             showcase-ui:test | RUN  v4.1.6 /workspaces/root/projects/examples/packages/showcase-ui
+             showcase-ui:test | 
+             showcase-ui:test | No test files found, exiting with code 0
+▮▮▮▮ showcase-ui:test (cached, 0b09e949)
+                services:test | RUN  v4.1.6 /workspaces/root/repos/cfx-keys/packages/services
+                services:test | 
+                services:test |  ✓ src/auth/token.test.ts (3 tests) 3ms
+                services:test |  ✓ src/keystore/index.test.ts (1 test) 4ms
+                services:test |  ✓ src/keystore/audit.test.ts (1 test) 8ms
+                services:test |  ✓ src/auth/nonces.test.ts (2 tests) 2ms
+                services:test |  ✓ src/keystore/ledger/core-framing.test.ts (13 tests) 8ms
+                services:test |  ✓ src/keystore/memory/capability.test.ts (8 tests) 5ms
+                services:test |  ✓ src/keystore/ledger/index.test.ts (8 tests) 14ms
+                services:test |  ✓ src/embedded-wallet/manager.test.ts (3 tests) 51ms
+                services:test |  ✓ src/index.test.ts (2 tests) 3ms
+                services:test |  ✓ src/crypto/index.test.ts (10 tests) 45ms
+                services:test |  ✓ src/keystore/memory/index.test.ts (8 tests) 135ms
+                services:test |  ✓ src/keystore/file/index.test.ts (6 tests) 129ms
+                services:test | 
+                services:test |  Test Files  12 passed (12)
+                services:test |       Tests  65 passed (65)
+                services:test |    Start at  11:51:36
+                services:test |    Duration  523ms (transform 388ms, setup 0ms, import 2.25s, tests 407ms, environment 1ms)
+▮▮▮▮ services:test (cached, c7537b7e)
+          wallet-connect:test | RUN  v4.1.6 /workspaces/root/repos/cfx-ui/packages/wallet-connect
+          wallet-connect:test | 
+          wallet-connect:test |  ✓ src/lib/walletState.test.ts (3 tests) 2ms
+          wallet-connect:test |  ✓ src/config/chains.test.ts (2 tests) 2ms
+          wallet-connect:test |  ✓ src/lib/coreWalletPrimitives.test.ts (4 tests) 3ms
+          wallet-connect:test |  ✓ src/siwe/index.test.ts (3 tests) 9ms
+          wallet-connect:test |  ✓ src/index.test.ts (2 tests) 2ms
+          wallet-connect:test | 
+          wallet-connect:test |  Test Files  5 passed (5)
+          wallet-connect:test |       Tests  14 passed (14)
+          wallet-connect:test |    Start at  11:51:39
+          wallet-connect:test |    Duration  392ms (transform 141ms, setup 0ms, import 814ms, tests 19ms, environment 0ms)
+▮▮▮▮ wallet-connect:test (cached, 0417b434)
+                   theme:test | RUN  v4.1.6 /workspaces/root/repos/cfx-ui/packages/theme
+                   theme:test | 
+                   theme:test |  ✓ src/index.test.ts (1 test) 2ms
+                   theme:test | 
+                   theme:test |  Test Files  1 passed (1)
+                   theme:test |       Tests  1 passed (1)
+                   theme:test |    Start at  11:51:38
+                   theme:test |    Duration  104ms (transform 19ms, setup 0ms, import 30ms, tests 2ms, environment 0ms)
+▮▮▮▮ theme:test (cached, 283ee3e8)
+hardware-wallet-showcase:test | RUN  v4.1.6 /workspaces/root/projects/examples/apps/hardware-wallet-showcase
+hardware-wallet-showcase:test | 
+hardware-wallet-showcase:test |  ✓ src/App.test.ts (1 test) 1ms
+hardware-wallet-showcase:test | 
+hardware-wallet-showcase:test |  Test Files  1 passed (1)
+hardware-wallet-showcase:test |       Tests  1 passed (1)
+hardware-wallet-showcase:test |    Start at  11:51:39
+hardware-wallet-showcase:test |    Duration  543ms (transform 163ms, setup 0ms, import 465ms, tests 1ms, environment 0ms)
+▮▮▮▮ hardware-wallet-showcase:test (cached, 4d823c06)
+                showcase:test | RUN  v4.1.6 /workspaces/root/projects/examples/apps/showcase
+                showcase:test | 
+                showcase:test |  ✓ src/wiring.test.ts (3 tests) 4ms
+                showcase:test | 
+                showcase:test |  Test Files  1 passed (1)
+                showcase:test |       Tests  3 passed (3)
+                showcase:test |    Start at  08:29:43
+                showcase:test |    Duration  261ms (transform 50ms, setup 0ms, import 190ms, tests 4ms, environment 0ms)
+▮▮▮▮ showcase:test (cached, 32c9c0a2)
+               llm-tools:test | RUN  v4.1.6 /workspaces/root/repos/cfx-llm/packages/llm-tools
+               llm-tools:test | 
+               llm-tools:test |  ✓ src/run.test.ts (2 tests) 3ms
+               llm-tools:test | 
+               llm-tools:test |  Test Files  1 passed (1)
+               llm-tools:test |       Tests  2 passed (2)
+               llm-tools:test |    Start at  11:51:44
+               llm-tools:test |    Duration  98ms (transform 20ms, setup 0ms, import 29ms, tests 3ms, environment 0ms)
+▮▮▮▮ llm-tools:test (cached, da6ae8cb)
+                 devnode:test | RUN  v4.1.6 /workspaces/root/repos/cfx-core/packages/devnode
+                 devnode:test | 
+                 devnode:test |  ✓ src/errors.test.ts (1 test) 1ms
+                 devnode:test |  ✓ src/index.test.ts (1 test) 1ms
+                 devnode:test |  ✓ src/cli.test.ts (8 tests) 3ms
+                 devnode:test |  ✓ src/node.test.ts (8 tests) 836ms
+                 devnode:test | 
+                 devnode:test |  Test Files  4 passed (4)
+                 devnode:test |       Tests  18 passed (18)
+                 devnode:test |    Start at  08:29:44
+                 devnode:test |    Duration  1.08s (transform 136ms, setup 0ms, import 689ms, tests 842ms, environment 0ms)
+▮▮▮▮ devnode:test (cached, 8750eb37)
+                compiler:test | RUN  v4.1.6 /workspaces/root/repos/cfx-solidity/packages/compiler
+                compiler:test | 
+                compiler:test |  ✓ src/templates/erc721/source.test.ts (1 test) 2ms
+                compiler:test |  ✓ src/templates/erc20/source.test.ts (1 test) 2ms
+                compiler:test |  ✓ src/resolver/index.test.ts (1 test) 3ms
+                compiler:test |  ✓ src/templates/index.test.ts (1 test) 2ms
+                compiler:test |  ✓ src/solc/loader.test.ts (1 test) 2ms
+                compiler:test |  ✓ src/artifacts.test.ts (1 test) 2ms
+                compiler:test |  ✓ src/errors.test.ts (1 test) 3ms
+                compiler:test |  ✓ src/solc/index.test.ts (1 test) 2ms
+                compiler:test |  ✓ src/index.test.ts (8 tests) 5ms
+                compiler:test |  ✓ src/solc/compile.test.ts (1 test) 2ms
+                compiler:test |  ↓ src/integration.test.ts (3 tests | 3 skipped)
+                compiler:test | 
+                compiler:test |  Test Files  10 passed | 1 skipped (11)
+                compiler:test |       Tests  17 passed | 3 skipped (20)
+                compiler:test |    Start at  11:51:40
+                compiler:test |    Duration  352ms (transform 293ms, setup 0ms, import 1.63s, tests 24ms, environment 1ms)
+▮▮▮▮ compiler:test (cached, 68a2f02d)
+              arch-check:test | RUN  v4.1.5 /workspaces/root/repos/cfx-tools/packages/arch-check
+              arch-check:test | 
+              arch-check:test | No test files found, exiting with code 0
+▮▮▮▮ arch-check:test (cached, f3dd9e38)
+          devnode-server:test | RUN  v4.1.5 /workspaces/root/repos/cfx-tools/packages/devnode-server
+          devnode-server:test | 
+          devnode-server:test |  ✓ src/index.test.ts (1 test) 1ms
+          devnode-server:test |  ✓ src/cli.test.ts (4 tests) 5ms
+          devnode-server:test |  ✓ src/index.basics.test.ts (6 tests) 4767ms
+          devnode-server:test |      ✓ compiles sources through the shared compiler api  514ms
+          devnode-server:test |      ✓ issues and verifies a session key through the shared api  4223ms
+          devnode-server:test |  ✓ src/index.node-profiles.test.ts (1 test) 6265ms
+          devnode-server:test |      ✓ selects a node profile from keystore wallets and locks it while running  6264ms
+          devnode-server:test |  ✓ src/index.network.test.ts (1 test) 6321ms
+          devnode-server:test |      ✓ persists wallet-scoped network profiles and guards local node start in public mode  6320ms
+          devnode-server:test |  ✓ src/index.contracts-persistence.test.ts (4 tests) 10330ms
+          devnode-server:test |      ✓ calls tracked contracts by id in public mode  4258ms
+          devnode-server:test |      ✓ persists tracked contracts across app restarts and wallet switches  6067ms
+          devnode-server:test |  ✓ src/index.keystore.test.ts (1 test) 16296ms
+          devnode-server:test |      ✓ manages wallets through the keystore api  16295ms
+          devnode-server:test |  ✓ src/index.deploy.test.ts (4 tests) 20022ms
+          devnode-server:test |      ✓ deploys through the shared runtime api and registers the contract  8285ms
+          devnode-server:test |      ✓ deploys through the active public network profile with request signer override  4042ms
+          devnode-server:test |      ✓ writes contract state through the shared runtime api  7691ms
+          devnode-server:test | 
+          devnode-server:test |  Test Files  8 passed (8)
+          devnode-server:test |       Tests  22 passed (22)
+          devnode-server:test |    Start at  08:34:58
+          devnode-server:test |    Duration  20.43s (transform 871ms, setup 140ms, import 2.17s, tests 64.01s, environment 0ms)
+             showcase-ui:test | include: src/**/*.test.ts
+             showcase-ui:test | exclude:  **/node_modules/**, **/.git/**
+              arch-check:test | include: **/*.{test,spec}.?(c|m)[jt]s?(x)
+              arch-check:test | exclude:  **/node_modules/**, **/.git/**
+▮▮▮▮ devnode-server:test (cached, 6c9cbe20)
+
+Tasks: 43 completed (39 cached)
+ Time: 395ms
+
+EXIT CODE: 0

@@ -57,11 +57,11 @@ export function createKeystoreRoutes(
   });
 
   app.post('/wallets', async (c) => {
-    const { mnemonic, name, accountCount, derivationBase } = await readBody<{
+    const { mnemonic, name, accountCount, accountType } = await readBody<{
       mnemonic?: string;
       name?: string;
       accountCount?: number;
-      derivationBase?: string;
+      accountType?: string;
     }>(c);
     if (!mnemonic || !name) {
       return c.json({ ok: false, error: 'mnemonic and name are required' }, 400);
@@ -69,7 +69,7 @@ export function createKeystoreRoutes(
     try {
       const wallet = await keystore.addWallet(mnemonic, name, {
         ...(accountCount === undefined ? {} : { accountCount }),
-        ...(derivationBase === undefined ? {} : { derivationBase }),
+        ...(accountType === undefined ? {} : { accountType }),
       });
       return c.json({ ok: true, wallet });
     } catch (err) {

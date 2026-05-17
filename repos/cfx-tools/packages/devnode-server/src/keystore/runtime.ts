@@ -103,7 +103,7 @@ export class KeystoreRuntime {
   async addWallet(
     mnemonic: string,
     name: string,
-    options: { accountCount?: number; derivationBase?: string } = {},
+    options: { accountCount?: number; accountType?: string } = {},
   ): Promise<WalletSummary> {
     const id = await addWalletSecret(this.#requireUnlocked(), mnemonic, name, options);
     await this.#reloadWallets();

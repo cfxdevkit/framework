@@ -126,10 +126,12 @@ export function WalletsSection(props: ShowcaseWorkspacePanelsProps) {
                     {wallet.active ? <StatusBadge label="active" status="ok" /> : null}
                   </div>
                 </div>
-                {wallet.firstAddress ? (
+                {wallet.firstEspaceAddress ? (
                   <div style={noteStyle}>
                     First address:{' '}
-                    <code style={{ fontSize: 'var(--cfx-text-xs)' }}>{wallet.firstAddress}</code>
+                    <code style={{ fontSize: 'var(--cfx-text-xs)' }}>
+                      {wallet.firstEspaceAddress}
+                    </code>
                   </div>
                 ) : null}
                 <div style={noteStyle}>

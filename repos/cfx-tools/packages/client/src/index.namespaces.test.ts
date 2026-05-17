@@ -105,7 +105,7 @@ describe('@cfxdevkit/client namespaces', () => {
           active: true,
           accountCount: 3,
           activeAccountIndex: 0,
-          derivationBase: "m/44'/503'/0'/0",
+          accountType: 'standard' as const,
         },
       ];
       const fetch = mockFetch({
@@ -128,10 +128,11 @@ describe('@cfxdevkit/client namespaces', () => {
               active: true,
               accountCount: 3,
               activeAccountIndex: 1,
-              derivationBase: "m/44'/503'/0'/0",
-              address: '0x1',
+              accountType: 'standard' as const,
+              espaceAddress: '0x1',
               coreAddress: 'cfxtest:a',
-              derivationPath: "m/44'/503'/0'/0/1",
+              espaceDerivationPath: "m/44'/60'/0'/0/1",
+              coreDerivationPath: "m/44'/503'/0'/0/1",
             },
           },
         },
@@ -141,9 +142,10 @@ describe('@cfxdevkit/client namespaces', () => {
             accounts: [
               {
                 index: 1,
-                derivationPath: "m/44'/503'/0'/0/1",
-                address: '0x1',
+                espaceDerivationPath: "m/44'/60'/0'/0/1",
+                espaceAddress: '0x1',
                 coreAddress: 'cfxtest:a',
+                coreDerivationPath: "m/44'/503'/0'/0/1",
                 active: true,
               },
             ],

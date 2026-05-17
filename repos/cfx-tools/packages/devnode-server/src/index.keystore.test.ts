@@ -50,7 +50,7 @@ describe('@cfxdevkit/devnode-server keystore flows', () => {
       const accounts = await app.request(`/keystore/wallets/${wallet.id}/accounts`);
       const accountsJson = (await accounts.json()) as {
         ok: boolean;
-        accounts: Array<{ index: number; active: boolean; address: string }>;
+        accounts: Array<{ index: number; active: boolean; espaceAddress: string }>;
       };
       expect(accountsJson.ok).toBe(true);
       expect(accountsJson.accounts).toHaveLength(3);
@@ -68,15 +68,15 @@ describe('@cfxdevkit/devnode-server keystore flows', () => {
       const activeAfter = await app.request('/keystore/active');
       const activeAfterJson = (await activeAfter.json()) as {
         ok: boolean;
-        wallet: { activeAccountIndex: number; address: string; derivationPath: string };
+        wallet: { activeAccountIndex: number; espaceAddress: string; espaceDerivationPath: string };
       };
       const expectedAccount = deriveAccount({ mnemonic: TEST_MNEMONIC, path: "m/44'/60'/0'/0/2" });
       expect(activeAfterJson).toMatchObject({
         ok: true,
         wallet: {
           activeAccountIndex: 2,
-          address: expectedAccount.account.address,
-          derivationPath: "m/44'/60'/0'/0/2",
+          espaceAddress: expectedAccount.account.address,
+          espaceDerivationPath: "m/44'/60'/0'/0/2",
         },
       });
 
@@ -107,9 +107,9 @@ describe('@cfxdevkit/devnode-server keystore flows', () => {
         reveal: {
           kind: 'private-key',
           accountIndex: 2,
-          derivationPath: "m/44'/60'/0'/0/2",
+          espaceDerivationPath: "m/44'/60'/0'/0/2",
           privateKey: expectedAccount.privateKey,
-          address: expectedAccount.account.address,
+          espaceAddress: expectedAccount.account.address,
         },
       });
 

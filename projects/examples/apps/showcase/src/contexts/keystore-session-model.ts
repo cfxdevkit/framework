@@ -1,5 +1,5 @@
 import type { Address, Hex, Signer } from '@cfxdevkit/core';
-import { coreAddressFromPrivateKey, deriveAccount, validateMnemonic } from '@cfxdevkit/core';
+import { deriveDualAccount, validateMnemonic } from '@cfxdevkit/core';
 import type { Capability, SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
 
 export const DEFAULT_SHOWCASE_MNEMONIC =
@@ -79,16 +79,15 @@ export function deriveAccounts(
   if (!validateMnemonic(clean)) return [];
   const accounts: ShowcaseAccount[] = [];
   for (let index = 0; index < count; index++) {
-    const path = `m/44'/60'/0'/0/${index}`;
-    const { account, privateKey } = deriveAccount({ mnemonic: clean, path });
+    const dual = deriveDualAccount({ mnemonic: clean, index, coreNetworkId });
     accounts.push({
       index,
       ref: accountRefForIndex(index),
-      evmAddress: account.address,
-      coreAddress: coreAddressFromPrivateKey(privateKey, coreNetworkId),
-      privateKey,
-      publicKey: account.publicKey,
-      paths: { evm: path, core: path },
+      evmAddress: dual.evmAddress,
+      coreAddress: dual.coreAddress,
+      privateKey: dual.privateKey,
+      publicKey: dual.publicKey,
+      paths: dual.paths,
     });
   }
   return accounts;

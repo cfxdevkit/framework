@@ -151,7 +151,7 @@ export class NodeProfileService {
       selected,
       locked: this.#isNodeRunning(),
       accountCount: wallet.accountCount,
-      ...(wallet.firstAddress ? { firstAddress: wallet.firstAddress } : {}),
+      ...(wallet.firstEspaceAddress ? { firstAddress: wallet.firstEspaceAddress } : {}),
     };
   }
 }

@@ -192,9 +192,11 @@ async function resolveKeystoreSigner(input: {
   }
 
   const mnemonic = await keystore.readWalletMnemonic(wallet.id);
+  const segment = wallet.accountType === 'mining' ? 1 : 0;
+  const espaceDerivationPath = `m/44'/60'/${segment}'/0/${resolvedAccountIndex}`;
   const derived = deriveAccount({
     mnemonic,
-    path: `${wallet.derivationBase}/${resolvedAccountIndex}`,
+    path: espaceDerivationPath,
   });
 
   return {

@@ -8,11 +8,12 @@ export const META_NAME_KEY = 'name';
 export const META_ACTIVE_KEY = 'active';
 export const META_ACCOUNT_COUNT_KEY = 'accountCount';
 export const META_ACTIVE_ACCOUNT_INDEX_KEY = 'activeAccountIndex';
-export const META_DERIVATION_BASE_KEY = 'derivationBase';
-export const META_FIRST_ADDRESS_KEY = 'firstAddress';
+export const META_ACCOUNT_TYPE_KEY = 'accountType';
+export const META_FIRST_ESPACE_ADDRESS_KEY = 'firstEspaceAddress';
 export const UNLOCK_PROBE_REF: SecretRef = { service: META_SERVICE, account: 'unlock-probe' };
 export const DEFAULT_ACCOUNT_COUNT = 5;
-export const DEFAULT_DERIVATION_BASE = "m/44'/60'/0'/0";
+export type AccountType = 'standard' | 'mining';
+export const DEFAULT_ACCOUNT_TYPE: AccountType = 'standard';
 export const DEFAULT_REVEAL_TTL_MS = 60_000;
 export const REVEAL_WARNING =
   'This token reveals protected secret material. Consume it immediately; it expires and cannot be reused.';
@@ -43,9 +44,9 @@ export function toWalletSummary(secret: StoredSecret): WalletSummary {
     active: isActiveWallet(secret),
     accountCount: walletAccountCount(secret),
     activeAccountIndex: walletActiveAccountIndex(secret),
-    derivationBase: walletDerivationBase(secret),
-    ...(secret.meta?.[META_FIRST_ADDRESS_KEY]
-      ? { firstAddress: secret.meta[META_FIRST_ADDRESS_KEY] }
+    accountType: walletAccountType(secret),
+    ...(secret.meta?.[META_FIRST_ESPACE_ADDRESS_KEY]
+      ? { firstEspaceAddress: secret.meta[META_FIRST_ESPACE_ADDRESS_KEY] }
       : {}),
   };
 }
@@ -62,13 +63,30 @@ export function walletActiveAccountIndex(secret: StoredSecret): number {
   return Math.min(raw, Math.max(0, walletAccountCount(secret) - 1));
 }
 
-export function walletDerivationBase(secret: StoredSecret): string {
-  const raw = secret.meta?.[META_DERIVATION_BASE_KEY]?.trim();
-  return raw ? raw : DEFAULT_DERIVATION_BASE;
+export function walletAccountType(secret: StoredSecret): AccountType {
+  const raw = secret.meta?.[META_ACCOUNT_TYPE_KEY];
+  if (raw === 'standard' || raw === 'mining') return raw;
+  // Legacy wallets with old derivationBase metadata default to 'standard'
+  return DEFAULT_ACCOUNT_TYPE;
 }
 
-export function walletDerivationPath(secret: StoredSecret, index: number): string {
-  return `${walletDerivationBase(secret)}/${index}`;
+export function normalizeAccountType(value: string | undefined): AccountType {
+  if (value === 'standard' || value === 'mining') return value;
+  return DEFAULT_ACCOUNT_TYPE;
+}
+
+function accountTypeSegment(accountType: AccountType): number {
+  return accountType === 'standard' ? 0 : 1;
+}
+
+export function walletEspacePath(secret: StoredSecret, index: number): string {
+  const seg = accountTypeSegment(walletAccountType(secret));
+  return `m/44'/60'/${seg}'/0/${index}`;
+}
+
+export function walletCorePath(secret: StoredSecret, index: number): string {
+  const seg = accountTypeSegment(walletAccountType(secret));
+  return `m/44'/503'/${seg}'/0/${index}`;
 }
 
 export function assertAccountIndex(secret: StoredSecret, accountIndex: number): void {
@@ -89,14 +107,6 @@ export function normalizeAccountCount(value: number | undefined): number {
   return value;
 }
 
-export function normalizeDerivationBase(value: string | undefined): string {
-  const derivationBase = value?.trim() ?? DEFAULT_DERIVATION_BASE;
-  if (!derivationBase) {
-    throw new Error('derivationBase is required');
-  }
-  return derivationBase;
-}
-
 export function normalizeRevealTtl(value: number | undefined): number {
   if (value === undefined) return DEFAULT_REVEAL_TTL_MS;
   if (!Number.isInteger(value) || value < 1_000 || value > 5 * 60_000) {
@@ -113,16 +123,15 @@ export function createPrivateKeyReveal(
 ): RevealedSecret {
   const accountIndex = requestedIndex ?? walletActiveAccountIndex(wallet);
   assertAccountIndex(wallet, accountIndex);
-  const derivationPath = walletDerivationPath(wallet, accountIndex);
-  const derived = deriveAccount({ mnemonic, path: derivationPath });
+  const espaceDerivationPath = walletEspacePath(wallet, accountIndex);
+  const derived = deriveAccount({ mnemonic, path: espaceDerivationPath });
 
   return {
     kind: 'private-key',
     walletId,
     privateKey: derived.privateKey,
-    address: derived.account.address,
-    ...(derived.account.coreAddress ? { coreAddress: derived.account.coreAddress } : {}),
-    derivationPath,
+    espaceAddress: derived.account.address,
+    espaceDerivationPath,
     accountIndex,
   };
 }

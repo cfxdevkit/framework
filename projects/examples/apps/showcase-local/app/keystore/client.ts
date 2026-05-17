@@ -49,7 +49,7 @@ export async function createKeystoreWallet(
     mnemonic: input.mnemonic?.trim() || generateMnemonic(128),
     name: input.name?.trim() || 'Showcase Wallet',
     ...(input.accountCount === undefined ? {} : { accountCount: input.accountCount }),
-    ...(input.derivationBase === undefined ? {} : { derivationBase: input.derivationBase }),
+    ...(input.accountType === undefined ? {} : { accountType: input.accountType }),
   });
 }
 

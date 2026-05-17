@@ -84,7 +84,7 @@ export interface KeystoreNamespace {
       mnemonic: string;
       name: string;
       accountCount?: number;
-      derivationBase?: string;
+      accountType?: string;
     }): Promise<{ ok: boolean; wallet: WalletSummary }>;
     activate(id: string, input?: { accountIndex?: number }): Promise<OkResponse>;
     accounts(id: string): Promise<{ ok: boolean; accounts: WalletAccountSummary[] }>;

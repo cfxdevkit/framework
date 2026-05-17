@@ -7,21 +7,23 @@ export interface WalletSummary {
   active: boolean;
   accountCount: number;
   activeAccountIndex: number;
-  derivationBase: string;
-  firstAddress?: string;
+  accountType: 'standard' | 'mining';
+  firstEspaceAddress?: string;
 }
 
 export interface ActiveWalletSummary extends WalletSummary {
-  address: string;
-  coreAddress?: string;
-  derivationPath: string;
+  espaceAddress: string;
+  coreAddress: string;
+  espaceDerivationPath: string;
+  coreDerivationPath: string;
 }
 
 export interface WalletAccountSummary {
   index: number;
-  derivationPath: string;
-  address: string;
-  coreAddress?: string;
+  espaceAddress: string;
+  espaceDerivationPath: string;
+  coreAddress: string;
+  coreDerivationPath: string;
   active: boolean;
 }
 
@@ -41,9 +43,9 @@ export interface RevealedSecret {
   walletId: string;
   mnemonic?: string;
   privateKey?: string;
-  address?: string;
+  espaceAddress?: string;
   coreAddress?: string;
-  derivationPath?: string;
+  espaceDerivationPath?: string;
   accountIndex?: number;
 }
 
@@ -107,7 +109,7 @@ export class KeystoreService {
   async addWallet(
     mnemonic: string,
     name: string,
-    options: { accountCount?: number; derivationBase?: string } = {},
+    options: { accountCount?: number; accountType?: string } = {},
   ): Promise<WalletSummary> {
     return this.#runtime.addWallet(mnemonic, name, options);
   }

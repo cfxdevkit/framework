@@ -45,9 +45,9 @@ export function ActiveWalletCard({
                 wordBreak: 'break-all',
               }}
             >
-              {activeWallet.address}
+              {activeWallet.espaceAddress}
             </code>
-            <CopyButton label="copy" text={activeWallet.address} />
+            <CopyButton label="copy" text={activeWallet.espaceAddress} />
           </div>
           <div style={addressRowStyle}>
             <span style={{ ...sectionLabelStyle, minWidth: '56px' }}>Core</span>
@@ -74,7 +74,7 @@ export function ActiveWalletCard({
           <div style={addressRowStyle}>
             <span style={{ ...sectionLabelStyle, minWidth: '56px' }}>Path</span>
             <code style={{ fontSize: 'var(--cfx-text-xs)', color: 'var(--cfx-color-fg-subtle)' }}>
-              {activeWallet.derivationPath}
+              {activeWallet.espaceDerivationPath}
             </code>
           </div>
         </div>
@@ -124,9 +124,9 @@ export function DerivedAccountsList(
                     wordBreak: 'break-all',
                   }}
                 >
-                  {account.address}
+                  {account.espaceAddress}
                 </code>
-                <CopyButton label="copy" text={account.address} />
+                <CopyButton label="copy" text={account.espaceAddress} />
               </div>
               <div style={addressRowStyle}>
                 <span style={{ ...sectionLabelStyle, minWidth: '56px' }}>Core</span>

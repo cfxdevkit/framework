@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Signer } from '@cfxdevkit/core';
-import { coreAddressFromPrivateKey, deriveAccount } from '@cfxdevkit/core';
+import { deriveDualAccount } from '@cfxdevkit/core';
 import type { SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
 import {
   type createFileKeystore,
@@ -14,24 +14,25 @@ import type {
   WalletAccountSummary,
 } from '../keystore.js';
 import {
+  type AccountType,
   assertAccountIndex,
   createPrivateKeyReveal,
   isActiveWallet,
   META_ACCOUNT_COUNT_KEY,
+  META_ACCOUNT_TYPE_KEY,
   META_ACTIVE_ACCOUNT_INDEX_KEY,
   META_ACTIVE_KEY,
-  META_DERIVATION_BASE_KEY,
-  META_FIRST_ADDRESS_KEY,
+  META_FIRST_ESPACE_ADDRESS_KEY,
   META_NAME_KEY,
   normalizeAccountCount,
-  normalizeDerivationBase,
+  normalizeAccountType,
   normalizeRevealTtl,
   normalizeUnlockError,
   REVEAL_WARNING,
   toWalletSummary,
   walletAccountCount,
   walletActiveAccountIndex,
-  walletDerivationPath,
+  walletEspacePath,
   walletMeta,
   walletRef,
 } from './domain.js';
@@ -69,30 +70,24 @@ export async function loadActiveWalletSummary(
   const wallet = state.wallets.find(isActiveWallet);
   if (!wallet) return null;
 
-  const derivationPath = walletDerivationPath(wallet, walletActiveAccountIndex(wallet));
-  const signer = await state.provider.getSigner(wallet.ref, undefined, { derivationPath });
-  const derived =
-    signer.account.coreAddress === undefined
-      ? deriveAccount({
-          mnemonic: await readStoredMnemonic({
-            path,
-            passphrase: state.passphrase,
-            ref: wallet.ref,
-          }),
-          path: derivationPath,
-        })
-      : null;
-  const coreAddress =
-    signer.account.coreAddress ??
-    (derived && coreNetworkId !== undefined
-      ? coreAddressFromPrivateKey(derived.privateKey, coreNetworkId)
-      : undefined);
+  const activeIndex = walletActiveAccountIndex(wallet);
+  const mnemonic = await readStoredMnemonic({
+    path,
+    passphrase: state.passphrase,
+    ref: wallet.ref,
+  });
+  const dual = deriveDualAccount({
+    mnemonic,
+    index: activeIndex,
+    ...(coreNetworkId !== undefined ? { coreNetworkId } : {}),
+  });
 
   return {
     ...toWalletSummary(wallet),
-    address: signer.account.address,
-    ...(coreAddress ? { coreAddress } : {}),
-    derivationPath,
+    espaceAddress: dual.evmAddress,
+    coreAddress: dual.coreAddress,
+    espaceDerivationPath: dual.paths.evm,
+    coreDerivationPath: dual.paths.core,
   };
 }
 
@@ -103,7 +98,7 @@ export async function loadActiveSigner(state: LoadedKeystoreState): Promise<Sign
   }
 
   return state.provider.getSigner(wallet.ref, undefined, {
-    derivationPath: walletDerivationPath(wallet, walletActiveAccountIndex(wallet)),
+    derivationPath: walletEspacePath(wallet, walletActiveAccountIndex(wallet)),
   });
 }
 
@@ -119,12 +114,14 @@ export async function addWalletSecret(
   state: LoadedKeystoreState,
   mnemonic: string,
   name: string,
-  options: { accountCount?: number; derivationBase?: string },
+  options: { accountCount?: number; accountType?: AccountType | string },
 ): Promise<string> {
   const id = randomUUID();
   const accountCount = normalizeAccountCount(options.accountCount);
-  const derivationBase = normalizeDerivationBase(options.derivationBase);
-  const first = deriveAccount({ mnemonic, path: `${derivationBase}/0` });
+  const accountType = normalizeAccountType(
+    typeof options.accountType === 'string' ? options.accountType : undefined,
+  );
+  const first = deriveDualAccount({ mnemonic, index: 0 });
 
   await state.provider.put?.({
     ref: walletRef(id),
@@ -135,8 +132,8 @@ export async function addWalletSecret(
       [META_ACTIVE_KEY]: state.wallets.some(isActiveWallet) ? 'false' : 'true',
       [META_ACCOUNT_COUNT_KEY]: String(accountCount),
       [META_ACTIVE_ACCOUNT_INDEX_KEY]: '0',
-      [META_DERIVATION_BASE_KEY]: derivationBase,
-      [META_FIRST_ADDRESS_KEY]: first.account.address,
+      [META_ACCOUNT_TYPE_KEY]: accountType,
+      [META_FIRST_ESPACE_ADDRESS_KEY]: first.evmAddress,
     },
   });
 
@@ -177,35 +174,27 @@ export async function listWalletAccounts(
 ): Promise<WalletAccountSummary[]> {
   const activeIndex = walletActiveAccountIndex(wallet);
   const accountCount = walletAccountCount(wallet);
-  const accounts: WalletAccountSummary[] = [];
   const mnemonic = await readStoredMnemonic({
     path,
     passphrase: state.passphrase,
     ref: wallet.ref,
   });
 
-  for (let index = 0; index < accountCount; index++) {
-    const derivationPath = walletDerivationPath(wallet, index);
-    const signer = await state.provider.getSigner(wallet.ref, undefined, { derivationPath });
-    const derived =
-      signer.account.coreAddress === undefined
-        ? deriveAccount({ mnemonic, path: derivationPath })
-        : null;
-    const coreAddress =
-      signer.account.coreAddress ??
-      (derived && coreNetworkId !== undefined
-        ? coreAddressFromPrivateKey(derived.privateKey, coreNetworkId)
-        : undefined);
-    accounts.push({
+  return Array.from({ length: accountCount }, (_, index) => {
+    const dual = deriveDualAccount({
+      mnemonic,
       index,
-      derivationPath,
-      address: signer.account.address,
-      ...(coreAddress ? { coreAddress } : {}),
-      active: isActiveWallet(wallet) && index === activeIndex,
+      ...(coreNetworkId !== undefined ? { coreNetworkId } : {}),
     });
-  }
-
-  return accounts;
+    return {
+      index,
+      espaceAddress: dual.evmAddress,
+      coreAddress: dual.coreAddress,
+      espaceDerivationPath: dual.paths.evm,
+      coreDerivationPath: dual.paths.core,
+      active: isActiveWallet(wallet) && index === activeIndex,
+    };
+  });
 }
 
 export async function createRevealSession(input: {

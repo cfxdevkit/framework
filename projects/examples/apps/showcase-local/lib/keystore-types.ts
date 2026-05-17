@@ -36,7 +36,7 @@ export interface CreateKeystoreWalletRequest {
   mnemonic?: string;
   name?: string;
   accountCount?: number;
-  derivationBase?: string;
+  accountType?: string;
 }
 
 export interface RenameKeystoreWalletRequest {
