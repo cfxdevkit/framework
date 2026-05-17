@@ -84,11 +84,6 @@ export function walletEspacePath(secret: StoredSecret, index: number): string {
   return `m/44'/60'/${seg}'/0/${index}`;
 }
 
-export function walletCorePath(secret: StoredSecret, index: number): string {
-  const seg = accountTypeSegment(walletAccountType(secret));
-  return `m/44'/503'/${seg}'/0/${index}`;
-}
-
 export function assertAccountIndex(secret: StoredSecret, accountIndex: number): void {
   if (
     !Number.isInteger(accountIndex) ||

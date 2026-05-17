@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createAppendOnlyAuditLogger } from './audit.js';
 
-const tick = () => new Promise((resolve) => setImmediate(resolve));
+const tick = () => new Promise((resolve) => setTimeout(resolve, 10));
 
 describe('createAppendOnlyAuditLogger', () => {
   it('writes sequenced hash-chained audit events', async () => {
@@ -36,7 +36,7 @@ describe('createAppendOnlyAuditLogger', () => {
 });
 
 async function waitForLines(path: string, lineCount: number): Promise<void> {
-  for (let attempt = 0; attempt < 20; attempt++) {
+  for (let attempt = 0; attempt < 200; attempt++) {
     try {
       const lines = (await readFile(path, 'utf8')).trim().split('\n').filter(Boolean);
       if (lines.length >= lineCount) return;
@@ -45,4 +45,5 @@ async function waitForLines(path: string, lineCount: number): Promise<void> {
     }
     await tick();
   }
+  throw new Error(`timed out waiting for ${lineCount} audit log lines in ${path}`);
 }

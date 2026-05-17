@@ -4,7 +4,6 @@ export * from './chain.js';
 export * from './commands.js';
 export * from './contract/commands.js';
 export * from './contract/import.js';
-export * from './hardware.js';
 export * from './node.js';
 export * from './selection.js';
 export * from './shared.js';

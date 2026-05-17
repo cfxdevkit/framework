@@ -49,8 +49,6 @@
     "@cfxdevkit/core": "workspace:^",
     "@cfxdevkit/create": "workspace:^",
     "@cfxdevkit/devnode-server": "workspace:^",
-    "@cfxdevkit/services": "workspace:^",
-    "@cfxdevkit/wallet": "workspace:^",
     "viem": "^2.0.0"
   }
 }

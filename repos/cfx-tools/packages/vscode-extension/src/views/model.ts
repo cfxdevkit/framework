@@ -13,13 +13,6 @@ export interface AccountTreeRecord {
   state?: 'ready' | 'locked' | 'unavailable';
 }
 
-export interface KeystoreBackendOptionRecord {
-  label: string;
-  description: string;
-  backend: string;
-  selected: boolean;
-}
-
 export interface WalletRootRecord {
   label: string;
   ref: TreeSecretRef;

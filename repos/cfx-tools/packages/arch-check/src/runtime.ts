@@ -1,9 +1,7 @@
-import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, extname, join, relative, resolve } from 'node:path';
-import { promisify } from 'node:util';
 
 export type Severity = 'error' | 'warning' | 'info';
 
@@ -25,7 +23,6 @@ export type AgentSummary = {
   [key: string]: unknown;
 };
 
-export const execFileAsync = promisify(execFile);
 export const root = findWorkspaceRoot(process.cwd());
 export const artifactsRoot = join(root, 'artifacts', 'llm');
 

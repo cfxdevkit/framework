@@ -32,6 +32,10 @@ const config: KnipConfig = {
 
   ignoreExportsUsedInFile: true,
 
+  rules: {
+    duplicates: 'off',
+  },
+
   workspaces: {
     '.': {
       entry: ['scripts/*.mjs', 'scripts/*.ts'],

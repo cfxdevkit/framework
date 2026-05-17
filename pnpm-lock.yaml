@@ -1258,12 +1258,6 @@ importers:
       '@cfxdevkit/devnode-server':
         specifier: workspace:^
         version: link:../devnode-server
-      '@cfxdevkit/services':
-        specifier: workspace:^
-        version: link:../../../cfx-keys/packages/services
-      '@cfxdevkit/wallet':
-        specifier: workspace:^
-        version: link:../../../cfx-keys/packages/wallet
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
         version: 1.29.0(zod@4.3.4)

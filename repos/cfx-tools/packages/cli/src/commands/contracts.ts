@@ -2,11 +2,6 @@ import { cli as extractCli } from '@cfxdevkit/codegen-contracts';
 import { getString } from '../args.js';
 import type { RunOptions } from '../run.js';
 
-export interface ContractsExtractResult {
-  artifactsDir: string;
-  outDir: string;
-}
-
 export async function contractsExtractFromFlags(
   flags: Record<string, string | boolean>,
   opts: RunOptions,

@@ -69,10 +69,6 @@ export async function exchangeLegacyChunks(
   return response;
 }
 
-export function isLedgerStatus(cause: unknown, status: number): boolean {
-  return statusFromTransportError(cause) === status;
-}
-
 export async function exchange(
   transport: LedgerTransportLike,
   ins: number,
