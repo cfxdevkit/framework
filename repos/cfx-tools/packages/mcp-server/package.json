@@ -45,11 +45,9 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@cfxdevkit/compiler": "workspace:^",
-    "@cfxdevkit/contracts": "workspace:^",
     "@cfxdevkit/core": "workspace:^",
     "@cfxdevkit/create": "workspace:^",
     "@cfxdevkit/devnode": "workspace:^",
-    "@cfxdevkit/protocol": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
     "@cfxdevkit/wallet": "workspace:^",
     "viem": "^2.0.0"

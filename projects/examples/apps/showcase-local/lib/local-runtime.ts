@@ -10,7 +10,7 @@ import {
   KeystoreService,
   NetworkState,
 } from '@cfxdevkit/devnode-server';
-import type { DevnodeMiningStatus, DevnodeStatusResponse, DevnodeUrls } from './devnode-types';
+import type { DevnodeStatusResponse } from './devnode-types';
 import type { KeystoreActiveWalletSummary } from './keystore-types';
 import {
   mapDevnodeStatus,

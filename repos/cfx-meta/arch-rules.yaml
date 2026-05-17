@@ -5,7 +5,8 @@
     "id": "cross-cutting",
     "level": -1,
     "crossCutting": true,
-    "description": "Cross-cutting architecture and build configuration packages. These may be consumed as devDependencies by any tier and must not be runtime dependencies.",
+    "usageConstraint": "dev-only",
+    "description": "Cross-cutting architecture and build configuration packages. Must only appear as devDependencies in any tier. Must not carry runtime logic consumed by other packages.",
     "paths": [
       "repos/cfx-meta/packages/**",
       "repos/cfx-config/packages/**"
@@ -15,7 +16,9 @@
     {
       "id": "framework",
       "level": 0,
-      "description": "Tier 0 reusable framework packages.",
+      "versioningPolicy": "semver",
+      "allowedFromTiers": ["platform", "domains", "projects"],
+      "description": "Tier 0 reusable framework packages. Must not runtime-import from any higher tier. Published to npm with explicit semver ranges.",
       "paths": [
         "repos/cfx-core/packages/**",
         "repos/cfx-keys/packages/**",
@@ -26,7 +29,9 @@
     {
       "id": "platform",
       "level": 1,
-      "description": "Tier 1 developer platform packages.",
+      "versioningPolicy": "workspace",
+      "allowedFromTiers": ["domains", "projects"],
+      "description": "Tier 1 developer platform packages. May runtime-import framework (Tier 0). Must not runtime-import domains or projects. May use workspace:* for framework deps during pre-release.",
       "paths": [
         "repos/cfx-tools/packages/**",
         "repos/cfx-llm/packages/**"
@@ -35,7 +40,9 @@
     {
       "id": "domains",
       "level": 2,
-      "description": "Tier 2 reusable domain packages.",
+      "versioningPolicy": "workspace",
+      "allowedFromTiers": ["projects"],
+      "description": "Tier 2 reusable domain packages. May runtime-import framework and platform. Must not runtime-import projects.",
       "paths": [
         "repos/cfx-domain/packages/**"
       ]
@@ -43,7 +50,9 @@
     {
       "id": "projects",
       "level": 3,
-      "description": "Tier 3 applications and project-local packages.",
+      "versioningPolicy": "internal",
+      "allowedFromTiers": [],
+      "description": "Tier 3 applications and project-local packages. May import any lower tier. Never published; version is internal only.",
       "paths": [
         "projects/**"
       ]
@@ -55,14 +64,42 @@
       "enforce": "always",
       "severity": "error",
       "scope": "all",
-      "description": "A package must not import from or depend on a higher-numbered tier. Cross-cutting packages are allowed only as devDependencies."
+      "description": "A package must not runtime-import from or depend on a higher-numbered tier. Allowed direction: projects → domains → platform → framework. Cross-cutting packages are only allowed as devDependencies."
+    },
+    {
+      "id": "no-cross-cutting-runtime-dep",
+      "enforce": "always",
+      "severity": "error",
+      "scope": "all",
+      "description": "Cross-cutting packages (cfx-meta, cfx-config) must only appear in devDependencies. Using them as runtime dependencies violates the cross-cutting usageConstraint."
+    },
+    {
+      "id": "framework-no-upward-runtime-dep",
+      "enforce": "always",
+      "severity": "error",
+      "scope": ["framework"],
+      "description": "Framework (Tier 0) packages must not declare runtime dependencies on platform, domains, or projects packages. Only lower-tier or external packages are allowed in dependencies."
+    },
+    {
+      "id": "platform-no-domain-or-project-dep",
+      "enforce": "always",
+      "severity": "error",
+      "scope": ["platform"],
+      "description": "Platform (Tier 1) packages must not runtime-depend on domains or projects packages."
+    },
+    {
+      "id": "domains-no-project-dep",
+      "enforce": "always",
+      "severity": "error",
+      "scope": ["domains"],
+      "description": "Domain (Tier 2) packages must not runtime-depend on projects packages."
     },
     {
       "id": "no-internal-reach",
       "enforce": "always",
       "severity": "error",
       "scope": "all",
-      "description": "A package must not import another package's src/internal implementation files."
+      "description": "A package must not import another package's src/internal implementation files. Only the public entrypoint (src/index.ts or the exports map) is permitted."
     },
     {
       "id": "no-default-exports",
@@ -79,11 +116,18 @@
       "description": "Framework and domain packages must declare package.json exports maps for every public entrypoint."
     },
     {
+      "id": "framework-requires-semver",
+      "enforce": "on-release",
+      "severity": "error",
+      "scope": ["framework"],
+      "description": "Framework packages must publish with an explicit semver version (no 0.0.0 placeholders, no workspace:* in released package.json)."
+    },
+    {
       "id": "platform-uses-semver-for-framework",
       "enforce": "on-release",
       "severity": "warning",
       "scope": ["platform"],
-      "description": "Platform packages should depend on released framework packages by semver range, not workspace:* once releases exist."
+      "description": "Platform packages should depend on released framework packages by semver range, not workspace:*, once framework releases exist."
     },
     {
       "id": "requires-moon-yml",
@@ -139,3 +183,4 @@
     }
   ]
 }
+

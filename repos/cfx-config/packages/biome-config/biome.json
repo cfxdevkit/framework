@@ -39,6 +39,11 @@
       "suspicious": {
         "noExplicitAny": "warn"
       },
+      "correctness": {
+        "noUnusedImports": "warn",
+        "noUnusedVariables": "warn",
+        "noUnusedFunctionParameters": "warn"
+      },
       "style": {
         "useImportType": "error",
         "useExportType": "error",

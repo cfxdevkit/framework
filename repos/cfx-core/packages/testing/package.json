@@ -40,7 +40,6 @@
     "vitest": "^4.1.6"
   },
   "dependencies": {
-    "@cfxdevkit/contracts": "workspace:^",
     "@cfxdevkit/core": "workspace:^",
     "@cfxdevkit/devnode": "workspace:^"
   }

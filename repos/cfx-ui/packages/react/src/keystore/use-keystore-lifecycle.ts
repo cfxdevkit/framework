@@ -67,6 +67,3 @@ export function useIsKeystoreReady(): boolean {
 export function useIsKeystoreActive(): boolean {
   return useKeystoreContext().phase === 'active-wallet';
 }
-
-// Re-export so consumers have one import path
-export { useKeystoreContext };

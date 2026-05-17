@@ -19,7 +19,6 @@
     "@cfxdevkit/core": "workspace:*",
     "@cfxdevkit/example-showcase-ui": "workspace:*",
     "@cfxdevkit/services": "workspace:*",
-    "@cfxdevkit/wallet": "workspace:*",
     "buffer": "^6.0.3",
     "react": "^18.3.0",
     "react-dom": "^19.2.6",

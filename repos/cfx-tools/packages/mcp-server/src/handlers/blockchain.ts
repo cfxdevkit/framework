@@ -10,7 +10,6 @@ import {
   signerFromPrivateKey,
 } from '@cfxdevkit/core';
 import { type Abi, createPublicClient, encodeFunctionData, parseAbi, http as viemHttp } from 'viem';
-import { getKeystoreProvider } from './keystore.js';
 import { getNodeSingleton } from './node.js';
 
 function espacePublicClient() {
@@ -146,7 +145,6 @@ export async function handleBlockchainTool(
   }
 
   // ── Write tools ─────────────────────────────────────────────────────────────
-  const _keystoreProvider = getKeystoreProvider();
   if (
     name.startsWith('cfxdevkit_blockchain_send_') ||
     name.startsWith('cfxdevkit_blockchain_write_') ||

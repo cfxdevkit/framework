@@ -52,7 +52,6 @@
     "@biomejs/biome": "^2.4.15",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
-    "@cfxdevkit/wallet": "workspace:^",
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.14",
     "typescript": "^6.0.3",

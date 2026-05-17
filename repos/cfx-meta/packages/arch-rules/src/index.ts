@@ -1,5 +1,12 @@
 import archRulesContent from '../../../arch-rules.yaml?raw';
-import type { ArchRule, ArchRulesSchema, Lifecycle, ResolvedTier, TierDef } from './types.js';
+import type {
+  ArchRule,
+  ArchRulesSchema,
+  Lifecycle,
+  ResolvedTier,
+  TierDef,
+  VersioningPolicy,
+} from './types.js';
 
 export type {
   ArchRule,
@@ -11,6 +18,7 @@ export type {
   RuleScope,
   RuleSeverity,
   TierDef,
+  VersioningPolicy,
 } from './types.js';
 
 const parsedRules = parseArchRules(archRulesContent);
@@ -39,6 +47,25 @@ export function getRulesFor(tierId: string): readonly ArchRule[] {
   return parsedRules.rules.filter((rule) => ruleAppliesToTier(rule, tierId));
 }
 
+/**
+ * Returns true when a package in `fromTierId` is allowed to runtime-import
+ * a package in `toTierId`. Cross-cutting packages must be checked separately
+ * (they are only valid as devDependencies regardless of this function).
+ */
+export function isImportAllowed(fromTierId: string, toTierId: string): boolean {
+  if (toTierId === 'cross-cutting') return false; // use dev-only check instead
+  const toTier = parsedRules.tiers.find((t) => t.id === toTierId);
+  return toTier?.allowedFromTiers.includes(fromTierId) ?? false;
+}
+
+/**
+ * Returns the versioning policy for a given tier id.
+ * Returns null if the tier is not found or is cross-cutting.
+ */
+export function getVersioningPolicy(tierId: string): VersioningPolicy | null {
+  return parsedRules.tiers.find((t) => t.id === tierId)?.versioningPolicy ?? null;
+}
+
 function parseArchRules(content: string): ArchRulesSchema {
   const parsed = JSON.parse(content) as ArchRulesSchema;
   validateArchRules(parsed);
@@ -50,13 +77,31 @@ function validateArchRules(schema: ArchRulesSchema): void {
   if (schema.lifecycle !== 'pre-release' && schema.lifecycle !== 'release') {
     throw new Error('Invalid arch-rules lifecycle.');
   }
-  if (!schema['cross-cutting']?.crossCutting || schema['cross-cutting'].level !== -1) {
+  const cc = schema['cross-cutting'];
+  if (!cc?.crossCutting || cc.level !== -1) {
     throw new Error('Invalid cross-cutting tier definition.');
   }
+  if (cc.usageConstraint !== 'dev-only') {
+    throw new Error('cross-cutting usageConstraint must be "dev-only".');
+  }
+  const validVersioning = new Set(['semver', 'workspace', 'internal']);
   const tierIds = new Set<string>();
   for (const tier of schema.tiers) {
     if (tierIds.has(tier.id)) throw new Error(`Duplicate tier id: ${tier.id}`);
     tierIds.add(tier.id);
+    if (!validVersioning.has(tier.versioningPolicy)) {
+      throw new Error(`Invalid versioningPolicy "${tier.versioningPolicy}" on tier "${tier.id}".`);
+    }
+    if (!Array.isArray(tier.allowedFromTiers)) {
+      throw new Error(`Tier "${tier.id}" must declare allowedFromTiers.`);
+    }
+  }
+  for (const tier of schema.tiers) {
+    for (const ref of tier.allowedFromTiers) {
+      if (!tierIds.has(ref)) {
+        throw new Error(`Tier "${tier.id}" allowedFromTiers references unknown tier "${ref}".`);
+      }
+    }
   }
   const ruleIds = new Set<string>();
   for (const rule of schema.rules) {

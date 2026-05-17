@@ -29,10 +29,6 @@ export function TxListProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const _updateStatus = useCallback((hash: Hash, status: TrackedTx['status']) => {
-    setTxs((prev) => prev.map((t) => (t.hash === hash ? { ...t, status } : t)));
-  }, []);
-
   const clear = useCallback(() => setTxs([]), []);
 
   return <TxListContext.Provider value={{ txs, track, clear }}>{children}</TxListContext.Provider>;
