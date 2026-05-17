@@ -1,254 +1,258 @@
 'use client';
 
-import { CodeSnippet, DemoCard, StatusBadge } from '@cfxdevkit/example-showcase-ui';
-import { CORE_CHAIN_CONFIGS } from '@cfxdevkit/wallet-connect';
+import { parseCFX } from '@cfxdevkit/core';
+import { getFluentCoreProvider } from '@cfxdevkit/wallet-connect';
 import { useCoreWallet } from '@cfxdevkit/wallet-connect/hooks';
-import { useAccount, useBalance, useChainId, useSwitchChain } from 'wagmi';
+import { useEffect, useMemo, useState } from 'react';
+import { parseEther, toHex } from 'viem';
+import { useAccount, useBalance, useChainId, useSwitchChain, useWalletClient } from 'wagmi';
 import { SiteLayout } from '../site-layout';
+import { WalletAccountCards } from './wallet-account-cards';
+import { WalletActionCards } from './wallet-action-cards';
+import { buildCip23Payload, buildEip712Payload, CORE_TESTNET_ID } from './wallet-data';
 
-const ESPACE_MAINNET_ID = 1030;
-const ESPACE_TESTNET_ID = 71;
-// Core Space chain IDs: 1 = testnet, 1029 = mainnet
-const CORE_TESTNET_ID = 1;
-const CORE_MAINNET_ID = 1029;
-
-const ROW: React.CSSProperties = { borderBottom: '1px solid var(--cfx-color-border-subtle)' };
-const TD_LABEL: React.CSSProperties = {
-  padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-  color: 'var(--cfx-color-fg-subtle)',
-  width: 150,
-};
-const TD_VALUE: React.CSSProperties = {
-  padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-  fontFamily: 'monospace',
-  wordBreak: 'break-all',
-};
-
-function chainBtn(active: boolean, disabled: boolean): React.CSSProperties {
-  return {
-    padding: 'var(--cfx-space-2) var(--cfx-space-4)',
-    background: active ? 'var(--cfx-color-brand-primary)' : 'var(--cfx-color-bg-emphasis)',
-    color: active ? '#fff' : 'var(--cfx-color-fg-default)',
-    borderWidth: '1px',
-    borderStyle: 'solid',
-    borderColor: 'var(--cfx-color-border-default)',
-    borderRadius: 'var(--cfx-radius-md)',
-    cursor: disabled ? 'default' : 'pointer',
-    fontSize: 'var(--cfx-text-sm)',
-  };
+function errorText(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string') return message;
+  }
+  return String(error);
 }
 
-const ESPACE_SNIPPET = `// 1. Wrap your app with ConfluxWagmiProviders (done in providers.tsx)
-import { ConfluxWagmiProviders } from '@cfxdevkit/wallet-connect';
-
-// 2. Use the shared wallet UI primitives from @cfxdevkit/ui
-import { WalletButton, WalletPickerModal, WalletStatusChip } from '@cfxdevkit/ui';
-
-// 3. Read wallet state with wagmi hooks
-import { useAccount, useBalance, useChainId, useSwitchChain } from 'wagmi';
-
-const { address, isConnected, chain } = useAccount();
-const { data: balance } = useBalance({ address });
-const chainId = useChainId();
-const { switchChain } = useSwitchChain();
-
-<WalletButton />
-<WalletStatusChip address={address} />
-<WalletPickerModal open={open} onClose={() => setOpen(false)} />
-
-switchChain({ chainId: 71 });  // → eSpace testnet
-switchChain({ chainId: 1030 }); // → eSpace mainnet`;
-
-const CORE_SNIPPET = `// useCoreWallet talks to window.conflux — independent of wagmi
-import { useCoreWallet, CORE_CHAIN_CONFIGS } from '@cfxdevkit/wallet-connect';
-
-const core = useCoreWallet();
-// core.status: 'detecting' | 'not-installed' | 'not-active' | 'connecting' | 'active'
-// core.address  — Core Space address string
-// core.chainId  — hex chain ID ("0x1" = testnet, "0x405" = mainnet)
-
-await core.connect();   // opens Fluent cfx_requestAccounts popup
-core.disconnect();      // resets local state (Fluent has no revoke method)
-
-// Switch chain — pass a CoreChainConfig from the built-in map
-await core.switchChain(CORE_CHAIN_CONFIGS[1]);    // testnet
-await core.switchChain(CORE_CHAIN_CONFIGS[1029]); // mainnet`;
+interface CoreChainState {
+  balance: string | null;
+  epoch: string | null;
+  gasPrice: string | null;
+}
 
 // biome-ignore lint/style/noDefaultExport: Next.js page requires default export.
 export default function WalletPage() {
   const { address, isConnected, chain } = useAccount();
   const chainId = useChainId();
+  const { data: walletClient } = useWalletClient();
   // Strip out Core base32 addresses (cfxtest:/cfx:) that Fluent may briefly emit
   // through window.ethereum during Core chain switches — viem rejects them.
-  const validHexAddress = address?.startsWith('0x') ? address : undefined;
+  const validHexAddress = address?.startsWith('0x') ? (address as `0x${string}`) : undefined;
   const { data: balanceData } = useBalance({ address: validHexAddress });
   const { switchChain, isPending: isSwitching } = useSwitchChain();
   const core = useCoreWallet();
 
+  const [espaceMessage, setEspaceMessage] = useState('Hello from showcase-public eSpace');
+  const [espaceSignature, setEspaceSignature] = useState('');
+  const [espaceTypedSignature, setEspaceTypedSignature] = useState('');
+  const [espaceTxHash, setEspaceTxHash] = useState('');
+  const [espaceValue, setEspaceValue] = useState('0');
+  const [espaceActionError, setEspaceActionError] = useState('');
+  const [espaceBusy, setEspaceBusy] = useState(false);
+
+  const [coreMessage, setCoreMessage] = useState('Hello from showcase-public Core');
+  const [coreSignature, setCoreSignature] = useState('');
+  const [coreTypedSignature, setCoreTypedSignature] = useState('');
+  const [coreTxHash, setCoreTxHash] = useState('');
+  const [coreValue, setCoreValue] = useState('0');
+  const [coreActionError, setCoreActionError] = useState('');
+  const [coreBusy, setCoreBusy] = useState(false);
+  const [coreChainState, setCoreChainState] = useState<CoreChainState>({
+    balance: null,
+    epoch: null,
+    gasPrice: null,
+  });
+
+  const eip712Payload = useMemo(
+    () => buildEip712Payload(chainId, validHexAddress),
+    [chainId, validHexAddress],
+  );
+  const coreChainIdNumber = core.chainId ? Number(BigInt(core.chainId)) : CORE_TESTNET_ID;
+  const cip23Payload = useMemo(
+    () => buildCip23Payload(coreChainIdNumber, core.address),
+    [coreChainIdNumber, core.address],
+  );
+
+  useEffect(() => {
+    if (!core.isConnected || !core.address) {
+      setCoreChainState({ balance: null, epoch: null, gasPrice: null });
+      return;
+    }
+    const provider = getFluentCoreProvider();
+    if (!provider) return;
+    let cancelled = false;
+
+    async function refreshCoreState() {
+      try {
+        const [balance, epoch, gasPrice] = await Promise.all([
+          provider?.request({ method: 'cfx_getBalance', params: [core.address, 'latest_state'] }),
+          provider?.request({ method: 'cfx_epochNumber' }),
+          provider?.request({ method: 'cfx_gasPrice' }),
+        ]);
+        if (cancelled) return;
+        setCoreChainState({
+          balance: typeof balance === 'string' ? balance : null,
+          epoch: typeof epoch === 'string' ? epoch : null,
+          gasPrice: typeof gasPrice === 'string' ? gasPrice : null,
+        });
+      } catch {
+        if (!cancelled) setCoreChainState((prev) => prev);
+      }
+    }
+
+    void refreshCoreState();
+    const timer = setInterval(() => void refreshCoreState(), 10_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [core.address, core.isConnected]);
+
+  async function signEspaceMessage() {
+    if (!walletClient) return;
+    setEspaceBusy(true);
+    setEspaceActionError('');
+    setEspaceSignature('');
+    try {
+      const signature = await walletClient.signMessage({ message: espaceMessage });
+      setEspaceSignature(signature);
+    } catch (error) {
+      setEspaceActionError(errorText(error));
+    } finally {
+      setEspaceBusy(false);
+    }
+  }
+
+  async function signEspaceTypedData() {
+    if (!walletClient || !validHexAddress) return;
+    setEspaceBusy(true);
+    setEspaceActionError('');
+    setEspaceTypedSignature('');
+    try {
+      const signature = await walletClient.signTypedData(eip712Payload as never);
+      setEspaceTypedSignature(signature);
+    } catch (error) {
+      setEspaceActionError(errorText(error));
+    } finally {
+      setEspaceBusy(false);
+    }
+  }
+
+  async function sendEspaceSelfTransfer() {
+    if (!walletClient || !validHexAddress) return;
+    setEspaceBusy(true);
+    setEspaceActionError('');
+    setEspaceTxHash('');
+    try {
+      const hash = await walletClient.sendTransaction({
+        to: validHexAddress,
+        value: parseEther(espaceValue.trim() || '0'),
+      });
+      setEspaceTxHash(hash);
+    } catch (error) {
+      setEspaceActionError(errorText(error));
+    } finally {
+      setEspaceBusy(false);
+    }
+  }
+
+  async function signCoreMessage() {
+    const provider = getFluentCoreProvider();
+    if (!provider || !core.address) return;
+    setCoreBusy(true);
+    setCoreActionError('');
+    setCoreSignature('');
+    try {
+      const signature = (await provider.request({
+        method: 'personal_sign',
+        params: [coreMessage, core.address],
+      })) as string;
+      setCoreSignature(signature);
+    } catch (error) {
+      setCoreActionError(errorText(error));
+    } finally {
+      setCoreBusy(false);
+    }
+  }
+
+  async function signCoreTypedData() {
+    const provider = getFluentCoreProvider();
+    if (!provider || !core.address) return;
+    setCoreBusy(true);
+    setCoreActionError('');
+    setCoreTypedSignature('');
+    try {
+      const signature = (await provider.request({
+        method: 'cfx_signTypedData_v4',
+        params: [core.address, JSON.stringify(cip23Payload)],
+      })) as string;
+      setCoreTypedSignature(signature);
+    } catch (error) {
+      setCoreActionError(errorText(error));
+    } finally {
+      setCoreBusy(false);
+    }
+  }
+
+  async function sendCoreSelfTransfer() {
+    const provider = getFluentCoreProvider();
+    if (!provider || !core.address) return;
+    setCoreBusy(true);
+    setCoreActionError('');
+    setCoreTxHash('');
+    try {
+      const value = parseCFX(coreValue.trim() || '0');
+      const hash = (await provider.request({
+        method: 'cfx_sendTransaction',
+        params: [{ from: core.address, to: core.address, value: toHex(value) }],
+      })) as string;
+      setCoreTxHash(hash);
+    } catch (error) {
+      setCoreActionError(errorText(error));
+    } finally {
+      setCoreBusy(false);
+    }
+  }
+
   return (
     <SiteLayout>
-      {/* ── eSpace Account ── */}
-      <DemoCard
-        title="eSpace Account"
-        description="Shared wallet UI on top of wagmi. Use the header wallet picker, then read account state with useAccount and useBalance."
-      >
-        {isConnected ? (
-          <table
-            style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--cfx-text-sm)' }}
-          >
-            <tbody>
-              {[
-                ['Address', address],
-                ['Chain', chain?.name ?? chainId],
-                [
-                  'Balance',
-                  balanceData
-                    ? `${(Number(balanceData.value) / 10 ** balanceData.decimals).toFixed(4)} ${balanceData.symbol}`
-                    : '…',
-                ],
-              ].map(([k, v]) => (
-                <tr key={String(k)} style={ROW}>
-                  <td style={TD_LABEL}>{k}</td>
-                  <td style={TD_VALUE}>{String(v)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <StatusBadge status="pending" label="Click the eSpace button in the header to connect" />
-        )}
-        <CodeSnippet code={ESPACE_SNIPPET} label="How it works" />
-      </DemoCard>
-
-      {/* ── eSpace Chain Switch ── */}
-      <DemoCard
-        title="eSpace Chain Switch"
-        description="useSwitchChain — switch the eSpace wallet between mainnet (1030) and testnet (71)."
-      >
-        <div
-          style={{
-            display: 'flex',
-            gap: 'var(--cfx-space-3)',
-            flexWrap: 'wrap',
-            marginBottom: 'var(--cfx-space-3)',
-          }}
-        >
-          {[
-            { label: 'eSpace Mainnet (1030)', id: ESPACE_MAINNET_ID },
-            { label: 'eSpace Testnet (71)', id: ESPACE_TESTNET_ID },
-          ].map(({ label, id }) => (
-            <button
-              key={id}
-              type="button"
-              disabled={!isConnected || isSwitching || chainId === id}
-              onClick={() => switchChain({ chainId: id })}
-              style={chainBtn(chainId === id, !isConnected || isSwitching || chainId === id)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <StatusBadge
-          status={isConnected ? 'ok' : 'pending'}
-          label={isConnected ? `Active: chain ID ${chainId}` : 'Connect an eSpace wallet first'}
-        />
-      </DemoCard>
-
-      {/* ── Core Space Account ── */}
-      <DemoCard
-        title="Core Space Account (Fluent)"
-        description="useCoreWallet — connects via window.conflux, completely independent of wagmi. Click Core in the header."
-      >
-        {core.status === 'detecting' && (
-          <p
-            style={{
-              color: 'var(--cfx-color-fg-muted)',
-              fontSize: 'var(--cfx-text-sm)',
-              margin: 0,
-            }}
-          >
-            Detecting Fluent…
-          </p>
-        )}
-        {core.status === 'not-installed' && (
-          <StatusBadge
-            status="error"
-            label="Fluent wallet not detected — install from fluent.wallet"
-          />
-        )}
-        {core.status === 'not-active' && (
-          <StatusBadge status="pending" label="Click the Core button in the header to connect" />
-        )}
-        {core.status === 'connecting' && (
-          <StatusBadge status="pending" label="Waiting for Fluent approval…" />
-        )}
-        {core.status === 'active' && (
-          <table
-            style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--cfx-text-sm)' }}
-          >
-            <tbody>
-              {[
-                ['Address', core.address],
-                ['Chain ID (hex)', core.chainId],
-                ['Chain ID (dec)', core.chainId ? Number.parseInt(core.chainId, 16) : '—'],
-              ].map(([k, v]) => (
-                <tr key={String(k)} style={ROW}>
-                  <td style={TD_LABEL}>{k}</td>
-                  <td style={TD_VALUE}>{String(v)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <CodeSnippet code={CORE_SNIPPET} label="How it works" />
-      </DemoCard>
-
-      {/* ── Core Chain Switch ── */}
-      <DemoCard
-        title="Core Space Chain Switch"
-        description="core.switchChain — switch Fluent between Core Space testnet (chainId 1) and mainnet (1029)."
-      >
-        <div
-          style={{
-            display: 'flex',
-            gap: 'var(--cfx-space-3)',
-            flexWrap: 'wrap',
-            marginBottom: 'var(--cfx-space-3)',
-          }}
-        >
-          {[
-            { label: 'Core Testnet (1)', id: CORE_TESTNET_ID },
-            { label: 'Core Mainnet (1029)', id: CORE_MAINNET_ID },
-          ].map(({ label, id }) => {
-            const targetCfg = CORE_CHAIN_CONFIGS[id];
-            const isActive = !!targetCfg && core.chainId === targetCfg.chainIdHex;
-            const disabled = !core.isConnected || core.isSwitching || isActive;
-            return (
-              <button
-                key={id}
-                type="button"
-                disabled={disabled}
-                onClick={() => {
-                  if (targetCfg) void core.switchChain(targetCfg);
-                }}
-                style={chainBtn(isActive, disabled)}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-        <StatusBadge
-          status={core.isConnected ? 'ok' : 'pending'}
-          label={
-            core.isConnected
-              ? `Active: ${core.chainId ?? '…'}`
-              : core.status === 'not-installed'
-                ? 'Fluent not installed'
-                : 'Connect Core wallet first'
-          }
-        />
-      </DemoCard>
+      <WalletAccountCards
+        address={address}
+        balanceData={balanceData}
+        chainId={chainId}
+        chainName={chain?.name}
+        core={core}
+        coreChainState={coreChainState}
+        isConnected={isConnected}
+        isSwitching={isSwitching}
+        switchChain={switchChain}
+        validHexAddress={validHexAddress}
+      />
+      <WalletActionCards
+        core={core}
+        coreActionError={coreActionError}
+        coreBusy={coreBusy}
+        coreMessage={coreMessage}
+        coreSignature={coreSignature}
+        coreTxHash={coreTxHash}
+        coreTypedSignature={coreTypedSignature}
+        coreValue={coreValue}
+        espaceActionError={espaceActionError}
+        espaceBusy={espaceBusy}
+        espaceMessage={espaceMessage}
+        espaceSignature={espaceSignature}
+        espaceTxHash={espaceTxHash}
+        espaceTypedSignature={espaceTypedSignature}
+        espaceValue={espaceValue}
+        onCoreMessageChange={setCoreMessage}
+        onCoreValueChange={setCoreValue}
+        onEspaceMessageChange={setEspaceMessage}
+        onEspaceValueChange={setEspaceValue}
+        onSendCoreSelfTransfer={sendCoreSelfTransfer}
+        onSendEspaceSelfTransfer={sendEspaceSelfTransfer}
+        onSignCoreMessage={signCoreMessage}
+        onSignCoreTypedData={signCoreTypedData}
+        onSignEspaceMessage={signEspaceMessage}
+        onSignEspaceTypedData={signEspaceTypedData}
+        validHexAddress={validHexAddress}
+        walletReady={!!walletClient}
+      />
     </SiteLayout>
   );
 }

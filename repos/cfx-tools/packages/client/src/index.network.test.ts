@@ -6,9 +6,11 @@ describe('@cfxdevkit/client network and errors', () => {
   describe('ConfluxDevkitClient constructor', () => {
     it('creates an instance with all namespaces', () => {
       const client = new ConfluxDevkitClient({ baseUrl: 'http://localhost:52000' });
+      expect(client.health).toBeDefined();
       expect(client.node).toBeDefined();
       expect(client.keystore).toBeDefined();
       expect(client.accounts).toBeDefined();
+      expect(client.bootstrap).toBeDefined();
       expect(client.compiler).toBeDefined();
       expect(client.contracts).toBeDefined();
       expect(client.deploy).toBeDefined();
@@ -24,6 +26,14 @@ describe('@cfxdevkit/client network and errors', () => {
   });
 
   describe('network namespace', () => {
+    it('checks runtime health', async () => {
+      const fetch = mockFetch({
+        'GET /health': { body: { ok: true } },
+      });
+      const client = new ConfluxDevkitClient({ baseUrl: 'http://localhost:52000', fetch });
+      await expect(client.health()).resolves.toMatchObject({ ok: true });
+    });
+
     it('fetches current network', async () => {
       const fetch = mockFetch({
         'GET /network/current': {

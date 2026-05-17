@@ -14,7 +14,6 @@
     "@cfxdevkit/mcp-server",
     "@cfxdevkit/create",
     "@cfxdevkit/game-engine",
-    "@cfxdevkit/automation",
-    "@cfxdevkit/hardware-bridge"
+    "@cfxdevkit/automation"
   ]
 }

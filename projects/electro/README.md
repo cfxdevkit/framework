@@ -10,7 +10,7 @@
 
 **Framework / domain usage**
 - `@cfxdevkit/core` (already consumed today)
-- `domains/hardware-bridge` for WS protocol, sensor types, pin diagram codegen
+- Device WS protocol, sensor types, and pin diagram codegen stay project-local until a reusable domain package is justified
 
 **Migration notes**
 - Already follows the target pattern (thin wrapper over framework). Lowest-effort migration.

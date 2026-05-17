@@ -4,6 +4,27 @@ import { deriveDualAccount, generateMnemonic, validateMnemonic } from '@cfxdevki
 import { CodeSnippet, DemoCard, StatusBadge } from '@cfxdevkit/example-showcase-ui';
 import { useState } from 'react';
 import { SiteLayout } from '../site-layout';
+import { HardwareWalletSection } from './hardware-wallet-section';
+
+const BUTTON_STYLE: React.CSSProperties = {
+  padding: 'var(--cfx-space-2) var(--cfx-space-4)',
+  background: 'var(--cfx-color-brand-primary)',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 'var(--cfx-radius-md)',
+  cursor: 'pointer',
+  fontSize: 'var(--cfx-text-sm)',
+};
+const INPUT_STYLE: React.CSSProperties = {
+  width: '100%',
+  padding: 'var(--cfx-space-2) var(--cfx-space-3)',
+  background: 'var(--cfx-color-bg-emphasis)',
+  border: '1px solid var(--cfx-color-border-default)',
+  borderRadius: 'var(--cfx-radius-md)',
+  color: 'var(--cfx-color-fg-default)',
+  fontSize: 'var(--cfx-text-sm)',
+  boxSizing: 'border-box',
+};
 
 interface DerivedPair {
   eSpace: string;
@@ -47,16 +68,7 @@ export default function KeysPage() {
         <button
           type="button"
           onClick={handleGenerate}
-          style={{
-            padding: 'var(--cfx-space-2) var(--cfx-space-4)',
-            background: 'var(--cfx-color-brand-primary)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 'var(--cfx-radius-md)',
-            cursor: 'pointer',
-            fontSize: 'var(--cfx-text-sm)',
-            marginBottom: mnemonic ? 'var(--cfx-space-3)' : 0,
-          }}
+          style={{ ...BUTTON_STYLE, marginBottom: mnemonic ? 'var(--cfx-space-3)' : 0 }}
         >
           Generate Mnemonic
         </button>
@@ -113,18 +125,7 @@ export default function KeysPage() {
           onChange={(e) => setValidateInput(e.target.value)}
           placeholder="Enter 12 or 24 words separated by spaces…"
           rows={3}
-          style={{
-            width: '100%',
-            padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-            background: 'var(--cfx-color-bg-emphasis)',
-            border: '1px solid var(--cfx-color-border-default)',
-            borderRadius: 'var(--cfx-radius-md)',
-            color: 'var(--cfx-color-fg-default)',
-            fontSize: 'var(--cfx-text-sm)',
-            resize: 'vertical',
-            boxSizing: 'border-box',
-            marginBottom: 'var(--cfx-space-2)',
-          }}
+          style={{ ...INPUT_STYLE, resize: 'vertical', marginBottom: 'var(--cfx-space-2)' }}
         />
         {isValid !== null && (
           <StatusBadge
@@ -144,32 +145,9 @@ export default function KeysPage() {
           onChange={(e) => setDeriveInput(e.target.value)}
           placeholder="Paste a mnemonic to derive addresses…"
           rows={3}
-          style={{
-            width: '100%',
-            padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-            background: 'var(--cfx-color-bg-emphasis)',
-            border: '1px solid var(--cfx-color-border-default)',
-            borderRadius: 'var(--cfx-radius-md)',
-            color: 'var(--cfx-color-fg-default)',
-            fontSize: 'var(--cfx-text-sm)',
-            resize: 'vertical',
-            boxSizing: 'border-box',
-            marginBottom: 'var(--cfx-space-2)',
-          }}
+          style={{ ...INPUT_STYLE, resize: 'vertical', marginBottom: 'var(--cfx-space-2)' }}
         />
-        <button
-          type="button"
-          onClick={handleDerive}
-          style={{
-            padding: 'var(--cfx-space-2) var(--cfx-space-4)',
-            background: 'var(--cfx-color-brand-primary)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 'var(--cfx-radius-md)',
-            cursor: 'pointer',
-            fontSize: 'var(--cfx-text-sm)',
-          }}
-        >
+        <button type="button" onClick={handleDerive} style={BUTTON_STYLE}>
           Derive Accounts
         </button>
         {deriveError && (
@@ -197,6 +175,8 @@ export default function KeysPage() {
           </div>
         )}
       </DemoCard>
+
+      <HardwareWalletSection />
     </SiteLayout>
   );
 }

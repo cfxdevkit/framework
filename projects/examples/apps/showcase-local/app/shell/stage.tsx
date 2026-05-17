@@ -8,7 +8,6 @@ import type { ShowcaseWorkspaceDrafts } from '../workspace/drafts';
 import type { ShowcaseWorkspaceKeystoreActions } from '../workspace/keystore/actions';
 import type { ShowcaseWorkspaceKeystoreRuntime } from '../workspace/keystore/runtime';
 import type { WorkspaceDialogId, WorkspaceSectionId } from '../workspace/shared';
-import { WORKSPACE_STEPS } from '../workspace/shared';
 
 export type LogEntries = React.ComponentProps<typeof LogBox>['entries'];
 
@@ -22,18 +21,6 @@ export interface ShowcaseWorkspaceShellProps {
   keystoreActions: ShowcaseWorkspaceKeystoreActions;
   onOpenDialog(dialog: Exclude<WorkspaceDialogId, null>): void;
   onSelectSection(section: WorkspaceSectionId): void;
-}
-
-export function resolveWorkspaceSteps(section: WorkspaceSectionId) {
-  const stepIndex = WORKSPACE_STEPS.indexOf(section as (typeof WORKSPACE_STEPS)[number]);
-  return {
-    nextStep:
-      stepIndex >= 0 && stepIndex < WORKSPACE_STEPS.length - 1
-        ? WORKSPACE_STEPS[stepIndex + 1]
-        : null,
-    previousStep: stepIndex > 0 ? WORKSPACE_STEPS[stepIndex - 1] : null,
-    stepIndex,
-  };
 }
 
 export function ShowcaseWorkspacePanelStage({

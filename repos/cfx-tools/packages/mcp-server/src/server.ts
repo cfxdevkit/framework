@@ -1,11 +1,12 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import type { ProjectContext } from './context/types.js';
+import { stopControlPlaneNode } from './control-plane.js';
 import { handleAccountsTool } from './handlers/accounts.js';
 import { handleBlockchainTool } from './handlers/blockchain.js';
 import { handleCompilerTool } from './handlers/compiler.js';
 import { handleKeystoreTool } from './handlers/keystore.js';
-import { getNodeSingleton, handleNodeTool } from './handlers/node.js';
+import { handleNodeTool } from './handlers/node.js';
 import { handleScaffoldTool } from './handlers/scaffold.js';
 import { handleWalletTool } from './handlers/wallet.js';
 import { registerAllResources } from './resources/registry.js';
@@ -77,15 +78,12 @@ export function createMcpServer(context: ProjectContext): Server {
   });
 
   // ── Resources ─────────────────────────────────────────────────────────────
-  registerAllResources(server, context, getNodeSingleton);
+  registerAllResources(server, context);
 
   // ── Cleanup on process exit ───────────────────────────────────────────────
   const cleanup = async () => {
-    const node = getNodeSingleton();
-    if (node?.getStatus() === 'running') {
-      process.stderr.write('MCP server shutting down — stopping devnode...\n');
-      await node.stop().catch(() => {});
-    }
+    process.stderr.write('MCP server shutting down — stopping devnode-server control plane...\n');
+    await stopControlPlaneNode();
     process.exit(0);
   };
   process.once('SIGINT', cleanup);

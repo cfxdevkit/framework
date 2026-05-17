@@ -1,13 +1,4 @@
-import {
-  type CoreSpaceClient,
-  coreSpaceLocal,
-  createClient,
-  type EspaceClient,
-  espaceLocal,
-  formatCFX,
-  http,
-} from '@cfxdevkit/core';
-import type { DevNode } from '@cfxdevkit/devnode';
+import { getControlPlaneClient } from '../control-plane.js';
 
 export const chainResources = [
   {
@@ -38,30 +29,22 @@ function jsonError(uri: string, message: string) {
   };
 }
 
-export async function readChainResource(uri: string, getNode: () => DevNode | undefined) {
-  const node = getNode();
-
+export async function readChainResource(uri: string) {
   if (uri === 'cfxdevkit://chain/status') {
-    if (!node || node.getStatus() !== 'running') {
+    const client = getControlPlaneClient();
+    const { node } = await client.node.status();
+    if (!node.running) {
       return jsonError(uri, 'Node is not running. Run cfxdevkit_node_start first.');
     }
     try {
-      const espaceClient = createClient({ chain: espaceLocal, transport: http() }) as EspaceClient;
-      const coreClient = createClient({
-        chain: coreSpaceLocal,
-        transport: http(),
-      }) as CoreSpaceClient;
-      const [espaceBlock, coreStatus, miningStatus] = await Promise.all([
-        espaceClient.getBlockNumber(),
-        coreClient.getStatus(),
-        node.getMiningStatus(),
-      ]);
       const result = json({
-        node: node.getStatus(),
+        node: node.status,
         urls: node.urls,
-        eSpace: { blockNumber: espaceBlock.toString() },
-        coreSpace: { epochNumber: coreStatus.epochNumber.toString() },
-        mining: miningStatus,
+        accountCount: node.accounts.length,
+        faucet: node.faucet
+          ? { evmAddress: node.faucet.evmAddress, coreAddress: node.faucet.coreAddress }
+          : null,
+        mining: node.mining,
       });
       const first = result.contents[0];
       if (first) first.uri = uri;
@@ -75,22 +58,13 @@ export async function readChainResource(uri: string, getNode: () => DevNode | un
   }
 
   if (uri === 'cfxdevkit://chain/accounts') {
-    if (!node || node.getStatus() !== 'running') {
+    const client = getControlPlaneClient();
+    const { node } = await client.node.status();
+    if (!node.running) {
       return jsonError(uri, 'Node is not running. Run cfxdevkit_node_start first.');
     }
     try {
-      const client = createClient({ chain: espaceLocal, transport: http() }) as EspaceClient;
-      const accounts = await Promise.all(
-        node.accounts.map(async (a, i) => {
-          const bal = await client.getBalance(a.evmAddress).catch(() => 0n);
-          return {
-            index: i,
-            evmAddress: a.evmAddress,
-            coreAddress: a.coreAddress,
-            balance: formatCFX(bal),
-          };
-        }),
-      );
+      const { accounts } = await client.accounts.list();
       const result = json({ accounts });
       const first = result.contents[0];
       if (first) first.uri = uri;

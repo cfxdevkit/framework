@@ -6,11 +6,9 @@ import {
   espaceLocal,
   formatCFX,
   http,
-  parseCFX,
-  signerFromPrivateKey,
 } from '@cfxdevkit/core';
-import { type Abi, createPublicClient, encodeFunctionData, parseAbi, http as viemHttp } from 'viem';
-import { getNodeSingleton } from './node.js';
+import { type Abi, createPublicClient, parseAbi, http as viemHttp } from 'viem';
+import { getControlPlaneClient } from '../control-plane.js';
 
 function espacePublicClient() {
   const rpcUrl = espaceLocal.rpc.http[0] ?? 'http://127.0.0.1:8545';
@@ -151,34 +149,23 @@ export async function handleBlockchainTool(
     name.startsWith('cfxdevkit_blockchain_deploy_') ||
     name.startsWith('cfxdevkit_blockchain_erc20_')
   ) {
-    const node = getNodeSingleton();
-    if (!node || node.getStatus() !== 'running') {
+    const controlPlaneClient = getControlPlaneClient();
+    const status = await controlPlaneClient.node.status();
+    if (!status.node.running) {
       return errText('Node is not running. Run cfxdevkit_node_start first.');
     }
 
-    // For write operations, use a devnode account directly (index 0 by default)
     const accountIndex = Number(args.accountIndex ?? args.from ?? 0);
-    const account =
-      typeof accountIndex === 'number'
-        ? (node.accounts[accountIndex] ?? node.accounts[0])
-        : node.accounts[0];
-
-    if (!account) return errText('No accounts available on devnode.');
-    const signer = signerFromPrivateKey(account.privateKey);
-    const client = createClient({ chain: espaceLocal, transport: http() }) as EspaceClient;
 
     if (name === 'cfxdevkit_blockchain_send_cfx_espace') {
       const to = String(args.to ?? '');
       const amountCfx = String(args.amount ?? '1');
       try {
-        const signedTx = await signer.signTransaction({
-          to: to as `0x${string}`,
-          value: parseCFX(amountCfx),
-          chainId: espaceLocal.id,
+        const funded = await controlPlaneClient.accounts.fund({
+          address: to,
+          amount: amountCfx,
         });
-        const txHash = await client.sendRawTransaction(signedTx);
-        await node.mine(1);
-        return text(`Sent ${amountCfx} CFX to ${to}.\nTx: ${txHash}`);
+        return text(`Sent ${amountCfx} CFX to ${to}.\nTx: ${funded.txHash}`);
       } catch (err) {
         return errText(`Send failed: ${err instanceof Error ? err.message : String(err)}`);
       }
@@ -190,16 +177,16 @@ export async function handleBlockchainTool(
       const abiRaw = args.abi as unknown[];
       const fnArgs = (args.args as unknown[]) ?? [];
       try {
-        const abi = abiRaw as Abi;
-        const data = encodeFunctionData({ abi, functionName: method, args: fnArgs });
-        const signedTx = await signer.signTransaction({
-          to: address as `0x${string}`,
-          data,
-          chainId: espaceLocal.id,
+        const result = await controlPlaneClient.contracts.write({
+          accountIndex,
+          abi: abiRaw,
+          address,
+          args: fnArgs,
+          functionName: method,
+          space: 'espace',
+          waitForReceipt: true,
         });
-        const txHash = await client.sendRawTransaction(signedTx);
-        await node.mine(1);
-        return text(`Contract ${method} called.\nTx: ${txHash}`);
+        return text(`Contract ${method} called.\nTx: ${result.hash}`);
       } catch (err) {
         return errText(
           `Contract write failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -212,27 +199,15 @@ export async function handleBlockchainTool(
       const abiRaw = args.abi as unknown[];
       const ctorArgs = (args.constructorArgs as unknown[]) ?? [];
       try {
-        const abi = abiRaw as Abi;
-        let data: `0x${string}` = bytecode as `0x${string}`;
-        if (ctorArgs.length > 0) {
-          const ctorItem = abi.find((x: { type: string }) => x.type === 'constructor');
-          if (ctorItem) {
-            const { encodeAbiParameters } = await import('viem');
-            const inputs = (ctorItem as { inputs?: unknown[] }).inputs ?? [];
-            const encoded = encodeAbiParameters(
-              inputs as Parameters<typeof encodeAbiParameters>[0],
-              ctorArgs,
-            );
-            data = (bytecode + encoded.slice(2)) as `0x${string}`;
-          }
-        }
-        const signedTx = await signer.signTransaction({ data, chainId: espaceLocal.id });
-        const txHash = await client.sendRawTransaction(signedTx);
-        await node.mine(1);
-        const viemClient = espacePublicClient();
-        const receipt = await viemClient.getTransactionReceipt({ hash: txHash });
+        const deployed = await controlPlaneClient.deploy.run({
+          accountIndex,
+          abi: abiRaw,
+          args: ctorArgs,
+          bytecode,
+          space: 'espace',
+        });
         return text(
-          JSON.stringify({ txHash, contractAddress: receipt?.contractAddress ?? null }, null, 2),
+          JSON.stringify({ txHash: deployed.hash, contractAddress: deployed.address }, null, 2),
         );
       } catch (err) {
         return errText(`Deploy failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -252,19 +227,16 @@ export async function handleBlockchainTool(
         'function approve(address spender, uint256 amount) returns (bool)',
       ]);
       try {
-        const data = encodeFunctionData({
-          abi: erc20Abi,
+        const result = await controlPlaneClient.contracts.write({
+          accountIndex,
+          abi: erc20Abi as unknown as unknown[],
+          address: tokenAddress,
+          args: [to, BigInt(amount).toString()],
           functionName: funcName,
-          args: [to as `0x${string}`, BigInt(amount)],
+          space: 'espace',
+          waitForReceipt: true,
         });
-        const signedTx = await signer.signTransaction({
-          to: tokenAddress as `0x${string}`,
-          data,
-          chainId: espaceLocal.id,
-        });
-        const txHash = await client.sendRawTransaction(signedTx);
-        await node.mine(1);
-        return text(`ERC-20 ${funcName} successful.\nTx: ${txHash}`);
+        return text(`ERC-20 ${funcName} successful.\nTx: ${result.hash}`);
       } catch (err) {
         return errText(
           `ERC-20 ${funcName} failed: ${err instanceof Error ? err.message : String(err)}`,

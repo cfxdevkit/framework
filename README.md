@@ -111,7 +111,7 @@ Use this mapping when working in the current repository:
 | `devkit-workspace/.devcontainer` | `repos/cfx-tools/devcontainer/*` |
 | `chainbrawler/packages/core` | `repos/cfx-domain/packages/game-engine` |
 | `cas/conflux-cas/worker` (patterns) | `repos/cfx-domain/packages/automation` |
-| `Electro/packages/{ws-protocol,sensor-types,hardware-diagram}` | `repos/cfx-domain/packages/hardware-bridge` |
+| `Electro/packages/{ws-protocol,sensor-types,hardware-diagram}` | Project-local Electro code; no shared domain package is kept until reuse demand exists |
 | `cas/*` | `projects/cas/` |
 | `chainbrawler/*` | `projects/chainbrawler/` |
 | `conflux-phaser/*` | `projects/conflux-phaser/` |

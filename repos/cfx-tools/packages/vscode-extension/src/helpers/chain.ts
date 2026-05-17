@@ -1,7 +1,7 @@
 // @ts-nocheck
 // biome-ignore-all lint/correctness/noUnusedImports: extension helper groups share the VS Code runtime surface.
 // biome-ignore format: shared helper import is intentionally kept compact for hotspot limits.
-import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createDevNode, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, readFileKeystoreMnemonic, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode } from './shared.js';
+import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createFileKeystore, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, readFileKeystoreMnemonic, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode } from './shared.js';
 
 export async function readDeployments(this: ExtensionRuntime): Promise<DeploymentRecord[]> {
   try {
@@ -113,18 +113,13 @@ export function withCoreAddress(this: ExtensionRuntime, signer: Signer, networkI
 }
 
 export function deriveRunningNodeAccounts(this: ExtensionRuntime): AccountTreeRecord[] {
-  const coreNetworkId = this.currentChains().core.id;
   return (this.node?.accounts ?? []).map((account) => {
-    const coreAddress = coreAddressFromPrivateKey(
-      account.privateKey as `0x${string}`,
-      coreNetworkId,
-    );
     return {
       label: `Local #${account.index}`,
       description: account.evmAddress,
       espaceAddress: account.evmAddress,
-      coreAddress,
-      detail: `${this.selectedNetworkLabel()}\neSpace: ${account.evmAddress}\nCore: ${coreAddress}`,
+      coreAddress: account.coreAddress,
+      detail: `${this.selectedNetworkLabel()}\neSpace: ${account.evmAddress}\nCore: ${account.coreAddress}`,
       state: 'ready' as const,
     };
   });

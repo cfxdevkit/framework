@@ -13,91 +13,49 @@ Unlike production modules, this module is not consumed as a library — it is a 
 - Demonstrate end-to-end workflows (e.g., SIWE authentication → session-key delegation → contract deployment)
 - Provide working patterns for integrating hardware wallets (Ledger via WebHID), browser wallets (MetaMask, Fluent), and memory/file keystores
 - Validate internal APIs (`@cfxdevkit/core`, `@cfxdevkit/wallet`, `@cfxdevkit/services`, etc.) in realistic usage
-- Support gateway-style local development with a unified entry point and reverse proxy
+- Support local development through the keeper showcase apps
 
 ---
 
 ## Architecture Overview
 
-The examples module is organized into **four main application apps**, plus a **shared UI library**, all coordinated by a **gateway app**:
+The examples module is organized around two keeper applications plus a shared UI library:
 
 ```mermaid
 flowchart TD
-    subgraph "Gateway (port 5173)"
-        GW[showcase-gateway]
-    end
-
-    subgraph "Backend (port 5174)"
-        BE[showcase-backend]
-    end
-
-    subgraph "Browser Apps"
-        BC[showcase-browser] -->|proxy| BE
-        BS[showcase-stack] -->|proxy| BE
-        HW[hardware-wallet-showcase] -->|proxy| BE
-        SC[showcase] -->|proxy| BE
-    end
-
-    GW -->|/showcase| SC
-    GW -->|/browser| BC
-    GW -->|/stack| BS
-    GW -->|/keystores| HW
-    GW -->|/hardware| HW
-    GW -->|/auth, /compile, /devnode, /rpc| BE
-
-    UI["@cfxdevkit/example-showcase-ui"] -.->|shared| BC & BS & HW & SC
+    LOCAL[showcase-local]
+    PUBLIC[showcase-public]
+    UI["@cfxdevkit/example-showcase-ui"] -.->|shared| LOCAL & PUBLIC
 ```
 
-All apps are Vite-based React applications, with `showcase-backend` running as an Express server. The gateway (`showcase-gateway`) acts as a **reverse proxy and unified dev entry point**, routing requests to the appropriate backend or frontend app on fixed internal ports.
+The keeper apps cover the supported release workflows directly. Legacy gateway, stack, browser, backend, and hardware-wallet demo apps have been retired after their surviving behavior moved into the keeper apps.
 
 ---
 
 ## Key Applications
 
-### 1. `showcase-backend` — Server-Side Showcase
+### 1. `showcase-local` — Local Development Showcase
 
-**Purpose**: Demonstrates server-side operations — DevNode lifecycle, Solidity compilation, SIWE authentication, and session-key delegation.
+**Purpose**: Demonstrates local devnode workflows, Solidity compilation, deployment, SIWE authentication, keystore setup, and session-key delegation.
 
 **Key Features**:
-- **DevNode management**: Start/stop/restart/wipe/mine local Conflux node (`/devnode/*`)
-- **Compiler API**: Compile Solidity templates and return artifacts (`/compile/*`)
-- **SIWE auth**: Issue and verify login nonces, validate signatures (`/auth/*`)
-- **Session-key delegation**: Issue and verify capability-based session keys (`/session-key/*`)
-
-**API Endpoints**:
-| Path | Method | Description |
-|------|--------|-------------|
-| `/health` | GET | Health check |
-| `/devnode/status` | GET | DevNode status snapshot |
-| `/devnode/start` | POST | Start DevNode with config |
-| `/devnode/stop` | POST | Stop DevNode |
-| `/devnode/mine` | POST | Mine blocks |
-| `/devnode/wipe` | POST | Wipe DevNode state |
-| `/compile/templates` | GET | List available templates |
-| `/compile` | POST | Compile a template |
-| `/auth/nonce` | GET | Get login nonce |
-| `/auth/verify` | POST | Verify SIWE signature |
-| `/auth/me` | GET | Get authenticated user |
-| `/session-key/issue` | POST | Issue session key |
-| `/session-key/verify` | POST | Verify session key attestation |
-
-**Implementation Highlights**:
-- Uses `express` + `cors` for routing
-- `DevNodeManager` and `CompileManager` abstract stateful operations
-- SIWE validation uses `siwe` package; session keys use `@cfxdevkit/wallet/session-key`
-- Full test coverage (`*.test.ts`) with `supertest` and `vitest`
+- **Devnode control**: Start, stop, mine, and inspect a local Conflux node.
+- **Compiler and deployment**: Compile Solidity templates and deploy them through the shared client surface.
+- **Keystore workflows**: Set up file-backed keystores, add wallets, unlock, and exercise reveal flows.
+- **SIWE and session keys**: Demonstrate auth/session-key patterns through the local server surface.
 
 ---
 
-### 2. `showcase-browser` — Browser Wallet Showcase
+### 2. `showcase-public` — Public API Showcase
 
-**Purpose**: Focuses on browser wallet integration — Fluent, MetaMask, and generic EIP-1193 providers — with no backend dependency.
+**Purpose**: Focuses on public, browser-facing workflows including Fluent, MetaMask, generic EIP-1193 providers, token utilities, and hardware-wallet flows.
 
 **Key Features**:
 - Dual-space wallet support (Core + eSpace)
 - BIP-39/BIP-32/SLIP-0044 derivation (mnemonic generation, path derivation)
 - Wallet connection UI (modal picker, status pills)
 - RPC interaction via `wagmi` and `@cfxjs/use-wallet-react`
+- Ledger hardware wallet coverage through the supported wallet package
 
 **UI Components**:
 - `WalletPickerModal`: Modal to select wallet provider
@@ -109,62 +67,6 @@ All apps are Vite-based React applications, with `showcase-backend` running as a
 - `generateMnemonic`, `validateMnemonic`, `listChains` (`@cfxdevkit/core`)
 - `rpcCoreAccounts`, `rpcCoreChainId`, `switchConfluxChain`, `buildAddChainParams`
 - `useCoreWallet`, `useFluentCore`, `detectFluentCore`
-
----
-
-### 3. `showcase-stack` — Full-Stack Integration
-
-**Purpose**: Combines frontend (browser wallets) and backend (SIWE, DevNode, compiler) into a unified workflow.
-
-**Workflow Example**:
-1. User connects MetaMask (eSpace) or Fluent (Core)
-2. User logs in via SIWE → backend issues session key
-3. User compiles a Solidity template (via `/compile`)
-4. User deploys contract using session-key-signed transaction
-5. User interacts with deployed contract (ABI-driven)
-
-**Key Integration Points**:
-- `api` client (`src/lib/api.ts`) wraps backend endpoints
-- `useShowcaseBackend` hook manages backend status
-- Shared `@cfxdevkit/example-showcase-ui` components reused across apps
-
----
-
-### 4. `hardware-wallet-showcase` — Ledger Hardware Wallet Demo
-
-**Purpose**: Demonstrates secure signing via Ledger hardware wallet using WebHID.
-
-**Key Features**:
-- Ledger ETH app integration (`@ledgerhq/hw-app-eth`, `@ledgerhq/hw-transport-webhid`)
-- Memory, file, and hardware wallet comparison UI
-- Full signer spectrum: `MemoryWallet`, `FileWallet`, `LedgerWallet`
-
-**Dependencies**:
-- `@ledgerhq/hw-app-eth`: Ledger Ethereum app API
-- `@ledgerhq/hw-transport-webhid`: WebHID transport for Ledger devices
-- `buffer`: Polyfilled for browser compatibility
-
----
-
-### 5. `showcase-gateway` — Unified Dev Entry Point
-
-**Purpose**: Single public entry point (`http://localhost:5173`) that proxies all example apps and backend routes.
-
-**Proxy Configuration**:
-| Path Prefix | Target | Notes |
-|-------------|--------|-------|
-| `/showcase` | `http://127.0.0.1:5181` | `showcase` app |
-| `/browser` | `http://127.0.0.1:5183` | `showcase-browser` app |
-| `/stack` | `http://127.0.0.1:5182` | `showcase-stack` app |
-| `/keystores` / `/hardware` | `http://127.0.0.1:5184` | `hardware-wallet-showcase` app |
-| `/auth`, `/compile`, `/devnode`, `/rpc`, `/session-key` | `http://127.0.0.1:5174` | `showcase-backend` |
-| `/api/*` | `http://127.0.0.1:5174` | Rewrites `/api` → `` |
-
-**Special Handling**:
-- Disables compression (`accept-encoding: identity`) to prevent `ERR_CONTENT_LENGTH_MISMATCH`
-- Uses `aliasedAppProxy` for `/hardware` → `/keystores` rewrite
-
----
 
 ## Shared UI Library: `@cfxdevkit/example-showcase-ui`
 
@@ -196,23 +98,16 @@ From the monorepo root:
 pnpm showcase
 ```
 
-This starts:
-- `showcase-backend` on port `5174`
-- All frontend apps on fixed internal ports (`5181`, `5182`, `5183`, `5184`)
-- `showcase-gateway` on port `5173`
-
-Then open `http://localhost:5173` in your browser.
+This starts `showcase-local` and `showcase-public`.
 
 ### Testing
 
 Each app has its own test suite:
-- `showcase-backend`: `vitest` + `supertest` for API tests
 - `showcase-ui`: `vitest` for state logic (`wallet-state-*.test.ts`)
-- Frontend apps: minimal smoke tests (`wiring.test.ts`, `App.test.ts`)
+- Keeper apps: smoke and route-level tests
 
 Example:
 ```bash
-pnpm test --filter @cfxdevkit/example-showcase-backend
 pnpm test --filter @cfxdevkit/example-showcase-ui
 ```
 
@@ -240,7 +135,7 @@ The **Other — examples** module is the **living documentation** of the `@cfxde
 - ✅ Working examples of wallet management (memory, file, hardware)
 - ✅ Full-stack patterns (SIWE, session keys, compiler, deploy)
 - ✅ Browser wallet integration (wagmi, Fluent, MetaMask)
-- ✅ Unified dev gateway for local testing
+- ✅ Unified local and public showcase workflows
 - ✅ Reusable UI primitives and state logic
 
 It is not a library — it is a **reference implementation suite**. Developers should treat it as a sandbox to explore, copy, and adapt patterns for their own projects.

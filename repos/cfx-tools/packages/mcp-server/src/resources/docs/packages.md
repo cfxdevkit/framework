@@ -16,20 +16,21 @@ const hash = await client.sendRawTransaction(signedTx);    // Hex → Hash
 
 **Key types:** `EspaceClient`, `CoreSpaceClient`, `DualAddressAccount` (`evmAddress`, `coreAddress`, `privateKey`)
 
-## @cfxdevkit/devnode
+## @cfxdevkit/client + @cfxdevkit/devnode-server
 
-Local Conflux blockchain node lifecycle manager.
+Shared control-plane client and backend runtime.
 
 ```ts
-import { createDevNode } from '@cfxdevkit/devnode';
-const node = createDevNode();
-await node.start();
-// node.accounts[0].evmAddress, .coreAddress, .privateKey
-// node.faucet.evmAddress
-// node.urls.espace, node.urls.core
-await node.mine(5);
-await node.stop();
+import { createConfluxDevkitClient } from '@cfxdevkit/client';
+
+const client = createConfluxDevkitClient({ baseUrl: 'http://localhost:3001' });
+await client.node.start();
+const { accounts } = await client.accounts.list();
+await client.node.mine({ blocks: 5 });
+await client.node.stop();
 ```
+
+Tooling may embed `createDevnodeServerApp()` from `@cfxdevkit/devnode-server` for local operation, but runtime actions should go through the client surface.
 
 ## @cfxdevkit/compiler
 

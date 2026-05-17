@@ -85,9 +85,6 @@ add_dep "@cfxdevkit/automation" prod \
   "@cfxdevkit/executor@workspace:*" \
   "@cfxdevkit/contracts@workspace:*"
 
-# hardware-bridge -> core
-add_dep "@cfxdevkit/hardware-bridge" prod "@cfxdevkit/core@workspace:*"
-
 # ---------- platform ----------
 
 # mcp-server -> core, services, wallet, contracts, compiler, devnode

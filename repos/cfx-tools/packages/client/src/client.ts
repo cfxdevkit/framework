@@ -1,18 +1,22 @@
 import { HttpClient } from './http.js';
 import {
   type AccountsNamespace,
+  type BootstrapNamespace,
   type CompilerNamespace,
   type ContractsNamespace,
   createAccountsNamespace,
+  createBootstrapNamespace,
   createCompilerNamespace,
   createContractsNamespace,
   createDeployNamespace,
+  createHealthNamespace,
   createKeystoreNamespace,
   createMiningNamespace,
   createNetworkNamespace,
   createNodeNamespace,
   createSessionKeysNamespace,
   type DeployNamespace,
+  type HealthNamespace,
   type KeystoreNamespace,
   type MiningNamespace,
   type NetworkNamespace,
@@ -35,9 +39,11 @@ export type { ConfluxDevkitClientOptions };
  * ```
  */
 export class ConfluxDevkitClient {
+  readonly health: HealthNamespace;
   readonly node: NodeNamespace;
   readonly keystore: KeystoreNamespace;
   readonly accounts: AccountsNamespace;
+  readonly bootstrap: BootstrapNamespace;
   readonly compiler: CompilerNamespace;
   readonly contracts: ContractsNamespace;
   readonly deploy: DeployNamespace;
@@ -47,9 +53,11 @@ export class ConfluxDevkitClient {
 
   constructor(options: ConfluxDevkitClientOptions) {
     const http = new HttpClient(options.baseUrl, options.fetch);
+    this.health = createHealthNamespace(http);
     this.node = createNodeNamespace(http);
     this.keystore = createKeystoreNamespace(http);
     this.accounts = createAccountsNamespace(http);
+    this.bootstrap = createBootstrapNamespace(http);
     this.compiler = createCompilerNamespace(http);
     this.contracts = createContractsNamespace(http);
     this.deploy = createDeployNamespace(http);

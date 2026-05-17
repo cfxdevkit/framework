@@ -14,7 +14,7 @@ single `moon run :check`, and single release cycle become friction:
 |------|--------|----------------|---------|
 | 0 | `framework/` | core, services, wallet, contracts, react, defi-react, theme, testing, devnode, executor, protocol, compiler, wallet-connect | Public, semver, npm-published |
 | 1 | `platform/` | scaffold-cli, mcp-server, vscode-extension, devcontainer, devtools, docs-site, templates | Developer experience |
-| 2 | `domains/` | game-engine, automation, hardware-bridge | Vertical concerns |
+| 2 | `domains/` | game-engine, automation | Vertical concerns |
 | 3 | `projects/` | cas, chainbrawler, conflux-phaser, electro | Deployable apps |
 | — | `infrastructure/`, `docs/`, `tools/` | shared cross-cutting | — |
 
@@ -73,7 +73,7 @@ than UI code.
 | 2 | `cfx-core` | `core`, `protocol`, `contracts`, `compiler`, `executor`, `devnode`, `testing` | Chain primitives; large surface but rarely changes; long support window. |
 | 3 | **`cfx-keys`** | `services` (keystore interface + memory + file backends), `wallet` (signers, init, hardware, session-keys, policies), future `keystore-kms` / `keystore-os` / `keystore-forward` | **Audit-grade trust boundary.** Tightest review, separate threat model, separate release cadence. Smallest dep tree. |
 | 4 | `cfx-ui` | `react`, `defi-react`, `theme`, `wallet-connect` | UI moves fastest; depends on `cfx-keys` + `cfx-core` over npm; no need to live next to chain code. |
-| 5 | `cfx-domain` | `domains/game-engine`, `domains/automation`, `domains/hardware-bridge` | Each vertical may eventually move to its own repo (especially `hardware-bridge` for Electro). Start as one repo. |
+| 5 | `cfx-domain` | `domains/game-engine`, `domains/automation` | Each vertical may eventually move to its own repo once reuse justifies the split. Start as one repo. |
 | 6 | `cfx-tools` | `scaffold-cli`, `mcp-server`, `vscode-extension`, `devcontainer`, `devtools`, `docs-site`, `templates` | Developer experience releases on its own cadence (weekly), needs no semver discipline of Tier 0. |
 
 Each `projects/<app>` (cas, chainbrawler, conflux-phaser, electro) keeps its
@@ -110,7 +110,7 @@ boundaries instead of folder boundaries:
 - `cfx-keys`: depends on `@cfxdevkit/core` over npm range, never workspace.
 - `cfx-ui`: depends on `@cfxdevkit/core` and `@cfxdevkit/wallet` over npm.
 - `cfx-domain`: depends on `cfx-core` (and may depend on `cfx-keys`/`cfx-ui`
-  per package, e.g. `hardware-bridge` needs `wallet/hardware`).
+  per package when a vertical requires it).
 - `cfx-tools`: depends on everything; never depended on by anything.
 
 ### Versioning
@@ -231,15 +231,15 @@ After the split: `framework/{core,protocol,contracts,compiler,executor,devnode,t
 - Where do the smart-contract artefacts (`framework/contracts/deployments/*.json`)
   live after the split? **Tentative answer:** stay with `cfx-core` because
   ABIs are a chain-protocol concern.
-- Should `domains/hardware-bridge` move to the Electro project repo
-  instead of `cfx-domain`? **Tentative answer:** yes once it has a second
-  consumer it can move back to `cfx-domain`.
+- Should hardware-specific Electro protocol code move into `cfx-domain`?
+  **Tentative answer:** no for now; keep it project-local until a second
+  consumer proves reusable demand.
 
 ## Acceptance checklist (when the split is complete)
 
 - [ ] `cfx-keys` repo exists, publishes `@cfxdevkit/{services,wallet}`.
 - [ ] `cfx-tools` repo exists, publishes `@cfxdevkit/{scaffold-cli,mcp-server,vscode-extension}`.
-- [ ] `cfx-domain` repo exists, publishes `@cfxdevkit/{game-engine,automation,hardware-bridge}`.
+- [ ] `cfx-domain` repo exists, publishes `@cfxdevkit/{game-engine,automation}`.
 - [ ] `cfx-ui` repo exists, publishes `@cfxdevkit/{react,defi-react,theme,wallet-connect}`.
 - [ ] `cfx-core` (renamed from `root/`) publishes `@cfxdevkit/{core,protocol,contracts,compiler,executor,devnode,testing}`.
 - [ ] `cfx-meta` exists with this ADR, the integration matrix, and `clone-all.sh`.

@@ -110,7 +110,7 @@ export function UiFoundationCatalog() {
     <>
       <DemoCard
         title="Shared Wallet UI"
-        description="Reusable eSpace wallet actions extracted from the old showcase/browser implementations into @cfxdevkit/ui."
+        description="Reusable eSpace wallet actions shared across public showcase flows in @cfxdevkit/ui."
       >
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
@@ -155,7 +155,7 @@ export function UiFoundationCatalog() {
 
       <DemoCard
         title="Segmented Network Selector"
-        description="Shared segmented control extracted from the duplicated network selectors in the old showcase-browser and showcase-stack apps."
+        description="Shared segmented control for public network choices and app-level routing state."
       >
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-4">
@@ -187,10 +187,8 @@ export function UiFoundationCatalog() {
           <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300">
             <p className="font-semibold text-slate-100">Why this moved</p>
             <p className="mt-2 leading-6">
-              The old showcase apps had two separate segmented controls with the same interaction
-              model and slightly different copy. The control is reusable; the network state model
-              stays app-level because browser and stack still have different routing and provider
-              responsibilities.
+              The control is reusable across showcase routes, while the network state model stays
+              app-level because routing and provider responsibilities remain specific to each flow.
             </p>
           </div>
         </div>

@@ -162,4 +162,46 @@ describe('@cfxdevkit/client contracts flows', () => {
       expect(result.contractId).toBe('contract-1');
     });
   });
+
+  describe('bootstrap namespace', () => {
+    it('reads template catalog and template details', async () => {
+      const template = {
+        id: 'counter',
+        name: 'Counter',
+        description: 'Counter contract',
+        contractName: 'Counter',
+        solcVersion: '0.8.26',
+      };
+      const fetch = mockFetch({
+        'GET /bootstrap/catalog': { body: { ok: true, templates: [template] } },
+        'GET /bootstrap/catalog/counter': {
+          body: { ok: true, template: { ...template, source: 'contract Counter {}' } },
+        },
+      });
+      const client = new ConfluxDevkitClient({ baseUrl: 'http://localhost:52000', fetch });
+      const catalog = await client.bootstrap.catalog();
+      const details = await client.bootstrap.get('counter');
+      expect(catalog.templates[0].id).toBe('counter');
+      expect(details.template.source).toContain('Counter');
+    });
+
+    it('deploys a bootstrap template', async () => {
+      const fetch = mockFetch({
+        'POST /bootstrap/deploy': {
+          body: {
+            ok: true,
+            txHash: '0xabc',
+            contractAddress: '0x0000000000000000000000000000000000000001',
+            contract: null,
+            templateId: 'counter',
+            contractName: 'Counter',
+          },
+        },
+      });
+      const client = new ConfluxDevkitClient({ baseUrl: 'http://localhost:52000', fetch });
+      const result = await client.bootstrap.deploy({ templateId: 'counter' });
+      expect(result.txHash).toBe('0xabc');
+      expect(result.contractName).toBe('Counter');
+    });
+  });
 });

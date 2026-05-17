@@ -67,13 +67,13 @@ RPC client, account management, chain utilities.
 - deriveDualAccounts({ mnemonic, count, startIndex }) → DualAddressAccount[]
 - DualAddressAccount: { evmAddress, coreAddress, privateKey }
 
-## @cfxdevkit/devnode
-Local Conflux blockchain node lifecycle manager.
-- createDevNode() → DevNode
-- node.start() / stop() / mine(blocks?) / getStatus()
-- node.accounts[].evmAddress / .coreAddress / .privateKey
-- node.faucet.evmAddress / .privateKey
-- node.urls.espace / .core
+## @cfxdevkit/client + @cfxdevkit/devnode-server
+Shared control-plane client and backend runtime.
+- createConfluxDevkitClient({ baseUrl }) → ConfluxDevkitClient
+- client.node.start() / stop() / mine({ blocks }) / status()
+- client.accounts.list() / fund({ address, space, amount })
+- client.compiler.compileSources(...) / client.deploy.run(...)
+- MCP can embed createDevnodeServerApp() for local operation, while handlers use the client surface
 
 ## @cfxdevkit/compiler
 Solidity compilation with bundled solc.

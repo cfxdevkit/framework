@@ -14,9 +14,7 @@ export type {
 export {
   makeNetworkItems,
   makeNetworkNodeRow,
-  makeNetworkRow,
   makeNodeItems,
-  makeNodeRow,
 } from './network/node.js';
 
 import type * as vscode from 'vscode';

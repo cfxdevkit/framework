@@ -94,16 +94,6 @@ const config: KnipConfig = {
       project: ['src/**/*.ts'],
     },
 
-    'projects/examples/apps/showcase-browser': {
-      entry: ['src/main.tsx!', 'src/main.ts!'],
-      project: ['src/**/*.{ts,tsx}'],
-      ignore: [
-        'src/panels/**',
-        'src/components/WalletPickerModal.tsx',
-        'src/components/WalletPill.tsx',
-      ],
-      ignoreDependencies: ['@cfxdevkit/wallet'],
-    },
     'projects/examples/apps/*': {
       entry: ['src/main.ts!', 'src/main.tsx!', 'app/page.tsx!', 'src/index.ts!'],
       project: ['src/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}', 'lib/**/*.{ts,tsx}'],
@@ -115,11 +105,7 @@ const config: KnipConfig = {
     'projects/cas/apps/frontend': {
       entry: ['src/main.tsx!'],
       project: ['src/**/*.{ts,tsx}'],
-      ignore: [
-        'src/app/create/**',
-        'src/components/JobForm.tsx',
-        'src/components/SystemAdminPanel.tsx',
-      ],
+      ignore: ['src/components/JobForm.tsx', 'src/components/SystemAdminPanel.tsx'],
     },
     'projects/cas/apps/*': {
       entry: ['src/main.ts!', 'src/main.tsx!', 'src/index.ts!'],

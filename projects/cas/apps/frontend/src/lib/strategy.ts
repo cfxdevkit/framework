@@ -4,7 +4,6 @@ import {
   type CasTokenInfo,
   ZERO_ADDRESS,
 } from '@cfxdevkit/cas-shared';
-import { formatUnits, parseUnits } from 'viem';
 import { MAINNET_AUTOMATION_MANAGER_ADDRESS, MAINNET_WCFX_ADDRESS } from './deployments';
 import { readTargetEspaceChain } from './ethereum';
 
@@ -91,35 +90,6 @@ export function buildStrategySteps(
 
 // ── Pool helpers ──────────────────────────────────────────────────────────────
 
-export function withNativeCfx(
-  pools: CasPoolsResponse,
-  wcfxAddress: CasHexAddress,
-): TokenWithBalance[] {
-  const native: TokenWithBalance = {
-    address: CFX_NATIVE_ADDRESS,
-    symbol: 'CFX',
-    name: 'Conflux',
-    decimals: 18,
-  };
-  const seen = new Set<string>([native.address.toLowerCase()]);
-  const tokens: TokenWithBalance[] = [native];
-  for (const token of pools.tokens) {
-    const normalized = token.address.toLowerCase();
-    if (seen.has(normalized)) continue;
-    seen.add(normalized);
-    tokens.push(token);
-  }
-  if (!seen.has(wcfxAddress.toLowerCase()) && wcfxAddress !== ZERO_ADDRESS) {
-    tokens.push({
-      address: wcfxAddress,
-      symbol: 'WCFX',
-      name: 'Wrapped CFX',
-      decimals: 18,
-    });
-  }
-  return tokens.sort((a, b) => (a.symbol === 'CFX' ? -1 : a.symbol.localeCompare(b.symbol)));
-}
-
 export function pairedTokens(
   pools: CasPoolsResponse,
   tokens: TokenWithBalance[],
@@ -151,13 +121,6 @@ export function tokenDecimals(token: CasTokenInfo | undefined): number {
   return token?.decimals ?? 18;
 }
 
-export function formatTokenAmount(value: bigint, decimals = 18): string {
-  const formatted = Number(formatUnits(value, decimals));
-  if (!Number.isFinite(formatted) || formatted === 0) return '0';
-  if (formatted < 0.000001) return '<0.000001';
-  return formatted.toLocaleString(undefined, { maximumFractionDigits: 6 });
-}
-
 // ── Inline committed-amount helper (used by StrategyBuilder) ─────────────────
 
 import type { CasJobDto } from '@cfxdevkit/cas-shared';
@@ -178,24 +141,6 @@ export function readExistingCommitted(jobs: CasJobDto[], tokenIn: CasHexAddress)
     }
   }
   return committed;
-}
-
-// ── Estimated output (limit order preview) ───────────────────────────────────
-
-export function estimatedOutput(
-  draft: StrategyDraft,
-  tokenIn?: TokenWithBalance,
-): { human: string } {
-  try {
-    if (!draft.amountIn || !draft.targetPrice) return { human: '' };
-    const amountIn = parseUnits(draft.amountIn, tokenDecimals(tokenIn));
-    const target = parseUnits(draft.targetPrice, 18);
-    return {
-      human: formatUnits((amountIn * target) / 10n ** 18n, tokenDecimals(tokenIn)),
-    };
-  } catch {
-    return { human: '' };
-  }
 }
 
 // ── Contract reader ───────────────────────────────────────────────────────────

@@ -4,8 +4,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { compile, listTemplates } from '@cfxdevkit/compiler';
+import { createConfluxDevkitClient } from '@cfxdevkit/client';
 import { deriveAccount } from '@cfxdevkit/core/wallet';
-import { createDevNode } from '@cfxdevkit/devnode';
+import { createDevnodeServerApp } from '@cfxdevkit/devnode-server';
 import {
   createFileKeystore,
   initFileKeystore,
@@ -16,8 +17,23 @@ const here = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(here, '..');
 const deployEnabled = process.argv.includes('--deploy');
 
+function createSmokeControlPlane(dir) {
+  const app = createDevnodeServerApp({
+    keystorePath: join(dir, 'devnode-server-keystore.json'),
+    nodeProfileDataRoot: join(dir, 'node-profiles'),
+  });
+  return createConfluxDevkitClient({
+    baseUrl: 'http://cfxdevkit-extension-smoke.local',
+    fetch: async (input, init) => {
+      if (input instanceof Request) return app.request(input);
+      const url = new URL(String(input), 'http://cfxdevkit-extension-smoke.local');
+      return app.request(`${url.pathname}${url.search}`, init);
+    },
+  });
+}
+
 await checkManifest();
-await checkKeystoreToDevnodeDerivation();
+await checkKeystoreToControlPlaneDerivation();
 const artifact = await checkBuiltInTemplateCompile();
 
 if (deployEnabled) {
@@ -44,7 +60,7 @@ async function checkManifest() {
   assert.equal(titleCommands.has('cfxdevkit.importContract'), false);
 }
 
-async function checkKeystoreToDevnodeDerivation() {
+async function checkKeystoreToControlPlaneDerivation() {
   const mnemonic = 'test test test test test test test test test test test junk';
   const passphrase = 'correct horse battery staple';
   const dir = await mkdtemp(join(tmpdir(), 'cfx-extension-smoke-'));
@@ -56,9 +72,13 @@ async function checkKeystoreToDevnodeDerivation() {
     await keystore.put({ ref, kind: 'mnemonic', secret: mnemonic, meta: { accountCount: '2' } });
 
     const restored = await readFileKeystoreMnemonic({ path, passphrase, ref });
-    const node = createDevNode({ mnemonic: restored, accounts: 2, dataDir: join(dir, 'node') });
+    const client = createSmokeControlPlane(dir);
+    const { node } = await client.node.start({
+      config: { mnemonic: restored, accounts: 2, dataDir: join(dir, 'node') },
+    });
     const first = deriveAccount({ mnemonic, path: "m/44'/60'/0'/0/0" });
     assert.equal(node.accounts[0].evmAddress, first.account.address);
+    await client.node.stop();
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -86,14 +106,10 @@ async function checkBuiltInTemplateCompile() {
 }
 
 async function checkLocalDeploy(artifact) {
-  const { deployContract } = await import('@cfxdevkit/contracts/deploy');
-  const { createClient, http } = await import('@cfxdevkit/core/client');
-  const { espaceLocal } = await import('@cfxdevkit/core/chains');
-
   const mnemonic = 'test test test test test test test test test test test junk';
   const passphrase = 'correct horse battery staple';
   const dir = await mkdtemp(join(tmpdir(), 'cfx-extension-deploy-'));
-  let node;
+  let client;
   try {
     const path = join(dir, 'keystore.json');
     const ref = { service: 'cfxdevkit', account: 'mnemonic-default' };
@@ -101,38 +117,33 @@ async function checkLocalDeploy(artifact) {
     const keystore = createFileKeystore({ path, unlock: async () => ({ passphrase }) });
     await keystore.put({ ref, kind: 'mnemonic', secret: mnemonic, meta: { accountCount: '2' } });
     const restored = await readFileKeystoreMnemonic({ path, passphrase, ref });
-    node = createDevNode({
-      mnemonic: restored,
-      accounts: 2,
-      dataDir: join(dir, 'node'),
-      coreRpcPort: Number(process.env.CFX_SMOKE_CORE_RPC_PORT ?? '22537'),
-      evmRpcPort: Number(process.env.CFX_SMOKE_EVM_RPC_PORT ?? '28545'),
-      coreWsPort: Number(process.env.CFX_SMOKE_CORE_WS_PORT ?? '22536'),
-      evmWsPort: Number(process.env.CFX_SMOKE_EVM_WS_PORT ?? '28546'),
-      logging: process.env.CFX_SMOKE_NODE_LOGGING === '1',
+    client = createSmokeControlPlane(dir);
+    await client.keystore.setup({ passphrase });
+    await client.keystore.wallets.add({ mnemonic: restored, name: 'Primary' });
+    await client.node.start({
+      config: {
+        mnemonic: restored,
+        accounts: 2,
+        dataDir: join(dir, 'node'),
+        coreRpcPort: Number(process.env.CFX_SMOKE_CORE_RPC_PORT ?? '22537'),
+        evmRpcPort: Number(process.env.CFX_SMOKE_EVM_RPC_PORT ?? '28545'),
+        coreWsPort: Number(process.env.CFX_SMOKE_CORE_WS_PORT ?? '22536'),
+        evmWsPort: Number(process.env.CFX_SMOKE_EVM_WS_PORT ?? '28546'),
+        logging: process.env.CFX_SMOKE_NODE_LOGGING === '1',
+      },
     });
-    await node.start();
 
-    const client = createClient({
-      chain: { ...espaceLocal, rpc: { http: [node.urls.espace] } },
-      transport: http({ url: node.urls.espace }),
-    });
-    const signer = await keystore.getSigner(ref, undefined, {
-      derivationPath: "m/44'/60'/0'/0/0",
-    });
-    const result = await deployContract({
-      client,
-      signer,
+    const result = await client.deploy.run({
+      accountIndex: 0,
       abi: artifact.abi,
       bytecode: artifact.bytecode,
-      args: ['Smoke Token', 'SMK', 18, 1000n],
-      waitForReceipt: true,
-      receiptTimeoutMs: 30_000,
-      pollIntervalMs: 500,
+      contractName: artifact.contractName,
+      args: ['Smoke Token', 'SMK', 18, 1000],
+      space: 'espace',
     });
     assert.ok(result.address, 'expected deployed contract address');
   } finally {
-    if (node) await node.stop().catch(() => undefined);
+    if (client) await client.node.stop().catch(() => undefined);
     await rm(dir, { recursive: true, force: true });
   }
 }

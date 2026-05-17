@@ -3,7 +3,7 @@ import type { LedgerEthAppLike, LedgerTransportLike } from './types.js';
 
 export async function createNodeHidLedgerTransport(): Promise<LedgerTransportLike> {
   const moduleName = ['@ledgerhq', 'hw-transport-node-hid'].join('/');
-  const mod = (await import(/* @vite-ignore */ moduleName)) as {
+  const mod = (await import(/* webpackIgnore: true */ /* @vite-ignore */ moduleName)) as {
     default?: { create(): Promise<LedgerTransportLike> };
     create?: () => Promise<LedgerTransportLike>;
   };
@@ -21,7 +21,7 @@ export async function createLedgerEthApp(
   transport: LedgerTransportLike,
 ): Promise<LedgerEthAppLike> {
   const moduleName = ['@ledgerhq', 'hw-app-eth'].join('/');
-  const mod = (await import(/* @vite-ignore */ moduleName)) as {
+  const mod = (await import(/* webpackIgnore: true */ /* @vite-ignore */ moduleName)) as {
     default?: new (transport: LedgerTransportLike) => LedgerEthAppLike;
   };
   const Eth = mod.default;

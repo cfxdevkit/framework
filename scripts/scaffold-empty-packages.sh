@@ -193,7 +193,6 @@ scaffold_lib "framework/testing"       "@cfxdevkit/testing"       "Shared test f
 
 scaffold_lib "domains/game-engine"     "@cfxdevkit/game-engine"   "Reusable on-chain game state engine."
 scaffold_lib "domains/automation"      "@cfxdevkit/automation"    "Automation strategies (limit, dca, stop-loss, scheduled)."
-scaffold_lib "domains/hardware-bridge" "@cfxdevkit/hardware-bridge" "Hardware ↔ chain bridge (ws-protocol, sensor-types)."
 
 # ---------- platform (library packages only here) ----------
 

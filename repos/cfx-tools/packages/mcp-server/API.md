@@ -79,17 +79,18 @@ The ledger is in-memory by design. Project-level backends can persist operation 
 
 ```json
 {
+  "@cfxdevkit/client": "workspace:^",
   "@cfxdevkit/compiler": "workspace:^",
   "@cfxdevkit/contracts": "workspace:^",
   "@cfxdevkit/core": "workspace:^",
-  "@cfxdevkit/devnode": "workspace:^",
+  "@cfxdevkit/devnode-server": "workspace:^",
   "@cfxdevkit/protocol": "workspace:^",
   "@cfxdevkit/services": "workspace:^",
   "@cfxdevkit/wallet": "workspace:^"
 }
 ```
 
-The current package dependencies still reflect the existing scaffold. As runtime alignment progresses, MCP should consume the shared backend contract directly or through a matching adapter rather than documenting a separate package-local lifecycle model.
+Runtime tools consume the shared backend contract through `@cfxdevkit/client`. The MCP server may embed `@cfxdevkit/devnode-server` for local operation, but handlers should not own a separate package-local devnode lifecycle.
 
 ## Tier
 

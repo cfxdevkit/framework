@@ -8,7 +8,7 @@ export const accountTools = [
     description: 'List local dev node accounts and derived addresses.',
     mutability: 'read',
     requiresConfirmation: false,
-    packageHints: ['@cfxdevkit/devnode', '@cfxdevkit/core'],
+    packageHints: ['@cfxdevkit/client', '@cfxdevkit/devnode-server'],
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
   }),
   defineTool({
@@ -18,7 +18,7 @@ export const accountTools = [
     description: 'Return one local account by index.',
     mutability: 'read',
     requiresConfirmation: false,
-    packageHints: ['@cfxdevkit/devnode'],
+    packageHints: ['@cfxdevkit/client', '@cfxdevkit/devnode-server'],
     inputSchema: { type: 'object', required: ['index'], properties: { index: { type: 'number' } } },
   }),
   defineTool({
@@ -28,7 +28,7 @@ export const accountTools = [
     description: 'Transfer local CFX from the dev node faucet account.',
     mutability: 'write',
     requiresConfirmation: true,
-    packageHints: ['@cfxdevkit/devnode', '@cfxdevkit/core'],
+    packageHints: ['@cfxdevkit/client', '@cfxdevkit/devnode-server'],
     inputSchema: {
       type: 'object',
       required: ['address', 'amountCfx'],

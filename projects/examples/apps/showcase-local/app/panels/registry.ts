@@ -20,20 +20,6 @@ export interface LocalPanelSpec {
   localOnly?: boolean;
 }
 
-export interface LocalPanelGroupSpec {
-  id: LocalPanelGroup;
-  label: string;
-}
-
-export const GROUPS: readonly LocalPanelGroupSpec[] = Object.freeze([
-  { id: 'backend', label: 'Backend SDK' },
-  { id: 'onchain', label: 'On-Chain' },
-  { id: 'keys', label: 'Key Tools' },
-  { id: 'auth', label: 'Auth & Signing' },
-  { id: 'contracts', label: 'Contracts' },
-  { id: 'inspect', label: 'Inspect' },
-]);
-
 export const PANELS: readonly LocalPanelSpec[] = Object.freeze([
   {
     id: 'setup',

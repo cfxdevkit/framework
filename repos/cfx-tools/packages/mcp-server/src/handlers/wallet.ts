@@ -1,5 +1,11 @@
-import { deriveDualAccounts, generateMnemonic, validateMnemonic } from '@cfxdevkit/core';
-import { getKeystoreProvider } from './keystore.js';
+import {
+  deriveDualAccounts,
+  generateMnemonic,
+  signerFromPrivateKey,
+  validateMnemonic,
+} from '@cfxdevkit/core';
+import { getControlPlaneClient } from '../control-plane.js';
+import { getKeystoreSession } from './keystore.js';
 
 function text(content: string) {
   return { content: [{ type: 'text' as const, text: content }] };
@@ -52,17 +58,31 @@ export async function handleWalletTool(
         return errText('wallet is required (format: "service/account" or "account").');
       if (!message) return errText('message is required.');
 
-      const provider = getKeystoreProvider();
-      if (!provider) return errText('Keystore is locked. Run cfxdevkit_keystore_unlock first.');
-
-      // Parse walletRef as "service/account" or default service "cfxdevkit"
-      const parts = walletRef.includes('/') ? walletRef.split('/') : ['cfxdevkit', walletRef];
-      const service = parts[0] ?? 'cfxdevkit';
-      const account = parts[1] ?? walletRef;
-      const ref = { service: String(service), account: String(account) };
+      const session = getKeystoreSession();
+      if (!session?.passphrase) {
+        return errText('Keystore is locked. Run cfxdevkit_keystore_unlock first.');
+      }
 
       try {
-        const signer = await provider.getSigner(ref);
+        const client = getControlPlaneClient();
+        const wallets = await client.keystore.wallets.list();
+        const wallet =
+          wallets.wallets.find(
+            (entry: { id: string; name: string }) =>
+              entry.id === walletRef || entry.name === walletRef,
+          ) ??
+          wallets.wallets.find((entry: { id: string }) => entry.id === session.walletId) ??
+          wallets.wallets[0];
+        if (!wallet) return errText('No wallet found. Run cfxdevkit_keystore_setup first.');
+        const revealed = await client.keystore.reveal.request({
+          accountIndex: wallet.activeAccountIndex,
+          kind: 'private-key',
+          passphrase: session.passphrase,
+          walletId: wallet.id,
+        });
+        const secret = await client.keystore.reveal.consume(revealed.request.token);
+        if (!secret.reveal.privateKey) return errText('Wallet did not reveal a private key.');
+        const signer = signerFromPrivateKey(secret.reveal.privateKey as `0x${string}`);
         const msgBytes = new TextEncoder().encode(message);
         const signature = await signer.signMessage(msgBytes);
         return text(JSON.stringify({ wallet: walletRef, message, signature }, null, 2));

@@ -1,6 +1,5 @@
-import { compile, getTemplate, listTemplates } from '@cfxdevkit/compiler';
-import { createClient, espaceLocal, http, signerFromPrivateKey } from '@cfxdevkit/core';
-import { getNodeSingleton } from './node.js';
+import { getTemplate, listTemplates } from '@cfxdevkit/compiler';
+import { getControlPlaneClient } from '../control-plane.js';
 
 function text(content: string) {
   return { content: [{ type: 'text' as const, text: content }] };
@@ -50,29 +49,25 @@ export async function handleCompilerTool(
 
     case 'cfxdevkit_compiler_compile_solidity': {
       const source = String(args.source ?? '');
-      const contractName = args.contractName ? String(args.contractName) : undefined;
+      const contractName = args.contractName ? String(args.contractName) : '';
       const solcVersion = String(args.solcVersion ?? '0.8.20');
-      if (!source) return errText('source is required.');
+      if (!source || !contractName) return errText('source and contractName are required.');
 
       try {
-        const output = await compile({
-          sources: [{ path: 'Input.sol', content: source }],
+        const artifact = await getControlPlaneClient().compiler.compileSources({
+          contractName,
+          filename: 'Input.sol',
+          source,
           solcVersion,
         });
-
-        const artifacts = contractName
-          ? output.artifacts.filter((a) => a.contractName === contractName)
-          : output.artifacts;
-
         return text(
           JSON.stringify(
             {
               success: true,
-              solcVersion: output.solcVersion,
-              warnings: output.warnings.map((d) => d.message),
-              contracts: Object.fromEntries(
-                artifacts.map((a) => [a.contractName, { abi: a.abi, bytecode: a.bytecode }]),
-              ),
+              warnings: artifact.warnings.map((warning: { message: string }) => warning.message),
+              contracts: {
+                [artifact.contractName]: { abi: artifact.abi, bytecode: artifact.bytecode },
+              },
             },
             null,
             2,
@@ -84,11 +79,6 @@ export async function handleCompilerTool(
     }
 
     case 'cfxdevkit_compiler_compile_and_deploy': {
-      const node = getNodeSingleton();
-      if (!node || node.getStatus() !== 'running') {
-        return errText('Node is not running. Run cfxdevkit_node_start first.');
-      }
-
       const source = String(args.source ?? '');
       const contractName = String(args.contractName ?? '');
       const solcVersion = String(args.solcVersion ?? '0.8.20');
@@ -98,46 +88,30 @@ export async function handleCompilerTool(
       }
 
       try {
-        const output = await compile({
-          sources: [{ path: 'Input.sol', content: source }],
+        const client = getControlPlaneClient();
+        const artifact = await client.compiler.compileSources({
+          contractName,
+          filename: 'Input.sol',
+          source,
           solcVersion,
         });
-
-        const artifact = output.artifacts.find((a) => a.contractName === contractName);
-        if (!artifact) {
-          return errText(
-            `Contract "${contractName}" not found. ` +
-              `Available: ${output.artifacts.map((a) => a.contractName).join(', ')}`,
-          );
+        if (!artifact.bytecode || artifact.bytecode === '0x') {
+          return errText('Compilation produced empty bytecode.');
         }
-
-        const bytecode = artifact.bytecode;
-        if (!bytecode || bytecode === '0x') return errText('Compilation produced empty bytecode.');
-
-        const account = node.accounts[0];
-        if (!account) return errText('No accounts available on devnode.');
-        const signer = signerFromPrivateKey(account.privateKey);
-        const client = createClient({ chain: espaceLocal, transport: http() });
-
-        const signedTx = await signer.signTransaction({
-          data: bytecode,
-          chainId: espaceLocal.id,
+        const deployed = await client.deploy.run({
+          abi: artifact.abi,
+          bytecode: artifact.bytecode,
+          contractName,
+          space: 'espace',
         });
-        const txHash = await client.sendRawTransaction(signedTx);
-        await node.mine(1);
-
-        const { createPublicClient, http: viemHttp } = await import('viem');
-        const rpcUrl = espaceLocal.rpc.http[0] ?? 'http://127.0.0.1:8545';
-        const viemClient = createPublicClient({ transport: viemHttp(rpcUrl) });
-        const receipt = await viemClient.getTransactionReceipt({ hash: txHash });
 
         return text(
           JSON.stringify(
             {
               success: true,
               contractName,
-              txHash,
-              contractAddress: receipt?.contractAddress ?? null,
+              txHash: deployed.hash,
+              contractAddress: deployed.address,
               abi: artifact.abi,
             },
             null,

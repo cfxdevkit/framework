@@ -9,11 +9,9 @@
 |---------|-----|-----------|
 | `game-engine` | `@cfxdevkit/game-engine` | conflux-phaser, chainbrawler |
 | `automation` | `@cfxdevkit/automation` | cas, electro |
-| `hardware-bridge` | `@cfxdevkit/hardware-bridge` | electro |
 
-Each vertical may eventually move to its own repo (especially
-`hardware-bridge`, which has only one consumer today). Start as one repo;
-split when a second consumer arrives.
+Each vertical may eventually move to its own repo. Start as one repo; split when
+a second consumer arrives.
 
 ## Boundaries
 

@@ -6,8 +6,8 @@ Shared theme, shell, backend controls, and wallet UI primitives for the example 
 
 - Reusable presentational components shared by the showcase apps
 - Shared `theme.css` imported by every app for the common showcase visual system
-- Shared gateway/shell helpers for top navigation, panel sidebars, and panel state
-- Shared backend/devnode operations hook and gateway control panel
+- Shared shell helpers for top navigation, panel sidebars, and panel state
+- Shared backend/devnode operations hook and local control panel
 - Example-specific styling and UI composition
 - Lightweight library build for local example development
 
@@ -20,10 +20,10 @@ Shared theme, shell, backend controls, and wallet UI primitives for the example 
 
 ## Shared shell APIs
 
-- `ShowcaseNav` keeps every app connected to the gateway and sibling sections.
+- `Shell` provides the common application frame for the keeper showcases.
 - `PanelSidebar` renders grouped panel navigation using each app's registry.
 - `useActivePanelState` persists `?panel=` and `localStorage` state consistently.
-- `ShowcaseOpsPanel` and `useShowcaseBackend` expose backend health and devnode controls.
+- `useShowcaseBackend` exposes backend health and devnode controls where an app still needs them.
 
 ## Depends on
 

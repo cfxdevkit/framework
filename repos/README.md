@@ -27,6 +27,6 @@ When a slice is ready to be carved out:
 | [cfx-core](./cfx-core/) | 0a | chain primitives (core, protocol, executor, devnode, testing) |
 | [cfx-keys](./cfx-keys/) | 0b | **audit-grade trust boundary** — keystore + wallet + hardware adapters |
 | [cfx-ui](./cfx-ui/) | 0c | React, theme, defi-react, wallet-connect |
-| [cfx-domain](./cfx-domain/) | 2 | game-engine, automation, hardware-bridge |
+| [cfx-domain](./cfx-domain/) | 2 | game-engine, automation |
 | [cfx-tools](./cfx-tools/) | 1 | scaffold-cli, mcp-server, vscode-extension, devtools, devcontainer |
 | [cfx-llm](./cfx-llm/) | 1 | local LLM automation, repo review, hotspot scanning, commit assistance |

@@ -10,13 +10,12 @@ title: "Repository Layout — cfx-domain"
 
 The `cfx-domain` module is a **Tier 2** vertical concern repository, introduced per [ADR-0003](../../docs/adr/0003-multi-repo-split.md). It encapsulates domain-specific logic that is reusable across multiple projects but not tied to any single one. This module serves as the staging ground for domain abstractions before they may eventually be split into independent repositories upon reaching sufficient reuse.
 
-Currently, `cfx-domain` hosts three packages:
+Currently, `cfx-domain` hosts two packages:
 
 | Package | npm Name | Primary Consumers | Status |
 |--------|----------|-------------------|--------|
 | `game-engine` | `@cfxdevkit/game-engine` | `conflux-phaser`, `chainbrawler` | Phase A scaffold |
 | `automation` | `@cfxdevkit/automation` | `cas`, `electro` | Phase A scaffold |
-| `hardware-bridge` | `@cfxdevkit/hardware-bridge` | `electro` | Phase A scaffold |
 
 Each package is designed to be **engine-agnostic**, **framework-agnostic**, and **UI-agnostic**, ensuring maximum portability and composability.
 
@@ -46,7 +45,7 @@ This enforces a strict **one-way dependency flow**:
 
 - All packages currently coexist in a single monorepo for coordination and shared tooling.
 - Packages are candidates for **future extraction** into standalone repos when:
-  - A second consumer emerges (e.g., `hardware-bridge` currently has only one consumer: `electro`)
+  - A second consumer emerges for a domain vertical
   - Versioning or release cycles diverge significantly
   - Ownership shifts to a different team
 
@@ -175,59 +174,6 @@ Extracted from `chainbrawler/packages/core`. RPG-specific rules remain in `proje
 
 ---
 
-### 3. `@cfxdevkit/hardware-bridge`
-
-#### Purpose
-
-Provides **reusable infrastructure for physical hardware ↔ backend/chain communication**, including protocol, sensor types, and hardware description tooling.
-
-#### Sub-Packages
-
-| Sub-package | npm Name | Purpose |
-|-------------|----------|---------|
-| `ws-protocol` | `@cfxdevkit/hw-ws-protocol` | WebSocket message schemas & transport |
-| `sensor-types` | `@cfxdevkit/hw-sensor-types` | Typed sensor descriptors & value encoders |
-| `hardware-diagram` | `@cfxdevkit/hw-diagram` | JSON pin-mapping + codegen for firmware |
-
-#### Core Responsibilities
-
-- Define versioned message schemas (device ↔ backend)
-- Encode/decode sensor values (CBOR/JSON)
-- Provide reusable sensor catalog (temperature, humidity, motion, etc.)
-- Generate firmware headers (`Pins.h`) and TypeScript types from board JSON
-- Support board descriptors (e.g., ESP32-DevKitC, ESP32-S3)
-
-#### Non-Goals
-
-- Firmware implementation (stays in `projects/electro/apps/firmware/`)
-- Hardware-specific drivers (handled in firmware)
-- Project-specific dashboards
-
-#### Structure Highlights
-
-```
-hardware-bridge/
-├── ws-protocol/       ← Message schemas, codec, transport, auth
-├── sensor-types/      ← Catalog, encoding, validation
-└── hardware-diagram/  ← Schema, parser, codegen, board descriptors
-```
-
-#### Codegen Workflow
-
-```mermaid
-flowchart LR
-    A[board.json] --> B[hw-diagram-gen CLI]
-    B --> C[Pins.h]
-    B --> D[ts-types.ts]
-    B --> E[wiring.md]
-```
-
-#### Origin
-
-Extracted from `Electro/packages/{ws-protocol,sensor-types,hardware-diagram}`.
-
----
-
 ## Package Lifecycle & Development
 
 ### Phase A: Scaffold
@@ -273,7 +219,6 @@ All `cfx-domain` packages depend on **Tier 1** modules (`@cfxdevkit/core`, `@cfx
 | `game-engine` | `chainbrawler` | Uses `state/store`, `entities`, `chain-bridge` |
 | `automation` | `cas` | CAS worker consumes `strategies/limit-order`, `backtest` |
 | `automation` | `electro` | Uses `automation` for scheduled sensor uploads |
-| `hardware-bridge` | `electro` | Firmware uses `ws-protocol`, `sensor-types`, `hardware-diagram` |
 
 ---
 
@@ -281,10 +226,8 @@ All `cfx-domain` packages depend on **Tier 1** modules (`@cfxdevkit/core`, `@cfx
 
 - ✅ Finalize `automation` strategy interface and built-ins
 - ✅ Implement `game-engine` state machine and chain bridge
-- ✅ Complete `hardware-bridge` codegen tooling
 - 🚧 Add backtesting data sources (e.g., historical price feeds)
 - 🚧 Add `game-engine` test fixtures (e.g., mock state transitions)
-- 🚧 Add hardware simulator for `ws-protocol` testing
 
 ---
 
@@ -294,4 +237,3 @@ All `cfx-domain` packages depend on **Tier 1** modules (`@cfxdevkit/core`, `@cfx
 - [Architecture Tier Model](../../ARCHITECTURE.md)
 - `automation/STRUCTURE.md`
 - `game-engine/STRUCTURE.md`
-- `hardware-bridge/STRUCTURE.md`

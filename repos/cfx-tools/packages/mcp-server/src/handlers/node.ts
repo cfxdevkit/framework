@@ -1,12 +1,5 @@
-import { createDevNode, type DevNode } from '@cfxdevkit/devnode';
-
-/** In-process devnode singleton. */
-let _node: DevNode | undefined;
-
-/** Expose the singleton for server cleanup and resource endpoints. */
-export function getNodeSingleton(): DevNode | undefined {
-  return _node;
-}
+import type { NodeStatus } from '@cfxdevkit/client';
+import { getControlPlaneClient } from '../control-plane.js';
 
 function text(content: string) {
   return { content: [{ type: 'text' as const, text: content }] };
@@ -22,19 +15,17 @@ export async function handleNodeTool(
 ): Promise<{ isError?: true; content: Array<{ type: 'text'; text: string }> }> {
   switch (name) {
     case 'cfxdevkit_node_start': {
-      if (_node?.getStatus() === 'running') {
-        return text(`Node already running.\n${JSON.stringify(nodeSnapshot(_node), null, 2)}`);
+      const client = getControlPlaneClient();
+      const current = await client.node.status();
+      if (current.node.running) {
+        return text(
+          `Node already running.\n${JSON.stringify(nodeSnapshot(current.node), null, 2)}`,
+        );
       }
-      _node = createDevNode();
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30_000);
       try {
-        await _node.start();
-        clearTimeout(timeout);
-        return text(`Node started.\n${JSON.stringify(nodeSnapshot(_node), null, 2)}`);
+        const started = await client.node.start();
+        return text(`Node started.\n${JSON.stringify(nodeSnapshot(started.node), null, 2)}`);
       } catch (err) {
-        clearTimeout(timeout);
-        _node = undefined;
         return errText(
           `Failed to start node: ${err instanceof Error ? err.message : String(err)}\nHint: Make sure @xcfx/node binary is installed.`,
         );
@@ -42,31 +33,33 @@ export async function handleNodeTool(
     }
 
     case 'cfxdevkit_node_stop': {
-      if (!_node || _node.getStatus() !== 'running') {
+      const client = getControlPlaneClient();
+      const current = await client.node.status();
+      if (!current.node.running) {
         return text('Node is not running.');
       }
-      await _node.stop();
-      _node = undefined;
+      await client.node.stop();
       return text('Node stopped.');
     }
 
     case 'cfxdevkit_node_status': {
-      if (!_node) {
+      const { node } = await getControlPlaneClient().node.status();
+      if (!node.running) {
         return text(
           'Node status: stopped\nHint: Run cfxdevkit_node_start to start a local Conflux node.',
         );
       }
-      return text(
-        `Node status: ${_node.getStatus()}\n${JSON.stringify(nodeSnapshot(_node), null, 2)}`,
-      );
+      return text(`Node status: ${node.status}\n${JSON.stringify(nodeSnapshot(node), null, 2)}`);
     }
 
     case 'cfxdevkit_node_mine': {
-      if (!_node || _node.getStatus() !== 'running') {
+      const client = getControlPlaneClient();
+      const current = await client.node.status();
+      if (!current.node.running) {
         return errText('Node is not running. Run cfxdevkit_node_start first.');
       }
       const blocks = Math.max(1, Math.floor(Number(args.blocks ?? 1)));
-      await _node.mine(blocks);
+      await client.node.mine({ blocks });
       return text(`Mined ${blocks} block(s).`);
     }
 
@@ -75,20 +68,29 @@ export async function handleNodeTool(
   }
 }
 
-function nodeSnapshot(node: DevNode) {
+function nodeSnapshot(node: NodeStatus) {
   return {
-    status: node.getStatus(),
+    status: node.status,
     urls: node.urls,
-    accounts: node.accounts.map((a) => ({
-      index: node.accounts.indexOf(a),
-      espaceAddress: a.evmAddress,
-      coreAddress: a.coreAddress,
-      initialBalanceCfx: a.initialBalanceCfx,
-    })),
-    faucet: {
-      espaceAddress: node.faucet.evmAddress,
-      coreAddress: node.faucet.coreAddress,
-    },
-    mining: node.getMiningStatus(),
+    accounts: node.accounts.map(
+      (a: {
+        coreAddress: string;
+        evmAddress: string;
+        index: number;
+        initialBalanceCfx: number;
+      }) => ({
+        index: a.index,
+        espaceAddress: a.evmAddress,
+        coreAddress: a.coreAddress,
+        initialBalanceCfx: a.initialBalanceCfx,
+      }),
+    ),
+    faucet: node.faucet
+      ? {
+          espaceAddress: node.faucet.evmAddress,
+          coreAddress: node.faucet.coreAddress,
+        }
+      : null,
+    mining: node.mining,
   };
 }

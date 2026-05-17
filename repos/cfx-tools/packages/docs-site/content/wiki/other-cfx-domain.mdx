@@ -9,19 +9,18 @@ title: "Other — cfx-domain"
 > **Package**: `@cfxdevkit/repo-cfx-domain`  
 > **Version**: `0.0.0`  
 > **Target**: Carve-out per [ADR-0003](#)  
-> **Layer**: Tier 2 — *verticals* (game-engine, automation, hardware-bridge)
+> **Layer**: Tier 2 — *verticals* (game-engine, automation)
 
 ---
 
 ## Overview
 
-The `cfx-domain` module is a **workspace-root package** that organizes and coordinates *domain-specific verticals* within the CFX DevKit architecture. It does not contain executable logic itself, but serves as a structural container for three independent, reusable TypeScript libraries:
+The `cfx-domain` module is a **workspace-root package** that organizes and coordinates *domain-specific verticals* within the CFX DevKit architecture. It does not contain executable logic itself, but serves as a structural container for independent, reusable TypeScript libraries:
 
 | Package | Purpose |
 |--------|---------|
 | `@cfxdevkit/automation` | On-chain automation strategies (e.g., DCA, stop-loss, scheduled execution) |
 | `@cfxdevkit/game-engine` | Reusable on-chain game state engine |
-| `@cfxdevkit/hardware-bridge` | Bidirectional bridge between physical hardware and the chain (e.g., sensors, actuators) |
 
 Each vertical is implemented as a **workspace package** (`packages/*`) with its own build, test, and type-checking pipeline. All follow a consistent monorepo pattern and are designed to be consumed by higher-tier modules (e.g., `@cfxdevkit/app`, `@cfxdevkit/services`).
 
@@ -33,7 +32,6 @@ Each vertical is implemented as a **workspace package** (`packages/*`) with its 
 graph TD
     A["@cfxdevkit/repo-cfx-domain"] --> B["@cfxdevkit/automation"]
     A --> C["@cfxdevkit/game-engine"]
-    A --> D["@cfxdevkit/hardware-bridge"]
 
     B --> E["@cfxdevkit/contracts"]
     B --> F["@cfxdevkit/core"]
@@ -43,8 +41,6 @@ graph TD
 
     C --> E
     C --> F
-
-    D --> F
 ```
 
 ### Key Structural Principles
@@ -73,16 +69,6 @@ graph TD
   - `@cfxdevkit/contracts`, `@cfxdevkit/core`
 - **Current surface**: Minimal — only exposes `__packageName`.
 - **Planned exports**: State machine types, transition validators, event loggers, and engine runners.
-
-### `@cfxdevkit/hardware-bridge`
-
-- **Purpose**: Enable *physical-world integration* via standardized sensor/actuator protocols (e.g., WebSocket-based telemetry, MQTT, BLE).
-- **Dependencies**:
-  - `@cfxdevkit/core`
-- **Current surface**: Minimal — only exposes `__packageName`.
-- **Planned exports**: Protocol adapters, sensor type definitions, event streams, and bridge lifecycle managers.
-
----
 
 ## Development & Build
 
@@ -140,7 +126,6 @@ This module resides at **Tier 2**, directly above the foundational `@cfxdevkit/c
 
 - Implement concrete strategies in `@cfxdevkit/automation`.
 - Define game state schema and engine interfaces in `@cfxdevkit/game-engine`.
-- Add hardware protocol adapters (e.g., WebSocket, serial) in `@cfxdevkit/hardware-bridge`.
 - Publish API documentation (`API.md`) and structural docs (`STRUCTURE.md`) for each package.
 - Stabilize versions and release to npm.
 

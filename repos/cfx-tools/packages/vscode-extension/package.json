@@ -306,10 +306,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@cfxdevkit/client": "workspace:^",
     "@cfxdevkit/compiler": "workspace:^",
     "@cfxdevkit/contracts": "workspace:^",
     "@cfxdevkit/core": "workspace:^",
-    "@cfxdevkit/devnode": "workspace:^",
+    "@cfxdevkit/devnode-server": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
     "@cfxdevkit/wallet": "workspace:^"
   },

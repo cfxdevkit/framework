@@ -16,10 +16,10 @@
 
 **Current implementation notes**
 - Excludes project/stack commands and DEX workflows on purpose
-- Uses the current framework packages directly (`devnode`, `wallet`, `compiler`, `contracts`)
+- Uses `@cfxdevkit/client` for shared control-plane operations while `@cfxdevkit/devnode-server` owns local runtime state
 - Persists deploy records under `.cfxdevkit/deployments.json` in the workspace
 - Treats `@cfxdevkit/devnode-server` as the canonical backend contract for
-	local, testnet, and mainnet operations; the extension should follow the same
+	local, testnet, and mainnet operations; the extension follows the same
 	wallet-scoped network profile, deploy, and tracked-contract semantics as
 	showcase-local and MCP
 - The Wallets view is split into Keystore, Wallets, and Accounts sections so backend choice and wallet choice are distinct; wallet rows use VS Code inline item actions instead of separate action rows

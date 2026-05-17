@@ -1,4 +1,9 @@
 // @ts-nocheck
+
+import { join as joinPath } from 'node:path';
+import { createConfluxDevkitClient } from '@cfxdevkit/client';
+import { createDevnodeServerApp } from '@cfxdevkit/devnode-server';
+
 export { promises as fs } from 'node:fs';
 export { isAbsolute, join, relative } from 'node:path';
 export { type Artifact, compile, listTemplates, npmResolver } from '@cfxdevkit/compiler';
@@ -29,7 +34,6 @@ export {
   type Signer,
   validateMnemonic,
 } from '@cfxdevkit/core/wallet';
-export { createDevNode, type DevNode } from '@cfxdevkit/devnode';
 export { createAppendOnlyAuditLogger } from '@cfxdevkit/services';
 export type { KeystoreProvider, SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
 export {
@@ -119,6 +123,57 @@ export const BACKEND_LABELS: Record<KeystoreBackend, string> = {
   onekey: 'OneKey',
   satoshi: 'Satochip',
 };
+
+export function createSharedNodeRuntime(config: {
+  accounts?: number;
+  dataDir: string;
+  logging?: boolean;
+  mnemonic: string;
+}) {
+  const remoteBaseUrl = process.env.CFXDEVKIT_DEVNODE_SERVER_URL?.trim();
+  const app = remoteBaseUrl
+    ? null
+    : createDevnodeServerApp({
+        keystorePath: joinPath(config.dataDir, '..', 'devnode-server-keystore.json'),
+        nodeProfileDataRoot: joinPath(config.dataDir, '..', 'node-profiles'),
+      });
+  const fetchImpl = app
+    ? async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (input instanceof Request) return app.request(input);
+        const url = new URL(String(input), 'http://cfxdevkit-extension.local');
+        return app.request(`${url.pathname}${url.search}`, init);
+      }
+    : undefined;
+  const client = createConfluxDevkitClient({
+    baseUrl: remoteBaseUrl || 'http://cfxdevkit-extension.local',
+    ...(fetchImpl ? { fetch: fetchImpl as typeof fetch } : {}),
+  });
+  let snapshot = { status: 'stopped', running: false, accounts: [] };
+
+  const refresh = async (responsePromise) => {
+    const response = await responsePromise;
+    snapshot = response.node;
+    return snapshot;
+  };
+
+  return {
+    get accounts() {
+      return snapshot.accounts ?? [];
+    },
+    get urls() {
+      return snapshot.urls;
+    },
+    isRunning: () => Boolean(snapshot.running),
+    mine: (blocks: number) => refresh(client.node.mine({ blocks })),
+    packMine: () => refresh(client.node.mine({ pack: true })),
+    restart: () => refresh(client.node.restart()),
+    start: () => refresh(client.node.start({ config })),
+    startMining: (intervalMs: number) => client.mining.start({ intervalMs }),
+    stop: () => refresh(client.node.stop()),
+    stopMining: () => client.mining.stop(),
+    wipe: (restart = false) => refresh(client.node.wipe({ config, restart })),
+  };
+}
 
 export interface CachedSigner {
   backend: KeystoreBackend;

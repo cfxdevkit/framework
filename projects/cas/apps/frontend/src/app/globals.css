@@ -1,9 +1,9 @@
 @import "tailwindcss";
-@source "../../../../../../repos/cfx-ui/packages/ui/src";
 @import "./styles/layout.css";
 @import "./styles/controls.css";
 @import "./styles/forms.css";
 @import "./styles/entities.css";
+@source "../../../../../../repos/cfx-ui/packages/ui/src";
 
 /* ── Conflux brand color scale (available as conflux-50 … conflux-900) ─── */
 @theme {

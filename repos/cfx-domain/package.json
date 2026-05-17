@@ -2,7 +2,7 @@
   "name": "@cfxdevkit/repo-cfx-domain",
   "version": "0.0.0",
   "private": true,
-  "description": "Tier 2 — verticals: game-engine, automation, hardware-bridge. Carve-out target per ADR-0003.",
+  "description": "Tier 2 — verticals: game-engine and automation. Carve-out target per ADR-0003.",
   "packageManager": "pnpm@10.6.0",
   "engines": {
     "node": ">=22",

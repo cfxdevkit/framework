@@ -1,4 +1,3 @@
-import type { DevNode } from '@cfxdevkit/devnode';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   ListResourcesRequestSchema,
@@ -17,11 +16,7 @@ const ALL_STATIC_RESOURCES = [
   ...docsResources,
 ];
 
-export function registerAllResources(
-  server: Server,
-  context: ProjectContext,
-  getNode: () => DevNode | undefined,
-): void {
+export function registerAllResources(server: Server, context: ProjectContext): void {
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({
     resources: ALL_STATIC_RESOURCES,
   }));
@@ -30,7 +25,7 @@ export function registerAllResources(
     const uri = request.params.uri;
 
     if (uri.startsWith('cfxdevkit://chain/')) {
-      return readChainResource(uri, getNode);
+      return readChainResource(uri);
     }
     if (uri.startsWith('cfxdevkit://contracts/')) {
       return readContractResource(uri, context);

@@ -10,4 +10,5 @@ tasks:
       - 'app/**/*'
       - '/biome.json'
     options:
+      mergeArgs: 'replace'
       cache: true

@@ -1,14 +1,22 @@
 import type { HttpClient } from './http.js';
 import type {
   ActiveWalletSummary,
+  BootstrapCatalogResponse,
+  BootstrapDeployInput,
+  BootstrapDeployResponse,
+  BootstrapTemplateResponse,
   ContractReadResponse,
   ContractRecord,
   ContractWriteResponse,
+  HealthResponse,
   KeystoreStatus,
   NodeProfileSelection,
   NodeProfileState,
   NodeStatus,
   OkResponse,
+  RevealConsumeResponse,
+  RevealRequestInput,
+  RevealRequestResponse,
   Space,
   TrackedContractCallResponse,
   WalletAccountSummary,
@@ -72,12 +80,22 @@ export function createNodeNamespace(http: HttpClient): NodeNamespace {
   };
 }
 
+export type HealthNamespace = () => Promise<HealthResponse>;
+
+export function createHealthNamespace(http: HttpClient): HealthNamespace {
+  return () => http.get('/health');
+}
+
 export interface KeystoreNamespace {
   status(): Promise<KeystoreStatus>;
   setup(input: { passphrase: string }): Promise<{ ok: boolean; walletCount: number }>;
   unlock(input: { passphrase: string }): Promise<OkResponse>;
   lock(): Promise<OkResponse>;
   active(): Promise<{ ok: boolean; wallet: ActiveWalletSummary | null }>;
+  reveal: {
+    request(input: RevealRequestInput): Promise<RevealRequestResponse>;
+    consume(token: string): Promise<RevealConsumeResponse>;
+  };
   wallets: {
     list(): Promise<{ ok: boolean; wallets: WalletSummary[] }>;
     add(input: {
@@ -101,6 +119,10 @@ export function createKeystoreNamespace(http: HttpClient): KeystoreNamespace {
     unlock: (input) => http.post('/keystore/unlock', input),
     lock: () => http.post('/keystore/lock'),
     active: () => http.get('/keystore/active'),
+    reveal: {
+      request: (input) => http.post('/keystore/reveal/request', input),
+      consume: (token) => http.post('/keystore/reveal/consume', { token }),
+    },
     wallets: {
       list: () => http.get('/keystore/wallets'),
       add: (input) => http.post('/keystore/wallets', input),
@@ -225,5 +247,19 @@ export function createContractsNamespace(http: HttpClient): ContractsNamespace {
     call: (id, input) => http.post(`/contracts/${encodeURIComponent(id)}/call`, input),
     delete: (id) => http.delete(`/contracts/${encodeURIComponent(id)}`),
     clear: () => http.delete('/contracts'),
+  };
+}
+
+export interface BootstrapNamespace {
+  catalog(): Promise<BootstrapCatalogResponse>;
+  deploy(input: BootstrapDeployInput): Promise<BootstrapDeployResponse>;
+  get(id: string): Promise<BootstrapTemplateResponse>;
+}
+
+export function createBootstrapNamespace(http: HttpClient): BootstrapNamespace {
+  return {
+    catalog: () => http.get('/bootstrap/catalog'),
+    deploy: (input) => http.post('/bootstrap/deploy', input),
+    get: (id) => http.get(`/bootstrap/catalog/${encodeURIComponent(id)}`),
   };
 }

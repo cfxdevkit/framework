@@ -37,7 +37,7 @@ electro/
 │       ├── moon.yml
 │       └── src/
 │           ├── index.ts
-│           ├── ws/                 device WS server (uses domains/hardware-bridge)
+│           ├── ws/                 device WS server (project-local protocol)
 │           ├── chain/              uses framework/core (already today)
 │           ├── routes/             dashboard API
 │           ├── dashboard/          static UI build (sub-vite)

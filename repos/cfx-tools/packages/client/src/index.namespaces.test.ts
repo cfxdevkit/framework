@@ -164,6 +164,38 @@ describe('@cfxdevkit/client namespaces', () => {
       expect(activated.ok).toBe(true);
       expect(accountActivated.ok).toBe(true);
     });
+
+    it('requests and consumes a secret reveal token', async () => {
+      const fetch = mockFetch({
+        'POST /keystore/reveal/request': {
+          body: {
+            ok: true,
+            request: {
+              expiresAt: 123,
+              kind: 'mnemonic',
+              token: 'reveal-token',
+              walletId: 'w1',
+              warning: 'consume immediately',
+            },
+          },
+        },
+        'POST /keystore/reveal/consume': {
+          body: {
+            ok: true,
+            reveal: { kind: 'mnemonic', mnemonic: 'test test', walletId: 'w1' },
+          },
+        },
+      });
+      const client = new ConfluxDevkitClient({ baseUrl: 'http://localhost:52000', fetch });
+      const request = await client.keystore.reveal.request({
+        kind: 'mnemonic',
+        passphrase: 'secret',
+        walletId: 'w1',
+      });
+      const consume = await client.keystore.reveal.consume(request.request.token);
+      expect(request.request.kind).toBe('mnemonic');
+      expect(consume.reveal.walletId).toBe('w1');
+    });
   });
 
   describe('accounts namespace', () => {

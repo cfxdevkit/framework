@@ -1,20 +1,94 @@
 'use client';
 
-import { base32ToHex, hexToBase32 } from '@cfxdevkit/core';
 import type { LogEntry } from '@cfxdevkit/example-showcase-ui';
 import { CodeSnippet, DemoCard, LogBox, makeEntry } from '@cfxdevkit/example-showcase-ui';
+import { crossSpaceCallAddress } from '@cfxdevkit/protocol';
 import { useState } from 'react';
 import { SiteLayout } from '../site-layout';
-import { CHAINS, CLIENT_SNIPPET, CODEC_SNIPPET, UNIT_EXAMPLES, UNITS_SNIPPET } from './core-data';
+import { LiveRpcCard } from './live-rpc-card';
+import {
+  AddressCodecCard,
+  ChainCatalogCard,
+  ClientArchitectureCard,
+  UnitFormattingCard,
+} from './overview-cards';
+
+type RpcSpace = 'core' | 'espace';
+
+const BUTTON_STYLE: React.CSSProperties = {
+  padding: 'var(--cfx-space-2) var(--cfx-space-4)',
+  background: 'var(--cfx-color-brand-primary)',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 'var(--cfx-radius-md)',
+  cursor: 'pointer',
+  fontSize: 'var(--cfx-text-sm)',
+};
+const INPUT_STYLE: React.CSSProperties = {
+  flex: 1,
+  minWidth: 240,
+  padding: 'var(--cfx-space-2) var(--cfx-space-3)',
+  background: 'var(--cfx-color-bg-emphasis)',
+  border: '1px solid var(--cfx-color-border-default)',
+  borderRadius: 'var(--cfx-radius-md)',
+  color: 'var(--cfx-color-fg-default)',
+  fontSize: 'var(--cfx-text-sm)',
+};
+const SELECT_STYLE: React.CSSProperties = {
+  padding: 'var(--cfx-space-2) var(--cfx-space-3)',
+  background: 'var(--cfx-color-bg-emphasis)',
+  border: '1px solid var(--cfx-color-border-default)',
+  borderRadius: 'var(--cfx-radius-md)',
+  color: 'var(--cfx-color-fg-default)',
+  fontSize: 'var(--cfx-text-sm)',
+};
+const CONTROL_ROW: React.CSSProperties = {
+  display: 'flex',
+  gap: 'var(--cfx-space-2)',
+  alignItems: 'flex-end',
+  flexWrap: 'wrap',
+  marginBottom: 'var(--cfx-space-3)',
+};
+
+async function requestRpc(space: RpcSpace, method: string, params: unknown[] = []) {
+  const res = await fetch(`/api/rpc/${space}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', method, params, id: Date.now() }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? `RPC proxy failed with HTTP ${res.status}`);
+  if (json.error) {
+    const message = typeof json.error === 'string' ? json.error : json.error.message;
+    throw new Error(message ?? `${method} failed`);
+  }
+  return json.result;
+}
+
+function pretty(value: unknown): string {
+  return JSON.stringify(value, null, 2);
+}
 
 // biome-ignore lint/style/noDefaultExport: Next.js page requires default export.
 export default function CorePage() {
   const [rpcLogs, setRpcLogs] = useState<LogEntry[]>([]);
   const [rpcLoading, setRpcLoading] = useState(false);
 
-  const [codecInput, setCodecInput] = useState('');
-  const [codecResult, setCodecResult] = useState('');
-  const [codecError, setCodecError] = useState('');
+  const [blockLookupKind, setBlockLookupKind] = useState<'epoch' | 'hash'>('epoch');
+  const [blockLookupInput, setBlockLookupInput] = useState('latest_mined');
+  const [blockLookupLogs, setBlockLookupLogs] = useState<LogEntry[]>([]);
+  const [blockLookupResult, setBlockLookupResult] = useState<unknown>(null);
+  const [blockLookupLoading, setBlockLookupLoading] = useState(false);
+
+  const [txHash, setTxHash] = useState('');
+  const [txLookupLogs, setTxLookupLogs] = useState<LogEntry[]>([]);
+  const [txLookupResult, setTxLookupResult] = useState<unknown>(null);
+  const [receiptLookupResult, setReceiptLookupResult] = useState<unknown>(null);
+  const [txLookupLoading, setTxLookupLoading] = useState(false);
+
+  const [crossSpaceLogs, setCrossSpaceLogs] = useState<LogEntry[]>([]);
+  const [crossSpaceResult, setCrossSpaceResult] = useState<unknown>(null);
+  const [crossSpaceLoading, setCrossSpaceLoading] = useState(false);
 
   async function fetchBlockNumber() {
     setRpcLoading(true);
@@ -40,215 +114,181 @@ export default function CorePage() {
     }
   }
 
-  function convertAddress() {
-    setCodecError('');
-    setCodecResult('');
-    const v = codecInput.trim();
-    if (!v) return;
+  async function lookupBlock() {
+    setBlockLookupLoading(true);
+    setBlockLookupLogs([]);
+    setBlockLookupResult(null);
     try {
-      if (v.startsWith('0x') || v.startsWith('0X')) {
-        // hex → base32 (testnet networkId = 1)
-        setCodecResult(hexToBase32(v as `0x${string}`, 1));
-      } else {
-        setCodecResult(base32ToHex(v));
-      }
+      const input = blockLookupInput.trim();
+      if (blockLookupKind === 'hash' && !input) throw new Error('Enter a block hash.');
+      const method =
+        blockLookupKind === 'hash' ? 'cfx_getBlockByHash' : 'cfx_getBlockByEpochNumber';
+      const params = blockLookupKind === 'hash' ? [input, true] : [input || 'latest_mined', true];
+      const result = await requestRpc('core', method, params);
+      setBlockLookupResult(result);
+      setBlockLookupLogs([makeEntry(`${method} succeeded.`, 'info')]);
     } catch (e) {
-      setCodecError(String(e));
+      setBlockLookupLogs([makeEntry(String(e), 'error')]);
+    } finally {
+      setBlockLookupLoading(false);
+    }
+  }
+
+  async function lookupTransaction() {
+    setTxLookupLoading(true);
+    setTxLookupLogs([]);
+    setTxLookupResult(null);
+    setReceiptLookupResult(null);
+    try {
+      const hash = txHash.trim();
+      if (!hash) throw new Error('Enter a transaction hash.');
+      const [transaction, receipt] = await Promise.all([
+        requestRpc('core', 'cfx_getTransactionByHash', [hash]),
+        requestRpc('core', 'cfx_getTransactionReceipt', [hash]),
+      ]);
+      setTxLookupResult(transaction);
+      setReceiptLookupResult(receipt);
+      setTxLookupLogs([makeEntry('Transaction and receipt lookup completed.', 'info')]);
+    } catch (e) {
+      setTxLookupLogs([makeEntry(String(e), 'error')]);
+    } finally {
+      setTxLookupLoading(false);
+    }
+  }
+
+  async function readCrossSpaceState() {
+    setCrossSpaceLoading(true);
+    setCrossSpaceLogs([]);
+    setCrossSpaceResult(null);
+    try {
+      const [balance, nonce, logs] = await Promise.all([
+        requestRpc('core', 'cfx_getBalance', [crossSpaceCallAddress, 'latest_state']),
+        requestRpc('core', 'cfx_getNextNonce', [crossSpaceCallAddress, 'latest_state']),
+        requestRpc('core', 'cfx_getLogs', [
+          {
+            address: crossSpaceCallAddress,
+            fromEpoch: 'latest_checkpoint',
+            toEpoch: 'latest_state',
+          },
+        ]),
+      ]);
+      setCrossSpaceResult({ crossSpaceCallAddress, balance, nonce, recentLogs: logs });
+      setCrossSpaceLogs([makeEntry('CrossSpaceCall state read through Core RPC.', 'info')]);
+    } catch (e) {
+      setCrossSpaceLogs([makeEntry(String(e), 'error')]);
+    } finally {
+      setCrossSpaceLoading(false);
     }
   }
 
   return (
     <SiteLayout>
-      {/* ── Client Architecture ── */}
-      <DemoCard
-        title="createClient — eSpace & Core Space"
-        description="@cfxdevkit/core ships two typed RPC clients. CfxProvider distributes a client to React hooks — no wallet needed for reads."
-      >
-        <CodeSnippet code={CLIENT_SNIPPET} label="Usage" />
-      </DemoCard>
+      <ClientArchitectureCard />
+      <ChainCatalogCard />
 
-      {/* ── Chain list ── */}
-      <DemoCard
-        title="Available Chains"
-        description="Static chain catalog from listChains() — covers eSpace and Core Space across all networks."
-      >
-        <table
-          style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--cfx-text-sm)' }}
-        >
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--cfx-color-border-default)' }}>
-              {['Name', 'Family', 'Network', 'Chain ID', 'RPC'].map((h) => (
-                <th
-                  key={h}
-                  style={{
-                    textAlign: 'left',
-                    padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-                    color: 'var(--cfx-color-fg-subtle)',
-                  }}
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {CHAINS.map((c) => (
-              <tr key={c.id} style={{ borderBottom: '1px solid var(--cfx-color-border-subtle)' }}>
-                <td style={{ padding: 'var(--cfx-space-2) var(--cfx-space-3)' }}>
-                  {c.displayName}
-                </td>
-                <td
-                  style={{
-                    padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-                    color: 'var(--cfx-color-fg-subtle)',
-                  }}
-                >
-                  {c.family}
-                </td>
-                <td
-                  style={{
-                    padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-                    color: 'var(--cfx-color-fg-subtle)',
-                  }}
-                >
-                  {c.network}
-                </td>
-                <td
-                  style={{
-                    padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-                    fontFamily: 'monospace',
-                  }}
-                >
-                  {c.id}
-                </td>
-                <td
-                  style={{
-                    padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-                    color: 'var(--cfx-color-fg-muted)',
-                    fontFamily: 'monospace',
-                    fontSize: 'var(--cfx-text-xs)',
-                  }}
-                >
-                  {c.rpc.http[0]}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </DemoCard>
+      <LiveRpcCard loading={rpcLoading} logs={rpcLogs} onFetch={fetchBlockNumber} />
 
-      {/* ── Live RPC ── */}
       <DemoCard
-        title="Live RPC Call"
-        description="POST to /api/rpc/espace → eth_blockNumber on eSpace testnet."
+        title="Block Lookup"
+        description="Read Core Space blocks by epoch tag/number or by block hash through the local RPC proxy."
       >
-        <button
-          type="button"
-          onClick={fetchBlockNumber}
-          disabled={rpcLoading}
-          style={{
-            padding: 'var(--cfx-space-2) var(--cfx-space-4)',
-            background: 'var(--cfx-color-brand-primary)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 'var(--cfx-radius-md)',
-            cursor: rpcLoading ? 'not-allowed' : 'pointer',
-            fontSize: 'var(--cfx-text-sm)',
-            marginBottom: 'var(--cfx-space-3)',
-          }}
-        >
-          {rpcLoading ? 'Fetching…' : 'Fetch Block Number'}
-        </button>
-        <LogBox entries={rpcLogs} empty="Click the button to make a live RPC call." />
-      </DemoCard>
-
-      {/* ── Address codec ── */}
-      <DemoCard
-        title="Address Codec"
-        description="Convert between hex (0x…) and base32 (cfxtest:…) addresses. Core Space uses base32; eSpace uses hex."
-      >
-        <div
-          style={{
-            display: 'flex',
-            gap: 'var(--cfx-space-2)',
-            alignItems: 'flex-end',
-            flexWrap: 'wrap',
-          }}
-        >
+        <div style={CONTROL_ROW}>
+          <select
+            value={blockLookupKind}
+            onChange={(e) => setBlockLookupKind(e.target.value as 'epoch' | 'hash')}
+            style={SELECT_STYLE}
+          >
+            <option value="epoch">Epoch</option>
+            <option value="hash">Hash</option>
+          </select>
           <input
-            value={codecInput}
-            onChange={(e) => setCodecInput(e.target.value)}
-            placeholder="0x… or cfxtest:…"
-            style={{
-              flex: 1,
-              minWidth: 240,
-              padding: 'var(--cfx-space-2) var(--cfx-space-3)',
-              background: 'var(--cfx-color-bg-emphasis)',
-              border: '1px solid var(--cfx-color-border-default)',
-              borderRadius: 'var(--cfx-radius-md)',
-              color: 'var(--cfx-color-fg-default)',
-              fontSize: 'var(--cfx-text-sm)',
-            }}
+            value={blockLookupInput}
+            onChange={(e) => setBlockLookupInput(e.target.value)}
+            placeholder={blockLookupKind === 'hash' ? '0x block hash' : 'latest_mined or 0x epoch'}
+            style={INPUT_STYLE}
           />
           <button
             type="button"
-            onClick={convertAddress}
-            style={{
-              padding: 'var(--cfx-space-2) var(--cfx-space-4)',
-              background: 'var(--cfx-color-brand-primary)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 'var(--cfx-radius-md)',
-              cursor: 'pointer',
-              fontSize: 'var(--cfx-text-sm)',
-            }}
+            onClick={lookupBlock}
+            disabled={blockLookupLoading}
+            style={{ ...BUTTON_STYLE, cursor: blockLookupLoading ? 'not-allowed' : 'pointer' }}
           >
-            Convert
+            {blockLookupLoading ? 'Looking up…' : 'Lookup Block'}
           </button>
         </div>
-        {codecError && (
-          <p
-            style={{
-              color: 'var(--cfx-color-feedback-danger)',
-              fontSize: 'var(--cfx-text-sm)',
-              marginTop: 'var(--cfx-space-2)',
-            }}
-          >
-            {codecError}
-          </p>
-        )}
-        {codecResult && (
+        <LogBox entries={blockLookupLogs} empty="Choose an epoch or hash and query Core Space." />
+        {blockLookupResult !== null && (
           <div style={{ marginTop: 'var(--cfx-space-3)' }}>
-            <CodeSnippet code={codecResult} label="Result" />
+            <CodeSnippet code={pretty(blockLookupResult)} label="Block result" />
           </div>
         )}
-        {!codecResult && !codecError && (
-          <p
-            style={{
-              color: 'var(--cfx-color-fg-muted)',
-              fontSize: 'var(--cfx-text-sm)',
-              marginTop: 'var(--cfx-space-2)',
-            }}
-          >
-            Enter a hex address to get its base32 form (testnet networkId=1), or a base32 address to
-            get hex.
-          </p>
-        )}
-        <CodeSnippet code={CODEC_SNIPPET} label="API reference" />
       </DemoCard>
 
-      {/* ── Unit formatting ── */}
       <DemoCard
-        title="Unit Formatting"
-        description="formatCFX, formatGDrip, and parseCFX for drip ↔ human-readable conversions."
+        title="Transaction and Receipt Lookup"
+        description="Fetch cfx_getTransactionByHash and cfx_getTransactionReceipt together for a Core transaction hash."
       >
-        {UNIT_EXAMPLES.map((ex) => (
-          <div key={ex.label} style={{ marginBottom: 'var(--cfx-space-3)' }}>
-            <CodeSnippet code={`${ex.label}\n// → ${ex.value}`} />
+        <div style={CONTROL_ROW}>
+          <input
+            value={txHash}
+            onChange={(e) => setTxHash(e.target.value)}
+            placeholder="0x transaction hash"
+            style={INPUT_STYLE}
+          />
+          <button
+            type="button"
+            onClick={lookupTransaction}
+            disabled={txLookupLoading}
+            style={{ ...BUTTON_STYLE, cursor: txLookupLoading ? 'not-allowed' : 'pointer' }}
+          >
+            {txLookupLoading ? 'Looking up…' : 'Lookup Transaction'}
+          </button>
+        </div>
+        <LogBox
+          entries={txLookupLogs}
+          empty="Paste a Core transaction hash to read the transaction and receipt."
+        />
+        {txLookupResult !== null && (
+          <div style={{ marginTop: 'var(--cfx-space-3)' }}>
+            <CodeSnippet code={pretty(txLookupResult)} label="Transaction" />
           </div>
-        ))}
-        <CodeSnippet code={UNITS_SNIPPET} label="API reference" />
+        )}
+        {receiptLookupResult !== null && (
+          <div style={{ marginTop: 'var(--cfx-space-3)' }}>
+            <CodeSnippet code={pretty(receiptLookupResult)} label="Receipt" />
+          </div>
+        )}
       </DemoCard>
+
+      <DemoCard
+        title="Cross-Space Read"
+        description="Read the CrossSpaceCall internal contract through Core RPC to inspect eSpace bridge-related state without a wallet."
+      >
+        <button
+          type="button"
+          onClick={readCrossSpaceState}
+          disabled={crossSpaceLoading}
+          style={{
+            ...BUTTON_STYLE,
+            cursor: crossSpaceLoading ? 'not-allowed' : 'pointer',
+            marginBottom: 'var(--cfx-space-3)',
+          }}
+        >
+          {crossSpaceLoading ? 'Reading…' : 'Read CrossSpaceCall'}
+        </button>
+        <LogBox
+          entries={crossSpaceLogs}
+          empty="Click to read balance, nonce, and recent logs for the cross-space internal contract."
+        />
+        {crossSpaceResult !== null && (
+          <div style={{ marginTop: 'var(--cfx-space-3)' }}>
+            <CodeSnippet code={pretty(crossSpaceResult)} label="Cross-space state" />
+          </div>
+        )}
+      </DemoCard>
+
+      <AddressCodecCard />
+      <UnitFormattingCard />
     </SiteLayout>
   );
 }

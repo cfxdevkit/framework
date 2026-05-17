@@ -47,7 +47,7 @@ Conceptual target:
 ┌─────────────────────────────────────────────────────────────┐
 │  projects/      cas │ chainbrawler │ conflux-phaser │ electro│  Tier 3
 ├─────────────────────────────────────────────────────────────┤
-│  domains/      game-engine │ automation │ hardware-bridge   │  Tier 2
+│  domains/      game-engine │ automation                     │  Tier 2
 ├─────────────────────────────────────────────────────────────┤
 │  platform/     devcontainer │ mcp │ scaffold │ vscode-ext   │  Tier 1
 ├─────────────────────────────────────────────────────────────┤

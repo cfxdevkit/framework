@@ -19,5 +19,5 @@ showcase-ui/
 
 ### Runtime role
 
-- Shared UI layer for `showcase-browser` and `showcase-stack`.
+- Shared UI layer for the keeper showcase apps.
 - Not a general-purpose framework package; this stays project-scoped under `projects/examples`.

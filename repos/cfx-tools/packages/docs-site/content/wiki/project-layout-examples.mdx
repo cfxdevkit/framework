@@ -113,7 +113,7 @@ graph TD
 - **Apps**: `firmware` (PlatformIO/C++), `backend` (Express)
 - **Key Features**:
   - Dual-core ESP32 firmware with generated pin map (`hardware/diagram.json` → `Pins.h`)
-  - WS protocol ↔ `domains/hardware-bridge`
+  - Project-local backend bridge for device telemetry
   - Thin wrapper over `@cfxdevkit/core`
 - **Migration Effort**: **Low** — already follows target pattern
 
@@ -121,12 +121,8 @@ graph TD
 
 - **Type**: Demo suite + integration tests
 - **Apps**:
-  - `showcase-gateway/` — Single entry point (`http://127.0.0.1:5173`)
-  - `showcase/` — SDK fundamentals (HD derivation, Core/eSpace, devnode)
-  - `showcase-stack/` — Full-stack (backend + wallet)
-  - `showcase-browser/` — External wallet flows (MetaMask, Fluent Core)
-  - `showcase-backend/` — Backend service (SIWE, devnode, compiler)
-  - `hardware-wallet-showcase/` — Keystore management (memory, file, Ledger)
+  - `showcase-local/` — Local devnode, compiler, deploy, SIWE, and keystore workflows
+  - `showcase-public/` — Public API, wallet, token, and hardware-wallet workflows
 - **Shared Package**: `packages/showcase-ui/` — Theme, navigation, wallet UI primitives
 - **Purpose**:
   - Validate public API surface
@@ -160,7 +156,7 @@ A **Tier 2** shared package used *only* by example apps. It provides:
 - Reusable UI components (`ConnectWall`, `WalletPickerModal`, `LogBox`)
 - Wallet state helpers (`useCoreWallet`, `deriveCoreState`, `deriveESpaceState`)
 - Shared theme (`theme.css`)
-- Gateway navigation & panel state (`ShowcaseNav`, `PanelSidebar`, `useActivePanelState`)
+- Shell navigation & panel state (`Shell`, `PanelSidebar`, `useActivePanelState`)
 
 ### Constraints
 
@@ -178,33 +174,19 @@ A **Tier 2** shared package used *only* by example apps. It provides:
 
 ## Local Development Workflow
 
-### Gateway-Driven Showcase
+### Keeper Showcase Apps
 
 ```bash
 pnpm showcase
-# Starts backend + gateway + all apps
-# → http://127.0.0.1:5173
+# Starts showcase-local and showcase-public
 ```
-
-The gateway (`showcase-gateway/`) proxies:
-
-| Path | Target |
-|------|--------|
-| `/showcase/` | `@cfxdevkit/example-showcase` |
-| `/stack/` | `@cfxdevkit/example-showcase-stack` |
-| `/browser/` | `@cfxdevkit/example-showcase-browser` |
-| `/keystores/` | `@cfxdevkit/example-hardware-wallet-showcase` |
-| `/api/*` | `@cfxdevkit/example-showcase-backend` |
-| `/devnode/*`, `/rpc/*`, `/compile/*` | Same-origin backend routes |
 
 ### Standalone App Workflow
 
 ```bash
-pnpm --filter @cfxdevkit/example-showcase-backend dev
-pnpm --filter @cfxdevkit/example-showcase dev
+pnpm --filter @cfxdevkit/example-showcase-local dev
+pnpm --filter @cfxdevkit/example-showcase-public dev
 ```
-
-Use `VITE_BACKEND_URL` to override backend location.
 
 ---
 
@@ -236,7 +218,7 @@ Use `VITE_BACKEND_URL` to override backend location.
 |------|----------|-------|
 | `@cfxdevkit/theme`, `@cfxdevkit/react` | Partial | Shared theme in place; dedicated component demos pending |
 | `@cfxdevkit/cli`, `@cfxdevkit/llm-tools` | Gap | Add CLI/scaffold and LLM automation demos |
-| `domains/automation`, `game-engine`, `hardware-bridge` | Gap | Add domain-specific examples after core flows stabilize |
+| `domains/automation`, `game-engine` | Gap | Add domain-specific examples after core flows stabilize |
 
 ---
 

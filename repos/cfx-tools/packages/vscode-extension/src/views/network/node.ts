@@ -50,27 +50,6 @@ export function makeNetworkNodeRow(snapshot: ViewSnapshot): vscode.TreeItem {
   return item;
 }
 
-/** @deprecated Use makeNetworkNodeRow instead */
-export function makeNetworkRow(snapshot: ViewSnapshot): vscode.TreeItem {
-  return makeNetworkNodeRow(snapshot);
-}
-
-/** @deprecated Node row is merged into makeNetworkNodeRow */
-export function makeNodeRow(snapshot: ViewSnapshot): vscode.TreeItem {
-  const item = new vscode.TreeItem('Node');
-  item.description = snapshot.keystoreLocked ? 'unlock wallet first' : snapshot.nodeStatusLabel;
-  item.contextValue = snapshot.keystoreLocked
-    ? 'cfxNodeLocked'
-    : snapshot.nodeRunning
-      ? 'cfxNodeRunning'
-      : 'cfxNodeStopped';
-  item.iconPath = new vscode.ThemeIcon(
-    snapshot.nodeRunning ? 'server-environment' : snapshot.keystoreLocked ? 'lock' : 'server',
-    new vscode.ThemeColor(snapshot.nodeRunning ? 'testing.iconPassed' : 'descriptionForeground'),
-  );
-  return item;
-}
-
 export function makeNetworkItems(snapshot: ViewSnapshot): vscode.TreeItem[] {
   return [makeNetworkNodeRow(snapshot)];
 }

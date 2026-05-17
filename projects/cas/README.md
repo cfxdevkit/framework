@@ -145,6 +145,11 @@ Admin routes additionally require the caller's address to be listed in `ADMIN_AD
 | GET | `/sse/jobs` | Bearer | Server-Sent Events stream for real-time job updates |
 | GET | `/system/status` | — | System status: network, contracts, keeper health |
 
+The frontend opens `/sse/jobs` for dashboard updates and closes the stream when the
+browser reports an error. Explicit reconnect/backoff handling remains deferred for
+this cleanup because the current dashboard still performs an authenticated initial
+`GET /jobs` load and the route cleanup does not change the event contract.
+
 ---
 
 ## Environment variables

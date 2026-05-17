@@ -6,7 +6,7 @@ export type {
   WalletSummary as KeystoreWalletSummary,
 } from '@cfxdevkit/client';
 
-import type { ActiveWalletSummary, WalletAccountSummary, WalletSummary } from '@cfxdevkit/client';
+import type { ActiveWalletSummary, WalletSummary } from '@cfxdevkit/client';
 
 /** Thin ok+error response. */
 export interface KeystoreActionResponse {
@@ -17,10 +17,6 @@ export interface KeystoreActionResponse {
 /** Response wrappers used by the showcase keystore client. */
 export interface KeystoreWalletsResponse extends KeystoreActionResponse {
   wallets: WalletSummary[];
-}
-
-export interface KeystoreWalletAccountsResponse extends KeystoreActionResponse {
-  accounts: WalletAccountSummary[];
 }
 
 export interface KeystoreWalletMutationResponse extends KeystoreActionResponse {

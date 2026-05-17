@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { join } from 'node:path';
-import { createClient, http, type Signer } from '@cfxdevkit/core';
+import { createClient, http } from '@cfxdevkit/core';
 import {
   ContractRegistry,
   createDevnodeServerApp,
@@ -77,7 +77,6 @@ const runtimeApp = createDevnodeServerApp({
 const jsonHeaders = { 'Cache-Control': 'no-store' } as const;
 
 type RuntimeKeystoreApi = KeystoreService & {
-  activeSigner: () => Promise<Signer>;
   activeWallet: () => Promise<KeystoreActiveWalletSummary | null>;
 };
 
@@ -99,10 +98,6 @@ export function noStoreHeaders() {
 
 export async function readRuntimeActiveWallet(): Promise<KeystoreActiveWalletSummary | null> {
   return runtimeKeystoreApi.activeWallet();
-}
-
-export async function readRuntimeActiveSigner(): Promise<Signer> {
-  return runtimeKeystoreApi.activeSigner();
 }
 
 export async function readShowcaseBlockNumber(

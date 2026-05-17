@@ -30,14 +30,6 @@ const WORKSPACE_SECTIONS = [
   'reveal',
 ] as const satisfies readonly WorkspaceSectionId[];
 
-export const WORKSPACE_STEPS = [
-  'keystore',
-  'accounts',
-  'setup',
-  'deploy',
-  'session-key',
-] as const satisfies readonly WorkspaceSectionId[];
-
 interface CompileWarning {
   message: string;
   severity: string;
@@ -99,7 +91,6 @@ export interface LocalFundResponse {
   error?: string;
 }
 
-export const DEFAULT_PASSPHRASE = 'local-demo-passphrase';
 export const DEFAULT_SOURCE = `pragma solidity ^0.8.26;
 
 contract Counter {
