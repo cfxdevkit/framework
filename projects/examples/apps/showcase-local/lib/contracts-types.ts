@@ -1,19 +1,14 @@
-export type ContractNetworkId = 'local' | 'testnet' | 'mainnet';
-export type ContractSpaceId = 'core' | 'espace';
+// Contract types — canonical source is @cfxdevkit/client
+export type {
+  ContractRecord as ShowcaseContractRecord,
+  Network as ContractNetworkId,
+  Space as ContractSpaceId,
+} from '@cfxdevkit/client';
 
-export interface ShowcaseContractRecord {
-  id: string;
-  name: string;
-  address: string;
-  abi: unknown[];
-  network: ContractNetworkId;
-  chainId: number;
-  space: ContractSpaceId;
-  deployedAt: number;
-}
+import type { ContractRecord } from '@cfxdevkit/client';
 
 export interface ShowcaseContractsResponse {
   ok: boolean;
-  contracts: ShowcaseContractRecord[];
+  contracts: ContractRecord[];
   error?: string;
 }

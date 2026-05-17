@@ -57,7 +57,7 @@ export interface ShowcaseWorkspacePanelsProps {
   devnode: DevnodeStatusResponse | null;
   devnodeAccounts: readonly DevnodeAccountSummary[];
   devnodeBadge: ReactNode;
-  devnodeBusy: 'refresh' | 'start' | 'restart' | 'stop' | 'mine' | null;
+  devnodeBusy: 'refresh' | 'start' | 'restart' | 'stop' | 'wipe' | 'mine' | null;
   devnodeError: string | null;
   entries: readonly unknown[];
   environmentFaucets: ReadonlyArray<{ href: string; label: string }>;
@@ -109,6 +109,7 @@ export interface ShowcaseWorkspacePanelsProps {
   solcVersion: string;
   source: string;
   space: SpaceId;
+  walletAccountCount: string;
   walletAccounts: readonly KeystoreWalletAccountSummary[];
   walletActionId: string | null;
   walletName: string;
@@ -140,10 +141,12 @@ export interface ShowcaseWorkspacePanelsProps {
   onSetMnemonicDraft(value: string): void;
   onSetPassphrase(value: string): void;
   onSetSpace(space: SpaceId): void;
+  onSetWalletAccountCount(value: string): void;
   onSetWalletName(value: string): void;
   onSetWalletNameDraft(id: string, value: string): void;
   onStartDevnode(): void;
   onStopDevnode(): void;
+  onWipeDevnode(): void;
   onVerifySession(): void;
 }
 

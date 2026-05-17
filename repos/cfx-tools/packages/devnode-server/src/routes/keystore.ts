@@ -1,12 +1,15 @@
 import { Hono } from 'hono';
-import type { KeystoreService } from '../keystore.js';
+import type { KeystoreResetGuidance, KeystoreService } from '../keystore.js';
 
-export function createKeystoreRoutes(keystore: KeystoreService): Hono {
+export function createKeystoreRoutes(
+  keystore: KeystoreService,
+  options: { reset?: KeystoreResetGuidance; network?: { chainIds(): { core: number } } } = {},
+): Hono {
   const app = new Hono();
 
   app.get('/status', async (c) => {
     const s = await keystore.status();
-    return c.json({ ok: true, ...s });
+    return c.json({ ok: true, ...s, ...(options.reset ? { reset: options.reset } : {}) });
   });
 
   app.post('/setup', async (c) => {
@@ -38,7 +41,8 @@ export function createKeystoreRoutes(keystore: KeystoreService): Hono {
 
   app.get('/active', async (c) => {
     try {
-      return c.json({ ok: true, wallet: await keystore.activeWallet() });
+      const coreNetworkId = options.network?.chainIds().core;
+      return c.json({ ok: true, wallet: await keystore.activeWallet(coreNetworkId) });
     } catch (err) {
       return c.json({ ok: false, error: errMsg(err), wallet: null }, 403);
     }
@@ -76,7 +80,8 @@ export function createKeystoreRoutes(keystore: KeystoreService): Hono {
   app.get('/wallets/:id/accounts', async (c) => {
     const id = c.req.param('id');
     try {
-      return c.json({ ok: true, accounts: await keystore.listAccounts(id) });
+      const coreNetworkId = options.network?.chainIds().core;
+      return c.json({ ok: true, accounts: await keystore.listAccounts(id, coreNetworkId) });
     } catch (err) {
       return c.json({ ok: false, error: errMsg(err) }, 404);
     }

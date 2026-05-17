@@ -20,7 +20,7 @@ import {
   fetchKeystoreStatus,
   fetchKeystoreWalletAccounts,
   fetchKeystoreWallets,
-} from '../../keystore/keystore-client';
+} from '../../keystore/client';
 import type { NetworkId, SpaceId } from '../shared';
 import { faucetFor, faucetLinksFor, syncWalletDrafts } from '../shared';
 
@@ -37,7 +37,7 @@ export function useShowcaseWorkspaceKeystoreRuntime({
 }) {
   const [devnode, setDevnode] = useState<DevnodeStatusResponse | null>(null);
   const [devnodeBusy, setDevnodeBusy] = useState<
-    'refresh' | 'start' | 'restart' | 'stop' | 'mine' | null
+    'refresh' | 'start' | 'restart' | 'stop' | 'wipe' | 'mine' | null
   >(null);
   const [devnodeError, setDevnodeError] = useState<string | null>(null);
   const [keystoreStatus, setKeystoreStatus] = useState<KeystoreStatusResponse | null>(null);
@@ -157,8 +157,8 @@ export function useShowcaseWorkspaceKeystoreRuntime({
   );
 
   useEffect(() => {
-    void refreshDevnode({ logMessage: 'Loaded node status.' });
-    void refreshKeystore({ logMessage: 'Loaded keystore state.' });
+    void refreshDevnode();
+    void refreshKeystore();
   }, [refreshDevnode, refreshKeystore]);
 
   useEffect(() => {
@@ -177,11 +177,12 @@ export function useShowcaseWorkspaceKeystoreRuntime({
   const keystoreBadge = useMemo(() => {
     if (keystoreError) return createElement(StatusBadge, { label: 'error', status: 'error' });
     if (!keystoreStatus) return createElement(StatusBadge, { label: 'loading', status: 'pending' });
-    if (!keystoreStatus.initialized)
+    if (keystoreStatus.phase === 'blank')
       return createElement(StatusBadge, { label: 'setup required', status: 'info' });
-    if (keystoreStatus.locked)
+    if (keystoreStatus.phase === 'locked')
       return createElement(StatusBadge, { label: 'locked', status: 'pending' });
-    if (activeWallet) return createElement(StatusBadge, { label: 'signer ready', status: 'ok' });
+    if (keystoreStatus.phase === 'active-wallet' && activeWallet)
+      return createElement(StatusBadge, { label: 'signer ready', status: 'ok' });
     return createElement(StatusBadge, { label: 'unlocked', status: 'info' });
   }, [activeWallet, keystoreError, keystoreStatus]);
 
@@ -202,6 +203,7 @@ export function useShowcaseWorkspaceKeystoreRuntime({
     keystoreBadge,
     keystoreBusy,
     keystoreError,
+    keystorePhase: keystoreStatus?.phase ?? null,
     keystoreReady: Boolean(keystoreStatus?.initialized) && !keystoreStatus?.locked,
     keystoreStatus,
     localRpc: space === 'core' ? devnode?.urls?.core : devnode?.urls?.espace,

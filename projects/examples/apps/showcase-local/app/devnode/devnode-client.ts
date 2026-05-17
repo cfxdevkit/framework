@@ -4,72 +4,71 @@ import type {
   DevnodeProfileStateResponse,
   DevnodeStatusResponse,
 } from '../../lib/devnode-types';
+import { showcaseRuntimeClient } from '../runtime/devkit-client';
 
 interface ErrorWithPayload extends Error {
   payload?: DevnodeStatusResponse;
 }
 
 export async function fetchDevnodeStatus(): Promise<DevnodeStatusResponse> {
-  return requestDevnode('/api/devnode/status', { method: 'GET' });
+  const result = await showcaseRuntimeClient.node.status();
+  return result.node as DevnodeStatusResponse;
 }
 
 export async function fetchDevnodeProfiles(): Promise<DevnodeProfileStateResponse> {
-  return requestJson<DevnodeProfileStateResponse>('/api/devnode/profile', { method: 'GET' });
+  return showcaseRuntimeClient.node.profiles();
 }
 
 export async function selectDevnodeProfile(id: string): Promise<DevnodeProfileSelectionResponse> {
-  return requestJson<DevnodeProfileSelectionResponse>(`/api/devnode/profile/${id}/select`, {
-    method: 'PUT',
-  });
+  return showcaseRuntimeClient.node.selectProfile(id);
 }
 
 export async function startDevnode(): Promise<DevnodeStatusResponse> {
-  return requestDevnode('/api/devnode/start', { method: 'POST' });
+  return runNodeMutation(() => showcaseRuntimeClient.node.start());
 }
 
 export async function restartDevnode(): Promise<DevnodeStatusResponse> {
-  return requestDevnode('/api/devnode/restart', { method: 'POST' });
+  return runNodeMutation(() => showcaseRuntimeClient.node.restart());
 }
 
 export async function stopDevnode(): Promise<DevnodeStatusResponse> {
-  return requestDevnode('/api/devnode/stop', { method: 'POST' });
+  return runNodeMutation(() => showcaseRuntimeClient.node.stop());
+}
+
+export async function wipeDevnode(): Promise<DevnodeStatusResponse> {
+  return runNodeMutation(() => showcaseRuntimeClient.node.wipe());
 }
 
 export async function mineDevnode(input: DevnodeMineRequest): Promise<DevnodeStatusResponse> {
-  return requestDevnode('/api/devnode/mine', {
-    body: JSON.stringify(input),
-    headers: { 'content-type': 'application/json' },
-    method: 'POST',
-  });
+  return runNodeMutation(() =>
+    showcaseRuntimeClient.node.mine({
+      ...(input.count === undefined ? {} : { blocks: input.count }),
+    }),
+  );
 }
 
 export function isErrorWithPayload(error: unknown): error is ErrorWithPayload {
   return error instanceof Error && 'payload' in error;
 }
 
-async function requestDevnode(path: string, init: RequestInit): Promise<DevnodeStatusResponse> {
-  const response = await fetch(path, { ...init, cache: 'no-store' });
-  const payload = (await response.json()) as DevnodeStatusResponse & { error?: string };
-
-  if (!response.ok) {
-    const error = new Error(payload.error ?? `${init.method ?? 'GET'} ${path} failed`);
-    (error as ErrorWithPayload).payload = payload;
-    throw error;
+async function runNodeMutation(
+  request: () => Promise<{ ok: boolean; node: unknown }>,
+): Promise<DevnodeStatusResponse> {
+  try {
+    const result = await request();
+    return result.node as DevnodeStatusResponse;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const payload = await fetchDevnodeStatus().catch(
+      () =>
+        ({
+          error: message,
+          running: false,
+          status: 'error',
+        }) satisfies DevnodeStatusResponse,
+    );
+    const nextError = new Error(message) as ErrorWithPayload;
+    nextError.payload = { ...payload, error: message };
+    throw nextError;
   }
-
-  return payload;
-}
-
-async function requestJson<T extends { error?: string }>(
-  path: string,
-  init: RequestInit,
-): Promise<T> {
-  const response = await fetch(path, { ...init, cache: 'no-store' });
-  const payload = (await response.json()) as T;
-
-  if (!response.ok) {
-    throw new Error(payload.error ?? `${init.method ?? 'GET'} ${path} failed`);
-  }
-
-  return payload;
 }

@@ -1,11 +1,7 @@
 import 'server-only';
 
 import { join } from 'node:path';
-import {
-  createClient,
-  http,
-  type Signer,
-} from '@cfxdevkit/core';
+import { createClient, http, type Signer } from '@cfxdevkit/core';
 import {
   ContractRegistry,
   createDevnodeServerApp,
@@ -53,7 +49,10 @@ const runtimeApp = createDevnodeServerApp({
       const space = normalizeRuntimeSpace(context.req.query('space'));
 
       if (!network) {
-        return context.json({ ok: false, error: 'network must be local, testnet, or mainnet' }, 400);
+        return context.json(
+          { ok: false, error: 'network must be local, testnet, or mainnet' },
+          400,
+        );
       }
 
       if (!space) {

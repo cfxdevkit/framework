@@ -27,14 +27,16 @@ export const LOCAL_CHAPTERS: readonly LocalChapter[] = [
   {
     slug: 'devnode',
     title: 'DevNode',
-    description: 'Start or restart the local chain only when Local is selected and a stored node profile is ready.',
+    description:
+      'Start or restart the local chain only when Local is selected and a stored node profile is ready.',
     status: 'ready',
     next: 'Use the selected node profile so the local genesis accounts stay aligned with the keystore.',
   },
   {
     slug: 'keystore',
     title: 'Keystore',
-    description: 'Initialize the encrypted backend keystore and generate or import stored mnemonics.',
+    description:
+      'Initialize the encrypted backend keystore and generate or import stored mnemonics.',
     status: 'ready',
     next: 'Activate the signer you want the session-key and deploy flows to reuse.',
   },
@@ -83,7 +85,8 @@ export const LOCAL_FLOW: readonly LocalFlowStep[] = [
   {
     slug: 'session-key',
     title: 'Delegate a constrained signer',
-    detail: 'Create a session key only after the parent backend signer is ready for the selected environment.',
+    detail:
+      'Create a session key only after the parent backend signer is ready for the selected environment.',
   },
   {
     slug: 'compiler',

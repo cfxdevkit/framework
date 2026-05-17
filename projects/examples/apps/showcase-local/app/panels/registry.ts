@@ -66,9 +66,9 @@ export const PANELS: readonly LocalPanelSpec[] = Object.freeze([
   {
     id: 'keystore',
     group: 'keys',
-    label: 'Wallet Roots',
+    label: 'Wallets',
     blurb:
-      'Manage backend keystore state, import or generate mnemonic roots, rename them, and choose the active root.',
+      'Manage the backend keystore, generate or import mnemonic wallets, and choose the active signer.',
   },
   {
     id: 'accounts',

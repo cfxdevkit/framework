@@ -16,14 +16,64 @@ export interface WalletSummary {
   id: string;
   name: string;
   active: boolean;
+  accountCount: number;
+  activeAccountIndex: number;
+  derivationBase: string;
+  firstAddress?: string;
+}
+
+export interface ActiveWalletSummary extends WalletSummary {
+  address: string;
+  coreAddress?: string;
+  derivationPath: string;
+}
+
+export interface WalletAccountSummary {
+  index: number;
+  derivationPath: string;
+  address: string;
+  coreAddress?: string;
+  active: boolean;
 }
 
 /** Keystore status. */
 export interface KeystoreStatus {
   ok: boolean;
+  phase: 'blank' | 'locked' | 'unlocked' | 'active-wallet';
   locked: boolean;
   initialized: boolean;
   walletCount: number;
+  reset?: {
+    destructive: true;
+    mode: 'cli';
+    paths: string[];
+    requiresNodeStop: boolean;
+    warning: string;
+  };
+}
+
+export interface NodeProfileSummary {
+  id: string;
+  name: string;
+  dataDir: string;
+  selected: boolean;
+  locked: boolean;
+  accountCount: number;
+  firstAddress?: string;
+}
+
+export interface NodeProfileState {
+  ok: boolean;
+  error?: string;
+  locked: boolean;
+  profiles: NodeProfileSummary[];
+  selectedProfile: NodeProfileSummary | null;
+}
+
+export interface NodeProfileSelection {
+  ok: boolean;
+  error?: string;
+  profile?: NodeProfileSummary;
 }
 
 /** Contract record as stored in the registry. */

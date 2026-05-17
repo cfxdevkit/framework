@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { ContractRegistry } from './contracts.js';
 import { DevnodeServerController } from './controller.js';
-import { KeystoreService } from './keystore.js';
+import { type KeystoreResetGuidance, KeystoreService } from './keystore.js';
 import { NetworkState } from './network.js';
 import { NodeProfileService } from './profiles.js';
 import { createAccountsRoutes } from './routes/accounts.js';
@@ -66,6 +66,10 @@ export function createDevnodeServerApp(options: DevnodeServerAppOptions = {}): H
     });
 
   const app = new Hono();
+  const reset = createResetGuidance({
+    keystorePath,
+    ...(options.nodeProfileDataRoot ? { nodeProfileDataRoot: options.nodeProfileDataRoot } : {}),
+  });
 
   const syncRuntimeContext = async () => {
     try {
@@ -147,7 +151,7 @@ export function createDevnodeServerApp(options: DevnodeServerAppOptions = {}): H
   );
 
   app.route('/node/profile', createNodeProfileRoutes(profiles));
-  app.route('/keystore', createKeystoreRoutes(keystore));
+  app.route('/keystore', createKeystoreRoutes(keystore, { reset, network }));
   app.route('/accounts', createAccountsRoutes(controller));
   app.route('/compiler', createCompilerRoutes());
   app.route('/contracts', createContractsRoutes(contracts, controller, keystore, network));
@@ -182,4 +186,24 @@ async function readJson<T>(context: { req: { json: () => Promise<unknown> } }): 
 
 function runtimeStateRootFor(keystorePath: string): string {
   return resolve(`${keystorePath}.runtime`);
+}
+
+function createResetGuidance({
+  keystorePath,
+  nodeProfileDataRoot,
+}: {
+  keystorePath: string;
+  nodeProfileDataRoot?: string;
+}): KeystoreResetGuidance {
+  return {
+    destructive: true,
+    mode: 'cli',
+    paths: [
+      resolve(keystorePath),
+      runtimeStateRootFor(keystorePath),
+      ...(nodeProfileDataRoot ? [resolve(nodeProfileDataRoot)] : []),
+    ],
+    requiresNodeStop: true,
+    warning: 'Reset deletes the keystore, wallet-scoped runtime state, and local node profiles.',
+  };
 }

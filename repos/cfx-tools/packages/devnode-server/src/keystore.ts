@@ -47,10 +47,22 @@ export interface RevealedSecret {
   accountIndex?: number;
 }
 
+export type KeystoreLifecyclePhase = 'blank' | 'locked' | 'unlocked' | 'active-wallet';
+
+export interface KeystoreResetGuidance {
+  destructive: true;
+  mode: 'cli';
+  paths: string[];
+  requiresNodeStop: boolean;
+  warning: string;
+}
+
 export interface KeystoreStatus {
+  phase: KeystoreLifecyclePhase;
   locked: boolean;
   initialized: boolean;
   walletCount: number;
+  reset?: KeystoreResetGuidance;
 }
 
 export class KeystoreService {
@@ -80,8 +92,8 @@ export class KeystoreService {
     return this.#runtime.listWallets();
   }
 
-  async activeWallet(): Promise<ActiveWalletSummary | null> {
-    return this.#runtime.activeWallet();
+  async activeWallet(coreNetworkId?: number): Promise<ActiveWalletSummary | null> {
+    return this.#runtime.activeWallet(coreNetworkId);
   }
 
   async activeSigner(): Promise<Signer> {
@@ -104,8 +116,8 @@ export class KeystoreService {
     return this.#runtime.activateWallet(id, accountIndex);
   }
 
-  async listAccounts(id: string): Promise<WalletAccountSummary[]> {
-    return this.#runtime.listAccounts(id);
+  async listAccounts(id: string, coreNetworkId?: number): Promise<WalletAccountSummary[]> {
+    return this.#runtime.listAccounts(id, coreNetworkId);
   }
 
   async activateAccount(id: string, accountIndex: number): Promise<void> {

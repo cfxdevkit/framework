@@ -10,6 +10,7 @@ import {
   selectDevnodeProfile,
   startDevnode,
   stopDevnode,
+  wipeDevnode,
 } from '../../devnode/devnode-client';
 import {
   activateKeystoreAccount,
@@ -19,7 +20,7 @@ import {
   renameKeystoreWallet,
   setupKeystore,
   unlockKeystore,
-} from '../../keystore/keystore-client';
+} from '../../keystore/client';
 import type { ShowcaseWorkspaceDrafts } from '../drafts';
 import { runDevnodeAction, runLocalFund, runLock, runPassphraseAction } from './helpers';
 import type { ShowcaseWorkspaceKeystoreRuntime } from './runtime';
@@ -37,8 +38,15 @@ export function useShowcaseWorkspaceKeystoreActions({
 }) {
   const runImportWallet = async () => {
     const nextMnemonic = drafts.mnemonicDraft.trim();
+    const accountCount = readWalletAccountCount(drafts.walletAccountCount);
     if (!nextMnemonic) {
       const message = 'Mnemonic is required for import.';
+      runtime.setKeystoreError(message);
+      log(message, 'error');
+      return;
+    }
+    if (accountCount === null) {
+      const message = 'Account count must be an integer between 1 and 50.';
       runtime.setKeystoreError(message);
       log(message, 'error');
       return;
@@ -47,7 +55,7 @@ export function useShowcaseWorkspaceKeystoreActions({
     runtime.setKeystoreBusy('import');
     runtime.setKeystoreError(null);
     try {
-      await createKeystoreWallet({ mnemonic: nextMnemonic, name });
+      await createKeystoreWallet({ mnemonic: nextMnemonic, name, accountCount });
       drafts.setWalletName('');
       await runtime.refreshKeystore({ silent: true });
       log(`Imported mnemonic ${name} into the backend keystore.`);
@@ -61,11 +69,18 @@ export function useShowcaseWorkspaceKeystoreActions({
   };
 
   const runCreateWallet = async () => {
+    const accountCount = readWalletAccountCount(drafts.walletAccountCount);
+    if (accountCount === null) {
+      const message = 'Account count must be an integer between 1 and 50.';
+      runtime.setKeystoreError(message);
+      log(message, 'error');
+      return;
+    }
     const name = drafts.walletName.trim() || `Mnemonic ${runtime.wallets.length + 1}`;
     runtime.setKeystoreBusy('create');
     runtime.setKeystoreError(null);
     try {
-      await createKeystoreWallet({ name });
+      await createKeystoreWallet({ name, accountCount });
       drafts.setWalletName('');
       await runtime.refreshKeystore({ silent: true });
       log(`Generated mnemonic ${name} in the backend keystore.`);
@@ -228,6 +243,14 @@ export function useShowcaseWorkspaceKeystoreActions({
         runtime,
         successMessage: () => 'Stopped DevNode',
       }),
+    wipeDevnodeAction: () =>
+      runDevnodeAction({
+        action: 'wipe',
+        log,
+        request: wipeDevnode,
+        runtime,
+        successMessage: () => 'Wiped local node data',
+      }),
     unlockKeystoreAction: () =>
       runPassphraseAction({
         action: 'unlock',
@@ -243,3 +266,11 @@ export function useShowcaseWorkspaceKeystoreActions({
 export type ShowcaseWorkspaceKeystoreActions = ReturnType<
   typeof useShowcaseWorkspaceKeystoreActions
 >;
+
+function readWalletAccountCount(value: string): number | null {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 50) {
+    return null;
+  }
+  return parsed;
+}

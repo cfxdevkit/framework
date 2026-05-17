@@ -1,3 +1,12 @@
+// Profile types — canonical source is @cfxdevkit/client
+export type {
+  NodeProfileSummary as DevnodeProfileSummary,
+  NodeProfileState as DevnodeProfileStateResponse,
+  NodeProfileSelection as DevnodeProfileSelectionResponse,
+} from '@cfxdevkit/client';
+
+// These types differ structurally from @cfxdevkit/client NodeStatus and are
+// local adapters for showcase-local's own devnode instance API routes.
 export interface DevnodeUrls {
   core: string;
   espace: string;
@@ -34,30 +43,6 @@ export interface DevnodeStatusResponse {
   mining?: DevnodeMiningStatus;
   rpcUrl?: string;
   urls?: DevnodeUrls;
-}
-
-export interface DevnodeProfileSummary {
-  id: string;
-  name: string;
-  dataDir: string;
-  selected: boolean;
-  locked: boolean;
-  accountCount: number;
-  firstAddress?: string;
-}
-
-export interface DevnodeProfileStateResponse {
-  ok: boolean;
-  error?: string;
-  locked: boolean;
-  profiles: DevnodeProfileSummary[];
-  selectedProfile: DevnodeProfileSummary | null;
-}
-
-export interface DevnodeProfileSelectionResponse {
-  ok: boolean;
-  error?: string;
-  profile?: DevnodeProfileSummary;
 }
 
 export interface DevnodeMineRequest {

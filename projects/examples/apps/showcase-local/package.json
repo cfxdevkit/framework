@@ -12,6 +12,7 @@
     "clean": "rm -rf .next"
   },
   "dependencies": {
+    "@cfxdevkit/client": "workspace:*",
     "@cfxdevkit/compiler": "workspace:*",
     "@cfxdevkit/contracts": "workspace:*",
     "@cfxdevkit/core": "workspace:*",

@@ -112,6 +112,7 @@ export function ShowcaseWorkspacePanelStage({
       solcVersion={drafts.solcVersion}
       source={drafts.source}
       space={drafts.space}
+      walletAccountCount={drafts.walletAccountCount}
       walletAccounts={keystore.walletAccounts}
       walletActionId={keystore.walletActionId}
       walletName={drafts.walletName}
@@ -143,12 +144,14 @@ export function ShowcaseWorkspacePanelStage({
       onSetMnemonicDraft={drafts.setMnemonicDraft}
       onSetPassphrase={drafts.setPassphrase}
       onSetSpace={drafts.setSpace}
+      onSetWalletAccountCount={drafts.setWalletAccountCount}
       onSetWalletName={drafts.setWalletName}
       onSetWalletNameDraft={(id, value) =>
         keystore.setWalletNameDrafts((prev) => ({ ...prev, [id]: value }))
       }
       onStartDevnode={() => void keystoreActions.startDevnodeAction()}
       onStopDevnode={() => void keystoreActions.stopDevnodeAction()}
+      onWipeDevnode={() => void keystoreActions.wipeDevnodeAction()}
       onVerifySession={() => void compose.runVerifySession()}
     />
   );

@@ -21,19 +21,71 @@ describe('@cfxdevkit/client namespaces', () => {
       const result = await client.node.start();
       expect(result.node.running).toBe(true);
     });
+
+    it('reads and selects node profiles', async () => {
+      const fetch = mockFetch({
+        'GET /node/profile': {
+          body: {
+            ok: true,
+            locked: false,
+            profiles: [
+              {
+                id: 'wallet-1',
+                name: 'Wallet 1',
+                dataDir: '/tmp/profile',
+                selected: true,
+                locked: false,
+                accountCount: 3,
+              },
+            ],
+            selectedProfile: {
+              id: 'wallet-1',
+              name: 'Wallet 1',
+              dataDir: '/tmp/profile',
+              selected: true,
+              locked: false,
+              accountCount: 3,
+            },
+          },
+        },
+        'PUT /node/profile/wallet-1/select': {
+          body: { ok: true, profile: { id: 'wallet-1', name: 'Wallet 1' } },
+        },
+      });
+      const client = new ConfluxDevkitClient({ baseUrl: 'http://localhost:52000', fetch });
+      const profiles = await client.node.profiles();
+      const selection = await client.node.selectProfile('wallet-1');
+      expect(profiles.selectedProfile?.id).toBe('wallet-1');
+      expect(selection.profile?.id).toBe('wallet-1');
+    });
   });
 
   describe('keystore namespace', () => {
     it('fetches keystore status', async () => {
       const fetch = mockFetch({
         'GET /keystore/status': {
-          body: { ok: true, locked: true, initialized: false, walletCount: 0 },
+          body: {
+            ok: true,
+            phase: 'blank',
+            locked: true,
+            initialized: false,
+            walletCount: 0,
+            reset: {
+              destructive: true,
+              mode: 'cli',
+              paths: ['/tmp/keystore.json', '/tmp/keystore.json.runtime'],
+              requiresNodeStop: true,
+              warning: 'Reset deletes the keystore and runtime state.',
+            },
+          },
         },
       });
       const client = new ConfluxDevkitClient({ baseUrl: 'http://localhost:52000', fetch });
       const result = await client.keystore.status();
       expect(result.locked).toBe(true);
       expect(result.walletCount).toBe(0);
+      expect(result.phase).toBe('blank');
+      expect(result.reset?.mode).toBe('cli');
     });
 
     it('unlocks the keystore', async () => {
@@ -46,7 +98,16 @@ describe('@cfxdevkit/client namespaces', () => {
     });
 
     it('lists wallets', async () => {
-      const wallets = [{ id: 'w1', name: 'Main', active: true }];
+      const wallets = [
+        {
+          id: 'w1',
+          name: 'Main',
+          active: true,
+          accountCount: 3,
+          activeAccountIndex: 0,
+          derivationBase: "m/44'/503'/0'/0",
+        },
+      ];
       const fetch = mockFetch({
         'GET /keystore/wallets': { body: { ok: true, wallets } },
       });
@@ -54,6 +115,52 @@ describe('@cfxdevkit/client namespaces', () => {
       const result = await client.keystore.wallets.list();
       expect(result.wallets).toHaveLength(1);
       expect(result.wallets[0].name).toBe('Main');
+    });
+
+    it('reads active wallet and wallet accounts', async () => {
+      const fetch = mockFetch({
+        'GET /keystore/active': {
+          body: {
+            ok: true,
+            wallet: {
+              id: 'w1',
+              name: 'Main',
+              active: true,
+              accountCount: 3,
+              activeAccountIndex: 1,
+              derivationBase: "m/44'/503'/0'/0",
+              address: '0x1',
+              coreAddress: 'cfxtest:a',
+              derivationPath: "m/44'/503'/0'/0/1",
+            },
+          },
+        },
+        'GET /keystore/wallets/w1/accounts': {
+          body: {
+            ok: true,
+            accounts: [
+              {
+                index: 1,
+                derivationPath: "m/44'/503'/0'/0/1",
+                address: '0x1',
+                coreAddress: 'cfxtest:a',
+                active: true,
+              },
+            ],
+          },
+        },
+        'PUT /keystore/wallets/w1/activate': { body: { ok: true } },
+        'PUT /keystore/wallets/w1/accounts/1/activate': { body: { ok: true } },
+      });
+      const client = new ConfluxDevkitClient({ baseUrl: 'http://localhost:52000', fetch });
+      const active = await client.keystore.active();
+      const accounts = await client.keystore.wallets.accounts('w1');
+      const activated = await client.keystore.wallets.activate('w1', { accountIndex: 1 });
+      const accountActivated = await client.keystore.wallets.activateAccount('w1', 1);
+      expect(active.wallet?.activeAccountIndex).toBe(1);
+      expect(accounts.accounts[0].index).toBe(1);
+      expect(activated.ok).toBe(true);
+      expect(accountActivated.ok).toBe(true);
     });
   });
 

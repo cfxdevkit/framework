@@ -1,7 +1,0 @@
-
-> @cfxdevkit/ui-core@0.0.0 lint /workspaces/root/repos/cfx-ui/packages/ui-core
-> biome check src -- --format json
-
-Checked 6 files in 6ms. No fixes applied.
-Found 2 errors.
- ELIFECYCLE  Command failed with exit code 1.

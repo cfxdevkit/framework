@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { DEFAULT_SHOWCASE_LOCAL_MNEMONIC } from '../../lib/showcase-guide';
 import type { NetworkId, SpaceId, WorkspaceSectionId } from './shared';
 import {
-  DEFAULT_PASSPHRASE,
   DEFAULT_SOURCE,
   readStoredEnum,
   readStoredString,
@@ -17,8 +15,9 @@ export function useShowcaseWorkspaceDrafts() {
   const [activeSection, setActiveSection] = useState<WorkspaceSectionId>('keystore');
   const [network, setNetwork] = useState<NetworkId>('local');
   const [space, setSpace] = useState<SpaceId>('espace');
-  const [mnemonicDraft, setMnemonicDraft] = useState(DEFAULT_SHOWCASE_LOCAL_MNEMONIC);
-  const [passphrase, setPassphrase] = useState(DEFAULT_PASSPHRASE);
+  const [mnemonicDraft, setMnemonicDraft] = useState('');
+  const [passphrase, setPassphrase] = useState('');
+  const [walletAccountCount, setWalletAccountCount] = useState('5');
   const [walletName, setWalletName] = useState('');
   const [source, setSource] = useState(DEFAULT_SOURCE);
   const [contractName, setContractName] = useState('Counter');
@@ -42,10 +41,9 @@ export function useShowcaseWorkspaceDrafts() {
       ] as const),
     );
     setSpace(readStoredEnum(`${STORAGE_PREFIX}.space`, 'espace', ['espace', 'core'] as const));
-    setMnemonicDraft(
-      readStoredString(`${STORAGE_PREFIX}.mnemonic`, DEFAULT_SHOWCASE_LOCAL_MNEMONIC),
-    );
-    setPassphrase(readStoredString(`${STORAGE_PREFIX}.passphrase`, DEFAULT_PASSPHRASE));
+    setMnemonicDraft(readStoredDraft(`${STORAGE_PREFIX}.mnemonic`));
+    setPassphrase(readStoredDraft(`${STORAGE_PREFIX}.passphrase`));
+    setWalletAccountCount(readStoredString(`${STORAGE_PREFIX}.walletAccountCount`, '5'));
     setSource(readStoredString(`${STORAGE_PREFIX}.source`, DEFAULT_SOURCE));
     setContractName(readStoredString(`${STORAGE_PREFIX}.contractName`, 'Counter'));
     setSolcVersion(readStoredString(`${STORAGE_PREFIX}.solcVersion`, '0.8.26'));
@@ -67,6 +65,9 @@ export function useShowcaseWorkspaceDrafts() {
   useEffect(() => {
     if (storageReady) writeStoredString(`${STORAGE_PREFIX}.passphrase`, passphrase);
   }, [passphrase, storageReady]);
+  useEffect(() => {
+    if (storageReady) writeStoredString(`${STORAGE_PREFIX}.walletAccountCount`, walletAccountCount);
+  }, [storageReady, walletAccountCount]);
   useEffect(() => {
     if (storageReady) writeStoredString(`${STORAGE_PREFIX}.source`, source);
   }, [source, storageReady]);
@@ -90,6 +91,7 @@ export function useShowcaseWorkspaceDrafts() {
     sessionMaxValue,
     sessionSelectors,
     sessionTtlMinutes,
+    setWalletAccountCount,
     setActiveSection,
     setContractName,
     setFaucetAddress,
@@ -110,8 +112,14 @@ export function useShowcaseWorkspaceDrafts() {
     source,
     space,
     storageReady,
+    walletAccountCount,
     walletName,
   };
+}
+
+function readStoredDraft(key: string): string {
+  const value = readStoredString(key, '');
+  return value;
 }
 
 export type ShowcaseWorkspaceDrafts = ReturnType<typeof useShowcaseWorkspaceDrafts>;

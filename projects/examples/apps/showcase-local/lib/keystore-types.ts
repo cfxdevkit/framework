@@ -1,58 +1,42 @@
+// Core wallet/keystore types — canonical source is @cfxdevkit/client
+export type {
+  KeystoreStatus as KeystoreStatusResponse,
+  WalletSummary as KeystoreWalletSummary,
+  ActiveWalletSummary as KeystoreActiveWalletSummary,
+  WalletAccountSummary as KeystoreWalletAccountSummary,
+} from '@cfxdevkit/client';
+
+import type { ActiveWalletSummary, WalletAccountSummary, WalletSummary } from '@cfxdevkit/client';
+
+/** Thin ok+error response. */
 export interface KeystoreActionResponse {
   ok: boolean;
   error?: string;
-  walletCount?: number;
 }
 
-export interface KeystoreStatusResponse extends KeystoreActionResponse {
-  initialized: boolean;
-  locked: boolean;
-  walletCount: number;
-}
-
-export interface KeystoreWalletSummary {
-  id: string;
-  name: string;
-  active: boolean;
-  accountCount: number;
-  activeAccountIndex: number;
-  derivationBase: string;
-  firstAddress?: string;
-}
-
-export interface KeystoreActiveWalletSummary extends KeystoreWalletSummary {
-  address: string;
-  coreAddress?: string;
-  derivationPath: string;
-}
-
-export interface KeystoreWalletAccountSummary {
-  index: number;
-  derivationPath: string;
-  address: string;
-  coreAddress?: string;
-  active: boolean;
-}
-
+/** Response wrappers used by the showcase keystore client. */
 export interface KeystoreWalletsResponse extends KeystoreActionResponse {
-  wallets: KeystoreWalletSummary[];
+  wallets: WalletSummary[];
 }
 
 export interface KeystoreWalletAccountsResponse extends KeystoreActionResponse {
-  accounts: KeystoreWalletAccountSummary[];
+  accounts: WalletAccountSummary[];
 }
 
 export interface KeystoreWalletMutationResponse extends KeystoreActionResponse {
-  wallet?: KeystoreWalletSummary;
+  wallet?: WalletSummary;
 }
 
 export interface KeystoreActiveWalletResponse extends KeystoreActionResponse {
-  wallet: KeystoreActiveWalletSummary | null;
+  wallet: ActiveWalletSummary | null;
 }
 
+/** Request shapes for keystore mutations. */
 export interface CreateKeystoreWalletRequest {
   mnemonic?: string;
   name?: string;
+  accountCount?: number;
+  derivationBase?: string;
 }
 
 export interface RenameKeystoreWalletRequest {

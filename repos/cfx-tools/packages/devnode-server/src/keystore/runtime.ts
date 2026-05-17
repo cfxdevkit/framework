@@ -4,6 +4,7 @@ import type { SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
 import { createFileKeystore, initFileKeystore } from '@cfxdevkit/services/keystore-file';
 import type {
   ActiveWalletSummary,
+  KeystoreLifecyclePhase,
   KeystoreStatus,
   RevealedSecret,
   RevealKind,
@@ -44,10 +45,13 @@ export class KeystoreRuntime {
   }
 
   async status(): Promise<KeystoreStatus> {
+    const initialized = await this.#isInitialized();
+    const walletCount = this.#state?.wallets.length ?? 0;
     return {
+      phase: this.#phaseFor({ initialized, walletCount }),
       locked: this.#state === null,
-      initialized: await this.#isInitialized(),
-      walletCount: this.#state?.wallets.length ?? 0,
+      initialized,
+      walletCount,
     };
   }
 
@@ -84,8 +88,8 @@ export class KeystoreRuntime {
     return this.#requireUnlocked().wallets.map(toWalletSummary);
   }
 
-  async activeWallet(): Promise<ActiveWalletSummary | null> {
-    return loadActiveWalletSummary(this.#requireUnlocked());
+  async activeWallet(coreNetworkId?: number): Promise<ActiveWalletSummary | null> {
+    return loadActiveWalletSummary(this.#path, this.#requireUnlocked(), coreNetworkId);
   }
 
   async activeSigner() {
@@ -116,8 +120,13 @@ export class KeystoreRuntime {
     await this.#reloadWallets();
   }
 
-  async listAccounts(id: string): Promise<WalletAccountSummary[]> {
-    return listWalletAccounts(this.#requireUnlocked(), this.#findWallet(id));
+  async listAccounts(id: string, coreNetworkId?: number): Promise<WalletAccountSummary[]> {
+    return listWalletAccounts(
+      this.#path,
+      this.#requireUnlocked(),
+      this.#findWallet(id),
+      coreNetworkId,
+    );
   }
 
   async activateAccount(id: string, accountIndex: number): Promise<void> {
@@ -184,6 +193,18 @@ export class KeystoreRuntime {
   #requireUnlocked(): LoadedKeystoreState {
     if (this.#state === null) throw new Error('keystore is locked');
     return this.#state;
+  }
+
+  #phaseFor({
+    initialized,
+    walletCount,
+  }: {
+    initialized: boolean;
+    walletCount: number;
+  }): KeystoreLifecyclePhase {
+    if (!initialized) return 'blank';
+    if (this.#state === null) return 'locked';
+    return walletCount > 0 ? 'active-wallet' : 'unlocked';
   }
 
   async #isInitialized(): Promise<boolean> {

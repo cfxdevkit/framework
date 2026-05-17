@@ -3,9 +3,9 @@ export class HttpClient {
   readonly #baseUrl: string;
   readonly #fetch: typeof fetch;
 
-  constructor(baseUrl: string, fetchImpl: typeof fetch = globalThis.fetch) {
+  constructor(baseUrl: string, fetchImpl: typeof fetch = globalThis.fetch.bind(globalThis)) {
     this.#baseUrl = baseUrl.replace(/\/$/, '');
-    this.#fetch = fetchImpl;
+    this.#fetch = fetchImpl === globalThis.fetch ? fetchImpl.bind(globalThis) : fetchImpl;
   }
 
   async get<T>(path: string): Promise<T> {

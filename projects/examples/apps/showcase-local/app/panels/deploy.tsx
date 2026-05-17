@@ -1,17 +1,20 @@
 'use client';
 
+import { CopyButton } from '@cfxdevkit/example-showcase-ui';
 import { DEPLOY_SNIPPET } from '../../lib/showcase-guide';
 import {
   buttonRowStyle,
   DevnodeStat,
   errorStyle,
   noteStyle,
+  rowStyle,
   stackStyle,
   statsGridStyle,
 } from '../devnode/devnode-ui';
 import {
   CollapsibleCodeExample,
   displayNetwork,
+  formatDeployedAt,
   formatSpace,
   preStyle,
   type ShowcaseWorkspacePanelsProps,
@@ -76,6 +79,90 @@ export function DeployPanel(props: ShowcaseWorkspacePanelsProps) {
           {props.deployResult ? (
             <pre style={preStyle}>{JSON.stringify(props.deployResult, null, 2)}</pre>
           ) : null}
+
+          {/* Contract registry */}
+          <div>
+            <div
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: '#666',
+                marginBottom: '10px',
+              }}
+            >
+              Deployed contracts ({props.contracts.length})
+            </div>
+            {props.contracts.length > 0 ? (
+              <div style={stackStyle}>
+                {props.contracts.map((contract) => (
+                  <div
+                    key={contract.id}
+                    style={{
+                      border:
+                        props.selectedContractId === contract.id
+                          ? '1px solid #3b82f6'
+                          : '1px solid var(--cfx-color-border-default)',
+                      borderRadius: 'var(--cfx-radius-md)',
+                      display: 'grid',
+                      gap: 'var(--cfx-space-2)',
+                      padding: 'var(--cfx-space-3)',
+                      backgroundColor:
+                        props.selectedContractId === contract.id
+                          ? 'rgba(59,130,246,0.04)'
+                          : 'transparent',
+                    }}
+                  >
+                    <div style={rowStyle}>
+                      <strong>{contract.name}</strong>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            backgroundColor: '#2a2a2a',
+                            color: '#999',
+                          }}
+                        >
+                          {contract.network}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            backgroundColor: '#2a2a2a',
+                            color: '#999',
+                          }}
+                        >
+                          {contract.space === 'espace' ? 'eSpace' : 'Core'}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={noteStyle}>
+                      <code style={{ fontSize: '11px' }}>{contract.address}</code>
+                    </div>
+                    <div style={noteStyle}>Deployed: {formatDeployedAt(contract.deployedAt)}</div>
+                    <div style={buttonRowStyle}>
+                      <CopyButton label="copy address" text={contract.address} />
+                      <button
+                        type="button"
+                        disabled={props.selectedContractId === contract.id}
+                        onClick={() => props.onSelectContract(contract.id)}
+                      >
+                        {props.selectedContractId === contract.id ? 'Selected' : 'Select'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={noteStyle}>No contracts deployed yet.</div>
+            )}
+          </div>
+
           <CollapsibleCodeExample code={DEPLOY_SNIPPET} label="Deploy backend flow" />
         </div>
       </div>

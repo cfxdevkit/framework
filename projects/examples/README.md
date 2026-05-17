@@ -32,7 +32,9 @@ and light integration coverage for the public API surface.
   the same control plane expected by showcase, the VS Code extension, and MCP.
   The backend owns the active network profile per wallet, supports switching
   between `local`, `testnet`, and `mainnet`, keeps tracked contracts isolated by
-  wallet, and preserves generic ABI routes alongside tracked contract calls by id.
+  wallet root, preserves generic ABI routes alongside tracked contract calls by id,
+  and exposes derived-account inventory beneath the active wallet root. Destructive
+  reset remains operator-only; see [`apps/showcase-local/RESET.md`](apps/showcase-local/RESET.md).
 
 - [`apps/showcase-backend/`](apps/showcase-backend/) — Tier 1 backend service used by
   the stack example.
@@ -62,8 +64,10 @@ The gateway presents the examples as a single path through the current codebase:
   session-key delegation, compiler endpoints, contract deployment, and local
   RPC proxying.
 3. `/showcase-local/` — shared backend control plane: wallet-scoped keystore,
-  local/public network profile switching, tracked contract persistence, deploy,
-  read, write, and tracked contract call-by-id flows.
+  wallet-root and derived-account management, local/public network profile
+  switching, tracked contract persistence, deploy, read, write, and tracked
+  contract call-by-id flows. Reset is a manual operator workflow rather than a
+  browser action.
 4. `/browser/` — external wallet coverage: Fluent Core, non-Fluent eSpace
   providers, wagmi, raw injected provider diagnostics, signing, and transfer
   flows.

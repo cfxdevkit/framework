@@ -19,6 +19,8 @@ In practice this means:
 
 That shared backend contract now includes a few important runtime guarantees:
 
+- keystore terminology stays shared: wallet roots are mnemonic roots, and accounts
+	are derived child indexes beneath the active wallet root
 - network profile is wallet-scoped and backend-owned
 - `local` versus `public` mode is derived from the active backend profile,
 	not from MCP-side tool state
@@ -26,6 +28,12 @@ That shared backend contract now includes a few important runtime guarantees:
 	by showcase-local and the VS Code extension
 - tracked contracts persist per wallet and can be addressed directly through
 	`POST /contracts/:id/call` in addition to generic ABI read and write routes
+
+Reset and recovery follow the same shared rule as showcase-local and the VS Code
+extension: destructive reset is operator-only. MCP tools may surface backend
+status and guidance, but they must not implement a passwordless reset mutation;
+operators stop the runtime and remove the configured keystore file plus its
+matching `.runtime` directory when a blank-state reset is required.
 
 The current package still exposes a typed tool registry plus an operation ledger scaffold. Runtime handlers and docs need to keep converging on the shared backend contract in the next implementation pass.
 

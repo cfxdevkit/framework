@@ -173,6 +173,13 @@ export function DevnodePanel(props: ShowcaseWorkspacePanelsProps) {
             <button
               type="button"
               disabled={props.devnodeBusy !== null}
+              onClick={props.onWipeDevnode}
+            >
+              {props.devnodeBusy === 'wipe' ? 'Wiping…' : 'Wipe node data'}
+            </button>
+            <button
+              type="button"
+              disabled={props.devnodeBusy !== null}
               onClick={props.onRefreshDevnode}
             >
               {props.devnodeBusy === 'refresh' ? 'Refreshing…' : 'Refresh'}
@@ -200,6 +207,10 @@ export function DevnodePanel(props: ShowcaseWorkspacePanelsProps) {
             Starting the local node now uses the selected backend node profile and its deterministic
             data directory. Current RPC for the selected space:{' '}
             <code>{props.localRpc ?? 'not running'}</code>
+          </div>
+          <div style={noteStyle}>
+            Wipe removes the active local node data directory through the backend before the next
+            start or restart.
           </div>
 
           {props.devnodeAccounts.length > 0 ? (

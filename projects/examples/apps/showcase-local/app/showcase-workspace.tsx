@@ -49,6 +49,16 @@ export function ShowcaseWorkspace() {
   }, [drafts.activeSection, drafts.network, drafts.setActiveSection]);
 
   useEffect(() => {
+    if (
+      keystore.keystorePhase !== null &&
+      keystore.keystorePhase !== 'active-wallet' &&
+      drafts.activeSection !== 'keystore'
+    ) {
+      drafts.setActiveSection('keystore');
+    }
+  }, [drafts.activeSection, drafts.setActiveSection, keystore.keystorePhase]);
+
+  useEffect(() => {
     if (!activePanel) {
       drafts.setActiveSection('setup');
     }
@@ -59,6 +69,10 @@ export function ShowcaseWorkspace() {
   }
 
   const selectSection = (section: WorkspaceSectionId) => {
+    if (keystore.keystorePhase !== null && keystore.keystorePhase !== 'active-wallet') {
+      drafts.setActiveSection('keystore');
+      return;
+    }
     if (section === 'devnode' && drafts.network !== 'local') {
       drafts.setActiveSection('setup');
       return;

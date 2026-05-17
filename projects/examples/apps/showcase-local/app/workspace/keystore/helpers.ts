@@ -2,7 +2,7 @@
 
 import type { DevnodeStatusResponse } from '../../../lib/devnode-types';
 import { isErrorWithPayload } from '../../devnode/devnode-client';
-import { lockKeystore } from '../../keystore/keystore-client';
+import { lockKeystore } from '../../keystore/client';
 import type { ShowcaseWorkspaceDrafts } from '../drafts';
 import type { LocalFundResponse } from '../shared';
 import type { ShowcaseWorkspaceKeystoreRuntime } from './runtime';
@@ -10,7 +10,7 @@ import type { ShowcaseWorkspaceKeystoreRuntime } from './runtime';
 type WorkspaceLog = (message: string, level?: 'error') => void;
 
 export async function runDevnodeAction(params: {
-  action: 'start' | 'restart' | 'stop' | 'mine';
+  action: 'start' | 'restart' | 'stop' | 'wipe' | 'mine';
   log: WorkspaceLog;
   request: () => Promise<DevnodeStatusResponse>;
   runtime: ShowcaseWorkspaceKeystoreRuntime;
