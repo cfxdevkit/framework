@@ -23,6 +23,11 @@ jobs:
   build:
     name: Build and push docs image
     runs-on: ubuntu-latest
+    env:
+      # Docker actions (login, metadata, setup-buildx, build-push) still ship
+      # with a Node 20 runtime. Opt into Node 24 now to silence the deprecation
+      # warnings and stay ahead of the June 2026 forced migration.
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v6

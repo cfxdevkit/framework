@@ -18,6 +18,8 @@ fileGroups:
 tasks:
   build:
     command: 'pnpm exec vite build'
+    deps:
+      - '^:build'
     inputs:
       - '@group(sources)'
       - '@group(configs)'
@@ -29,6 +31,8 @@ tasks:
 
   typecheck:
     command: 'pnpm exec tsc --noEmit'
+    deps:
+      - '^:build'
     inputs:
       - '@group(sources)'
       - '@group(configs)'
