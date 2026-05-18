@@ -1,15 +1,13 @@
 name: Build docs image
 
 on:
+  # Run manually to test the pipeline or force a fresh image
   workflow_dispatch: {}
-  push:
-    branches:
-      - dev
-      - main
-    paths:
-      - repos/cfx-tools/packages/docs-site/**
-      - .github/workflows/build-docs.yml
-      - pnpm-lock.yaml
+  # Build and push a new image on every published GitHub release so the
+  # docs image always matches the released version, not every dev commit
+  release:
+    types:
+      - published
 
 permissions:
   contents: read

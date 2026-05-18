@@ -4,6 +4,17 @@ layer: 'application'
 language: 'typescript'
 
 tasks:
+  build:
+    command: 'next build'
+    local: true
+    inputs:
+      - 'app/**/*'
+      - 'package.json'
+      - 'next.config.*'
+      - 'tsconfig*.json'
+    outputs:
+      - '.next'
+
   lint:
     command: 'pnpm exec biome check app'
     inputs:
