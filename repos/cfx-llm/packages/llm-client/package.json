@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/llm-client",
-  "version": "0.0.0",
+  "version": "2.0.0",
   "private": false,
   "description": "Typed provider-agnostic LLM client for Conflux DevKit automation.",
   "type": "module",

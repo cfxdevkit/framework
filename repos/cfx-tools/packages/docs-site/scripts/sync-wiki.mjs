@@ -24,6 +24,14 @@ function toMdxSafeContent(content) {
 }
 
 async function main() {
+  // Skip gracefully if the wiki source directory hasn't been generated yet
+  try {
+    await fs.access(WIKI_SRC);
+  } catch {
+    console.log(`Wiki source not found at ${WIKI_SRC} — skipping sync.`);
+    return;
+  }
+
   const files = await fs.readdir(WIKI_SRC);
   const mdFiles = files.filter((f) => f.endsWith('.md') && !SKIP.includes(f));
 

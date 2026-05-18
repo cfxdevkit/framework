@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/core",
-  "version": "0.0.0",
+  "version": "2.0.0",
   "private": false,
   "description": "Conflux RPC client, contract I/O, addresses, units, errors.",
   "type": "module",
