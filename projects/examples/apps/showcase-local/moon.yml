@@ -6,7 +6,6 @@ language: 'typescript'
 tasks:
   build:
     command: 'next build'
-    local: true
     inputs:
       - 'app/**/*'
       - 'package.json'
@@ -14,6 +13,8 @@ tasks:
       - 'tsconfig*.json'
     outputs:
       - '.next'
+    options:
+      runInCI: false
 
   lint:
     command: 'pnpm exec biome check app'
