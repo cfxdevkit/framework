@@ -48,7 +48,7 @@
     "@cfxdevkit/core": "workspace:^",
     "@cfxdevkit/executor": "workspace:^",
     "@cfxdevkit/protocol": "workspace:^",
-    "better-sqlite3": "^11.7.0",
+    "better-sqlite3": "^12.10.0",
     "drizzle-orm": "^0.45.2",
     "viem": "^2.21.0"
   },
