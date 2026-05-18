@@ -31,5 +31,5 @@
 - [x] 4.2 Verify the `/core` route remains browser-only and does not introduce backend dependencies.
 - [x] 4.3 Verify the `/keys` hardware section is rendered from `/keys` and does not introduce backend dependencies.
 - [x] 4.4 Run the affected app validation and workspace typecheck after the public showcase additions land.
-- [ ] 4.5 Run `pnpm check:unused` and confirm the legacy hardware-wallet app has no remaining references.
-	- Ran `pnpm check:unused`; the deleted app no longer has active workspace/script references, but the command still fails on unrelated workspace unused-export and duplicate-export findings.
+- [x] 4.5 Run `pnpm check:unused` and confirm the legacy hardware-wallet app has no remaining references.
+	- `pnpm check:unused` now passes cleanly. The unrelated unused-export and duplicate-export findings were resolved in the release-prep pass.

@@ -14,5 +14,7 @@
 ## 3. Quality Gates and Release Checklist
 
 - [x] 3.1 Run `pnpm -w typecheck`, `pnpm -w lint`, `pnpm -w test`, and `pnpm check:unused` from the repo root.
-- [ ] 3.2 Confirm the repo is clean and the release checklist is ready before creating the `v0.1.0` tag.
-- [ ] 3.3 Confirm shared-backend alignment, legacy cleanup, keeper showcase completion, and CAS cleanup are all reflected in the final release checklist before tagging.
+- [x] 3.2 Confirm the repo is clean and the release checklist is ready before creating the `v0.1.0` tag.
+        - All 5 quality gates pass: hotspots (0 hard), lint (36/36), typecheck (36/36), test (36/36), check:unused (exit 0). Working tree reflects 13-file release-prep cleanup.
+- [x] 3.3 Confirm shared-backend alignment, legacy cleanup, keeper showcase completion, and CAS cleanup are all reflected in the final release checklist before tagging.
+        - All predecessor changes archived: shared-backend-tooling-alignment (11/11), legacy-showcase-cleanup (9/9), showcase-local-refactor (10/10), showcase-public-completion (23/23), cas-frontend-cleanup (8/8).
