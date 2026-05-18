@@ -1,6 +1,7 @@
 FROM node:24-bookworm-slim AS builder
 
-ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
+    NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
@@ -8,7 +9,11 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 COPY . .
 
 RUN pnpm install --frozen-lockfile --filter @cfxdevkit/docs-site...
-RUN pnpm --filter @cfxdevkit/docs-site build
+
+# Run next build from the package directory so Next.js/Turbopack can locate
+# the 'next' package via local node_modules (avoids workspace root confusion)
+WORKDIR /app/repos/cfx-tools/packages/docs-site
+RUN NEXT_TELEMETRY_DISABLED=1 pnpm build
 
 FROM node:24-bookworm-slim AS runner
 
