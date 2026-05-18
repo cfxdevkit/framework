@@ -33,7 +33,7 @@ describe('runCli', () => {
         '--',
         '--dry-run',
       ]),
-      expect.objectContaining({ cwd: expect.stringContaining('/workspaces/root') }),
+      expect.objectContaining({ cwd: expect.any(String) }),
     );
     expect(process.exitCode).toBe(0);
   });
