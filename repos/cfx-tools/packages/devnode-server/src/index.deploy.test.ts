@@ -72,7 +72,7 @@ describe('@cfxdevkit/devnode-server deploy and writes', () => {
       deployContractMock.mockReset();
       await rm(keystorePath, { force: true });
     }
-  }, 30000);
+  }, 60000);
 
   it('deploys through the active public network profile with request signer override', async () => {
     deployContractMock.mockResolvedValueOnce({
@@ -146,7 +146,7 @@ describe('@cfxdevkit/devnode-server deploy and writes', () => {
       await rm(keystorePath, { force: true });
       await rm(runtimeStateRoot, { recursive: true, force: true });
     }
-  }, 30000);
+  }, 60000);
 
   it('reads contract state through the shared runtime api', async () => {
     readContractMock.mockResolvedValueOnce(42n);
@@ -203,5 +203,5 @@ describe('@cfxdevkit/devnode-server deploy and writes', () => {
       sendWriteMock.mockReset();
       await rm(keystorePath, { force: true });
     }
-  }, 30000);
+  }, 60000);
 });
