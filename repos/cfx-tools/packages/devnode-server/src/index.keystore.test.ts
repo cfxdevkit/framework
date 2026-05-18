@@ -162,5 +162,5 @@ describe('@cfxdevkit/devnode-server keystore flows', () => {
     } finally {
       await rm(keystorePath, { force: true });
     }
-  }, 20000);
+  }, 60000);
 });

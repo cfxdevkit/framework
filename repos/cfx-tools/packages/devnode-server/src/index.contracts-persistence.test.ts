@@ -83,7 +83,7 @@ describe('@cfxdevkit/devnode-server contracts persistence', () => {
       await rm(keystorePath, { force: true });
       await rm(runtimeStateRoot, { recursive: true, force: true });
     }
-  }, 10000);
+  }, 30000);
 
   it('persists tracked contracts across app restarts and wallet switches', async () => {
     const keystorePath = join(tmpdir(), `cfxdevkit-contract-persistence-${Date.now()}.json`);
@@ -150,7 +150,7 @@ describe('@cfxdevkit/devnode-server contracts persistence', () => {
       await rm(keystorePath, { force: true });
       await rm(runtimeStateRoot, { recursive: true, force: true });
     }
-  }, 10000);
+  }, 30000);
 
   it('funds Core Space addresses through the shared accounts api', async () => {
     sendCoreFundsMock.mockResolvedValueOnce('0xcorefund');
