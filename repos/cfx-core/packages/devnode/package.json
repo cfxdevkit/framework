@@ -27,7 +27,9 @@
     "API.md",
     "STRUCTURE.md"
   ],
+  "sideEffects": false,
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "start": "node ./dist/cli.js",
     "test": "vitest run",

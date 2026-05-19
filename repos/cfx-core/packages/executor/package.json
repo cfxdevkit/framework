@@ -20,7 +20,9 @@
     "API.md",
     "STRUCTURE.md"
   ],
+  "sideEffects": false,
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",

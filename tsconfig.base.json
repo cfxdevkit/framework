@@ -1,3 +1,17 @@
 {
-  "extends": "./repos/cfx-config/packages/tsconfig/base.json"
+  "extends": "./repos/cfx-config/packages/tsconfig/base.json",
+  "compilerOptions": {
+    "paths": {
+      "@cfxdevkit/core": ["./repos/cfx-core/packages/core/src/index.ts"],
+      "@cfxdevkit/core/*": ["./repos/cfx-core/packages/core/src/*"],
+      "@cfxdevkit/protocol": ["./repos/cfx-core/packages/protocol/src/index.ts"],
+      "@cfxdevkit/protocol/*": ["./repos/cfx-core/packages/protocol/src/*"],
+      "@cfxdevkit/executor": ["./repos/cfx-core/packages/executor/src/index.ts"],
+      "@cfxdevkit/executor/*": ["./repos/cfx-core/packages/executor/src/*"],
+      "@cfxdevkit/devnode": ["./repos/cfx-core/packages/devnode/src/index.ts"],
+      "@cfxdevkit/devnode/*": ["./repos/cfx-core/packages/devnode/src/*"],
+      "@cfxdevkit/testing": ["./repos/cfx-core/packages/testing/src/index.ts"],
+      "@cfxdevkit/testing/*": ["./repos/cfx-core/packages/testing/src/*"]
+    }
+  }
 }

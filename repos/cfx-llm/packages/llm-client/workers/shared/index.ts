@@ -166,6 +166,22 @@ export const QUALITY_GATES = [
     timeoutMs: 180000,
   },
   {
+    id: 'cfx-core:workspace',
+    label: 'cfx-core workspace',
+    cmd: 'node',
+    args: ['repos/cfx-core/scripts/validate-workspace.mjs'],
+    required: true,
+    timeoutMs: 15000,
+  },
+  {
+    id: 'cfx-core:deps',
+    label: 'cfx-core deps',
+    cmd: 'node',
+    args: ['repos/cfx-core/scripts/check-deps.mjs'],
+    required: true,
+    timeoutMs: 15000,
+  },
+  {
     id: 'build',
     label: 'Build',
     cmd: 'pnpm',
