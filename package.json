@@ -59,9 +59,9 @@
     "gitnexus": "^1.6.3",
     "knip": "^5.61.3",
     "typescript": "^6.0.3",
-    "vite": "^8.0.12",
-    "vite-plugin-dts": "^5.0.0",
-    "vitest": "^4.1.6"
+    "vite": "^8.0.13",
+    "vite-plugin-dts": "^5.0.1",
+    "vitest": "^4.1.7"
   },
   "pnpm": {
     "overrides": {
