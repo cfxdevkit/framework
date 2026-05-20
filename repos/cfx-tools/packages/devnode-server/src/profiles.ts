@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import type { DevNodeConfig } from '@cfxdevkit/devnode';
-import type { KeystoreService, WalletSummary } from './keystore.js';
+import type { KeystoreService, WalletSummary } from '@cfxdevkit/keystore-server';
 
 export interface NodeProfileSummary {
   id: string;

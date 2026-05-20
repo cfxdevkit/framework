@@ -1,9 +1,9 @@
 import { deployContract } from '@cfxdevkit/contracts/deploy';
+import type { KeystoreService } from '@cfxdevkit/keystore-server';
 import { Hono } from 'hono';
 import type { Abi } from 'viem';
 import { type ContractRegistry, chainIdForContractNetwork } from '../contracts.js';
 import type { DevnodeServerController } from '../controller.js';
-import type { KeystoreService } from '../keystore.js';
 import type { NetworkState } from '../network.js';
 import {
   createRuntimeClient,

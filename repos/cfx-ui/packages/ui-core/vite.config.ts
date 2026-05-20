@@ -11,6 +11,9 @@ export default defineConfig({
     lib: {
       entry: {
         index: 'src/index.ts',
+        network: 'src/network.ts',
+        tokens: 'src/tokens.ts',
+        wallet: 'src/wallet.ts',
       },
       formats: ['es'],
       fileName: (_format, entryName) => `${entryName}.js`,

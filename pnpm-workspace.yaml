@@ -3,6 +3,7 @@ packages:
   - "repos/cfx-meta/packages/*"
   - "repos/*/packages/*"
   - "repos/cfx-tools/devtools/*"
+  - "repos/cfx-tools/infra/*"
   - "repos/cfx-tools/templates/*"
   - "projects/*/apps/*"
   - "projects/*/packages/*"

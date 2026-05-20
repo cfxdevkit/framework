@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { completeCommitAgent, git, readContextFile } from '../completion/index.ts';
@@ -178,7 +178,22 @@ export async function confirmPrompt(question) {
 
 export async function executeCommit(subject, body, filesToStage) {
   if (filesToStage.length === 0) throw new Error('No files selected for staging.');
-  await execFileAsync('git', ['add', '--', ...filesToStage], { cwd: root });
+  // Skip files that no longer exist on disk (already staged as deletions via `git rm`).
+  const toAdd = (
+    await Promise.all(
+      filesToStage.map(async (f) => {
+        try {
+          await access(join(root, f));
+          return f;
+        } catch {
+          return null;
+        }
+      }),
+    )
+  ).filter((f): f is string => f !== null);
+  if (toAdd.length > 0) {
+    await execFileAsync('git', ['add', '--', ...toAdd], { cwd: root });
+  }
   const messageArgs = body ? ['-m', subject, '-m', body] : ['-m', subject];
   await execFileAsync('git', ['commit', ...messageArgs], { cwd: root });
   return git(['rev-parse', '--short', 'HEAD']);

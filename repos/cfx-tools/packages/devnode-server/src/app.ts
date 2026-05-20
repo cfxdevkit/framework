@@ -1,9 +1,13 @@
 import { join, resolve } from 'node:path';
+import {
+  createKeystoreRoutes,
+  type KeystoreResetGuidance,
+  KeystoreService,
+} from '@cfxdevkit/keystore-server';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { ContractRegistry } from './contracts.js';
 import { DevnodeServerController } from './controller.js';
-import { type KeystoreResetGuidance, KeystoreService } from './keystore.js';
 import { NetworkState } from './network.js';
 import { NodeProfileService } from './profiles.js';
 import { createAccountsRoutes } from './routes/accounts.js';
@@ -11,7 +15,6 @@ import { createBootstrapRoutes } from './routes/bootstrap.js';
 import { createCompilerRoutes } from './routes/compiler.js';
 import { createContractsRoutes } from './routes/contracts.js';
 import { createDeployRoutes } from './routes/deploy.js';
-import { createKeystoreRoutes } from './routes/keystore.js';
 import { createMiningRoutes } from './routes/mining.js';
 import { createNetworkRoutes } from './routes/network.js';
 import { createNodeProfileRoutes } from './routes/node-profile.js';

@@ -11,6 +11,12 @@ export default defineConfig({
     lib: {
       entry: {
         index: 'src/index.ts',
+        shell: 'src/shell.ts',
+        panel: 'src/panel.ts',
+        form: 'src/form.ts',
+        'data-display': 'src/data-display.ts',
+        feedback: 'src/feedback.ts',
+        wallet: 'src/wallet.ts',
       },
       formats: ['es'],
       fileName: (_format, entryName) => `${entryName}.js`,

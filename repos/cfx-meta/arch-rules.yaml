@@ -23,7 +23,8 @@
         "repos/cfx-core/packages/**",
         "repos/cfx-keys/packages/**",
         "repos/cfx-ui/packages/**",
-        "repos/cfx-solidity/packages/**"
+        "repos/cfx-solidity/packages/abis",
+        "repos/cfx-solidity/packages/contracts"
       ]
     },
     {
@@ -34,7 +35,7 @@
       "description": "Tier 1 developer platform packages. May runtime-import framework (Tier 0). Must not runtime-import domains or projects. May use workspace:* for framework deps during pre-release.",
       "paths": [
         "repos/cfx-tools/packages/**",
-        "repos/cfx-llm/packages/**"
+        "repos/cfx-tools/infra/**"
       ]
     },
     {

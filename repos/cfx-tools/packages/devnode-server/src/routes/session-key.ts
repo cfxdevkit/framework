@@ -1,9 +1,9 @@
 import type { Address, Hex, Signer } from '@cfxdevkit/core';
+import type { KeystoreService } from '@cfxdevkit/keystore-server';
 import type { Capability } from '@cfxdevkit/services';
 import { canonicalAttestationMessage, createSessionKey } from '@cfxdevkit/wallet/session-key';
 import { Hono } from 'hono';
 import { verifyMessage } from 'viem';
-import type { KeystoreService } from '../keystore.js';
 
 interface CapabilityBody {
   chains?: number[];

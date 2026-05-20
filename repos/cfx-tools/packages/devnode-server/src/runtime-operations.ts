@@ -10,8 +10,8 @@ import {
   type Signer,
   signerFromPrivateKey,
 } from '@cfxdevkit/core';
+import type { KeystoreService } from '@cfxdevkit/keystore-server';
 import type { DevnodeServerController } from './controller.js';
-import type { KeystoreService } from './keystore.js';
 import {
   defaultNetworkChainIds,
   defaultNetworkConfig,
