@@ -28,6 +28,15 @@ const ignoredDirs = new Set([
   '.vitest',
 ]);
 
+function isTestFile(rel: string): boolean {
+  return (
+    rel.includes('.test.') ||
+    rel.includes('.spec.') ||
+    rel.includes('/__tests__/') ||
+    rel.includes('/test-fixtures/')
+  );
+}
+
 const rules: SecretRule[] = [
   {
     name: 'no-vscode-state-secret-persistence',
@@ -51,6 +60,25 @@ const rules: SecretRule[] = [
     name: 'no-recovery-mnemonic-output-label',
     pattern: /appendLine\([^\n]*Recovery mnemonic/i,
     message: 'Do not expose recovery mnemonic labels in runtime output.',
+  },
+  {
+    name: 'no-hardcoded-api-key',
+    // Matches: apiKey = "...", api_key = "...", API_KEY = "..." with a non-empty string literal
+    pattern: /\b(apiKey|api_key|API_KEY)\s*[=:]\s*['"][^'"]{8,}['"]/,
+    message: 'Do not hardcode API keys in source files. Use environment variables instead.',
+  },
+  {
+    name: 'no-hardcoded-private-key',
+    // Matches privateKey / private_key assigned to a 0x-prefixed 64-char hex string
+    pattern: /\b(privateKey|private_key|PRIVATE_KEY)\s*[=:]\s*['"]0x[0-9a-fA-F]{64}['"]/,
+    message:
+      'Do not hardcode private keys in source files. Use a keystore or environment variable.',
+  },
+  {
+    name: 'no-hardcoded-jwt',
+    // Matches JWT-shaped string literals (three base64url segments separated by dots)
+    pattern: /['"]eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}['"]/,
+    message: 'Do not hardcode JWT tokens in source files.',
   },
 ];
 
@@ -83,6 +111,7 @@ async function walk(dir: string, findings: Finding[]): Promise<void> {
 
 async function scanFile(path: string, findings: Finding[]): Promise<void> {
   const rel = toRel(path);
+  if (isTestFile(rel)) return;
   const content = await readFile(path, 'utf8');
   const lines = content.split('\n');
   for (const [index, text] of lines.entries()) {

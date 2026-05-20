@@ -24,6 +24,7 @@
     "STRUCTURE.md"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -50,5 +51,6 @@
     "@cfxdevkit/create": "workspace:^",
     "@cfxdevkit/devnode-server": "workspace:^",
     "viem": "^2.0.0"
-  }
+  },
+  "sideEffects": false
 }

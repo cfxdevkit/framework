@@ -49,6 +49,7 @@
     "STRUCTURE.md"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -77,5 +78,6 @@
   },
   "dependencies": {
     "@cfxdevkit/core": "workspace:^"
-  }
+  },
+  "sideEffects": false
 }

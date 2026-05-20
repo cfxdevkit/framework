@@ -3,6 +3,7 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join, relative } from 'node:path';
 import { promisify } from 'node:util';
 import { root } from '../runtime.js';
+import { renderMarkdownReport } from './hotspots-render.js';
 
 const execFileAsync = promisify(execFile);
 const artifactsRoot = join(root, 'artifacts', 'llm', 'reports');
@@ -230,40 +231,6 @@ export function renderConsoleReport(report: HotspotReport): string {
   }
   lines.push('', 'Reports: artifacts/llm/reports/code-hotspots.{md,json}');
   return lines.join('\n');
-}
-
-function renderMarkdownReport(report: HotspotReport): string {
-  const lines = [
-    '# Code Hotspots',
-    '',
-    `Generated: ${report.generatedAt}`,
-    '',
-    `Status: ${report.status}`,
-    '',
-    `Policy: ${report.policy.source} file budget (${report.policy.softFileLineLimit} soft, ${report.policy.hardFileLineLimit} hard).`,
-    `Churn window: ${report.policy.churnWindow}.`,
-    '',
-    '## Summary',
-    '',
-    `- Scanned source files: ${report.totals.scannedFiles}`,
-    `- Hard violations: ${report.totals.hardViolations}`,
-    `- Soft warnings: ${report.totals.softWarnings}`,
-    '',
-    '## Hard Violations',
-    '',
-  ];
-  lines.push(...renderFileRows(report.hardViolations), '', '## Soft Warnings', '');
-  lines.push(...renderFileRows(report.softWarnings), '', '## Top Hotspots', '');
-  lines.push(...renderFileRows(report.hotspots));
-  return `${lines.join('\n')}\n`;
-}
-
-function renderFileRows(files: readonly HotspotRecord[]): string[] {
-  if (!files.length) return ['No findings.'];
-  return files.map(
-    (file) =>
-      `- ${file.path}: ${file.lines} lines, ${file.commits} commit(s), +${file.addedLines}/-${file.deletedLines}, score ${file.hotspotScore}`,
-  );
 }
 
 function isGeneratedPath(path: string): boolean {

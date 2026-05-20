@@ -41,6 +41,7 @@
     "STRUCTURE.md"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -68,5 +69,6 @@
   "dependencies": {
     "@cfxdevkit/core": "workspace:^",
     "viem": "^2.21.0"
-  }
+  },
+  "sideEffects": false
 }

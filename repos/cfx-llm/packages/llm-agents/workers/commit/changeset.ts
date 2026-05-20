@@ -67,7 +67,10 @@ export async function writeChangesetFile(plan) {
   }
   const changesetDir = join(root, '.changeset');
   await mkdir(changesetDir, { recursive: true });
-  const filename = `${slugify(plan.changesets.map((entry) => entry.packageName).join('-'))}.md`;
+  const pkgNames = plan.changesets.map((entry) => entry.packageName);
+  const slug = slugify(pkgNames.join('-'));
+  const safeSlug = slug.length > 100 ? `multi-package-${pkgNames.length}-changeset` : slug;
+  const filename = `${safeSlug}.md`;
   const relPath = `.changeset/${filename}`;
   const path = join(root, relPath);
   const uniquePath = await nextAvailablePath(path);

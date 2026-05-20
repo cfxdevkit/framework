@@ -18,6 +18,7 @@
     "dist"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -39,5 +40,6 @@
   "peerDependencies": {
     "react": "^19.2.5",
     "wagmi": "^3.6.9"
-  }
+  },
+  "sideEffects": false
 }

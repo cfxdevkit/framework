@@ -22,6 +22,9 @@ tasks:
       - '/projects/**/*'
       - '/scripts/**/*'
       - 'src/**/*'
+    outputs:
+      - '/artifacts/llm/reports/code-hotspots.json'
+      - '/artifacts/llm/reports/code-hotspots.md'
     options:
       cache: false
       runFromWorkspaceRoot: false
@@ -46,6 +49,9 @@ tasks:
       - '/repos/**/package.json'
       - '/projects/**/package.json'
       - 'src/**/*'
+    outputs:
+      - '/artifacts/llm/reports/docs-alignment.json'
+      - '/artifacts/llm/reports/docs-alignment.md'
     options:
       cache: false
       runFromWorkspaceRoot: false
@@ -63,6 +69,8 @@ tasks:
       - '/repos/**/*'
       - '/scripts/**/*'
       - 'src/**/*'
+    outputs:
+      - '/artifacts/llm/corpus/**/*'
     options:
       cache: false
       runFromWorkspaceRoot: false
@@ -85,6 +93,24 @@ tasks:
       - '/pnpm-workspace.yaml'
       - '/.moon/workspace.yml'
       - 'src/**/*'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
+  check-report:
+    command: 'pnpm exec tsx src/bin/check-report.ts'
+    inputs:
+      - '/repos/**/*'
+      - '/projects/**/*'
+      - '/scripts/**/*'
+      - '/**/*.md'
+      - '/.github/workflows/**/*'
+      - '/.moon/workspace.yml'
+      - '/infrastructure/**/*'
+      - 'src/**/*'
+    outputs:
+      - '/artifacts/llm/reports/arch-check-report.json'
+      - '/artifacts/llm/reports/arch-check-report.md'
     options:
       cache: false
       runFromWorkspaceRoot: false

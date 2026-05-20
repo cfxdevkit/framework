@@ -66,7 +66,7 @@ Current implementation:
 ┌─────────────────────────────────────────────────────────────┐
 │  projects/      apps, examples, project-local packages      │  Tier 3
 ├─────────────────────────────────────────────────────────────┤
-│  repos/cfx-domain  game-engine │ automation │ hardware      │  Tier 2
+│  repos/cfx-domain  game-engine │ automation                  │  Tier 2
 ├─────────────────────────────────────────────────────────────┤
 │  repos/cfx-tools   mcp │ scaffold │ cli │ editor tooling   │  Tier 1
 ├─────────────────────────────────────────────────────────────┤

@@ -31,6 +31,7 @@
     "STRUCTURE.md"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -51,5 +52,8 @@
   },
   "peerDependencies": {
     "react": "^19.2.5"
-  }
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

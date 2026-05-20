@@ -53,6 +53,7 @@
     "STRUCTURE.md"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -82,5 +83,6 @@
     "@cfxdevkit/core": "workspace:^",
     "@cfxdevkit/react": "workspace:^",
     "@cfxdevkit/ui-core": "workspace:^"
-  }
+  },
+  "sideEffects": false
 }

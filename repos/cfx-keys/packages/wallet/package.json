@@ -61,6 +61,7 @@
     "STRUCTURE.md"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -84,5 +85,6 @@
     "@cfxdevkit/services": "workspace:^",
     "@noble/hashes": "^2.2.0",
     "viem": "^2.21.0"
-  }
+  },
+  "sideEffects": false
 }

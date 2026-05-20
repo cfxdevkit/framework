@@ -25,6 +25,7 @@
     "STRUCTURE.md"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "llm": "tsx src/bin.ts",
     "test": "vitest run --passWithNoTests",
@@ -47,5 +48,6 @@
     "vite": "^8.0.12",
     "vite-plugin-dts": "^5.0.0",
     "vitest": "^4.1.6"
-  }
+  },
+  "sideEffects": false
 }

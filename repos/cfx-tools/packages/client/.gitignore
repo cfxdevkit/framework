@@ -1,0 +1,18 @@
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Test
+coverage/
+.vitest/
+
+# Dependencies
+node_modules/
+
+# Vite
+.vite/
+
+# Logs
+*.log
+pnpm-debug.log*

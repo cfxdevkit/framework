@@ -7,5 +7,9 @@
   "engines": {
     "node": ">=22",
     "pnpm": ">=10"
+  },
+  "scripts": {
+    "validate:workspace": "node scripts/validate-workspace.mjs",
+    "validate:deps": "node scripts/check-deps.mjs"
   }
 }

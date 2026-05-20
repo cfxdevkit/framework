@@ -25,6 +25,7 @@
     "STRUCTURE.md"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -41,5 +42,6 @@
     "vite": "^8.0.12",
     "vite-plugin-dts": "^5.0.0",
     "vitest": "^4.1.6"
-  }
+  },
+  "sideEffects": false
 }

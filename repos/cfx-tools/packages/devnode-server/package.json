@@ -28,6 +28,7 @@
     "STRUCTURE.md"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "start": "node ./dist/cli.js serve",
     "test": "vitest run",
@@ -56,5 +57,6 @@
     "vite": "^8.0.10",
     "vite-plugin-dts": "^5.0.0",
     "vitest": "^4.1.5"
-  }
+  },
+  "sideEffects": false
 }

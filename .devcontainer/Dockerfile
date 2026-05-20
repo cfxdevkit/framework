@@ -53,6 +53,9 @@ USER node
 # Install moon via native installer so `moon upgrade` works (~/.moon is the required location)
 RUN curl -fsSL https://moonrepo.dev/install/moon.sh | bash
 
+# Install openspec CLI globally so it is available on PATH after container rebuild
+RUN npm install -g openspec@latest
+
 ENV PATH=/home/node/.moon:${PATH}
 
 RUN pnpm config set store-dir /home/node/.local/share/pnpm/store

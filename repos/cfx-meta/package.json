@@ -1,0 +1,15 @@
+{
+  "name": "@cfxdevkit/repo-cfx-meta",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cross-cutting architecture rules and meta tooling.",
+  "packageManager": "pnpm@10.6.0",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "validate:workspace": "node scripts/validate-workspace.mjs",
+    "validate:deps": "node scripts/check-deps.mjs"
+  }
+}

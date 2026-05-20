@@ -243,5 +243,8 @@ async function collectPackageSourceFiles(pkg: PackageInfo): Promise<string[]> {
 
 function isGeneratedSource(path: string): boolean {
   const rel = toRel(path);
-  return rel.includes('/generated.') || rel.includes('/generated/');
+  const basename = rel.split('/').at(-1) ?? '';
+  return (
+    rel.includes('/generated/') || rel.includes('/generated.') || basename.includes('.generated.')
+  );
 }

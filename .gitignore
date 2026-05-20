@@ -20,6 +20,9 @@ coverage/
 # Vite
 .vite/
 
+# Ideas / local brainstorm (never committed)
+.ideas/
+
 # Editor
 .vscode/*
 !.vscode/extensions.json

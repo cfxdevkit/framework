@@ -1,4 +1,9 @@
-## ADDED Requirements
+# cas-home-dashboard Specification
+
+## Purpose
+TBD - created by archiving change cas-frontend-cleanup. Update Purpose after archive.
+
+## Requirements
 
 ### Requirement: Home page transforms in-place based on auth state
 The system SHALL render the `/` route as a full state machine: (1) not connected hero, (2) wrong network gate, (3) auto-sign in progress, (4) signature rejected with retry, (5) authenticated strategy dashboard — all without navigating away from `/`.
@@ -24,7 +29,7 @@ The system SHALL render the `/` route as a full state machine: (1) not connected
 - **THEN** the page SHALL display the "My Strategies" heading with [Active & Historical] badge, three action buttons (Wrap wCFX, Approvals, + New Strategy), and the Dashboard component below
 
 ### Requirement: New Strategy modal
-The system SHALL open a modal containing the `StrategyBuilder` component when the user clicks "+ New Strategy". The modal SHALL block body scroll while open and close on Escape or backdrop click, unless a transaction is in progress.
+The system SHALL treat the home page modal as the canonical authenticated strategy-creation flow. The system SHALL open a modal containing the `StrategyBuilder` component when the user clicks "+ New Strategy". The modal SHALL block body scroll while open and close on Escape or backdrop click, unless a transaction is in progress. The app SHALL NOT present a separate authenticated full-page strategy builder.
 
 #### Scenario: Open modal
 - **WHEN** the user clicks "+ New Strategy"
@@ -60,9 +65,13 @@ The system SHALL open the `ApprovalWidget` as a modal when the user clicks "Appr
 - **WHEN** the user triggers close on the approvals modal
 - **THEN** the modal SHALL close
 
-### Requirement: Dashboard route redirects to home
-The system SHALL redirect any navigation to `/dashboard` back to `/`.
+### Requirement: Dashboard and create routes redirect to home
+The system SHALL redirect any navigation to `/dashboard` or `/create` back to `/`.
 
 #### Scenario: Dashboard redirect
 - **WHEN** the browser navigates to `/dashboard`
+- **THEN** the user SHALL be redirected to `/` via Next.js `redirect()`
+
+#### Scenario: Create redirect
+- **WHEN** the browser navigates to `/create`
 - **THEN** the user SHALL be redirected to `/` via Next.js `redirect()`
