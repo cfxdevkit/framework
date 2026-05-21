@@ -1,4 +1,4 @@
-import { CfxError } from '@cfxdevkit/core';
+import { CfxError } from '@cfxdevkit/cdk';
 
 export type DevNodeErrorCode =
   | 'devnode/already-running'

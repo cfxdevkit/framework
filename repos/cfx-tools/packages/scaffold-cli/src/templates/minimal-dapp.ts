@@ -17,7 +17,7 @@ export const MINIMAL_DAPP: TemplateDefinition = {
     "preview": "vite preview"
   },
   "dependencies": {
-    "@cfxdevkit/core":    "*",
+    "@cfxdevkit/cdk":    "*",
     "@cfxdevkit/react":  "*",
     "@cfxdevkit/theme":  "*",
     "@tanstack/react-query": "^5.0.0",
@@ -85,9 +85,9 @@ export default defineConfig({
     {
       path: 'src/main.tsx',
       content: `import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createEspaceClient } from '@cfxdevkit/core';
+import { createEspaceClient } from '@cfxdevkit/cdk';
 import { CfxProvider } from '@cfxdevkit/react';
-import { espaceTestnet } from '@cfxdevkit/core/chains';
+import { espaceTestnet } from '@cfxdevkit/cdk/chains';
 import { createCfxConfig } from '@cfxdevkit/wallet-connect';
 import '@cfxdevkit/theme/css';
 import { WagmiProvider } from 'wagmi';

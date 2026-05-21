@@ -1,5 +1,5 @@
 import type { CasPairInfo, CasPoolsResponse, CasTokenInfo } from '@cfxdevkit/cas-shared';
-import { ZERO_ADDRESS } from '@cfxdevkit/core';
+import { ZERO_ADDRESS } from '@cfxdevkit/cdk';
 import { WCFX_ADDRESSES } from '@cfxdevkit/protocol';
 import { createPublicClient, http } from 'viem';
 

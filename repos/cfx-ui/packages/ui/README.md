@@ -18,9 +18,9 @@ Tailwind-first reusable Conflux UI components built on `@cfxdevkit/ui-core`.
 ## Setup
 
 - Ensure the consuming app already compiles Tailwind utility classes.
-- Include `@cfxdevkit/ui` in the app's Tailwind source scan.
-- Provide the wagmi wallet context before rendering wallet or network components.
-- Use app-level wrappers when an app needs product-specific copy, layout, or auth flows.
+- Include `@cfxdevkit/ui` in the app's Tailwind source scan (e.g., via `content: ["../node_modules/@cfxdevkit/ui/dist/**/*"]`).
+- Provide the wagmi `WalletProvider` context before rendering wallet or network components.
+- Use app-level wrappers for product-specific copy, layout, or auth flows.
 
 ```css
 @import "tailwindcss";
@@ -38,30 +38,26 @@ Tailwind-first reusable Conflux UI components built on `@cfxdevkit/ui-core`.
 
 - Components ship with Tailwind utility classes only.
 - No component-local CSS files or inline style objects are allowed in this package.
-- Consumers customize visuals with `className`, slot-level class props, or wrappers.
+- Consumers customize visuals with `className`, slot-level class props (e.g., `activeOptionClassName`, `buttonClassName`), or wrappers.
 
 ## Current surfaces
 
-- `SegmentedControl`
-- `Field`
-- `Notice`
-- `StatusGrid`
-- `Metric`
-- `WalletButton`
-- `WalletStatusChip`
-- `WalletProviderCard`
-- `WalletPickerModal`
-- `NetworkSwitchNotice`
-- `TokenSelect`
-- `TokenAmountField`
-- `TokenPairSelector`
-- `AssetConversionPanel`
+| Sub-path | Exports |
+|----------|---------|
+| `.` | `AppShell`, `Topbar`, `MainGrid`, `AssetConversionPanel`, `Field`, `IconButton`, `Metric`, `NetworkSwitchNotice`, `Notice`, `Panel`, `PanelBody`, `SegmentedControl`, `StatusGrid`, `TokenAmountField`, `TokenPairSelector`, `TokenSelect`, `WalletButton`, `WalletPickerModal`, `WalletProviderCard`, `WalletStatusChip` |
+| `./shell` | `AppShell`, `Topbar`, `MainGrid` |
+| `./panel` | `Panel`, `PanelBody`, `AssetConversionPanel` |
+| `./form` | `Field`, `TokenAmountField`, `TokenPairSelector`, `TokenSelect`, `SegmentedControl`, `IconButton` |
+| `./data-display` | `Metric`, `StatusGrid` |
+| `./feedback` | `Notice`, `NetworkSwitchNotice` |
+| `./wallet` | `WalletButton`, `WalletPickerModal`, `WalletProviderCard`, `WalletStatusChip` |
 
 ## Usage
 
 ```tsx
 import {
   Field,
+  IconButton,
   Metric,
   NetworkSwitchNotice,
   Notice,
@@ -137,3 +133,5 @@ function PortfolioHeader() {
 - `@cfxdevkit/ui` owns reusable styled wallet status, wallet selection, segmented-control, network notice, and token-selection surfaces.
 - `@cfxdevkit/wallet-connect/ui` remains only for legacy consumers that have not yet moved to the shared `ui` package.
 - Product-specific auth, session, and orchestration UI stays in app-level wrappers.
+
+<!-- readme-hash: 768c23624d46737d148b027099a8e675d3ec59f2a1f04c5450b9ab4b552483b8 -->

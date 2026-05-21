@@ -2,7 +2,7 @@
  * Shared types for `@cfxdevkit/defi-react`.
  * DexAdapter and TokenInfo are interfaces consumers implement / provide.
  */
-import type { Address, Hash, Wei } from '@cfxdevkit/core/types';
+import type { Address, Hash, Wei } from '@cfxdevkit/cdk/types';
 
 // ── Token ──────────────────────────────────────────────────────────────────
 

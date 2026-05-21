@@ -1,7 +1,7 @@
 'use client';
 
-import { createClient, espaceMainnet, http } from '@cfxdevkit/core';
-import type { EspaceClient } from '@cfxdevkit/core/client';
+import { createClient, espaceMainnet, http } from '@cfxdevkit/cdk';
+import type { EspaceClient } from '@cfxdevkit/cdk/client';
 import {
   createSwappiAdapter,
   createTokenRegistry,
@@ -46,7 +46,7 @@ function Portfolio({ address }) {
 }`;
 
 const SWAP_SNIPPET = `import { SwapWidget, createSwappiAdapter } from '@cfxdevkit/defi-react';
-import { createClient, http, espaceMainnet } from '@cfxdevkit/core';
+import { createClient, http, espaceMainnet } from '@cfxdevkit/cdk';
 import { CfxProvider } from '@cfxdevkit/react';
 import {
   CFX_NATIVE_ADDRESS,

@@ -7,7 +7,7 @@
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import type { Hex } from '@cfxdevkit/core';
+import type { Hex } from '@cfxdevkit/cdk';
 import { type Abi, toFunctionSelector } from 'viem';
 import { CompileError } from './errors.js';
 import type { Artifact } from './types.js';

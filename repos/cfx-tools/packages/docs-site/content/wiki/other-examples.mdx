@@ -2,140 +2,224 @@
 title: "Other — examples"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Other — examples
 
-# Other — Examples Module
+# Examples Module
 
-The **Other — examples** module is a collection of standalone, self-contained demonstration applications and shared UI libraries that showcase the capabilities of the `@cfxdevkit/*` ecosystem. It serves as both a **developer reference** and a **living testbed**, illustrating how to integrate core wallet management, hardware wallet support, backend services, and frontend frameworks in real-world scenarios.
+## Overview
 
-Unlike production modules, this module is not consumed as a library — it is a *set of example applications* meant to be run locally, inspected, and extended. Its primary goals are:
+The Examples module (`projects/examples`) contains demonstration applications and shared libraries designed to showcase Conflux SDK capabilities. It is structured as a monorepo containing multiple consumer applications and a shared UI library (`showcase-ui`) that standardizes the presentation layer across demos.
 
-- Demonstrate end-to-end workflows (e.g., SIWE authentication → session-key delegation → contract deployment)
-- Provide working patterns for integrating hardware wallets (Ledger via WebHID), browser wallets (MetaMask, Fluent), and memory/file keystores
-- Validate internal APIs (`@cfxdevkit/core`, `@cfxdevkit/wallet`, `@cfxdevkit/services`, etc.) in realistic usage
-- Support local development through the keeper showcase apps
+This module serves two primary purposes:
+1.  **Demonstration:** Providing working examples of hardware wallet integration, backend services, browser interactions, and gateway configurations.
+2.  **Reusability:** Offering a shared component library (`@cfxdevkit/example-showcase-ui`) to reduce duplication across example applications.
 
----
+## Architecture
 
-## Architecture Overview
+The module follows a library-first architecture where UI primitives are abstracted into a dedicated package, consumed by various standalone applications.
 
-The examples module is organized around two keeper applications plus a shared UI library:
+<Mermaid chart={`graph TD
+    subgraph External Dependencies
+        UI["@cfxdevkit/ui"]
+        WC["@cfxdevkit/wallet-connect"]
+    end
 
-```mermaid
-flowchart TD
-    LOCAL[showcase-local]
-    PUBLIC[showcase-public]
-    UI["@cfxdevkit/example-showcase-ui"] -.->|shared| LOCAL & PUBLIC
-```
+    subgraph Shared Library
+        SU[showcase-ui<br/>@cfxdevkit/example-showcase-ui]
+    end
 
-The keeper apps cover the supported release workflows directly. Legacy gateway, stack, browser, backend, and hardware-wallet demo apps have been retired after their surviving behavior moved into the keeper apps.
+    subgraph Consumer Applications
+        HW[hardware-wallet-showcase]
+        BK[showcase-backend]
+        BR[showcase-browser]
+        GW[showcase-gateway]
+        ST[showcase-stack]
+        SC[showcase]
+    end
 
----
+    UI --> SU
+    WC --> SU
+    SU --> HW
+    SU --> BK
+    SU --> BR
+    SU --> GW
+    SU --> ST
+    SU --> SC
+`} />
 
-## Key Applications
+## Shared UI Library (`showcase-ui`)
 
-### 1. `showcase-local` — Local Development Showcase
+Located at `projects/examples/packages/showcase-ui`, this package provides the core UI primitives and utilities used across the example applications. It is built on top of `@cfxdevkit/ui` and `@cfxdevkit/wallet-connect`.
 
-**Purpose**: Demonstrates local devnode workflows, Solidity compilation, deployment, SIWE authentication, keystore setup, and session-key delegation.
+### Package Configuration
 
-**Key Features**:
-- **Devnode control**: Start, stop, mine, and inspect a local Conflux node.
-- **Compiler and deployment**: Compile Solidity templates and deploy them through the shared client surface.
-- **Keystore workflows**: Set up file-backed keystores, add wallets, unlock, and exercise reveal flows.
-- **SIWE and session keys**: Demonstrate auth/session-key patterns through the local server surface.
+*   **Name:** `@cfxdevkit/example-showcase-ui`
+*   **Type:** Module (ESM)
+*   **Entry Point:** `src/index.ts`
+*   **Build Tool:** Vite
+*   **Testing:** Vitest
 
----
+### Dependencies
 
-### 2. `showcase-public` — Public API Showcase
+| Dependency | Version | Purpose |
+| :--- | :--- | :--- |
+| `@cfxdevkit/ui` | `workspace:*` | Base UI components |
+| `@cfxdevkit/wallet-connect` | `workspace:*` | Wallet connection logic and types |
+| `react` | `>=18.0.0` | Peer dependency |
 
-**Purpose**: Focuses on public, browser-facing workflows including Fluent, MetaMask, generic EIP-1193 providers, token utilities, and hardware-wallet flows.
+### Component API
 
-**Key Features**:
-- Dual-space wallet support (Core + eSpace)
-- BIP-39/BIP-32/SLIP-0044 derivation (mnemonic generation, path derivation)
-- Wallet connection UI (modal picker, status pills)
-- RPC interaction via `wagmi` and `@cfxjs/use-wallet-react`
-- Ledger hardware wallet coverage through the supported wallet package
+The library exports components categorized by functionality. All components are re-exported from `src/index.ts`.
 
-**UI Components**:
-- `WalletPickerModal`: Modal to select wallet provider
-- `ConnectWall`: Placeholder UI when wallet is not connected
-- `SharedDevNodePill`: DevNode status pill (reused from `showcase-ui`)
-- `DualWalletBar`: Side-by-side Core/eSpace wallet status indicators
+#### Wallet & Network Components
+These components handle wallet connection states and network switching logic.
 
-**Core APIs Demonstrated**:
-- `generateMnemonic`, `validateMnemonic`, `listChains` (`@cfxdevkit/core`)
-- `rpcCoreAccounts`, `rpcCoreChainId`, `switchConfluxChain`, `buildAddChainParams`
-- `useCoreWallet`, `useFluentCore`, `detectFluentCore`
+*   **`ConnectButton`**: Re-exported from `@cfxdevkit/wallet-connect/ui`.
+*   **`WalletButton`**: UI for wallet interaction.
+*   **`WalletPickerModal`**: Modal for selecting wallet providers.
+*   **`WalletProviderCard`**: Displays provider status and details.
+    *   *Props:* `WalletProviderCardProps`, `WalletProviderCardStatus`
+*   **`WalletStatusChip`**: Compact status indicator.
+    *   *Props:* `WalletStatusChipProps`
+*   **`NetworkSwitchNotice`**: Notification for network changes.
+    *   *Props:* `NetworkSwitchNoticeProps`
 
-## Shared UI Library: `@cfxdevkit/example-showcase-ui`
+#### Data & Form Components
+Components for displaying metrics, tokens, and handling user input.
 
-**Purpose**: Centralizes reusable UI components and hooks across browser apps.
+*   **`AssetConversionPanel`**: Handles asset conversion UI.
+    *   *Props:* `AssetConversionPanelProps`
+*   **`TokenAmountField`**: Input field for token amounts.
+    *   *Props:* `TokenAmountFieldProps`
+*   **`TokenPairSelector`**: Selector for token pairs.
+    *   *Props:* `TokenPairSelectorProps`
+*   **`TokenSelect`**: Dropdown for token selection.
+    *   *Props:* `TokenSelectProps`, `TokenSelectOption`
+*   **`Field`**: Generic form field wrapper.
+    *   *Props:* `FieldProps`
+*   **`Metric`**: Displays numerical metrics.
+    *   *Props:* `MetricProps`
+*   **`StatusGrid`**: Grid layout for status items.
+    *   *Props:* `StatusGridProps`
+*   **`SegmentedControl`**: Segmented button control.
+    *   *Props:* `SegmentedControlProps`, `SegmentedControlOption`
 
-**Exports**:
-- **Components**: `ConnectWall`, `WalletPickerModal`, `LogBox`, `CopyButton`
-- **DevNode UI**: `SharedDevNodePill`, `ShowcaseOpsPanel`, `useShowcaseBackend`
-- **Wallet State**: `deriveCoreState`, `deriveESpaceState`, `needsESpaceSwitch`, `coreChainLabel`, `espaceChainLabel`
-- **Wallet Hooks**: `useCoreWallet`, `getFluentCoreProvider`, `switchConfluxChain`, `buildAddChainParams`
-- **Shell Layout**: `ShowcaseNav`, `PanelSidebar`, `useActivePanelState`
+#### Layout & Shell Components
+Structural components for the application shell and navigation.
 
-**State Logic**:
-- `deriveCoreState(status, chainId, targetHex)` → `{ isActive, onCorrectChain, showSwitch }`
-- `deriveESpaceState(isConnected, chainId, targetChainId)` → `{ isConnected, onCorrectChain, showSwitch }`
-- `needsESpaceSwitch(...)` → `boolean`
+*   **`Shell`**: Main application shell container.
+    *   *Props:* `ShellProps`
+    *   *Hooks:* `useActivePanelState`
+*   **`Sidebar`**: Navigation sidebar.
+    *   *Props:* `SidebarProps`, `SidebarGroup`, `SidebarItem`
+*   **`PanelSidebar`**: Sidebar variant for panels.
+*   **`ShowcaseNav`**: Navigation component specific to showcase apps.
+*   **`ShowcaseOpsPanel`**: Operations panel for showcase apps.
+*   **`DemoCard`**: Card component for demo listings.
+    *   *Props:* `DemoCardProps`
+*   **`CodeSnippet`**: Displays code blocks.
+    *   *Props:* `CodeSnippetProps`
+*   **`LogBox`**: Displays log output.
+*   **`CopyButton`**: Utility button for copying text.
+*   **`StatusBadge`**: Status indicator badge.
+    *   *Props:* `StatusBadgeProps`, `BadgeStatus`
+*   **`ConnectWall`**: Component for connection walls/obstacles.
+*   **`SharedDevNodePill`**: Indicator for development nodes.
 
-**Theme**: Dark mode with CSS variables (`--accent`, `--accent-2`, `--warn`, `--err`, `--glow-cyan`), Inter font, and monospace fallback.
+#### Notification Components
+*   **`Notice`**: General notice component.
+    *   *Props:* `NoticeProps`, `NoticeTone`
 
----
+### Wallet State Utilities
 
-## Development & Testing
+The library re-exports core wallet state management utilities from `@cfxdevkit/wallet-connect`.
 
-### Running the Examples
+*   **`useCoreWallet`**: Hook for accessing core wallet state.
+*   **`deriveCoreState`**: Function to derive core state.
+*   **`getFluentCoreProvider`**: Function to retrieve the fluent core provider.
+*   **`coreChainLabel`**: Function to format chain labels.
+*   **`CORE_CHAIN_CONFIGS`**: Configuration object for core chains.
+*   **Types:** `CoreChainConfig`, `CoreWalletStatus`
 
-From the monorepo root:
+### Logging Utilities
+
+Located in `src/lib/log`, these utilities manage application logging.
+
+*   **`makeEntry`**: Creates a log entry.
+*   **`useLogList`**: Hook for managing a list of logs.
+*   **`copy`**: Utility function for copying content.
+*   **`errMsg`**: Utility for formatting error messages.
+*   **Types:** `LogEntry`, `LogLevel`
+
+### Configuration
+
+#### TypeScript (`tsconfig.json`)
+Extends `@cfxdevkit/tsconfig/lib.json`. Configured for React JSX and ESNext modules.
+*   **Root Dir:** `../../../../`
+*   **Out Dir:** `dist`
+*   **Paths:** Maps `@cfxdevkit/ui` and `@cfxdevkit/ui-core` to local repo paths.
+
+#### Vite (`vite.config.ts`)
+Configured for library builds.
+*   **Format:** ES Module (`es`)
+*   **Target:** `es2023`
+*   **Plugins:** `vite-plugin-dts` for TypeScript declaration generation.
+*   **External:** All non-relative imports are treated as external dependencies.
+
+#### Testing (`vitest.config.ts`)
+*   **Environment:** `node`
+*   **Include:** `src/**/*.test.ts`
+
+## Consumer Applications
+
+The `projects/examples/apps` directory contains standalone applications that utilize the `showcase-ui` library. While specific implementation details vary per app, they share a common configuration structure.
+
+| Application | Path | Description |
+| :--- | :--- | :--- |
+| **hardware-wallet-showcase** | `apps/hardware-wallet-showcase` | Demonstrates hardware wallet integration. |
+| **showcase-backend** | `apps/showcase-backend` | Backend service example. |
+| **showcase-browser** | `apps/showcase-browser` | Browser-based interaction demo. |
+| **showcase-gateway** | `apps/showcase-gateway` | Gateway integration example. |
+| **showcase-stack** | `apps/showcase-stack` | Full stack demonstration. |
+| **showcase** | `apps/showcase` | General showcase application. |
+
+### Common Structure
+Each application typically includes:
+*   `index.html`: Entry HTML file.
+*   `main.tsx`: React entry point.
+*   `vite.config.ts`: Build configuration.
+*   `tsconfig.json`: TypeScript configuration.
+*   `package.json`: Dependencies and scripts.
+*   `moon.yml`: Moon workspace configuration.
+*   `src/styles.css`: Global styles (often split into parts).
+*   `src/*.test.ts`: Unit tests.
+
+## Development Workflow
+
+### Building the UI Library
+To typecheck and build the shared UI library:
 
 ```bash
-pnpm showcase
+# Typecheck
+npm run typecheck
+
+# Build (generates dist/)
+npm run build
+
+# Lint
+npm run lint
+
+# Test
+npm run test
 ```
 
-This starts `showcase-local` and `showcase-public`.
+### Running Consumer Applications
+Each application in `apps/` follows standard Vite/React development workflows. Refer to the specific `package.json` within each app directory for start scripts (typically `dev` or `start`).
 
-### Testing
-
-Each app has its own test suite:
-- `showcase-ui`: `vitest` for state logic (`wallet-state-*.test.ts`)
-- Keeper apps: smoke and route-level tests
-
-Example:
-```bash
-pnpm test --filter @cfxdevkit/example-showcase-ui
-```
-
----
-
-## Integration with Core Packages
-
-This module exercises the following `@cfxdevkit/*` packages:
-
-| Package | Usage |
-|---------|-------|
-| `@cfxdevkit/core` | Mnemonic generation, chain definitions, wallet utilities |
-| `@cfxdevkit/wallet` | Signers, session keys, derivation paths |
-| `@cfxdevkit/services` | Ledger hardware wallet integration |
-| `@cfxdevkit/compiler` | Solidity template registry and compilation |
-| `@cfxdevkit/devnode` | Local Conflux node management |
-| `@cfxdevkit/contracts` | Pre-built contract ABIs and deployments |
-
----
-
-## Summary
-
-The **Other — examples** module is the **living documentation** of the `@cfxdevkit` ecosystem. It provides:
-
-- ✅ Working examples of wallet management (memory, file, hardware)
-- ✅ Full-stack patterns (SIWE, session keys, compiler, deploy)
-- ✅ Browser wallet integration (wagmi, Fluent, MetaMask)
-- ✅ Unified local and public showcase workflows
-- ✅ Reusable UI primitives and state logic
-
-It is not a library — it is a **reference implementation suite**. Developers should treat it as a sandbox to explore, copy, and adapt patterns for their own projects.
+### Adding New Components
+1.  Create the component file in `src/components/`.
+2.  Export the component and its props type in `src/index.ts`.
+3.  Ensure the component is compatible with `@cfxdevkit/ui` and `@cfxdevkit/wallet-connect` patterns.
+4.  Run `npm run lint` and `npm run test` to verify compliance.

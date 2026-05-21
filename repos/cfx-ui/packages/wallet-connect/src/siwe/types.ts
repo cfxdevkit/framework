@@ -1,4 +1,4 @@
-import type { Address, Hex } from '@cfxdevkit/core';
+import type { Address, Hex } from '@cfxdevkit/cdk';
 
 export interface SiweMessageInput {
   domain: string;

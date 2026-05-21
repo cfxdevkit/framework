@@ -1,4 +1,4 @@
-import { type ChainConfig, createClient, getChain, http, listChains } from '@cfxdevkit/core';
+import { type ChainConfig, createClient, getChain, http, listChains } from '@cfxdevkit/cdk';
 import { getBool, getNumber, getString } from '../args.js';
 
 export interface StatusReport {

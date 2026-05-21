@@ -1,4 +1,4 @@
-import { coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet } from '@cfxdevkit/core/chains';
+import { coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet } from '@cfxdevkit/cdk/chains';
 import { toHex } from 'viem';
 
 export interface FluentProvider {

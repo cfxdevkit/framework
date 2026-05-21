@@ -16,17 +16,17 @@ import { Callout, Steps, Tabs } from 'nextra/components'
 <Tabs items={['pnpm', 'npm', 'yarn']}>
   <Tabs.Tab>
   ```bash
-  pnpm add @cfxdevkit/core
+  pnpm add @cfxdevkit/cdk
   ```
   </Tabs.Tab>
   <Tabs.Tab>
   ```bash
-  npm install @cfxdevkit/core
+  npm install @cfxdevkit/cdk
   ```
   </Tabs.Tab>
   <Tabs.Tab>
   ```bash
-  yarn add @cfxdevkit/core
+  yarn add @cfxdevkit/cdk
   ```
   </Tabs.Tab>
 </Tabs>
@@ -36,8 +36,8 @@ import { Callout, Steps, Tabs } from 'nextra/components'
 ## Connect to Conflux eSpace
 
 ```typescript
-import { createClient, http } from '@cfxdevkit/core/client'
-import { espaceTestnet } from '@cfxdevkit/core/chains'
+import { createClient, http } from '@cfxdevkit/cdk/client'
+import { espaceTestnet } from '@cfxdevkit/cdk/chains'
 
 const client = createClient({
   chain: espaceTestnet,
@@ -51,7 +51,7 @@ console.log('Block:', block)
 ## Create a wallet
 
 ```typescript
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet'
+import { signerFromPrivateKey } from '@cfxdevkit/cdk/wallet'
 
 const signer = signerFromPrivateKey('0xYOUR_PRIVATE_KEY')
 
@@ -62,8 +62,8 @@ console.log('Core address:', signer.coreAddress) // Base32 format
 ## Read a contract
 
 ```typescript
-import { createClient, http } from '@cfxdevkit/core/client'
-import { espaceTestnet } from '@cfxdevkit/core/chains'
+import { createClient, http } from '@cfxdevkit/cdk/client'
+import { espaceTestnet } from '@cfxdevkit/cdk/chains'
 
 const client = createClient({ chain: espaceTestnet, transport: http() })
 
@@ -78,9 +78,9 @@ const balance = await client.readContract({
 ## Deploy a contract
 
 ```typescript
-import { createClient, http } from '@cfxdevkit/core/client'
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet'
-import { espaceTestnet } from '@cfxdevkit/core/chains'
+import { createClient, http } from '@cfxdevkit/cdk/client'
+import { signerFromPrivateKey } from '@cfxdevkit/cdk/wallet'
+import { espaceTestnet } from '@cfxdevkit/cdk/chains'
 import { compileContract } from '@cfxdevkit/compiler'
 
 const client = createClient({ chain: espaceTestnet, transport: http() })

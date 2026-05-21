@@ -1,4 +1,4 @@
-import { KeystoreError } from '@cfxdevkit/core';
+import { KeystoreError } from '@cfxdevkit/cdk';
 import type { LedgerEthAppLike, LedgerTransportLike } from './types.js';
 
 export async function createNodeHidLedgerTransport(): Promise<LedgerTransportLike> {

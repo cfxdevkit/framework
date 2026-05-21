@@ -47,7 +47,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@cfxdevkit/client": "workspace:^",
     "@cfxdevkit/compiler": "workspace:^",
-    "@cfxdevkit/core": "workspace:^",
+    "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/create": "workspace:^",
     "@cfxdevkit/devnode-server": "workspace:^",
     "viem": "^2.0.0"

@@ -15,7 +15,7 @@
   "dependencies": {
     "@cfxdevkit/automation": "workspace:*",
     "@cfxdevkit/cas-shared": "workspace:*",
-    "@cfxdevkit/core": "workspace:*",
+    "@cfxdevkit/cdk": "workspace:*",
     "@cfxdevkit/protocol": "workspace:*",
     "@cfxdevkit/ui": "workspace:*",
     "@cfxdevkit/wallet-connect": "workspace:*",

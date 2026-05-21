@@ -17,7 +17,7 @@ import type {
   TxReceipt,
   TxRequest,
   Wei,
-} from '@cfxdevkit/core';
+} from '@cfxdevkit/cdk';
 
 export interface MockClientOptions {
   family?: 'espace' | 'core';

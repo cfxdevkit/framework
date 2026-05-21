@@ -54,7 +54,7 @@ wallet/
 
 ### Dependencies
 
-- Runtime: `@cfxdevkit/core`, `@cfxdevkit/services` (for keystore interface).
+- Runtime: `@cfxdevkit/cdk`, `@cfxdevkit/services` (for keystore interface).
 
 ### Security note
 

@@ -10,7 +10,7 @@ import { Cards } from 'nextra/components'
 cfxdevkit is a monorepo of focused, layered packages. Install only what you need.
 
 <Cards>
-  <Cards.Card title="@cfxdevkit/core" href="/packages/core" description="Chain clients, HD wallet, contract utilities, address codec, units" />
+  <Cards.Card title="@cfxdevkit/cdk" href="/packages/cdk" description="Chain clients, HD wallet, contract utilities, address codec, units" />
   <Cards.Card title="@cfxdevkit/protocol" href="/packages/protocol" description="Cross-space bridge, automation, permit transfers" />
   <Cards.Card title="@cfxdevkit/executor" href="/packages/executor" description="Job queue, retry/backoff, gas-aware tx submission" />
   <Cards.Card title="@cfxdevkit/wallet" href="/packages/wallet" description="Session keys, capability signers, batch transactions" />
@@ -29,7 +29,7 @@ cfxdevkit is a monorepo of focused, layered packages. Install only what you need
 ## Dependency tree
 
 ```
-@cfxdevkit/core                ← Tier 0 foundation
+@cfxdevkit/cdk                ← Tier 0 foundation
 ├── @cfxdevkit/protocol        ← cross-space bridge
 ├── @cfxdevkit/executor        ← automation primitives
 ├── @cfxdevkit/wallet          ← session keys (→ core, services)

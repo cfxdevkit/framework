@@ -37,7 +37,7 @@ The main pain points that need surgical attention:
 
 | Package | Source path (relative to workspace root) |
 |---------|------------------------------------------|
-| `@cfxdevkit/core` | `repos/cfx-core/packages/core/` |
+| `@cfxdevkit/cdk` | `repos/cfx-core/packages/cdk/` |
 | `@cfxdevkit/protocol` | `repos/cfx-core/packages/protocol/` |
 | `@cfxdevkit/executor` | `repos/cfx-core/packages/executor/` |
 | `@cfxdevkit/devnode` | `repos/cfx-core/packages/devnode/` |
@@ -173,7 +173,7 @@ All Tier 0 packages have real implementations. No stubs remain in Tier 0.
 
 | Tier | Package | Status |
 |------|---------|--------|
-| 0 | `@cfxdevkit/core` | ✅ Complete |
+| 0 | `@cfxdevkit/cdk` | ✅ Complete |
 | 0 | `@cfxdevkit/protocol` | ✅ Complete |
 | 0 | `@cfxdevkit/executor` | ✅ Complete |
 | 0 | `@cfxdevkit/devnode` | ✅ Complete |

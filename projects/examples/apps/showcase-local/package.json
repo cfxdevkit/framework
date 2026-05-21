@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@cfxdevkit/client": "workspace:*",
-    "@cfxdevkit/core": "workspace:*",
+    "@cfxdevkit/cdk": "workspace:*",
     "@cfxdevkit/devnode-server": "workspace:*",
     "@cfxdevkit/theme": "workspace:*",
     "@cfxdevkit/example-showcase-ui": "workspace:*",

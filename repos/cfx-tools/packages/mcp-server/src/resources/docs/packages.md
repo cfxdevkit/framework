@@ -1,12 +1,12 @@
 # cfxdevkit Packages
 
-## @cfxdevkit/core
+## @cfxdevkit/cdk
 
 RPC client, account management, and chain utilities.
 
 ```ts
-import { createClient, espaceLocal, coreSpaceLocal, formatCFX, parseCFX } from '@cfxdevkit/core';
-import { signerFromPrivateKey, generateMnemonic, deriveDualAccounts } from '@cfxdevkit/core';
+import { createClient, espaceLocal, coreSpaceLocal, formatCFX, parseCFX } from '@cfxdevkit/cdk';
+import { signerFromPrivateKey, generateMnemonic, deriveDualAccounts } from '@cfxdevkit/cdk';
 
 const client = createClient({ chain: espaceLocal, transport: http() }) as EspaceClient;
 const balance = await client.getBalance(address);           // returns bigint (wei)
@@ -52,7 +52,7 @@ Templates: `counter`, `erc20`, `erc721`, `multisig`
 Key management, BIP-39 mnemonic, and signing.
 
 ```ts
-import { signerFromPrivateKey, generateMnemonic, validateMnemonic, deriveDualAccounts } from '@cfxdevkit/core';
+import { signerFromPrivateKey, generateMnemonic, validateMnemonic, deriveDualAccounts } from '@cfxdevkit/cdk';
 const mnemonic = generateMnemonic(256);
 const accounts = deriveDualAccounts({ mnemonic, count: 10, startIndex: 0 });
 const signer = signerFromPrivateKey(privateKey);

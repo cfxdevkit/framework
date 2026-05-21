@@ -1,4 +1,4 @@
-import type { Client, Hex, TxReceipt } from '@cfxdevkit/core';
+import type { Client, Hex, TxReceipt } from '@cfxdevkit/cdk';
 import { ContractsError } from '../errors/index.js';
 
 export async function waitForReceipt(

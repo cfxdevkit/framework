@@ -2,144 +2,77 @@
 title: "Repository Layout — repos"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Repository Layout — repos
 
-# Repository Layout — `repos/`
+# repos/ Module
 
-The `repos/` directory implements a **tier-aligned multi-repository split**, as defined in [ADR-0003](../docs/adr/0003-multi-repo-split.md). Its purpose is to prepare a monorepo for eventual decomposition into independent, auditable, and independently versioned repositories — while preserving day-to-day developer workflow during the transition.
+## Overview
 
-> This module is *not* a runtime component — it is a structural and organizational layer. It has no execution flow, no internal calls, and no outgoing dependencies beyond the workspace itself.
+The `repos/` directory implements a **tier-aligned repository split strategy** defined in [ADR-0003](../docs/adr/0003-multi-repo-split.md). It organizes the codebase into logical slices that are structured to function as standalone git repositories while currently residing within the root monorepo.
 
----
+This architecture allows for day-to-day development within a single workspace while preparing specific domains for eventual extraction into independent repositories.
 
-## Core Purpose
+## Architecture
 
-The `repos/` directory contains **repository slices**, each representing a logical boundary aligned with system tiering and security posture. Each slice is structured *as if it were already a standalone git repository*, enabling:
+### Directory Structure
+Each subdirectory within `repos/` is structured as if it were already a standalone repository. Key files present in each slice include:
+- `package.json`
+- `pnpm-workspace.template.yaml`
+- `README.md`
 
-- **Gradual carve-out**: Slices can be extracted with minimal friction using `git filter-repo`.
-- **Independent release cycles**: Each slice can be versioned and published separately.
-- **Clear audit boundaries**: Especially for trust-critical components (e.g., `cfx-keys`).
-- **Consumer decoupling**: Downstream consumers can switch from local workspace deps to published npm packages.
+### Workspace Configuration
+To maintain monorepo functionality without prematurely isolating slices, the workspace configuration uses a template mechanism:
 
----
+1.  **Root Workspace:** The top-level `pnpm-workspace.yaml` in `root/` includes a glob pattern `repos/*/packages/*`. This ensures all packages within the slices are recognized by the root pnpm workspace.
+2.  **Slice Templates:** Individual slices use `pnpm-workspace.template.yaml` instead of `pnpm-workspace.yaml`.
+    -   **Purpose:** Prevents pnpm from treating each slice as a separate workspace during development.
+    -   **Benefit:** Maintains cross-slice dependency resolution against `tools/*` and other root-level packages.
+    -   **Activation:** At carve-out time, the file is renamed to `pnpm-workspace.yaml`.
 
-## Structure & Template Conventions
+<Mermaid chart={`flowchart TD
+    Root[Root pnpm-workspace.yaml] -->|Glob: repos/*/packages/*| SlicePackages[Slice Packages]
+    SliceDir[Slice Directory] -->|Contains| Template[pnpm-workspace.template.yaml]
+    Template -.->|Ignored by Root pnpm| Root
+    SliceDir -->|Contains| PackageJSON[package.json]
+    SliceDir -->|Contains| Readme[README.md]
+`} />
 
-Each subdirectory under `repos/` follows a consistent template layout:
+## Repository Slices
 
-```
-repos/<slice>/
-├── packages/               # Contains one or more packages (e.g., `cfx-core`, `cfx-wallet`)
-│   └── <pkg>/
-│       ├── package.json
-│       └── ...
-├── pnpm-workspace.template.yaml   # ⚠️ Template — *not* active workspace config
-├── README.md
-└── ...
-```
+The following slices are currently defined within `repos/`. Each is assigned a tier based on its criticality and trust boundary.
 
-### Why a `.template.yaml`?
+| Slice | Tier | Public Surface | Description |
+| :--- | :--- | :--- | :--- |
+| `cfx-meta` | — | Architecture | Architecture, ADRs, release orchestration |
+| `cfx-core` | 0a | Chain Primitives | Core, protocol, executor, devnode, testing |
+| `cfx-keys` | 0b | Trust Boundary | **Audit-grade** — keystore, wallet, hardware adapters |
+| `cfx-ui` | 0c | Frontend | React, theme, defi-react, wallet-connect |
+| `cfx-domain` | 2 | Game Engine | Game-engine, automation |
+| `cfx-tools` | 1 | DevTools | scaffold-cli, mcp-server, vscode-extension, devtools, devcontainer |
+| `cfx-llm` | 1 | Automation | Local LLM automation, repo review, hotspot scanning, commit assistance |
 
-- pnpm treats any `pnpm-workspace.yaml` as a *root* workspace marker.
-- If present in each slice, pnpm would treat them as *separate* workspaces, breaking cross-slice resolution (e.g., `tools/*` imports).
-- During development, the **root** `pnpm-workspace.yaml` uses globs like `repos/*/packages/*` to unify all packages.
-- At carve-out time, the template is renamed to `pnpm-workspace.yaml`, and the slice is removed from the root config.
+## Repository Carve-out Procedure
 
----
+When a slice is ready to be extracted into its own independent repository, follow this procedure:
 
-## Slice Inventory & Tier Alignment
+1.  **Filter History:**
+    Run `git filter-repo --subdirectory-filter repos/<name>` in a fresh clone of the root repository.
+2.  **Activate Workspace:**
+    Rename the workspace template:
+    ```bash
+    mv pnpm-workspace.template.yaml pnpm-workspace.yaml
+    ```
+3.  **Publish:**
+    Push the filtered repository to its new remote (e.g., `cfx-keys`).
+4.  **Update Root:**
+    Remove the slice's entries from the root `pnpm-workspace.yaml`.
+5.  **Update Consumers:**
+    Update any remaining consumers in the root monorepo to depend on published npm versions of the extracted slice.
 
-| Slice | Tier | Description | Public Surface |
-|-------|------|-------------|----------------|
-| `cfx-meta` | — | Architecture, ADRs, release orchestration | `docs/`, `adr/`, `release/` |
-| `cfx-core` | 0a | Chain primitives: core, protocol, executor, devnode, testing | `cfx-core`, `cfx-executor`, `cfx-testing` |
-| `cfx-keys` | 0b | **Audit-grade trust boundary**: keystore, wallet, hardware adapters | `cfx-keystore`, `cfx-wallet`, `cfx-hw` |
-| `cfx-ui` | 0c | UI stack: React, theme, defi-react, wallet-connect | `cfx-ui`, `cfx-theme`, `cfx-wc` |
-| `cfx-domain` | 2 | Game engine, automation | `cfx-game`, `cfx-automation` |
-| `cfx-tools` | 1 | Developer tooling: scaffold-cli, MCP server, VS Code extension, devcontainer | `cfx-scaffold`, `cfx-mcp`, `cfx-devtools` |
-| `cfx-llm` | 1 | LLM-powered tooling: repo review, hotspot scanning, commit assistance | `cfx-llm-scan`, `cfx-commit-assist` |
+## Development Guidelines
 
-> **Tier 0a/0b/0c** are security-critical and may require separate audit, CI, and release governance.
-
----
-
-## Carve-Out Workflow
-
-When a slice is ready to become its own repository, follow this deterministic process:
-
-```mermaid
-flowchart TD
-    A[Ready Slice] --> B[git filter-repo --subdirectory-filter repos/<name>]
-    B --> C[Rename pnpm-workspace.template.yaml → pnpm-workspace.yaml]
-    C --> D[Push to new remote e.g., cfx-keys]
-    D --> E[Remove slice entries from root pnpm-workspace.yaml]
-    E --> F[Update consumers to use published npm versions]
-```
-
-### Step-by-step
-
-1. **Extract history**  
-   ```bash
-   git clone <root-repo> cfx-keys-temp && cd cfx-keys-temp
-   git filter-repo --subdirectory-filter repos/cfx-keys
-   ```
-
-2. **Activate workspace config**  
-   ```bash
-   mv repos/cfx-keys/pnpm-workspace.template.yaml repos/cfx-keys/pnpm-workspace.yaml
-   ```
-
-3. **Push to new remote**  
-   ```bash
-   git remote add origin git@github.com:conflux-fans/cfx-keys.git
-   git push -u origin main
-   ```
-
-4. **Decommission in root**  
-   - Remove `repos/cfx-keys/packages/*` from root `pnpm-workspace.yaml`.
-   - (Optional) Add `repos/cfx-keys` to `.gitignore`.
-
-5. **Consumer migration**  
-   - Update `package.json` dependencies to reference published versions (e.g., `@conflux/cfx-keys@^1.0.0`).
-   - Update import paths (e.g., `import { Wallet } from '@conflux/cfx-keys'`).
-
----
-
-## Integration with the Root Monorepo
-
-During the transition, `repos/` remains fully integrated:
-
-- **Root `pnpm-workspace.yaml`** includes:
-  ```yaml
-  packages:
-    - 'repos/*/packages/*'
-    - 'tools/*'
-  ```
-
-- **Build/test tooling** (e.g., `pnpm build`, `pnpm test`) works unchanged — no special flags needed.
-
-- **Cross-slice references** (e.g., `cfx-ui` → `cfx-keys`) resolve via workspace symlinks.
-
-This ensures zero disruption to developers until the carve-out is complete.
-
----
-
-## Future State
-
-Once all slices are carved out:
-
-- `repos/` may be removed or retained as a *reference archive*.
-- The root monorepo becomes a lightweight **orchestration layer** (e.g., release coordination, CI matrix).
-- Each slice evolves independently — with its own:
-  - CI/CD pipeline
-  - release schedule
-  - security review cadence
-  - versioning strategy
-
----
-
-## Related Documentation
-
-- [ADR-0003: Multi-Repo Split](../docs/adr/0003-multi-repo-split.md) — architectural decision rationale
-- `tools/scaffold-cli/` — may generate new slices using `repos/<slice>/` templates
-- `cfx-meta/` — contains release tooling and versioning policies for carved-out repos
+-   **Dependency Management:** Do not modify the root `pnpm-workspace.yaml` to include slice-specific configurations. Rely on the root glob for package discovery.
+-   **Cross-Slice Dependencies:** Dependencies between slices (e.g., `cfx-ui` depending on `cfx-core`) are resolved via the root workspace.
+-   **Tooling:** Tools located in `cfx-tools/` are accessible to all slices during the monorepo phase. Ensure tooling compatibility is maintained before any carve-out occurs.

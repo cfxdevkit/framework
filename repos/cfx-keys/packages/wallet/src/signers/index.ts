@@ -8,7 +8,7 @@
  * `readonlySigner` is a placeholder identity (e.g. for simulation or
  * read-only call paths) — every `sign*` call throws.
  */
-import type { Address, Signer } from '@cfxdevkit/core';
+import type { Address, Signer } from '@cfxdevkit/cdk';
 import type { Capability, KeystoreProvider, SecretRef } from '@cfxdevkit/services/keystore';
 import { SessionKeyError } from '../errors/index.js';
 

@@ -1,0 +1,147 @@
+---
+title: "@cfxdevkit/game-engine"
+description: "Reusable on-chain game state engine."
+---
+
+import { Callout, Tabs } from 'nextra/components'
+
+# @cfxdevkit/game-engine
+
+> Reusable on-chain game state engine.
+
+## Install
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/game-engine
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/game-engine
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/game-engine
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+**Scope:** Engine-agnostic, on-chain game primitives.
+
+**Responsibilities**
+- Game state machine abstractions (`GameEngine`, `GameState`, `Transition`)
+- Turn / round / action dispatch (`dispatchAction`, `nextTurn`, `roundState`)
+- Inventory & character interfaces (`Inventory`, `Character`, `Item`)
+- Bridge between chain events and a Zustand-style local store (`createStoreAdapter`)
+- Adapter interfaces for renderer (React, Phaser, …) (`RendererAdapter`, `RendererContext`)
+
+**Non-goals**
+- Specific game rules (those stay in `projects/<game>`).
+- UI/rendering (only defines interfaces to integrate with them).
+
+**Origin:** `chainbrawler/packages/core` — extract the truly engine-shaped pieces, leave RPG-specific rules in the project.
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | `GameEngine`, `GameState`, `Transition`, `dispatchAction`, `nextTurn`, `roundState`, `Inventory`, `Character`, `Item`, `createStoreAdapter`, `RendererAdapter`, `RendererContext`, `__packageName` |
+
+---
+
+## `.`
+
+### Core Engine Types
+
+```ts
+export interface GameState {
+  currentRound: number;
+  currentPlayerIndex: number;
+  status: 'idle' | 'active' | 'paused' | 'finished';
+}
+
+export type Transition = (state: GameState) => GameState;
+
+export interface GameEngine {
+  getState(): GameState;
+  applyTransition(transition: Transition): void;
+  reset(): void;
+}
+```
+
+### Action Dispatch
+
+```ts
+export function dispatchAction(action: unknown): void;
+export function nextTurn(): void;
+export function roundState(): GameState['status'];
+```
+
+### Inventory & Character
+
+```ts
+export interface Item {
+  id: string;
+  name: string;
+  quantity: number;
+}
+
+export interface Inventory {
+  items: Item[];
+  addItem(item: Item): void;
+  removeItem(itemId: string, quantity: number): void;
+}
+
+export interface Character {
+  id: string;
+  name: string;
+  inventory: Inventory;
+  stats: Record<string, number>;
+}
+```
+
+### Store Bridge
+
+```ts
+export function createStoreAdapter(store: {
+  subscribe: (listener: () => void) => () => void;
+  getState: () => GameState;
+  dispatch: (action: unknown) => void;
+}): {
+  subscribe: (listener: () => void) => () => void;
+  getState: () => GameState;
+  dispatch: (action: unknown) => void;
+};
+```
+
+### Renderer Integration
+
+```ts
+export interface RendererAdapter {
+  render(state: GameState): void;
+}
+
+export interface RendererContext {
+  engine: GameEngine;
+  adapter: RendererAdapter;
+}
+```
+
+### Package Identifier
+
+```ts
+export declare const __packageName: "@cfxdevkit/game-engine";
+```
+
+## API Reference
+
+## `.`
+
+```ts
+export declare const __packageName: "@cfxdevkit/game-engine";
+```
+
+{/* readme-hash: 14872a8fa456b1e31edee0d8eeb5518cea9a2d607595db7e8ed269385e432470 */}

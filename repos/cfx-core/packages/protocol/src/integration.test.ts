@@ -7,7 +7,7 @@
  * Without the flag the two `describe.skipIf` blocks are collected as skipped
  * and the suite exits 0 with no I/O.
  */
-import { createClient, espaceLocal, http, signerFromPrivateKey } from '@cfxdevkit/core';
+import { createClient, espaceLocal, http, signerFromPrivateKey } from '@cfxdevkit/cdk';
 import { createDevNode } from '@cfxdevkit/devnode';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { estimateTransaction, getChainProgress, waitForTransactionReceipt } from './index.js';

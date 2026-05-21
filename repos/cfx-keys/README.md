@@ -30,7 +30,7 @@ Future packages staged for this repo (see [ADR-0002](../../docs/adr/0002-keystor
 
 ## Dependency rules
 
-- **MAY** depend on `@cfxdevkit/core` (over npm range, never workspace
+- **MAY** depend on `@cfxdevkit/cdk` (over npm range, never workspace
   once carved).
 - **MUST NOT** depend on `cfx-ui`, `cfx-domain`, `cfx-tools`.
 - **Consumers** SHOULD use **tilde** ranges (`~x.y.z`) to force conscious

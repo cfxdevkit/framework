@@ -1,0 +1,52 @@
+{
+  "name": "@cfxdevkit/docs-pipeline",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Typed documentation pipeline for generation, validation, and docs-oriented orchestration.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "cfx-docs-pipeline": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "prepublishOnly": "pnpm clean",
+    "build": "vite build",
+    "docs": "tsx src/bin.ts",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "clean": "rm -rf dist .vitest coverage"
+  },
+  "dependencies": {
+    "@mdx-js/mdx": "^3.1.1",
+    "mermaid": "^11.4.1",
+    "remark-frontmatter": "^5.0.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/tsconfig": "workspace:*",
+    "@types/node": "^25.6.0",
+    "tsx": "^4.20.6",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.12",
+    "vite-plugin-dts": "^5.0.0",
+    "vitest": "^4.1.6"
+  },
+  "sideEffects": false
+}

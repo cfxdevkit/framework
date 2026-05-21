@@ -23,7 +23,7 @@
  * https://developer.onekey.so → chain-evm): `evmGetAddress`,
  * `evmSignMessage`, `evmSignTransaction`, `evmSignTypedData`.
  */
-import type { Account, SignableTx, Signer, SignOptions, TypedData } from '@cfxdevkit/core';
+import type { Account, SignableTx, Signer, SignOptions, TypedData } from '@cfxdevkit/cdk';
 import type { Hex, TransactionSerializableEIP1559 } from 'viem';
 import { HardwareWalletError } from '../../errors/index.js';
 import { EVM_DEFAULT_PATH, finaliseEip1559Tx, toCanonicalHex } from '../types.js';

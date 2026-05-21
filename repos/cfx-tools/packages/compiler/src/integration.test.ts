@@ -12,9 +12,9 @@
  * Caches: solc artifacts land in `$XDG_CACHE_HOME/cfxdevkit/solc` (or
  * `~/.cache/cfxdevkit/solc`) so subsequent runs are offline + fast.
  */
+import { createClient, espaceLocal, http, signerFromPrivateKey } from '@cfxdevkit/cdk';
 import { erc20 } from '@cfxdevkit/contracts';
 import { deployContract } from '@cfxdevkit/contracts/deploy';
-import { createClient, espaceLocal, http, signerFromPrivateKey } from '@cfxdevkit/core';
 import { createDevNode } from '@cfxdevkit/devnode';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { compile } from './solc/compile.js';

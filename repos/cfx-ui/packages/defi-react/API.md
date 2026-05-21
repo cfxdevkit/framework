@@ -1,80 +1,306 @@
-# @cfxdevkit/defi-react — Public API
+# `@cfxdevkit/defi-react` — Public API
 
-> Opinionated DeFi widgets for prototypes & demos. Built on `react`, `services/dex`,
-> `services/tokens`, and `theme`. **No protocol logic here** — this is composition.
+> Opinionated DeFi widgets (swap, portfolio, picker).
 
 ## Sub-paths
 
-| Sub-path | Concern |
+| Sub-path | Exports |
 |----------|---------|
-| `@cfxdevkit/defi-react/swap` | swap widget + `useSwap` hook |
-| `@cfxdevkit/defi-react/balance` | portfolio table + hook |
-| `@cfxdevkit/defi-react/token-picker` | token selector |
-| `@cfxdevkit/defi-react/tx-status` | submitted-tx toast/list |
+| `.` | 119 symbols |
+| `./swap` | 6 symbols |
+| `./balance` | 5 symbols |
+| `./token-picker` | 2 symbols |
+| `./tx-status` | 6 symbols |
+| `./primitives` | 73 symbols |
+| `./service` | 4 symbols |
+| `./pool` | 10 symbols |
+| `./lp` | 0 symbols |
 
 ---
 
-## `defi-react/swap`
+## `.`
 
-```
-function useSwap(input: {
-  adapter: DexAdapter
-  tokenIn: Address
-  tokenOut: Address
-  amountIn: Wei
-  slippageBps?: number          // default 50
-  deadlineMs?: DurationMs       // default 60_000
-}): {
-  quote: Quote | undefined
-  isQuoting: boolean
-  swapAsync: () => Promise<{ hash: Hash }>
-  isSwapping: boolean
-  error: DexError | null
-}
-
-const SwapWidget: React.FC<{
-  adapter: DexAdapter
-  tokens?: TokenInfo[]                    // defaults to registry
-  defaultTokenIn?: Address
-  defaultTokenOut?: Address
-  onSwapSubmitted?: (tx: { hash: Hash }) => void
-}>
+```ts
+export declare const __packageName: "@cfxdevkit/defi-react";
+export interface PortfolioTableProps {
+export interface UsePortfolioInput {
+export interface UsePortfolioReturn {
+export interface UsePoolsInput {
+export interface UsePoolsReturn {
+export interface UsePoolTokensInput {
+export interface PoolData {
+export interface UsePoolTokensReturn {
+export interface UseTokenPriceInput {
+export interface UseTokenPriceReturn {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface CardProps extends HTMLAttributes<HTMLDivElement> {
+export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+export interface TabItem<T extends string = string> {
+export interface TabsProps<T extends string = string> {
+export interface NetworkBadgeProps {
+export interface FaucetResult {
+export interface FaucetWidgetProps {
+export interface DevkitStatusProps {
+export interface Toast {
+export interface AppToasterProps {
+export interface SelectableListItemProps {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface CopyButtonProps {
+export interface SelectMenuOption<T extends string = string> {
+export interface SelectMenuProps<T extends string = string> {
+export interface SegmentedControlOption<T extends string = string> {
+export interface SegmentedControlProps<T extends string = string> {
+export interface SectionHeaderProps {
+export interface StatusBannerProps {
+export interface MetricCardProps {
+export interface NavLink {
+export interface AppNavBarProps {
+export interface NavBrandProps {
+export interface NavWalletActionsProps {
+export interface MainGridProps {
+export interface PanelProps {
+export interface TradeTokenFieldProps {
+export interface TradeActionBarProps {
+export interface TradeSummaryRow {
+export interface TradeSummaryGridProps {
+export interface NoticeProps {
+export interface SwapServiceConfig {
+export interface PoolTokens {
+export interface SwapWidgetProps {
+export interface UseSwapInput {
+export interface UseSwapReturn {
+export interface TokenPickerProps {
+export interface TxStatusListProps {
+export interface TxStatusToastProps {
+export interface TokenInfo {
+export interface Quote {
+export interface SwapCalldata {
+export interface BuildSwapCalldataOptions {
+export interface DexAdapter {
+export interface TokenRegistry {
+export interface PortfolioRow {
+export interface TrackedTx {
+export declare function PortfolioTable({ tokens, address, renderRow }: PortfolioTableProps): import("react/jsx-runtime").JSX.Element;
+export declare function usePortfolio(input: UsePortfolioInput): UsePortfolioReturn;
+export declare function usePools(input: UsePoolsInput): UsePoolsReturn;
+export declare function usePoolTokens(input: UsePoolTokensInput): UsePoolTokensReturn;
+export declare function useTokenPrice(input: UseTokenPriceInput): UseTokenPriceReturn;
+export declare function Button({ variant, size, loading, disabled, children, style, ...rest }: ButtonProps): import("react/jsx-runtime").JSX.Element;
+export declare function Card({ padding, elevated, children, style, ...rest }: CardProps): import("react/jsx-runtime").JSX.Element;
+export declare function Badge({ variant, children, style, ...rest }: BadgeProps): import("react/jsx-runtime").JSX.Element;
+export declare function Tabs<T extends string = string>({ items, active, onChange, style }: TabsProps<T>): import("react/jsx-runtime").JSX.Element;
+export declare function NetworkBadge({ chainId, name, style }: NetworkBadgeProps): import("react/jsx-runtime").JSX.Element;
+export declare function FaucetWidget({ onFund, defaultAddress, defaultAmountCfx, style, }: FaucetWidgetProps): import("react/jsx-runtime").JSX.Element;
+export declare function DevkitStatus({ nodeStatus, keystoreStatus, walletCount, blockNumber, onStartNode, onStopNode, style, }: DevkitStatusProps): import("react/jsx-runtime").JSX.Element;
+export declare function AppToaster({ toasts, onDismiss, position, style }: AppToasterProps): import("react/jsx-runtime").JSX.Element;
+export declare function SelectableListItem({ label, description, selected, disabled, icon, onClick, style, }: SelectableListItemProps): import("react/jsx-runtime").JSX.Element;
+export declare function Input({ label, error, id, style, ...rest }: InputProps): import("react/jsx-runtime").JSX.Element;
+export declare function CopyButton({ text, label, style }: CopyButtonProps): import("react/jsx-runtime").JSX.Element;
+export declare function SelectMenu<T extends string = string>({ options, value, onChange, label, disabled, style, }: SelectMenuProps<T>): import("react/jsx-runtime").JSX.Element;
+export declare function SegmentedControl<T extends string = string>({ options, active, onChange, style, }: SegmentedControlProps<T>): import("react/jsx-runtime").JSX.Element;
+export declare function SectionHeader({ title, subtitle, action, style }: SectionHeaderProps): import("react/jsx-runtime").JSX.Element;
+export declare function StatusBanner({ variant, children, style }: StatusBannerProps): import("react/jsx-runtime").JSX.Element;
+export declare function MetricCard({ label, value, delta, style }: MetricCardProps): import("react/jsx-runtime").JSX.Element;
+export declare function AppNavBar({ brand, links, actions, onLinkClick, style }: AppNavBarProps): import("react/jsx-runtime").JSX.Element;
+export declare function NavBrand({ icon, name, style }: NavBrandProps): import("react/jsx-runtime").JSX.Element;
+export declare function NavWalletActions({ isConnected, address, isSignedIn, isSigning, wrongNetwork, isSwitchingNetwork, error, onConnect, onSignIn, onSignOut, onSwitchNetwork, style, }: NavWalletActionsProps): import("react/jsx-runtime").JSX.Element;
+export declare function AppShell({ children, style, ...props }: {
+export declare function MainGrid({ sidebar, children, style }: MainGridProps): import("react/jsx-runtime").JSX.Element;
+export declare function Panel({ title, icon, actions, children, style }: PanelProps): import("react/jsx-runtime").JSX.Element;
+export declare function PanelBody({ children, style }: {
+export declare function TradeTokenField({ label, value, onChange, tokenSymbol, tokenIcon, onTokenClick, balance, disabled, placeholder, style, }: TradeTokenFieldProps): import("react/jsx-runtime").JSX.Element;
+export declare function TradeActionBar({ mode, onModeChange, slippage, onSlippageChange, style, }: TradeActionBarProps): import("react/jsx-runtime").JSX.Element;
+export declare function TradeSummaryGrid({ rows, style }: TradeSummaryGridProps): import("react/jsx-runtime").JSX.Element | null;
+export declare function Field({ label, children, style, }: {
+export declare function Notice({ tone, children, style }: NoticeProps): import("react/jsx-runtime").JSX.Element;
+export declare function IconButton({ title, children, style, ...props }: IconButtonProps): import("react/jsx-runtime").JSX.Element;
+export declare function StatusGrid({ children, columns, style, }: {
+export declare function Metric({ label, value, style, }: {
+export declare function createSwapService(config: SwapServiceConfig): SwapService;
+export declare function createSwappiAdapter(config: {
+export declare function SwapWidget({ adapter, tokens, pairs, tokenSelectionOptions, defaultTokenIn, defaultTokenOut, onSwapSubmitted, }: SwapWidgetProps): import("react/jsx-runtime").JSX.Element;
+export declare function useSwap(input: UseSwapInput): UseSwapReturn;
+export declare function TokenPicker({ registry, chainId, selected, onSelect, placeholder, }: TokenPickerProps): import("react/jsx-runtime").JSX.Element;
+export declare function TxListProvider({ children }: {
+export declare function useTxList(): TxListContextValue;
+export declare function TxStatusList({ recent, onConfirm }: TxStatusListProps): import("react/jsx-runtime").JSX.Element | null;
+export declare function TxStatusToast({ hash, label, onConfirm }: TxStatusToastProps): import("react/jsx-runtime").JSX.Element;
+export declare function createTokenRegistry(tokens: readonly TokenInfo[]): TokenRegistry;
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonSize = 'sm' | 'md' | 'lg';
+export type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'brand';
+export type DevkitNodeStatus = 'running' | 'stopped' | 'unknown';
+export type DevkitKeystoreStatus = 'locked' | 'unlocked' | 'not-setup' | 'unknown';
+export type ToastVariant = 'info' | 'success' | 'warning' | 'error';
+export type StatusBannerVariant = 'info' | 'success' | 'warning' | 'error';
+export type TradeMode = 'swap' | 'provide';
+export type NoticeTone = 'neutral' | 'ok' | 'error' | 'warning';
+export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'type' | 'aria-label'> & {
+export type ChainId = number;
+export type TxStatus = 'pending' | 'success' | 'failed';
+export declare class SwapService implements DexAdapter {
+export declare class DexError extends Error {
 ```
 
 ---
 
-## `defi-react/balance`
+## `./swap`
 
-```
-function usePortfolio(input: { address?: Address; tokens: TokenInfo[]; refreshMs?: DurationMs }): {
-  rows: Array<{ token: TokenInfo; balance: Wei; formatted: string }>
-  totalUsd?: number
-  isLoading: boolean
-}
-
-const PortfolioTable: React.FC<{ tokens: TokenInfo[]; address?: Address; renderRow?: (row: { token; balance; formatted }) => React.ReactNode }>
+```ts
+export declare function createSwappiAdapter(config: {
+export declare function SwapWidget({ adapter, tokens, pairs, tokenSelectionOptions, defaultTokenIn, defaultTokenOut, onSwapSubmitted, }: SwapWidgetProps): import("react/jsx-runtime").JSX.Element;
+export declare function useSwap(input: UseSwapInput): UseSwapReturn;
+export interface SwapWidgetProps {
+export interface UseSwapInput {
+export interface UseSwapReturn {
 ```
 
 ---
 
-## `defi-react/token-picker`
+## `./balance`
 
+```ts
+export interface PortfolioTableProps {
+export interface UsePortfolioInput {
+export interface UsePortfolioReturn {
+export declare function PortfolioTable({ tokens, address, renderRow }: PortfolioTableProps): import("react/jsx-runtime").JSX.Element;
+export declare function usePortfolio(input: UsePortfolioInput): UsePortfolioReturn;
 ```
-const TokenPicker: React.FC<{
-  registry: ReturnType<typeof createTokenRegistry>
-  chainId: ChainId
-  selected?: Address
-  onSelect: (token: TokenInfo) => void
-}>
-```
-
-Headless. Search + filter only.
 
 ---
 
-## `defi-react/tx-status`
+## `./token-picker`
 
+```ts
+export interface TokenPickerProps {
+export declare function TokenPicker({ registry, chainId, selected, onSelect, placeholder, }: TokenPickerProps): import("react/jsx-runtime").JSX.Element;
 ```
-const TxStatusList: React.FC<{ recent?: number }>      // shows in-flight tx from useSendTransaction
-const TxStatusToast: React.FC<{ hash: Hash; onConfirm?: (r: TxReceipt) => void }>
+
+---
+
+## `./tx-status`
+
+```ts
+export declare function TxListProvider({ children }: {
+export declare function useTxList(): TxListContextValue;
+export declare function TxStatusList({ recent, onConfirm }: TxStatusListProps): import("react/jsx-runtime").JSX.Element | null;
+export declare function TxStatusToast({ hash, label, onConfirm }: TxStatusToastProps): import("react/jsx-runtime").JSX.Element;
+export interface TxStatusListProps {
+export interface TxStatusToastProps {
 ```
+
+---
+
+## `./primitives`
+
+```ts
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonSize = 'sm' | 'md' | 'lg';
+export type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'brand';
+export type DevkitNodeStatus = 'running' | 'stopped' | 'unknown';
+export type DevkitKeystoreStatus = 'locked' | 'unlocked' | 'not-setup' | 'unknown';
+export type ToastVariant = 'info' | 'success' | 'warning' | 'error';
+export type StatusBannerVariant = 'info' | 'success' | 'warning' | 'error';
+export type TradeMode = 'swap' | 'provide';
+export type NoticeTone = 'neutral' | 'ok' | 'error' | 'warning';
+export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'type' | 'aria-label'> & {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface CardProps extends HTMLAttributes<HTMLDivElement> {
+export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+export interface TabItem<T extends string = string> {
+export interface TabsProps<T extends string = string> {
+export interface NetworkBadgeProps {
+export interface FaucetResult {
+export interface FaucetWidgetProps {
+export interface DevkitStatusProps {
+export interface Toast {
+export interface AppToasterProps {
+export interface SelectableListItemProps {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface CopyButtonProps {
+export interface SelectMenuOption<T extends string = string> {
+export interface SelectMenuProps<T extends string = string> {
+export interface SegmentedControlOption<T extends string = string> {
+export interface SegmentedControlProps<T extends string = string> {
+export interface SectionHeaderProps {
+export interface StatusBannerProps {
+export interface MetricCardProps {
+export interface NavLink {
+export interface AppNavBarProps {
+export interface NavBrandProps {
+export interface NavWalletActionsProps {
+export interface MainGridProps {
+export interface PanelProps {
+export interface TradeTokenFieldProps {
+export interface TradeActionBarProps {
+export interface TradeSummaryRow {
+export interface TradeSummaryGridProps {
+export interface NoticeProps {
+export declare function Button({ variant, size, loading, disabled, children, style, ...rest }: ButtonProps): import("react/jsx-runtime").JSX.Element;
+export declare function Card({ padding, elevated, children, style, ...rest }: CardProps): import("react/jsx-runtime").JSX.Element;
+export declare function Badge({ variant, children, style, ...rest }: BadgeProps): import("react/jsx-runtime").JSX.Element;
+export declare function Tabs<T extends string = string>({ items, active, onChange, style }: TabsProps<T>): import("react/jsx-runtime").JSX.Element;
+export declare function NetworkBadge({ chainId, name, style }: NetworkBadgeProps): import("react/jsx-runtime").JSX.Element;
+export declare function FaucetWidget({ onFund, defaultAddress, defaultAmountCfx, style, }: FaucetWidgetProps): import("react/jsx-runtime").JSX.Element;
+export declare function DevkitStatus({ nodeStatus, keystoreStatus, walletCount, blockNumber, onStartNode, onStopNode, style, }: DevkitStatusProps): import("react/jsx-runtime").JSX.Element;
+export declare function AppToaster({ toasts, onDismiss, position, style }: AppToasterProps): import("react/jsx-runtime").JSX.Element;
+export declare function SelectableListItem({ label, description, selected, disabled, icon, onClick, style, }: SelectableListItemProps): import("react/jsx-runtime").JSX.Element;
+export declare function Input({ label, error, id, style, ...rest }: InputProps): import("react/jsx-runtime").JSX.Element;
+export declare function CopyButton({ text, label, style }: CopyButtonProps): import("react/jsx-runtime").JSX.Element;
+export declare function SelectMenu<T extends string = string>({ options, value, onChange, label, disabled, style, }: SelectMenuProps<T>): import("react/jsx-runtime").JSX.Element;
+export declare function SegmentedControl<T extends string = string>({ options, active, onChange, style, }: SegmentedControlProps<T>): import("react/jsx-runtime").JSX.Element;
+export declare function SectionHeader({ title, subtitle, action, style }: SectionHeaderProps): import("react/jsx-runtime").JSX.Element;
+export declare function StatusBanner({ variant, children, style }: StatusBannerProps): import("react/jsx-runtime").JSX.Element;
+export declare function MetricCard({ label, value, delta, style }: MetricCardProps): import("react/jsx-runtime").JSX.Element;
+export declare function AppNavBar({ brand, links, actions, onLinkClick, style }: AppNavBarProps): import("react/jsx-runtime").JSX.Element;
+export declare function NavBrand({ icon, name, style }: NavBrandProps): import("react/jsx-runtime").JSX.Element;
+export declare function NavWalletActions({ isConnected, address, isSignedIn, isSigning, wrongNetwork, isSwitchingNetwork, error, onConnect, onSignIn, onSignOut, onSwitchNetwork, style, }: NavWalletActionsProps): import("react/jsx-runtime").JSX.Element;
+export declare function AppShell({ children, style, ...props }: {
+export declare function MainGrid({ sidebar, children, style }: MainGridProps): import("react/jsx-runtime").JSX.Element;
+export declare function Panel({ title, icon, actions, children, style }: PanelProps): import("react/jsx-runtime").JSX.Element;
+export declare function PanelBody({ children, style }: {
+export declare function TradeTokenField({ label, value, onChange, tokenSymbol, tokenIcon, onTokenClick, balance, disabled, placeholder, style, }: TradeTokenFieldProps): import("react/jsx-runtime").JSX.Element;
+export declare function TradeActionBar({ mode, onModeChange, slippage, onSlippageChange, style, }: TradeActionBarProps): import("react/jsx-runtime").JSX.Element;
+export declare function TradeSummaryGrid({ rows, style }: TradeSummaryGridProps): import("react/jsx-runtime").JSX.Element | null;
+export declare function Field({ label, children, style, }: {
+export declare function Notice({ tone, children, style }: NoticeProps): import("react/jsx-runtime").JSX.Element;
+export declare function IconButton({ title, children, style, ...props }: IconButtonProps): import("react/jsx-runtime").JSX.Element;
+export declare function StatusGrid({ children, columns, style, }: {
+export declare function Metric({ label, value, style, }: {
+```
+
+---
+
+## `./service`
+
+```ts
+export interface SwapServiceConfig {
+export interface PoolTokens {
+export declare class SwapService implements DexAdapter {
+export declare function createSwapService(config: SwapServiceConfig): SwapService;
+```
+
+---
+
+## `./pool`
+
+```ts
+export interface UsePoolsInput {
+export interface UsePoolsReturn {
+export interface UsePoolTokensInput {
+export interface PoolData {
+export interface UsePoolTokensReturn {
+export interface UseTokenPriceInput {
+export interface UseTokenPriceReturn {
+export declare function usePools(input: UsePoolsInput): UsePoolsReturn;
+export declare function usePoolTokens(input: UsePoolTokensInput): UsePoolTokensReturn;
+export declare function useTokenPrice(input: UseTokenPriceInput): UseTokenPriceReturn;
+```
+
+---
+
+## `./lp`
+
+*(no named exports detected)*
+
+<!-- api-hash: dcaf1465376a98b267bd1f4f0ef46bdad892d8522534af7c8b5d637641d979f0 -->

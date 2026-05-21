@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { AUTOMATION_MANAGER_ADDRESSES } from '@cfxdevkit/automation';
-import { ZERO_ADDRESS } from '@cfxdevkit/core';
+import { ZERO_ADDRESS } from '@cfxdevkit/cdk';
 import { permitHandlerAddress, swappiPriceAdapterAddress } from '@cfxdevkit/protocol';
 
 const DEFAULT_SQLITE_PATH = fileURLToPath(

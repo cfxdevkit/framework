@@ -1,50 +1,443 @@
 ---
 title: "@cfxdevkit/wallet"
-description: Session keys, capability-scoped signers, and batched transactions.
+description: "Session keys, signers, batched writes, capability policies."
 ---
+
+import { Callout, Tabs } from 'nextra/components'
 
 # @cfxdevkit/wallet
 
-> Focused wallet primitives — the only blessed entrypoint for automated signers in the cfxdevkit stack.
+> Session keys, signers, batched writes, capability policies.
 
-```bash
-pnpm add @cfxdevkit/wallet
-```
+## Install
 
-**Depends on:** `@cfxdevkit/core`, `@cfxdevkit/services` (for keystore).
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/wallet
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/wallet
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/wallet
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+**Scope:** Focused wallet primitives — session keys, capability-scoped signers, batched transactions.
+
+**Responsibilities**
+- Session key generation and lifecycle (including attestation)
+- Capability/policy enforcement on signers (e.g., gas limits, allowed methods)
+- Batched transaction helpers (multicall + multisend via `TransactionBatcher`)
+- Re-exports a curated subset of `core` wallet APIs for convenience
+
+Depends on: `@cfxdevkit/cdk`, `@cfxdevkit/services` (for keystore).
+
+Security note: this package is the **only** blessed entrypoint for automated signers.
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 34 symbols |
+| `./batcher` | 4 symbols |
+| `./signers` | 3 symbols |
+| `./errors` | 2 symbols |
+| `./hardware` | 8 symbols |
+| `./hardware/onekey` | 5 symbols |
+| `./hardware/ledger` | 8 symbols |
+| `./hardware/satochip` | 3 symbols |
+| `./init` | 8 symbols |
+| `./policies` | 3 symbols |
+| `./session-key` | 5 symbols |
 
 ---
 
-## Responsibilities
+## `.`
 
-- Session key generation and lifecycle management
-- Capability / policy attached to a signer (scoped permissions)
-- Batched transaction helpers (multicall + multisend)
-- Re-exports a curated subset of `@cfxdevkit/core` wallet APIs
+Core wallet primitives and convenience re-exports.
 
----
+```ts
+export declare const __packageName: "@cfxdevkit/wallet";
 
-## Session keys
-
-```typescript
-import { createSessionKey, SessionKeyPolicy } from '@cfxdevkit/wallet'
-
-const policy: SessionKeyPolicy = {
-  allowedContracts: ['0xYOUR_CONTRACT'],
-  maxValuePerTx: parseCFX('0.1'),
-  expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
+// Batched transactions
+export { BatchTask, TransactionBatcherOptions, TransactionBatchResult }
+export declare class TransactionBatcher<T = unknown> {
+  constructor(options?: TransactionBatcherOptions);
+  add(task: BatchTask): void;
+  execute(): Promise<TransactionBatchResult<T>>;
 }
 
-const sessionKey = await createSessionKey({ signer: rootSigner, policy })
+// Hardware wallets
+export { HardwareWalletAdapter, HardwareWalletKind, HARDWARE_WALLET_KINDS, EVM_DEFAULT_PATH }
+export declare function detectHardwareWallet(kind: HardwareWalletKind): Promise<HardwareWalletAdapter>;
+export declare function getHardwareWalletAdapter(kind: HardwareWalletKind): Promise<HardwareWalletAdapter>;
+export declare function getHardwareWalletPath(kind: HardwareWalletKind, index: number): string;
+export declare function signWithHardwareWallet(adapter: HardwareWalletAdapter, path: string, message: string): Promise<RawEvmSignature>;
+
+// Utilities
+export { RawEvmSignature, finaliseEip1559Tx, rawSignatureToHex, toCanonicalHex }
+
+// Errors
+export declare class SessionKeyError extends CfxError {
+  constructor(message: string, code?: string);
+}
+export declare class HardwareWalletError extends CfxError {
+  constructor(message: string, code?: string);
+}
+
+// Local wallet management
+export declare function defaultKeystorePath(): string;
+export declare function initLocalWallet(input: InitLocalWalletInput): Promise<InitLocalWalletResult>;
+export declare function openLocalWallet(input: OpenLocalWalletInput): Promise<OpenLocalWalletResult>;
+export declare function rotateLocalPassphrase(input: {
+  keystorePath: string;
+  oldPassphrase: string;
+  newPassphrase: string;
+}): Promise<void>;
+
+// Capability-scoped signers
+export declare function withCapability(inner: Signer, capability?: Capability): Signer;
+export declare function checkCapability(capability: Capability, tx: SignableTx): SessionKeyError | null;
+export declare function isEmptyCapability(c: Capability): boolean;
+
+// Session keys
+export declare function createSessionKey(input: CreateSessionKeyInput): Promise<SessionKey>;
+export declare function canonicalAttestationMessage(sessionAddress: Address, parent: Address, c: Capability): string;
+
+// Signers
+export declare function signerFromKeystore(input: SignerFromKeystoreInput): Promise<Signer>;
+export declare function readonlySigner(address: Address): Signer;
+
+// Interfaces
+export interface InitLocalWalletInput { keystorePath: string; passphrase: string; }
+export interface InitLocalWalletResult { keystorePath: string; address: Address; }
+export interface OpenLocalWalletInput { keystorePath: string; passphrase: string; }
+export interface OpenLocalWalletResult { keystorePath: string; address: Address; }
+export interface CreateSessionKeyInput {
+  parentSigner: Signer;
+  parentPassphrase?: string;
+  capability: Capability;
+  nonce?: bigint;
+}
+export interface SessionKey {
+  address: Address;
+  privateKey: string;
+  attestation: SessionAttestation;
+}
+export interface SessionAttestation {
+  parent: Address;
+  capability: Capability;
+  nonce: bigint;
+  signature: string;
+}
+export interface SignerFromKeystoreInput { keystorePath: string; passphrase: string; }
 ```
 
-## Batch transactions
+---
 
-```typescript
-import { batchTransactions } from '@cfxdevkit/wallet'
+## `./batcher`
 
-const result = await batchTransactions(client, signer, [
-  { to: '0xA', data: '0x...', value: 0n },
-  { to: '0xB', data: '0x...', value: 0n },
-])
+Batched transaction execution via `TransactionBatcher`.
+
+```ts
+export { BatchTask, TransactionBatcherOptions, TransactionBatchResult }
+export declare class TransactionBatcher<T = unknown> {
+  constructor(options?: TransactionBatcherOptions);
+  add(task: BatchTask): void;
+  execute(): Promise<TransactionBatchResult<T>>;
+}
 ```
+
+---
+
+## `./signers`
+
+Signer creation and wrappers.
+
+```ts
+export interface SignerFromKeystoreInput { keystorePath: string; passphrase: string; }
+export declare function signerFromKeystore(input: SignerFromKeystoreInput): Promise<Signer>;
+export declare function readonlySigner(address: Address): Signer;
+```
+
+---
+
+## `./errors`
+
+Custom error types.
+
+```ts
+export { SessionKeyError, HardwareWalletError }
+```
+
+---
+
+## `./hardware`
+
+Hardware wallet abstraction and utilities.
+
+```ts
+export { HardwareWalletAdapter, HardwareWalletKind, HARDWARE_WALLET_KINDS, EVM_DEFAULT_PATH }
+export declare function detectHardwareWallet(kind: HardwareWalletKind): Promise<HardwareWalletAdapter>;
+export declare function getHardwareWalletAdapter(kind: HardwareWalletKind): Promise<HardwareWalletAdapter>;
+export declare function getHardwareWalletPath(kind: HardwareWalletKind, index: number): string;
+export declare function signWithHardwareWallet(adapter: HardwareWalletAdapter, path: string, message: string): Promise<RawEvmSignature>;
+```
+
+---
+
+## `./hardware/onekey`
+
+OneKey hardware wallet support.
+
+```ts
+export { OneKeyAdapter }
+export declare function detectOneKey(): Promise<OneKeyAdapter>;
+export declare function getOneKeyAdapter(): Promise<OneKeyAdapter>;
+export declare function getOneKeyPath(index: number): string;
+export declare function signWithOneKey(adapter: OneKeyAdapter, path: string, message: string): Promise<RawEvmSignature>;
+```
+
+---
+
+## `./hardware/ledger`
+
+Ledger hardware wallet support.
+
+```ts
+export { LedgerAdapter }
+export declare function detectLedger(): Promise<LedgerAdapter>;
+export declare function getLedgerAdapter(): Promise<LedgerAdapter>;
+export declare function getLedgerPath(index: number): string;
+export declare function signWithLedger(adapter: LedgerAdapter, path: string, message: string): Promise<RawEvmSignature>;
+export declare function getLedgerAppVersion(adapter: LedgerAdapter): Promise<string>;
+export declare function isLedgerAppOpen(adapter: LedgerAdapter): Promise<boolean>;
+export declare function openLedgerApp(adapter: LedgerAdapter): Promise<void>;
+export declare function closeLedgerApp(adapter: LedgerAdapter): Promise<void>;
+```
+
+---
+
+## `./hardware/satochip`
+
+Satochip hardware wallet support.
+
+```ts
+export { SatochipAdapter }
+export declare function detectSatochip(): Promise<SatochipAdapter>;
+export declare function getSatochipAdapter(): Promise<SatochipAdapter>;
+export declare function signWithSatochip(adapter: SatochipAdapter, path: string, message: string): Promise<RawEvmSignature>;
+```
+
+---
+
+## `./init`
+
+Local wallet initialization and passphrase management.
+
+```ts
+export { InitLocalWalletInput, InitLocalWalletResult }
+export { OpenLocalWalletInput, OpenLocalWalletResult }
+export declare function defaultKeystorePath(): string;
+export declare function initLocalWallet(input: InitLocalWalletInput): Promise<InitLocalWalletResult>;
+export declare function openLocalWallet(input: OpenLocalWalletInput): Promise<OpenLocalWalletResult>;
+export declare function rotateLocalPassphrase(input: {
+  keystorePath: string;
+  oldPassphrase: string;
+  newPassphrase: string;
+}): Promise<void>;
+```
+
+---
+
+## `./policies`
+
+Capability-based signer restrictions.
+
+```ts
+export { Capability }
+export declare function withCapability(inner: Signer, capability?: Capability): Signer;
+export declare function checkCapability(capability: Capability, tx: SignableTx): SessionKeyError | null;
+export declare function isEmptyCapability(c: Capability): boolean;
+```
+
+---
+
+## `./session-key`
+
+Session key generation and attestation.
+
+```ts
+export { CreateSessionKeyInput, SessionKey, SessionAttestation }
+export declare function createSessionKey(input: CreateSessionKeyInput): Promise<SessionKey>;
+export declare function canonicalAttestationMessage(sessionAddress: Address, parent: Address, c: Capability): string;
+```
+
+## API Reference
+
+## `.`
+
+```ts
+export declare const __packageName: "@cfxdevkit/wallet";
+export { BatchTask }
+export { TransactionBatcherOptions }
+export { TransactionBatchResult }
+export { HardwareWalletAdapter }
+export { HardwareWalletKind }
+export { RawEvmSignature }
+export { EVM_DEFAULT_PATH }
+export { finaliseEip1559Tx }
+export { HARDWARE_WALLET_KINDS }
+export { rawSignatureToHex }
+export { toCanonicalHex }
+export declare class TransactionBatcher<T = unknown> {
+export declare class SessionKeyError extends CfxError {
+export declare class HardwareWalletError extends CfxError {
+export declare function defaultKeystorePath(): string;
+export declare function initLocalWallet(input: InitLocalWalletInput): Promise<InitLocalWalletResult>;
+export declare function openLocalWallet(input: OpenLocalWalletInput): Promise<OpenLocalWalletResult>;
+export declare function rotateLocalPassphrase(input: {
+export declare function withCapability(inner: Signer, capability?: Capability): Signer;
+export declare function checkCapability(capability: Capability, tx: SignableTx): SessionKeyError | null;
+export declare function isEmptyCapability(c: Capability): boolean;
+export declare function createSessionKey(input: CreateSessionKeyInput): Promise<SessionKey>;
+export declare function canonicalAttestationMessage(sessionAddress: Address, parent: Address, c: Capability): string;
+export declare function signerFromKeystore(input: SignerFromKeystoreInput): Promise<Signer>;
+export declare function readonlySigner(address: Address): Signer;
+export interface InitLocalWalletInput {
+export interface InitLocalWalletResult {
+export interface OpenLocalWalletInput {
+export interface OpenLocalWalletResult {
+export interface CreateSessionKeyInput {
+export interface SessionKey {
+export interface SessionAttestation {
+export interface SignerFromKeystoreInput {
+```
+
+---
+
+## `./batcher`
+
+```ts
+export { BatchTask }
+export { TransactionBatcherOptions }
+export { TransactionBatchResult }
+export declare class TransactionBatcher<T = unknown> {
+```
+
+---
+
+## `./signers`
+
+```ts
+export interface SignerFromKeystoreInput {
+export declare function signerFromKeystore(input: SignerFromKeystoreInput): Promise<Signer>;
+export declare function readonlySigner(address: Address): Signer;
+```
+
+---
+
+## `./errors`
+
+```ts
+export declare class SessionKeyError extends CfxError {
+export declare class HardwareWalletError extends CfxError {
+```
+
+---
+
+## `./hardware`
+
+```ts
+export { HardwareWalletAdapter }
+export { HardwareWalletKind }
+export { RawEvmSignature }
+export { EVM_DEFAULT_PATH }
+export { finaliseEip1559Tx }
+export { HARDWARE_WALLET_KINDS }
+export { rawSignatureToHex }
+export { toCanonicalHex }
+```
+
+---
+
+## `./hardware/onekey`
+
+```ts
+export interface OneKeySdkLike {
+export interface OneKeyTxParams {
+export interface SignerFromOneKeyInput {
+export type OneKeyResponse<T> = {
+export declare function signerFromOneKey(input: SignerFromOneKeyInput): Promise<Signer>;
+```
+
+---
+
+## `./hardware/ledger`
+
+```ts
+export { createLedgerEthApp }
+export { createNodeHidLedgerTransport }
+export { signerFromLedger }
+export { LedgerEthAppLike }
+export { LedgerTransportLike }
+export { SignerFromLedgerInput }
+export interface LedgerHardwareAdapterInput extends Omit<SignerFromLedgerInput, 'path'> {
+export declare function createLedgerHardwareAdapter(input: LedgerHardwareAdapterInput): HardwareWalletAdapter;
+```
+
+---
+
+## `./hardware/satochip`
+
+```ts
+export interface SatochipBridgeConfig {
+export interface SignerFromSatochipInput extends SatochipBridgeConfig {
+export declare function signerFromSatochip(input?: SignerFromSatochipInput): Promise<Signer>;
+```
+
+---
+
+## `./init`
+
+```ts
+export declare function defaultKeystorePath(): string;
+export declare function initLocalWallet(input: InitLocalWalletInput): Promise<InitLocalWalletResult>;
+export declare function openLocalWallet(input: OpenLocalWalletInput): Promise<OpenLocalWalletResult>;
+export declare function rotateLocalPassphrase(input: {
+export interface InitLocalWalletInput {
+export interface InitLocalWalletResult {
+export interface OpenLocalWalletInput {
+export interface OpenLocalWalletResult {
+```
+
+---
+
+## `./policies`
+
+```ts
+export declare function withCapability(inner: Signer, capability?: Capability): Signer;
+export declare function checkCapability(capability: Capability, tx: SignableTx): SessionKeyError | null;
+export declare function isEmptyCapability(c: Capability): boolean;
+```
+
+---
+
+## `./session-key`
+
+```ts
+export interface CreateSessionKeyInput {
+export interface SessionKey {
+export interface SessionAttestation {
+export declare function createSessionKey(input: CreateSessionKeyInput): Promise<SessionKey>;
+export declare function canonicalAttestationMessage(sessionAddress: Address, parent: Address, c: Capability): string;
+```
+
+{/* readme-hash: 519eb0872a2375f2ac1c382053ac7997fbe7020847ca2105c49f879fa2734609 */}

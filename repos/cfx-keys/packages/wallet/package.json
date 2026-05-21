@@ -80,7 +80,7 @@
     "vitest": "^4.1.6"
   },
   "dependencies": {
-    "@cfxdevkit/core": "workspace:^",
+    "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/executor": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
     "@noble/hashes": "^2.2.0",

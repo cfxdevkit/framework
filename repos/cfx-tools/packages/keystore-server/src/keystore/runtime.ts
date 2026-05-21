@@ -1,5 +1,5 @@
 import { access } from 'node:fs/promises';
-import { generateMnemonic } from '@cfxdevkit/core';
+import { generateMnemonic } from '@cfxdevkit/cdk';
 import type { SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
 import { createFileKeystore, initFileKeystore } from '@cfxdevkit/services/keystore-file';
 import type {

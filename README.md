@@ -54,7 +54,7 @@ Source of truth for these rules: `repos/cfx-meta/arch-rules.yaml`
 #### `repos/cfx-core`
 | Package | npm name | Purpose |
 |---------|----------|---------|
-| `packages/core` | `@cfxdevkit/core` | Conflux chain interaction, provider abstractions, network config |
+| `packages/core` | `@cfxdevkit/cdk` | Conflux chain interaction, provider abstractions, network config |
 | `packages/devnode` | `@cfxdevkit/devnode` | Local Conflux devnode launcher (Node.js binary wrapper) |
 | `packages/executor` | `@cfxdevkit/executor` | Transaction execution primitives |
 | `packages/protocol` | `@cfxdevkit/protocol` | Low-level protocol encoding/decoding |

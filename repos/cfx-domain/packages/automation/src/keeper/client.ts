@@ -1,4 +1,4 @@
-import type { EspaceClient, Hex, SignableTx, Signer } from '@cfxdevkit/core';
+import type { EspaceClient, Hex, SignableTx, Signer } from '@cfxdevkit/cdk';
 import { waitForTransactionReceipt } from '@cfxdevkit/protocol';
 import { decodeFunctionResult, encodeFunctionData, hexToBigInt } from 'viem';
 import { buildSwapCalldata } from '../swap/calldata.js';

@@ -1,0 +1,102 @@
+---
+title: "@cfxdevkit/cli"
+description: "Conflux developer CLI: network status + HD key derivation."
+---
+
+import { Callout, Tabs } from 'nextra/components'
+
+# @cfxdevkit/cli
+
+> Conflux developer CLI: network status + HD key derivation.
+
+## Install
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/cli
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/cli
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/cli
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+Tiny developer CLI bundled with `@cfxdevkit/cdk`. Provides three commands:
+
+- **`cfx status`** — pings each chain and prints head block / epoch + latency.
+- **`cfx derive`** — derives dual-space accounts (EVM `0x…` + Core `cfx[…]:…`) from a mnemonic or generates new ones.
+- **`cfx generate`** — prints a fresh BIP-39 mnemonic.
+
+## Examples
+
+```sh
+cfx status
+cfx status --chain core-testnet
+cfx status --chain 1030 --rpc https://my-private-rpc.example
+cfx status --json
+
+cfx derive --generate --count 3 --core-network-id 1
+cfx derive --mnemonic "test test test test test test test test test test test junk" --count 5
+cfx derive --mnemonic "..." --type mining --core-network-id 2029 --show-private-keys
+
+cfx generate
+```
+
+## Notes
+
+- The default `--core-network-id` is `1029` (mainnet `cfx:…`).
+  Use `1` for testnet (`cfxtest:…`) and `2029` for the local devnet (`net2029:…`).
+- `--type mining` switches the BIP-44 account segment from `0'` to `1'`,
+  matching the convention used by the original `@cfxdevkit/cdk` POC for
+  faucet / miner accounts.
+- Private keys are **not** printed unless you pass `--show-private-keys`.
+
+## API Reference
+
+### Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | `ParsedArgs`, `parseArgs`, `DeriveReport`, `runDerive`, `GenerateReport`, `runGenerate`, `runStatus`, `StatusReport`, `run` |
+
+---
+
+### `.`
+
+```ts
+export { ParsedArgs }
+export { parseArgs }
+export { DeriveReport }
+export { runDerive }
+export { GenerateReport }
+export { runGenerate }
+export { runStatus }
+export { StatusReport }
+export { run }
+```
+
+## API Reference
+
+## `.`
+
+```ts
+export { ParsedArgs }
+export { parseArgs }
+export { DeriveReport }
+export { runDerive }
+export { GenerateReport }
+export { runGenerate }
+export { runStatus }
+export { StatusReport }
+export { run }
+```
+
+{/* readme-hash: 52b348e060620914ba1644865dd2e691aa582238099d52e8e9c4bf504a0ca8bc */}

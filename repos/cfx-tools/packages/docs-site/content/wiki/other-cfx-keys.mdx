@@ -2,353 +2,647 @@
 title: "Other — cfx-keys"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Other — cfx-keys
 
-# `@cfxdevkit/repo-cfx-keys` — Tier 0b Trust Boundary: Keystore + Wallet
-
-> **Audience**: Platform engineers, security auditors, and wallet integration developers working with Conflux eSpace and Core Space.
-
----
+# cfx-keys Module Documentation
 
 ## Overview
 
-The `cfx-keys` module implements **Tier 0b** of the security model: the *audit-grade trust boundary* for cryptographic key management and signing operations. It provides:
+The `cfx-keys` module provides cryptographic key management, keystore implementations, and wallet abstractions for Conflux blockchain operations. It consists of two packages:
 
-- **Keystores**: Pluggable backends for storing and retrieving private keys (file, memory, Ledger hardware, audit-logged).
-- **Crypto primitives**: AES-256-GCM encryption, Argon2id/HKDF key derivation, secure encoding.
-- **Wallet tooling**: Session keys, capability policies, hardware wallet adapters (Ledger, OneKey, Satochip), and local wallet initialization.
+- **`@cfxdevkit/services`** — Pluggable backends for keystore, crypto, and audit logging
+- **`@cfxdevkit/wallet`** — Session keys, signers, hardware wallet adapters, and capability policies
 
-Per [ADR-0003](https://github.com/cfxdevkit/adr), this module is a *carve-out target* — its code must be reviewed for cryptographic correctness, side-channel resilience, and auditability.
-
-### Key Design Principles
-
-| Principle | Rationale |
-|---------|-----------|
-| **Zero key material exposure** | Secrets are never logged, serialized, or returned in `list()` results. |
-| **Capability-based signing** | All signers can be wrapped with fine-grained policies (chains, contracts, selectors, value limits, expiry). |
-| **Hardware-first** | Ledger and other hardware wallets are first-class citizens; software keystores are fallbacks. |
-| **Append-only audit trail** | All keystore operations are logged in a hash-chained, sequenced audit log. |
-
----
+This module is designated as **Tier 0b — audit-grade trust boundary** per ADR-0003, meaning it handles sensitive key material and requires rigorous security review.
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    subgraph "Public Surface"
-        A["@cfxdevkit/services"] --> B["Keystore Providers"]
-        A --> C["Crypto Primitives"]
-        D["@cfxdevkit/wallet"] --> E["Session Keys"]
-        D --> F["Hardware Adapters"]
-        D --> G["Capability Policies"]
+<Mermaid chart={`graph TB
+    subgraph "@cfxdevkit/services"
+        S1[Crypto Utils]
+        S2[Keystore Backends]
+        S3[Audit Logger]
+        S4[Auth Helpers]
     end
+    
+    subgraph "@cfxdevkit/wallet"
+        W1[Hardware Adapters]
+        W2[Session Keys]
+        W3[Policy Engine]
+        W4[Signer Abstraction]
+    end
+    
+    subgraph "External"
+        H1[Ledger Device]
+        H2[OneKey Device]
+        H3[Satochip Bridge]
+        F1[Filesystem]
+    end
+    
+    S2 --> W4
+    W1 --> H1
+    W1 --> H2
+    W1 --> H3
+    S2 --> F1
+    W2 --> W3
+    W4 --> S1
+`} />
 
-    subgraph "Keystore Backends"
-        B --> B1["Memory"]
-        B --> B2["File (AES-256-GCM)"]
-        B --> B3["Ledger (Ethereum & Conflux Core APDU)"]
-        B --> B4["Audit Logger"]
-    end
+## Package: @cfxdevkit/services
 
-    subgraph "Hardware Support"
-        F --> F1["Ledger (Ethereum app)"]
-        F --> F2["OneKey"]
-        F --> F3["Satochip (Bridge)"]
-    end
+### Purpose
 
-    subgraph "Core Dependencies"
-        C --> N["noble/ciphers, noble/hashes"]
-        B --> N
-        F --> N
-    end
+Provides pluggable backend implementations for cryptographic operations, keystore management, and audit logging. Designed to be consumed by the wallet package and other consumers requiring secure key storage.
+
+### Exports
+
+```typescript
+// Package root
+export * from './auth/index.js';
+export * from './embedded-wallet/index.js';
+export * from './keystore/audit.js';
+export * from './keystore/index.js';
+
+// Sub-path exports
+export * from './crypto/index.js';
+export * from './keystore/memory/index.js';
+export * from './keystore/file/index.js';
+export * from './keystore/ledger/index.js';
 ```
 
-### Package Structure
+### Crypto Utilities
 
-| Package | Purpose |
-|--------|---------|
-| `@cfxdevkit/services` | Core keystore + crypto primitives. |
-| `@cfxdevkit/wallet` | Session keys, hardware adapters, capability policies, local wallet init. |
+Located in `src/crypto/`, provides cryptographic primitives:
 
----
+| Function | Purpose |
+|----------|---------|
+| `encryptAesGcm` / `decryptAesGcm` | AES-256-GCM encryption with AAD support |
+| `deriveKeyArgon2id` | Password-based key derivation (Argon2id) |
+| `deriveKeyHkdf` | Key derivation using HKDF |
+| `generateAesGcmKey` | Generate random AES-256 key |
+| `randomBytes` | Cryptographically secure random bytes |
+| `toHex` / `fromHex` | Hex encoding/decoding with `0x` prefix |
+| `toBase64Url` / `fromBase64Url` | URL-safe base64 encoding |
 
-## `@cfxdevkit/services`: Core Keystore & Crypto
+**Constants:**
+```typescript
+export const AES_KEY_LEN = 32;      // 256 bits
+export const GCM_IV_LEN = 12;       // 96 bits
+export const GCM_TAG_LEN = 16;      // 128 bits
+```
 
-### Crypto Module (`src/crypto/`)
+**Error Handling:**
+All crypto operations throw `CryptoError` on failure. Tests verify:
+- Roundtrip encryption/decryption
+- AAD tampering detection
+- Ciphertext tampering detection
+- Salt length validation for KDFs
 
-A minimal, auditable crypto layer built on [`@noble/ciphers`](https://github.com/paulmillr/noble-ciphers) and [`@noble/hashes`](https://github.com/paulmillr/noble-hashes).
+### Keystore Implementations
 
-#### Key Functions
+The keystore abstraction provides a unified interface for storing and retrieving secrets:
 
-| Function | Description |
-|---------|-------------|
-| `generateAesGcmKey()` | Generates a 32-byte AES-256 key. |
-| `encryptAesGcm({ key, plaintext, aad? })` | Encrypts with AES-256-GCM; returns `{ ciphertext, iv, tag }`. |
-| `decryptAesGcm({ key, ciphertext, iv, tag, aad? })` | Decrypts; throws on tag mismatch or AAD tampering. |
-| `deriveKeyArgon2id({ passphrase, salt, memKiB, iterations })` | Memory-hard key derivation (recommended for master passphrase). |
-| `deriveKeyHkdf({ ikm, info, length })` | Deterministic key expansion (e.g., for hierarchical derivation). |
-| `randomBytes(n)` | Cryptographically secure random bytes. |
-| `toHex`, `fromHex`, `toBase64Url`, `fromBase64Url` | Standardized encoding (no `+`, `/`, `=` in base64url). |
-
-#### Security Notes
-
-- **IV length**: 12 bytes (NIST-recommended for GCM).
-- **Tag length**: 16 bytes (full 128-bit authentication tag).
-- **Argon2id**: Enforces `salt.length ≥ 16` bytes; rejects short salts.
-- **AAD support**: Tampering with associated data breaks decryption (e.g., context binding).
-
-### Keystore Module (`src/keystore/`)
-
-A unified interface for key storage and retrieval:
-
-```ts
+```typescript
 interface Keystore {
-  list(): Promise<KeystoreItem[]>
-  has(ref: KeystoreRef): Promise<boolean>
-  getSigner(ref: KeystoreRef, capability?: Capability): Promise<Signer>
-  put?(item: KeystoreItem): Promise<void> // optional write capability
-  remove?(ref: KeystoreRef): Promise<void> // optional write capability
+  has(ref: KeyRef): Promise<boolean>;
+  list(): Promise<KeystoreItem[]>;
+  getSigner(ref: KeyRef): Promise<Signer>;
+  put?(item: KeystoreItem): Promise<void>;
+  remove?(ref: KeyRef): Promise<void>;
 }
 ```
 
-#### Supported Backends
+#### Memory Keystore
 
-| Backend | Path | Features |
-|--------|------|----------|
-| `memory` | `@cfxdevkit/services/keystore-memory` | In-memory, seeded at construction. |
-| `file` | `@cfxdevkit/services/keystore-file` | AES-256-GCM encrypted JSON file. |
-| `ledger` | `@cfxdevkit/services/keystore-ledger` | Hardware-backed via Ledger HID. |
-| `audit` | `@cfxdevkit/services/keystore-audit` | Wraps any keystore with append-only logging. |
+In-memory storage for testing and ephemeral use:
 
-#### Audit Logging (`src/keystore/audit.ts`)
+```typescript
+import { createMemoryKeystore } from '@cfxdevkit/services/keystore-memory';
 
-All keystore operations are logged in a **hash-chained** format:
+const ks = createMemoryKeystore({
+  seed: [{
+    ref: { service: 'cfxdevkit', account: 'deployer' },
+    privateKey: '0x...',
+    meta: { label: 'test' }
+  }],
+  audit: { record: (e) => console.log(e) }
+});
 
+const signer = await ks.getSigner({ service: 'cfxdevkit', account: 'deployer' });
+```
+
+**Features:**
+- Seeded with initial secrets
+- Supports capability constraints via `getSigner(ref, capability)`
+- Audit logging integration
+- Secrets never exposed through `list()`
+
+#### File Keystore
+
+Encrypted file-based storage with passphrase protection:
+
+```typescript
+import {
+  initFileKeystore,
+  createFileKeystore,
+  changeFilePassphrase
+} from '@cfxdevkit/services/keystore-file';
+
+// Initialize (creates file, refuses to overwrite)
+await initFileKeystore({
+  path: './keystore.json',
+  passphrase: 'strong-passphrase',
+  kdf: { memKiB: 1024, iterations: 10 }
+});
+
+// Open and use
+const ks = createFileKeystore({
+  path: './keystore.json',
+  unlock: async () => ({ passphrase: 'strong-passphrase' })
+});
+
+// Change passphrase (re-encrypts all secrets)
+await changeFilePassphrase({
+  path: './keystore.json',
+  oldPassphrase: 'old',
+  newPassphrase: 'new'
+});
+```
+
+**Security Features:**
+- Argon2id key derivation (configurable memory/iterations)
+- AES-256-GCM encryption with AAD
+- Passphrase validation on unlock
+- Refuses to overwrite existing keystore files
+- Secrets never exposed through `list()`
+
+#### Ledger Keystore
+
+Hardware wallet integration for Conflux eSpace and Core Space:
+
+```typescript
+import { createLedgerKeystore, signerFromLedger } from '@cfxdevkit/services/keystore-ledger';
+
+// eSpace (uses Ledger Ethereum app)
+const ethProvider = createLedgerKeystore({
+  eth: await createLedgerEthApp(),
+  accounts: [{
+    ref: { service: 'deploy', account: 'ledger-0' },
+    path: "m/44'/60'/0'/0/0"
+  }]
+});
+
+// Core Space (uses Conflux Ledger app)
+const coreSigner = await signerFromLedger({
+  family: 'core',
+  coreTransport: await createNodeHidLedgerTransport(),
+  chainId: 1029
+});
+```
+
+**Supported Operations:**
+- Address derivation and display on device
+- Personal message signing
+- Transaction signing (EIP-1559 for eSpace, legacy for Core)
+- EIP-712 typed data signing (eSpace)
+
+**APDU Error Handling:**
+The Ledger adapter provides human-readable error messages for common APDU status codes:
+
+| Status Code | Error Message |
+|-------------|---------------|
+| `0x650e` | "Open the Conflux Core app" |
+| `0x6a15` | "Wrong Ledger app" |
+| `0x6e03` | "rejected the APDU length" |
+| `0x6a86` | "does not expose INS=0x04 personal-signing" |
+| `0x5515` | "Ledger is locked or not ready" |
+
+### Audit Logger
+
+Append-only, hash-chained audit logging for keystore operations:
+
+```typescript
+import { createAppendOnlyAuditLogger } from '@cfxdevkit/services/keystore-audit';
+
+const logger = createAppendOnlyAuditLogger({ path: './audit.log' });
+
+logger.record({
+  at: 1,
+  provider: 'file',
+  action: 'put',
+  ok: true
+});
+```
+
+**Log Format:**
 ```json
 {
   "sequence": 1,
-  "previousHash": "0000...0000",
-  "entryHash": "sha256(1 || prevHash || JSON(entry))"
+  "previousHash": "0x0000...",
+  "entryHash": "0xabc123...",
+  "timestamp": 1234567890,
+  "provider": "file",
+  "action": "put",
+  "ok": true
 }
 ```
 
-- **Entry fields**: `at`, `provider`, `action`, `ok`, `ref`, `kind`.
-- **Tamper-evident**: Any modification breaks the chain.
-- **Append-only**: New entries are appended; no in-place updates.
+**Security Properties:**
+- Hash-chained entries (each entry includes hash of previous)
+- Append-only (no modification of existing entries)
+- Sequence numbers for ordering
+- Suitable for compliance/audit requirements
 
-```ts
-const logger = createAppendOnlyAuditLogger({ path: '/var/log/keystore.log' });
-logger.record({ at: Date.now(), provider: 'file', action: 'getSigner', ok: true, ref: { service: 's', account: 'a' } });
+## Package: @cfxdevkit/wallet
+
+### Purpose
+
+Provides wallet abstractions, hardware wallet adapters, session key management, and capability-based access control policies.
+
+### Exports
+
+```typescript
+// Package root
+export * from './batcher/index.js';
+export * from './errors/index.js';
+export * from './hardware/index.js';
+export * from './init/index.js';
+export * from './policies/index.js';
+export * from './session-key/index.js';
+export * from './signers/index.js';
+
+// Sub-path exports
+export * from './hardware/ledger/index.js';
+export * from './hardware/onekey/index.js';
+export * from './hardware/satochip/index.js';
 ```
 
----
+### Hardware Wallet Adapters
 
-## `@cfxdevkit/wallet`: Session Keys & Hardware
+Unified interface for hardware wallet integration:
 
-### Session Keys (`src/session-key/`)
-
-A *session key* is a short-lived signer derived from a *parent* key, constrained by a *capability*.
-
-#### Flow
-
-```mermaid
-flowchart LR
-    Parent[Parent Signer] -->|signs| Attestation[Attestation Message]
-    Attestation -->|digest| Capability[Capability]
-    Capability -->|applies to| Session[Session Signer]
-    Session -->|revoked by| Revoke[Parent revokes]
-```
-
-#### Key Functions
-
-| Function | Description |
-|---------|-------------|
-| `createSessionKey({ parent, capability, privateKey })` | Mints a session signer with attestation. |
-| `canonicalAttestationMessage(parent, session, capability)` | Deterministic JSON message for signing. |
-| `session.revoke()` | Marks session as revoked; all future sign calls fail. |
-
-#### Capability Schema
-
-```ts
-interface Capability {
-  chains?: number[]; // permitted chain IDs
-  contracts?: Address[]; // permitted target addresses
-  selectors?: Hex[]; // permitted function selectors (e.g., `0xa9059cbb`)
-  maxValuePerTx?: bigint; // max ETH/token value per transaction
-  notAfter?: number; // Unix timestamp (ms)
-}
-```
-
-> **Note**: Empty capabilities are rejected — every session must be constrained.
-
-### Hardware Wallets (`src/hardware/`)
-
-Unified adapter contract for hardware devices:
-
-```ts
+```typescript
 interface HardwareWalletAdapter {
-  kind: 'ledger' | 'onekey' | 'satochip';
-  getSigner(path: string, expectedAddress?: Address): Promise<Signer>;
+  kind: HardwareWalletKind;
+  getSigner(path: string): Promise<Signer>;
 }
 ```
 
-#### Supported Devices
+**Supported Kinds:** `['ledger', 'onekey', 'satochip']`
 
-| Device | Adapter | Transport |
-|--------|---------|-----------|
-| Ledger Nano X/S | `@cfxdevkit/wallet/hardware/ledger` | `@ledgerhq/hw-app-eth` + APDU framing |
-| OneKey | `@cfxdevkit/wallet/hardware/onekey` | SDK over USB/BLE |
-| Satochip | `@cfxdevkit/wallet/hardware/satochip` | HTTP bridge (`/health`, `/address`, `/sign-*`) |
+#### Ledger Adapter
 
-#### Ledger APDU Framing (`src/keystore/ledger/core-framing.ts`)
+```typescript
+import { createLedgerHardwareAdapter } from '@cfxdevkit/wallet/hardware/ledger';
 
-Conflux Core Space uses a custom APDU protocol:
+const adapter = createLedgerHardwareAdapter({
+  eth: await createLedgerEthApp()
+});
 
-- **`INS=0x01`**: Get version.
-- **`INS=0x02`**: Get public key (with chain ID display).
-- **`INS=0x03`**: Sign transaction (`SIGN_TX`).
-- **`INS=0x04`**: Sign message (`SIGN_PERSONAL`).
-
-The module implements **chunked APDU exchange** to handle long messages (e.g., 1024+ bytes).
-
-```ts
-await exchangeChunks(transport, 0x04, encodePath("m/44'/503'/0'/0/0"), message);
+const signer = await adapter.getSigner("m/44'/60'/0'/0/7");
 ```
 
-- **Fallback**: If `transport.send()` fails (e.g., old LedgerJS), falls back to raw `exchange()`.
+#### OneKey Adapter
 
-### Local Wallet Init (`src/init/`)
+```typescript
+import { signerFromOneKey } from '@cfxdevkit/wallet/hardware/onekey';
 
-Convenience functions for bootstrapping a local keystore:
-
-| Function | Description |
-|---------|-------------|
-| `initLocalWallet({ passphrase, path })` | Creates encrypted keystore, returns mnemonic + signer. |
-| `openLocalWallet({ passphrase, path })` | Opens existing keystore. |
-| `rotateLocalPassphrase({ oldPassphrase, newPassphrase, path })` | Re-encrypts keystore under new passphrase. |
-| `defaultKeystorePath()` | Respects `CFXDEVKIT_KEYSTORE` env var. |
-
-> **Security**: Passphrases must be ≥ 12 characters (enforced by `initFileKeystore`).
-
----
-
-## Capability Enforcement (`src/policies/`)
-
-All signers can be wrapped with `withCapability(signer, capability)` to enforce policies:
-
-```ts
-const capped = withCapability(signer, {
-  chains: [1030],
-  contracts: ['0x...'],
-  maxValuePerTx: 1000n,
-  notAfter: Date.now() + 3600_000,
+const signer = await signerFromOneKey({
+  sdk: oneKeySdk,
+  connectId: 'C',
+  deviceId: 'D',
+  expectedAddress: '0x...' // Optional: validates device address
 });
 ```
 
-### Policy Checks
+**Features:**
+- Address derivation with optional device display
+- EIP-1559 transaction signing
+- Personal message signing
+- EIP-712 typed data signing
+- Address mismatch detection
 
-| Constraint | Error Code | Message |
-|-----------|------------|---------|
-| `chainId` not in list | `wallet/policies/chain-denied` | `chainId X not permitted` |
-| `to` not in allowlist | `wallet/policies/contract-denied` | `target 0x... not permitted` |
-| Function selector not allowed | `wallet/policies/selector-denied` | `selector 0x... not permitted` |
-| `value` exceeds cap | `wallet/policies/value-exceeded` | `tx value Y exceeds cap X` |
-| Capability expired | `wallet/policies/expired` | `capability expired` |
+#### Satochip Adapter
 
-> **Note**: `signMessage` and `signTypedData` are *not* constrained by chain/contract — only `signTransaction`.
+```typescript
+import { signerFromSatochip } from '@cfxdevkit/wallet/hardware/satochip';
 
----
+const signer = await signerFromSatochip({
+  fetch: customFetch, // Optional: for testing
+  pin: '1234',        // Optional: PIN for card unlock
+  expectedAddress: '0x...' // Optional: validates device address
+});
+```
 
-## Integration Points
+**Bridge Endpoints:**
+- `/health` — Check bridge connectivity
+- `/init` — Initialize with PIN
+- `/address` — Derive address
+- `/sign-message` — Sign personal message
+- `/sign-transaction` — Sign transaction
 
-### Call Graph Highlights
+**Error Codes:**
+- `wallet/hardware/satochip/bridge-unreachable` — Network error
+- `wallet/hardware/satochip/no-card` — Card not connected
+- `wallet/hardware/satochip/bad-pin` — Incorrect PIN
 
-| Flow | Description |
-|------|-------------|
-| `initLocalWallet` → `initFileKeystore` | Creates AES-256-GCM encrypted keystore. |
-| `createSessionKey` → `signMessage` | Parent signs attestation message. |
-| `ledger keystore` → `exchangeChunks` | APDU exchange for Core message signing. |
-| `withCapability` → `checkCapability` | Validates transaction against policy. |
+### Session Keys
 
-### Dependencies
+Create ephemeral signing keys with capability constraints:
 
-| Dependency | Role |
-|-----------|------|
-| `viem` | Transaction serialization, address recovery. |
-| `@ledgerhq/hw-app-eth` | Ledger Ethereum app integration. |
-| `@ledgerhq/hw-transport-node-hid` | Node.js HID transport for Ledger. |
-| `@noble/ciphers`, `@noble/hashes` | Cryptographic primitives (AES, Argon2, HKDF). |
+```typescript
+import { createSessionKey } from '@cfxdevkit/wallet/session-key';
 
----
+const session = await createSessionKey({
+  parent: parentSigner,
+  capability: {
+    chains: [1030],
+    maxValuePerTx: 1000n,
+    notAfter: Date.now() + 60_000,
+    contracts: ['0x...'],
+    selectors: ['0xa9059cbb']
+  },
+  privateKey: sessionPrivateKey
+});
+
+// Use session signer (enforces capability)
+await session.signer.signTransaction(tx);
+
+// Revoke session
+session.revoke();
+```
+
+**Attestation Format:**
+```json
+{
+  "v": 1,
+  "type": "cfxdevkit.session-key.v1",
+  "parent": "0x...",
+  "session": "0x...",
+  "capability": { ... },
+  "signature": "0x..."
+}
+```
+
+**Security Properties:**
+- Parent signs attestation (verifiable on-chain)
+- Capability constraints enforced at signer level
+- Revocation flag prevents further signing
+- Session address differs from parent
+
+### Policy Engine
+
+Capability-based access control for signers:
+
+```typescript
+import { withCapability, checkCapability } from '@cfxdevkit/wallet/policies';
+
+const cappedSigner = withCapability(baseSigner, {
+  chains: [1030],
+  contracts: ['0x...'],
+  selectors: ['0xa9059cbb'],
+  maxValuePerTx: 1000n,
+  notAfter: Date.now() + 60_000
+});
+
+// Check without executing
+const error = checkCapability(capability, tx);
+if (error) {
+  console.log(`Transaction denied: ${error.message}`);
+}
+```
+
+**Capability Fields:**
+
+| Field | Purpose |
+|-------|---------|
+| `chains` | Allowed chain IDs |
+| `contracts` | Allowed target addresses |
+| `selectors` | Allowed function selectors |
+| `maxValuePerTx` | Maximum transaction value |
+| `notAfter` | Expiration timestamp |
+
+**Error Codes:**
+- `wallet/policies/chain-denied` — Chain not permitted
+- `wallet/policies/contract-denied` — Target not permitted
+- `wallet/policies/selector-denied` — Function not permitted
+- `wallet/policies/value-exceeded` — Value exceeds limit
+- `wallet/policies/expired` — Capability expired
+
+### Local Wallet Initialization
+
+Initialize and manage local encrypted keystore:
+
+```typescript
+import {
+  initLocalWallet,
+  openLocalWallet,
+  rotateLocalPassphrase,
+  defaultKeystorePath
+} from '@cfxdevkit/wallet/init';
+
+// Initialize new wallet
+const wallet = await initLocalWallet({
+  passphrase: 'strong-passphrase',
+  path: defaultKeystorePath(),
+  kdf: { memKiB: 1024, iterations: 10 }
+});
+
+// Open existing wallet
+const wallet = await openLocalWallet({
+  passphrase: 'strong-passphrase',
+  path: defaultKeystorePath()
+});
+
+// Rotate passphrase
+await rotateLocalPassphrase({
+  oldPassphrase: 'old',
+  newPassphrase: 'new',
+  path: defaultKeystorePath()
+});
+```
+
+**Environment Variable:**
+```bash
+CFXDEVKIT_KEYSTORE=/custom/path/keystore.json
+```
+
+### Signer Abstractions
+
+```typescript
+import { signerFromKeystore, readonlySigner } from '@cfxdevkit/wallet/signers';
+
+// From keystore with optional capability
+const signer = await signerFromKeystore({
+  provider: keystore,
+  ref: { service: 'cfxdevkit', account: 'deployer' },
+  capability: { chains: [1030] }
+});
+
+// Read-only signer (no signing capability)
+const roSigner = readonlySigner('0x...');
+```
+
+## Integration Patterns
+
+### Using Keystore with Wallet
+
+```typescript
+import { createFileKeystore } from '@cfxdevkit/services/keystore-file';
+import { signerFromKeystore } from '@cfxdevkit/wallet/signers';
+
+const ks = createFileKeystore({
+  path: './keystore.json',
+  unlock: async () => ({ passphrase: '...' })
+});
+
+const signer = await signerFromKeystore({
+  provider: ks,
+  ref: { service: 'cfxdevkit', account: 'deployer' },
+  capability: {
+    chains: [1030],
+    maxValuePerTx: 1000n
+  }
+});
+```
+
+### Hardware Wallet with Session Key
+
+```typescript
+import { createLedgerHardwareAdapter } from '@cfxdevkit/wallet/hardware/ledger';
+import { createSessionKey } from '@cfxdevkit/wallet/session-key';
+
+const adapter = createLedgerHardwareAdapter({ eth: await createLedgerEthApp() });
+const parentSigner = await adapter.getSigner("m/44'/60'/0'/0/0");
+
+const session = await createSessionKey({
+  parent: parentSigner,
+  capability: {
+    chains: [1030],
+    maxValuePerTx: 1000n,
+    notAfter: Date.now() + 3600_000
+  },
+  privateKey: sessionPrivateKey
+});
+```
+
+### Audit-Enabled Keystore
+
+```typescript
+import { createMemoryKeystore } from '@cfxdevkit/services/keystore-memory';
+import { createAppendOnlyAuditLogger } from '@cfxdevkit/services/keystore-audit';
+
+const auditLogger = createAppendOnlyAuditLogger({ path: './audit.log' });
+
+const ks = createMemoryKeystore({
+  seed: [...],
+  audit: {
+    record: (event) => {
+      auditLogger.record({
+        at: event.sequence,
+        provider: 'memory',
+        action: event.action,
+        ok: event.ok
+      });
+    }
+  }
+});
+```
 
 ## Security Considerations
 
-### Audit Trail
+### Key Material Handling
 
-- **All keystore operations** are logged via `audit.record(...)`.
-- **Audit log is append-only** — tampering breaks the hash chain.
-- **Sensitive fields** (`secret`, `privateKey`) are never logged.
+- **Never log** private keys, mnemonics, or passphrases
+- **Memory keystore** is for testing only — use file or hardware for production
+- **File keystore** encrypts secrets at rest with AES-256-GCM
+- **Hardware wallets** never expose private keys to host
 
-### Key Rotation
+### Capability Enforcement
 
-- **File keystore**: `changeFilePassphrase` re-encrypts all entries.
-- **Session keys**: Revoked via `session.revoke()`; parent retains authority.
+- Capabilities are enforced at the **signer level**, not just the keystore
+- Session keys provide **ephemeral, revocable** access
+- Empty capabilities (`{}`) are rejected — always specify constraints
 
-### Hardware Wallets
+### Audit Requirements
 
-- **Address verification**: `expectedAddress` mismatch throws `address-mismatch`.
-- **Ledger app versioning**: Core message signing requires ≥ v2.2.3 (gracefully degrades to transaction signing only).
+- All keystore operations should be **audit-logged**
+- Audit logs are **hash-chained** for tamper detection
+- Logs should be stored **separately** from keystore data
 
----
+### Hardware Wallet Verification
 
-## Usage Examples
+- Always verify **device address** matches expected address
+- Handle **APDU errors** with user-friendly messages
+- Support **fallback paths** (e.g., legacy APDU when new fails)
 
-### 1. Initialize a Local Wallet
+## Testing
 
-```ts
-import { initLocalWallet } from '@cfxdevkit/wallet/init';
+### Running Tests
 
-const wallet = await initLocalWallet({
-  passphrase: 'correct horse battery staple',
-  path: '/home/user/.cfxdevkit/keystore.json',
-});
+```bash
+# Services package
+cd packages/services
+pnpm test
 
-console.log(wallet.mnemonic); // 24-word BIP39 mnemonic
-console.log(wallet.address); // 0x...
+# Wallet package
+cd packages/wallet
+pnpm test
+
+# Type checking
+pnpm typecheck
+
+# Linting
+pnpm lint
 ```
 
-### 2. Create a Session Key
+### Test Patterns
 
-```ts
-import { createSessionKey } from '@cfxdevkit/wallet/session-key';
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
+Tests verify:
+- **Crypto roundtrips** — encryption/decryption consistency
+- **Tamper detection** — AAD/ciphertext modification rejection
+- **Capability enforcement** — policy violations throw errors
+- **Hardware adapters** — mock device responses
+- **Audit logging** — hash chain integrity
 
-const parent = signerFromPrivateKey('0x...');
-const session = await createSessionKey({
-  parent,
-  capability: {
-    chains: [1030],
-    contracts: ['0x10109fc8df283027b6285cc889f5aa624eac1f55'],
-    maxValuePerTx: 1000n,
-    notAfter: Date.now() + 3600_000,
-  },
-  privateKey: '0x2222...',
-});
+## Dependencies
 
-// Use session.signer — all txs are constrained.
-const raw = await session.signer.signTransaction({
-  chainId: 1030,
-  to: '0x10109fc8df283027b6285cc889f5aa624eac1f55',
-  value: 500n,
-});
-```
+### @cfxdevkit/services
 
-### 3. Ledger Hardware Signing (Core Space)
+| Dependency | Purpose |
+|------------|---------|
+| `@cfxdevkit/cdk` | Core SDK types and utilities |
+| `@ledgerhq/hw-app-eth` | Ledger Ethereum app |
+| `@ledgerhq/hw-transport-node-hid` | Ledger transport |
+| `@noble/ciphers` | AES-GCM implementation |
+| `@noble/hashes` | Argon2id, HKDF |
+| `viem` | Ethereum/Conflux types |
 
-```ts
-import { createLedgerKeystore, createNodeHidLedgerTransport } from '@cfxdevkit/services/keystore-ledger';
+### @cfxdevkit/wallet
 
-const transport = createNodeHidLedgerTransport();
-const provider = createLedgerKeystore({
-  eth: createLedgerEthApp(transport),
-  accounts: [{ ref: { service: 'cfx', account: 'ledger-0' }, path
+| Dependency | Purpose |
+|------------|---------|
+| `@cfxdevkit/cdk` | Core SDK types and utilities |
+| `@cfxdevkit/executor` | Transaction execution |
+| `@cfxdevkit/services` | Keystore and crypto |
+| `@noble/hashes` | Cryptographic operations |
+| `viem` | Ethereum/Conflux types |
+
+## Version Compatibility
+
+- **Node.js:** `>=22`
+- **pnpm:** `>=10`
+- **TypeScript:** `^6.0.3`
+- **Vite:** `^8.0.12`
+- **Vitest:** `^4.1.6`
+
+## Contributing
+
+1. Run `pnpm validate:workspace` to check workspace integrity
+2. Run `pnpm validate:deps` to check dependency constraints
+3. Add tests for new functionality
+4. Ensure all tests pass: `pnpm test`
+5. Run type checking: `pnpm typecheck`
+6. Run linting: `pnpm lint`

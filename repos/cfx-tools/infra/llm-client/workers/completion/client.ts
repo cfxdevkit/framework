@@ -2,10 +2,18 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { configPath, defaultBaseUrls, modelPaths } from '../shared/index.ts';
 
+const DEFAULT_REQUEST_TIMEOUT_MS = 120000;
+
 export function normalizeBaseUrl(url) {
   const value = String(url || '').trim();
   if (!value) return value;
   return value.endsWith('/') ? value : `${value}/`;
+}
+
+export function resolveRequestTimeoutMs(config) {
+  const raw = config?.requestTimeoutMs ?? process.env.LEMONADE_REQUEST_TIMEOUT_MS;
+  const value = Number(raw ?? DEFAULT_REQUEST_TIMEOUT_MS);
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_REQUEST_TIMEOUT_MS;
 }
 
 export async function createClient(config = null) {
@@ -127,5 +135,10 @@ export async function writeConfig(config) {
 }
 
 export function defaultConfig() {
-  return { baseUrl: null, defaultModel: null, actions: {} };
+  return {
+    baseUrl: null,
+    defaultModel: null,
+    requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+    actions: {},
+  };
 }

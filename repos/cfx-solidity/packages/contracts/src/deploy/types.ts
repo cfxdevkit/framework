@@ -1,4 +1,4 @@
-import type { Client, Hex, SignableTx, Signer, SignOptions, TxReceipt } from '@cfxdevkit/core';
+import type { Client, Hex, SignableTx, Signer, SignOptions, TxReceipt } from '@cfxdevkit/cdk';
 import type { Abi, ContractConstructorArgs } from 'viem';
 
 export interface DeployContractInput<TAbi extends Abi> {

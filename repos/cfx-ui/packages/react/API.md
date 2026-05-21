@@ -1,115 +1,227 @@
-# framework/react — Public API
+# `@cfxdevkit/react` — Public API
 
-> Thin React adapters over `framework/core`. **Hooks only**, no providers that
-> hide state. State is managed externally via TanStack Query and a minimal client context.
-> All hooks are built on top of `core` primitives and expose no internal state management.
+> React hooks over @cfxdevkit/cdk.
 
 ## Sub-paths
 
-| Sub-path | Concern |
+| Sub-path | Exports |
 |----------|---------|
-| `@cfxdevkit/react` | `<CfxProvider>` + `useClient` / `useChain` |
-| `@cfxdevkit/react/account` | account hooks |
-| `@cfxdevkit/react/contract` | contract read / write hooks |
-| `@cfxdevkit/react/balance` | balance + token hooks |
-| `@cfxdevkit/react/tx` | tx submission + wait hooks |
-| `@cfxdevkit/react/events` | event subscription hooks |
+| `.` | 77 symbols |
+| `./account` | 2 symbols |
+| `./balance` | 10 symbols |
+| `./context` | 6 symbols |
+| `./contract` | 14 symbols |
+| `./events` | 3 symbols |
+| `./tx` | 7 symbols |
+| `./keystore` | 34 symbols |
 
 ---
 
-## `react`
+## `.`
 
+```ts
+export declare const __packageName: "@cfxdevkit/react";
+export interface UseAccountReturn {
+export interface UseNativeBalanceInput {
+export interface UseNativeBalanceReturn {
+export interface UseTokenBalanceInput {
+export interface UseTokenBalanceReturn {
+export interface TokenMetadata {
+export interface UseTokenMetadataInput {
+export interface UseTokenMetadataReturn {
+export interface Signer {
+export interface CfxProviderProps {
+export interface ContractError extends Error {
+export interface ReadCall {
+export interface WriteInput {
+export interface UseReadContractInput {
+export interface UseReadContractReturn<T> {
+export interface UseReadContractsInput {
+export interface UseReadContractsReturn {
+export interface UseSimulateContractInput {
+export interface UseSimulateContractReturn<T> {
+export interface UseWriteContractReturn {
+export interface WatchEventLog {
+export interface UseWatchEventInput {
+export interface SendTransactionInput {
+export interface SendTransactionResult {
+export interface UseSendTransactionReturn {
+export interface UseWaitForTransactionInput {
+export interface UseWaitForTransactionReturn {
+export declare function useAccount(): UseAccountReturn;
+export declare function useNativeBalance(input: UseNativeBalanceInput): UseNativeBalanceReturn;
+export declare function useTokenBalance(input: UseTokenBalanceInput): UseTokenBalanceReturn;
+export declare function useTokenMetadata(input: UseTokenMetadataInput): UseTokenMetadataReturn;
+export declare function CfxProvider({ client, signer, queryClient, children }: CfxProviderProps): import("react/jsx-runtime").JSX.Element;
+export declare function useClient(): Client;
+export declare function useChain(): ChainConfig;
+export declare function useSigner(): Signer | null;
+export declare function useReadContract<T = unknown>(input: UseReadContractInput): UseReadContractReturn<T>;
+export declare function useReadContracts(input: UseReadContractsInput): UseReadContractsReturn;
+export declare function useSimulateContract<T = unknown>(input: UseSimulateContractInput): UseSimulateContractReturn<T>;
+export declare function useWriteContract(): UseWriteContractReturn;
+export declare function useWatchEvent(input: UseWatchEventInput): void;
+export declare function useSendTransaction(): UseSendTransactionReturn;
+export declare function useWaitForTransaction(input: UseWaitForTransactionInput): UseWaitForTransactionReturn;
+export { KeystoreContextValue }
+export { KeystoreProviderProps }
+export { KeystoreProvider }
+export { AccountType }
+export { DualChainIdentity }
+export { KeystoreAccount }
+export { KeystoreActionResult }
+export { KeystoreActiveWallet }
+export { KeystoreAddWalletInput }
+export { KeystorePhase }
+export { KeystoreService }
+export { KeystoreStatusResult }
+export { KeystoreWallet }
+export { KeystoreWalletMutationResult }
+export { UseKeystoreAccountsReturn }
+export { useKeystoreAccounts }
+export { UseKeystoreIdentityReturn }
+export { useKeystoreIdentity }
+export { UseKeystoreLifecycleReturn }
+export { useIsKeystoreActive }
+export { useIsKeystoreBlank }
+export { useIsKeystoredLocked }
+export { useIsKeystoreReady }
+export { useKeystoreLifecycle }
+export { UseKeystoreWalletsReturn }
+export { useKeystoreWallets }
+export { KeystoreAccountSwitcherProps }
+export { KeystoreIdentityStripProps }
+export { KeystoreShellProps }
+export { KeystoreWalletSwitcherProps }
+export { KeystoreAccountSwitcher }
+export { KeystoreIdentityStrip }
+export { KeystoreShell }
+export { KeystoreWalletSwitcher }
 ```
-type CfxProviderProps = {
-  client: Client                              // built by app, passed in
-  signer?: Signer                             // optional; null = readonly
-  queryClient?: QueryClient                   // injectable
-  children: React.ReactNode
-}
-
-const CfxProvider: React.FC<CfxProviderProps>
-
-function useClient(): Client
-function useChain(): ChainConfig
-function useSigner(): Signer | null           // null when readonly
-```
-
-Provider does **not** create the client. The app owns construction; the provider
-distributes it. This makes SSR + tests trivial.
 
 ---
 
-## `react/account`
+## `./account`
 
-```
-function useAccount(): { address: Address | null; isConnected: boolean }
-```
-
-That's it. No "wallet" abstractions here — `wallet-connect` provides a connector
-that calls `<CfxProvider signer=...>` with a fresh signer.
-
----
-
-## `react/contract`
-
-```
-function useReadContract<T>(input: {
-  address: Address
-  abi: Abi
-  functionName: string
-  args?: readonly unknown[]
-  blockTag?: BlockTag
-  enabled?: boolean
-  staleTimeMs?: DurationMs
-}): { data: T | undefined; error: ContractError | null; isLoading: boolean; refetch: () => void }
-
-function useReadContracts(input: { calls: readonly ReadCall[]; enabled?: boolean; staleTimeMs?: DurationMs }): { data: Array<{ status; result }> | undefined; error: ContractError | null; isLoading: boolean }
-
-function useSimulateContract<T>(input: { address: Address; abi: Abi; functionName: string; args?: readonly unknown[]; value?: Wei; enabled?: boolean }): { data: { result: T; request: WriteInput<Abi, string> } | undefined; error: ContractError | null; isLoading: boolean }
-
-function useWriteContract(): {
-  writeAsync: (input: WriteInput<Abi, string>) => Promise<{ hash: Hash }>
-  isPending: boolean
-  error: ContractError | null
-  reset: () => void
-}
-```
-
-Each hook is a thin wrapper over the matching `core/contract` function.
-
----
-
-## `react/balance`
-
-```
-function useNativeBalance(input?: { address?: Address; enabled?: boolean }): { data: Wei | undefined; isLoading: boolean; error: RpcError | null }
-function useTokenBalance(input: { token: Address; address?: Address; enabled?: boolean }): { data: Wei | undefined; isLoading: boolean; error: ContractError | null }
-function useTokenMetadata(input: { token: Address }): { data: { symbol: string; name: string; decimals: number } | undefined; isLoading: boolean }
+```ts
+export interface UseAccountReturn {
+export declare function useAccount(): UseAccountReturn;
 ```
 
 ---
 
-## `react/tx`
+## `./balance`
 
-```
-function useWaitForTransaction(input: { hash: Hash | undefined; confirmations?: number; timeoutMs?: DurationMs }): { data: TxReceipt | undefined; isLoading: boolean; error: RpcError | null }
-function useSendTransaction(): { sendAsync: (tx: SignableTx) => Promise<{ hash: Hash }>; isPending: boolean; error: RpcError | null }
+```ts
+export interface UseNativeBalanceInput {
+export interface UseNativeBalanceReturn {
+export interface UseTokenBalanceInput {
+export interface UseTokenBalanceReturn {
+export interface TokenMetadata {
+export interface UseTokenMetadataInput {
+export interface UseTokenMetadataReturn {
+export declare function useNativeBalance(input: UseNativeBalanceInput): UseNativeBalanceReturn;
+export declare function useTokenBalance(input: UseTokenBalanceInput): UseTokenBalanceReturn;
+export declare function useTokenMetadata(input: UseTokenMetadataInput): UseTokenMetadataReturn;
 ```
 
 ---
 
-## `react/events`
+## `./context`
 
+```ts
+export interface Signer {
+export interface CfxProviderProps {
+export declare function CfxProvider({ client, signer, queryClient, children }: CfxProviderProps): import("react/jsx-runtime").JSX.Element;
+export declare function useClient(): Client;
+export declare function useChain(): ChainConfig;
+export declare function useSigner(): Signer | null;
 ```
-function useWatchEvent(input: { address?: Address | Address[]; abi: Abi; eventName: string; enabled?: boolean }): { events: DecodedEvent[]; clear: () => void }
-```
-
-Internally subscribes via `core/contract.watchEvent`; cancelled on unmount.
 
 ---
 
-## Anti-goals
+## `./contract`
 
-- ❌ Wallet connection UI / modal (lives in `framework/wallet-connect`).
-- ❌ Theming (lives in `framework/theme`).
-- ❌ Pre-built DeFi widgets (lives in `framework/defi-react`).
+```ts
+export interface ContractError extends Error {
+export interface ReadCall {
+export interface WriteInput {
+export interface UseReadContractInput {
+export interface UseReadContractReturn<T> {
+export interface UseReadContractsInput {
+export interface UseReadContractsReturn {
+export interface UseSimulateContractInput {
+export interface UseSimulateContractReturn<T> {
+export interface UseWriteContractReturn {
+export declare function useReadContract<T = unknown>(input: UseReadContractInput): UseReadContractReturn<T>;
+export declare function useReadContracts(input: UseReadContractsInput): UseReadContractsReturn;
+export declare function useSimulateContract<T = unknown>(input: UseSimulateContractInput): UseSimulateContractReturn<T>;
+export declare function useWriteContract(): UseWriteContractReturn;
+```
+
+---
+
+## `./events`
+
+```ts
+export interface WatchEventLog {
+export interface UseWatchEventInput {
+export declare function useWatchEvent(input: UseWatchEventInput): void;
+```
+
+---
+
+## `./tx`
+
+```ts
+export interface SendTransactionInput {
+export interface SendTransactionResult {
+export interface UseSendTransactionReturn {
+export interface UseWaitForTransactionInput {
+export interface UseWaitForTransactionReturn {
+export declare function useSendTransaction(): UseSendTransactionReturn;
+export declare function useWaitForTransaction(input: UseWaitForTransactionInput): UseWaitForTransactionReturn;
+```
+
+---
+
+## `./keystore`
+
+```ts
+export { KeystoreContextValue }
+export { KeystoreProviderProps }
+export { KeystoreProvider }
+export { AccountType }
+export { DualChainIdentity }
+export { KeystoreAccount }
+export { KeystoreActionResult }
+export { KeystoreActiveWallet }
+export { KeystoreAddWalletInput }
+export { KeystorePhase }
+export { KeystoreService }
+export { KeystoreStatusResult }
+export { KeystoreWallet }
+export { KeystoreWalletMutationResult }
+export { UseKeystoreAccountsReturn }
+export { useKeystoreAccounts }
+export { UseKeystoreIdentityReturn }
+export { useKeystoreIdentity }
+export { UseKeystoreLifecycleReturn }
+export { useIsKeystoreActive }
+export { useIsKeystoreBlank }
+export { useIsKeystoredLocked }
+export { useIsKeystoreReady }
+export { useKeystoreLifecycle }
+export { UseKeystoreWalletsReturn }
+export { useKeystoreWallets }
+export { KeystoreAccountSwitcherProps }
+export { KeystoreIdentityStripProps }
+export { KeystoreShellProps }
+export { KeystoreWalletSwitcherProps }
+export { KeystoreAccountSwitcher }
+export { KeystoreIdentityStrip }
+export { KeystoreShell }
+export { KeystoreWalletSwitcher }
+```
+
+<!-- api-hash: cb84b9888b942908683ef2f0682b1a62916507fa17141e5dd786ce71b686b296 -->

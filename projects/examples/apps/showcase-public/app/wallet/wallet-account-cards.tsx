@@ -1,4 +1,4 @@
-import { formatCFX, formatGDrip } from '@cfxdevkit/core';
+import { formatCFX, formatGDrip } from '@cfxdevkit/cdk';
 import { CodeSnippet, DemoCard, StatusBadge } from '@cfxdevkit/example-showcase-ui';
 import { CORE_CHAIN_CONFIGS } from '@cfxdevkit/wallet-connect';
 import {

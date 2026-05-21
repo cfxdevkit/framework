@@ -1,4 +1,4 @@
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
+import { signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
 import { describe, expect, it } from 'vitest';
 import {
   createSiweMessage,

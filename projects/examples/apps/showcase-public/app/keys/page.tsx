@@ -1,6 +1,6 @@
 'use client';
 
-import { deriveDualAccount, generateMnemonic, validateMnemonic } from '@cfxdevkit/core';
+import { deriveDualAccount, generateMnemonic, validateMnemonic } from '@cfxdevkit/cdk';
 import { CodeSnippet, DemoCard, StatusBadge } from '@cfxdevkit/example-showcase-ui';
 import { useState } from 'react';
 import { SiteLayout } from '../site-layout';

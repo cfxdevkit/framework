@@ -1,7 +1,7 @@
 'use client';
 
-import type { Signer } from '@cfxdevkit/core/wallet';
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
+import type { Signer } from '@cfxdevkit/cdk/wallet';
+import { signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
 import { DemoCard, StatusBadge } from '@cfxdevkit/example-showcase-ui';
 import {
   createLedgerHardwareAdapter,

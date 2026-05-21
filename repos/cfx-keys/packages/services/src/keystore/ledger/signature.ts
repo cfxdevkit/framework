@@ -1,5 +1,5 @@
-import type { Address, Hex } from '@cfxdevkit/core';
-import { KeystoreError, type SignableTx } from '@cfxdevkit/core';
+import type { Address, Hex } from '@cfxdevkit/cdk';
+import { KeystoreError, type SignableTx } from '@cfxdevkit/cdk';
 import { serializeTransaction, type TransactionSerializableEIP1559 } from 'viem';
 import type { LedgerSignature, LedgerSignatureResponse } from './types.js';
 

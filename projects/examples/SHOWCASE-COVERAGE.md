@@ -6,7 +6,7 @@ The supported showcase suite is split across the two keeper apps:
 
 | Area | Packages | Covered By | Notes |
 | --- | --- | --- | --- |
-| Core runtime | `@cfxdevkit/core`, `@cfxdevkit/protocol`, `@cfxdevkit/devnode-server`, `@cfxdevkit/client` | `showcase-local`, `showcase-public` | dual-space clients, local control plane, Core/eSpace RPC, address/unit helpers |
+| Core runtime | `@cfxdevkit/cdk`, `@cfxdevkit/protocol`, `@cfxdevkit/devnode-server`, `@cfxdevkit/client` | `showcase-local`, `showcase-public` | dual-space clients, local control plane, Core/eSpace RPC, address/unit helpers |
 | Keys and wallets | `@cfxdevkit/services`, `@cfxdevkit/wallet` | `showcase-local`, `showcase-public` | file keystore, browser wallets, memory wallet, Ledger, OneKey, and Satochip-oriented public demos |
 | Solidity | `@cfxdevkit/contracts`, `@cfxdevkit/compiler`, `@cfxdevkit/abis` | `showcase-local`, `showcase-public` | template catalog, compile/deploy flows, ABI read/write, tracked contract calls |
 | Shared example UI | `@cfxdevkit/example-showcase-ui` | keeper showcase apps | shared UI primitives, code snippets, status badges, and log widgets |

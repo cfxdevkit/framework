@@ -2,238 +2,253 @@
 title: "Repository Layout — cfx-domain"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Repository Layout — cfx-domain
 
-# `cfx-domain` — Vertical Domain Module Documentation
+# cfx-domain
 
-## Overview
+**Tier 2 — Vertical Concerns**
 
-The `cfx-domain` module is a **Tier 2** vertical concern repository, introduced per [ADR-0003](../../docs/adr/0003-multi-repo-split.md). It encapsulates domain-specific logic that is reusable across multiple projects but not tied to any single one. This module serves as the staging ground for domain abstractions before they may eventually be split into independent repositories upon reaching sufficient reuse.
+The `cfx-domain` repository houses vertical-specific logic that may eventually be split into independent repositories. It serves as a carve-out target per [ADR-0003](../../docs/adr/0003-multi-repo-split.md).
 
-Currently, `cfx-domain` hosts two packages:
+## Repository Boundaries
 
-| Package | npm Name | Primary Consumers | Status |
-|--------|----------|-------------------|--------|
-| `game-engine` | `@cfxdevkit/game-engine` | `conflux-phaser`, `chainbrawler` | Phase A scaffold |
-| `automation` | `@cfxdevkit/automation` | `cas`, `electro` | Phase A scaffold |
+To maintain architectural integrity, this module adheres to strict dependency rules:
 
-Each package is designed to be **engine-agnostic**, **framework-agnostic**, and **UI-agnostic**, ensuring maximum portability and composability.
+| Dependency Type | Allowed | Forbidden |
+|-----------------|---------|-----------|
+| **Internal SDKs** | `@cfxdevkit/cdk`, `@cfxdevkit/wallet` | — |
+| **UI/Tools** | — | `cfx-ui`, `cfx-tools` |
 
----
+## Package Inventory
 
-## Architecture Principles
+| Package | npm Scope | Primary Consumers | Status |
+|---------|-----------|-------------------|--------|
+| `game-engine` | `@cfxdevkit/game-engine` | `conflux-phaser`, `chainbrawler` | Active |
+| `automation` | `@cfxdevkit/automation` | `cas`, `electro` | Active |
+| `hardware-bridge` | `@cfxdevkit/hardware-bridge` | — | Pending |
 
-### Dependency Rules
-
-Per the [Architecture Tier Model](../../ARCHITECTURE.md), `cfx-domain` adheres to the following constraints:
-
-- ✅ **May depend on**:  
-  - `@cfxdevkit/core`  
-  - `@cfxdevkit/wallet`  
-  - `@cfxdevkit/contracts`  
-  - `@cfxdevkit/executor`  
-  - `@cfxdevkit/services`
-
-- ❌ **Must not depend on**:  
-  - `cfx-ui`  
-  - `cfx-tools`
-
-This enforces a strict **one-way dependency flow**:  
-`projects → domains → platform → framework`
-
-### Repository Strategy
-
-- All packages currently coexist in a single monorepo for coordination and shared tooling.
-- Packages are candidates for **future extraction** into standalone repos when:
-  - A second consumer emerges for a domain vertical
-  - Versioning or release cycles diverge significantly
-  - Ownership shifts to a different team
+> **Split Strategy:** Start as one repo. Split a package into its own repository when a second distinct consumer arrives.
 
 ---
 
-## Package Deep Dives
+## Package: `@cfxdevkit/automation`
 
-### 1. `@cfxdevkit/automation`
+**Scope:** Off-chain automation strategies executable by `framework/executor`.
 
-#### Purpose
+### Responsibilities
+- **Strategy Interface:** Defines `evaluate`, `buildTx`, and `verify` methods.
+- **Built-in Strategies:** Limit order, DCA, TWAP, condition-based swaps.
+- **Persistence:** Job and execution state via `JobRepository` and `ExecutionRepository`.
+- **Safety:** Pre-execution checks via `SafetyConfig` and `SafetyGuard`.
+- **Backtesting:** Price history evaluation via `PriceChecker`.
 
-Provides **off-chain automation strategies** — reusable, composable logic for executing transactions based on conditions, schedules, or market events — executable by `framework/executor`.
+### Architecture
 
-#### Core Responsibilities
+The automation system operates on a polling model managed by the `Keeper`.
 
-- Define a generic `Strategy` interface (`evaluate`, `buildTx`, `verify`)
-- Implement built-in strategies:  
-  - Limit order  
-  - Dollar-cost averaging (DCA)  
-  - Scheduled transactions  
-  - Stop-loss / trailing-stop  
-  - Generic condition-based triggers  
-- Define strategy persistence schema (e.g., for PostgreSQL or in-memory)
-- Provide backtesting infrastructure (runner, data sources)
+<Mermaid chart={`flowchart TD
+    Keeper[Keeper] -->|Poll| JobRepo[JobRepository]
+    JobRepo -->|Active Jobs| Keeper
+    Keeper -->|Evaluate| Strategy[StrategyEvaluator]
+    Strategy -->|Check| PriceSource[PriceSource]
+    PriceSource -->|Price Data| Strategy
+    Strategy -->|Triggered?| Executor[SwapExecutor]
+    Executor -->|Tx| Chain[Blockchain]
+    Executor -->|Record| ExecRepo[ExecutionRepository]
+    ExecRepo -->|Failures| RetryQueue[RetryQueue]
+    RetryQueue -->|Retry| Keeper
+`} />
 
-#### Non-Goals
+### Key Components
 
-- Transport/queueing (handled by `framework/executor`)
-- Project-specific UI (e.g., CAS order builder remains in `projects/cas/`)
+#### Strategies
+Strategies define *when* and *how* to execute a job. Each implements `StrategyEvaluator<TJob>`.
 
-#### Structure Highlights
+- **`LimitOrderStrategy`**: Executes when price meets threshold.
+- **`DCAStrategy`**: Executes recurring buys/sells based on time intervals.
+- **`TWAPStrategy`**: Executes trades over a duration to average price.
+- **`SwapStrategy`**: Condition-based swaps (e.g., `BELOW`/`ABOVE` threshold).
 
-```
-automation/
-├── strategy/          ← Strategy interface & base class
-├── strategies/        ← Concrete strategies (limit-order/, dca/, etc.)
-├── conditions/        ← Reusable predicates (price, time, balance, event)
-├── persistence/       ← Strategy storage (postgres, memory)
-└── backtest/          ← Backtesting harness
-```
+#### Execution Flow
+1. **Polling:** `Keeper` queries `JobRepository` for active jobs.
+2. **Evaluation:** `StrategyEvaluator` runs `evaluate()` using `PriceSource`.
+3. **Construction:** If triggered, `buildTx()` prepares calldata.
+4. **Execution:** `SwapExecutorClient` submits transaction via `AutomationManager`.
+5. **Recording:** `ExecutionRepository` logs outcome; `RetryQueue` handles failures.
 
-#### Execution Flow (Simplified)
+#### Safety & Reliability
+- **`SafetyConfig`**: Defines thresholds (e.g., `maxSlippageBps`, `maxPriceDeviationBps`).
+- **`SafetyGuard`**: Enforces constraints before execution.
+- **`RetryQueue`**: Manages transient failures with exponential backoff.
 
-```mermaid
-flowchart LR
-    A[User creates strategy] --> B[persistence/repository.save]
-    B --> C[executor.subscribe]
-    C --> D[Strategy.evaluate]
-    D --> E{Condition met?}
-    E -->|Yes| F[Strategy.buildTx]
-    F --> G[Strategy.verify]
-    G --> H[executor.submit]
-```
+### Usage
 
-#### Origin
+#### Create a Limit Order Job
+```ts
+import {
+  LimitOrderStrategy,
+  MemoryJobRepository,
+  SwappiPriceSource,
+  DEFAULT_SAFETY_CONFIG,
+} from '@cfxdevkit/automation';
 
-Extracted from:
-- `cas/conflux-cas/worker`
-- `cas/conflux-sdk` automation types
+const priceSource = new SwappiPriceSource({
+  routerAddress: SWAPPI_ADDRESSES.router,
+  quoteReader: new SwappiQuoteReader(),
+});
 
----
+const jobRepo = new MemoryJobRepository();
+const strategy = new LimitOrderStrategy(new PriceChecker(priceSource, DEFAULT_SAFETY_CONFIG));
 
-### 2. `@cfxdevkit/game-engine`
+const job = {
+  id: 'limit-0x123',
+  type: 'limit_order',
+  params: {
+    tokenIn: '0x...',
+    tokenOut: '0x...',
+    amountIn: 1_000_000n,
+    amountOutMin: 950_000n,
+    deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
+  },
+  strategy: strategy,
+};
 
-#### Purpose
-
-Provides **engine-agnostic on-chain game primitives** — abstractions for game state, entities, and chain synchronization — without game-specific rules.
-
-#### Core Responsibilities
-
-- Local game state management (Zustand-style store, no React coupling)
-- Game loop / state machine (turn/round/phase transitions)
-- Entity interfaces (character, inventory, item, stats)
-- Chain ↔ local-state bridge (optimistic updates, reconciliation)
-- Renderer adapters (React hooks, Phaser scene bridge)
-
-#### Non-Goals
-
-- Game rules (e.g., RPG combat logic stays in `projects/chainbrawler/packages/game-rules/`)
-- Rendering or UI
-
-#### Structure Highlights
-
-```
-game-engine/
-├── state/             ← Local store, persistence, selectors
-├── engine/            ← State machine, actions, reducer, timing
-├── entities/          ← Character, inventory, item, stats
-├── chain-bridge/      ← Event listener, action dispatcher, sync
-└── adapters/          ← React hooks, Phaser bridge
+await jobRepo.add(job);
 ```
 
-#### Key Abstractions
+#### Run the Keeper
+```ts
+import { Keeper } from '@cfxdevkit/automation';
 
-| Abstraction | Description |
-|-------------|-------------|
-| `GameState` | Immutable snapshot of game state |
-| `EntityId` | Unique identifier for characters/items |
-| `ActionDispatcher` | Maps local actions → on-chain writes |
-| `EventListener` | Subscribes to chain events → updates local store |
-| `OptimisticUpdate` | Local-first update with rollback on failure |
+const keeper = new Keeper({
+  jobRepo,
+  executionRepo: new MemoryExecutionRepository(),
+  retryQueue: { maxRetries: 3, baseDelayMs: 1000 },
+  priceSource,
+  safetyConfig: DEFAULT_SAFETY_CONFIG,
+});
 
-#### Execution Flow (Chain ↔ Local)
-
-```mermaid
-flowchart LR
-    subgraph Chain
-        A[On-chain event] --> B[framework/core]
-    end
-    subgraph Local
-        B --> C[EventListener]
-        C --> D[Store.update]
-        D --> E[Selectors]
-        E --> F[Renderer]
-    end
-    subgraph Local → Chain
-        G[User action] --> H[ActionDispatcher]
-        H --> I[OptimisticUpdate]
-        I --> J[Contract.write]
-    end
+keeper.start();
 ```
 
-#### Origin
+### API Reference Highlights
 
-Extracted from `chainbrawler/packages/core`. RPG-specific rules remain in `projects/chainbrawler/packages/game-rules/`.
-
----
-
-## Package Lifecycle & Development
-
-### Phase A: Scaffold
-
-All packages currently exist as **Phase A scaffolds** — minimal structure with:
-- `__packageName` smoke export
-- `STRUCTURE.md` documenting intent
-- `API.md` placeholder
-
-This phase validates:
-- Package boundaries
-- Dependency hygiene
-- Naming & structure consensus
-
-### Phase B: Implementation
-
-Once consensus is reached, implementation proceeds in lockstep with:
-- Public surface documented in `API.md`
-- Tests added
-- Examples added per sub-package
-- Versioning aligned with workspace
-
-### Phase C: Extraction (Future)
-
-When reuse justifies it, a package may be extracted into its own repo with:
-- New monorepo layout (e.g., `cfx-automation`)
-- Independent versioning (`v1.0.0+`)
-- Dedicated CI/CD and release process
+| Symbol | Type | Description |
+|--------|------|-------------|
+| `Keeper` | Class | Main polling and execution loop. |
+| `PriceChecker` | Class | Evaluates job conditions against price data. |
+| `JobRepository` | Interface | CRUD for automation jobs. |
+| `ExecutionRepository` | Interface | Logs execution history. |
+| `SafetyGuard` | Class | Validates safety constraints. |
+| `SwappiPriceSource` | Class | Price feed via Swappi router. |
+| `GeckoTerminalPriceSource` | Class | Price feed via GeckoTerminal API. |
+| `DEFAULT_SAFETY_CONFIG` | Const | Default safety thresholds. |
 
 ---
 
-## Integration with Other Modules
+## Package: `@cfxdevkit/game-engine`
 
-### Dependencies
+**Scope:** Engine-agnostic, on-chain game primitives.
 
-All `cfx-domain` packages depend on **Tier 1** modules (`@cfxdevkit/core`, `@cfxdevkit/wallet`, etc.) and **Tier 0** (`contracts`, `services`). They do **not** depend on `cfx-ui` or `cfx-tools`, preserving separation of concerns.
+### Responsibilities
+- **State Machine:** `GameEngine`, `GameState`, `Transition`.
+- **Turn Management:** `dispatchAction`, `nextTurn`, `roundState`.
+- **Entities:** `Inventory`, `Character`, `Item`.
+- **Chain Bridge:** Syncs chain events to local state (`createStoreAdapter`).
+- **Renderer Integration:** Interfaces for React, Phaser, etc. (`RendererAdapter`).
 
-### Consumers
+### Architecture
 
-| Domain Package | Consumer | Integration Pattern |
-|----------------|----------|---------------------|
-| `game-engine` | `conflux-phaser` | Phaser scene uses `adapters/phaser` |
-| `game-engine` | `chainbrawler` | Uses `state/store`, `entities`, `chain-bridge` |
-| `automation` | `cas` | CAS worker consumes `strategies/limit-order`, `backtest` |
-| `automation` | `electro` | Uses `automation` for scheduled sensor uploads |
+The engine separates core logic from rendering and chain interaction.
+
+<Mermaid chart={`flowchart LR
+    Chain[Blockchain Events] -->|Sync| ChainBridge[Chain Bridge]
+    ChainBridge -->|State Update| Engine[GameEngine]
+    Engine -->|State| Store[Local Store]
+    Store -->|Subscribe| Adapter[RendererAdapter]
+    Adapter -->|Render| UI[UI / Phaser]
+    UI -->|Action| Engine
+`} />
+
+### Key Components
+
+#### Core Engine
+- **`GameEngine`**: Manages state transitions.
+- **`GameState`**: Holds `currentRound`, `currentPlayerIndex`, `status`.
+- **`Transition`**: Pure function `(state: GameState) => GameState`.
+
+#### Entities
+- **`Character`**: Contains `inventory` and `stats`.
+- **`Inventory`**: Manages `Item` lists (`addItem`, `removeItem`).
+- **`Item`**: Defined by `id`, `name`, `quantity`.
+
+#### Adapters
+- **`createStoreAdapter`**: Bridges Zustand-style stores to the engine.
+- **`RendererAdapter`**: Interface for rendering `GameState`.
+- **`RendererContext`**: Provides `engine` and `adapter` to renderers.
+
+### Usage
+
+#### Initialize Engine
+```ts
+import { GameEngine, createStoreAdapter } from '@cfxdevkit/game-engine';
+
+const engine = new GameEngine();
+const adapter = createStoreAdapter({
+  subscribe: (listener) => engine.subscribe(listener),
+  getState: () => engine.getState(),
+  dispatch: (action) => engine.dispatch(action),
+});
+```
+
+#### Dispatch Action
+```ts
+import { dispatchAction } from '@cfxdevkit/game-engine';
+
+dispatchAction({ type: 'ATTACK', targetId: 'enemy-1' });
+```
+
+### API Reference Highlights
+
+| Symbol | Type | Description |
+|--------|------|-------------|
+| `GameEngine` | Class | Core state machine. |
+| `GameState` | Interface | Current game state snapshot. |
+| `Inventory` | Interface | Item management logic. |
+| `Character` | Interface | Player/NPC data structure. |
+| `createStoreAdapter` | Function | Connects external store to engine. |
+| `RendererAdapter` | Interface | Rendering contract. |
+| `dispatchAction` | Function | Global action dispatcher. |
 
 ---
 
-## Future Work
+## Package: `hardware-bridge`
 
-- ✅ Finalize `automation` strategy interface and built-ins
-- ✅ Implement `game-engine` state machine and chain bridge
-- 🚧 Add backtesting data sources (e.g., historical price feeds)
-- 🚧 Add `game-engine` test fixtures (e.g., mock state transitions)
+**Status:** Documentation Pending
+
+This package exists within the repository layout but source files are currently unavailable for detailed documentation. It is intended to handle hardware-specific integrations.
 
 ---
 
-## References
+## Development Guidelines
 
-- [ADR-0003 — Multi-Repo Split](../../docs/adr/0003-multi-repo-split.md)
-- [Architecture Tier Model](../../ARCHITECTURE.md)
-- `automation/STRUCTURE.md`
-- `game-engine/STRUCTURE.md`
+### Adding a New Strategy (`automation`)
+1. Create a new directory under `src/strategies/`.
+2. Implement `StrategyEvaluator` interface.
+3. Define Zod schema in `schema.ts`.
+4. Export via `src/strategies/index.ts`.
+5. Update `API.md` with new symbols.
+
+### Adding a New Game Entity (`game-engine`)
+1. Define interface in `src/entities/`.
+2. Add state selectors in `src/state/selectors.ts`.
+3. Ensure no game-specific rules (e.g., damage formulas) are included; keep logic engine-agnostic.
+
+### Splitting a Package
+When a package gains a second consumer:
+1. Create a new repository in the `cfxdevkit` org.
+2. Move `packages/<name>` to the new repo root.
+3. Update `cfx-domain` to re-export from the new package (temporary) or remove dependency.
+4. Update `ADR-0003` with the split record.

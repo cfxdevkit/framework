@@ -42,7 +42,7 @@ conflux-phaser/
 ### Framework usage
 
 - `@cfxdevkit/wallet-connect` (replaces hand-rolled RainbowKit setup)
-- `@cfxdevkit/core`
+- `@cfxdevkit/cdk`
 
 ### Migration notes
 

@@ -2,97 +2,83 @@
 title: "Repository Layout"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Repository Layout
 
-# Repository Layout — Overview
+# Repository Layout — repos
 
-The **Repository Layout** module defines the structural and organizational backbone of the Conflux DevKit monorepo and its eventual decomposition into independent, auditable repositories. It implements the **tier-aligned multi-repository split** strategy from [ADR-0003](../docs/adr/0003-multi-repo-split.md), balancing immediate developer velocity with long-term modularity, security, and versioning discipline.
+## Overview
 
-At a high level, the layout is organized into **three layers**, each serving a distinct architectural purpose:
+The `repos/` directory implements a **tier-aligned repository split strategy** defined in [ADR-0003](../docs/adr/0003-multi-repo-split.md). It organizes the codebase into logical slices that function as standalone git repositories while currently residing within the root monorepo. This architecture enables day-to-day development within a single workspace while preparing specific domains for eventual extraction into independent repositories.
 
-```mermaid
-flowchart TB
-    subgraph "Tier 0 — Foundational Primitives & Trust Boundaries"
-        cfx-core["cfx-core<br/>Chain primitives"]
-        cfx-keys["cfx-keys<br/>Crypto & signing"]
-        cfx-ui["cfx-ui<br/>React UI surface"]
-        cfx-solidity["cfx-solidity<br/>Solidity toolchain"]
+Each subdirectory within `repos/` is structured as if it were already a standalone repository, containing key files such as `package.json`, `pnpm-workspace.template.yaml`, and `README.md`.
+
+## Architecture
+
+The ecosystem is divided into specific tiers based on stability, security boundaries, and release cadence. Dependencies flow strictly from lower tiers (stable/core) to higher tiers (verticals/tools), ensuring that core primitives remain decoupled from application logic.
+
+<Mermaid chart={`graph TD
+    subgraph "Governance & Standards"
+        META[cfx-meta]
     end
 
-    subgraph "Tier 1 — Developer Experience & Automation"
-        cfx-tools["cfx-tools<br/>CLI, scaffolding, MCP"]
-        cfx-llm["cfx-llm<br/>LLM automation"]
+    subgraph "Developer Experience [Tier 1]"
+        TOOLS[cfx-tools]
+        LLM[cfx-llm]
     end
 
-    subgraph "Tier 2 — Domain & Orchestration"
-        cfx-domain["cfx-domain<br/>Vertical domain logic"]
-        cfx-meta["cfx-meta<br/>Metadata & release orchestration"]
+    subgraph "Runtime Foundation [Tier 0]"
+        subgraph "Security Boundary [Tier 0b]"
+            KEYS[cfx-keys]
+        end
+        subgraph "Chain Primitives [Tier 0a]"
+            CORE[cfx-core]
+            SOLIDITY[cfx-solidity]
+        end
+        subgraph "UI Surface [Tier 0c]"
+            UI[cfx-ui]
+        end
     end
 
-    repos["repos/ — Multi-repo slices"] --> cfx-core
-    repos --> cfx-keys
-    repos --> cfx-ui
-    repos --> cfx-solidity
-    repos --> cfx-tools
-    repos --> cfx-llm
-    repos --> cfx-domain
-    repos --> cfx-meta
+    subgraph "Vertical Concerns [Tier 2]"
+        DOMAIN[cfx-domain]
+    end
 
-    cfx-core --> cfx-keys
-    cfx-core --> cfx-ui
-    cfx-core --> cfx-solidity
-    cfx-domain --> cfx-tools
-    cfx-domain --> cfx-llm
-    cfx-meta -->|orchestrates| repos
-```
+    META -.->|Governance| TOOLS
+    META -.->|Governance| CORE
+    TOOLS -.->|Build/Dev| CORE
+    TOOLS -.->|Build/Dev| DOMAIN
+    KEYS --> CORE
+    SOLIDITY --> CORE
+    UI --> CORE
+    UI --> KEYS
+    DOMAIN --> CORE
+    DOMAIN --> KEYS
+`} />
 
-## Layered Architecture
+## Module Interactions
 
-### 🔹 Tier 0 — Foundational & Audit-Grade
-These modules form the stable, low-level core of the DevKit. They are designed for long-term stability, minimal dependencies, and (where applicable) strict security isolation.
+### Core Runtime (Tier 0)
+The foundation of the ecosystem consists of stable, low-level primitives that decouple release cadences from higher-level logic.
+*   **[cfx-core](cfx-core.md):** Provides chain primitives, types, and protocol bindings. It serves as the primary dependency for UI and Domain layers.
+*   **[cfx-keys](cfx-keys.md):** Defines the audit-grade trust boundary. All cryptographic operations and signing logic are isolated here to reduce audit scope. Consumers use `@cfxdevkit/services` for primitives and `@cfxdevkit/wallet` for orchestration.
+*   **[cfx-solidity](cfx-solidity.md):** Manages the Solidity compilation pipeline, standard ABIs, and contract bindings. It is usable independently without pulling the rest of the DevKit.
+*   **[cfx-ui](cfx-ui.md):** Provides React-based UI surfaces. It couples to `cfx-core` and `cfx-keys` through stable npm ranges, ensuring chain code is not blocked by UI iteration.
 
-- [`cfx-core`](cfx-core.md): Tier-0a chain primitives (e.g., network abstractions, types, utilities) — the dependency root for all other modules.
-- [`cfx-keys`](cfx-keys.md): Tier-0b cryptographic trust boundary — isolates private key handling for auditability and reduced blast radius.
-- [`cfx-ui`](cfx-ui.md): Tier-0c React UI surface — headless, composable components for wallet and DeFi interfaces.
-- [`cfx-solidity`](cfx-solidity.md): Tier-0a Solidity toolchain — ABIs, compiler pipeline, and contract bindings.
+### Vertical Logic (Tier 2)
+*   **[cfx-domain](cfx-domain.md):** Houses vertical-specific logic (e.g., `game-engine`, `automation`, `hardware-bridge`). It adheres to strict dependency rules: it may depend on internal SDKs (`@cfxdevkit/cdk`, `@cfxdevkit/wallet`) but is **forbidden** from depending on `cfx-ui` or `cfx-tools`. Packages split into independent repositories when a second distinct consumer arrives.
 
-> All Tier 0 modules are carved out as independent repositories per ADR-0003, with strict boundary rules and independent versioning.
+### Developer Experience (Tier 1)
+*   **[cfx-tools](cfx-tools.md):** Contains CLI, scaffolding, and IDE integrations. It operates on a fast release cadence (weekly) and is **never** a runtime dependency of a deployed application. Core packages must not depend on `cfx-tools`.
+*   **[cfx-llm](cfx-llm.md):** Centralizes LLM tooling and utilities, encapsulating model interaction and prompt management logic within `packages/llm-tools`.
 
-### 🔹 Tier 1 — Developer Experience & Automation
-These modules enable rapid iteration on tooling and developer workflows, with no impact on production binaries.
+### Governance
+*   **[cfx-meta](cfx-meta.md):** Acts as the authoritative source for project-wide governance. It hosts Architecture Decision Records (ADRs), security policies (`SECURITY.md`), and release orchestration metadata. It does not contain shippable application code.
 
-- [`cfx-tools`](cfx-tools.md): Tier-1 CLI, scaffolding, MCP server, and VS Code extension — fast-release, no semver discipline.
-- [`cfx-llm`](cfx-llm.md): Tier-1 LLM automation slice — local AI pipelines for commits, docs, and code scanning.
+## Extraction Strategy
 
-> These modules may depend on Tier 0 primitives but remain decoupled from domain logic.
-
-### 🔹 Tier 2 — Domain & Orchestration
-These modules coordinate reusable business logic and architectural governance.
-
-- [`cfx-domain`](cfx-domain.md): Tier-2 vertical domain logic (e.g., `game-engine`, `automation`) — staging ground for reusable abstractions before carve-out.
-- [`cfx-meta`](cfx-meta.md): Metadata and release orchestration — no code, only docs, version manifests, and integration tracking.
-
-> `cfx-meta` serves as the source of truth for architectural decisions and cross-repo release coordination.
-
-## Cross-Module Workflows
-
-### 🔄 Development Flow
-1. A developer starts with [`cfx-tools`](cfx-tools.md) (e.g., `scaffold-cli`) to bootstrap a project.
-2. The project imports primitives from [`cfx-core`](cfx-core.md) and [`cfx-solidity`](cfx-solidity.md) for chain interaction.
-3. Wallet signing is handled via [`cfx-keys`](cfx-keys.md), ensuring private key logic stays isolated.
-4. UI components are composed from [`cfx-ui`](cfx-ui.md), which consumes `cfx-core` types and `cfx-keys` signers.
-5. Domain-specific logic (e.g., game rules) lives in [`cfx-domain`](cfx-domain.md), consumed by both CLI and UI tooling.
-
-### 🔄 Release & Integration Flow
-1. [`cfx-meta`](cfx-meta.md) tracks compatibility across repositories and coordinates monthly integration releases.
-2. As domain or tooling packages mature, they may be carved out into standalone repos (e.g., `cfx-domain` → `@cfxdevkit/game-engine`).
-3. The `repos/` directory holds **repository slices** — each representing a logical boundary aligned with tiering and security posture — enabling gradual decomposition while preserving monorepo workflows.
-
-### 🔐 Security & Audit Flow
-- Any code handling private keys lives exclusively in [`cfx-keys`](cfx-keys.md), making it the audit perimeter.
-- [`cfx-meta`](cfx-meta.md) enforces release policies (e.g., mandatory audit sign-off for `cfx-keys`).
-- [`cfx-core`](cfx-core.md) and [`cfx-solidity`](cfx-solidity.md) are versioned strictly to avoid breaking changes in downstream dependencies.
-
----
-
-> **Note**: This module group is *not* a runtime component — it is a structural and organizational layer. It has no execution flow, no internal calls, and no outgoing dependencies beyond the workspace itself. Each sub-module is documented in detail on its own page.
+The layout is designed to support the transition from monorepo to multi-repo.
+1.  **Current State:** All slices reside in `repos/` within the monorepo for shared development velocity.
+2.  **Preparation:** Each slice maintains standalone configuration (`pnpm-workspace.template.yaml`) to facilitate extraction.
+3.  **Future State:** Specific domains (e.g., `cfx-domain` packages) will be extracted into independent repositories once consumer count justifies the split, while `cfx-core` and `cfx-keys` remain stable foundations.

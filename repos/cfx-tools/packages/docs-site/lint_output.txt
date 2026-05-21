@@ -1,0 +1,249 @@
+
+> @cfxdevkit/framework@0.0.0 lint /workspaces/root
+> moon run :lint
+
+      game-engine:lint | Checked 2 files in 14ms. No fixes applied.
+▮▮▮▮ game-engine:lint (cached, b0164b0d)
+▮▮▮▮ biome-config:lint (no op, c8153761)
+▮▮▮▮ compiler:lint (0af8e0d8)
+▮▮▮▮ arch-rules:lint (38158f59)
+              cli:lint | Checked 14 files in 23ms. No fixes applied.
+▮▮▮▮ cli:lint (cached, 4f51c54c)
+▮▮▮▮ llm-agents:lint (f04c6a04)
+▮▮▮▮ mcp-server:lint (486ed607)
+▮▮▮▮ contracts:lint (3283f51d)
+▮▮▮▮ showcase-public:lint (c6d5e651)
+▮▮▮▮ llm-client:lint (0d7ba5a0)
+▮▮▮▮ vscode-extension:lint (64338b3b)
+▮▮▮▮ react:lint (5bd75729)
+▮▮▮▮ tsconfig:lint (no op, 8883be1d)
+               ui:lint | Checked 25 files in 52ms. No fixes applied.
+▮▮▮▮ ui:lint (cached, cf97abf7)
+▮▮▮▮ theme:lint (449f646a)
+▮▮▮▮ ui-core:lint (50de8871)
+     scaffold-cli:lint | Checked 17 files in 34ms. No fixes applied.
+▮▮▮▮ scaffold-cli:lint (cached, 3fbc2d96)
+▮▮▮▮ automation:lint (aeb361dc)
+▮▮▮▮ services:lint (3448e62f)
+▮▮▮▮ showcase-ui:lint (5a6a7cb2)
+▮▮▮▮ llm-tools:lint (9b5883ed)
+             abis:lint | Checked 12 files in 27ms. No fixes applied.
+▮▮▮▮ abis:lint (cached, 86a68895)
+codegen-contracts:lint | Checked 2 files in 26ms. No fixes applied.
+▮▮▮▮ codegen-contracts:lint (cached, 34c66e6a)
+▮▮▮▮ wallet-connect:lint (d00c3cc1)
+   showcase-local:lint | Checked 80 files in 43ms. No fixes applied.
+▮▮▮▮ showcase-local:lint (cached, 5f407955)
+▮▮▮▮ devnode:lint (93ba0bca)
+       defi-react:lint | Checked 36 files in 58ms. No fixes applied.
+▮▮▮▮ defi-react:lint (cached, 8dded547)
+▮▮▮▮ moon-config:lint (no op, 30af5c0f)
+▮▮▮▮ testing:lint (74a8ca8d)
+         executor:lint | Checked 2 files in 25ms. No fixes applied.
+▮▮▮▮ executor:lint (cached, 9a255e42)
+▮▮▮▮ cdk:lint (7d425807)
+▮▮▮▮ wallet:lint (35fc65ec)
+         protocol:lint | Checked 15 files in 17ms. No fixes applied.
+▮▮▮▮ protocol:lint (cached, 22b6b606)
+▮▮▮▮ devnode-server:lint (36faae49)
+  keystore-server:lint | Checked 7 files in 28ms. No fixes applied.
+▮▮▮▮ keystore-server:lint (cached, daab6e77)
+▮▮▮▮ arch-check:lint (5dd268ed)
+           client:lint | Checked 19 files in 38ms. No fixes applied.
+▮▮▮▮ client:lint (cached, b216ecab)
+       llm-agents:lint | src/index.ts:5:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━
+
+       llm-agents:lint |   × Sort the exported names.
+       llm-agents:lint |   
+       llm-agents:lint |      3 │ export { ask, configure, listActions, listModels, runAction } from '../workers/commands.js';
+       llm-agents:lint |      4 │ export { parseCommitFlags, runCommit, runPrecommit } from '../workers/commit/index.js';
+       llm-agents:lint |    > 5 │ export {
+       llm-agents:lint |        │ ^^^^^^^^
+       llm-agents:lint |    > 6 │   runDocsApi,
+       llm-agents:lint |         ...
+       llm-agents:lint |   > 10 │   runStructureUpkeep,
+       llm-agents:lint |   > 11 │ } from '../workers/docs/index.js';
+       llm-agents:lint |        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+       llm-agents:lint |     12 │ export { runTestUpkeep } from '../workers/tests/index.js';
+       llm-agents:lint |     13 │ 
+       llm-agents:lint |   
+       llm-agents:lint |   i Safe fix: Organize imports and exports (Biome)
+       llm-agents:lint |   
+       llm-agents:lint |      5  5 │   export {
+       llm-agents:lint |      6  6 │     runDocsApi,
+       llm-agents:lint |      7    │ - ··runDocsReadme,
+       llm-agents:lint |      8    │ - ··runDocsUpkeep,
+       llm-agents:lint |      9    │ - ··runDocsPackagePages,
+       llm-agents:lint |         7 │ + ··runDocsPackagePages,
+       llm-agents:lint |         8 │ + ··runDocsReadme,
+       llm-agents:lint |         9 │ + ··runDocsUpkeep,
+       llm-agents:lint |     10 10 │     runStructureUpkeep,
+       llm-agents:lint |     11 11 │   } from '../workers/docs/index.js';
+       llm-agents:lint |   
+
+       llm-agents:lint | check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+       llm-agents:lint |   × Some errors were emitted while running checks.
+       mcp-server:lint | Checked 29 files in 15ms. No fixes applied.
+       arch-rules:lint | Checked 4 files in 9ms. No fixes applied.
+       llm-client:lint | Checked 9 files in 16ms. No fixes applied.
+        contracts:lint | Checked 31 files in 15ms. No fixes applied.
+       llm-agents:lint | Checked 1 file in 4ms. No fixes applied.
+       llm-agents:lint | Found 1 error.
+       llm-agents:lint |   
+
+▮▮▮▮ mcp-server:lint (370ms, 486ed607)
+▮▮▮▮ arch-rules:lint (383ms, 38158f59)
+▮▮▮▮ llm-client:lint (368ms, 0d7ba5a0)
+▮▮▮▮ contracts:lint (385ms, 3283f51d)
+         compiler:lint | src/integration.test.ts:15:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━
+
+         compiler:lint |   × Sort these imports.
+         compiler:lint |   
+         compiler:lint |     13 │  * `~/.cache/cfxdevkit/solc`) so subsequent runs are offline + fast.
+         compiler:lint |     14 │  */
+         compiler:lint |   > 15 │ import { erc20 } from '@cfxdevkit/contracts';
+         compiler:lint |        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         compiler:lint |   > 16 │ import { deployContract } from '@cfxdevkit/contracts/deploy';
+         compiler:lint |   > 17 │ import { createClient, espaceLocal, http, signerFromPrivateKey } from '@cfxdevkit/cdk';
+         compiler:lint |        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         compiler:lint |     18 │ import { createDevNode } from '@cfxdevkit/devnode';
+         compiler:lint |     19 │ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+         compiler:lint |   
+         compiler:lint |   i Safe fix: Organize imports and exports (Biome)
+         compiler:lint |   
+         compiler:lint |      13  13 │    * `~/.cache/cfxdevkit/solc`) so subsequent runs are offline + fast.
+         compiler:lint |      14  14 │    */
+         compiler:lint |      15     │ - import·{·erc20·}·from·'@cfxdevkit/contracts';
+         compiler:lint |      16     │ - import·{·deployContract·}·from·'@cfxdevkit/contracts/deploy';
+         compiler:lint |      17     │ - import·{·createClient,·espaceLocal,·http,·signerFromPrivateKey·}·from·'@cfxdevkit/cdk';
+         compiler:lint |          15 │ + 
+         compiler:lint |          16 │ + import·{·createClient,·espaceLocal,·http,·signerFromPrivateKey·}·from·'@cfxdevkit/cdk';
+         compiler:lint |          17 │ + import·{·erc20·}·from·'@cfxdevkit/contracts';
+         compiler:lint |          18 │ + import·{·deployContract·}·from·'@cfxdevkit/contracts/deploy';
+         compiler:lint |      18  19 │   import { createDevNode } from '@cfxdevkit/devnode';
+         compiler:lint |      19  20 │   import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+         compiler:lint |   
+
+         compiler:lint | check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+         compiler:lint |   × Some errors were emitted while running checks.
+         compiler:lint |   
+
+▮▮▮▮ llm-agents:lint (391ms, f04c6a04)
+         compiler:lint | Checked 32 files in 11ms. No fixes applied.
+         compiler:lint | Found 1 error.
+            react:lint | Checked 21 files in 18ms. No fixes applied.
+  showcase-public:lint | Checked 27 files in 19ms. No fixes applied.
+▮▮▮▮ arch-check:lint (300ms, 5dd268ed)
+▮▮▮▮ devnode-server:lint (326ms, 36faae49)
+▮▮▮▮ showcase-ui:lint (359ms, 5a6a7cb2)
+▮▮▮▮ testing:lint (348ms, 74a8ca8d)
+▮▮▮▮ wallet:lint (338ms, 35fc65ec)
+▮▮▮▮ automation:lint (386ms, aeb361dc)
+▮▮▮▮ devnode:lint (354ms, 93ba0bca)
+▮▮▮▮ cdk:lint (344ms, 7d425807)
+▮▮▮▮ llm-tools:lint (366ms, 9b5883ed)
+▮▮▮▮ compiler:lint (420ms, 0af8e0d8)
+▮▮▮▮ showcase-public:lint (404ms, c6d5e651)
+▮▮▮▮ theme:lint (392ms, 449f646a)
+▮▮▮▮ services:lint (385ms, 3448e62f)
+ vscode-extension:lint | src/helpers/shared.ts:7:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━
+
+ vscode-extension:lint |   × Sort these exports.
+ vscode-extension:lint |   
+ vscode-extension:lint |      5 │ import { createDevnodeServerApp } from '@cfxdevkit/devnode-server';
+ vscode-extension:lint |      6 │ 
+ vscode-extension:lint |    > 7 │ export { promises as fs } from 'node:fs';
+ vscode-extension:lint |        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ vscode-extension:lint |    > 8 │ export { isAbsolute, join, relative } from 'node:path';
+ vscode-extension:lint |         ...
+ vscode-extension:lint |   > 35 │   validateMnemonic,
+ vscode-extension:lint |   > 36 │ } from '@cfxdevkit/cdk/wallet';
+ vscode-extension:lint |        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ vscode-extension:lint |     37 │ export { createAppendOnlyAuditLogger } from '@cfxdevkit/services';
+ vscode-extension:lint |     38 │ export type { KeystoreProvider, SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
+ vscode-extension:lint |   
+ vscode-extension:lint |   i Safe fix: Organize imports and exports (Biome)
+ vscode-extension:lint |   
+ vscode-extension:lint |       7   7 │   export { promises as fs } from 'node:fs';
+ vscode-extension:lint |       8   8 │   export { isAbsolute, join, relative } from 'node:path';
+ vscode-extension:lint |       9     │ - export·{·type·Artifact,·compile,·listTemplates,·npmResolver·}·from·'@cfxdevkit/compiler';
+ vscode-extension:lint |      10     │ - export·{·deployContract·}·from·'@cfxdevkit/contracts/deploy';
+ vscode-extension:lint |      11     │ - export·{·readContract·}·from·'@cfxdevkit/contracts/read';
+ vscode-extension:lint |      12     │ - export·{·sendWrite,·waitForReceipt·}·from·'@cfxdevkit/contracts/write';
+ vscode-extension:lint |      13     │ - export·{·hexToBase32·}·from·'@cfxdevkit/cdk/address';
+ vscode-extension:lint |      14     │ - export·{
+ vscode-extension:lint |      15     │ - ··type·ChainConfig,
+ vscode-extension:lint |      16     │ - ··coreSpaceLocal,
+ vscode-extension:lint |      17     │ - ··coreSpaceMainnet,
+ vscode-extension:lint |      18     │ - ··coreSpaceTestnet,
+ vscode-extension:lint |      19     │ - ··espaceLocal,
+ vscode-extension:lint |      20     │ - ··espaceMainnet,
+ vscode-extension:lint |      21     │ - ··espaceTestnet,
+ vscode-extension:lint |      22     │ - }·from·'@cfxdevkit/cdk/chains';
+ vscode-extension:lint |      23     │ - export·{
+ vscode-extension:lint |      24     │ - ··type·CoreSpaceClient,
+ vscode-extension:lint |      25     │ - ··createClient,
+ vscode-extension:lint |      26     │ - ··type·EspaceClient,
+ vscode-extension:lint |      27     │ - ··http,
+ vscode-extension:lint |      28     │ - }·from·'@cfxdevkit/cdk/client';
+ vscode-extension:lint |      29     │ - export·{·formatCFX·}·from·'@cfxdevkit/cdk/units';
+ vscode-extension:lint |      30     │ - export·{
+ vscode-extension:lint |      31     │ - ··coreAddressFromPrivateKey,
+ vscode-extension:lint |      32     │ - ··deriveAccount,
+ vscode-extension:lint |      33     │ - ··generateMnemonic,
+ vscode-extension:lint |      34     │ - ··type·Signer,
+ vscode-extension:lint |      35     │ - ··validateMnemonic,
+ vscode-extension:lint |      36     │ - }·from·'@cfxdevkit/cdk/wallet';
+ vscode-extension:lint |           9 │ + export·{·hexToBase32·}·from·'@cfxdevkit/cdk/address';
+ vscode-extension:lint |          10 │ + export·{
+ vscode-extension:lint |          11 │ + ··type·ChainConfig,
+ vscode-extension:lint |          12 │ + ··coreSpaceLocal,
+ vscode-extension:lint |          13 │ + ··coreSpaceMainnet,
+ vscode-extension:lint |          14 │ + ··coreSpaceTestnet,
+ vscode-extension:lint |          15 │ + ··espaceLocal,
+ vscode-extension:lint |          16 │ + ··espaceMainnet,
+ vscode-extension:lint |          17 │ + ··espaceTestnet,
+ vscode-extension:lint |          18 │ + }·from·'@cfxdevkit/cdk/chains';
+ vscode-extension:lint |          19 │ + export·{
+ vscode-extension:lint |          20 │ + ··type·CoreSpaceClient,
+ vscode-extension:lint |          21 │ + ··createClient,
+ vscode-extension:lint |          22 │ + ··type·EspaceClient,
+ vscode-extension:lint |          23 │ + ··http,
+ vscode-extension:lint |          24 │ + }·from·'@cfxdevkit/cdk/client';
+ vscode-extension:lint |          25 │ + export·{·formatCFX·}·from·'@cfxdevkit/cdk/units';
+ vscode-extension:lint |          26 │ + export·{
+ vscode-extension:lint |          27 │ + ··coreAddressFromPrivateKey,
+ vscode-extension:lint |          28 │ + ··deriveAccount,
+ vscode-extension:lint |          29 │ + ··generateMnemonic,
+ vscode-extension:lint |          30 │ + ··type·Signer,
+ vscode-extension:lint |          31 │ + ··validateMnemonic,
+ vscode-extension:lint |          32 │ + }·from·'@cfxdevkit/cdk/wallet';
+ vscode-extension:lint |          33 │ + export·{·type·Artifact,·compile,·listTemplates,·npmResolver·}·from·'@cfxdevkit/compiler';
+ vscode-extension:lint |          34 │ + export·{·deployContract·}·from·'@cfxdevkit/contracts/deploy';
+ vscode-extension:lint |          35 │ + export·{·readContract·}·from·'@cfxdevkit/contracts/read';
+ vscode-extension:lint |          36 │ + export·{·sendWrite,·waitForReceipt·}·from·'@cfxdevkit/contracts/write';
+ vscode-extension:lint |      37  37 │   export { createAppendOnlyAuditLogger } from '@cfxdevkit/services';
+ vscode-extension:lint |      38  38 │   export type { KeystoreProvider, SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
+ vscode-extension:lint |   
+
+ vscode-extension:lint | check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ vscode-extension:lint |   × Some errors were emitted while running checks.
+ vscode-extension:lint |   
+
+▮▮▮▮ react:lint (400ms, 5bd75729)
+ vscode-extension:lint | Checked 22 files in 8ms. No fixes applied.
+ vscode-extension:lint | Found 1 error.
+   wallet-connect:lint | Checked 26 files in 8ms. No fixes applied.
+▮▮▮▮ vscode-extension:lint (418ms, 64338b3b)
+          ui-core:lint | Checked 11 files in 10ms. No fixes applied.
+▮▮▮▮ wallet-connect:lint (381ms, d00c3cc1)
+▮▮▮▮ ui-core:lint (412ms, 50de8871)
+Error: task_runner::run_failed
+
+  × Task llm-agents:lint failed to run.
+  ╰─▶ Process pnpm failed: exit code 1
+
+ ELIFECYCLE  Command failed with exit code 1.

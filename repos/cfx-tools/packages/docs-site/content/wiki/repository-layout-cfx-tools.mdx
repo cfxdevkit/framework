@@ -2,357 +2,312 @@
 title: "Repository Layout — cfx-tools"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Repository Layout — cfx-tools
 
-# Repository Layout — `cfx-tools`
+# cfx-tools
 
-The `cfx-tools` monorepo is the **Tier 1 developer experience (DX)** surface of the Conflux DevKit. It houses all tooling, scaffolding, and developer-facing integrations — but **never** runtime dependencies of deployed applications.
+**Tier 1 — Developer Experience.** This module contains the tooling, CLI, and IDE integrations for the Conflux development ecosystem. It is designed for a fast release cadence (weekly) and is **never** a runtime dependency of a deployed application.
 
-> **Design principle**: Fast iteration (weekly releases), no semver discipline, and zero impact on production binaries.
+## Architecture & Boundaries
 
----
+`cfx-tools` sits outside the core runtime stack. It may depend on `framework/`, `domains/`, or `projects/` for build-time logic, but core packages must not depend on `cfx-tools`.
 
-## High-Level Architecture
-
-```mermaid
-flowchart TD
-    subgraph "cfx-tools (Tier 1 DX)"
-        scaffold-cli["scaffold-cli<br/>@cfxdevkit/create"]
-        mcp-server["mcp-server<br/>@cfxdevkit/mcp-server"]
-        cli["cli<br/>@cfxdevkit/cli"]
-        vscode-ext["vscode-extension<br/>cfxdevkit.vscode"]
-        devcontainer["devcontainer"]
-        docs-site["docs-site"]
-        templates["templates"]
-        devtools["devtools"]
+<Mermaid chart={`graph LR
+    subgraph "cfx-tools [Tier 1 - DX]"
+        CLI[CLI]
+        SCAFFOLD[Scaffold]
+        MCP[MCP Server]
+        VSCODE[VS Code]
+        DEVTOOLS[DevTools]
     end
-
-    subgraph "framework (Tier 0)"
-        framework["framework/*"]
+    subgraph "Core Platform [Tier 0 - Runtime]"
+        FRAMEWORK[framework/]
+        DOMAINS[domains/]
+        PROJECTS[projects/<app>]
     end
-
-    scaffold-cli --> templates
-    mcp-server --> framework
-    cli --> framework
-    vscode-ext --> framework
-    devcontainer --> framework
-    docs-site --> framework
-
-    style framework fill:#f9f,stroke:#333,stroke-width:2px
-    style scaffold-cli fill:#9f9,stroke:#333
-    style mcp-server fill:#9f9,stroke:#333
-    style cli fill:#9f9,stroke:#333
-    style vscode-ext fill:#9f9,stroke:#333
-    style devcontainer fill:#9f9,stroke:#333
-    style docs-site fill:#9f9,stroke:#333
-    style templates fill:#9f9,stroke:#333
-    style devtools fill:#9f9,stroke:#333
-```
-
-### Key Boundaries
-
-| Direction | Allowed? | Reason |
-|-----------|----------|--------|
-| `cfx-tools` → `framework/*` | ✅ | DX tools *consume* framework primitives |
-| `framework/*` → `cfx-tools` | ❌ | Framework must not depend on dev tooling |
-| `projects/<app>` → `cfx-tools` | ❌ | Runtime apps never depend on DX tooling |
-| `domains/*` → `cfx-tools` | ❌ | Domain logic stays isolated from dev tooling |
-
----
+    CLI --> FRAMEWORK
+    SCAFFOLD --> FRAMEWORK
+    MCP --> FRAMEWORK
+    VSCODE --> FRAMEWORK
+    DEVTOOLS --> FRAMEWORK
+    FRAMEWORK -.->|MUST NOT depend on| CLI
+    DOMAINS -.->|MUST NOT depend on| CLI
+    PROJECTS -.->|MUST NOT depend on| CLI
+`} />
 
 ## Package Inventory
 
-| Package | npm Name | Role | Status |
-|---------|----------|------|--------|
-| `scaffold-cli` | `@cfxdevkit/create` | Project generator (`pnpm dlx @cfxdevkit/create`) | Phase A scaffold |
-| `mcp-server` | `@cfxdevkit/mcp-server` | AI agent bridge via Model Context Protocol | Phase A scaffold |
-| `vscode-extension` | `cfxdevkit.vscode` | VS Code extension for local dev, wallet, node, contracts | **Active** |
-| `devcontainer` | — | Reproducible Docker dev environment | Phase 2 |
-| `devtools` | — | Internal tooling (Hardhat, Express server, UI) | **Active** |
-| `docs-site` | `@cfxdevkit/docs-site` | Public docs site (`docs.cfxdevkit.dev`) | **Active** |
-| `templates` | — | Standalone starter templates | **Active** |
-| `cli` | `@cfxdevkit/cli` | Developer CLI (`cfx status`, `derive`, `generate`) | **Active** |
-
-> **Note**: `devtools` and `templates` are *not* published — they’re internal workspace packages.
+| Package | npm Scope | Surface | Role |
+|---------|-----------|---------|------|
+| `cli` | `@cfxdevkit/cli` | `cfx` binary | Network status, HD key derivation, mnemonic generation |
+| `scaffold-cli` | `@cfxdevkit/create` | `npx @cfxdevkit/create` | Project bootstrapper |
+| `mcp-server` | `@cfxdevkit/mcp-server` | MCP Protocol | AI agent tooling bridge |
+| `vscode-extension` | `cfxdevkit.vscode` | VS Code | IDE integration for wallets, nodes, contracts |
+| `devtools` | — | Internal | Hardhat workspace, devkit server, keystore TUI |
+| `devcontainer` | — | Docker | Reproducible dev environment |
+| `templates` | — | Filesystem | Starter templates for scaffold-cli |
+| `docs-site` | — | Static Site | Public documentation |
 
 ---
 
-## Core Packages Deep Dive
+## CLI (`@cfxdevkit/cli`)
 
-### `@cfxdevkit/cli`
+A developer-facing CLI for network probing and account management. It is bundled with `@cfxdevkit/cdk` but exposed as a standalone binary.
 
-A minimal CLI for developer diagnostics and account derivation.
+### Commands
 
-#### Commands
+*   **`cfx status`**: Pings chains for head block, epoch, and latency.
+*   **`cfx derive`**: Derives dual-space accounts (EVM `0x…` + Core `cfx[…]:…`) from a mnemonic.
+*   **`cfx generate`**: Generates a fresh BIP-39 mnemonic.
 
-| Command | Description |
-|---------|-------------|
-| `cfx status [--chain core-testnet]` | Probe chain heads + latency |
-| `cfx derive [--generate | --mnemonic "..."]` | Derive EVM + Core accounts |
-| `cfx generate` | Emit a fresh BIP-39 mnemonic |
+### API Reference
 
-#### Key Features
+The package exports command helpers for programmatic invocation.
 
-- Dual-space derivation (`0x…` EVM + `cfx[net]:…` Core)
-- `--show-private-keys` opt-in for debugging
-- `--json` for machine-readable output
-- Default network ID: `1029` (mainnet Core), `1` (testnet), `2029` (devnet)
+```ts
+// Entry point
+export { run }
 
-#### Structure
+// Status
+export { runStatus, StatusReport }
 
-```
-cli/
-├── src/
-│   ├── args.ts          # CLI argument parsing
-│   ├── run.ts           # Command dispatcher
-│   └── commands/
-│       ├── derive.ts    # Dual-space derivation
-│       ├── generate.ts  # Mnemonic generation
-│       └── status.ts    # Chain probing
-└── dist/bin.js          # CLI entrypoint
+// Derivation
+export { runDerive, DeriveReport }
+
+// Generation
+export { runGenerate, GenerateReport }
+
+// Utilities
+export { parseArgs, ParsedArgs }
 ```
 
----
+### Usage
 
-### `devtools`
+```sh
+# Check network status
+cfx status --chain core-testnet --json
 
-Internal tooling for framework developers — **never** shipped to users.
+# Derive accounts (default core-network-id: 1029)
+cfx derive --mnemonic "..." --count 5 --show-private-keys
 
-| Subfolder | Purpose |
-|-----------|---------|
-| `contracts/` | Hardhat workspace for framework-owned contracts (e.g., `session-key-validator`) |
-| `devkit-server/` | Express server for local devnode, compile, deploy, keystore |
-| `devkit-ui/` | Next.js UI embedded in `devkit-server` |
-| `cfx-keystore/` | Standalone TUI for file-based keystore management |
-
-#### Why `devtools`?
-
-- Centralizes complex local dev workflows (node lifecycle, contract deployment, keystore)
-- Avoids duplication across `framework/` and `projects/`
-- Enables CI tooling (e.g., `devkit-server` powers automated test setups)
+# Generate new mnemonic
+cfx generate
+```
 
 ---
 
-### `vscode-extension`
+## Scaffold CLI (`@cfxdevkit/create`)
 
-The primary VS Code integration for Conflux developers.
+Project generator used via `npx @cfxdevkit/create <template>`. It discovers templates from `../../templates/`, renders files, and runs post-install hooks.
 
-#### Capabilities
+### API Reference
 
-- **Network selection**: `local`, `testnet`, `mainnet`
-- **Space targeting**: Core Space (`cfx:…`) and eSpace (`0x…`)
-- **Node lifecycle**: Start/stop/wipe/restart local devnode
-- **Keystore management**: File, OneKey, Satochip backends
-- **Wallets & accounts**: Mnemonic-root → derived accounts (per network)
-- **Contract workflows**: Deploy, import, ABI read/write calls
+```ts
+// Main entry
+export { scaffoldProject }
+export { parseArgs }
+export { validateName }
 
-#### State Persistence
+// Template Management
+export { getTemplate, listTemplates }
+export { getTemplateFiles }
+export { renderFile }
 
-| Key | Location | Purpose |
-|-----|----------|---------|
-| `selectedNetwork` | VS Code workspace state | `local`/`testnet`/`mainnet` |
-| `keystoreBackend` | VS Code workspace state | `file`/`onekey`/`satoshi` |
-| `keystoreFile` | `.cfxdevkit/keystore.json` | Encrypted keystore path |
-| `deployments` | `.cfxdevkit/deployments.json` | Contract deployment registry |
+// Types
+export { TemplateDefinition, TemplateFile, TemplateTarget }
+```
 
-#### Views
+### Template Contract
 
-- `NetworkView`: Network + space selector
-- `NodeView`: Local devnode controls
-- `AccountsView`: Derived accounts (grouped by wallet)
-- `ContractsView`: Deployed contracts (grouped by network/space)
+Templates reside in `templates/` and must be self-contained (no monorepo coupling).
 
-> **Note**: Hardware backends (OneKey/Satochip) support eSpace only. Core Space writes require the `file` backend.
+*   **`template.json`**: Metadata (`name`, `description`, `vars`, `hooks`).
+*   **`files/`**: Source files with `{{ variable }}` placeholders.
+*   **`hooks/`**: Post-scaffold scripts (e.g., `setup-wallet.sh`).
+
+### Execution Flow
+
+1.  **Discovery**: `listTemplates()` scans `templates/` and remote registries.
+2.  **Selection**: User selects a template (e.g., `minimal-dapp`).
+3.  **Rendering**: `renderFile()` substitutes variables.
+4.  **Post-Install**: Runs `pnpm install`, `git init`, and `env-setup`.
 
 ---
 
-### `scaffold-cli` & `templates`
+## MCP Server (`@cfxdevkit/mcp-server`)
 
-A project generator with composable templates.
+Model Context Protocol server exposing devkit tools to AI agents. It enforces a strict tool allowlist and requires user confirmation for write operations.
 
-#### Template Contract
+### Security Model
 
-Every template must be:
-- **Self-contained** (no monorepo coupling)
-- **Runnable standalone** after scaffolding
-- **Versioned** via `template.json` metadata
+*   **No Raw Keys**: Never accepts raw private keys; uses session keys or managed signers.
+*   **Confirmation**: All `write` and `admin` tools require confirmation.
+*   **Ledger**: Tracks operation history via `OperationLedger`.
 
-#### Template Registry
+### API Reference
+
+```ts
+// Server Creation
+export { createMcpServer }
+
+// Tool Registry
+export { listMcpTools, getMcpTool, defineTool }
+export { MCP_TOOL_DEFINITIONS }
+
+// Types
+export type McpToolGroup = 'node' | 'accounts' | 'blockchain-read' | 'blockchain-write' | 'compiler' | 'keystore' | 'wallet-utils' | 'scaffold';
+export type McpToolMutability = 'read' | 'write' | 'admin';
+
+// Ledger
+export declare class OperationLedger {
+  record(operation: OperationRecord): void;
+  get(id: string): OperationRecord | undefined;
+  list(): OperationRecord[];
+  clear(): void;
+}
+```
+
+### Tool Groups
+
+*   **`node`**: Start/stop dev nodes.
+*   **`accounts`**: Derivation and management.
+*   **`blockchain-read`**: Query state.
+*   **`blockchain-write`**: Deploy/Call contracts (requires confirmation).
+*   **`keystore`**: Unlock/lock operations.
+
+---
+
+## VS Code Extension (`cfxdevkit.vscode`)
+
+Integration for managing Conflux infrastructure workflows within the IDE. It relies on `@cfxdevkit/client` for control-plane operations and `@cfxdevkit/devnode-server` for local runtime state.
+
+### Key Commands
+
+*   **Network**: `cfxdevkit.selectNetwork` (local, testnet, mainnet).
+*   **Node**: `cfxdevkit.nodeStart`, `cfxdevkit.nodeStop`, `cfxdevkit.nodeWipe`.
+*   **Wallet**: `cfxdevkit.addWallet`, `cfxdevkit.unlockKeystore`, `cfxdevkit.selectWallet`.
+*   **Contracts**: `cfxdevkit.deployContract`, `cfxdevkit.abiCallWrite`.
+
+### Views
+
+*   `cfxdevkit.networkView`: Active network status.
+*   `cfxdevkit.nodeView`: Local node lifecycle.
+*   `cfxdevkit.accountsView`: Derived accounts per network.
+*   `cfxdevkit.contractsView`: Tracked contracts by network/space.
+
+### Keystore Backends
+
+1.  **`file`**: Encrypted workspace keystore (`.cfxdevkit/keystore.json`). Supports mnemonic-root creation.
+2.  **`onekey`**: OneKey hardware signer (eSpace only).
+3.  **`satoshi`**: Satochip bridge signer (eSpace only).
+
+### State Persistence
+
+*   **Workspace State**: Network selection, keystore backend, active wallet root.
+*   **File System**: `.cfxdevkit/deployments.json`, `.cfxdevkit/keystore.json`.
+
+---
+
+## DevTools (`devtools/`)
+
+Internal developer-facing tools not published to npm. These power local development and CI.
+
+### Structure
+
+```
+devtools/
+├── contracts/          # Hardhat workspace for framework-owned contracts
+├── devkit-server/      # Express CLI server + lifecycle UI backend
+├── devkit-ui/          # Next.js UI embedded in the CLI
+└── cfx-keystore/       # Standalone keystore TUI
+```
+
+### Components
+
+*   **`contracts/`**: Contains `hardhat.config.ts`, deploy scripts (`scripts/deploy.ts`), and artifact extraction (`scripts/extract-artifacts.ts`).
+*   **`devkit-server/`**: Provides routes for `nodes.ts` (start/stop), `compile.ts`, `deploy.ts`, and `keystore.ts`.
+*   **`cfx-keystore/`**: TUI for managing file keystores (`init`, `add`, `unlock`, `export`).
+
+---
+
+## DevContainer (`devcontainer/`)
+
+Reproducible Docker-based development environment. Ensures `git clone && open in container` works without host tooling.
+
+### Features
+
+*   **Base Image**: Node 20, pnpm, moon, foundry, solc, gh, age, sops.
+*   **Features**:
+    *   `conflux-toolchain`: Installs `xcfx-node`, hardhat helpers.
+    *   `cfx-keystore`: Installs file-keystore CLI + age + sops.
+    *   `platformio`: ESP32 firmware toolchain (opt-in).
+*   **Lifecycle**:
+    *   `post-create.sh`: Runs `pnpm install`, `moon setup`.
+    *   `post-start.sh`: Runs env checks.
+
+### Security
+
+*   No key material in the image.
+*   Keystore is mounted/created at first run.
+*   Host keyring forwarded at runtime.
+
+---
+
+## Templates (`templates/`)
+
+Starter templates consumed by `scaffold-cli`. Each template is runnable standalone after scaffolding.
+
+### Available Templates
 
 | Template | Scope |
 |----------|-------|
-| `minimal-dapp/` | Bare wagmi + viem + framework |
-| `project-example/` | Full-feature reference dapp |
-| `wallet-probe/` | Wallet diagnostics tool |
-| `nextjs-app/` | Next.js 15 + framework |
-| `phaser-game/` | Phaser + wallet integration |
-| `keeper/` | Executor + automation strategy |
+| `minimal-dapp` | Bare wagmi + viem + framework setup |
+| `project-example` | Full-feature reference dapp |
+| `wallet-probe` | Wallet diagnostics tool |
+| `nextjs-app` | Next.js 15 + framework |
+| `phaser-game` | Phaser + wallet integration |
+| `keeper` | Executor + automation strategy |
 
-#### CLI Surface (Planned)
-
-```sh
-create-cfx new <template> <dir>   # scaffold new project
-create-cfx add <feature>          # add wallet/MCP/devcontainer
-create-cfx list                   # list available templates
-```
-
-#### Post-Scaffold Steps
-
-- `pnpm install`
-- `git init`
-- `.env` setup
-- `moon` initialization
-
----
-
-### `mcp-server`
-
-AI agent bridge for Conflux operations.
-
-#### Security Model
-
-- **Session keys only** — raw private keys rejected at startup
-- **Write tools require confirmation** (via `policy/confirm.ts`)
-- **Strict allowlist** — write tools disabled by default
-
-#### Tool Categories
-
-| Category | Examples |
-|----------|----------|
-| Chain | `get-block`, `get-balance`, `call` |
-| Contract | `read`, `simulate`, `deploy`, `verify` |
-| Wallet | `list-accounts`, `issue-session-key`, `revoke-session-key` |
-| Dev | `start-devnode`, `compile`, `scaffold` |
-
-#### Transport Layers
-
-- `stdio` (default for CLI agents)
-- `sse` (web-friendly)
-- `ws` (real-time updates)
-
----
-
-### `devcontainer`
-
-Reproducible dev environment for local and CI contributors.
-
-#### Key Features
-
-- **No host tooling required** — Docker + VS Code only
-- **Keystore mounted at runtime** — no key material in image
-- **Fast rebuilds** — deps in separate layer, framework prebuilt
-
-#### Structure Highlights
+### Template Structure
 
 ```
-devcontainer/
-├── Dockerfile              # Node 20, pnpm, moon, foundry, age, sops
-├── post-create.sh          # pnpm install, moon setup
-├── features/               # Composable Dev Container Features
-│   ├── conflux-toolchain/
-│   ├── cfx-keystore/
-│   └── platformio/
-└── env/                    # Documented `.env` variables
+template/
+├── template.json       # Metadata
+├── files/              # Source with {{var}} placeholders
+└── hooks/              # Post-scaffold scripts
 ```
 
----
-
-### `docs-site`
-
-Public documentation site (`docs.cfxdevkit.dev`).
-
-#### Tech Stack
-
-- **VitePress** — Vite-native static site generator
-- **Source in `root/docs/`** — Markdown sources live outside this package
-- **Build-time symlink** — `content/ → ../../docs/` (created in CI)
-
-#### Plugins
-
-- `adr-loader.ts` — pulls `docs/adr/*.md` into ADR section
-- `api-loader.ts` — pulls `docs/api/*` (TypeDoc output)
-
-#### Deployment
-
-- Fully static output (`dist/`)
-- Deployable to Cloudflare Pages, Netlify, S3, nginx, etc.
+Shared fragments in `_shared/` (e.g., `biome.json`, `tsconfig.base.json`) are merged into every scaffolded project.
 
 ---
 
-## Integration Points
+## Documentation Site (`docs-site/`)
 
-### With `framework/`
+Public documentation website built from `root/docs/`.
 
-All `cfx-tools` packages depend on `framework/*` (e.g., `@cfxdevkit/core`, `wallet`, `compiler`). This is the **only** allowed direction.
-
-Example: `vscode-extension` uses:
-- `@cfxdevkit/devnode` for local node lifecycle
-- `@cfxdevkit/wallet` for signing
-- `@cfxdevkit/compiler` for Solidity compilation
-- `@cfxdevkit/contracts` for deployment artifacts
-
-### With `cfx-llm/`
-
-Local LLM and AI-assisted automation lives in `../cfx-llm/`. `mcp-server` is the bridge between `cfx-llm` and `framework`.
+*   **Engine**: VitePress (Vite-native).
+*   **Plugins**: `adr-loader.ts` (pulls ADRs), `api-loader.ts` (pulls TypeDoc output).
+*   **Deployment**: Static `dist/` folder deployable to object storage or CDN.
 
 ---
 
-## Development Workflow
+## Security & Reset Protocols
 
-### Local Setup
+### Keystore Handling
 
-```sh
-# Install dependencies
-pnpm install
+*   **MCP**: Never accepts raw private keys. Writes go through managed signer abstractions.
+*   **VS Code**: Wallet roots are mnemonic roots; accounts are derived child indexes.
+*   **Backend**: Keystore terminology is shared across MCP, VS Code, and `showcase-local`.
 
-# Build CLI
-pnpm --filter @cfxdevkit/cli build
+### Reset & Recovery
 
-# Run CLI
-node repos/cfx-tools/packages/cli/dist/bin.js status
+Destructive reset is **operator-only**.
 
-# Start devkit-server (for internal tooling)
-pnpm --filter devkit-server dev
-```
+1.  Stop the local node or backend.
+2.  Remove the configured keystore file (e.g., `.cfxdevkit/keystore.json`).
+3.  Remove the sibling `.runtime` directory.
+4.  Restart to confirm blank, locked, or active-wallet phase via backend status.
 
-### Template Development
-
-1. Add a new folder in `templates/`
-2. Include `template.json` with `name`, `description`, `prompts[]`
-3. Use Handlebars `{{var}}` for variable substitution
-4. Reference shared fragments in `_shared/`
-
-### VS Code Extension Debugging
-
-1. Open `repos/cfx-tools/packages/vscode-extension`
-2. Press `F5` to launch Extension Development Host
-3. Use `View > Command Palette > CFX DevKit: ...` to trigger commands
-
----
-
-## Future Roadmap
-
-| Package | Phase | Goal |
-|---------|-------|------|
-| `scaffold-cli` | Phase B | Template registry + remote templates |
-| `mcp-server` | Phase B | Tool allowlist UI, audit logs |
-| `devcontainer` | Phase 2 | Feature composition, host keyring forwarding |
-| `docs-site` | Phase 2 | Search, versioning, API reference |
-
----
-
-## Conclusion
-
-`cfx-tools` is the **developer experience engine** of the Conflux DevKit — a curated set of packages that make local development, CI, and AI-assisted workflows fast, safe, and reproducible.
-
-It respects strict architectural boundaries:
-- **Consumes** `framework/` but never **depends on** it
-- **Never** becomes a runtime dependency
-- **Enables** fast iteration without compromising production stability
-
-All tooling is designed for:
-- **Terminal-first** workflows (`cli`, `scaffold-cli`)
-- **IDE integration** (`vscode-extension`)
-- **Reproducibility** (`devcontainer`, `devtools`)
-- **AI augmentation** (`mcp-server`)
-- **Documentation** (`docs-site`)
+**Note**: MCP tools and VS Code commands must not implement passwordless reset mutations that bypass backend safeguards.

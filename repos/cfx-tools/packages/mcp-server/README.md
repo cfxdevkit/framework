@@ -1,4 +1,4 @@
-# platform/mcp-server
+# @cfxdevkit/mcp-server
 
 **Scope:** Model Context Protocol server bridging AI agents to Conflux chain operations.
 
@@ -8,7 +8,7 @@
 - Require user confirmation for any write operation
 - Never accept a raw private key; session keys only
 
-The implementation direction is shared-backend alignment: MCP tools should target the same local-runtime control plane used by showcase-local and the VS Code extension. The preferred model is one orchestrated backend whose state can be fetched consistently by extension, MCP, showcase, and user-driven tooling.
+The implementation direction is shared-backend alignment: MCP tools should target the same local-runtime control plane used by `showcase-local` and the VS Code extension. The preferred model is one orchestrated backend whose state can be fetched consistently by extension, MCP, showcase, and user-driven tooling.
 
 In practice this means:
 
@@ -19,22 +19,76 @@ In practice this means:
 
 That shared backend contract now includes a few important runtime guarantees:
 
-- keystore terminology stays shared: wallet roots are mnemonic roots, and accounts
-	are derived child indexes beneath the active wallet root
+- keystore terminology stays shared: wallet roots are mnemonic roots, and accounts are derived child indexes beneath the active wallet root
 - network profile is wallet-scoped and backend-owned
-- `local` versus `public` mode is derived from the active backend profile,
-	not from MCP-side tool state
-- public deploy and write flows resolve signers with the same precedence used
-	by showcase-local and the VS Code extension
-- tracked contracts persist per wallet and can be addressed directly through
-	`POST /contracts/:id/call` in addition to generic ABI read and write routes
+- `local` versus `public` mode is derived from the active backend profile, not from MCP-side tool state
+- public deploy and write flows resolve signers with the same precedence used by `showcase-local` and the VS Code extension
+- tracked contracts persist per wallet and can be addressed directly through `POST /contracts/:id/call` in addition to generic ABI read and write routes
 
-Reset and recovery follow the same shared rule as showcase-local and the VS Code
-extension: destructive reset is operator-only. MCP tools may surface backend
-status and guidance, but they must not implement a passwordless reset mutation;
-operators stop the runtime and remove the configured keystore file plus its
-matching `.runtime` directory when a blank-state reset is required.
-
-The current package still exposes a typed tool registry plus an operation ledger scaffold. Runtime handlers and docs need to keep converging on the shared backend contract in the next implementation pass.
+Reset and recovery follow the same shared rule as `showcase-local` and the VS Code extension: destructive reset is operator-only. MCP tools may surface backend status and guidance, but they must not implement a passwordless reset mutation; operators stop the runtime and remove the configured keystore file plus its matching `.runtime` directory when a blank-state reset is required.
 
 > **Note:** This package lives under `repos/cfx-tools/packages/mcp-server` but aligns with the `platform/` tier in the five-tier architecture. See [ARCHITECTURE.md](../../../../../docs/architecture/ARCHITECTURE.md) for tier definitions.
+
+## Install
+
+```bash
+npm install @cfxdevkit/mcp-server
+```
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 16 symbols |
+
+---
+
+## `.`
+
+```ts
+export declare const __packageName: "@cfxdevkit/mcp-server";
+export declare const MCP_TOOL_DEFINITIONS: McpToolDefinition[];
+export { ProjectContext }
+export { createMcpServer }
+export type OperationStatus = 'running' | 'succeeded' | 'failed';
+export type McpToolName = (typeof MCP_TOOL_DEFINITIONS)[number]['name'];
+export type McpToolGroup = 'node' | 'accounts' | 'blockchain-read' | 'blockchain-write' | 'compiler' | 'keystore' | 'wallet-utils' | 'scaffold';
+export type McpToolMutability = 'read' | 'write' | 'admin';
+export interface OperationStep {
+  id: string;
+  name: string;
+  status: OperationStatus;
+  timestamp: number;
+}
+export interface OperationRecord {
+  id: string;
+  toolName: McpToolName;
+  inputs: Record<string, unknown>;
+  steps: OperationStep[];
+  status: OperationStatus;
+  createdAt: number;
+  updatedAt: number;
+}
+export interface OperationLedgerOptions {
+  basePath?: string;
+}
+export interface McpToolDefinition {
+  name: McpToolName;
+  group: McpToolGroup;
+  mutability: McpToolMutability;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+export declare class OperationLedger {
+  constructor(options?: OperationLedgerOptions);
+  record(operation: OperationRecord): void;
+  get(id: string): OperationRecord | undefined;
+  list(): OperationRecord[];
+  clear(): void;
+}
+export declare function listMcpTools(group?: McpToolGroup): readonly McpToolDefinition[];
+export declare function getMcpTool(name: string): McpToolDefinition | undefined;
+export declare function defineTool(definition: McpToolDefinition): McpToolDefinition;
+```
+
+<!-- readme-hash: 464e65866cc6caadab6da0d31be80698455d4ab27a7d6c8e87b262c1ccb753d6 -->

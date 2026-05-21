@@ -6,7 +6,7 @@
  * use (e.g. import `@cfxdevkit/wallet/hardware/onekey`). Ledger support uses
  * the same adapter contract and should live at `@cfxdevkit/wallet/hardware/ledger`.
  *
- * All adapters return the same `Signer` shape from `@cfxdevkit/core`, so they
+ * All adapters return the same `Signer` shape from `@cfxdevkit/cdk`, so they
  * are drop-in replacements for keystore-backed signers.
  */
 export type { HardwareWalletAdapter, HardwareWalletKind, RawEvmSignature } from './types.js';

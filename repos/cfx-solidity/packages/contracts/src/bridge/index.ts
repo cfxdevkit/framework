@@ -1,4 +1,4 @@
-import type { Client, Hex } from '@cfxdevkit/core';
+import type { Client, Hex } from '@cfxdevkit/cdk';
 import { hexToBigInt, keccak256, padHex, toHex } from 'viem';
 import { readContract } from '../read/index.js';
 import { type SendWriteResult, sendWrite } from '../write/index.js';

@@ -24,6 +24,6 @@ Tier 0, and is **never** a runtime dependency of a deployed application.
 
 ## Boundaries
 
-- **MAY** depend on anything (`@cfxdevkit/core`, `wallet`, UI, domain).
+- **MAY** depend on anything (`@cfxdevkit/cdk`, `wallet`, UI, domain).
 - **MUST NOT** be depended on by `framework/`, `domains/`, or any deployed
   `projects/<app>` runtime — only by their dev/build tooling.

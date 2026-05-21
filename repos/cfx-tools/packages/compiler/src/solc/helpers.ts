@@ -1,4 +1,4 @@
-import type { Hex } from '@cfxdevkit/core';
+import type { Hex } from '@cfxdevkit/cdk';
 import type { Abi } from 'viem';
 import { isHex } from 'viem';
 import { CompileError } from '../errors.js';

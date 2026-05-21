@@ -14,10 +14,10 @@ export const blockchainReadTools = [
     name: `cfxdevkit_blockchain_${suffix}`,
     group: 'blockchain-read',
     title: suffix.replaceAll('_', ' '),
-    description: `Read blockchain data with direct @cfxdevkit/core and @cfxdevkit/contracts calls: ${suffix}.`,
+    description: `Read blockchain data with direct @cfxdevkit/cdk and @cfxdevkit/contracts calls: ${suffix}.`,
     mutability: 'read',
     requiresConfirmation: false,
-    packageHints: ['@cfxdevkit/core', '@cfxdevkit/contracts', '@cfxdevkit/protocol'],
+    packageHints: ['@cfxdevkit/cdk', '@cfxdevkit/contracts', '@cfxdevkit/protocol'],
     inputSchema: { type: 'object', additionalProperties: true },
   }),
 );
@@ -37,7 +37,7 @@ export const blockchainWriteTools = [
     description: `Submit blockchain writes with direct package calls and explicit confirmation: ${suffix}.`,
     mutability: 'write',
     requiresConfirmation: true,
-    packageHints: ['@cfxdevkit/core', '@cfxdevkit/contracts', '@cfxdevkit/wallet'],
+    packageHints: ['@cfxdevkit/cdk', '@cfxdevkit/contracts', '@cfxdevkit/wallet'],
     inputSchema: { type: 'object', additionalProperties: true },
   }),
 );

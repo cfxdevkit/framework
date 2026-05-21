@@ -1,4 +1,4 @@
-import type { Address, Wei } from '@cfxdevkit/core/types';
+import type { Address, Wei } from '@cfxdevkit/cdk/types';
 import { useNativeBalance } from '@cfxdevkit/react/balance';
 import { useClient } from '@cfxdevkit/react/context';
 import {

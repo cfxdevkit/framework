@@ -9,7 +9,7 @@
 - `packages/react-bindings/` — UI ↔ engine adapter (kept project-local)
 
 **Framework usage (post-migration)**
-- `@cfxdevkit/core`, `@cfxdevkit/react`, `@cfxdevkit/wallet-connect`
+- `@cfxdevkit/cdk`, `@cfxdevkit/react`, `@cfxdevkit/wallet-connect`
 - `domains/game-engine` for state-machine + turn engine
 
 **Migration notes**

@@ -1,4 +1,4 @@
-import type { Hex } from '@cfxdevkit/core';
+import type { Hex } from '@cfxdevkit/cdk';
 import { encodeFunctionData } from 'viem';
 import type { HexAddress } from '../types.js';
 

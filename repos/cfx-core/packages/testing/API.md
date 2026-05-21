@@ -1,126 +1,26 @@
-# `@cfxdevkit/testing` — API Reference
+# `@cfxdevkit/testing` — Public API
 
-> Shared test utilities. **Test-only.** Import only from `*.test.ts` files.
-> Never imported in production/runtime code.
+> Shared test fixtures and matchers.
 
-## Exports
+## Sub-paths
 
-```ts
-// Deferred promise (resolve/reject from outside)
-function createDeferred<T>(): Deferred<T>
-interface Deferred<T> {
-  promise: Promise<T>
-  resolve(value: T | PromiseLike<T>): void
-  reject(error: unknown): void
-}
-
-// Poll until assertion returns true
-async function waitFor(
-  assertion: () => boolean | Promise<boolean>,
-  options?: { timeoutMs?: number; intervalMs?: number },  // defaults: 1000 ms / 25 ms
-): Promise<void>
-
-// In-memory mock client (eSpace or Core Space)
-function createMockClient(options?: MockClientOptions): Client
-interface MockClientOptions {
-  family?: 'core' | 'espace'    // default 'espace'
-  chainId?: number
-  receipts?: Map<string, TxReceipt | null>
-  logs?: CoreLog[]
-  request?: (method: string, params: readonly unknown[]) => unknown | Promise<unknown>
-}
-
-// Disposable devnode (does NOT auto-start by default)
-async function createDevNodeFixture(options?: DevNodeFixtureOptions): Promise<DevNode>
-interface DevNodeFixtureOptions {
-  mnemonic?: string
-  dataDir?: string
-  accounts?: number
-  logging?: boolean
-  autoStart?: boolean   // default false — call node.start() in beforeAll if needed
-}
-```
-
-## Usage
-
-```ts
-import { createDeferred, waitFor, createMockClient, createDevNodeFixture } from '@cfxdevkit/testing';
-
-// Deferred
-const deferred = createDeferred<string>();
-deferred.resolve('hello');
-await expect(deferred.promise).resolves.toBe('hello');
-
-// Poll
-let ready = false;
-setTimeout(() => { ready = true; }, 50);
-await waitFor(() => ready, { intervalMs: 5 });
-
-// Mock client
-const client = createMockClient({
-  receipts: new Map([['0xabc', { status: 'success' }]]),
-});
-const r = await client.getTransactionReceipt('0xabc');
-
-// Devnode fixture with auto-start
-const node = await createDevNodeFixture({ autoStart: true });
-// ... tests ...
-await node.stop();
-```
-
-## Notes
-
-- `createMockClient` creates a fully typed `Client` that satisfies both eSpace and Core Space interfaces.
-- `waitFor` throws `Error('condition was not met within Nms')` after the timeout.
-- `createDevNodeFixture` wraps `createDevNode` from `@cfxdevkit/devnode`. Use `autoStart: true` for
-  integration tests that need a real node, or leave it off and call `node.start()` in `beforeAll`.
-
-## Planned Mock Inventory
-
-`@cfxdevkit/testing` should own the reusable backend test doubles that are currently duplicated or package-local. Planned additions:
-
-```ts
-class MockJobRepository implements JobRepository {}
-class MockExecutionRepository implements ExecutionRepository {}
-class MockKeeperClient implements KeeperClient {}
-class MockPriceSource implements PriceSource {}
-
-function jobFactory(type: JobType, overrides?: Partial<Job>): Job
-function strategyFactory(type: Strategy['kind'], overrides?: Partial<Strategy>): Strategy
-```
-
-Also add Vitest matchers for chain-shaped values:
-
-```ts
-expect('0xabc...').toBeHexHash()
-expect('0x123...').toBeHexAddress()
-```
-
-When implemented, these helpers should depend on automation interfaces without pulling UI or MCP code into this package.
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 8 symbols |
 
 ---
 
-## `testing/clock`
+## `.`
 
-```
-type FakeClock = (() => Timestamp) & {
-  set(at: Timestamp): void
-  advance(ms: DurationMs): void
-}
-
-function createFakeClock(start: Timestamp): FakeClock
-```
-
-Pass to any framework function that accepts `clock`.
-
----
-
-## `testing/snapshots`
-
-Re-exports `devnode/snapshot` helpers + provides Vitest hooks:
-
-```
-function withSnapshot(node: Node): { beforeEach: () => Promise<void>; afterEach: () => Promise<void> }
+```ts
+export declare const __packageName: "@cfxdevkit/testing";
+export interface Deferred<T> {
+export interface MockClientOptions {
+export interface DevNodeFixtureOptions {
+export declare function createDeferred<T>(): Deferred<T>;
+export declare function waitFor(assertion: () => boolean | Promise<boolean>, options?: {
+export declare function createMockClient(options?: MockClientOptions): Client;
+export declare function createDevNodeFixture(options?: DevNodeFixtureOptions): Promise<DevNode>;
 ```
 
-Resets the chain to a snapshot between tests automatically.
+<!-- api-hash: 7c75dc1a5049ce3ce02313f28a94957c8fec2099d6daafdec297db0cb634beee -->

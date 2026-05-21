@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { join } from 'node:path';
-import { createClient, http } from '@cfxdevkit/core';
+import { createClient, http } from '@cfxdevkit/cdk';
 import {
   ContractRegistry,
   createDevnodeServerApp,

@@ -4,7 +4,7 @@
  * All errors derive from `CfxError` and carry a stable string `code` so
  * callers can branch on it without parsing messages.
  */
-import { CfxError, type CfxErrorInit } from '@cfxdevkit/core';
+import { CfxError, type CfxErrorInit } from '@cfxdevkit/cdk';
 
 export type CompileErrorCode =
   /** solc returned one or more `severity: error` diagnostics. */

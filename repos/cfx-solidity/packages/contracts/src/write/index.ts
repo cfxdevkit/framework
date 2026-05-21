@@ -1,4 +1,4 @@
-import type { Client, Hex, SignableTx, Signer, SignOptions, TxReceipt } from '@cfxdevkit/core';
+import type { Client, Hex, SignableTx, Signer, SignOptions, TxReceipt } from '@cfxdevkit/cdk';
 import type { Abi, ContractFunctionArgs, ContractFunctionName } from 'viem';
 import { encodeFunctionData } from 'viem';
 import { sendCoreWrite } from './core.js';

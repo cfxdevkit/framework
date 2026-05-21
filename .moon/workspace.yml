@@ -7,7 +7,7 @@ projects:
   - 'repos/cfx-config/packages/biome-config'
   - 'repos/cfx-config/packages/moon-config'
   - 'repos/cfx-meta/packages/arch-rules'
-  - 'repos/cfx-core/packages/core'
+  - 'repos/cfx-core/packages/cdk'
   - 'repos/cfx-core/packages/protocol'
   - 'repos/cfx-core/packages/executor'
   - 'repos/cfx-core/packages/devnode'

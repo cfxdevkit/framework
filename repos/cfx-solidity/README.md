@@ -17,7 +17,7 @@ pulling the rest of the devkit.
 
 ```
 abis           → viem only (zero cfxdevkit deps)
-contracts      → abis + @cfxdevkit/core + viem
-compiler       → @cfxdevkit/core + solc + viem (devDep on contracts/devnode for tests)
+contracts      → abis + @cfxdevkit/cdk + viem
+compiler       → @cfxdevkit/cdk + solc + viem (devDep on contracts/devnode for tests)
 contracts-extract → standalone CLI
 ```

@@ -316,7 +316,7 @@ src/index.keystore.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━
   
   i Safe fix: Organize Imports (Biome)
   
-      4   4 │   import { deriveAccount } from '@cfxdevkit/core';
+      4   4 │   import { deriveAccount } from '@cfxdevkit/cdk';
       5   5 │   import { describe, expect, it } from 'vitest';
       6     │ - import·{·TEST_MNEMONIC,·createMockNode·}·from·'./index.test-support.js';
       7     │ - import·{·createDevnodeServerApp·}·from·'./index.js';
@@ -513,8 +513,8 @@ src/keystore-operations.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━
   
   > 1 │ import { randomUUID } from 'node:crypto';
       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    2 │ import type { Signer } from '@cfxdevkit/core';
-    3 │ import { deriveAccount } from '@cfxdevkit/core';
+    2 │ import type { Signer } from '@cfxdevkit/cdk';
+    3 │ import { deriveAccount } from '@cfxdevkit/cdk';
   
   i Safe fix: Organize Imports (Biome)
   
@@ -568,7 +568,7 @@ src/keystore-operations.ts:5:8 lint/style/useImportType  FIXABLE  ━━━━�
 
   × Some named imports are only used as types.
   
-    3 │ import { deriveAccount } from '@cfxdevkit/core';
+    3 │ import { deriveAccount } from '@cfxdevkit/cdk';
     4 │ import type { SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
   > 5 │ import { createFileKeystore, readFileKeystoreMnemonic } from '@cfxdevkit/services/keystore-file';
       │        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -577,7 +577,7 @@ src/keystore-operations.ts:5:8 lint/style/useImportType  FIXABLE  ━━━━�
   
   i This import is only used as a type.
   
-    3 │ import { deriveAccount } from '@cfxdevkit/core';
+    3 │ import { deriveAccount } from '@cfxdevkit/cdk';
     4 │ import type { SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
   > 5 │ import { createFileKeystore, readFileKeystoreMnemonic } from '@cfxdevkit/services/keystore-file';
       │          ^^^^^^^^^^^^^^^^^^
@@ -618,7 +618,7 @@ src/keystore-runtime.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━
   
   > 1 │ import { access } from 'node:fs/promises';
       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    2 │ import { generateMnemonic } from '@cfxdevkit/core';
+    2 │ import { generateMnemonic } from '@cfxdevkit/cdk';
     3 │ import type { SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
   
   i Safe fix: Organize Imports (Biome)
@@ -716,7 +716,7 @@ src/routes/accounts-funding.ts:1:1 assist/source/organizeImports  FIXABLE  ━�
    > 4 │   defineChain,
         ...
   > 10 │   http,
-  > 11 │ } from '@cfxdevkit/core';
+  > 11 │ } from '@cfxdevkit/cdk';
        │ ^^^^^^^^^^^^^^^^^^^^^^^^^
     12 │ import type { Hex } from 'viem';
     13 │ 
@@ -741,7 +741,7 @@ src/routes/accounts-funding.ts:1:1 assist/source/organizeImports  FIXABLE  ━�
         8 │ + ··http,
         9 │ + ··parseCFX,
        10 │ + ··signerFromPrivateKey,
-    11 11 │   } from '@cfxdevkit/core';
+    11 11 │   } from '@cfxdevkit/cdk';
     12 12 │   import type { Hex } from 'viem';
   
 
@@ -756,7 +756,7 @@ src/routes/bootstrap.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━
   
   i Safe fix: Organize Imports (Biome)
   
-      8   8 │   } from '@cfxdevkit/core';
+      8   8 │   } from '@cfxdevkit/cdk';
       9   9 │   import { Hono } from 'hono';
      10     │ - import·{·chainIdForContractNetwork,·type·ContractRegistry·}·from·'../contracts.js';
          10 │ + import·{·type·ContractRegistry,·chainIdForContractNetwork·}·from·'../contracts.js';
@@ -1062,7 +1062,7 @@ src/runtime-operations.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━�
    > 4 │   defineChain,
         ...
   > 11 │   type Signer,
-  > 12 │ } from '@cfxdevkit/core';
+  > 12 │ } from '@cfxdevkit/cdk';
        │ ^^^^^^^^^^^^^^^^^^^^^^^^^
     13 │ import type { DevnodeServerController } from './controller.js';
     14 │ import type { KeystoreService } from './keystore.js';
@@ -1086,7 +1086,7 @@ src/runtime-operations.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━�
           9 │ + ··http,
          10 │ + ··type·Signer,
          11 │ + ··signerFromPrivateKey,
-     12  12 │   } from '@cfxdevkit/core';
+     12  12 │   } from '@cfxdevkit/cdk';
      13  13 │   import type { DevnodeServerController } from './controller.js';
   
 

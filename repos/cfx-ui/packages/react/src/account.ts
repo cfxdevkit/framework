@@ -1,4 +1,4 @@
-import type { Address } from '@cfxdevkit/core/types';
+import type { Address } from '@cfxdevkit/cdk/types';
 import { useSigner } from './context.js';
 
 export interface UseAccountReturn {

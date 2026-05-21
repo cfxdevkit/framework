@@ -2,7 +2,7 @@
  * `@cfxdevkit/contracts/abis` — back-compat re-exports.
  *
  * The standard ABI shapes now live in the leaf package `@cfxdevkit/abis` so
- * any layer of the stack (including `@cfxdevkit/core`) can consume them
+ * any layer of the stack (including `@cfxdevkit/cdk`) can consume them
  * without pulling contract-execution machinery. This module re-exports them
  * unchanged for back-compat.
  *

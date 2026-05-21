@@ -1,0 +1,92 @@
+---
+title: "@cfxdevkit/llm-agents"
+description: "Typed LLM workflow agents for Conflux DevKit repository automation."
+---
+
+import { Callout, Tabs } from 'nextra/components'
+
+# @cfxdevkit/llm-agents
+
+> Typed LLM workflow agents for Conflux DevKit repository automation.
+
+## Install
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/llm-agents
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/llm-agents
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/llm-agents
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+Typed workflow agents for Conflux DevKit repository automation.
+
+## Agents
+
+| Agent | Description |
+|-------|-------------|
+| `runCommit()` | Prepares and executes a commit with LLM-assisted message generation and validation |
+| `runPrecommit()` | Runs pre-commit checks (linting, formatting, tests) and reports issues |
+| `runDocsUpkeep()` | Analyzes docs changes and suggests improvements (e.g., missing examples, outdated references) |
+| `runTestUpkeep()` | Suggests test coverage improvements based on changed code paths |
+| `runReviewAgent()` | Performs deterministic, file-scoped review of changed files using LLM context |
+| `runAction()` | Executes a named LLM-driven action (e.g., `changelog`, `release-notes`) |
+| `listActions()` | Lists all registered named actions available in the current environment |
+| `runAll()` | Runs all agents sequentially, aggregating results and errors |
+| `ask()` | Sends a free-form prompt to the LLM and returns the response |
+| `configure()` | Configures agent behavior (e.g., model selection, temperature, timeout) |
+| `listModels()` | Lists available LLM models for use with agents |
+| `parseCommitFlags()` | Parses commit flags (e.g., `--fix`, `--feat`) into structured metadata |
+
+## Provider Pattern
+
+Agents consume the provider surface from `@cfxdevkit/llm-client`. CLI callers usually rely on `resolveProvider()` indirectly; tests can pass mocked provider behavior through the lower-level workflow helpers.
+
+```ts
+import { runReviewAgent, runCommit } from '@cfxdevkit/llm-agents';
+import { resolveProvider } from '@cfxdevkit/llm-client';
+
+const provider = await resolveProvider();
+await runCommit({ provider, cwd: process.cwd() });
+```
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | `runAll`, `runReviewAgent`, `ask`, `configure`, `listActions`, `listModels`, `runAction`, `parseCommitFlags`, `runCommit`, `runPrecommit`, `runDocsApi`, `runDocsUpkeep`, `runTestUpkeep` |
+
+## API Reference
+
+## `.`
+
+```ts
+export { runAll }
+export { runReviewAgent }
+export { ask }
+export { configure }
+export { listActions }
+export { listModels }
+export { runAction }
+export { parseCommitFlags }
+export { runCommit }
+export { runPrecommit }
+export { runDocsApi }
+export { runDocsReadme }
+export { runDocsUpkeep }
+export { runDocsPackagePages }
+export { runStructureUpkeep }
+export { runTestUpkeep }
+```
+
+{/* readme-hash: 9f3a53685f982197532f1c0d9e133da961207c80e171d214800dd6841c7b373f */}

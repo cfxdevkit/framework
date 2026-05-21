@@ -1,4 +1,4 @@
-import type { Signer } from '@cfxdevkit/core';
+import type { Signer } from '@cfxdevkit/cdk';
 import { KeystoreRuntime } from './keystore/runtime.js';
 
 export interface WalletSummary {

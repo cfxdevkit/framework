@@ -1,3 +1,10 @@
+export {
+  computeReadmeSkeletonHash,
+  embedReadmeSkeletonHash,
+  readEmbeddedReadmeSkeletonHash,
+  renderReadmeSkeleton,
+  stripReadmeSkeletonHash,
+} from './api/readme.js';
 export { runArchCheck } from './checks/arch.js';
 export { runCiCheck } from './checks/ci.js';
 export { runCorpusCheck } from './checks/corpus.js';

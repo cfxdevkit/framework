@@ -15,7 +15,7 @@ const repoRoot = resolve(__dirname, '..');
 const packagesDir = join(repoRoot, 'packages');
 
 // Discover all packages
-const packageDirs = readdirSync(packagesDir).filter(e => {
+const packageDirs = readdirSync(packagesDir).filter((e) => {
   const p = join(packagesDir, e);
   return statSync(p).isDirectory() && existsSync(join(p, 'package.json'));
 });
@@ -46,7 +46,7 @@ for (const [name, info] of Object.entries(packages)) {
   const externalDevDeps = Object.entries(info.devDeps)
     .filter(([, v]) => String(v).startsWith('workspace:'))
     .map(([k]) => k)
-    .filter(k => !allNames.has(k));
+    .filter((k) => !allNames.has(k));
 
   console.log(`\n  ${name}:`);
   if (workspaceDeps.length === 0) {
@@ -54,7 +54,9 @@ for (const [name, info] of Object.entries(packages)) {
   } else {
     for (const dep of workspaceDeps) {
       if (!allNames.has(dep)) {
-        console.warn(`    WARN  ${dep}  — cross-repo dep (expected in monorepo, needs real npm version in standalone mode)`);
+        console.warn(
+          `    WARN  ${dep}  — cross-repo dep (expected in monorepo, needs real npm version in standalone mode)`,
+        );
       } else {
         console.log(`    ->  ${dep}`);
       }

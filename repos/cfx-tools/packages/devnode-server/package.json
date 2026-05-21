@@ -40,7 +40,7 @@
   "dependencies": {
     "@cfxdevkit/compiler": "workspace:^",
     "@cfxdevkit/contracts": "workspace:^",
-    "@cfxdevkit/core": "workspace:^",
+    "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/devnode": "workspace:^",
     "@cfxdevkit/keystore-server": "workspace:^",
     "@cfxdevkit/services": "workspace:^",

@@ -1,4 +1,4 @@
-import type { Client, TxReceipt } from '@cfxdevkit/core';
+import type { Client, TxReceipt } from '@cfxdevkit/cdk';
 import { describe, expect, it } from 'vitest';
 import {
   __packageName,

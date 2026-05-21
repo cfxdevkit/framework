@@ -1,4 +1,4 @@
-import type { EspaceClient, Hex, SignableTx, Signer, TxReceipt } from '@cfxdevkit/core';
+import type { EspaceClient, Hex, SignableTx, Signer, TxReceipt } from '@cfxdevkit/cdk';
 import { encodeAbiParameters, encodeEventTopics, encodeFunctionResult } from 'viem';
 import { describe, expect, it } from 'vitest';
 import { limitOrderJob, OWNER } from '../testHelpers.js';

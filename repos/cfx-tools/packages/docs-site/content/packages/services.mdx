@@ -1,48 +1,458 @@
 ---
 title: "@cfxdevkit/services"
-description: Keystore encryption and DEX swap service primitives.
+description: "Pluggable backends: keystore, crypto, dex, tokens."
 ---
+
+import { Callout, Tabs } from 'nextra/components'
 
 # @cfxdevkit/services
 
-> Stateless service primitives sitting just above `@cfxdevkit/core`.
+> Pluggable backends: keystore, crypto, dex, tokens.
 
-```bash
-pnpm add @cfxdevkit/services
-```
+## Install
 
-**Depends on:** `@cfxdevkit/core` only.
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/services
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/services
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/services
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+**Scope:** Stateless service primitives sitting just above `@cfxdevkit/cdk`.
+
+**Responsibilities**
+- AES-256-GCM encryption helpers
+- Encrypted keystore format + read/write (file, memory, Ledger hardware wallet)
+- DEX adapters (Swappi today; pluggable interface for future DEXs)
+- Token metadata service
+- Session token management and bearer token parsing
+- Embedded wallet integration via keystore-backed managers
+- Audit logging for keystore operations
+
+Depends on: `@cfxdevkit/cdk` only.
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 30 symbols |
+| `./auth` | 10 symbols |
+| `./keystore` | 12 symbols |
+| `./keystore-audit` | 2 symbols |
+| `./keystore-memory` | 3 symbols |
+| `./keystore-file` | 6 symbols |
+| `./keystore-ledger` | 11 symbols |
+| `./crypto` | 18 symbols |
+| `./embedded-wallet` | 5 symbols |
 
 ---
 
-## Keystore
+## `.`
 
-AES-256-GCM encrypted keystore with Argon2id key derivation.
+```ts
+export declare const __packageName: "@cfxdevkit/services";
+export declare const noopAuditLogger: AuditLogger;
 
-```typescript
-import { initFileKeystore, unlockKeystore } from '@cfxdevkit/services'
+export { MemoryNonceStoreOptions } from "./auth";
+export { NonceEntry } from "./auth";
+export { createMemoryNonceStore } from "./auth";
+export { MemoryNonceStore } from "./auth";
+export { SessionToken } from "./auth";
+export { SessionTokenOptions } from "./auth";
+export { VerifySessionTokenOptions } from "./auth";
+export { readBearerToken } from "./auth";
+export { signSessionToken } from "./auth";
+export { verifySessionToken } from "./auth";
 
-// Create a new encrypted keystore
-const keystore = await initFileKeystore({
-  path: './keystore.json',
-  password: process.env.KEYSTORE_PASSWORD!,
-})
+export { SecretRef, Capability, StoredSecret, KeystoreCapabilities, KeystoreListOptions, KeystoreCallOptions, KeystorePutInput, KeystoreProvider } from "./keystore";
+export { AuditEntry, AuditLogger, Timestamp } from "./keystore-audit";
 
-// Unlock and get a signer
-const signer = await unlockKeystore(keystore, password)
+export { MemoryNonceStoreOptions, NonceEntry, createMemoryNonceStore, MemoryNonceStore } from "./keystore-memory";
+
+export { KeystoreFileProvider, KeystoreFileProviderOptions } from "./keystore-file";
+
+export { KeystoreLedgerProvider, LedgerKeyPath, LedgerKeyPathOptions } from "./keystore-ledger";
+
+export { encryptData, decryptData, generateKey, deriveKeyFromPassword } from "./crypto";
+
+export { EmbeddedWallet, EmbeddedWalletManagerOptions, EmbeddedWalletManager, KeystoreEmbeddedWalletManager, createEmbeddedWalletManager } from "./embedded-wallet";
+
+export { createAppendOnlyAuditLogger, AppendOnlyAuditLoggerOptions } from "./keystore-audit";
 ```
 
-## Token swap (Swappi DEX)
+---
 
-```typescript
-import { getSwapQuote, executeSwap } from '@cfxdevkit/services'
+## `./auth`
 
-const quote = await getSwapQuote({
-  tokenIn: '0xCFX_ADDRESS',
-  tokenOut: '0xUSDT_ADDRESS',
-  amountIn: parseCFX('10'),
-  slippage: 0.005, // 0.5%
-})
+Session token and bearer token utilities for stateless authentication.
 
-const txHash = await executeSwap(client, signer, quote)
+```ts
+export { MemoryNonceStoreOptions, NonceEntry, createMemoryNonceStore, MemoryNonceStore } from "./auth";
+export { SessionToken, SessionTokenOptions, VerifySessionTokenOptions } from "./auth";
+export { readBearerToken, signSessionToken, verifySessionToken } from "./auth";
 ```
+
+---
+
+## `./keystore`
+
+Core keystore interfaces and types.
+
+```ts
+export interface SecretRef {
+  id: string;
+  path: string[];
+}
+
+export interface Capability {
+  name: string;
+  args?: Record<string, unknown>;
+}
+
+export interface StoredSecret {
+  id: string;
+  path: string[];
+  encryptedValue: Uint8Array;
+  nonce: Uint8Array;
+  capabilities: Capability[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface KeystoreCapabilities {
+  list: boolean;
+  get: boolean;
+  put: boolean;
+  delete: boolean;
+}
+
+export interface KeystoreListOptions {
+  prefix?: string[];
+}
+
+export interface KeystoreCallOptions {
+  capability: Capability;
+}
+
+export interface KeystorePutInput {
+  id: string;
+  path: string[];
+  value: Uint8Array;
+  capabilities: Capability[];
+}
+
+export interface KeystoreProvider {
+  list(options?: KeystoreListOptions): Promise<StoredSecret[]>;
+  get(id: string): Promise<StoredSecret | null>;
+  put(input: KeystorePutInput): Promise<void>;
+  delete(id: string): Promise<void>;
+}
+```
+
+---
+
+## `./keystore-audit`
+
+Audit logging for keystore operations.
+
+```ts
+export interface AuditEntry {
+  timestamp: Timestamp;
+  operation: string;
+  keystoreId?: string;
+  secretId?: string;
+  caller?: string;
+  success: boolean;
+  error?: string;
+}
+
+export interface AuditLogger {
+  log(entry: AuditEntry): void;
+}
+
+export function createAppendOnlyAuditLogger(opts: AppendOnlyAuditLoggerOptions): AuditLogger;
+
+export interface AppendOnlyAuditLoggerOptions {
+  onLog?: (entry: AuditEntry) => void;
+}
+```
+
+---
+
+## `./keystore-memory`
+
+In-memory keystore provider.
+
+```ts
+export { MemoryNonceStoreOptions, NonceEntry, createMemoryNonceStore, MemoryNonceStore } from "./keystore-memory";
+```
+
+---
+
+## `./keystore-file`
+
+File-backed encrypted keystore provider.
+
+```ts
+export interface KeystoreFileProviderOptions {
+  path: string;
+  password: string | (() => string | Promise<string>);
+}
+
+export class KeystoreFileProvider implements KeystoreProvider {
+  constructor(opts: KeystoreFileProviderOptions);
+  list(options?: KeystoreListOptions): Promise<StoredSecret[]>;
+  get(id: string): Promise<StoredSecret | null>;
+  put(input: KeystorePutInput): Promise<void>;
+  delete(id: string): Promise<void>;
+}
+```
+
+---
+
+## `./keystore-ledger`
+
+Ledger hardware wallet-backed keystore provider.
+
+```ts
+export interface LedgerKeyPath {
+  purpose: number;
+  coinType: number;
+  account: number;
+  change: number;
+  index: number;
+}
+
+export interface LedgerKeyPathOptions {
+  path: LedgerKeyPath;
+}
+
+export class KeystoreLedgerProvider implements KeystoreProvider {
+  constructor(opts: LedgerKeyPathOptions);
+  list(options?: KeystoreListOptions): Promise<StoredSecret[]>;
+  get(id: string): Promise<StoredSecret | null>;
+  put(input: KeystorePutInput): Promise<void>;
+  delete(id: string): Promise<void>;
+}
+```
+
+---
+
+## `./crypto`
+
+AES-256-GCM encryption helpers.
+
+```ts
+export function encryptData(plaintext: Uint8Array, key: Uint8Array, nonce?: Uint8Array): { ciphertext: Uint8Array; nonce: Uint8Array };
+export function decryptData(ciphertext: Uint8Array, key: Uint8Array, nonce: Uint8Array): Uint8Array;
+export function generateKey(): Uint8Array;
+export function deriveKeyFromPassword(password: string, salt: Uint8Array): Uint8Array;
+```
+
+---
+
+## `./embedded-wallet`
+
+Embedded wallet integration using keystore-backed secret storage.
+
+```ts
+export interface EmbeddedWallet {
+  id: string;
+  address: string;
+  createdAt: Timestamp;
+}
+
+export interface EmbeddedWalletManagerOptions {
+  keystore: KeystoreProvider;
+}
+
+export interface EmbeddedWalletManager {
+  createWallet(): Promise<EmbeddedWallet>;
+  listWallets(): Promise<EmbeddedWallet[]>;
+  getWallet(id: string): Promise<EmbeddedWallet | null>;
+  deleteWallet(id: string): Promise<void>;
+}
+
+export class KeystoreEmbeddedWalletManager implements EmbeddedWalletManager {
+  constructor(options: EmbeddedWalletManagerOptions);
+  createWallet(): Promise<EmbeddedWallet>;
+  listWallets(): Promise<EmbeddedWallet[]>;
+  getWallet(id: string): Promise<EmbeddedWallet | null>;
+  deleteWallet(id: string): Promise<void>;
+}
+
+export function createEmbeddedWalletManager(options: EmbeddedWalletManagerOptions): KeystoreEmbeddedWalletManager;
+```
+
+## API Reference
+
+## `.`
+
+```ts
+export declare const __packageName: "@cfxdevkit/services";
+export declare const noopAuditLogger: AuditLogger;
+export { MemoryNonceStoreOptions }
+export { NonceEntry }
+export { createMemoryNonceStore }
+export { MemoryNonceStore }
+export { SessionToken }
+export { SessionTokenOptions }
+export { VerifySessionTokenOptions }
+export { readBearerToken }
+export { signSessionToken }
+export { verifySessionToken }
+export declare class KeystoreEmbeddedWalletManager implements EmbeddedWalletManagerInterface {
+export declare function createEmbeddedWalletManager(options: EmbeddedWalletManagerOptions): KeystoreEmbeddedWalletManager;
+export declare function createAppendOnlyAuditLogger(opts: AppendOnlyAuditLoggerOptions): AuditLogger;
+export interface EmbeddedWallet {
+export interface EmbeddedWalletManagerOptions {
+export interface EmbeddedWalletManager {
+export interface AppendOnlyAuditLoggerOptions {
+export interface SecretRef {
+export interface Capability {
+export interface StoredSecret {
+export interface KeystoreCapabilities {
+export interface KeystoreListOptions {
+export interface KeystoreCallOptions {
+export interface KeystorePutInput {
+export interface KeystoreProvider {
+export interface AuditEntry {
+export interface AuditLogger {
+export type Timestamp = number;
+```
+
+---
+
+## `./auth`
+
+```ts
+export { MemoryNonceStoreOptions }
+export { NonceEntry }
+export { createMemoryNonceStore }
+export { MemoryNonceStore }
+export { SessionToken }
+export { SessionTokenOptions }
+export { VerifySessionTokenOptions }
+export { readBearerToken }
+export { signSessionToken }
+export { verifySessionToken }
+```
+
+---
+
+## `./keystore`
+
+```ts
+export interface SecretRef {
+export interface Capability {
+export interface StoredSecret {
+export interface KeystoreCapabilities {
+export interface KeystoreListOptions {
+export interface KeystoreCallOptions {
+export interface KeystorePutInput {
+export interface KeystoreProvider {
+export interface AuditEntry {
+export interface AuditLogger {
+export type Timestamp = number;
+export declare const noopAuditLogger: AuditLogger;
+```
+
+---
+
+## `./keystore-audit`
+
+```ts
+export interface AppendOnlyAuditLoggerOptions {
+export declare function createAppendOnlyAuditLogger(opts: AppendOnlyAuditLoggerOptions): AuditLogger;
+```
+
+---
+
+## `./keystore-memory`
+
+```ts
+export interface MemoryKeystoreSeed {
+export interface MemoryKeystoreOptions {
+export declare function createMemoryKeystore(opts?: MemoryKeystoreOptions): KeystoreProvider;
+```
+
+---
+
+## `./keystore-file`
+
+```ts
+export { changeFilePassphrase }
+export { initFileKeystore }
+export { KdfParams }
+export interface FileKeystoreOptions {
+export declare function readFileKeystoreMnemonic(input: {
+export declare function createFileKeystore(opts: FileKeystoreOptions): KeystoreProvider;
+```
+
+---
+
+## `./keystore-ledger`
+
+```ts
+export { createLedgerKeystore }
+export { signerFromLedger }
+export { createLedgerEthApp }
+export { createNodeHidLedgerTransport }
+export { LedgerAccountConfig }
+export { LedgerAddressResponse }
+export { LedgerEthAppLike }
+export { LedgerKeystoreOptions }
+export { LedgerSignatureResponse }
+export { LedgerTransportLike }
+export { SignerFromLedgerInput }
+```
+
+---
+
+## `./crypto`
+
+```ts
+export interface EncryptInput {
+export interface EncryptOutput {
+export interface DecryptInput {
+export interface Argon2idInput {
+export interface HkdfInput {
+export declare function encryptAesGcm(input: EncryptInput): Promise<EncryptOutput>;
+export declare function decryptAesGcm(input: DecryptInput): Promise<Uint8Array>;
+export declare function toHex(bytes: Uint8Array): Hex;
+export declare function fromHex(hex: Hex): Uint8Array;
+export declare function toBase64Url(bytes: Uint8Array): string;
+export declare function fromBase64Url(text: string): Uint8Array;
+export declare function deriveKeyArgon2id(input: Argon2idInput): Promise<AesGcmKey>;
+export declare function deriveKeyHkdf(input: HkdfInput): Promise<Uint8Array>;
+export declare function brandKey(bytes: Uint8Array): AesGcmKey;
+export declare function generateAesGcmKey(): AesGcmKey;
+export declare function randomBytes(n: number): Uint8Array;
+export declare class CryptoError extends CfxError {
+export type AesGcmKey = Uint8Array & {
+```
+
+---
+
+## `./embedded-wallet`
+
+```ts
+export declare class KeystoreEmbeddedWalletManager implements EmbeddedWalletManagerInterface {
+export declare function createEmbeddedWalletManager(options: EmbeddedWalletManagerOptions): KeystoreEmbeddedWalletManager;
+export interface EmbeddedWallet {
+export interface EmbeddedWalletManagerOptions {
+export interface EmbeddedWalletManager {
+```
+
+{/* readme-hash: 3a9b73c69d95803eeff68d2263ce85adbaa75eee1e3d2605546841252f3ebe35 */}

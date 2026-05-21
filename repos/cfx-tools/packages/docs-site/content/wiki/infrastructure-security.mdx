@@ -2,114 +2,93 @@
 title: "Infrastructure & Security"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Infrastructure & Security
 
 # Infrastructure & Security Module
 
 ## Overview
 
-The **Infrastructure & Security** module is a cross-cutting operational framework that defines *how* secrets, deployments, and observability are governed across the system — not *what* the system does. It enforces security best practices, standardizes secret management, and establishes audit and access controls for production-critical operations.
+The `infrastructure/` module manages cross-cutting operational concerns including deployment, CI/CD, and observability. It contains provisioning scripts, security policies, and secret management templates.
 
-Crucially, this module is **one-way**: infrastructure code may reference application projects, but application code must *never* import from `infrastructure/`. This ensures operational concerns remain decoupled from business logic and prevents accidental tight coupling between security policy and runtime behavior.
+**Key Principles:**
+- **Separation of Concerns:** Project code does **not** import from this module.
+- **No Secrets in Repo:** This folder contains policies and templates only. Actual secrets are stored in a managed secret manager (KMS, Vault, or OIDC).
+- **Immutable Infrastructure:** VPS provisioning is handled via Ansible.
 
-> **Design Principle**: *Policy lives in infrastructure; execution lives in application.*  
-> This module codifies *rules*, not *implementations*.
+## Directory Structure
 
----
-
-## Core Purpose
-
-This module serves three primary functions:
-
-1. **Secret Governance**  
-   Enforces secure handling of cryptographic material (signing keys, tokens, mnemonics) through policies, templates, and integration with external secret stores (KMS, Vault, GitHub OIDC).
-
-2. **Operational Continuity**  
-   Defines backup, recovery, and rotation procedures to ensure resilience and incident response readiness.
-
-3. **Audit & Compliance**  
-   Mandates tamper-evident, append-only logging of secret access and signing events, with defined retention and alerting.
-
-It does *not* contain secrets, deploy scripts, or CI logic — those live elsewhere (e.g., `.github/workflows/`, secret manager, deployment tooling). Instead, it provides the *rules* those systems must follow.
-
----
-
-## Structure
-
-```
+```text
 infrastructure/
-├── README.md                 # High-level overview & rules
-├── STRUCTURE.md              # Detailed layout & policy references
-└── secrets/                  # Policy & template layer only
-    ├── README.md             # Secrets operations guidance
-    ├── env.template          # Environment variable template (no secrets)
+├── README.md
+├── STRUCTURE.md
+├── ansible/                 # VPS provisioning and app compose templates
+│   ├── inventory.ini        # Template inventory
+│   ├── playbook.yml         # Base, Docker, Caddy, Backups, Monitoring, Docs
+│   ├── requirements.yml     # Ansible Galaxy collections
+│   ├── vars/
+│   │   ├── all.yml          # Safe variable template
+│   │   └── local.yml        # Local overrides (gitignored)
+│   └── roles/
+│       ├── backups/
+│       ├── base/
+│       ├── caddy/
+│       ├── docker/
+│       ├── docs/
+│       └── monitoring/
+└── secrets/                 # Policies, templates, references ONLY
+    ├── README.md
+    ├── env.template
     └── policies/
-        ├── access.md         # Least-privilege access model & reviews
-        ├── audit-retention.md# Log retention, format, and alerting
-        ├── backup-recovery.md# Recovery procedures & quorum rules
-        └── rotation.md       # Cadence & emergency rotation steps
+        ├── access.md
+        ├── audit-retention.md
+        ├── backup-recovery.md
+        └── rotation.md
 ```
 
-### Key Constraints
+## VPS Provisioning
 
-- ✅ Allowed: templates, references, encrypted files (e.g., SOPS + KMS), policy documents  
-- ❌ Forbidden: plaintext secrets, decrypted keys, mnemonics, private keys, API tokens  
-- 🔐 All production secrets must be sourced from a managed backend (AWS/GCP KMS, HashiCorp Vault, GitHub OIDC)
+The shared Hetzner VPS hosts Dockerized runtime services behind Caddy. The primary service is the docs site (`www.cfxdevkit.org`). Provisioning is automated using Ansible.
 
----
+### Prerequisites
+1. Install Ansible Galaxy collections:
+   ```sh
+   cd infrastructure/ansible
+   ansible-galaxy collection install -r requirements.yml
+   ```
+2. Configure inventory and variables locally:
+   ```sh
+   cp inventory.ini inventory.local.ini
+   cp vars/all.yml vars/local.yml
+   ```
+3. Execute the playbook:
+   ```sh
+   ansible-playbook playbook.yml -i inventory.local.ini -e @vars/local.yml
+   ```
 
-## How It Works
+### Roles
+The `playbook.yml` orchestrates the following roles:
+- `base`: System initialization.
+- `docker`: Container runtime setup.
+- `caddy`: Reverse proxy and TLS management.
+- `docs`: Documentation site deployment.
+- `monitoring`: Observability stack.
+- `backups`: Automated backup routines.
 
-### Secret Lifecycle Management
+## Secrets Management
 
-Secrets are *never* stored in this module. Instead, the module defines *how* secrets are managed across their lifecycle:
+The `infrastructure/secrets/` directory defines how secrets are handled. **Never commit raw secrets**, including plaintext keys, tokens, or credentials.
 
-| Phase | Policy Source | Enforcement |
-|-------|---------------|-------------|
-| **Creation** | `rotation.md` (cadence), `env.template` (backend config) | Secret manager enforces key type, length, and origin |
-| **Access** | `access.md` (least privilege, OIDC), `env.template` (KMS/Vault config) | IAM roles, OIDC federation, and workload identity binding |
-| **Rotation** | `rotation.md` (procedure), `backup-recovery.md` (fallback) | CI/CD pipelines trigger rotation via backend APIs |
-| **Audit** | `audit-retention.md` (log format, retention, alerts) | Audit sink (e.g., CloudWatch, Stackdriver, custom sink) |
-| **Recovery** | `backup-recovery.md` (quorum, dry-run, incident workflow) | Manual or automated restore via backend-native tools |
+### Storage & Access
+- **Production:** Secrets must reside in a managed store (AWS KMS, GCP KMS, HashiCorp Vault, or GitHub Actions OIDC).
+- **CI/CD:** Uses OIDC or short-lived tokens. Long-lived private keys are prohibited in repository secrets.
+- **Development:** Local keystores are encrypted and treated as personal state.
 
-#### Secret Access Flow (Simplified)
+### Environment Templates
+Use `secrets/env.template` to define required environment variables. Do not populate real values.
 
-```mermaid
-flowchart LR
-    A[Deployment / CI Job] -->|Requests Secret| B[Secret Manager<br/>KMS / Vault / OIDC]
-    B -->|Returns short-lived token| C[Consumer App]
-    C -->|Uses secret| D[Signing / Deploy / RPC]
-    D -->|Audit Event| E[Audit Sink<br/>Append-only, hash-chained]
-    E -->|Alerting| F[Security Ops]
-```
-
-> All secrets flow through a managed backend — *never* via repository secrets or plaintext files.
-
----
-
-### Policy Enforcement
-
-Policies are *declarative* and *reference-driven*. They do not auto-enforce — instead, they serve as:
-
-- **Checklist for CI/CD pipelines** (e.g., verify rotation date before deploy)
-- **Audit criteria** (e.g., monthly access review records must exist)
-- **Incident response playbook** (e.g., follow `backup-recovery.md` steps)
-
-Example: A CI job deploying a signing service must:
-1. Confirm the signing key’s last rotation date is within `rotation.md` cadence  
-2. Verify the access review record for that key is ≤30 days old  
-3. Route signing events to the audit sink per `audit-retention.md` format  
-4. Fail if any check is missing
-
----
-
-## Key Components
-
-### 1. `secrets/env.template`
-
-A *non-secret* environment variable template used to configure secret backend integration:
-
-```bash
+```ini
 CFXDEVKIT_ENV=development
 CFXDEVKIT_AUDIT_SINK=file://.cfxdevkit/audit.log
 CFXDEVKIT_KMS_PROVIDER=
@@ -118,108 +97,83 @@ CFXDEVKIT_VAULT_ADDR=
 CFXDEVKIT_VAULT_MOUNT=
 ```
 
-- Used by developers and CI to configure secret resolution  
-- Must be copied to `secrets/.env` (ignored by `.gitignore`) and populated with *non-sensitive* backend config  
-- Never contains actual credentials
+### GitHub Actions Integration
+CI workflows (located in `.github/workflows/`) consume specific secrets and variables.
 
-### 2. `secrets/policies/`
+| Name | Type | Used By | Purpose |
+| :--- | :--- | :--- | :--- |
+| `VPS_HOST` | Secret | `deploy-docs.yml` | Hetzner VPS public IP or hostname |
+| `VPS_SSH_KEY` | Secret | `deploy-docs.yml` | Private key for VPS `deploy` user |
+| `GHCR_TOKEN` | Secret | `deploy-docs.yml` | PAT with `read:packages` (if private) |
+| `GHCR_USERNAME` | Variable | `deploy-docs.yml` | GHCR username (default: `cfxdevkit`) |
+| npm Trusted Publishing | Config | `release.yml` | OIDC publishing for public packages |
 
-A set of human-readable policy documents that define *operational guardrails*:
+## Security Policies
 
-| Policy | Scope | Key Requirements |
-|--------|-------|------------------|
-| `access.md` | Who can access what, and when | Least privilege, OIDC, named identities, scheduled reviews |
-| `audit-retention.md` | Logging & compliance | Append-only, tamper-evident, ≥1-year retention, alerting triggers |
-| `backup-recovery.md` | Resilience & incident response | Quorum-based recovery, no plaintext export, dry-run testing |
-| `rotation.md` | Key freshness & compromise response | Cadence by secret type, 5-step procedure, emergency override |
+All production operations must adhere to the policies defined in `secrets/policies/`.
 
-> These are *living documents* — updated as threats evolve or tooling changes.
+### Access Control
+- **Least Privilege:** Grant access by deployment, environment, and operation type.
+- **Identity:** Production access requires named identities; shared accounts are prohibited.
+- **Reviews:**
+  - Production signing/deployment secrets: **Monthly**
+  - CI publish credentials: **Monthly**
+  - Non-production service tokens: **Quarterly**
 
----
+### Secret Rotation
+| Secret Type | Cadence | Trigger |
+| :--- | :--- | :--- |
+| Production signing roots | Annual review | Exposure, departure, custody change |
+| Session-signing credentials | ≤ 24 hours | Scope change, suspicious activity |
+| CI publish tokens | 90 days (if not OIDC) | Workflow compromise, departure |
+| RPC/API tokens | 90 days | Provider incident, quota abuse |
 
-## Integration with the Rest of the Codebase
+**Rotation Procedure:**
+1. Create replacement secret in managed backend.
+2. Deploy consumers to read replacement (keep old value active).
+3. Verify health checks and audit events.
+4. Revoke old secret.
+5. Record rotation details in deployment runbook.
 
-This module is *consumed* by:
+### Audit & Backup
+- **Retention:** Production audit events (keystore reads/writes) must be retained for **1 year**. Access review records for **2 years**.
+- **Integrity:** Audit logs must be append-only and tamper-evident.
+- **Backup:** KMS/HSM root keys use provider-native backup. Plaintext export of production private keys is prohibited.
+- **Recovery:** Requires at least two authorized maintainers or provider-enforced quorum.
 
-- **CI/CD pipelines** (`.github/workflows/`)  
-  → Enforces policy checks before deploy (e.g., rotation date, access review)
+## Architecture Flow
 
-- **Secret resolution libraries** (in application repos)  
-  → Uses `env.template` to configure KMS/Vault/OIDC clients
+The following diagram illustrates the relationship between local configuration, CI/CD, and the remote infrastructure.
 
-- **Audit sinks** (e.g., `cfxdevkit-audit-sink`)  
-  → Implements `audit-retention.md` format and retention rules
+<Mermaid chart={`flowchart LR
+    subgraph LocalDev
+    Dev[Developer]
+    Ansible[Ansible Config]
+    Policies[Security Policies]
+    end
 
-- **Deployment tooling** (e.g., Terraform, Helm, custom scripts)  
-  → Integrates with secret manager APIs per `rotation.md` and `backup-recovery.md`
+    subgraph CI
+    GH[GitHub Actions]
+    end
 
-- **Security operations**  
-  → Uses `access.md` and `audit-retention.md` for compliance audits and incident triage
+    subgraph Remote
+    VPS[Hetzner VPS]
+    SM[Secret Manager]
+    end
 
-### No Reverse Dependencies
+    Dev -->|Configure| Ansible
+    Dev -->|Enforce| Policies
+    GH -->|Authenticate| SM
+    GH -->|Trigger| Ansible
+    Ansible -->|Provision| VPS
+    VPS -->|Host| Services[Docker/Caddy]
+`} />
 
-Application code **must not**:
-- Import from `infrastructure/`
-- Reference policy files at runtime
-- Parse or execute policy documents
+## Compliance Checklist
 
-This ensures security policy remains *external* to the system’s runtime behavior — reducing attack surface and preventing policy leakage into binaries.
-
----
-
-## Security Posture
-
-This module enforces:
-
-- ✅ **Zero plaintext secrets in source control**  
-- ✅ **Short-lived credentials** (OIDC, KMS short-lived tokens)  
-- ✅ **Tamper-evident audit trails**  
-- ✅ **Least-privilege access** with scheduled reviews  
-- ✅ **Recovery quorum** to prevent single-point-of-failure  
-- ✅ **Rotation cadence** aligned with threat model
-
-It does *not* replace:
-- Secret scanning tools (e.g., GitLeaks)  
-- Runtime secret redaction (e.g., in logs)  
-- Penetration testing or vulnerability scanning
-
-Instead, it provides the *operational foundation* those tools rely on.
-
----
-
-## Developer Guidance
-
-### For Developers
-
-- Use `secrets/env.template` to configure local secret resolution  
-- Store personal keystores *outside* the repo (e.g., `~/.cfxdevkit/keystore`)  
-- Never commit decrypted SOPS files or plaintext secrets  
-- Follow `rotation.md` when rotating local dev keys  
-- Report access review findings via the runbook (not in PRs)
-
-### For CI/CD Maintainers
-
-- Enforce policy checks in workflows (e.g., `rotation.md` cadence)  
-- Route signing events to the audit sink per `audit-retention.md`  
-- Fail deployments if access review records are missing or expired  
-- Use OIDC where possible — avoid long-lived repository secrets
-
-### For Security Ops
-
-- Review `access.md` and `audit-retention.md` for compliance audits  
-- Monitor audit sink alerts (e.g., failed signing, off-hours access)  
-- Run quarterly recovery dry-runs using non-production keys  
-- Update policies as threats evolve
-
----
-
-## Future Considerations
-
-- **Automated policy validation**: Tools to lint CI workflows against `access.md`/`rotation.md`  
-- **Audit sink abstraction**: Unified interface for diverse sinks (CloudWatch, Splunk, custom)  
-- **Policy versioning**: Track policy changes alongside infrastructure code  
-- **Secret health dashboard**: Visualize rotation status, access reviews, and audit gaps
-
----
-
-> **Remember**: This module is *policy*, not *code*. Its success is measured by the absence of incidents — not by lines of code.
+Before merging changes to `infrastructure/`:
+- [ ] No plaintext secrets or keys are present.
+- [ ] `secrets/env.template` is updated if new env vars are required.
+- [ ] Ansible roles follow the `roles/` directory structure.
+- [ ] CI secrets referenced in workflows match `secrets/README.md`.
+- [ ] Rotation and access policies are reviewed if permissions change.

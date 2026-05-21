@@ -6,8 +6,12 @@ import {
   listModels,
   runAction,
   runCommit,
+  runDocsApi,
+  runDocsPackagePages,
+  runDocsReadme,
   runDocsUpkeep,
   runPrecommit,
+  runStructureUpkeep,
   runTestUpkeep,
 } from '@cfxdevkit/llm-agents';
 
@@ -21,7 +25,11 @@ try {
   else if (command === 'ask') await ask(args);
   else if (command === 'precommit') await runPrecommit(args);
   else if (command === 'commit') await runCommit(args);
+  else if (command === 'docs-api') await runDocsApi(args);
+  else if (command === 'readme-upkeep') await runDocsReadme(args);
+  else if (command === 'package-pages') await runDocsPackagePages(args);
   else if (command === 'docs-upkeep') await runDocsUpkeep(args);
+  else if (command === 'structure-upkeep') await runStructureUpkeep(args);
   else if (command === 'test-upkeep') await runTestUpkeep(args);
   else if (command === 'run') await runAction(args);
   else if (command === 'actions') listActions();
@@ -42,7 +50,11 @@ Commands:
   commit       Run the local LLM commit pipeline
   run          Run a named delegated action
   actions      List delegated actions
-  docs-upkeep  Run documentation upkeep recommendations
-  test-upkeep  Run test coverage upkeep recommendations
+  docs-api       Generate deterministic API.md skeletons then enrich with local LLM
+  readme-upkeep      Scaffold missing READMEs then enrich with local LLM
+  package-pages      Sync package MDX stubs then enrich docs-site pages with local LLM
+  docs-upkeep        Run documentation upkeep recommendations
+  structure-upkeep   Generate/refresh STRUCTURE.md for every public package
+  test-upkeep        Run test coverage upkeep recommendations
 `);
 }

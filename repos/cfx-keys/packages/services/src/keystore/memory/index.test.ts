@@ -1,5 +1,5 @@
-import { KeystoreError } from '@cfxdevkit/core';
-import { deriveAccount } from '@cfxdevkit/core/wallet';
+import { KeystoreError } from '@cfxdevkit/cdk';
+import { deriveAccount } from '@cfxdevkit/cdk/wallet';
 import { describe, expect, it } from 'vitest';
 import { createMemoryKeystore } from './index.js';
 

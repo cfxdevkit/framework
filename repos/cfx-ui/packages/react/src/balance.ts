@@ -1,4 +1,4 @@
-import type { Address, Wei } from '@cfxdevkit/core/types';
+import type { Address, Wei } from '@cfxdevkit/cdk/types';
 import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { decodeFunctionResult, encodeFunctionData } from 'viem';

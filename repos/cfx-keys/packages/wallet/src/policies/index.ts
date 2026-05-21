@@ -27,7 +27,7 @@
  * - `wallet/policies/missing-selector`   — selector policy set but `tx.data` < 4 bytes
  * - `wallet/policies/typed-data-chain-denied` — typed-data `domain.chainId` blocked
  */
-import type { Address, Hex, SignableTx, Signer, SignOptions, TypedData } from '@cfxdevkit/core';
+import type { Address, Hex, SignableTx, Signer, SignOptions, TypedData } from '@cfxdevkit/cdk';
 import type { Capability } from '@cfxdevkit/services/keystore';
 import { SessionKeyError } from '../errors/index.js';
 

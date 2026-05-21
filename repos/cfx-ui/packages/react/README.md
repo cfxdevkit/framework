@@ -1,10 +1,214 @@
-# framework/react
+# @cfxdevkit/react
 
-**Scope:** Headless React hooks + components on top of `framework/core`.
+**Scope:** Headless React hooks and components built on top of `@cfxdevkit/cdk`.
 
 **Responsibilities**
-- `useChainClient`, `useContractRead`, `useContractWrite` (or equivalents)
-- React-Query integrated data hooks
-- No styling assumptions (headless)
+- High-level React hooks for account, balance, contract interaction, transactions, and events
+- Built on React Query for caching, background updates, and state management
+- Fully headless — no styling assumptions or UI dependencies
 
-Depends on: `core`. Optional peer: `framework/wallet-connect` for wallet-aware hooks.
+**Dependencies**
+- `@cfxdevkit/cdk` (required)
+- `@tanstack/react-query` (required peer)
+- `@cfxdevkit/wallet-connect` (optional peer — enables wallet-aware hooks)
+
+---
+
+## Installation
+
+```bash
+npm install @cfxdevkit/react @tanstack/react-query
+# Optional: for wallet integration
+npm install @cfxdevkit/wallet-connect
+```
+
+---
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 77 symbols |
+| `./account` | 2 symbols |
+| `./balance` | 10 symbols |
+| `./context` | 6 symbols |
+| `./contract` | 14 symbols |
+| `./events` | 3 symbols |
+| `./tx` | 7 symbols |
+| `./keystore` | 34 symbols |
+
+---
+
+## Core Hooks
+
+### `useAccount()`
+Returns the currently connected account.
+
+```ts
+const { address, chainId, accountType } = useAccount();
+```
+
+### `useNativeBalance(input)`
+Reads the native token balance of an account.
+
+```ts
+const { data: balance, isLoading } = useNativeBalance({ address });
+```
+
+### `useTokenBalance(input)`
+Reads the ERC-20 token balance of an account.
+
+```ts
+const { data: balance, isLoading } = useTokenBalance({
+  address,
+  tokenAddress,
+});
+```
+
+### `useTokenMetadata(input)`
+Fetches metadata (name, symbol, decimals) for a token.
+
+```ts
+const { data: metadata } = useTokenMetadata({ tokenAddress });
+```
+
+### `useReadContract<T>(input)`
+Performs a read-only call to a contract.
+
+```ts
+const { data, isLoading, error } = useReadContract({
+  abi,
+  address,
+  functionName,
+  args,
+});
+```
+
+### `useReadContracts(input)`
+Batch read calls to multiple contracts/functions.
+
+```ts
+const { data } = useReadContracts({
+  contracts: [
+    { abi, address, functionName, args },
+    // ...
+  ],
+});
+```
+
+### `useSimulateContract<T>(input)`
+Simulates a contract call without submitting a transaction.
+
+```ts
+const { data: result } = useSimulateContract({
+  abi,
+  address,
+  functionName,
+  args,
+  value,
+});
+```
+
+### `useWriteContract()`
+Returns helpers to prepare and send write transactions.
+
+```ts
+const { writeContract, isPending, error, data } = useWriteContract();
+
+writeContract({
+  abi,
+  address,
+  functionName,
+  args,
+  value,
+});
+```
+
+### `useSendTransaction()`
+Sends a raw transaction.
+
+```ts
+const { sendTransaction, isPending, error, data } = useSendTransaction();
+
+sendTransaction({
+  to,
+  value,
+  data,
+});
+```
+
+### `useWaitForTransaction(input)`
+Waits for a transaction to be confirmed.
+
+```ts
+const { data, isLoading, error } = useWaitForTransaction({
+  hash,
+});
+```
+
+### `useWatchEvent(input)`
+Watches for contract events in real time.
+
+```ts
+useWatchEvent({
+  abi,
+  address,
+  eventName,
+  onLogs: (logs) => console.log(logs),
+});
+```
+
+---
+
+## Context & Providers
+
+### `CfxProvider`
+Wraps your app to provide client, signer, and React Query context.
+
+```tsx
+import { CfxProvider } from '@cfxdevkit/react';
+import { QueryClient } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
+<CfxProvider
+  client={client}
+  signer={signer}
+  queryClient={queryClient}
+>
+  <App />
+</CfxProvider>
+```
+
+### `useClient()`, `useChain()`, `useSigner()`
+Access the configured client, chain config, and signer.
+
+```ts
+const client = useClient();
+const chain = useChain();
+const signer = useSigner();
+```
+
+---
+
+## Keystore Hooks (Optional)
+
+> Requires `@cfxdevkit/wallet-connect` or local keystore support.
+
+### `useKeystoreLifecycle()`
+Manages keystore wallet lifecycle (add, unlock, sign, etc.).
+
+```ts
+const { wallets, addWallet, unlockWallet, signMessage } = useKeystoreLifecycle();
+```
+
+See `./keystore` exports for full list of types and utilities.
+
+--- 
+
+## Notes
+- All hooks integrate with React Query for automatic caching and refetching.
+- Hooks are typed end-to-end — full TypeScript support.
+- No UI assumptions — designed for composability with any UI library.
+
+<!-- readme-hash: 4f96a171149358c71d45a9cbbbff3cbfe74af9ba2d15d28a36d73531366672a0 -->

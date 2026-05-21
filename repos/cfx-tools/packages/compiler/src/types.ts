@@ -5,7 +5,7 @@
  * framework-agnostic so callers can persist artifacts in whatever format
  * they like (the package only ships `selectorsOf` + read/write helpers).
  */
-import type { Hex } from '@cfxdevkit/core';
+import type { Hex } from '@cfxdevkit/cdk';
 import type { Abi } from 'viem';
 
 /** A single compilation unit. `path` is what solc sees in error messages and source maps. */

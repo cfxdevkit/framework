@@ -1,4 +1,4 @@
-import { type Hex, KeystoreError } from '@cfxdevkit/core';
+import { type Hex, KeystoreError } from '@cfxdevkit/cdk';
 import type { LedgerSignature, LedgerTransportLike } from './types.js';
 
 const CLA = 0xe0;

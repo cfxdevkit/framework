@@ -1,4 +1,4 @@
-import type { Address } from '@cfxdevkit/core/types';
+import type { Address } from '@cfxdevkit/cdk/types';
 import { normalizeAddress } from '@cfxdevkit/ui-core';
 import { formatUnits, parseUnits } from 'viem';
 

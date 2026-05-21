@@ -71,7 +71,7 @@ electro/
 
 ### Framework / domain usage
 
-- `@cfxdevkit/core` (already consumed)
+- `@cfxdevkit/cdk` (already consumed)
 - `@cfxdevkit/hw-ws-protocol`, `@cfxdevkit/hw-sensor-types`, `@cfxdevkit/hw-diagram`
 
 ### Pipeline

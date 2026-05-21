@@ -175,7 +175,7 @@ YML
 
 # ---------- framework ----------
 
-scaffold_lib "framework/core"          "@cfxdevkit/core"          "Conflux RPC client, contract I/O, addresses, units, errors."
+scaffold_lib "framework/core"          "@cfxdevkit/cdk"          "Conflux RPC client, contract I/O, addresses, units, errors."
 scaffold_lib "framework/services"      "@cfxdevkit/services"      "Pluggable backends: keystore, crypto, dex, tokens."
 scaffold_lib "framework/wallet"        "@cfxdevkit/wallet"        "Session keys, signers, batched writes, capability policies."
 scaffold_lib "framework/compiler"      "@cfxdevkit/compiler"      "Solidity compilation pipeline."
@@ -183,7 +183,7 @@ scaffold_lib "framework/devnode"       "@cfxdevkit/devnode"       "Local Conflux
 scaffold_lib "framework/contracts"     "@cfxdevkit/contracts"     "Standard contract bindings (ERC-20/721/1155, multicall3, internal)."
 scaffold_lib "framework/protocol"      "@cfxdevkit/protocol"      "Conflux-specific protocol features (sponsor, cross-space, staking)."
 scaffold_lib "framework/executor"      "@cfxdevkit/executor"      "Generic background job runner with queues and scheduler."
-scaffold_lib "framework/react"         "@cfxdevkit/react"         "React hooks over @cfxdevkit/core." react
+scaffold_lib "framework/react"         "@cfxdevkit/react"         "React hooks over @cfxdevkit/cdk." react
 scaffold_lib "framework/wallet-connect" "@cfxdevkit/wallet-connect" "Browser wallet connectors and headless UI." react
 scaffold_lib "framework/defi-react"    "@cfxdevkit/defi-react"    "Opinionated DeFi widgets (swap, portfolio, picker)." react
 scaffold_lib "framework/theme"         "@cfxdevkit/theme"         "Design tokens and CSS layer." react

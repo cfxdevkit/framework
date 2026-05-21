@@ -310,7 +310,7 @@
     "@cfxdevkit/client": "workspace:^",
     "@cfxdevkit/compiler": "workspace:^",
     "@cfxdevkit/contracts": "workspace:^",
-    "@cfxdevkit/core": "workspace:^",
+    "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/devnode-server": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
     "@cfxdevkit/wallet": "workspace:^"

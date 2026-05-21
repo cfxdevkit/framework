@@ -56,7 +56,7 @@ The local devnode runs a full Conflux node with:
 
 const PACKAGES_MD = `# cfxdevkit Packages
 
-## @cfxdevkit/core
+## @cfxdevkit/cdk
 RPC client, account management, chain utilities.
 - createClient({ chain, transport }) → EspaceClient | CoreSpaceClient
 - client.getBalance(address) → bigint (wei)

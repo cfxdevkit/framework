@@ -2,447 +2,269 @@
 title: "Repository Layout — cfx-core"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Repository Layout — cfx-core
 
-# `cfx-core` — Chain Primitives Module
+# cfx-core Repository
 
-The `cfx-core` module is the foundational layer of the Conflux DevKit monorepo. It provides **tier-0a chain primitives** — stable, low-level abstractions for interacting with Conflux networks (both **eSpace** and **Core Space**) — that all higher-level packages depend on.
+**Tier 0a — chain primitives.** This repository carves out stable, low-level chain primitives to decouple their release cadence from higher-level application logic. It serves as the foundation for the DevKit ecosystem, providing types, protocol bindings, execution primitives, and local development tooling.
 
-Designed for long-term stability and minimal dependencies, `cfx-core` is split into **seven focused packages**, each with a single responsibility and strict boundary rules. This modular structure enables independent versioning, tree-shaking, and decoupled release cycles.
+## Overview
 
----
+`cfx-core` is a monorepo containing seven distinct npm packages. These packages are designed to have a small dependency tree (primarily `viem`, `cive`, `@scure/*`) and a long support window.
 
-## Core Principles
+### Design Goals
+- **Stability:** Chain primitives change rarely; this repo allows other slices to pin stable versions.
+- **Decoupling:** Separates core logic from `cfx-keys`, `cfx-ui`, `cfx-domain`, and `cfx-tools`.
+- **Type Safety:** All packages publish typed entrypoints + sourcemaps.
 
-| Principle | Rationale |
-|---------|-----------|
-| **No internal framework dependencies** | `cfx-core` packages may not import from `cfx-keys`, `cfx-ui`, `cfx-domain`, or `cfx-tools`. This ensures they remain reusable by external tooling and future frameworks. |
-| **Functional, stateless API** | All public APIs are pure functions or simple factories. No mutable global state, no "client managers", no orchestrator classes. |
-| **Cross-space first** | Every primitive supports both eSpace (EVM, viem-backed) and Core Space (Conflux-native, cive-backed) via discriminated unions. |
-| **BigInt-only** | Token amounts, gas, block numbers — all use `bigint`. No `Number` conversions. |
-| **Typed entrypoints + sourcemaps** | Every package publishes full TypeScript definitions and source maps for debugging. |
+### Dependency Boundaries
+- **MUST NOT** depend on: `cfx-keys`, `cfx-ui`, `cfx-domain`, `cfx-tools`.
+- **MAY** depend on: Third-party crypto libs (`@noble/*`, `@scure/*`, `viem`, `cive`).
 
----
+## Package Inventory
 
-## Package Overview
+| Package | npm Scope | Surface Area |
+|---------|-----------|--------------|
+| `core` | `@cfxdevkit/cdk` | Types, errors, chains, units, client, wallet primitives |
+| `protocol` | `@cfxdevkit/protocol` | Conflux protocol bindings, precompile ABIs, contract metadata |
+| `contracts` | `@cfxdevkit/contracts` | Shared ABIs + deployments |
+| `compiler` | `@cfxdevkit/compiler` | solc + revive bridge |
+| `executor` | `@cfxdevkit/executor` | Tx submission, receipt handling, job queues, gas strategies |
+| `devnode` | `@cfxdevkit/devnode` | Local devnet harness (wraps `@xcfx/node`) |
+| `testing` | `@cfxdevkit/testing` | Shared test fixtures, matchers, mock clients |
 
-| Package | npm | Purpose | Key Dependencies |
-|--------|-----|---------|------------------|
-| `core` | `@cfxdevkit/core` | **Chain primitives**: client, wallet, chains, units, contract I/O, batch, types, errors | `viem`, `cive`, `@noble/hashes`, `@noble/curves` |
-| `protocol` | `@cfxdevkit/protocol` | **Protocol artifacts**: selectors, events, schemas, network metadata | — |
-| `contracts` | `@cfxdevkit/contracts` | **Curated ABIs + deployments** (e.g., `Multicall3`, `Staking`, `CrossSpaceBridge`) | `core` |
-| `compiler` | `@cfxdevkit/compiler` | **Solidity tooling**: `solc` wrapper + `revive` bridge | — |
-| `executor` | `@cfxdevkit/executor` | **Background job runner**: generic queue, retry, gas-aware submission | `core`, `wallet` |
-| `devnode` | `@cfxdevkit/devnode` | **Local devnet harness**: deterministic node lifecycle, pre-funded accounts | `@xcfx/node` |
-| `testing` | `@cfxdevkit/testing` | **Test fixtures**: shared `DevWorld`, matchers, mocks, snapshots | `core`, `devnode`, `vitest`, `msw` |
+## Package Details
 
-> ✅ **All packages are browser-safe** (no `node:*` imports in `core`/`protocol`/`contracts`/`compiler`).
+### `@cfxdevkit/devnode`
+**Purpose:** Local Conflux dev node lifecycle. Wraps `@xcfx/node` to bring up a dual-space (Core + eSpace) chain on deterministic ports with pre-funded genesis accounts.
 
----
+**Scope:** Dev / test only — Node.js host required. Never bundled into a runtime application.
 
-## Architecture Diagram
+#### Key Features
+- **Dual-Space Support:** Core Space (HTTP/WS) and eSpace (HTTP/WS) on default ports.
+- **Pre-funded Accounts:** 10 genesis accounts derived from a BIP-44 standard branch.
+- **Auto-mining:** Packs pending transactions into blocks on a timer.
+- **Snapshot/Restore:** Supports test isolation via state snapshots.
 
-```mermaid
-flowchart TD
-    subgraph "cfx-core (Tier 0a)"
-        core["core<br/>@cfxdevkit/core"]
-        protocol["protocol<br/>@cfxdevkit/protocol"]
-        contracts["contracts<br/>@cfxdevkit/contracts"]
-        compiler["compiler<br/>@cfxdevkit/compiler"]
-        executor["executor<br/>@cfxdevkit/executor"]
-        devnode["devnode<br/>@cfxdevkit/devnode"]
-        testing["testing<br/>@cfxdevkit/testing"]
-    end
+#### Default Configuration
+| Field | Value | Matches |
+|-------|-------|---------|
+| Core HTTP / WS | `12537` / `12536` | `coreSpaceLocal` |
+| eSpace HTTP / WS | `8545` / `8546` | `espaceLocal` |
+| Core Chain ID | `2029` | `coreSpaceLocal.id` |
+| eSpace Chain ID | `2030` | `espaceLocal.id` |
+| Genesis Accounts | `10` | BIP-44 standard branch |
+| Initial Balance | `10_000` CFX | Hardcoded by `@xcfx/node` |
+| Auto-miner Tick | `2000` ms | `mine({numTxs:1})` |
 
-    subgraph "Higher Framework"
-        services["services"]
-        wallet["wallet"]
-        react["react"]
-        walletConnect["wallet-connect"]
-        automation["automation"]
-    end
-
-    subgraph "Domains & Platforms"
-        domains["domains/*"]
-        platforms["platform/*"]
-        projects["projects/*"]
-    end
-
-    %% Dependencies
-    protocol --> core
-    contracts --> core
-    compiler --> core
-    executor --> core & wallet
-    devnode --> core
-    testing --> core & devnode & contracts
-
-    services --> core
-    wallet --> core & services
-    react --> core & wallet
-    walletConnect --> core & wallet
-    automation --> executor & core
-
-    domains --> framework
-    platforms --> framework
-    projects --> framework
-
-    style core fill:#e6f7ff,stroke:#1890ff
-    style protocol fill:#e6f7ff,stroke:#1890ff
-    style contracts fill:#e6f7ff,stroke:#1890ff
-    style compiler fill:#e6f7ff,stroke:#1890ff
-    style executor fill:#e6f7ff,stroke:#1890ff
-    style devnode fill:#e6f7ff,stroke:#1890ff
-    style testing fill:#e6f7ff,stroke:#1890ff
-```
-
----
-
-## `@cfxdevkit/core` — The Heart of the Module
-
-This is the largest and most critical package. It provides **six sub-paths**, each with a single, well-defined responsibility.
-
-### 1. `chains` — Chain Registry
-
-A static, immutable catalog of chain configurations. **No I/O, no network calls.**
-
+#### API Surface
 ```ts
-import { espaceTestnet, coreSpaceMainnet, getChain } from '@cfxdevkit/core/chains';
+import { createDevNode, DevNode } from '@cfxdevkit/devnode';
 
-const chain = getChain('espace-testnet'); // throws if unknown
-console.log(chain.rpc.http[0]); // "https://testnet.confluxrpc.com"
-```
-
-**Key types:**
-- `ChainConfig`: `id`, `name`, `network`, `family`, `nativeToken`, `rpc`, `explorer`
-- `ChainId`: `"cfx:core:2029"` | `"cfx:espace:2030"` | etc.
-
-**Functions:**
-- `getChain(idOrName)` — lookup by ID or name
-- `listChains()` — all registered chains
-- `defineChain(input)` — register custom chains (e.g., local testnets)
-
-> 📌 **Boundary**: `chains` is pure data. It does *not* instantiate clients or perform RPC calls.
-
----
-
-### 2. `client` — RPC Client Factory
-
-Creates a **typed, chain-aware client** from a `ChainConfig` and `Transport`. One client per chain.
-
-```ts
-import { createClient, http } from '@cfxdevkit/core/client';
-import { espaceTestnet } from '@cfxdevkit/core/chains';
-
-const client = createClient({
-  chain: espaceTestnet,
-  transport: http('https://testnet.confluxrpc.com'),
-});
-
-const blockNumber = await client.getBlockNumber();
-const balance = await client.getBalance('0x0000000000000000000000000000000000000000');
-```
-
-**Key types:**
-- `Transport`: `http`, `ws`, or `fallback` (first-success-wins)
-- `Client`: discriminated union (`EspaceClient` / `CoreSpaceClient`) with chain-specific actions:
-  - eSpace: `getBlockNumber`, `getBlock`, `getBalance`, `getTransactionReceipt`, `estimateGas`
-  - Core Space: `getEpochNumber`, `getStatus`, `getSponsorInfo`, `getAdmin`, `getLogs`
-
-**Functions:**
-- `http(url, opts?)`, `ws(url, opts?)`, `fallback(transports)`
-- `createClient({ chain, transport })`
-
-> ⚠️ **No caching, no auth, no signer**. Chain switching requires creating a new client.
-
----
-
-### 3. `wallet` — HD Derivation & Signer Interface
-
-Pure HD derivation + a minimal `Signer` interface. **No keystore I/O** (that lives in `services/keystore`).
-
-```ts
-import { deriveAccount, signerFromPrivateKey } from '@cfxdevkit/core/wallet';
-
-const { account, privateKey } = deriveAccount({ mnemonic: '...' });
-const signer = signerFromPrivateKey(privateKey);
-
-const signed = await signer.signTransaction({
-  chainId: 2030,
-  to: '0x...',
-  value: 1000000000000000000n,
-});
-```
-
-**Key types:**
-- `Account`: `{ address, publicKey }` (private key never exposed)
-- `Signer`: `signTransaction`, `signMessage`, `signTypedData`
-- `SignableTx`: `{ chainId, to?, value?, data?, nonce?, gas?, maxFeePerGas? }`
-
-**Functions:**
-- `deriveAccount(input)` — BIP-44 derivation (Conflux paths: `m/44'/503'/...`)
-- `deriveAccounts(input)` — batch derivation
-- `signerFromPrivateKey(pk)` — test-only (production uses `services/keystore`)
-
-> 📌 **Design**: Mnemonic → private key is explicit. Production code should *never* hold private keys in memory.
-
----
-
-### 4. `contract` — Typed Contract I/O
-
-**One function per verb.** No "ContractInstance" objects. Pure, stateless.
-
-```ts
-import { readContract, writeContract, deployContract } from '@cfxdevkit/core/contract';
-
-// Read
-const balance = await readContract({
-  client, address: tokenAddress, abi: erc20Abi, functionName: 'balanceOf', args: [userAddress]
-});
-
-// Write
-const { hash } = await writeContract({
-  client, signer, address: tokenAddress, abi: erc20Abi, functionName: 'transfer', args: [to, amount]
-});
-
-// Deploy
-const { hash, address } = await deployContract({
-  client, signer, abi: MyTokenAbi, bytecode: myBytecode, args: ['MyToken', 'MTK', 18]
-});
-```
-
-**Functions:**
-- `readContract`, `simulateContract`, `writeContract`, `deployContract`
-- `watchEvent` → `AsyncIterable<DecodedEvent>` (cancellable via `AbortSignal`)
-- `parseEventLog` — decode raw logs
-
-> 📌 **No shared state**. Each call is independent. `simulateContract` returns a reusable `request` for `writeContract`.
-
----
-
-### 5. `batch` — RPC Coalescing
-
-**Reads only via Multicall3.** Writes via `multisend` (SafeMultisend).
-
-```ts
-import { multicall, multisend } from '@cfxdevkit/core/batch';
-
-// Multicall3
-const results = await multicall({
-  client,
-  calls: [
-    { address: token1, abi: erc20Abi, functionName: 'balanceOf', args: [addr] },
-    { address: token2, abi: erc20Abi, functionName: 'balanceOf', args: [addr] }
-  ]
-});
-
-// Multisend (batched writes)
-const { hash } = await multisend({
-  client, signer,
-  calls: [
-    { to: token1, data: encodeFunctionData('transfer', [to, amount]) },
-    { to: token2, data: encodeFunctionData('transfer', [to, amount]) }
-  ]
-});
-```
-
-**Functions:**
-- `multicall(input)` — single RPC call for many reads
-- `multisend(input)` — single transaction for many writes
-- `createBatcher(opts?)` — stateful request coalescing (for high-throughput apps)
-
-> 📌 **No caching**. Deduplication is handled by the batcher.
-
----
-
-### 6. `abi`, `address`, `units`, `errors`, `types` — Supporting Primitives
-
-| Sub-path | Purpose |
-|---------|---------|
-| `abi` | Static const ABIs: `erc20Abi`, `erc721Abi`, `multicall3Abi` |
-| `address` | `isAddress`, `checksum`, `assertAddress`, `coreToEspace`, `espaceToCore` |
-| `units` | `formatUnits`, `parseUnits`, `formatToken`, `formatCFX`, `parseCFX` (BigInt-only) |
-| `errors` | `CfxError`, `RpcError`, `ContractError`, `WalletError`, `isCfxError` |
-| `types` | Shared primitives: `Address`, `Hash`, `Hex`, `Wei`, `ChainId`, `BlockTag`, `Block`, `TxReceipt`, `RawLog`, `TypedData`, `Abi` |
-
----
-
-## `@cfxdevkit/devnode` — Local Devnet Harness
-
-A **dev-only** package that wraps `@xcfx/node` to spin up a deterministic local Conflux node.
-
-```ts
-import { createDevNode } from '@cfxdevkit/devnode';
-
-const node = await createDevNode();
+const node = createDevNode();
 await node.start();
 
-// node.urls.core → "http://127.0.0.1:12537"
-// node.urls.espace → "http://127.0.0.1:8545"
-// node.accounts[0] → pre-funded with 10,000 CFX
+// Access URLs
+node.urls.core    // http://127.0.0.1:12537
+node.urls.espace  // http://127.0.0.1:8545
 
+// Lifecycle
 await node.stop();
+await node.restart();
+await node.mine(1);       // Advance empty blocks
+await node.packMine();    // Pack pending txs into next block
+
+// Mining Control
+node.startMining(2000);   // Re-arm auto-miner
+node.stopMining();        // Disarm auto-miner
 ```
 
-**Key features:**
-- Dual-space (Core + eSpace) on standard ports (`12537/12536`, `8545/8546`)
-- Deterministic genesis (BIP-44 mnemonic, 10 funded accounts)
-- Auto-miner (`mine({ numTxs: 1 })`) to pack pending txs
-- Snapshot/restore for test isolation (`snapshot`, `revert`, `mineBlocks`)
+#### CLI Usage
+```sh
+cfxdevkit-devnode --accounts 4 --balance 1000
+cfxdevkit-devnode --help
+```
 
-> 📌 **Not for production**. Node.js host required.
+#### Internal Structure
+```
+devnode/
+├── lifecycle/      # start, stop, health, ports
+├── genesis/        # deterministic genesis, funded accounts
+├── snapshot/       # take, restore, store
+├── docker/         # optional Docker driver
+└── internal/       # child_process helpers
+```
 
----
+### `@cfxdevkit/executor`
+**Purpose:** Generic execution primitives for keeper / off-chain automation systems.
 
-## `@cfxdevkit/testing` — Shared Test Utilities
+**Scope:** No domain logic (strategies live in `@cfxdevkit/automation`).
 
-**Test-only.** Imported only from `*.test.ts`. Tree-shaken from production builds.
+#### Key Features
+- **Job Queue:** Pluggable backends (memory, postgres, redis).
+- **Retry Policy:** Exponential backoff with jitter.
+- **Gas Awareness:** `gasPrice`, `maxFeePerGas`, `maxPriorityFeePerGas` in context.
+- **Idempotency:** Support via `idempotencyKey`.
+- **Distributed Locking:** `withLock` for critical sections.
+- **Polling:** Periodic checks via `createPoller`.
 
-**Key fixtures:**
-- `createDevWorld()` — returns `{ node, client, funded[], stop() }`
-- `deployErc20()` — deploys a test ERC20 token
-- `withSnapshot(node)` — Vitest hooks for automatic snapshot reset
+#### API Surface
+```ts
+import { execute, createTaskQueue, withLock } from '@cfxdevkit/executor';
 
-**Custom matchers:**
-- `expect(receipt).toBeMined()`
-- `expect(receipt).toEmitEvent({ abi, name, args? })`
-- `expect(call).toRevertWithCode('core/contract/revert')`
-- `expect(addr).toBeAddress()`
-- `expect(amount).toEqualWei('1.234', 18)`
+// Single execution with retry
+const result = await execute(
+  async (ctx) => { /* on-chain op */ },
+  { maxAttempts: 3, idempotencyKey: 'tx-0x123' }
+);
 
-> ✅ Auto-registered on import: `import '@cfxdevkit/testing/matchers'`.
+// Task Queue
+const queue = createTaskQueue({ concurrency: 5 });
+queue.start();
+await queue.enqueue(async (ctx) => { /* task */ });
 
----
+// Distributed Lock
+const result = await withLock('dca:account-0x...', async () => {
+  // Critical section
+});
+```
 
-## `@cfxdevkit/executor` — Background Job Runner
+#### Internal Structure
+```
+executor/
+├── job/            # Job lifecycle, context
+├── queue/          # memory, postgres, redis adapters
+├── scheduler/      # cron, interval triggers
+├── policy/         # retry, circuit-breaker, rate-limit
+├── gas/            # estimate, price-strategy, replace
+└── observability/  # metrics, trace
+```
 
-A **generic** job runner for off-chain automation (keepers, DEX bots, etc.). **No domain logic**.
+### `@cfxdevkit/protocol`
+**Purpose:** Conflux protocol helpers, precompile ABIs, and reusable DevKit contract metadata.
+
+**Scope:** Pure Conflux protocol helpers. No RPC side effects.
+
+#### Key Exports
+- **Precompiles:** `AdminControl`, `SponsorWhitelist`, `Staking`, `CrossSpaceCall`, `PoSRegister`.
+- **DevKit Contracts:** `AutomationManager`, `PermitHandler`, `SwappiPriceAdapter`.
+- **WCFX:** ABI and address constants for wrap/unwrap flows.
+- **Helpers:** `waitForTransactionReceipt`, `getChainProgress`, `estimateTransaction`.
+
+#### API Surface
+```ts
+import { 
+  crossSpaceCallAbi, 
+  waitForTransactionReceipt, 
+  getChainProgress 
+} from '@cfxdevkit/protocol';
+
+// Chain Progress
+const progress = await getChainProgress(client);
+// { epochNumber, epochIndex, blockNumber }
+
+// Receipt Handling
+const receipt = await waitForTransactionReceipt(client, hash, {
+  timeout: 30_000,
+  retryInterval: 1000
+});
+```
+
+### `@cfxdevkit/testing`
+**Purpose:** Shared test fixtures and matchers.
+
+**Scope:** Dev-dependency only. Used by every package and project.
+
+#### Key Features
+- **Mock Client:** `createMockClient` (Viem-shaped).
+- **DevNode Fixture:** `createDevNodeFixture` wraps `framework/devnode`.
+- **Async Coordination:** `createDeferred`, `waitFor`.
+- **Vitest Matchers:** `toBeHexHash`, `toBeHexAddress`, `toEmitEvent`.
+
+#### API Surface
+```ts
+import { createMockClient, createDevNodeFixture } from '@cfxdevkit/testing';
+
+// Mock Client
+const client = createMockClient({ blockNumber: 1n });
+
+// DevNode Fixture
+const node = await createDevNodeFixture({
+  startupTimeout: 10_000
+});
+```
+
+### `@cfxdevkit/cdk` (core)
+**Purpose:** Base types, errors, chains, units, client, and wallet primitives.
+
+**Scope:** Foundation for all other packages.
+
+**Exports:** Types, errors, chains, units, client, wallet primitives.
+
+### `@cfxdevkit/contracts` & `@cfxdevkit/compiler`
+- **contracts:** Shared ABIs + deployments.
+- **compiler:** solc + revive bridge.
+
+## Architecture
+
+The following diagram illustrates the dependency relationships within `cfx-core`. `core` serves as the base layer, while `devnode` and `testing` are strictly development utilities.
+
+<Mermaid chart={`graph TD
+    subgraph "Core Primitives"
+        Core[core<br/>@cfxdevkit/cdk]
+        Protocol[protocol<br/>@cfxdevkit/protocol]
+        Executor[executor<br/>@cfxdevkit/executor]
+    end
+
+    subgraph "Dev Tools"
+        DevNode[devnode<br/>@cfxdevkit/devnode]
+        Testing[testing<br/>@cfxdevkit/testing]
+    end
+
+    subgraph "Build & Deploy"
+        Compiler[compiler<br/>@cfxdevkit/compiler]
+        Contracts[contracts<br/>@cfxdevkit/contracts]
+    end
+
+    Protocol --> Core
+    Executor --> Core
+    Testing --> DevNode
+    Testing --> Core
+    DevNode --> Core
+`} />
+
+## Development Guidelines
+
+### Building
+All packages use `vite` for node-only builds and `moon` for task orchestration.
+
+```sh
+pnpm --filter @cfxdevkit/devnode build
+pnpm --filter @cfxdevkit/executor build
+```
+
+### Testing
+Tests rely on `@cfxdevkit/testing` for fixtures and `@cfxdevkit/devnode` for integration.
+
+```sh
+pnpm test --filter @cfxdevkit/protocol
+```
+
+### Contribution
+1. **Boundaries:** Ensure no forbidden dependencies (`cfx-ui`, `cfx-domain`, etc.) are introduced.
+2. **Types:** All public entrypoints must be typed.
+3. **Sourcemaps:** Ensure sourcemaps are published for debugging.
+4. **API Stability:** Changes to public exports in `core` or `protocol` require version bumping and migration notes.
+
+### Sub-path Exports
+Most packages support sub-path imports for tree-shaking and specific functionality:
 
 ```ts
-import { createExecutor, createMemoryQueue } from '@cfxdevkit/executor';
+// Example: Importing specific queue backend
+import { createTaskQueue } from '@cfxdevkit/executor/queue/postgres';
 
-const executor = createExecutor({
-  queue: createMemoryQueue(),
-});
-
-executor.register('transfer', async (payload, ctx) => {
-  const { signer, client } = ctx;
-  const { to, amount } = payload;
-  await writeContract({ client, signer, to, value: amount, ... });
-});
-
-await executor.start({ concurrency: 5 });
-await executor.enqueue({ id: 'tx-1', kind: 'transfer', payload: { to: '0x...', amount: 1000000000000000000n } });
-await executor.stop({ drainMs: 5000 });
+// Example: Importing lifecycle helpers
+import { start } from '@cfxdevkit/devnode/lifecycle';
 ```
-
-**Key features:**
-- Pluggable queues (`memory`, `redis`, `postgres`)
-- Retry + exponential backoff
-- Idempotency keys (`id`)
-- Gas-aware submission (via handlers)
-
-> 📌 **Domain strategies live in `@cfxdevkit/automation`**, which registers handlers via `executor.register`.
-
----
-
-## `@cfxdevkit/protocol` — Protocol Artifacts
-
-**Raw on-chain artifacts** for tooling (block explorers, indexers, MCP). Lower-level than `contracts`.
-
-| Sub-path | Purpose |
-|---------|---------|
-| `selectors` | 4-byte function selectors → human signature (`0xa9059cbb → "transfer(address,uint256)"`) |
-| `events` | Event topic0 → schema (`0x... → "Transfer(address,address,uint256)"`) |
-| `schemas` | JSON schemas for on-chain payloads |
-| `networks` | Network metadata (RPC endpoints, explorers, faucets) |
-
-> 📌 **No opinionated TS surface**. Pure data for downstream tooling.
-
----
-
-## `@cfxdevkit/contracts` — Curated ABIs + Deployments
-
-**Curated ABIs** (e.g., `Staking`, `CrossSpaceBridge`, `SponsorWhitelistControl`) + **deployment addresses**.
-
-```ts
-import { stakingAbi, crossSpaceBridgeAbi } from '@cfxdevkit/contracts';
-import { stakingAddress } from '@cfxdevkit/contracts/deployments/espace-mainnet';
-
-const { result } = await readContract({
-  client, address: stakingAddress, abi: stakingAbi, functionName: 'getStakeBalance', args: [userAddress]
-});
-```
-
-> 📌 **Higher-level than `protocol`**, but **lower-level than `core/contract`**. No business logic.
-
----
-
-## `@cfxdevkit/compiler` — Solidity Tooling
-
-**Solidity compiler wrapper** (`solc`) + `revive` bridge for Conflux-specific features.
-
-> 📌 Used by `framework/contracts` and project build tooling.
-
----
-
-## Dependency Graph (One-Way)
-
-```mermaid
-flowchart LR
-    core --> protocol
-    core --> contracts
-    core --> compiler
-    core --> executor
-    core --> devnode
-    core --> testing
-
-    protocol --> contracts
-    contracts --> executor
-    devnode --> testing
-
-    executor --> automation
-    testing --> framework
-
-    style core fill:#e6f7ff,stroke:#1890ff
-```
-
----
-
-## Anti-Goals (Explicitly Excluded)
-
-| Area | Location |
-|------|----------|
-| Wallet UI / connector | `framework/wallet-connect` |
-| Keystore I/O | `framework/services/keystore` |
-| Session keys | `framework/wallet/session-key` |
-| Caching layer | `framework/react` (react-query) |
-| Strategy / scheduling | `domains/automation` + `framework/executor` |
-| Solidity compilation | `framework/compiler` |
-
----
-
-## Porting & Stability
-
-The `PORTING.md` file documents the **symbol-by-symbol mapping** from the reference implementation (`devkit/packages/core@1.2.5`) to this contract. Every source export is accounted for as:
-
-- `PORT` — copy and adapt
-- `RENAME` — same shape, different identifier
-- `RESHAPE` — class → functional verb
-- `RELOCATE` — moved to another package
-- `NEW` — required by docs, no source equivalent
-- `DROP` — devkit-specific, internal, or duplicative
-
-This ensures **100% coverage** and traceability.
-
----
-
-## Conclusion
-
-`cfx-core` is the **stable, dependency-light foundation** of the Conflux DevKit. By splitting primitives into focused packages with strict boundaries, it enables:
-
-- ✅ Independent versioning and release cadence
-- ✅ Tree-shaking and minimal bundle size
-- ✅ Reusability across frameworks and tooling
-- ✅ Long-term stability (tier-0a)
-
-All higher-level packages (`services`, `wallet`, `react`, `automation`, etc.) build on top of `cfx-core`, relying on its clean, typed, and predictable API.

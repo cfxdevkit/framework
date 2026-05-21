@@ -10,7 +10,7 @@
  * (MetaMask, Fluent eSpace mode, any injected wallet).
  */
 
-import type { ChainConfig } from '@cfxdevkit/core/chains';
+import type { ChainConfig } from '@cfxdevkit/cdk/chains';
 import { type Chain, toHex } from 'viem';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -30,7 +30,7 @@ export interface SwitchChainOptions {
  * Switch the provider's active chain to the one described by `chain`.
  * `chain` is a viem-style `Chain` object — you can pass any entry from
  * `@cfxdevkit/wallet-connect` (e.g. `espaceMainnet`, `espaceTestnet`, `espaceLocal`)
- * or build one from `@cfxdevkit/core/chains` via `toViemChain`.
+ * or build one from `@cfxdevkit/cdk/chains` via `toViemChain`.
  *
  * @throws if the user rejects the request or if the wallet does not support
  *         `wallet_switchEthereumChain` / `wallet_addEthereumChain`.
@@ -74,10 +74,10 @@ export async function switchEspaceChain(
   }
 }
 
-// ── Convenience overload for @cfxdevkit/core ChainConfig objects ──────────
+// ── Convenience overload for @cfxdevkit/cdk ChainConfig objects ──────────
 
 /**
- * Switch using a `ChainConfig` from `@cfxdevkit/core/chains` (e.g. `espaceTestnet`).
+ * Switch using a `ChainConfig` from `@cfxdevkit/cdk/chains` (e.g. `espaceTestnet`).
  * Avoids having to convert to a viem `Chain` first.
  */
 export async function switchEspaceChainFromConfig(

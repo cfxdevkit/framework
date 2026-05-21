@@ -39,8 +39,8 @@
  *   privilege delegation (EIP-7702, 4337 modular accounts, …).
  */
 import { randomBytes } from 'node:crypto';
-import type { Address, Hex, SignableTx, Signer, SignOptions, TypedData } from '@cfxdevkit/core';
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
+import type { Address, Hex, SignableTx, Signer, SignOptions, TypedData } from '@cfxdevkit/cdk';
+import { signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
 import type { Capability } from '@cfxdevkit/services/keystore';
 import { SessionKeyError } from '../errors/index.js';
 import { isEmptyCapability, withCapability } from '../policies/index.js';

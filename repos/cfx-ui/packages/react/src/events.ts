@@ -1,4 +1,4 @@
-import type { Address, Hex, RawLog } from '@cfxdevkit/core/types';
+import type { Address, Hex, RawLog } from '@cfxdevkit/cdk/types';
 import { useEffect, useRef } from 'react';
 import type { Abi } from 'viem';
 import { decodeEventLog, encodeEventTopics } from 'viem';

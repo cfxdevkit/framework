@@ -1,91 +1,102 @@
-# @cfxdevkit/compiler — Public API
+# `@cfxdevkit/compiler` — Public API
 
-> Solidity compilation. Pure, deterministic, no caching of artifacts (caller's job).
+> Solidity compilation pipeline.
 
 ## Sub-paths
 
-| Sub-path | Concern |
+| Sub-path | Exports |
 |----------|---------|
-| `@cfxdevkit/compiler` | high-level `compile` |
-| `@cfxdevkit/compiler/solc` | solc binary management |
-| `@cfxdevkit/compiler/resolver` | import resolution (npm + remappings) |
-| `@cfxdevkit/compiler/artifacts` | artifact shape + helpers |
-| `@cfxdevkit/compiler/errors` | `CompileError` |
+| `.` | 24 symbols |
+| `./solc` | 4 symbols |
+| `./resolver` | 3 symbols |
+| `./templates` | 8 symbols |
+| `./artifacts` | 3 symbols |
+| `./errors` | 2 symbols |
 
 ---
 
-## `compiler`
+## `.`
 
-```
-type Source = { path: string; content: string }
-
-type CompileInput = {
-  sources: readonly Source[]
-  solcVersion: string                          // exact, e.g. "0.8.26"
-  optimizer?: { enabled: boolean; runs: number }
-  evmVersion?: string
-  remappings?: readonly string[]
-  resolver?: ImportResolver                    // default = npm node_modules
-  signal?: AbortSignal
-}
-
-type Artifact = {
-  path: string
-  contractName: string
-  abi: Abi
-  bytecode: Hex
-  deployedBytecode: Hex
-  metadata: string                             // JSON string
-  sourceMap?: string
-}
-
-type CompileOutput = {
-  artifacts: readonly Artifact[]
-  warnings: readonly { message: string; severity: 'warning' | 'info' }[]
-  inputHash: string                            // sha256 of normalised input
-}
-
-function compile(input: CompileInput): Promise<CompileOutput>
-```
-
-### Errors
-`CompileError` codes:
-- `compiler/solc/syntax`           — solc returned errors; `meta.errors[]` has them
-- `compiler/resolver/not-found`    — import unresolved
-- `compiler/version-mismatch`      — pragma vs `solcVersion` conflict
-- `compiler/solc/binary-unavailable` — could not download/locate solc
-
----
-
-## `compiler/solc`
-
-```
-function ensureSolc(version: string, opts?: { cacheDir?: string; signal?: AbortSignal }): Promise<{ binaryPath: string; version: string }>
-function listInstalledSolc(opts?: { cacheDir?: string }): Promise<string[]>
-```
-
-Downloads to a cache (XDG by default). No global state.
-
----
-
-## `compiler/resolver`
-
-```
-type ImportResolver = {
-  resolve(input: { from: string; importPath: string }): Promise<{ path: string; content: string } | null>
-}
-
-function npmResolver(opts?: { rootDir?: string }): ImportResolver
-function remappingResolver(remappings: readonly string[]): ImportResolver
-function compose(resolvers: readonly ImportResolver[]): ImportResolver
+```ts
+export { readArtifact }
+export { selectorsOf }
+export { writeArtifact }
+export { CompileError }
+export { CompileErrorCode }
+export { compose }
+export { npmResolver }
+export { remappingResolver }
+export { compile }
+export { ensureSolc }
+export { listInstalledSolc }
+export { SolcInstance }
+export { basicErc20 }
+export { basicErc721 }
+export { getTemplate }
+export { listTemplates }
+export { TemplateMeta }
+export { Artifact }
+export { CompileDiagnostic }
+export { CompileInput }
+export { CompileOutput }
+export { ImportResolver }
+export { Source }
+export declare const __packageName: "@cfxdevkit/compiler";
 ```
 
 ---
 
-## `compiler/artifacts`
+## `./solc`
 
+```ts
+export { compile }
+export { ensureSolc }
+export { listInstalledSolc }
+export { SolcInstance }
 ```
-function readArtifact(path: string): Promise<Artifact>
-function writeArtifact(path: string, artifact: Artifact): Promise<void>
-function selectorsOf(abi: Abi): readonly Hex[]
+
+---
+
+## `./resolver`
+
+```ts
+export declare function npmResolver(opts?: {
+export declare function remappingResolver(remappings: readonly string[]): ImportResolver;
+export declare function compose(resolvers: readonly ImportResolver[]): ImportResolver;
 ```
+
+---
+
+## `./templates`
+
+```ts
+export interface TemplateMeta {
+export declare function getTemplate(id: string): TemplateMeta;
+export declare function listTemplates(): readonly TemplateMeta[];
+export { basicErc20 }
+export { basicErc721 }
+export { exampleCounter }
+export { payableVault }
+export { simpleStorage }
+```
+
+---
+
+## `./artifacts`
+
+```ts
+export declare function selectorsOf(abi: Abi): readonly Hex[];
+export declare function readArtifact(path: string): Promise<Artifact>;
+export declare function writeArtifact(path: string, artifact: Artifact): Promise<void>;
+```
+
+---
+
+## `./errors`
+
+```ts
+export type CompileErrorCode = 'compiler/solc/syntax' | 'compiler/resolver/not-found' | 'compiler/version-mismatch' | 'compiler/solc/binary-unavailable' | 'compiler/invalid-argument' | 'compiler/io-failure';
+export declare class CompileError extends CfxError {
+```
+
+<!-- api-hash: 5973fa8c4c15735c9795d78cf2f56e6ac02d2d21a45e30db9b5097abb6a8d755 -->

@@ -1,4 +1,4 @@
-import type { Address } from '@cfxdevkit/core/types';
+import type { Address } from '@cfxdevkit/cdk/types';
 import { useClient } from '@cfxdevkit/react/context';
 import { useQuery } from '@tanstack/react-query';
 import type { SwapService } from '../service/SwapService.js';

@@ -20,7 +20,7 @@ console.log(\`Deploying \${CONTRACT_NAME} to \${NETWORK}…\`);
 // Load current deployments
 const deployments = JSON.parse(readFileSync(DEPLOYMENTS_FILE, 'utf-8'));
 
-// TODO: Replace with actual deployment using viem + @cfxdevkit/core
+// TODO: Replace with actual deployment using viem + @cfxdevkit/cdk
 // Example:
 //   const artifact = JSON.parse(readFileSync(\`./packages/contracts/artifacts/\${CONTRACT_NAME}.json\`));
 //   const address = await deployContract(artifact.bytecode, artifact.abi, []);

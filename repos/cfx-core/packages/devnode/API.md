@@ -1,65 +1,38 @@
-# framework/devnode — Public API
+# `@cfxdevkit/devnode` — Public API
 
-> Local Conflux dev node. One process per `Node`. Lifecycle is explicit and managed via `createNode` and `stop`.
+> Local Conflux dev node lifecycle.
 
 ## Sub-paths
 
-| Sub-path | Concern |
+| Sub-path | Exports |
 |----------|---------|
-| `@cfxdevkit/devnode` | `createNode`, lifecycle |
-| `@cfxdevkit/devnode/funded` | pre-funded test accounts |
-| `@cfxdevkit/devnode/snapshot` | snapshot / restore |
-| `@cfxdevkit/devnode/errors` | `NodeError` |
+| `.` | 9 symbols |
+| `./cli` | 3 symbols |
 
 ---
 
-## `devnode`
+## `.`
 
-```
-type NodeOptions = {
-  binary?: string                  // path or download
-  dataDir?: string                 // default: tmpdir, removed on stop
-  rpcPort?: number                 // default: random
-  wsPort?: number                  // default: random
-  chainId?: ChainId
-  blockTimeMs?: number             // default 1000
-  preFundedAccounts?: number       // default 10
-  log?: (line: string) => void     // injectable
-}
-
-type Node = {
-  readonly chain: ChainConfig
-  readonly rpcUrl: string
-  readonly wsUrl: string
-  readonly accounts: readonly { address: Address; privateKey: Hex }[]
-  isRunning(): boolean
-  stop(opts?: { signal?: AbortSignal }): Promise<void>
-}
-
-function createNode(opts?: NodeOptions): Promise<Node>
-```
-
-### Errors
-`NodeError` codes: `devnode/{start-failed,port-in-use,crashed,binary-not-found}`.
-
----
-
-## `devnode/funded`
-
-```
-function fundAccount(input: { node: Node; to: Address; amount: Wei; signal?: AbortSignal }): Promise<{ hash: Hash }>
-function fundAccounts(input: { node: Node; accounts: readonly { to: Address; amount: Wei }[]; signal?: AbortSignal }): Promise<{ hash: Hash }>
+```ts
+export { DevNodeError }
+export { DevNodeErrorCode }
+export { createDevNode }
+export { DevNode }
+export { DevNodeUrls }
+export { DevNodeAccount }
+export { DevNodeConfig }
+export { DevNodeStatus }
+export { MiningStatus }
 ```
 
 ---
 
-## `devnode/snapshot`
+## `./cli`
 
-```
-function snapshot(node: Node, opts?: { signal?: AbortSignal }): Promise<{ id: string }>
-function revert(node: Node, snapshotId: string, opts?: { signal?: AbortSignal }): Promise<void>
-function mineBlocks(node: Node, n: number, opts?: { signal?: AbortSignal }): Promise<void>
-function setBlockTime(node: Node, ms: DurationMs): Promise<void>
+```ts
+export interface ParsedArgs {
+export declare function parseArgs(argv: string[]): ParsedArgs;
+export declare function printHelp(): void;
 ```
 
-Mirrors anvil/hardhat semantics for compatibility with existing test fixtures.
+<!-- api-hash: b516adbcdbeba06b9a0fc1ba9a782bb29060261d68ff8232d2abd1be6b3bad19 -->

@@ -5,7 +5,7 @@ import {
   espaceLocal,
   espaceMainnet,
   espaceTestnet,
-} from '@cfxdevkit/core';
+} from '@cfxdevkit/cdk';
 import type { DevnodeServerController, DevnodeServerStatus } from '@cfxdevkit/devnode-server';
 import type { DevnodeMiningStatus, DevnodeStatusResponse, DevnodeUrls } from './devnode-types';
 

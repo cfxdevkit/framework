@@ -1,5 +1,5 @@
-import type { ChainConfig } from '@cfxdevkit/core/chains';
-import { espaceLocal, espaceMainnet, espaceTestnet } from '@cfxdevkit/core/chains';
+import type { ChainConfig } from '@cfxdevkit/cdk/chains';
+import { espaceLocal, espaceMainnet, espaceTestnet } from '@cfxdevkit/cdk/chains';
 import { toHex } from 'viem';
 import { DEFAULT_CAS_NETWORK } from './deployments';
 

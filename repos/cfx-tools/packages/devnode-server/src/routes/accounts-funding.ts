@@ -8,7 +8,7 @@ import {
   http,
   parseCFX,
   signerFromPrivateKey,
-} from '@cfxdevkit/core';
+} from '@cfxdevkit/cdk';
 import type { Hex } from 'viem';
 
 interface CoreEstimate {

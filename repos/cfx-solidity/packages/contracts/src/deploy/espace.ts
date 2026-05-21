@@ -1,4 +1,4 @@
-import type { EspaceClient, Hex, SignableTx } from '@cfxdevkit/core';
+import type { EspaceClient, Hex, SignableTx } from '@cfxdevkit/cdk';
 import type { Abi } from 'viem';
 import { encodeDeployData, hexToBigInt } from 'viem';
 import { waitForReceipt } from '../write/index.js';

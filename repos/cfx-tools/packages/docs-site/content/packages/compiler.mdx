@@ -1,47 +1,294 @@
 ---
 title: "@cfxdevkit/compiler"
-description: Solidity compilation, ABI extraction, and contract template catalog.
+description: "Solidity compilation pipeline."
 ---
+
+import { Callout, Tabs } from 'nextra/components'
 
 # @cfxdevkit/compiler
 
-> Runtime Solidity compilation with a curated template catalog.
+> Solidity compilation pipeline.
 
-```bash
-pnpm add @cfxdevkit/compiler
-```
+## Install
 
-**Depends on:** nothing in `@cfxdevkit/*`. Pure utility.
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/compiler
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/compiler
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/compiler
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+**Scope:** Runtime Solidity compilation + contract template registry.
+
+**Responsibilities**
+- Wrap `solc-js` with a stable, typed API
+- Resolve standard imports (OpenZeppelin, etc.) via pluggable resolvers
+- Curated template catalog (ERC-20, ERC-721, NFT collection, etc.)
+
+Depends on: nothing in framework. Pure utility.
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 24 symbols |
+| `./solc` | 4 symbols |
+| `./resolver` | 3 symbols |
+| `./templates` | 8 symbols |
+| `./artifacts` | 3 symbols |
+| `./errors` | 2 symbols |
 
 ---
 
-## Compile Solidity
+## `.`
 
-```typescript
-import { compileContract } from '@cfxdevkit/compiler'
+### Core Compilation
 
-const source = `
-  // SPDX-License-Identifier: MIT
-  pragma solidity ^0.8.20;
-  import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-  contract MyToken is ERC20 {
-    constructor() ERC20("MyToken", "MTK") {
-      _mint(msg.sender, 1_000_000 ether);
-    }
-  }
-`
+```ts
+export declare function compile(
+  input: CompileInput,
+  solc: SolcInstance
+): CompileOutput;
 
-const { abi, bytecode } = await compileContract('MyToken.sol', source)
+export declare function ensureSolc(version: string): Promise<SolcInstance>;
+
+export declare function listInstalledSolc(): readonly string[];
 ```
 
-## Template catalog
+### Artifact Handling
 
-```typescript
-import { getTemplate, listTemplates } from '@cfxdevkit/compiler'
+```ts
+export interface Artifact {
+  sourceName: string;
+  contractName: string;
+  abi: any[];
+  bytecode: string;
+  deployedBytecode?: string;
+  metadata?: string;
+}
 
-const templates = listTemplates()
-// ['erc20', 'erc721', 'nft-collection', 'multisig', ...]
-
-const erc20Template = getTemplate('erc20')
-const { abi, bytecode } = await erc20Template.compile({ name: 'MyToken', symbol: 'MTK' })
+export declare function readArtifact(path: string): Artifact;
+export declare function writeArtifact(path: string, artifact: Artifact): void;
 ```
+
+### Error & Diagnostic Types
+
+```ts
+export declare class CompileError extends Error {
+  code: CompileErrorCode;
+  diagnostics: CompileDiagnostic[];
+}
+
+export declare enum CompileErrorCode {
+  COMPILATION_FAILED = "COMPILATION_FAILED",
+  RESOLUTION_FAILED = "RESOLUTION_FAILED",
+  SOLC_NOT_FOUND = "SOLC_NOT_FOUND",
+}
+
+export interface CompileDiagnostic {
+  sourceLocation?: { file: string; start: number; end: number };
+  severity: "error" | "warning" | "info";
+  message: string;
+}
+```
+
+### Import Resolution
+
+```ts
+export interface ImportResolver {
+  resolve(importPath: string, sourceName: string): Promise<Source | null>;
+}
+
+export interface Source {
+  content: string;
+  sourceName: string;
+}
+
+export declare function npmResolver(opts?: {
+  registry?: string;
+  cacheDir?: string;
+}): ImportResolver;
+
+export declare function remappingResolver(
+  remappings: readonly string[]
+): ImportResolver;
+
+export declare function compose(
+  resolvers: readonly ImportResolver[]
+): ImportResolver;
+```
+
+### Template System
+
+```ts
+export interface TemplateMeta {
+  id: string;
+  name: string;
+  description: string;
+  source: string;
+}
+
+export declare function getTemplate(id: string): TemplateMeta;
+export declare function listTemplates(): readonly TemplateMeta[];
+
+export declare const basicErc20: TemplateMeta;
+export declare const basicErc721: TemplateMeta;
+export declare const exampleCounter: TemplateMeta;
+export declare const payableVault: TemplateMeta;
+export declare const simpleStorage: TemplateMeta;
+```
+
+### Utilities
+
+```ts
+export declare function selectorsOf(abi: any[]): string[];
+export declare const __packageName: "@cfxdevkit/compiler";
+```
+
+---
+
+## `./solc`
+
+```ts
+export { compile, ensureSolc, listInstalledSolc, SolcInstance } from ".";
+```
+
+---
+
+## `./resolver`
+
+```ts
+export { npmResolver, remappingResolver, compose } from ".";
+```
+
+---
+
+## `./templates`
+
+```ts
+export {
+  TemplateMeta,
+  getTemplate,
+  listTemplates,
+  basicErc20,
+  basicErc721,
+  exampleCounter,
+  payableVault,
+  simpleStorage,
+} from ".";
+```
+
+---
+
+## `./artifacts`
+
+```ts
+export { Artifact, readArtifact, writeArtifact } from ".";
+```
+
+---
+
+## `./errors`
+
+```ts
+export { CompileError, CompileErrorCode, CompileDiagnostic } from ".";
+```
+
+## API Reference
+
+## `.`
+
+```ts
+export { readArtifact }
+export { selectorsOf }
+export { writeArtifact }
+export { CompileError }
+export { CompileErrorCode }
+export { compose }
+export { npmResolver }
+export { remappingResolver }
+export { compile }
+export { ensureSolc }
+export { listInstalledSolc }
+export { SolcInstance }
+export { basicErc20 }
+export { basicErc721 }
+export { getTemplate }
+export { listTemplates }
+export { TemplateMeta }
+export { Artifact }
+export { CompileDiagnostic }
+export { CompileInput }
+export { CompileOutput }
+export { ImportResolver }
+export { Source }
+export declare const __packageName: "@cfxdevkit/compiler";
+```
+
+---
+
+## `./solc`
+
+```ts
+export { compile }
+export { ensureSolc }
+export { listInstalledSolc }
+export { SolcInstance }
+```
+
+---
+
+## `./resolver`
+
+```ts
+export declare function npmResolver(opts?: {
+export declare function remappingResolver(remappings: readonly string[]): ImportResolver;
+export declare function compose(resolvers: readonly ImportResolver[]): ImportResolver;
+```
+
+---
+
+## `./templates`
+
+```ts
+export interface TemplateMeta {
+export declare function getTemplate(id: string): TemplateMeta;
+export declare function listTemplates(): readonly TemplateMeta[];
+export { basicErc20 }
+export { basicErc721 }
+export { exampleCounter }
+export { payableVault }
+export { simpleStorage }
+```
+
+---
+
+## `./artifacts`
+
+```ts
+export declare function selectorsOf(abi: Abi): readonly Hex[];
+export declare function readArtifact(path: string): Promise<Artifact>;
+export declare function writeArtifact(path: string, artifact: Artifact): Promise<void>;
+```
+
+---
+
+## `./errors`
+
+```ts
+export type CompileErrorCode = 'compiler/solc/syntax' | 'compiler/resolver/not-found' | 'compiler/version-mismatch' | 'compiler/solc/binary-unavailable' | 'compiler/invalid-argument' | 'compiler/io-failure';
+export declare class CompileError extends CfxError {
+```
+
+{/* readme-hash: 5bddd4b1e9bd71d723eb53c5dbbba97f1cb60543e9a4c3ee8b080a05040933f1 */}

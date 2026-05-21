@@ -3,7 +3,7 @@ import { getLifecycle, getRulesFor, getTierFor } from './index.js';
 
 describe('arch-rules', () => {
   it('resolves framework package paths', () => {
-    expect(getTierFor('repos/cfx-core/packages/core/src/index.ts')).toEqual({
+    expect(getTierFor('repos/cfx-core/packages/cdk/src/index.ts')).toEqual({
       id: 'framework',
       level: 0,
     });

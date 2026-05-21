@@ -1,4 +1,4 @@
-import { generateMnemonic, validateMnemonic } from '@cfxdevkit/core';
+import { generateMnemonic, validateMnemonic } from '@cfxdevkit/cdk';
 import { getBool, getNumber } from '../args.js';
 
 export interface GenerateReport {

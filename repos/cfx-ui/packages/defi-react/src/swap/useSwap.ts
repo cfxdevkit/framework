@@ -1,5 +1,5 @@
 import { ERC20_ABI } from '@cfxdevkit/abis';
-import type { Address, Hash, Wei } from '@cfxdevkit/core/types';
+import type { Address, Hash, Wei } from '@cfxdevkit/cdk/types';
 import { useAccount } from '@cfxdevkit/react/account';
 import { useClient } from '@cfxdevkit/react/context';
 import { useReadContract, useWriteContract } from '@cfxdevkit/react/contract';

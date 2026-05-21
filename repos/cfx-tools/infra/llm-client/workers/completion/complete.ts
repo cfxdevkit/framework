@@ -5,6 +5,7 @@ import {
   discoverModels,
   extractAssistantText,
   readConfig,
+  resolveRequestTimeoutMs,
 } from './client.ts';
 import { completeDirect } from './direct.ts';
 
@@ -41,6 +42,7 @@ export async function complete({ action, modelOverride, userPrompt, context, qui
     modelOverride ?? config.actions?.[action] ?? config.defaultModel ?? chooseModel(models)?.id;
   if (!modelId)
     throw new Error('No Lemonade model available. Run pnpm run llm:models to inspect inventory.');
+  const requestTimeoutMs = resolveRequestTimeoutMs(config);
 
   const messages = [
     {
@@ -70,7 +72,7 @@ export async function complete({ action, modelOverride, userPrompt, context, qui
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(120000),
+        signal: AbortSignal.timeout(requestTimeoutMs),
       });
       const text = await response.text();
       attempts.push({ url, ok: response.ok, status: response.status });

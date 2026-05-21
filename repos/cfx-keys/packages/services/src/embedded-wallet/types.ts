@@ -1,4 +1,4 @@
-import type { Address, Signer } from '@cfxdevkit/core';
+import type { Address, Signer } from '@cfxdevkit/cdk';
 import type { KeystoreProvider, SecretRef } from '../keystore/index.js';
 
 export interface EmbeddedWallet {

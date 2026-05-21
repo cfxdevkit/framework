@@ -1,14 +1,14 @@
 /**
  * Common types shared by hardware-wallet adapters (Ledger, OneKey, Satochip, …).
  *
- * The framework `Signer` interface (`@cfxdevkit/core`) expects
+ * The framework `Signer` interface (`@cfxdevkit/cdk`) expects
  * `signTransaction` to return a fully-RLP-encoded **raw signed
  * transaction** as 0x-hex, ready to broadcast. Hardware devices typically
  * return an `(r, s, v)` tuple instead — this module provides the helpers
  * that turn such tuples into the canonical raw form via viem's
  * `serializeTransaction`.
  */
-import type { Signer } from '@cfxdevkit/core';
+import type { Signer } from '@cfxdevkit/cdk';
 import { type Hex, serializeTransaction, type TransactionSerializableEIP1559 } from 'viem';
 import { HardwareWalletError } from '../errors/index.js';
 

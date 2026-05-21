@@ -1,4 +1,4 @@
-import type { Hash, TxReceipt } from '@cfxdevkit/core/types';
+import type { Hash, TxReceipt } from '@cfxdevkit/cdk/types';
 import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
 import type { TrackedTx } from '../types.js';
 import { TxStatusToast } from './TxStatusToast.js';

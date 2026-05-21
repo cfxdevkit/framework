@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { deriveDualAccount, generateMnemonic, validateMnemonic } from '@cfxdevkit/core';
+import { deriveDualAccount, generateMnemonic, validateMnemonic } from '@cfxdevkit/cdk';
 import { DevNodeError } from './errors.js';
 import type { DevNodeAccount, DevNodeConfig } from './types.js';
 

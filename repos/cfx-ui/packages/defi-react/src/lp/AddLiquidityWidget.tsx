@@ -1,4 +1,4 @@
-import type { Address } from '@cfxdevkit/core/types';
+import type { Address } from '@cfxdevkit/cdk/types';
 import type React from 'react';
 import { useState } from 'react';
 import type { PoolData } from '../pool/usePoolTokens.js';

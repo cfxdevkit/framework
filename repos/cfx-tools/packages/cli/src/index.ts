@@ -1,6 +1,6 @@
 /**
  * `@cfxdevkit/cli` — small developer CLI exercising the public API of
- * `@cfxdevkit/core`. Two surfaces:
+ * `@cfxdevkit/cdk`. Two surfaces:
  *
  * - `cfx status [--chain <id|name>]` — pings one or every known chain
  *   and prints the head block (eSpace) or epoch (Core Space) plus latency.

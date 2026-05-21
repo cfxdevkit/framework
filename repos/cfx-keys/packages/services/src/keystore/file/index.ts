@@ -1,4 +1,4 @@
-import { KeystoreError } from '@cfxdevkit/core';
+import { KeystoreError } from '@cfxdevkit/cdk';
 import type { AesGcmKey } from '../../crypto/index.js';
 import type {
   AuditLogger,
@@ -118,7 +118,7 @@ export function createFileKeystore(opts: FileKeystoreOptions): KeystoreProvider 
       ref: SecretRef,
       capability?: Capability,
       callOpts: KeystoreCallOptions = {},
-    ): Promise<import('@cfxdevkit/core').Signer> {
+    ): Promise<import('@cfxdevkit/cdk').Signer> {
       checkAborted(callOpts.signal);
       const env = await readEnvelope(opts.path);
       const rec = env.secrets[refKey(ref)];

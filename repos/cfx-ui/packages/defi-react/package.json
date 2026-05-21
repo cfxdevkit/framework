@@ -80,7 +80,7 @@
   },
   "dependencies": {
     "@cfxdevkit/abis": "workspace:^",
-    "@cfxdevkit/core": "workspace:^",
+    "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/react": "workspace:^",
     "@cfxdevkit/ui-core": "workspace:^"
   },

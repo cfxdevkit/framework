@@ -2,272 +2,266 @@
 title: "Repository Layout — cfx-keys"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Repository Layout — cfx-keys
 
-# Repository Layout — `cfx-keys`
+# cfx-keys
 
-The `cfx-keys` repository is a **tier-0b audit-grade trust boundary** for cryptographic operations in the Conflux DevKit ecosystem. It is carved out as a standalone repository per [ADR-0003](../../docs/adr/0003-multi-repo-split.md) to isolate all code that handles private keys, enabling focused security audits, stricter release policies, and reduced blast radius.
+**Tier 0b — audit-grade trust boundary.**
 
-> **Audit perimeter = repository perimeter.**  
-> Anything that touches private keys lives here.
+This repository contains all code that touches private keys. The repository perimeter **is** the audit perimeter. By isolating cryptographic operations, key management, and signing logic from UI and protocol code, the audit scope is reduced approximately 10×.
 
----
+## Architecture
 
-## High-Level Architecture
+The module is split into two primary packages with a strict dependency hierarchy. Consumers should never depend on `wallet` directly for low-level crypto; use `services` for primitives and `wallet` for signer orchestration.
 
-```mermaid
-flowchart TD
-    subgraph "cfx-keys"
-        A["services/"] -->|KeystoreProvider| B["wallet/"]
-        B -->|Signer| C["projects/*"]
-        A --> D["crypto/"]
-        A --> E["dex/"]
-        A --> F["tokens/"]
-        B --> G["session-key/"]
-        B --> H["batched/"]
-        B --> I["hardware/"]
+<Mermaid chart={`graph TD
+    subgraph "External"
+        Projects[projects/*]
     end
 
-    C -->|consume| B
-    B -->|delegate| A
-    A -->|crypto primitives| D
-```
+    subgraph "cfx-keys"
+        Wallet["@cfxdevkit/wallet"]
+        Services["@cfxdevkit/services"]
+    end
 
-The repository is split into two primary packages:
+    subgraph "Core"
+        CDK["@cfxdevkit/cdk"]
+    end
 
-| Package | npm | Role |
-|--------|-----|------|
-| `@cfxdevkit/services` | `services/` | **Pluggable keystore backends + crypto primitives** — stateless, interface-driven |
-| `@cfxdevkit/wallet` | `wallet/` | **Signer orchestration + session-key lifecycle** — the *only* blessed entrypoint for automated signing |
+    Projects --> Wallet
+    Wallet --> Services
+    Wallet --> CDK
+    Services --> CDK
+`} />
 
----
+### Dependency Rules
+
+- **`@cfxdevkit/services`**: MAY depend on `@cfxdevkit/cdk`. MUST NOT depend on `cfx-ui`, `cfx-domain`, or `cfx-tools`.
+- **`@cfxdevkit/wallet`**: MAY depend on `@cfxdevkit/cdk` and `@cfxdevkit/services`.
+- **Consumers**: SHOULD use **tilde** ranges (`~x.y.z`) to force conscious patch upgrades.
 
 ## Package: `@cfxdevkit/services`
 
-### Purpose
+**Scope:** Stateless service primitives sitting just above `@cfxdevkit/cdk`.
 
-Provides **stateless, pluggable keystore backends** behind a single `KeystoreProvider` interface, plus supporting primitives (crypto, DEX, tokens). It is the *only* place where private material crosses a boundary — and only into a secure backend (e.g., hardware, OS keyring, KMS), never into application memory.
+This package provides the foundational building blocks for key storage, encryption, and authentication. It is designed to be pluggable; backends (file, memory, hardware) are exposed as sub-paths.
 
-### Core Interface: `KeystoreProvider`
+### Key Sub-paths
 
-All backends implement this interface:
+| Sub-path | Responsibility |
+|----------|----------------|
+| `.` | Core interfaces (`KeystoreProvider`, `AuditLogger`) and re-exports. |
+| `./keystore` | `KeystoreProvider` interface, `StoredSecret`, `Capability` types. |
+| `./keystore-file` | File-backed encrypted keystore (cfx-v1 envelope: Argon2id KEK + AES-256-GCM). |
+| `./keystore-memory` | In-memory keystore for testing. |
+| `./keystore-ledger` | Ledger hardware wallet adapter. |
+| `./crypto` | AES-256-GCM encryption, Argon2id/HKDF derivation, encoding utilities. |
+| `./auth` | Session token management (`signSessionToken`, `verifySessionToken`). |
+| `./embedded-wallet` | `EmbeddedWalletManager` for keystore-backed wallet lifecycle. |
+
+### Core Interfaces
+
+#### `KeystoreProvider`
+The abstraction for secret storage. Implementations include `KeystoreFileProvider`, `KeystoreLedgerProvider`, and `KeystoreMemoryProvider`.
 
 ```ts
-type KeystoreProvider = {
-  readonly id: string
-  readonly capabilities: { write: boolean; list: boolean; rotate: boolean }
-
-  list(opts?): Promise<StoredSecret[]>
-  has(ref, opts?): Promise<boolean>
-  getSigner(ref, capability?, opts?): Promise<Signer>
-
-  put?(input): Promise<void>          // optional
-  updateMeta?(ref, meta, opts?): void // optional
-  remove?(ref, opts?): void           // optional
-  rotate?(ref, opts?): void           // optional
+export interface KeystoreProvider {
+  list(options?: KeystoreListOptions): Promise<StoredSecret[]>;
+  get(id: string): Promise<StoredSecret | null>;
+  put(input: KeystorePutInput): Promise<void>;
+  delete(id: string): Promise<void>;
 }
 ```
 
-- `StoredSecret` is metadata-only — never contains private material.
-- `getSigner` returns a `Signer` that *internally* delegates to the backend — private key never leaves the backend.
-- `Capability` is enforced server-side (if supported) or client-side (via `wallet/session-key`).
+#### `AuditLogger`
+All keystore operations must be logged. Use `createAppendOnlyAuditLogger` to instantiate a logger that writes to a file or external sink.
 
-### Backends
+```ts
+export interface AuditLogger {
+  log(entry: AuditEntry): void;
+}
 
-| Sub-path | Backend | Notes |
-|---------|---------|-------|
-| `keystore-file` | Encrypted local file (`cfx-v1` format: Argon2id KEK + AES-256-GCM) | Default for dev/test; supports SOPS+age export/import |
-| `keystore-memory` | In-memory store | Tests-only; throws in production builds |
-| `keystore-ledger` | Ledger hardware wallet (via Ethereum app) | Supports eSpace signing only; Core Space pending APDU support |
-| `keystore-kms` | AWS KMS / GCP KMS / HashiCorp Vault | Read-only by default; keys never leave cloud custody |
-| `keystore-os` | macOS Keychain / Windows DPAPI / Linux libsecret | Uses `@napi-rs/keyring`; may be unavailable in containers |
-| `keystore-forward` | Host keyring socket (e.g., D-Bus, ssh-agent) | For containers; proxies to host keyring |
+export interface AuditEntry {
+  timestamp: Timestamp;
+  operation: string;
+  keystoreId?: string;
+  secretId?: string;
+  caller?: string;
+  success: boolean;
+  error?: string;
+}
+```
 
-### Crypto Primitives (`crypto/`)
+### Crypto Primitives
 
-- `AES-256-GCM`: `encryptAesGcm`, `decryptAesGcm` (with optional AAD)
-- `KDF`: `deriveKeyArgon2id`, `deriveKeyHkdf`
-- `CSPRNG`: `randomBytes`
-- `Encoding`: `toHex`, `fromHex`, `toBase64Url`, `fromBase64Url`
+The `./crypto` sub-path exposes low-level primitives. Prefer high-level wrappers where available.
 
-All functions are pure, side-effect-free, and deterministic.
-
-### DEX & Tokens
-
-- `dex/`: `DexAdapter` interface (`quote`, `swap`) + `swappi` adapter
-- `tokens/`: `TokenRegistry` for metadata lookup (curated + on-chain fallback)
-
----
+- `encryptAesGcm(input: EncryptInput)`: Encrypts data using AES-256-GCM.
+- `decryptAesGcm(input: DecryptInput)`: Decrypts data.
+- `deriveKeyArgon2id(input: Argon2idInput)`: Derives keys from passwords.
+- `generateAesGcmKey()`: Generates a random key.
 
 ## Package: `@cfxdevkit/wallet`
 
-### Purpose
+**Scope:** Focused wallet primitives — session keys, capability-scoped signers, batched transactions.
 
-The **only blessed entrypoint for automated signers**. Wraps `KeystoreProvider`-backed keys into capability-scoped, session-aware signers and provides batched transaction helpers.
+**Security Note:** This package is the **only blessed entrypoint for automated signers**. Any project requiring a non-interactive signer MUST use `wallet/session-key` or `wallet/signers/from-hardware`.
 
-> ⚠️ **Security rule**: Any non-interactive signing *must* go through this package.
+### Key Features
 
-### Session Keys: Ephemeral, Capability-Limited Signers
-
-A session key is an ephemeral keypair derived *in memory* from a parent signer, signed by the parent, and valid only within a `Capability` and `notAfter` deadline.
-
-```ts
-type SessionKey = {
-  publicKey: Hex
-  address: Address
-  capability: Capability
-  issuedAt: Timestamp
-  notAfter: Timestamp
-  parent: Address
-  attestation: Hex  // parent signature over (publicKey, capability, notAfter)
-}
-```
-
-#### Lifecycle
-
-- `issueSessionKey(parent, capability, ttlMs)` → `SessionSigner`
-- `rotateSessionKey(current, parent, ttlMs)` → new `SessionSigner`
-- `revokeSessionKey(session, parent, registry?)` → on-chain revocation (if registry configured)
-- `verifyAttestation(session, expectedParent)` → off-chain validation
-
-Session keys live **only in RAM** — never persisted by this package.
-
-#### Policy Enforcement
-
-`wallet/policies` provides composable capability presets:
+#### 1. Local Wallet Initialization
+Convenience functions for managing filesystem keystores.
 
 ```ts
-combine(
-  allowlistContracts([addr1, addr2]),
-  allowlistSelectors([selector]),
-  valueCap(maxWei),
-  timeWindow(notAfter)
-)
+import { initLocalWallet, openLocalWallet } from '@cfxdevkit/wallet';
+
+// Initialize a new keystore
+const result = await initLocalWallet({
+  keystorePath: './keys/keystore.json',
+  passphrase: 'secure-passphrase'
+});
+
+// Open an existing keystore
+const wallet = await openLocalWallet({
+  keystorePath: './keys/keystore.json',
+  passphrase: 'secure-passphrase'
+});
 ```
 
-### Signer Factories
-
-| Factory | Input | Use case |
-|--------|-------|----------|
-| `signerFromKeystore(provider, ref, capability?)` | `KeystoreProvider` + `SecretRef` | Default for all non-interactive signing |
-| `signerFromHardware(transport, path?)` | Ledger transport | Direct hardware signing (e.g., CLI tools) |
-| `readonlySigner(address)` | `Address` | Watch-only (throws on sign) |
-
-### Batched Transactions
-
-- `createNonceManager(client, address)` → sequential nonce management
-- `multicallRead(client, calls)` → batched read calls
-- `multisendWrite(client, signer, calls)` → batched writes (delegate-call multisend)
-
-> Note: `core/batch` remains signer-free; `wallet/batched` adds signer + nonce concerns.
-
-### Hardware Wallet Support
-
-- `wallet/hardware/ledger`: Ledger adapter (shares signer with `services/keystore-ledger`)
-- `wallet/hardware/onekey`: OneKey adapter
-- `wallet/hardware/satochip`: Satochip local bridge adapter
-
-All adapters return a `HardwareWalletAdapter` and a `Signer`.
-
----
-
-## Dependency Rules & Security Boundaries
-
-### `cfx-keys` packages may depend on:
-- `@cfxdevkit/core` (via npm, never workspace after carve-out)
-
-### `cfx-keys` packages **must not** depend on:
-- `cfx-ui`, `cfx-domain`, `cfx-tools`
-
-### Consumers must:
-- Use **tilde ranges** (`~x.y.z`) to force conscious patch upgrades
-- Avoid importing raw private keys — always go through `wallet/session-key` or `wallet/signers`
-
----
-
-## CI & Release Requirements (Post Carve-Out)
-
-- `pnpm audit --prod` + `socket.dev` scan on every PR
-- Reproducible builds (`SOURCE_DATE_EPOCH` pinned)
-- CycloneDX SBOM attached to every release
-- `Signed-off-by` enforced on `main` (2 reviewers minimum)
-
----
-
-## Worked Example: Keystore Stack Flow
-
-```
-core (types/errors/wallet primitives)
-   ↓
-services (KeystoreProvider + crypto + file backend)
-   ↓
-wallet (signerFromKeystore + hardware adapters + init)
-   ↓
-projects/* (consume @cfxdevkit/wallet → call initLocalWallet)
-```
-
-### Example: Local File Keystore → Session Signer
+#### 2. Signers
+Create signers from keystores or hardware devices.
 
 ```ts
-import { initFileKeystore } from '@cfxdevkit/wallet'
-import { issueSessionKey } from '@cfxdevkit/wallet/session-key'
-import { combine, allowlistContracts } from '@cfxdevkit/wallet/policies'
+import { signerFromKeystore, readonlySigner } from '@cfxdevkit/wallet';
 
-// 1. Initialize keystore (one-time)
-await initFileKeystore({ path: './keystore.json', passphrase: '...' })
-
-// 2. Get keystore provider
-const provider = createFileKeystore({
-  path: './keystore.json',
-  unlock: () => promptPassphrase()
-})
-
-// 3. Get signer from keystore
+// From file keystore
 const signer = await signerFromKeystore({
-  provider,
-  ref: { service: 'file', account: 'deployer' }
-})
+  keystorePath: './keys/keystore.json',
+  passphrase: 'secure-passphrase'
+});
 
-// 4. Issue capability-scoped session key
-const capability = combine(
-  allowlistContracts(['0x...']),
-  valueCap(1000000000000000000n) // 1 CFX
-)
-
-const session = await issueSessionKey({
-  parent: signer,
-  capability,
-  ttlMs: 3600_000 // 1 hour
-})
-
-// 5. Use session.signer for signing (within capability)
-await session.signTransaction({ ... })
+// Watch-only
+const readOnly = readonlySigner('0x...');
 ```
 
----
+#### 3. Session Keys & Capabilities
+Generate ephemeral session keys with restricted capabilities (e.g., gas limits, allowed methods).
 
-## Anti-Goals (Explicitly Out of Scope)
+```ts
+import { createSessionKey, withCapability, checkCapability } from '@cfxdevkit/wallet';
 
-- ❌ Wallet UI / connectors (lives in `framework/wallet-connect`)
-- ❌ Mnemonic generation UX (lives in `platform/devtools/cfx-keystore`)
-- ❌ Persistent session-key store (projects decide persistence strategy)
+// Create a session key with specific capabilities
+const session = await createSessionKey({
+  parentSigner: mainSigner,
+  capability: { name: 'transfer', args: { maxGas: 100000 } }
+});
 
----
+// Wrap a signer with capability enforcement
+const restrictedSigner = withCapability(mainSigner, capability);
+```
 
-## Future Packages (Staged for `cfx-keys`)
+#### 4. Hardware Wallets
+Adapters for Ledger, OneKey, and Satochip are available under `./hardware`.
 
-- `keystore-os`, `keystore-kms`, `keystore-forward` (already in `services/`)
-- `wallet/policies`, `wallet/session-key`, `wallet/batched` (already in `wallet/`)
-- `wallet/audit`, `wallet/revocation-registry`, `wallet/backup`
+```ts
+import { signerFromLedger, createLedgerHardwareAdapter } from '@cfxdevkit/wallet/hardware/ledger';
 
----
+const adapter = await createLedgerHardwareAdapter({ path: "m/44'/60'/0'/0/0" });
+const signer = await signerFromLedger({ adapter });
+```
 
-## Summary
+#### 5. Batched Transactions
+Execute multiple transactions in a single call using `TransactionBatcher`.
 
-`cfx-keys` is the **cryptographic trust boundary** of the DevKit:
+```ts
+import { TransactionBatcher } from '@cfxdevkit/wallet/batcher';
 
-- **`services/`** = pluggable, auditable backends for key storage
-- **`wallet/`** = capability-aware, session-based signing orchestration
+const batcher = new TransactionBatcher();
+batcher.add({ to: '0x...', data: '0x...' });
+batcher.add({ to: '0x...', data: '0x...' });
 
-All private keys stay inside secure backends. All signing flows go through `wallet/`.  
-This separation enables focused audits, independent releases, and minimal attack surface.
+const result = await batcher.execute();
+```
+
+## Security & Compliance
+
+This repository is subject to stricter CI and release requirements than the rest of the monorepo.
+
+### CI Requirements
+- **Audit:** `pnpm audit --prod` + `socket.dev` advisory scan on every PR.
+- **Reproducibility:** `SOURCE_DATE_EPOCH` pinned for reproducible builds.
+- **SBOM:** CycloneDX Software Bill of Materials attached to every release.
+- **Sign-off:** `Signed-off-by` enforced on all commits.
+- **Review:** `main` branch requires two reviewers.
+
+### Dependency Constraints
+- **Allowed:** `@noble/*`, `@scure/*`, `viem`, `cive`, `@cfxdevkit/cdk`.
+- **Forbidden:** React, Phaser, Three.js, `cfx-ui`, `cfx-domain`, `cfx-tools`.
+
+### Audit Logging
+All keystore operations (`list`, `get`, `put`, `delete`) must be logged via the `AuditLogger` interface.
+
+```ts
+import { createAppendOnlyAuditLogger } from '@cfxdevkit/services/keystore-audit';
+
+const logger = createAppendOnlyAuditLogger({
+  onLog: (entry) => {
+    // Write to secure log file or SIEM
+    fs.appendFileSync('./audit.log', JSON.stringify(entry));
+  }
+});
+```
+
+## File Structure
+
+```
+repos/cfx-keys/
+├── packages/
+│   ├── services/                 # @cfxdevkit/services
+│   │   ├── src/
+│   │   │   ├── keystore/         # Provider interfaces & backends
+│   │   │   ├── crypto/           # Encryption & KDF
+│   │   │   ├── auth/             # Session tokens
+│   │   │   └── embedded-wallet/  # Wallet management
+│   │   └── API.md
+│   │
+│   └── wallet/                   # @cfxdevkit/wallet
+│       ├── src/
+│       │   ├── session-key/      # Session key lifecycle
+│       │   ├── batched/          # Transaction batching
+│       │   ├── signers/          # Signer wrappers
+│       │   ├── hardware/         # Vendor adapters
+│       │   └── policies/         # Capability enforcement
+│       └── API.md
+└── README.md
+```
+
+## Contributing
+
+1.  **Branching:** Create feature branches off `main`.
+2.  **Commits:** Ensure every commit includes `Signed-off-by`.
+3.  **Testing:** Unit tests must cover crypto primitives and keystore backends.
+4.  **Releases:** Releases occur only when crypto/security changes, not on UI updates.
+
+## Worked Example
+
+The canonical flow for consuming this module in a project:
+
+```ts
+// 1. Initialize local keystore (one-time setup)
+await initLocalWallet({ keystorePath: './keys.json', passphrase: '...' });
+
+// 2. Open wallet and create signer
+const signer = await signerFromKeystore({ keystorePath: './keys.json', passphrase: '...' });
+
+// 3. Create a session key for limited operations
+const session = await createSessionKey({
+  parentSigner: signer,
+  capability: { name: 'swap', args: { maxAmount: '100' } }
+});
+
+// 4. Execute transaction via session signer
+await session.signTransaction(tx);
+```

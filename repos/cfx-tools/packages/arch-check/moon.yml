@@ -4,6 +4,28 @@ layer: 'application'
 language: 'typescript'
 
 tasks:
+  generate-api:
+    command: 'pnpm exec tsx src/bin/generate-api.ts --write'
+    inputs:
+      - '/repos/**/dist/*.d.ts'
+      - '/repos/**/dist/**/*.d.ts'
+      - '/repos/**/package.json'
+      - '/projects/**/package.json'
+      - 'src/**/*'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
+  generate-readme:
+    command: 'pnpm exec tsx src/bin/generate-readme.ts --write'
+    inputs:
+      - '/repos/**/package.json'
+      - '/projects/**/package.json'
+      - 'src/**/*'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
   check-secrets:
     command: 'pnpm exec tsx src/bin/check-secrets.ts'
     inputs:

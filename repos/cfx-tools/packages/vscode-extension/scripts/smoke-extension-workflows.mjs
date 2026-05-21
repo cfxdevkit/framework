@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { compile, listTemplates } from '@cfxdevkit/compiler';
 import { createConfluxDevkitClient } from '@cfxdevkit/client';
-import { deriveAccount } from '@cfxdevkit/core/wallet';
+import { deriveAccount } from '@cfxdevkit/cdk/wallet';
 import { createDevnodeServerApp } from '@cfxdevkit/devnode-server';
 import {
   createFileKeystore,

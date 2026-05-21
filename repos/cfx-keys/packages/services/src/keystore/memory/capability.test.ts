@@ -1,6 +1,6 @@
-import type { Signer } from '@cfxdevkit/core';
-import { KeystoreError } from '@cfxdevkit/core';
-import type { SignableTx } from '@cfxdevkit/core/wallet';
+import type { Signer } from '@cfxdevkit/cdk';
+import { KeystoreError } from '@cfxdevkit/cdk';
+import type { SignableTx } from '@cfxdevkit/cdk/wallet';
 import { describe, expect, it } from 'vitest';
 import { applyCapability } from './capability.js';
 

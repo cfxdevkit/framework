@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import type { Signer } from '@cfxdevkit/core';
-import { deriveDualAccount } from '@cfxdevkit/core';
+import type { Signer } from '@cfxdevkit/cdk';
+import { deriveDualAccount } from '@cfxdevkit/cdk';
 import type { SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
 import {
   type createFileKeystore,

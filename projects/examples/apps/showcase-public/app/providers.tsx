@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient, espaceMainnet, http } from '@cfxdevkit/core';
+import { createClient, espaceMainnet, http } from '@cfxdevkit/cdk';
 import { CfxProvider } from '@cfxdevkit/react';
 import { ThemeProvider } from '@cfxdevkit/theme/react';
 import { ConfluxWagmiProviders } from '@cfxdevkit/wallet-connect';

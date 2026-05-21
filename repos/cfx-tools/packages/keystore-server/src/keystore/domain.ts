@@ -1,4 +1,4 @@
-import { deriveAccount } from '@cfxdevkit/core';
+import { deriveAccount } from '@cfxdevkit/cdk';
 import type { SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
 import type { RevealedSecret, WalletSummary } from '../keystore.js';
 

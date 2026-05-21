@@ -3,7 +3,7 @@ import {
   generateMnemonic,
   signerFromPrivateKey,
   validateMnemonic,
-} from '@cfxdevkit/core';
+} from '@cfxdevkit/cdk';
 import { getControlPlaneClient } from '../control-plane.js';
 import { getKeystoreSession } from './keystore.js';
 

@@ -45,7 +45,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Sync wiki content
-        run: node repos/cfx-tools/packages/docs-site/scripts/sync-wiki.mjs
+        run: pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync wiki
 
       - name: Derive image tags
         id: meta

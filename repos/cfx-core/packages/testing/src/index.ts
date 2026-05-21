@@ -1,4 +1,4 @@
-import type { Client, CoreLog, CoreLogFilter, TxReceipt } from '@cfxdevkit/core';
+import type { Client, CoreLog, CoreLogFilter, TxReceipt } from '@cfxdevkit/cdk';
 import { createDevNode, type DevNode } from '@cfxdevkit/devnode';
 
 export const __packageName = '@cfxdevkit/testing' as const;

@@ -1,4 +1,4 @@
-import type { EspaceClient } from '@cfxdevkit/core/client';
+import type { EspaceClient } from '@cfxdevkit/cdk/client';
 import { createSwapService, type SwapServiceConfig } from '../service/index.js';
 import type { DexAdapter } from '../types.js';
 

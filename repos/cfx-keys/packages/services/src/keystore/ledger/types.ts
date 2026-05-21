@@ -1,4 +1,4 @@
-import type { Address, Hex } from '@cfxdevkit/core';
+import type { Address, Hex } from '@cfxdevkit/cdk';
 import type { AuditLogger, SecretRef, StoredSecret } from '../index.js';
 
 export interface LedgerTransportLike {

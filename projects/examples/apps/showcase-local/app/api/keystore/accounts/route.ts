@@ -1,4 +1,4 @@
-import { generateMnemonic } from '@cfxdevkit/core';
+import { generateMnemonic } from '@cfxdevkit/cdk';
 import { NextResponse } from 'next/server';
 import type {
   CreateKeystoreWalletRequest,

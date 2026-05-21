@@ -1,5 +1,8 @@
 import { readFile, stat } from 'node:fs/promises';
 import { dirname, extname, join, resolve } from 'node:path';
+import { discoverPublicPackages } from '../api/filter.js';
+import { computeApiHash, readEmbeddedHash } from '../api/hash.js';
+import { checkReadmeSections } from '../api/readme.js';
 import {
   type AgentSummary,
   collectCorpusFiles,
@@ -30,6 +33,8 @@ export async function runDocsCheck(opts: { silent?: boolean } = {}): Promise<Age
 
   findings.push(...(await checkMoonRegistration()));
   findings.push(...(await checkPackageExports()));
+  findings.push(...(await checkApiDocs()));
+  findings.push(...(await checkReadmeDocs()));
 
   const report = {
     generatedAt: new Date().toISOString(),
@@ -114,6 +119,95 @@ async function checkPackageExports(): Promise<Finding[]> {
           issue: `Export ${exportPath} may not be represented in vite lib entries.`,
         });
       }
+    }
+  }
+  return findings;
+}
+
+async function checkApiDocs(): Promise<Finding[]> {
+  const findings: Finding[] = [];
+  const packages = await discoverPublicPackages();
+  for (const pkg of packages) {
+    const { rel, subpaths, distDir, apiMdPath } = pkg;
+    // Check if API.md exists
+    let apiMdContent: string | null = null;
+    try {
+      apiMdContent = await readFile(apiMdPath, 'utf8');
+    } catch {
+      findings.push({
+        severity: 'warning',
+        file: rel,
+        issue: `Public package missing API.md: ${rel}`,
+        recommendation: 'Run `pnpm gen:api` to generate API.md',
+      });
+      continue;
+    }
+
+    // Check for hash footer
+    const embeddedHash = readEmbeddedHash(apiMdContent);
+    if (!embeddedHash) {
+      findings.push({
+        severity: 'warning',
+        file: `${rel}/API.md`,
+        issue: `API.md has no api-hash footer (run generate:api --write): ${rel}`,
+        recommendation: 'Run `pnpm gen:api` to regenerate with hash footer',
+      });
+      continue;
+    }
+
+    // Recompute hash and compare
+    const dtsContents: string[] = [];
+    for (const [, dtsRelative] of Object.entries(subpaths)) {
+      const { join: pathJoin } = await import('node:path');
+      const fullPath = pathJoin(distDir, dtsRelative);
+      try {
+        dtsContents.push(await readFile(fullPath, 'utf8'));
+      } catch {
+        dtsContents.push('');
+      }
+    }
+    const currentHash = computeApiHash(dtsContents);
+    if (currentHash !== embeddedHash) {
+      findings.push({
+        severity: 'warning',
+        file: `${rel}/API.md`,
+        issue: `API.md is stale (exports changed): ${rel}`,
+        recommendation: 'Run `pnpm gen:api` to regenerate',
+      });
+    }
+  }
+  return findings;
+}
+
+async function checkReadmeDocs(): Promise<Finding[]> {
+  const findings: Finding[] = [];
+  const packages = await discoverPublicPackages();
+  for (const pkg of packages) {
+    const { rel } = pkg;
+    const readmePath = join(root, rel, 'README.md');
+    let content: string | null = null;
+    try {
+      content = await readFile(readmePath, 'utf8');
+    } catch {
+      findings.push({
+        severity: 'warning',
+        file: rel,
+        issue: `Public package missing README.md: ${rel}`,
+        recommendation: 'Run `pnpm gen:readme` to generate a README skeleton',
+      });
+      continue;
+    }
+    const checks = checkReadmeSections(content);
+    const missing = Object.entries(checks)
+      .filter(([, ok]) => !ok)
+      .map(([k]) => k);
+    if (missing.length > 0) {
+      findings.push({
+        severity: 'warning',
+        file: `${rel}/README.md`,
+        issue: `README.md missing sections: ${missing.join(', ')}`,
+        recommendation: 'Run `pnpm llm:readme-upkeep` to fill in the missing sections via LLM',
+      });
     }
   }
   return findings;

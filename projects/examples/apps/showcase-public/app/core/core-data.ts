@@ -1,4 +1,4 @@
-import { formatCFX, formatGDrip, listChains, parseCFX } from '@cfxdevkit/core';
+import { formatCFX, formatGDrip, listChains, parseCFX } from '@cfxdevkit/cdk';
 
 export const CHAINS = listChains();
 
@@ -8,8 +8,8 @@ export const UNIT_EXAMPLES = [
   { label: 'parseCFX("1.5") → drip', value: String(parseCFX('1.5')) },
 ];
 
-export const CLIENT_SNIPPET = `// @cfxdevkit/core — low-level RPC clients for eSpace and Core Space
-import { createClient, http, espaceTestnet, coreSpaceTestnet } from '@cfxdevkit/core';
+export const CLIENT_SNIPPET = `// @cfxdevkit/cdk — low-level RPC clients for eSpace and Core Space
+import { createClient, http, espaceTestnet, coreSpaceTestnet } from '@cfxdevkit/cdk';
 
 // eSpace client (EVM-compatible, uses viem under the hood)
 const espaceClient = createClient({
@@ -39,14 +39,14 @@ import { CfxProvider, useClient, useNativeBalance } from '@cfxdevkit/react';
 const client = useClient();
 const { data: balance } = useNativeBalance({ address });`;
 
-export const CODEC_SNIPPET = `import { hexToBase32, base32ToHex, isBase32Address } from '@cfxdevkit/core';
+export const CODEC_SNIPPET = `import { hexToBase32, base32ToHex, isBase32Address } from '@cfxdevkit/cdk';
 
 hexToBase32('0xABC…', 1)   // → 'cfxtest:aac…'  (networkId=1 for testnet)
 hexToBase32('0xABC…', 1029) // → 'cfx:aac…'      (networkId=1029 for mainnet)
 base32ToHex('cfxtest:aac…') // → '0xabc…'
 isBase32Address('cfx:aac…') // → true`;
 
-export const UNITS_SNIPPET = `import { formatCFX, formatGDrip, parseCFX } from '@cfxdevkit/core';
+export const UNITS_SNIPPET = `import { formatCFX, formatGDrip, parseCFX } from '@cfxdevkit/cdk';
 
 formatCFX(1_000_000_000_000_000_000n)  // → '1 CFX'
 formatGDrip(1_000_000_000n)            // → '1 GDrip'

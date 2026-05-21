@@ -56,7 +56,7 @@ Legacy root package evidence:
 
 Current package names include:
 
-- Framework/core: `@cfxdevkit/core`, `@cfxdevkit/protocol`, `@cfxdevkit/devnode`, `@cfxdevkit/executor`, `@cfxdevkit/testing`.
+- Framework/core: `@cfxdevkit/cdk`, `@cfxdevkit/protocol`, `@cfxdevkit/devnode`, `@cfxdevkit/executor`, `@cfxdevkit/testing`.
 - Keys/security: `@cfxdevkit/services`, `@cfxdevkit/wallet`.
 - Solidity/contracts: `@cfxdevkit/abis`, `@cfxdevkit/contracts`, `@cfxdevkit/compiler`, `@cfxdevkit/contracts-extract`.
 - UI: `@cfxdevkit/ui-core`, `@cfxdevkit/ui`, `@cfxdevkit/theme`, `@cfxdevkit/react`, `@cfxdevkit/defi-react`, `@cfxdevkit/wallet-connect`.

@@ -28,6 +28,6 @@ cli/
 
 ### Runtime role
 
-- Developer-facing CLI over `@cfxdevkit/core` primitives.
+- Developer-facing CLI over `@cfxdevkit/cdk` primitives.
 - Designed for terminal use, but its command helpers are also exported for tests
   and programmatic invocation.

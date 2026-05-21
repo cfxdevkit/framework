@@ -1,6 +1,6 @@
-import type { Address, Hex, Signer } from '@cfxdevkit/core';
-import { KeystoreError } from '@cfxdevkit/core';
-import { coreAddressFromPrivateKey } from '@cfxdevkit/core/wallet';
+import type { Address, Hex, Signer } from '@cfxdevkit/cdk';
+import { KeystoreError } from '@cfxdevkit/cdk';
+import { coreAddressFromPrivateKey } from '@cfxdevkit/cdk/wallet';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import type { KeystoreProvider, SecretRef, StoredSecret } from '../keystore/index.js';
 import type {

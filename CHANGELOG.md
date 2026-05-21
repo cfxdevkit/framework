@@ -6,7 +6,7 @@ First tagged release of the cfxdevkit framework monorepo.
 
 ### Framework packages (Tier 0 — published to npm)
 
-- `@cfxdevkit/core` — addresses, RPC client, chain registry, units, error types
+- `@cfxdevkit/cdk` — addresses, RPC client, chain registry, units, error types
 - `@cfxdevkit/protocol` — low-level encoding/decoding for Core Space and eSpace
 - `@cfxdevkit/executor` — transaction execution pipeline
 - `@cfxdevkit/devnode` — `child_process` wrapper for the Conflux Go node binary

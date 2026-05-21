@@ -15,5 +15,5 @@ a second consumer arrives.
 
 ## Boundaries
 
-- **MAY** depend on `@cfxdevkit/core`, `@cfxdevkit/wallet`.
+- **MAY** depend on `@cfxdevkit/cdk`, `@cfxdevkit/wallet`.
 - **MUST NOT** depend on `cfx-ui` or `cfx-tools`.

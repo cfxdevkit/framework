@@ -5,7 +5,7 @@
  * or the showcase can bring up a dual-space (Core + eSpace) Conflux chain on
  * deterministic ports with pre-funded genesis accounts.
  *
- * Defaults match `@cfxdevkit/core/chains`'s `core-local` (chainId 2029, port
+ * Defaults match `@cfxdevkit/cdk/chains`'s `core-local` (chainId 2029, port
  * 12537) and `espace-local` (chainId 2030, port 8545), so a plain
  * `createClient({ chain: coreSpaceLocal, transport: http() })` works against
  * the spawned node with no extra config.

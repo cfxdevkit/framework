@@ -16,7 +16,7 @@ templates/
 │   │   ├── main.tsx
 │   │   ├── App.tsx
 │   │   └── lib/
-│   │       └── chain.ts            uses @cfxdevkit/core + wallet-connect
+│   │       └── chain.ts            uses @cfxdevkit/cdk + wallet-connect
 │   └── .env.example
 │
 ├── project-example/                full-feature reference dapp

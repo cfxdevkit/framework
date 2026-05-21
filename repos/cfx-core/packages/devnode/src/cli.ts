@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 /**
  * `cfxdevkit-devnode` — minimal CLI to spin up a local Conflux node.
  *
- * Defaults match `@cfxdevkit/core/chains`'s `core-local` / `espace-local`,
+ * Defaults match `@cfxdevkit/cdk/chains`'s `core-local` / `espace-local`,
  * so a freshly-bootstrapped showcase or `pnpm exec moon run :test` can talk
  * to `127.0.0.1:12537` (Core) and `127.0.0.1:8545` (eSpace) immediately.
  *

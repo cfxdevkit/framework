@@ -1,4 +1,4 @@
-import { type Hex, KeystoreError, type SignableTx } from '@cfxdevkit/core';
+import { type Hex, KeystoreError, type SignableTx } from '@cfxdevkit/cdk';
 import { base32AddressToHex, concatHex, toHex, toRlp } from 'cive/utils';
 import type { LedgerSignature } from './types.js';
 

@@ -1,4 +1,4 @@
-import type { Client, CoreLog, CoreLogFilter, Hash, TxReceipt, TxRequest } from '@cfxdevkit/core';
+import type { Client, CoreLog, CoreLogFilter, Hash, TxReceipt, TxRequest } from '@cfxdevkit/cdk';
 
 export const __packageName = '@cfxdevkit/protocol' as const;
 

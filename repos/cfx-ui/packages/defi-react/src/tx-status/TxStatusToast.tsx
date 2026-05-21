@@ -1,4 +1,4 @@
-import type { Hash, TxReceipt } from '@cfxdevkit/core/types';
+import type { Hash, TxReceipt } from '@cfxdevkit/cdk/types';
 import { useWaitForTransaction } from '@cfxdevkit/react/tx';
 import type { TxStatus } from '../types.js';
 

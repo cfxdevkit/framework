@@ -9,7 +9,7 @@ import {
   http,
   type Signer,
   signerFromPrivateKey,
-} from '@cfxdevkit/core';
+} from '@cfxdevkit/cdk';
 import type { KeystoreService } from '@cfxdevkit/keystore-server';
 import type { DevnodeServerController } from './controller.js';
 import {

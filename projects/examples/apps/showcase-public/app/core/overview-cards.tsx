@@ -1,6 +1,6 @@
 'use client';
 
-import { base32ToHex, hexToBase32 } from '@cfxdevkit/core';
+import { base32ToHex, hexToBase32 } from '@cfxdevkit/cdk';
 import { CodeSnippet, DemoCard } from '@cfxdevkit/example-showcase-ui';
 import { useState } from 'react';
 import { CHAINS, CLIENT_SNIPPET, CODEC_SNIPPET, UNIT_EXAMPLES, UNITS_SNIPPET } from './core-data';
@@ -29,7 +29,7 @@ export function ClientArchitectureCard() {
   return (
     <DemoCard
       title="createClient — eSpace & Core Space"
-      description="@cfxdevkit/core ships two typed RPC clients. CfxProvider distributes a client to React hooks — no wallet needed for reads."
+      description="@cfxdevkit/cdk ships two typed RPC clients. CfxProvider distributes a client to React hooks — no wallet needed for reads."
     >
       <CodeSnippet code={CLIENT_SNIPPET} label="Usage" />
     </DemoCard>

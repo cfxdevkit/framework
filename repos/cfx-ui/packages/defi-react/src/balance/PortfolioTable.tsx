@@ -1,4 +1,4 @@
-import type { Address } from '@cfxdevkit/core/types';
+import type { Address } from '@cfxdevkit/cdk/types';
 import type { PortfolioRow, TokenInfo } from '../types.js';
 import { usePortfolio } from './usePortfolio.js';
 

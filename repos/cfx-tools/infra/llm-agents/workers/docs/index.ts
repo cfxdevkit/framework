@@ -1,4 +1,4 @@
-import { commandBlock } from '../completion/index.ts';
+import { refreshApiSkeletons, refreshDocsAlignmentArtifacts } from '@cfxdevkit/docs-pipeline';
 import {
   buildDocsUpkeepBaseContext,
   discoverDocsUpkeepScopes,
@@ -6,7 +6,11 @@ import {
   parseDocsUpkeepFlags,
 } from './discover.ts';
 
+export { runDocsApi } from './api.ts';
 export { normalizeScopeFilter } from './discover.ts';
+export { runDocsReadme } from './readme.ts';
+export { runDocsPackagePages } from './packages.ts';
+export { runStructureUpkeep } from './structure.ts';
 
 import { confirmPrompt } from '../commit/message.ts';
 import { logInfo, logStep } from '../shared/logging.ts';
@@ -21,21 +25,17 @@ import {
 export async function runDocsUpkeep(args) {
   if (args[0] === '--') args.shift();
   const flags = parseDocsUpkeepFlags(args);
-  const total = 4;
+  const total = 5;
 
-  logStep(1, total, 'Deterministic docs scan');
-  const docsScan = await commandBlock(
-    'deterministic docs alignment',
-    'pnpm',
-    ['run', 'check:docs'],
-    {
-      timeoutMs: 120000,
-      maxChars: 20000,
-    },
-  );
+  logStep(1, total, 'API.md staleness gate');
+  await refreshApiSkeletons();
+  logInfo('  ✓ API.md skeletons refreshed');
+
+  logStep(2, total, 'Deterministic docs scan');
+  const docsScan = await refreshDocsAlignmentArtifacts();
   logInfo('  ✓ docs alignment artifacts refreshed');
 
-  logStep(2, total, 'Discovering documentation folders');
+  logStep(3, total, 'Discovering documentation folders');
   const scopes = await discoverDocsUpkeepScopes(flags);
   if (scopes.length === 0) {
     logInfo('  No documentation folders matched.');
@@ -48,7 +48,7 @@ export async function runDocsUpkeep(args) {
       .join(', ')}`,
   );
 
-  logStep(3, total, 'Generating folder artifacts');
+  logStep(4, total, 'Generating folder artifacts');
   const baseContext = await buildDocsUpkeepBaseContext(docsScan, flags);
   const results = [];
   if (flags.write && !flags.yes) {
@@ -119,7 +119,7 @@ export async function runDocsUpkeep(args) {
     }
   }
 
-  logStep(4, total, 'Writing docs upkeep index');
+  logStep(5, total, 'Writing docs upkeep index');
   const indexPath = await writeDocsUpkeepIndex(results, flags);
   logInfo(`  report: ${indexPath}`);
 }

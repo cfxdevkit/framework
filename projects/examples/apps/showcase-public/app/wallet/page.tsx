@@ -1,6 +1,6 @@
 'use client';
 
-import { parseCFX } from '@cfxdevkit/core';
+import { parseCFX } from '@cfxdevkit/cdk';
 import { getFluentCoreProvider } from '@cfxdevkit/wallet-connect';
 import { useCoreWallet } from '@cfxdevkit/wallet-connect/hooks';
 import { useEffect, useMemo, useState } from 'react';

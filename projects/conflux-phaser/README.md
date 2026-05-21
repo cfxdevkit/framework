@@ -5,7 +5,7 @@
 
 **Framework usage (post-migration)**
 - `@cfxdevkit/wallet-connect` (replaces hand-rolled RainbowKit setup)
-- `@cfxdevkit/core`
+- `@cfxdevkit/cdk`
 
 **Migration notes**
 - Smallest project. Migrate first as a low-risk validation of framework wiring.

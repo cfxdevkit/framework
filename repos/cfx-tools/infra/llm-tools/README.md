@@ -4,6 +4,12 @@ Local LLM automation tools for the Conflux DevKit monorepo.
 
 This package is the CLI dispatcher for local LLM automation. Provider logic lives in `@cfxdevkit/llm-client`; workflow agents live in `@cfxdevkit/llm-agents`. It lives in `repos/cfx-llm` because local LLM and AI-assisted maintenance are isolated from the general developer tooling slice.
 
+## Install
+
+```bash
+pnpm add @cfxdevkit/llm-tools
+```
+
 ## Commands
 
 | Command | Purpose |
@@ -60,3 +66,41 @@ By default the command produces reviewable artifacts only. Add `--write` to let 
 ## Backend
 
 Delegated commands resolve providers through `@cfxdevkit/llm-client`: config file, `LEMONADE_URL`, local Lemonade probe, OpenAI-compatible env vars, then GitHub Models via `GITHUB_TOKEN`.
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 5 symbols |
+
+---
+
+## `.`
+
+```ts
+export type LlmWorker = 'lemonade' | 'deterministic';
+export type LlmCommandName = (typeof llmCommands)[number]['name'];
+export interface LlmCommandDefinition {
+  name: LlmCommandName;
+  description: string;
+  worker: LlmWorker;
+}
+export declare const llmCommands: readonly [
+  { name: 'llm:commit'; description: 'Run hardened commit pipeline with hotspot checks'; worker: 'deterministic' },
+  { name: 'llm:docs-upkeep'; description: 'Delegate documentation upkeep to LLM'; worker: 'lemonade' },
+  { name: 'llm:test-audit'; description: 'Audit test coverage of changed code'; worker: 'lemonade' },
+  { name: 'llm:health'; description: 'Summarize repo health and automation gaps'; worker: 'lemonade' },
+  { name: 'llm:validation'; description: 'Select minimal validation commands'; worker: 'lemonade' },
+  { name: 'llm:changeset'; description: 'Generate or update Changesets'; worker: 'lemonade' },
+  { name: 'llm:release'; description: 'Prepare and execute release'; worker: 'lemonade' },
+  { name: 'llm:ci-cd'; description: 'Validate and update CI/CD workflows'; worker: 'lemonade' },
+  { name: 'llm:docs-pipeline'; description: 'Build and deploy docs artifacts'; worker: 'lemonade' },
+  { name: 'llm:all'; description: 'Run all repo upkeep agents'; worker: 'lemonade' },
+  { name: 'llm:review'; description: 'Run LLM review agent'; worker: 'lemonade' }
+];
+export declare function findLlmCommand(name: string): LlmCommandDefinition | undefined;
+```
+
+<!-- api-hash: 7c774fb9fce0fb68e52a83c3d9b60f5fb98e14c85ca0bc4eab8b69943e070f12 -->
+
+<!-- readme-hash: 734b533cd7ee2ec6c19641221ad518c8d6eae7b9474a8453ee213ab090218f69 -->

@@ -10,10 +10,13 @@ COPY . .
 
 RUN pnpm install --frozen-lockfile --filter @cfxdevkit/docs-site...
 
+# Run docs-pipeline content prep explicitly before building the docs renderer.
+RUN pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all
+
 # Run next build from the package directory so Next.js/Turbopack can locate
 # the 'next' package via local node_modules (avoids workspace root confusion)
 WORKDIR /app/repos/cfx-tools/packages/docs-site
-RUN NEXT_TELEMETRY_DISABLED=1 pnpm build
+RUN NEXT_TELEMETRY_DISABLED=1 pnpm exec next build
 
 FROM node:24-bookworm-slim AS runner
 

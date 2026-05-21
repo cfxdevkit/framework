@@ -7,7 +7,7 @@
 
 | Package | npm | Surface |
 |---------|-----|---------|
-| `core` | `@cfxdevkit/core` | types, errors, chains, units, client, wallet primitives |
+| `core` | `@cfxdevkit/cdk` | types, errors, chains, units, client, wallet primitives |
 | `protocol` | `@cfxdevkit/protocol` | Conflux protocol bindings |
 | `contracts` | `@cfxdevkit/contracts` | shared ABIs + deployments |
 | `compiler` | `@cfxdevkit/compiler` | solc + revive bridge |

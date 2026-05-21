@@ -5,10 +5,10 @@ export const walletTools = [
     name: 'cfxdevkit_wallet_generate_mnemonic',
     group: 'wallet-utils',
     title: 'Generate mnemonic',
-    description: 'Generate a BIP-39 mnemonic through @cfxdevkit/core.',
+    description: 'Generate a BIP-39 mnemonic through @cfxdevkit/cdk.',
     mutability: 'read',
     requiresConfirmation: false,
-    packageHints: ['@cfxdevkit/core'],
+    packageHints: ['@cfxdevkit/cdk'],
     inputSchema: { type: 'object', properties: { strength: { type: 'number' } } },
   }),
   defineTool({
@@ -18,7 +18,7 @@ export const walletTools = [
     description: 'Validate a BIP-39 mnemonic phrase.',
     mutability: 'read',
     requiresConfirmation: false,
-    packageHints: ['@cfxdevkit/core'],
+    packageHints: ['@cfxdevkit/cdk'],
     inputSchema: {
       type: 'object',
       required: ['mnemonic'],
@@ -32,7 +32,7 @@ export const walletTools = [
     description: 'Derive eSpace/Core account pairs without persisting secrets.',
     mutability: 'read',
     requiresConfirmation: false,
-    packageHints: ['@cfxdevkit/core'],
+    packageHints: ['@cfxdevkit/cdk'],
     inputSchema: { type: 'object', additionalProperties: true },
   }),
   defineTool({

@@ -1,72 +1,55 @@
-# @cfxdevkit/abis — Public API
+# `@cfxdevkit/abis` — Public API
 
-> Stable EVM ABI constants with zero internal workspace dependencies. Intended for use in TypeScript-based dApps and tooling.
+> Standard EVM ABI shapes (ERC-20/721/1155, Multicall3) re-exported from viem under framework-stable aliases. Zero cfxdevkit dependencies.
 
-## Exports
+## Sub-paths
 
-```ts
-const ERC20_ABI: Abi
-type ERC20_ABI = typeof ERC20_ABI
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 23 symbols |
+| `./swappi` | 6 symbols |
 
-const ERC20_EXTENDED_ABI: Abi
-type ERC20_EXTENDED_ABI = typeof ERC20_EXTENDED_ABI
+---
 
-const ERC165_ABI: Abi
-type ERC165_ABI = typeof ERC165_ABI
-
-const ERC721_ABI: Abi
-type ERC721_ABI = typeof ERC721_ABI
-
-const ERC721_ENUMERABLE_ABI: Abi
-type ERC721_ENUMERABLE_ABI = typeof ERC721_ENUMERABLE_ABI
-
-const ERC721_EXTENDED_ABI: Abi
-type ERC721_EXTENDED_ABI = typeof ERC721_EXTENDED_ABI
-
-const ERC1155_ABI: Abi
-type ERC1155_ABI = typeof ERC1155_ABI
-
-const ERC2612_ABI: Abi
-type ERC2612_ABI = typeof ERC2612_ABI
-
-const ERC2981_ABI: Abi
-type ERC2981_ABI = typeof ERC2981_ABI
-
-const ERC4626_ABI: Abi
-type ERC4626_ABI = typeof ERC4626_ABI
-
-const MULTICALL3_ABI: Abi
-type MULTICALL3_ABI = typeof MULTICALL3_ABI
-
-const MULTICALL3_ADDRESS: "0xcA11bde05977b3631167028862bE2a173976CA11"
-```
-
-Camel-case aliases are also exported for compatibility with viem and older DevKit package surfaces:
+## `.`
 
 ```ts
-erc20Abi
-erc20ExtendedAbi
-erc165Abi
-erc721Abi
-erc721EnumerableAbi
-erc721ExtendedAbi
-erc1155Abi
-erc2612Abi
-erc2981Abi
-erc4626Abi
-multicall3Abi
+export declare const ERC2612_ABI: readonly [
+export declare const erc2612Abi: readonly [
+export declare const ERC20_ABI: readonly [
+export declare const erc20Abi: readonly [
+export declare const ERC20_EXTENDED_ABI: readonly [
+export declare const erc20ExtendedAbi: readonly [
+export declare const ERC165_ABI: readonly [
+export declare const erc165Abi: readonly [
+export declare const ERC721_ABI: readonly [
+export declare const erc721Abi: readonly [
+export declare const ERC721_ENUMERABLE_ABI: readonly [
+export declare const erc721EnumerableAbi: readonly [
+export declare const ERC2981_ABI: readonly [
+export declare const erc2981Abi: readonly [
+export declare const ERC721_EXTENDED_ABI: readonly [
+export declare const erc721ExtendedAbi: readonly [
+export declare const ERC1155_ABI: readonly [
+export declare const erc1155Abi: readonly [
+export declare const ERC4626_ABI: readonly [
+export declare const erc4626Abi: readonly [
+export declare const MULTICALL3_ABI: readonly [
+export declare const multicall3Abi: readonly [
+export declare const MULTICALL3_ADDRESS: "0xcA11bde05977b3631167028862bE2a173976CA11";
 ```
 
-## Notes
+---
 
-- All ABI constants are re-exported from `viem` under workspace-stable names.
-- `ERC2612_ABI` and the extended ERC ABIs are defined locally because viem does not ship those extension bundles as a single standard export.
-- `ERC165_ABI`, `ERC721_ENUMERABLE_ABI`, and `ERC2981_ABI` are included because they are common low-level building blocks for NFT and marketplace tooling.
-- `MULTICALL3_ADDRESS` is the canonical EVM deployment address; callers must still
-  verify support on the target chain before use.
-
-## Example
+## `./swappi`
 
 ```ts
-import { ERC20_ABI, ERC2612_ABI, ERC4626_ABI, MULTICALL3_ADDRESS } from '@cfxdevkit/abis';
+export { SWAPPI_FACTORY_ABI }
+export { SWAPPI_PAIR_ABI }
+export { SWAPPI_ROUTER_ABI }
+export declare const SWAPPI_FACTORY_ADDRESS: {
+export declare const SWAPPI_ROUTER_ADDRESS: {
+export declare const WCFX_ADDRESS: {
 ```
+
+<!-- api-hash: 6c5c6e6fe9050631ba637aa5567444ab573dd71382a47e7e0890270dfec7c354 -->

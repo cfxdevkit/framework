@@ -6,10 +6,10 @@
 
 **Other**
 - `hardware/` — Schematics, BOM, wiring guide (origin: `Electro/hardware/`)
-- `packages/blockchain-client/` — Thin project wrapper around `@cfxdevkit/core` for ESP32-relevant flows
+- `packages/blockchain-client/` — Thin project wrapper around `@cfxdevkit/cdk` for ESP32-relevant flows
 
 **Framework / domain usage**
-- `@cfxdevkit/core` (already consumed today)
+- `@cfxdevkit/cdk` (already consumed today)
 - Device WS protocol, sensor types, and pin diagram codegen stay project-local until a reusable domain package is justified
 
 **Migration notes**

@@ -12,7 +12,7 @@
     "clean": "rm -rf .next"
   },
   "dependencies": {
-    "@cfxdevkit/core": "workspace:*",
+    "@cfxdevkit/cdk": "workspace:*",
     "@cfxdevkit/defi-react": "workspace:*",
     "@cfxdevkit/example-showcase-ui": "workspace:*",
     "@cfxdevkit/protocol": "workspace:*",

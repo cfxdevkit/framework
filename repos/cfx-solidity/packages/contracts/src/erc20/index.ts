@@ -8,7 +8,7 @@
  * Reads and writes both work on eSpace and Core Space; the right RPC family
  * is selected from `client.family` by `readContract` / `sendWrite`.
  */
-import type { Client, Signer } from '@cfxdevkit/core';
+import type { Client, Signer } from '@cfxdevkit/cdk';
 import { ERC20_ABI } from '../abis/index.js';
 import { readContract } from '../read/index.js';
 import { type SendWriteResult, sendWrite } from '../write/index.js';

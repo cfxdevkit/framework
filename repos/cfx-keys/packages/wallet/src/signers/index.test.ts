@@ -1,4 +1,4 @@
-import { deriveAccount } from '@cfxdevkit/core/wallet';
+import { deriveAccount } from '@cfxdevkit/cdk/wallet';
 import { createMemoryKeystore } from '@cfxdevkit/services/keystore-memory';
 import { describe, expect, it } from 'vitest';
 import { SessionKeyError } from '../errors/index.js';

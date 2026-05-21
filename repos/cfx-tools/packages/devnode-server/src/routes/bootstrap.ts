@@ -1,11 +1,11 @@
-import { compile, getTemplate, listTemplates } from '@cfxdevkit/compiler';
 import {
   createClient,
   type EspaceClient,
   espaceLocal,
   http,
   signerFromPrivateKey,
-} from '@cfxdevkit/core';
+} from '@cfxdevkit/cdk';
+import { compile, getTemplate, listTemplates } from '@cfxdevkit/compiler';
 import { Hono } from 'hono';
 import { type ContractRegistry, chainIdForContractNetwork } from '../contracts.js';
 import type { DevnodeServerController } from '../controller.js';

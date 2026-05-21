@@ -2,163 +2,163 @@
 title: "Other — cfx-ui"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Other — cfx-ui
 
-# `@cfxdevkit/repo-cfx-ui` — Tier 0c React UI Surface
+# cfx-ui
 
-> **Carve-out target per ADR-0003**
+**Tier 0c — React UI surface.** Carve-out target per ADR-0003.
 
-The `cfx-ui` module is a **React-based UI surface layer** for the `@cfxdevkit` ecosystem. It provides opinionated, composable, and type-safe React components and hooks that abstract DeFi workflows (e.g., swaps, portfolio management, wallet connection) while enforcing consistent theming and integration with core services.
+This workspace provides the frontend infrastructure for Conflux ecosystem applications. It is structured as a monorepo using `pnpm` workspaces, containing four primary libraries that layer functionality from design tokens up to DeFi widgets.
 
-This module is structured as a **monorepo** of interdependent, publishable libraries — each targeting a specific concern in the UI stack.
+## Architecture
 
----
+The UI surface is organized into four distinct packages. Dependencies flow from foundational utilities up to high-level components.
 
-## Architecture Overview
+<Mermaid chart={`graph TD
+    Theme["@cfxdevkit/theme"] -->|Design Tokens| React["@cfxdevkit/react"]
+    Theme -->|CSS Layer| DeFi["@cfxdevkit/defi-react"]
+    React -->|Hooks| DeFi
+    Wallet["@cfxdevkit/wallet-connect"] -->|Wallet State| React
+    Wallet -->|Auth| DeFi
+    CDK["@cfxdevkit/cdk"] -->|Core Logic| React
+    CDK -->|Core Logic| Wallet
+    CDK -->|Core Logic| DeFi
 
-```mermaid
-flowchart TD
-    subgraph "UI Surface Layer (cfx-ui)"
-        A["@cfxdevkit/theme"] -->|CSS tokens, design system| B["@cfxdevkit/react"]
-        A -->|CSS tokens| C["@cfxdevkit/defi-react"]
-        B -->|React hooks over core| C
-        D["@cfxdevkit/wallet-connect"] -->|Wallet session management| C
-        D -->|Wallet hooks| B
-        C -->|DeFi widgets| "Consumer Apps"
-    end
+    style Theme fill:#f9f,stroke:#333
+    style React fill:#bbf,stroke:#333
+    style Wallet fill:#bfb,stroke:#333
+    style DeFi fill:#fbb,stroke:#333
+`} />
 
-    subgraph "Core Layer"
-        E["@cfxdevkit/core"] -->|Business logic, types| B
-        E -->|Business logic, types| D
-        E -->|Business logic, types| C
-    end
+## Package Overview
 
-    subgraph "Wallet Layer"
-        F["@cfxdevkit/wallet"] -->|Wallet abstraction| D
-        F -->|Wallet abstraction| B
-    end
+### @cfxdevkit/theme
+**Purpose:** Design tokens and CSS layer.
+**Version:** 2.0.0
+
+Provides the visual foundation for the UI. It exports React components for theming and raw CSS files for styling.
+
+*   **Exports:**
+    *   `.`: Main entry (`ThemeProvider`, tokens).
+    *   `./tokens`: Design token definitions.
+    *   `./react`: React-specific theme providers.
+    *   `./css`: Base CSS (`base.css`, `dark.css`).
+*   **Build Configuration:**
+    *   Uses `vite-plugin-dts` for TypeScript declarations.
+    *   Includes a custom `copyCssPlugin` in `vite.config.ts` that manually copies `src/css/*.css` to `dist/css/` after the JS build completes.
+    *   Marks CSS files as `sideEffects` to ensure they are not tree-shaken.
+
+### @cfxdevkit/react
+**Purpose:** React hooks over `@cfxdevkit/cdk`.
+**Version:** 2.0.0
+
+Wraps core logic into React hooks for state management, account handling, and transaction execution.
+
+*   **Exports:**
+    *   `.`: Main entry (re-exports all hooks).
+    *   `./account`, `./balance`, `./context`, `./contract`, `./events`, `./tx`, `./keystore`: Feature-specific modules.
+*   **Build Configuration:**
+    *   Includes a custom `preserveDirectives` plugin in `vite.config.ts`.
+    *   **Functionality:** Scans source modules for `"use client"` directives. If a chunk contains client modules, it prepends `"use client"` to the generated bundle. This ensures compatibility with React Server Components boundaries.
+    *   Targets `es2023`.
+
+### @cfxdevkit/wallet-connect
+**Purpose:** Browser wallet connectors and headless UI.
+**Version:** 2.0.0
+
+Handles wallet connection logic, chain switching, and authentication (SIWE).
+
+*   **Exports:**
+    *   `.`: Main entry.
+    *   `./config`: Chain configurations.
+    *   `./hooks`: Wallet connection hooks.
+    *   `./siwe`: Sign-In with Ethereum logic.
+    *   `./ui`: Headless UI components.
+    *   `./auth`: Authentication utilities.
+*   **Key Logic:**
+    *   **Chain Management:** Exports `CORE_CHAIN_CONFIGS` and `createSupportedEspaceChains` (located in `src/config/chains.ts`).
+    *   **State Logic:** Exports `needsESpaceSwitch` (located in `src/lib/walletState.ts`) to determine if a chain switch is required during wallet operations.
+    *   **Error Handling:** Exports `errMsg` for standardized error formatting.
+*   **Testing:**
+    *   Tests verify `CORE_CHAIN_CONFIGS` chain IDs (e.g., `0x405` for chain 1029).
+    *   Tests verify `createSupportedEspaceChains` returns expected IDs `[1030, 71, 2030]`.
+
+### @cfxdevkit/defi-react
+**Purpose:** Opinionated DeFi widgets (swap, portfolio, picker).
+**Version:** 2.0.0
+
+High-level components for interacting with DeFi protocols.
+
+*   **Exports:**
+    *   `.`: Main entry.
+    *   `./swap`, `./balance`, `./token-picker`, `./tx-status`, `./primitives`, `./service`, `./pool`, `./lp`: Feature-specific widgets.
+*   **Dependencies:**
+    *   Depends on `@cfxdevkit/react`, `@cfxdevkit/theme`, `@cfxdevkit/abis`, `@cfxdevkit/cdk`.
+    *   Peer dependencies include `@cfxdevkit/wallet`.
+*   **Build Configuration:**
+    *   Configured in `vite.config.ts` with specific entry points for `swap`, `balance`, `token-picker`, `tx-status`, and `primitives`.
+    *   **Note:** The `package.json` exports `./lp` pointing to `./src/lp/index.ts` for types and `./src/lp/index.js` for imports, bypassing the standard `dist` build path for this specific entry.
+
+## Development Workflow
+
+### Environment Requirements
+*   **Node:** `>=22`
+*   **Package Manager:** `pnpm@10.6.0` (enforced via `packageManager` field)
+
+### Scripts
+Run commands from the workspace root or specific package directories.
+
+| Command | Description |
+| :--- | :--- |
+| `pnpm validate:workspace` | Validates workspace structure (`cfx-ui` root). |
+| `pnpm validate:deps` | Checks dependency consistency (`cfx-ui` root). |
+| `pnpm build` | Builds the package using Vite. |
+| `pnpm test` | Runs Vitest suite. |
+| `pnpm test:watch` | Runs Vitest in watch mode. |
+| `pnpm typecheck` | Runs TypeScript compiler without emitting. |
+| `pnpm lint` | Runs Biome linter. |
+| `pnpm clean` | Removes `dist`, `.vitest`, and `coverage` directories. |
+
+### Testing Strategy
+All packages use **Vitest** with a Node environment.
+*   **Test Files:** Located in `src/**/*.test.ts` or `src/**/*.test.tsx`.
+*   **Exclusions:** Test files are excluded from TypeScript declaration generation (`emitDeclarationOnly`).
+*   **Standard Pattern:** Each package exports a `__packageName` constant which is verified in the root test file to ensure correct module resolution.
+
+```typescript
+// Example test pattern found across packages
+import { __packageName } from './index.js';
+
+describe('@cfxdevkit/<package>', () => {
+  it('exposes its package name', () => {
+    expect(__packageName).toBe('@cfxdevkit/<package>');
+  });
+});
 ```
 
-All packages in `cfx-ui` are **peer-dependent on React 19**, and use **workspace protocol (`workspace:*` / `workspace:^`)** to ensure tight coupling and version alignment with other `@cfxdevkit` packages.
+### Build Output
+*   **Format:** ES Modules (`es`).
+*   **Output Directory:** `dist/`.
+*   **Type Definitions:** Generated via `vite-plugin-dts` into `dist/`.
+*   **Source Maps:** Enabled (`sourcemap: true`).
+*   **Minification:** Disabled (`minify: false`) to preserve debugging capabilities.
 
----
+## Contributing
 
-## Package Structure
-
-| Package | Role | Key Dependencies |
-|--------|------|------------------|
-| `@cfxdevkit/theme` | Design tokens, CSS variables, and theming utilities | `react` (peer) |
-| `@cfxdevkit/react` | React hooks over `@cfxdevkit/core` (e.g., state sync, chain hooks) | `@cfxdevkit/core`, `@cfxdevkit/wallet` (peer) |
-| `@cfxdevkit/wallet-connect` | Wallet connection logic + headless UI primitives | `@cfxdevkit/core`, `@cfxdevkit/wallet` (peer) |
-| `@cfxdevkit/defi-react` | Opinionated DeFi widgets (swap, portfolio, picker) | `@cfxdevkit/core`, `@cfxdevkit/react`, `@cfxdevkit/services`, `@cfxdevkit/wallet-connect`, `@cfxdevkit/theme` (peer) |
-
-> All packages are **library-type** (no entrypoint app), and follow a consistent build/test/lint pattern.
-
----
-
-## Build & Development Tooling
-
-Each package uses a **standardized toolchain**:
-
-- **Build**: Vite (ES lib output, `dist/index.js` + `dist/index.d.ts`)
-- **Type Checking**: TypeScript (via `tsc --noEmit`)
-- **Testing**: Vitest (node environment)
-- **Linting**: Biome (via `@cfxdevkit/biome-config`)
-- **Clean**: `rm -rf dist .vitest coverage`
-
-### Build Configuration Highlights
-
-- **Entry**: `src/index.ts`
-- **Output**: Single ES module (`index.js`)
-- **Externals**: All `react*` imports are externalized (to avoid bundling React)
-- **Target**: `es2023`
-- **Source Maps**: Enabled
-- **Minification**: Disabled (for debugging & tree-shaking)
-
-```ts
-// vite.config.ts (shared pattern)
-const reactExternals = new Set(['react', 'react-dom', 'react/jsx-runtime']);
-external: (id) => reactExternals.has(id) || (!id.startsWith('.') && !id.startsWith('/'))
-```
-
-Type declarations are generated via [`vite-plugin-dts`](https://github.com/egoist/vite-plugin-dts), ensuring accurate `.d.ts` output.
-
----
-
-## Package Lifecycle & Public API
-
-All packages follow a **stub-first** development model:
-
-1. `src/index.ts` exports only a package identifier (`__packageName`)
-2. Actual implementations are added incrementally
-3. Public surface is documented in `API.md` (per-package)
-4. `STRUCTURE.md` documents internal module layout
-
-This ensures:
-- Early validation of package boundaries
-- Clear contract for consumers
-- Gradual migration from legacy code
-
-Example stub:
-
-```ts
-// src/index.ts
-export const __packageName = '@cfxdevkit/defi-react' as const;
-```
-
----
-
-## Integration with the Broader Codebase
-
-### Dependency Flow
-
-```mermaid
-flowchart LR
-    A["Consumer App"] -->|imports| B["@cfxdevkit/defi-react"]
-    B -->|uses| C["@cfxdevkit/theme"]
-    B -->|uses| D["@cfxdevkit/react"]
-    B -->|uses| E["@cfxdevkit/wallet-connect"]
-    D -->|uses| F["@cfxdevkit/core"]
-    E -->|uses| F
-    D -->|uses| G["@cfxdevkit/wallet"]
-    E -->|uses| G
-```
-
-### Key Integration Points
-
-| Integration | Purpose |
-|-------------|---------|
-| `@cfxdevkit/theme` → `defi-react` | Ensures consistent styling across widgets |
-| `@cfxdevkit/react` → `defi-react` | Enables hooks like `useChain`, `useAccount` in widgets |
-| `@cfxdevkit/wallet-connect` → `defi-react` | Supplies wallet session state & actions (connect, disconnect, switch chain) |
-| `@cfxdevkit/core` → all | Shared types, constants, and business logic (e.g., token metadata, chain config) |
-
----
-
-## Versioning & Workspace Strategy
-
-- All packages use `0.0.0` (pre-release), indicating active development
-- Workspace protocol (`workspace:*` / `workspace:^`) ensures:
-  - Local development uses the *exact* local version of dependencies
-  - Consumers get compatible versions at publish time
-- `pnpm-workspace.yaml` includes all `packages/*` directories
-
----
-
-## Future Work & Extensibility
-
-- `defi-react` is the primary surface for **end-user widgets** — this is where most UI logic will land
-- `wallet-connect` is designed to be **headless**, enabling custom UI implementations
-- `theme` is intended to support **dark/light modes**, dynamic theming, and CSS-in-JS or CSS Modules
-- `react` will grow to include hooks for:
-  - Chain state (`useChainId`, `useBlockNumber`)
-  - Account state (`useAccount`, `useBalance`)
-  - Transaction lifecycle (`useSendTransaction`, `useWaitForTransaction`)
-
----
-
-## Conclusion
-
-The `cfx-ui` module is the **React-facing layer** of the `@cfxdevkit` ecosystem — a modular, composable set of libraries that abstract DeFi UI complexity while enforcing consistency, type safety, and separation of concerns.
-
-It is intentionally minimal today (stub packages), but designed for rapid expansion into a full-featured DeFi UI toolkit.
+1.  **Install Dependencies:**
+    ```bash
+    pnpm install
+    ```
+2.  **Validate Workspace:**
+    Ensure the workspace structure is valid before committing.
+    ```bash
+    pnpm validate:workspace
+    ```
+3.  **Add Exports:**
+    When adding new modules, update `package.json` `exports` and `vite.config.ts` `build.lib.entry` simultaneously to ensure the build pipeline includes the new entry point.
+4.  **React Directives:**
+    If adding new components that require client-side interactivity, ensure `"use client"` is at the top of the file. The `preserveDirectives` plugin in `@cfxdevkit/react` will handle bundling, but verify the directive is present in source.
+5.  **CSS Assets:**
+    For `@cfxdevkit/theme`, new CSS files must be manually added to the `copyCssPlugin` in `vite.config.ts` to ensure they are copied to `dist/css/`.

@@ -1,4 +1,4 @@
-import type { Address, Hex, SignableTx, Signer, TypedData } from '@cfxdevkit/core';
+import type { Address, Hex, SignableTx, Signer, TypedData } from '@cfxdevkit/cdk';
 import type { Capability } from '@cfxdevkit/services/keystore';
 import { describe, expect, it } from 'vitest';
 import { SessionKeyError } from '../errors/index.js';

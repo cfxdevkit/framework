@@ -3,6 +3,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
+import { getDocsPipelineReviewContext } from '@cfxdevkit/docs-pipeline';
+
 export const execFileAsync = promisify(execFile);
 
 export const root = process.cwd();
@@ -19,6 +21,30 @@ export const defaultBaseUrls = [
 export const modelPaths = ['/api/v1/models', '/v1/models', '/models'];
 export const chatPaths = ['/api/v1/chat/completions', '/v1/chat/completions', '/chat/completions'];
 export const repoActions = {
+  'docs-api': {
+    title: 'API Documentation Enrichment',
+    defaultPrompt:
+      'Enrich the API.md skeleton for this package. For each exported symbol, add a concise one-line description as a comment. Add a brief usage example per sub-path. Do not change type signatures, the sub-paths table, or the api-hash footer.',
+    context: ['artifacts/llm/reports/docs-alignment.md'],
+  },
+  'readme-upkeep': {
+    title: 'README Upkeep',
+    defaultPrompt:
+      'Improve the README.md for this package. Fill in placeholder sections (Usage, Purpose). Add a minimal code example. Keep the Install and Sub-paths sections exactly as-is. Keep it concise.',
+    context: ['artifacts/llm/reports/docs-alignment.md'],
+  },
+  'package-pages': {
+    title: 'Package Page Enrichment',
+    defaultPrompt:
+      'Improve the MDX docs-site page for this package. Fill in sub-path table descriptions and add TypeScript code examples. Keep frontmatter, install tabs, and sub-paths table structure exactly as-is.',
+    context: ['artifacts/llm/reports/docs-alignment.md'],
+  },
+  'structure-upkeep': {
+    title: 'STRUCTURE.md Generation',
+    defaultPrompt:
+      'Generate a STRUCTURE.md for this package. Document each significant file and directory with a short inline description. Use a code block for the tree.',
+    context: [],
+  },
   'docs-upkeep': {
     title: 'Documentation Upkeep',
     defaultPrompt:
@@ -108,16 +134,7 @@ export const repoActions = {
     title: 'Docs Pipeline Review',
     defaultPrompt:
       'Review docs build, wiki sync, Docker image, Nextra output, and VPS deploy flow. Find issues that could break www.cfxdevkit.org or make docs drift from generated GitNexus content.',
-    context: [
-      'repos/cfx-tools/packages/docs-site/package.json',
-      'repos/cfx-tools/packages/docs-site/Dockerfile',
-      'repos/cfx-tools/packages/docs-site/scripts/sync-wiki.mjs',
-      '.github/workflows/build-docs.yml',
-      '.github/workflows/deploy-docs.yml',
-      'infrastructure/ansible/roles/docs/tasks/main.yml',
-      'artifacts/llm/reports/docs-alignment.md',
-      'artifacts/llm/reports/ci-cd.md',
-    ],
+    context: getDocsPipelineReviewContext(),
     includeChangedFiles: true,
     includeGitDiff: true,
   },

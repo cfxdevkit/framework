@@ -1,12 +1,12 @@
-import type { Address, Hex } from '@cfxdevkit/core';
+import type { Address, Hex } from '@cfxdevkit/cdk';
 import {
   KeystoreError,
   type SignableTx,
   type Signer,
   type SignOptions,
   type TypedData,
-} from '@cfxdevkit/core';
-import { DEFAULT_CORE_PATH, DEFAULT_ESPACE_PATH } from '@cfxdevkit/core/wallet';
+} from '@cfxdevkit/cdk';
+import { DEFAULT_CORE_PATH, DEFAULT_ESPACE_PATH } from '@cfxdevkit/cdk/wallet';
 import { serializeTransaction } from 'viem';
 import {
   getCoreLedgerAddress,

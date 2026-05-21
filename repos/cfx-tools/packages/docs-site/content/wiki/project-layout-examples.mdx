@@ -2,229 +2,283 @@
 title: "Project Layout & Examples"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Project Layout & Examples
 
-# Project Layout & Examples Module
+# projects/ — Tier 3: Consumer Applications
 
-## Overview
+The `projects/` directory contains Tier 3 consumer applications. These are end-user facing applications that consume shared infrastructure from `repos/cfx-*` but maintain their own deploy lifecycles, smart contracts (if applicable), and audit records.
 
-The **Project Layout & Examples** module defines the structure, conventions, and usage patterns for **Tier 3 consumer applications** in the `cfxdevkit` monorepo. It serves two primary purposes:
+## Module Overview
 
-1. **Standardization** — Enforces a consistent, scalable layout for end-user applications (`projects/<name>/`) across the workspace.
-2. **Demonstration & Validation** — Provides a suite of runnable, self-contained examples (`projects/examples/`) that exercise the public API surface of the framework, domains, and platform packages.
+Each project in `projects/` operates as an independent unit with the following characteristics:
+- **Deploy Lifecycle**: Managed via `infrastructure/<project>/`.
+- **Smart Contracts**: Owned locally under `contracts/` (if any).
+- **Audit Compliance**: Must maintain an `AUDITS.md` file tracking contract review and deployment status.
+- **Code Ownership**: Project-specific libraries may live in `packages/`, but reusable code shared beyond a single project should reside in `repos/cfx-*`.
+- **Dependencies**: Consumes shared packages from `repos/cfx-*` according to architectural tier rules.
 
-This module is *not* a runtime component — it is a **structural and documentation contract** that ensures consistency, auditability, and maintainability across all Tier 3 projects.
+## Standard Project Layout
 
----
-
-## Architecture
-
-### Tiered Architecture Context
+All projects follow this directory structure:
 
 ```
-repos/cfx-* (Tier 1: Framework & Platform)
-     ↑
-domains/* (Tier 2: Domain Logic)
-     ↑
-projects/* (Tier 3: Consumer Applications)
+projects/<name>/
+├── README.md
+├── apps/                  # Deployable units (frontend, backend, worker, firmware)
+├── packages/              # Project-internal libraries (optional)
+├── contracts/             # Solidity sources + deploy scripts (optional)
+├── AUDITS.md              # Audit status and contract records
+└── e2e/                   # Cross-app end-to-end tests (optional)
 ```
 
-- **Tier 3 apps** *consume* shared packages from `repos/cfx-*` and `domains/*`.
-- They *must not* be imported by higher-tier code.
-- Reusable logic that spans multiple projects belongs in `domains/` or `platform/`, not in `projects/<name>/packages/`.
+## Project Catalog
 
-### Project Layout
-
-All Tier 3 projects follow this canonical structure:
-
-```mermaid
-graph TD
-    A[projects/<name>/] --> B[apps/]
-    A --> C[packages/]
-    A --> D[contracts/]
-    A --> E[AUDITS.md]
-    A --> F[e2e/]
-    A --> G[README.md]
-
-    B --> B1[frontend]
-    B --> B2[backend]
-    B --> B3[worker]
-    B --> B4[firmware]
-
-    C --> C1[shared/]
-    C --> C2[utils/]
-    C --> C3[bindings/]
-
-    D --> D1[Solidity]
-    D --> D2[hardhat config]
-    D --> D3[deploy scripts]
-    D --> D4[deployments/]
-
-    E --> E1[Audit records]
-    F --> F1[e2e tests]
-```
-
-#### Key Directories
-
-| Path | Purpose | Notes |
-|------|---------|-------|
-| `apps/` | Deployable units (frontend, backend, worker, firmware) | Each app is a self-contained Vite/Moon project |
-| `packages/` | Project-internal libraries | Only for code *not* suitable for `domains/` |
-| `contracts/` | Solidity sources + deployment metadata | Optional; if present, `AUDITS.md` required |
-| `AUDITS.md` | Contract audit status & history | Required if `contracts/` exists |
-| `e2e/` | Cross-app integration tests | Optional; uses Playwright or similar |
+| Project | Description | Tech Stack |
+|---------|-------------|------------|
+| [cas/](cas/) | Non-custodial limit-order & DCA automation | Express, Next.js 16, SQLite |
+| [chainbrawler/](chainbrawler/) | On-chain RPG game | Vite, Mantine, Hardhat |
+| [conflux-phaser/](conflux-phaser/) | Phaser-based blockchain game | Vite, React, Phaser 3 |
+| [electro/](electro/) | ESP32 hardware + Conflux smart contract | PlatformIO, Express, WS |
 
 ---
 
-## Project Types
+## Deep Dive: CAS (Conflux Automation Site)
 
-### 1. **CAS** (`projects/cas/`) — Automation Service
+`projects/cas` is the primary reference implementation for a DeFi automation system. It demonstrates the integration of backend services, frontend dashboards, and on-chain contract interactions.
 
-- **Type**: Full-stack web service + keeper worker
-- **Apps**: `frontend` (Next.js), `backend` (Express), `worker` (Node)
-- **Key Features**:
-  - Order builder, DCA automation, execution engine
-  - Uses `@cfxdevkit/executor`, `domains/automation`
-  - Session-key signers for keeper via `@cfxdevkit/wallet`
-- **Migration Risk**: **High** — live mainnet system; worker migrates last behind feature flag
+### Architecture
 
-### 2. **Chainbrawler** (`projects/chainbrawler/`) — On-Chain RPG
+The CAS system consists of a backend API, a frontend dashboard, and an embedded keeper worker.
 
-- **Type**: Web UI + game engine
-- **Apps**: `web-ui` (Vite + Mantine)
-- **Key Features**:
-  - RPG rules (`packages/game-rules/`) kept project-local
-  - Engine logic → `domains/game-engine`
-  - Wallet integration via `@cfxdevkit/wallet-connect`
-- **Migration Strategy**: Extract engine pieces to domain; keep game rules here
+<Mermaid chart={`graph TD
+    User[User Browser] -->|HTTPS| Frontend[Next.js 16 Frontend]
+    Frontend -->|API Calls| Backend[Express Backend]
+    Frontend -->|Wallet Connect| Wallet[Browser Wallet]
+    Backend -->|SQLite| DB[(SQLite DB)]
+    Backend -->|RPC| Node[Conflux eSpace Node]
+    Backend -->|Keeper Worker| Contract[AutomationManager Contract]
+    Wallet -->|Sign| Contract
+`} />
 
-### 3. **Conflux Phaser** (`projects/conflux-phaser/`) — Phaser Game
+### Setup & Configuration
 
-- **Type**: Single-app Phaser 3 game
-- **Apps**: `web` (Vite + Phaser)
-- **Key Features**:
-  - Minimal structure; ideal for framework validation
-  - Replaces hand-rolled RainbowKit with `@cfxdevkit/wallet-connect`
-- **Migration Priority**: **Lowest risk** — migrate first as a validation test
-
-### 4. **Electro** (`projects/electro/`) — ESP32 + Conflux
-
-- **Type**: Firmware + backend bridge
-- **Apps**: `firmware` (PlatformIO/C++), `backend` (Express)
-- **Key Features**:
-  - Dual-core ESP32 firmware with generated pin map (`hardware/diagram.json` → `Pins.h`)
-  - Project-local backend bridge for device telemetry
-  - Thin wrapper over `@cfxdevkit/core`
-- **Migration Effort**: **Low** — already follows target pattern
-
-### 5. **Examples** (`projects/examples/`) — Public API Showcase
-
-- **Type**: Demo suite + integration tests
-- **Apps**:
-  - `showcase-local/` — Local devnode, compiler, deploy, SIWE, and keystore workflows
-  - `showcase-public/` — Public API, wallet, token, and hardware-wallet workflows
-- **Shared Package**: `packages/showcase-ui/` — Theme, navigation, wallet UI primitives
-- **Purpose**:
-  - Validate public API surface
-  - Document usage patterns
-  - Surface known coverage gaps (e.g., `@cfxdevkit/theme`, `@cfxdevkit/llm-tools`)
-- **Coverage Map**: See `SHOWCASE-COVERAGE.md`
-
----
-
-## Audit & Deployment Discipline
-
-### `AUDITS.md` Requirements
-
-Every project with `contracts/` **must** maintain an `AUDITS.md` file with:
-
-- List of all contracts, deployment scripts, and artifacts
-- Internal review date, reviewer, commit SHA, findings, remediation status
-- External audit report links (pre-mainnet)
-- Deployment addresses + verified source references
-
-> **Note**: Projects without `contracts/` (e.g., `cas`, `chainbrawler`, `conflux-phaser`, `electro`, `examples`) declare *no audit scope* in their `AUDITS.md`.
-
----
-
-## Shared Example UI (`packages/showcase-ui/`)
-
-### Role
-
-A **Tier 2** shared package used *only* by example apps. It provides:
-
-- Reusable UI components (`ConnectWall`, `WalletPickerModal`, `LogBox`)
-- Wallet state helpers (`useCoreWallet`, `deriveCoreState`, `deriveESpaceState`)
-- Shared theme (`theme.css`)
-- Shell navigation & panel state (`Shell`, `PanelSidebar`, `useActivePanelState`)
-
-### Constraints
-
-- May import from `framework/` and `platform/`
-- **Must not** import from `domains/` or higher tiers
-- Not intended for reuse outside `projects/examples/`
-
-### Build
-
-- Vite library mode (`vite.config.ts`)
-- Outputs `dist/` with TypeScript declarations
-- Commands: `build`, `typecheck`, `lint`
-
----
-
-## Local Development Workflow
-
-### Keeper Showcase Apps
+#### Guided Setup (Recommended)
+The `cas-setup` wizard handles environment generation and keeper registration.
 
 ```bash
-pnpm showcase
-# Starts showcase-local and showcase-public
+# 1. Install dependencies (repo root)
+pnpm install
+
+# 2. Build the setup wizard
+pnpm --filter @cfxdevkit/cas-setup build
+
+# 3. Run the wizard from the projects/cas/ directory
+cd projects/cas
+pnpm setup
 ```
 
-### Standalone App Workflow
+The wizard performs the following steps:
+1.  Checks Node.js version (≥ 24).
+2.  Verifies RPC connectivity for selected network (testnet/mainnet/local).
+3.  Deploys or retrieves contract addresses.
+4.  Configures keeper mode (optional).
+5.  Writes `apps/backend/.env` and `apps/frontend/.env.local`.
+
+#### Manual Setup (No-Keeper Mode)
+For read/create jobs without automatic execution:
 
 ```bash
-pnpm --filter @cfxdevkit/example-showcase-local dev
-pnpm --filter @cfxdevkit/example-showcase-public dev
+# 1. Install dependencies
+pnpm install
+
+# 2. Build shared package
+pnpm --filter @cfxdevkit/cas-shared build
+
+# 3. Configure backend
+cp projects/cas/apps/backend/.env.example projects/cas/apps/backend/.env
+# Edit .env (defaults target testnet, keeper disabled)
+
+# 4. Configure frontend
+cp projects/cas/apps/frontend/.env.local.example projects/cas/apps/frontend/.env.local
+
+# 5. Start services
+pnpm --filter @cfxdevkit/cas-backend dev   # http://127.0.0.1:3011
+pnpm --filter @cfxdevkit/cas-frontend dev   # http://127.0.0.1:3010
 ```
 
+#### Keeper Mode (Automatic Execution)
+The keeper worker is embedded in the backend. It requires a signer account registered on the `AutomationManager` contract.
+
+**1. Register Signer (One-time)**
+```bash
+# Testnet
+cast send 0x33e5E5B262e5d8eBC443E1c6c9F14215b020554d \
+  "setKeeper(address,bool)" <signerAddress> true \
+  --rpc-url https://evmtestnet.confluxrpc.com \
+  --private-key <ownerPrivateKey>
+
+# Mainnet
+cast send 0x9D5B131e5bA37A238cd1C485E2D9d7c2A68E1d0F \
+  "setKeeper(address,bool)" <signerAddress> true \
+  --rpc-url https://evm.confluxrpc.com \
+  --private-key <ownerPrivateKey>
+```
+
+**2. Enable in Backend**
+Update `apps/backend/.env`:
+```bash
+KEEPER_ENABLED=true
+SIGNER_PRIVATE_KEY=0xYOUR_FUNDED_TESTNET_SIGNER_KEY
+KEEPER_INTERVAL_MS=15000
+```
+
+### Backend API Surface
+
+All job routes require a `Bearer <token>` header from `POST /auth/verify`. Admin routes require the caller's address to be in `ADMIN_ADDRESSES`.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/health` | — | Liveness probe |
+| POST | `/auth/verify` | — | Verify SIWE message + signature |
+| GET | `/jobs` | Bearer | List jobs for authenticated user |
+| POST | `/jobs` | Bearer | Create a new automation job |
+| POST | `/jobs/:id/cancel` | Bearer | Cancel a job |
+| GET | `/sse/jobs` | Bearer | Server-Sent Events stream |
+| GET | `/admin/status` | Bearer + Admin | Keeper status |
+| POST | `/admin/pause` | Bearer + Admin | Pause keeper execution |
+| GET | `/pools` | — | List tradeable token pairs |
+
+### Environment Variables
+
+**Backend (`apps/backend/.env`)**
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `3011` | TCP port |
+| `CAS_SQLITE_PATH` | `../../.data/cas-dev.sqlite` | SQLite file path |
+| `NETWORK` | `mainnet` | Target Conflux eSpace network |
+| `KEEPER_ENABLED` | `false` | Enable embedded keeper worker |
+| `SIGNER_PRIVATE_KEY` | — | Keeper signer key (never commit) |
+
+**Frontend (`apps/frontend/.env.local`)**
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NEXT_PUBLIC_CAS_API_URL` | `http://127.0.0.1:3011` | Backend base URL |
+| `NEXT_PUBLIC_CAS_NETWORK` | `mainnet` | eSpace network for wallet |
+
+### Contract Addresses
+
+| Contract | Testnet (71) | Mainnet (1030) |
+|----------|-------------|----------------|
+| AutomationManager | `0x33e5E5B262e5d8eBC443E1c6c9F14215b020554d` | `0x9D5B131e5bA37A238cd1C485E2D9d7c2A68E1d0F` |
+| PermitHandler | `0x4240882f2d9d70cdb9fbcc859cdd4d3e59f5d137` | `0x0D566aC9Dd1e20Fc63990bEEf6e8abBA876c896B` |
+| SwappiPriceAdapter | `0x88C48e0E8F76493Bb926131a2BE779cc17ecBEdF` | `0xD2Cc2a7Eb4A5792cE6383CcD0f789C1A9c48ECf9` |
+| WCFX | `0x2ED3dddae5B2F321AF0806181FBFA6D049Be47d8` | `0x14b2D3bC65e74DAE1030EAFd8ac30c533c976A9b` |
+
 ---
 
-## Adding a New Project
+## Deep Dive: Examples
 
-### Tier 3 Project (`projects/<name>/`)
+`projects/examples` contains Tier 3 example apps that exercise the public API of `@cfxdevkit/*` packages. These apps serve as runnable demos and integration coverage.
 
-1. `mkdir -p projects/<name>`
-2. Add `README.md`, `AUDITS.md`, `package.json`, `pnpm-workspace.yaml`, `moon.yml`
-3. Add `apps/`, `packages/`, `contracts/`, `e2e/` as needed
-4. Register in `.moon/workspace.yml`
-5. Run `pnpm install`
+### Showcase Applications
 
-### Shared Example Package (`projects/examples/packages/<name>/`)
+| App | Purpose |
+|-----|---------|
+| `apps/showcase-local/` | Local-runtime showcase. Runs `@cfxdevkit/devnode-server` in-process. Manages wallet-scoped keystore, network profiles, and tracked contracts. |
+| `apps/showcase-public/` | Browser-side public SDK showcase. Covers Core/eSpace RPC, browser wallets, hardware wallets, SIWE, and DeFi widgets without local backend dependency. |
 
-1. `mkdir -p projects/examples/packages/<name>`
-2. Add `package.json` (`@cfxdevkit/example-<name>`)
-3. Register in `.moon/workspace.yml`
-4. Add `README.md` listing dependent apps
-5. Run `pnpm install`
+### Shared UI Package
 
-> **Note**: All `projects/examples` apps are Tier 3; shared packages are Tier 2.
+`packages/showcase-ui/` (`@cfxdevkit/example-showcase-ui`) provides shared theme, shell primitives, and wallet UI components.
+
+**Key Components:**
+- `ConnectWallet`: Wallet connection UI.
+- `LogBox`: Logging widget for debug output.
+- `WalletPickerModal`: Wallet selection interface.
+
+**Key Helpers:**
+- `useCoreWallet`: Hook for Core chain wallet status.
+- `useLogList`: Hook for managing log entries.
+- `copy`: Clipboard utility.
+
+**Usage:**
+```bash
+pnpm --filter @cfxdevkit/example-showcase-ui build
+```
+
+### Adding New Examples
+
+1.  Create directory: `mkdir -p projects/examples/apps/<name>`
+2.  Add `package.json` named `@cfxdevkit/example-<name>`.
+3.  Register path in `.moon/workspace.yml`.
+4.  Add `moon.yml` (`type: 'application'`, `language: 'typescript'`).
+5.  Run `pnpm install` from workspace root.
+
+**Constraint:** All apps in `projects/examples` are Tier 3. They may import from `framework/`, `platform/`, and `domains/`, but no higher-tier code may import from here.
 
 ---
 
-## Known Gaps & Roadmap
+## Other Projects
 
-| Area | Coverage | Notes |
-|------|----------|-------|
-| `@cfxdevkit/theme`, `@cfxdevkit/react` | Partial | Shared theme in place; dedicated component demos pending |
-| `@cfxdevkit/cli`, `@cfxdevkit/llm-tools` | Gap | Add CLI/scaffold and LLM automation demos |
-| `domains/automation`, `game-engine` | Gap | Add domain-specific examples after core flows stabilize |
+### chainbrawler
+On-chain RPG game using Vite + Mantine.
+- **Contracts**: Hardhat-based (`contracts/`).
+- **Packages**: Project-local `game-rules` and `react-bindings`.
+- **Framework**: Uses `@cfxdevkit/cdk`, `@cfxdevkit/react`, `@cfxdevkit/wallet-connect`, and `domains/game-engine`.
+
+### conflux-phaser
+Phaser-based blockchain game using Vite + React + Phaser 3.
+- **Scope**: Smallest project, used for low-risk validation of framework wiring.
+- **Framework**: Uses `@cfxdevkit/wallet-connect` and `@cfxdevkit/cdk`.
+
+### electro
+ESP32 hardware + Conflux smart contract integration.
+- **Apps**: `apps/firmware/` (PlatformIO/Arduino C++) and `apps/backend/` (Express + WS bridge).
+- **Hardware**: `hardware/` contains schematics, BOM, and wiring guides.
+- **Framework**: Uses `@cfxdevkit/cdk`, `@cfxdevkit/hw-ws-protocol`, `@cfxdevkit/hw-sensor-types`.
+- **Pipeline**: `hw-diagram-gen` reads `hardware/diagram.json` to generate `apps/firmware/src/generated/Pins.h`.
 
 ---
 
-## References
+## Audit & Compliance
 
-- **Framework Usage**: All projects reference `@cfxdevkit/core`, `@cfxdevkit/wallet`, `@cfxdevkit/wallet-connect`, and domain packages as needed.
-- **Migration Notes**: Each project includes `README.md` and `STRUCTURE.md` with migration status and risk assessment.
-- **Audit Policy**: Enforced via `AUDITS.md` — no contract deployment without audit record.
-- **Template Promotion**: Successful patterns (e.g., Phaser+wallet scaffold) may be promoted to `platform/templates/`.
+Every project must maintain an `AUDITS.md` file.
+
+### Requirements
+1.  **Current Scope**: State if `contracts/` exists and if audit records are required.
+2.  **Deployment Records**: Before contracts deploy, record:
+    - Contract package, deployment script, and artifact details.
+    - Internal review date, reviewer, commit SHA, findings, and remediation status.
+    - External audit report links (required before mainnet deployment).
+    - Deployment addresses and verified source references.
+
+### Example Entry
+```markdown
+## Contract: AutomationManager
+- **Address**: 0x9D5B131e5bA37A238cd1C485E2D9d7c2A68E1d0F
+- **Review Date**: 2023-10-01
+- **Reviewer**: Security Team
+- **Status**: Remediated
+- **Audit Report**: [Link to PDF]
+```
+
+## Development Workflow
+
+### Running Tests
+- **CAS Setup Wizard**:
+  ```bash
+  pnpm --filter @cfxdevkit/cas-setup test
+  pnpm --filter @cfxdevkit/cas-setup typecheck
+  ```
+- **Backend**:
+  ```bash
+  pnpm --filter @cfxdevkit/cas-backend test
+  ```
+
+### Dependency Management
+- Use `pnpm` for workspace management.
+- Shared code belongs in `repos/cfx-*`.
+- Project-specific code belongs in `projects/<name>/packages/`.
+- Do not import from `projects/` into `framework/`, `platform/`, or `domains/`.

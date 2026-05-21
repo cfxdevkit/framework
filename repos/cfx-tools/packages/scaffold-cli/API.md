@@ -1,21 +1,44 @@
-# `@cfxdevkit/create` — API Reference
+# `@cfxdevkit/create` — Public API
 
-> Status: **Phase A scaffold** — empty package. This document will be filled out as the implementation lands. See [STRUCTURE.md](./STRUCTURE.md) for the planned layout. Once implemented, every public symbol will be re-exported from `./src/index.ts` and listed here with its signature, parameters, return type, errors, and a runnable example.
+> Project scaffolder (npm create @cfxdevkit).
 
-## Public Exports
+## Sub-paths
 
-_None yet — package currently exports only `__packageName` as a smoke marker._
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 11 symbols |
+| `./templates` | 7 symbols |
 
-## Planned Surface
+---
 
-See the package's [STRUCTURE.md](./STRUCTURE.md) for the documented intent of each sub-folder. Once implemented, every public symbol will be re-exported from `./src/index.ts` and listed here with its signature, parameters, return type, errors, and a runnable example.
+## `.`
 
-## Internal Workspace Dependencies
-
-```json
-{}
+```ts
+export declare const __packageName: "@cfxdevkit/create";
+export { parseArgs }
+export { scaffoldProject }
+export { TemplateDefinition }
+export { TemplateFile }
+export { TemplateTarget }
+export { getTemplate }
+export { getTemplateFiles }
+export { listTemplates }
+export { renderFile }
+export { validateName }
 ```
 
-## Tier
+---
 
-Defined per [ARCHITECTURE.md](../../../docs/architecture/ARCHITECTURE.md). Dependencies must respect the one-way rule: `projects → domains → platform → framework`.
+## `./templates`
+
+```ts
+export { TemplateDefinition }
+export { TemplateFile }
+export { TemplateTarget }
+export declare function listTemplates(): TemplateDefinition[];
+export declare function getTemplate(name: string): TemplateDefinition | undefined;
+export declare function renderFile(content: string, values: Record<string, string>): string;
+export declare function getTemplateFiles(template: TemplateDefinition, target?: TemplateTarget): TemplateFile[];
+```
+
+<!-- api-hash: 1b9551fc80790d1bdc426f3ce568b5fa96a38b35068a3fc59d19e1e3506ae724 -->

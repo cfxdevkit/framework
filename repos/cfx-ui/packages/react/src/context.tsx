@@ -1,5 +1,5 @@
-import type { ChainConfig } from '@cfxdevkit/core/chains';
-import type { Client } from '@cfxdevkit/core/client';
+import type { ChainConfig } from '@cfxdevkit/cdk/chains';
+import type { Client } from '@cfxdevkit/cdk/client';
 import type { QueryClient } from '@tanstack/react-query';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createContext, type ReactNode, useContext, useMemo } from 'react';

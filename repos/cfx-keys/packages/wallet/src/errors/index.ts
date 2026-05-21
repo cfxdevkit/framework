@@ -1,7 +1,7 @@
 /**
  * `@cfxdevkit/wallet/errors` — wallet/session-key error class.
  */
-import { CfxError } from '@cfxdevkit/core';
+import { CfxError } from '@cfxdevkit/cdk';
 
 /**
  * Session-key / signer-factory failures. Codes:

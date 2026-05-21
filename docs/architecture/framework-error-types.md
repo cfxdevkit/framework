@@ -50,4 +50,4 @@ Rules:
 | `Timestamp` | branded `number` | unix seconds |
 | `DurationMs` | branded `number` | unsigned |
 
-All types are exported from `@cfxdevkit/core/types` so other packages share them.
+All types are exported from `@cfxdevkit/cdk/types` so other packages share them.

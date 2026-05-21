@@ -1,4 +1,4 @@
-import type { Address, Hex, Signer } from '@cfxdevkit/core';
+import type { Address, Hex, Signer } from '@cfxdevkit/cdk';
 import type { KeystoreService } from '@cfxdevkit/keystore-server';
 import type { Capability } from '@cfxdevkit/services';
 import { canonicalAttestationMessage, createSessionKey } from '@cfxdevkit/wallet/session-key';

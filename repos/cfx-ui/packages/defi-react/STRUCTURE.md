@@ -42,4 +42,4 @@ defi-react/
 ### Dependencies
 
 - Peer: `react`, `@tanstack/react-query`.
-- Runtime: `@cfxdevkit/core`, `@cfxdevkit/react`, `@cfxdevkit/services` (DEX).
+- Runtime: `@cfxdevkit/cdk`, `@cfxdevkit/react`, `@cfxdevkit/services` (DEX).

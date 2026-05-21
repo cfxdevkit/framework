@@ -1,8 +1,8 @@
 import { promises as fs } from 'node:fs';
 import { dirname } from 'node:path';
-import type { Hex, Signer } from '@cfxdevkit/core';
-import { KeystoreError } from '@cfxdevkit/core';
-import { deriveAccount, signerFromPrivateKey, validateMnemonic } from '@cfxdevkit/core/wallet';
+import type { Hex, Signer } from '@cfxdevkit/cdk';
+import { KeystoreError } from '@cfxdevkit/cdk';
+import { deriveAccount, signerFromPrivateKey, validateMnemonic } from '@cfxdevkit/cdk/wallet';
 import type { AesGcmKey } from '../../crypto/index.js';
 import {
   decryptAesGcm,

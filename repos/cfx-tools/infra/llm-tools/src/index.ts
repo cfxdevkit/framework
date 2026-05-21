@@ -51,6 +51,34 @@ export const llmCommands = [
     workerArgs: ['actions'],
   },
   {
+    name: 'docs-api',
+    description:
+      'Generate deterministic API.md skeletons for all public packages, then enrich with LLM descriptions',
+    worker: 'lemonade',
+    workerArgs: ['docs-api'],
+  },
+  {
+    name: 'readme-upkeep',
+    description:
+      'Scaffold missing README.md files for all public packages, then enrich placeholders with LLM prose',
+    worker: 'lemonade',
+    workerArgs: ['readme-upkeep'],
+  },
+  {
+    name: 'package-pages',
+    description:
+      'Sync package MDX stubs for the docs-site, then enrich each page with LLM-generated descriptions and code examples',
+    worker: 'lemonade',
+    workerArgs: ['package-pages'],
+  },
+  {
+    name: 'structure-upkeep',
+    description:
+      'Generate or refresh STRUCTURE.md for every public package by walking the directory tree and calling the local LLM',
+    worker: 'lemonade',
+    workerArgs: ['structure-upkeep'],
+  },
+  {
     name: 'docs-upkeep',
     description:
       'Run deterministic docs checks, then delegate doc-maintenance recommendations to the local LLM',

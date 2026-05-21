@@ -1,4 +1,4 @@
-import type { Address } from '@cfxdevkit/core';
+import type { Address } from '@cfxdevkit/cdk';
 import type { ParsedSiweMessage } from './types.js';
 
 const HEADER = ' wants you to sign in with your Ethereum account:';

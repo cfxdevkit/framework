@@ -1,4 +1,4 @@
-import type { Address } from '@cfxdevkit/core/types';
+import type { Address } from '@cfxdevkit/cdk/types';
 import { useAccount } from '@cfxdevkit/react/account';
 import { useNativeBalance, useTokenBalance } from '@cfxdevkit/react/balance';
 import {

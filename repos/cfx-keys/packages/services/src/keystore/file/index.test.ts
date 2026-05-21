@@ -1,8 +1,8 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { KeystoreError } from '@cfxdevkit/core';
-import { deriveAccount } from '@cfxdevkit/core/wallet';
+import { KeystoreError } from '@cfxdevkit/cdk';
+import { deriveAccount } from '@cfxdevkit/cdk/wallet';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   changeFilePassphrase,

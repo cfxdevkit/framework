@@ -4,7 +4,7 @@ import {
   deriveDualAccounts,
   generateMnemonic,
   validateMnemonic,
-} from '@cfxdevkit/core';
+} from '@cfxdevkit/cdk';
 import { getBool, getNumber, getString } from '../args.js';
 
 export interface DeriveReport {

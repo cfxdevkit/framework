@@ -55,7 +55,7 @@ Do NOT create `/keys/hardware/page.tsx` as a separate route — keep it as a new
 
 **Dependencies to use** (verify against `projects/examples/apps/showcase-public/package.json` before implementation):
 - `@cfxdevkit/wallet` (`repos/cfx-keys/packages/wallet/`) — hardware adapters live at `src/hardware/ledger.ts`, `src/hardware/onekey.ts`, `src/hardware/satochip.ts`; import via `@cfxdevkit/wallet/hardware/ledger` etc. This is not currently listed in `showcase-public/package.json`, so adding it is a required first step for the hardware-wallet work.
-- `@cfxdevkit/core` (`repos/cfx-core/packages/core/`) — address derivation, balance reads
+- `@cfxdevkit/cdk` (`repos/cfx-core/packages/cdk/`) — address derivation, balance reads
 - `@cfxdevkit/react` (`repos/cfx-ui/packages/react/`) — hooks for account/balance state
 - `@cfxdevkit/example-showcase-ui` (`projects/examples/packages/showcase-ui/`) — DemoCard, CodeSnippet, StatusBadge components
 
@@ -187,7 +187,7 @@ The SIWE flow already exists at `/siwe`, backed by `app/api/auth/nonce/route.ts`
 
 ### Target Route: `/core` (extend existing page)
 
-Do **not** create a new `/rpc` route. `showcase-public` already has `app/core/page.tsx`, and it already demonstrates direct Conflux reads using `@cfxdevkit/core`.
+Do **not** create a new `/rpc` route. `showcase-public` already has `app/core/page.tsx`, and it already demonstrates direct Conflux reads using `@cfxdevkit/cdk`.
 
 **Content:**
 
@@ -204,7 +204,7 @@ showcase-public/
 
 **Existing coverage:** chain list, one live RPC call, address codec, and unit helpers are already on `/core`.
 
-**Source:** Port the missing deeper lookup panels from `projects/examples/apps/showcase/src/` into the existing `/core` route. The RPC calls themselves use `@cfxdevkit/core` (`repos/cfx-core/packages/core/`), already a dep of showcase-public.
+**Source:** Port the missing deeper lookup panels from `projects/examples/apps/showcase/src/` into the existing `/core` route. The RPC calls themselves use `@cfxdevkit/cdk` (`repos/cfx-core/packages/cdk/`), already a dep of showcase-public.
 
 ---
 

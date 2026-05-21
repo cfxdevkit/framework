@@ -2,305 +2,237 @@
 title: "Solidity Compiler & Contracts"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Solidity Compiler & Contracts
 
-# Solidity Compiler & Contracts Module
+# @cfxdevkit/contracts
 
-This module provides a complete toolchain for compiling Solidity smart contracts and interacting with them on the Conflux network — supporting both **Core Space** and **eSpace**. It is split into two main packages:
+The `@cfxdevkit/contracts` module provides a typed, unified interface for interacting with smart contracts on the Conflux network. It abstracts the differences between **Core Space** (Conflux native) and **eSpace** (EVM-compatible), allowing developers to write code that works across both environments without managing low-level RPC details.
 
-- `@cfxdevkit/compiler`: Compiles Solidity sources to artifacts (ABI, bytecode, metadata) using `solc`, with robust import resolution and error handling.
-- `@cfxdevkit/contracts`: High-level helpers for deploying, reading, and writing to contracts on Conflux — abstracting away RPC family differences and encoding/decoding.
+## Architecture
 
-Both packages are designed to be **framework-agnostic**, **type-safe**, and **testable**, with first-class support for mocking and integration testing.
+The module relies on the `client.family` property to determine the target environment. All high-level functions (`deployContract`, `readContract`, `sendWrite`) dispatch to space-specific implementations based on this flag.
 
----
+<Mermaid chart={`flowchart TD
+    A[Entry Point<br/>deployContract / sendWrite / readContract] --> B{client.family?}
+    B -->|'core'| C[Core Space Implementation<br/>cfx_call, cfx_sendRawTransaction]
+    B -->|'espace'| D[eSpace Implementation<br/>eth_call, eth_sendRawTransaction]
+    C --> E[Address Validation<br/>Base32]
+    D --> F[Address Validation<br/>0x Hex]
+    E --> G[Transaction Signing & Submission]
+    F --> G
+    G --> H[Receipt Polling<br/>waitForReceipt]
+`} />
 
-## Overview
+## Core Operations
 
-```mermaid
-flowchart TD
-    subgraph Compiler
-        A[Source Files] --> B[compile()]
-        B --> C[Artifacts]
-        C --> D[selectorsOf / readArtifact / writeArtifact]
-    end
+### Deployment
 
-    subgraph Contracts
-        E[Deploy] --> F[Core / eSpace]
-        G[Read] --> H[Core / eSpace]
-        I[Write] --> J[Core / eSpace]
-    end
+Contract deployment is handled by `deployContract`. It automatically selects the correct deployment strategy based on the client's chain family.
 
-    C -->|ABI + Bytecode| E
-    C -->|ABI| G
-    C -->|ABI| I
-```
-
-### Key Capabilities
-
-| Feature | Description |
-|--------|-------------|
-| **Pinned solc versions** | Downloads and caches exact `soljson-vX.Y.Z+commit.*.js` binaries from `binaries.soliditylang.org`, with SHA-256 verification. |
-| **Import resolution** | Supports `npm`-style imports (`@openzeppelin/...`) and Foundry-style remappings (`@oz/=node_modules/@openzeppelin/`). |
-| **Dual-space support** | Transparently handles Core Space (`cfx:...`) and eSpace (`0x...`) addresses, RPC methods, and transaction formats. |
-| **Typed contract calls** | Uses viem’s ABI encoding/decoding for reads and writes — no manual ABI parsing. |
-| **Test-friendly** | Includes in-memory mocks (`mockClient`, `mockSigner`) for unit testing without RPC. |
-
----
-
-## `@cfxdevkit/compiler`
-
-### Purpose
-
-Compiles Solidity source files into standardized artifacts (ABI, bytecode, metadata), with:
-
-- Standard JSON input generation
-- Async import resolution (via pluggable resolvers)
-- Deterministic output (stable `inputHash`)
-- Rich error reporting with stable error codes
-
-### Core Types
-
-```ts
-interface Source {
-  path: string;
-  content: string;
-}
-
-interface CompileInput {
-  sources: readonly Source[];
-  solcVersion: string;
-  optimizer?: { enabled: boolean; runs: number };
-  evmVersion?: string;
-  remappings?: readonly string[];
-  resolver?: ImportResolver;
-  signal?: AbortSignal;
-}
-
-interface Artifact {
-  path: string;
-  contractName: string;
-  abi: Abi;
-  bytecode: Hex;
-  deployedBytecode: Hex;
-  metadata: string;
-  sourceMap?: string;
-}
-
-interface CompileOutput {
-  artifacts: readonly Artifact[];
-  warnings: readonly CompileDiagnostic[];
-  inputHash: string; // SHA-256 of normalized JSON input
-  solcVersion: string;
-}
-```
-
-### Main Entry Point: `compile()`
-
-```ts
-import { compile } from '@cfxdevkit/compiler';
-
-const output = await compile({
-  solcVersion: '0.8.26',
-  sources: [{ path: 'MyToken.sol', content: 'pragma solidity ^0.8.0; contract MyToken {}' }],
-  optimizer: { enabled: true, runs: 200 },
-});
-```
-
-#### How It Works
-
-1. **Build Standard JSON**  
-   `buildStandardJson()` normalizes sources, applies optimizer/remappings, and sets default output selection (`abi`, `bytecode`, `deployedBytecode`, `metadata`, `sourceMap`).
-
-2. **Pre-resolve Imports**  
-   If a resolver is provided, `preResolve()` walks the import graph and caches resolved sources before calling solc.
-
-3. **Call solc**  
-   `runSolcWithResolvedImports()` repeatedly calls `solc.compile()` with an `import` callback until all imports are resolved (up to 8 attempts to handle transitive dependencies).
-
-4. **Parse Output**  
-   `artifactsFrom()` converts raw solc output into typed `Artifact[]`.
-
-5. **Error Handling**  
-   `diagnostics()` separates hard errors (from `severity: 'error'`) and warnings. Hard errors throw `CompileError`.
-
-### Import Resolvers
-
-| Resolver | Purpose |
-|---------|---------|
-| `npmResolver({ rootDir })` | Resolves `@scope/pkg/file.sol` via `node_modules/` (Node-style). |
-| `remappingResolver(remappings)` | Supports Foundry-style `prefix=path` rewrites (e.g., `@oz/=node_modules/@openzeppelin/`). |
-| `compose(resolvers)` | Chains resolvers — returns first non-null result. |
-
-### Artifact Helpers
-
-```ts
-// Extract 4-byte function selectors (constructor/fallback excluded)
-const selectors = selectorsOf(abi); // Hex[]
-
-// Read/write artifacts to disk
-const artifact = await readArtifact('build/MyToken.json');
-await writeArtifact('dist/MyToken.json', artifact);
-```
-
-### solc Binary Management (`ensureSolc`)
-
-- **Caching**: Defaults to `$XDG_CACHE_HOME/cfxdevkit/solc/` (or `~/.cache/...`)
-- **Version pinning**: Accepts clean semver (`"0.8.26"`), looks up exact build via `list.json`
-- **Concurrency-safe**: Concurrent `ensureSolc("0.8.26")` calls share the same in-flight download promise
-- **Verification**: SHA-256 checksums are validated after download
-
-```ts
-import { ensureSolc, listInstalledSolc } from '@cfxdevkit/compiler/solc/loader';
-
-const solc = await ensureSolc('0.8.26');
-const versions = await listInstalledSolc(); // e.g., ['0.8.25', '0.8.26']
-```
-
-### Error Handling
-
-All errors derive from `CompileError` with stable `code`s:
-
-| Code | Meaning |
-|------|---------|
-| `compiler/solc/syntax` | solc emitted one or more errors |
-| `compiler/resolver/not-found` | Import could not be resolved |
-| `compiler/solc/binary-unavailable` | solc binary missing or checksum mismatch |
-| `compiler/io-failure` | Artifact read/write failed |
-| `compiler/invalid-argument` | Input validation failure |
-
----
-
-## `@cfxdevkit/contracts`
-
-### Purpose
-
-Provides **typed, family-aware helpers** for:
-
-- Deploying contracts (Core/eSpace)
-- Reading state (view/pure calls)
-- Sending transactions (nonpayable/payable)
-- Bridge-specific operations (Core ↔ eSpace transfers)
-
-All helpers automatically select the correct RPC method and address format based on `client.family`.
-
-### Core Helpers
-
-| Helper | Family | Description |
-|--------|--------|-------------|
-| `deployContract()` | Both | Deploys a contract, returns `hash`, `receipt`, and `address` |
-| `readContract()` | Both | Calls view/pure functions, decodes return value |
-| `sendWrite()` | Both | Sends a transaction, waits for receipt if requested |
-| `prepareWrite()` | Both | Builds a `SignableTx` without sending (for signing externally) |
-
-#### Example: Deploy
-
-```ts
-import { deployContract } from '@cfxdevkit/contracts';
+```typescript
+import { deployContract } from '@cfxdevkit/contracts/deploy';
 
 const result = await deployContract({
-  client, // CoreSpaceClient or EspaceClient
+  client,
   signer,
-  abi: MyTokenABI,
-  bytecode: '0x6080...',
-  args: ['MyToken', 'MTK', 18n, 1_000_000n],
+  abi,
+  bytecode,
+  args: [constructorArg1, constructorArg2],
   waitForReceipt: true,
 });
-
-console.log(result.address); // e.g., 'cfx:...` or '0x...'
 ```
 
-#### Example: Read
+**Key Behaviors:**
+*   **Core Space:** Uses `deployCoreContract`. Requires `signer.account.coreAddress` (base32). Estimates gas via `cfx_estimateGasAndCollateral`. Applies a 25% buffer to estimated gas/storage limits.
+*   **eSpace:** Uses `deployEspaceContract`. Uses `eth_estimateGas`. Fetches `baseFeePerGas` from the latest block to calculate `maxFeePerGas` (EIP-1559 style).
+*   **Result:** Returns `DeployContractResult` containing the transaction hash, raw transaction, and optionally the deployed contract address if `waitForReceipt` is true.
 
-```ts
-import { readContract } from '@cfxdevkit/contracts';
+### Reading Contract State
 
-const totalSupply = await readContract({
+Read operations use `readContract` to execute view/pure functions. It handles ABI encoding/decoding via `viem` and dispatches the correct RPC method.
+
+```typescript
+import { readContract } from '@cfxdevkit/contracts/read';
+
+const balance = await readContract({
   client,
-  address: '0x1234...5678', // eSpace or base32 Core
-  abi: ERC20_ABI,
-  functionName: 'totalSupply',
+  address: 'cfx:aa...123', // Base32 for Core, 0x... for eSpace
+  abi,
+  functionName: 'balanceOf',
+  args: [ownerAddress],
 });
 ```
 
-#### Example: Write
+**Address Validation:**
+*   **Core Space:** Addresses must be base32 (`cfx:`, `cfxtest:`, or `net<id>:`). Passing a `0x` hex address throws `ContractsError` with code `contracts/invalid-argument`.
+*   **eSpace:** Addresses must be `0x`-prefixed 20-byte hex.
 
-```ts
-import { sendWrite } from '@cfxdevkit/contracts';
+**RPC Dispatch:**
+*   **Core:** Calls `cfx_call` with an `epochTag` (default `latest_state`).
+*   **eSpace:** Calls `eth_call` with a `blockTag` (default `latest`).
+
+### Writing Contract State
+
+Write operations use `sendWrite` to sign and broadcast transactions.
+
+```typescript
+import { sendWrite } from '@cfxdevkit/contracts/write';
 
 const result = await sendWrite({
   client,
   signer,
-  address: '0x1234...5678',
-  abi: ERC20_ABI,
+  address,
+  abi,
   functionName: 'transfer',
-  args: ['0x9999...0000', 100n],
+  args: [to, amount],
   waitForReceipt: true,
 });
 ```
 
-### Family-Specific Behavior
+**Transaction Construction:**
+*   **Core Space:** Uses `sendCoreWrite`. Requires `signer.account.coreAddress`. Supports `coreType` ('legacy', 'cip2930', 'cip1559'). Defaults to `cip2930`.
+*   **eSpace:** Uses `sendEspaceWrite`. Uses EIP-1559 fee structure (`maxFeePerGas`, `maxPriorityFeePerGas`).
+*   **Receipt Polling:** If `waitForReceipt` is enabled, `waitForReceipt` polls `cfx_getTransactionReceipt` or `eth_getTransactionReceipt` until the transaction is confirmed or a timeout occurs.
 
-| Operation | eSpace (`family: 'espace'`) | Core Space (`family: 'core'`) |
-|----------|------------------------------|-------------------------------|
-| Address format | `0x`-prefixed 20-byte hex | Base32 (`cfx:...`, `cfxtest:...`) |
-| Read RPC | `eth_call` | `cfx_call` |
-| Write RPC | `eth_sendRawTransaction` | `cfx_sendRawTransaction` |
-| Gas estimation | `estimateGas()` | `cfx_estimateGasAndCollateral()` |
-| Nonce | `eth_getTransactionCount` | `cfx_getNextNonce` |
-| Fee model | EIP-1559 (`maxFeePerGas`, `maxPriorityFeePerGas`) | Legacy/CIP-2930 (`gasPrice`, `storageLimit`) |
+## Cross-Space Bridging
 
-### Bridge Helpers (`@cfxdevkit/contracts/bridge`)
+The `bridge` module facilitates interactions between Core Space and eSpace using the `CROSS_SPACE_CALL_ADDRESS` (`0x0888000000000000000000000000000000000006`).
 
-Specialized helpers for **Core ↔ eSpace transfers** using the `CrossSpaceCall` contract (`0x0888...0006`).
+### Transferring to eSpace
 
-| Function | Purpose |
-|---------|---------|
-| `transferToEspace()` | Transfer tokens from Core to eSpace |
-| `callEspace()` | Call a contract on eSpace from Core |
-| `withdrawFromMapped()` | Withdraw from mapped eSpace balance |
-| `mappedEspaceAddress()` | Derive eSpace address from Core address |
-| `getMappedBalance()` / `getMappedNonce()` | Query mapped state |
+Moves value from Core Space to a mapped eSpace address.
 
-```ts
-import { transferToEspace, mappedEspaceAddress } from '@cfxdevkit/contracts/bridge';
-
-const eSpaceAddr = mappedEspaceAddress('0x1234...5678'); // e.g., '0x...'
+```typescript
+import { transferToEspace } from '@cfxdevkit/contracts/bridge';
 
 await transferToEspace({
-  client, // CoreSpaceClient
+  client,
   signer,
-  to: eSpaceAddr,
-  value: 1n,
+  to: '0x...eSpaceAddress',
+  value: 1000000000000000000n, // 1 CFX
 });
 ```
 
-### ERC-20 Helpers (`@cfxdevkit/contracts/erc20`)
+### Calling eSpace Contracts from Core
 
-Thin wrappers over `readContract`/`sendWrite` for common ERC-20 operations.
+Executes arbitrary EVM calldata from Core Space.
 
-```ts
-import { erc20 } from '@cfxdevkit/contracts/erc20';
+```typescript
+import { callEspace } from '@cfxdevkit/contracts/bridge';
 
-const name = await erc20.name({ client, address });
-const balance = await erc20.balanceOf({ client, address }, owner);
-await erc20.transfer({ client, address, signer }, to, amount);
+await callEspace({
+  client,
+  signer,
+  to: '0x...eSpaceContract',
+  data: '0x...', // Encoded calldata
+  value: 0n,
+});
 ```
 
-### Error Handling
+### Mapped Account State
 
-All errors derive from `ContractsError` with stable codes:
+Retrieves the balance and nonce of a Core Space address as seen within eSpace.
 
-| Code | Meaning |
-|------|---------|
-| `contracts/unsupported-family` | Client family not supported (e.g., `core` required) |
-| `contracts/invalid-argument` | Malformed address, missing field, etc. |
-| `contracts/receipt-timeout` | Transaction receipt not found within timeout |
-| `contracts/reverted` | Transaction reverted |
-| `contracts/decode-failure` | Failed to decode return data |
+```typescript
+import { getMappedBalance, getMappedNonce } from '@cfxdevkit/contracts/bridge';
 
----
+const balance = await getMappedBalance({ client, coreHexAddress: '0x...' });
+const nonce = await getMappedNonce({ client, coreHexAddress: '0x...' });
+```
 
-## Template System (`@cfxdevkit/compiler/templates`)
+**Address Mapping:**
+Use `mappedEspaceAddress` to calculate the eSpace address corresponding to a Core Space hex address.
+```typescript
+import { mappedEspaceAddress } from '@cfxdevkit/contracts/bridge';
 
-Curated
+const espaceAddr = mappedEspaceAddress('0x...coreHex');
+```
+
+## ERC20 Helpers
+
+The `erc20` namespace provides typed wrappers for standard ERC20 functions, pre-binding the ABI.
+
+```typescript
+import { erc20 } from '@cfxdevkit/contracts/erc20';
+
+// Read
+const name = await erc20.name({ client, address });
+const balance = await erc20.balanceOf({ client, address }, owner);
+
+// Write
+await erc20.transfer({ client, address, signer }, to, amount);
+await erc20.approve({ client, address, signer }, spender, amount);
+```
+
+## Error Handling
+
+All contract operations throw `ContractsError` derived from `@cfxdevkit/cdk`. Errors include stable codes for programmatic handling.
+
+| Code | Description |
+| :--- | :--- |
+| `contracts/unsupported-family` | Client family is not 'core' or 'espace'. |
+| `contracts/invalid-argument` | Address format mismatch (e.g., hex in Core Space) or missing signer fields. |
+| `contracts/decode-failure` | ABI decoding failed on response data. |
+| `contracts/receipt-timeout` | Transaction receipt not found within timeout. |
+| `contracts/reverted` | Transaction status indicates a revert. |
+
+```typescript
+import { ContractsError } from '@cfxdevkit/contracts/errors';
+
+try {
+  await sendWrite(...);
+} catch (err) {
+  if (err instanceof ContractsError && err.code === 'contracts/reverted') {
+    // Handle revert
+  }
+}
+```
+
+## Testing
+
+The module includes mock utilities for unit testing without an RPC endpoint.
+
+### Mock Client
+
+Creates an in-memory client that records RPC calls and returns stubbed data.
+
+```typescript
+import { makeMockClient, mockChain } from '@cfxdevkit/contracts/test/mocks';
+
+const client = makeMockClient({
+  family: 'espace',
+  chainId: 71,
+  rpc: {
+    'eth_call': () => '0x...',
+  },
+});
+```
+
+### Mock Signer
+
+Creates a signer that records signed transactions for verification.
+
+```typescript
+import { makeMockSigner } from '@cfxdevkit/contracts/test/mocks';
+
+const signer = makeMockSigner({
+  address: '0x...',
+  coreAddress: 'cfx:...', // Required for Core Space tests
+});
+
+// After operation
+expect(signer.history).toHaveLength(1);
+```
+
+### Recording Calls
+
+Verify which RPC methods were invoked during a test.
+
+```typescript
+import { getRecordedCalls } from '@cfxdevkit/contracts/test/mocks';
+
+const calls = getRecordedCalls(client);
+expect(calls[0].method).toBe('eth_sendRawTransaction');
+```

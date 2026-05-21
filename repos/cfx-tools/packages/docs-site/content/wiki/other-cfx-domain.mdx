@@ -2,138 +2,163 @@
 title: "Other — cfx-domain"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Other — cfx-domain
 
-# `@cfxdevkit/repo-cfx-domain` — Tier 2 Verticals Module
+# cfx-domain
 
-> **Package**: `@cfxdevkit/repo-cfx-domain`  
-> **Version**: `0.0.0`  
-> **Target**: Carve-out per [ADR-0003](#)  
-> **Layer**: Tier 2 — *verticals* (game-engine, automation)
-
----
-
-## Overview
-
-The `cfx-domain` module is a **workspace-root package** that organizes and coordinates *domain-specific verticals* within the CFX DevKit architecture. It does not contain executable logic itself, but serves as a structural container for independent, reusable TypeScript libraries:
-
-| Package | Purpose |
-|--------|---------|
-| `@cfxdevkit/automation` | On-chain automation strategies (e.g., DCA, stop-loss, scheduled execution) |
-| `@cfxdevkit/game-engine` | Reusable on-chain game state engine |
-
-Each vertical is implemented as a **workspace package** (`packages/*`) with its own build, test, and type-checking pipeline. All follow a consistent monorepo pattern and are designed to be consumed by higher-tier modules (e.g., `@cfxdevkit/app`, `@cfxdevkit/services`).
-
----
+The `cfx-domain` module serves as the Tier 2 verticals container for game-engine and automation logic. It is designated as a carve-out target per ADR-0003. This monorepo manages domain-specific packages that interact with on-chain state, automation strategies, and hardware interfaces.
 
 ## Architecture
 
-```mermaid
-graph TD
-    A["@cfxdevkit/repo-cfx-domain"] --> B["@cfxdevkit/automation"]
-    A --> C["@cfxdevkit/game-engine"]
+The domain is structured as a pnpm workspace containing three primary packages. Each package is configured for TypeScript, ES module output, and Vite-based builds.
 
-    B --> E["@cfxdevkit/contracts"]
-    B --> F["@cfxdevkit/core"]
-    B --> G["@cfxdevkit/executor"]
-    B --> H["@cfxdevkit/services"]
-    B --> I["@cfxdevkit/wallet"]
+<Mermaid chart={`graph TD
+    Root[cfx-domain]
+    Root --> Auto["@cfxdevkit/automation"]
+    Root --> Engine["@cfxdevkit/game-engine"]
+    Root --> Hardware["@cfxdevkit/hardware-bridge"]
+    
+    Auto --> DB[./db export]
+    Auto --> Strategies[Strategies]
+    Auto --> Keeper[Keeper]
+    
+    Engine --> Stub[Placeholder]
+    Hardware --> Unknown[Source Unavailable]
+`} />
 
-    C --> E
-    C --> F
+## Packages
+
+### @cfxdevkit/automation
+
+The core automation package implements trading and execution strategies including limit orders, DCA, stop-loss, and scheduled actions. It integrates with blockchain protocols via `viem` and manages state using `drizzle-orm`.
+
+**Entry Point:** `src/index.ts`
+
+**Public Exports:**
+The package exposes the following modules via its main entry point:
+
+| Export Path | Description |
+| :--- | :--- |
+| `./conditions/price.js` | Price-based condition logic |
+| `./conditions/time.js` | Time-based condition logic |
+| `./keeper/index.js` | Keeper orchestration |
+| `./keeper.js` | Keeper utilities |
+| `./priceSources/geckoTerminal.js` | GeckoTerminal price feed integration |
+| `./priceSources/swappi.js` | Swappi price feed integration |
+| `./repository/memory.js` | In-memory repository implementation |
+| `./repository.js` | Repository abstraction |
+| `./retryQueue.js` | Retry queue management |
+| `./safety.js` | Safety checks and guards |
+| `./strategies/index.js` | Strategy implementations |
+| `./swap/index.js` | Swap execution logic |
+| `./types.js` | Shared type definitions |
+
+**Database Export:**
+A separate entry point is available for database-specific functionality:
+*   **Path:** `./db`
+*   **Files:** `dist/db/index.js`, `dist/db/index.d.ts`
+
+**Dependencies:**
+*   `@cfxdevkit/cdk` (workspace)
+*   `@cfxdevkit/executor` (workspace)
+*   `@cfxdevkit/protocol` (workspace)
+*   `better-sqlite3`
+*   `drizzle-orm`
+*   `viem`
+
+**Peer Dependencies:**
+*   `mysql2` (optional)
+*   `postgres` (optional)
+
+**Constants:**
+*   `__packageName`: Exports the string `'@cfxdevkit/automation'` for identification.
+
+### @cfxdevkit/game-engine
+
+This package is designed as a reusable on-chain game state engine. As of version 2.0.0, it is in a scaffolding state.
+
+**Entry Point:** `src/index.ts`
+
+**Public Exports:**
+*   `__packageName`: Exports the string `'@cfxdevkit/game-engine'`.
+
+**Status:**
+Implementation details are pending. Refer to `./API.md` and `./STRUCTURE.md` within the package directory for future specifications.
+
+### @cfxdevkit/hardware-bridge
+
+This package exists within the workspace structure but source files are not accessible in the current context. It is intended to bridge domain logic with external hardware interfaces.
+
+## Build & Configuration
+
+### Build System
+All packages use **Vite** for bundling and **vite-plugin-dts** for TypeScript declaration generation.
+
+**Build Target:** `es2023`
+**Output Format:** ES Modules (`es`)
+**Source Maps:** Enabled
+
+**Vite Configuration (`vite.config.ts`):**
+*   **Automation:** Builds two entries: `index` and `db/index`.
+*   **Game Engine:** Builds single entry: `index`.
+*   **Rollup:** Externalizes all non-relative imports.
+
+### TypeScript Configuration
+Packages extend `@cfxdevkit/tsconfig/lib.json`.
+
+**Key Compiler Options:**
+*   `rootDir`: `src`
+*   `outDir`: `dist`
+*   `emitDeclarationOnly`: `true` (TypeScript emits `.d.ts` files; Vite handles JS output)
+
+### Moon Configuration
+Projects are defined in `moon.yml` with the following settings:
+*   `layer`: `library`
+*   `language`: `typescript`
+
+## Development Workflow
+
+### Prerequisites
+*   Node.js >= 22
+*   pnpm >= 10
+
+### Commands
+
+| Command | Description |
+| :--- | :--- |
+| `pnpm build` | Compiles TypeScript and bundles with Vite |
+| `pnpm test` | Runs Vitest suite |
+| `pnpm test:watch` | Runs Vitest in watch mode |
+| `pnpm typecheck` | Runs TypeScript compiler without emitting |
+| `pnpm lint` | Runs Biome linter on `src` |
+| `pnpm clean` | Removes `dist`, `.vitest`, and `coverage` directories |
+| `pnpm prepublishOnly` | Runs `clean` before publishing |
+
+### Workspace Validation
+The root `cfx-domain` package includes scripts to validate the workspace structure and dependencies:
+*   `pnpm validate:workspace`: Executes `scripts/validate-workspace.mjs`
+*   `pnpm validate:deps`: Executes `scripts/check-deps.mjs`
+
+## Testing
+
+Tests are configured using **Vitest**.
+
+**Configuration (`vitest.config.ts`):**
+*   **Environment:** `node`
+*   **Include:** `src/**/*.test.ts`, `src/**/*.test.tsx`
+*   **Aliases:** `@cfxdevkit/executor` is aliased to the core package source for testing purposes.
+
+**Example Test Structure:**
+Tests verify package identity and module exports.
+```typescript
+import { describe, expect, it } from 'vitest';
+import { __packageName } from './index.js';
+
+describe('@cfxdevkit/automation', () => {
+  it('exposes its package name', () => {
+    expect(__packageName).toBe('@cfxdevkit/automation');
+  });
+});
 ```
-
-### Key Structural Principles
-
-- **No internal dependencies** between verticals — they are *orthogonal* concerns.
-- **No runtime logic** in the root package (`cfx-domain`); it only defines the workspace.
-- All packages are **ESM-only**, targeting `es2023`, with type declarations emitted via `vite-plugin-dts`.
-- Each package is versioned independently (currently `0.0.0`), and intended for future stabilization.
-
----
-
-## Package Details
-
-### `@cfxdevkit/automation`
-
-- **Purpose**: Encapsulate reusable *execution strategies* for on-chain interactions.
-- **Dependencies**:
-  - `@cfxdevkit/contracts`, `@cfxdevkit/core`, `@cfxdevkit/executor`, `@cfxdevkit/services`, `@cfxdevkit/wallet`
-- **Current surface**: Minimal — only exposes `__packageName`.
-- **Planned exports**: Strategy interfaces (e.g., `LimitStrategy`, `StopLossStrategy`, `ScheduledExecutor`), configuration schemas, and execution runners.
-
-### `@cfxdevkit/game-engine`
-
-- **Purpose**: Provide a generic engine for modeling and updating *on-chain game state* (e.g., turn-based, deterministic, stateful contracts).
-- **Dependencies**:
-  - `@cfxdevkit/contracts`, `@cfxdevkit/core`
-- **Current surface**: Minimal — only exposes `__packageName`.
-- **Planned exports**: State machine types, transition validators, event loggers, and engine runners.
-
-## Development & Build
-
-All packages share a common toolchain:
-
-| Tool | Role |
-|------|------|
-| `pnpm@10.6.0+` | Workspace manager |
-| `Node.js >=22` | Runtime |
-| `Vite` | Build system (library mode) |
-| `vitest` | Unit testing |
-| `biome` | Linting & formatting |
-| `tsc` | Type checking |
-
-### Build Pipeline
-
-1. Source files in `src/` are compiled to ESM (`dist/index.js`) and type declarations (`dist/index.d.ts`).
-2. `vite-plugin-dts` extracts types from source (excluding tests).
-3. All dependencies are externalized (no bundling of `node_modules`).
-4. Source maps are emitted for debugging.
-
-### Commands (per package)
-
-```bash
-# Build
-pnpm build
-
-# Test
-pnpm test
-pnpm test:watch
-
-# Type-check
-pnpm typecheck
-
-# Lint
-pnpm lint
-
-# Clean
-pnpm clean
-```
-
----
-
-## Integration with the DevKit
-
-This module resides at **Tier 2**, directly above the foundational `@cfxdevkit/core` and `@cfxdevkit/contracts` layers, and below application-facing layers (e.g., `@cfxdevkit/app`, `@cfxdevkit/cli`).
-
-- **Consumers**: Higher-tier packages (e.g., `@cfxdevkit/app`) import verticals as needed.
-- **Extensibility**: New verticals can be added as sibling packages under `packages/`, following the same `moon.yml`, `vite.config.ts`, and `tsconfig.json` conventions.
-- **ADR Alignment**: This structure reflects the carve-out strategy defined in [ADR-0003](#), separating domain concerns from infrastructure.
-
----
-
-## Future Work
-
-- Implement concrete strategies in `@cfxdevkit/automation`.
-- Define game state schema and engine interfaces in `@cfxdevkit/game-engine`.
-- Publish API documentation (`API.md`) and structural docs (`STRUCTURE.md`) for each package.
-- Stabilize versions and release to npm.
-
----
-
-## References
-
-- [ADR-0003 — Module Carve-Out Strategy](#)
-- [MoonRepo Project Schema](https://moonrepo.dev/schemas/project.json)
-- [Vite Library Mode](https://vitejs.dev/guide/build.html#library-mode)
-- [Biome](https://biomejs.dev/) — Unified toolchain for linting/formatting

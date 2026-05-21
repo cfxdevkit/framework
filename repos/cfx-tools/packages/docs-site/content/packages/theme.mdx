@@ -1,22 +1,201 @@
 ---
 title: "@cfxdevkit/theme"
-description: Shared design tokens and component styling for cfxdevkit UI packages.
+description: "Design tokens and CSS layer."
 ---
+
+import { Callout, Tabs } from 'nextra/components'
 
 # @cfxdevkit/theme
 
-> Shared design tokens, CSS variables, and component styling used across `@cfxdevkit/react`, `@cfxdevkit/defi-react`, and `@cfxdevkit/wallet-connect`.
+> Design tokens and CSS layer.
 
-```bash
-pnpm add @cfxdevkit/theme
+## Install
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/theme
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/theme
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/theme
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+**Scope:** Shared design tokens (colors, spacing, typography, shadows, motion) usable from any UI library.
+
+No React, no CSS-in-JS dependency. Outputs JSON + CSS variables + (optional) Tailwind preset.
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 13 symbols |
+| `./tokens` | 6 symbols |
+| `./react` | 6 symbols |
+| `./css` | 0 symbols |
+| `./dark` | 0 symbols |
+
+---
+
+## `.`
+
+Exports the full theme API, including tokens and React integration.
+
+```ts
+import { colors, spacing, radius, typography, shadow, motion, ThemeProvider, useTheme } from '@cfxdevkit/theme';
+```
+
+- `colors`, `spacing`, `radius`, `typography`, `shadow`, `motion`: Raw design token objects.
+- `ThemeProvider`, `useTheme`: React context provider and hook for theme switching.
+
+### Example
+
+```tsx
+import { ThemeProvider, useTheme } from '@cfxdevkit/theme';
+
+function App() {
+  return (
+    <ThemeProvider defaultTheme="light">
+      <Main />
+    </ThemeProvider>
+  );
+}
+
+function Main() {
+  const { theme, resolvedTheme } = useTheme();
+  // `theme`: user preference ('light' | 'dark' | 'system')
+  // `resolvedTheme`: effective theme ('light' | 'dark')
+  return <div style={{ color: colors.text.primary }}>Hello</div>;
+}
 ```
 
 ---
 
-```tsx
-import '@cfxdevkit/theme/styles.css'
-import { tokens } from '@cfxdevkit/theme'
+## `./tokens`
 
-// CSS variables are injected globally, or use tokens in JS
-const primary = tokens.colors.brand.primary  // '#1a56db'
+Exports only the raw design tokens (no React dependencies).
+
+```ts
+import { colors, spacing, radius, typography, shadow, motion } from '@cfxdevkit/theme/tokens';
 ```
+
+Useful for non-React environments (e.g., vanilla JS, Storybook, Figma plugins).
+
+### Example
+
+```ts
+import { colors, spacing } from '@cfxdevkit/theme/tokens';
+
+const buttonStyle = {
+  backgroundColor: colors.primary.default,
+  padding: spacing.md,
+  borderRadius: radius.md,
+};
+```
+
+---
+
+## `./react`
+
+Exports only the React integration (context provider + hook).
+
+```ts
+import { ThemeProvider, useTheme } from '@cfxdevkit/theme/react';
+```
+
+Requires `@cfxdevkit/theme` to be installed separately for token access.
+
+### Example
+
+```tsx
+import { ThemeProvider } from '@cfxdevkit/theme/react';
+import { colors } from '@cfxdevkit/theme/tokens';
+
+function App() {
+  return (
+    <ThemeProvider defaultTheme="system" storageKey="cfx-theme">
+      <div style={{ color: colors.text.primary }}>Theme-aware content</div>
+    </ThemeProvider>
+  );
+}
+```
+
+---
+
+## `./css`
+
+No named exports. Used internally to generate CSS variable files.
+
+---
+
+## `./dark`
+
+No named exports. Used internally for dark-mode token variants.
+
+## API Reference
+
+## `.`
+
+```ts
+export declare const __packageName: "@cfxdevkit/theme";
+export declare const colors: {
+export declare const spacing: {
+export declare const radius: {
+export declare const typography: {
+export declare const shadow: {
+export declare const motion: {
+export type Theme = 'light' | 'dark' | 'system';
+export type ResolvedTheme = 'light' | 'dark';
+export interface ThemeContextValue {
+export interface ThemeProviderProps {
+export declare function ThemeProvider({ defaultTheme, storageKey, children, }: ThemeProviderProps): import("react/jsx-runtime").JSX.Element;
+export declare function useTheme(): ThemeContextValue;
+```
+
+---
+
+## `./tokens`
+
+```ts
+export declare const colors: {
+export declare const spacing: {
+export declare const radius: {
+export declare const typography: {
+export declare const shadow: {
+export declare const motion: {
+```
+
+---
+
+## `./react`
+
+```ts
+export type Theme = 'light' | 'dark' | 'system';
+export type ResolvedTheme = 'light' | 'dark';
+export interface ThemeContextValue {
+export interface ThemeProviderProps {
+export declare function ThemeProvider({ defaultTheme, storageKey, children, }: ThemeProviderProps): import("react/jsx-runtime").JSX.Element;
+export declare function useTheme(): ThemeContextValue;
+```
+
+---
+
+## `./css`
+
+*(no named exports detected)*
+
+---
+
+## `./dark`
+
+*(no named exports detected)*
+
+{/* readme-hash: ebc7004ccfdd0bf990ec2adc0e3f07e90a7869bb28ad7e5ca4c01624c5633c3d */}

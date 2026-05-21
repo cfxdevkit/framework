@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@cfxdevkit/codegen-contracts": "workspace:*",
-    "@cfxdevkit/core": "workspace:*"
+    "@cfxdevkit/cdk": "workspace:*"
   },
   "devDependencies": {
     "@cfxdevkit/tsconfig": "workspace:*",

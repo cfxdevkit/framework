@@ -49,18 +49,26 @@ export async function configure(args) {
     return;
   }
   if (subcommand !== 'set') {
-    throw new Error('Usage: pnpm run llm:config -- set <base-url|default-model|action> ...');
+    throw new Error(
+      'Usage: pnpm run llm:config -- set <base-url|default-model|request-timeout-ms|action> ...',
+    );
   }
   if (key === 'base-url') {
     config.baseUrl = rest[0];
   } else if (key === 'default-model') {
     config.defaultModel = rest[0];
+  } else if (key === 'request-timeout-ms') {
+    const value = Number(rest[0]);
+    if (!Number.isFinite(value) || value <= 0) {
+      throw new Error('request-timeout-ms must be a positive integer number of milliseconds');
+    }
+    config.requestTimeoutMs = value;
   } else if (key === 'action') {
     const [action, model] = rest;
     assertAction(action);
     config.actions[action] = model;
   } else {
-    throw new Error('Config keys: base-url, default-model, action');
+    throw new Error('Config keys: base-url, default-model, request-timeout-ms, action');
   }
   await writeConfig(config);
   console.log(`Updated ${relativeConfigPath()}`);

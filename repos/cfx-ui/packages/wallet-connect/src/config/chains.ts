@@ -1,9 +1,9 @@
-import type { ChainConfig as FrameworkChainConfig } from '@cfxdevkit/core/chains';
+import type { ChainConfig as FrameworkChainConfig } from '@cfxdevkit/cdk/chains';
 import {
   espaceLocal as frameworkEspaceLocal,
   espaceMainnet as frameworkEspaceMainnet,
   espaceTestnet as frameworkEspaceTestnet,
-} from '@cfxdevkit/core/chains';
+} from '@cfxdevkit/cdk/chains';
 import { type Chain, defineChain } from 'viem';
 
 export interface CreateSupportedEspaceChainsOptions {

@@ -1,4 +1,4 @@
-import { formatCFX } from '@cfxdevkit/core';
+import { formatCFX } from '@cfxdevkit/cdk';
 
 interface BalanceContext {
   eSpace: string;

@@ -36,7 +36,7 @@ contracts/
 
 ### Dependencies
 
-Single runtime dep besides `@cfxdevkit/core`: **viem** (used purely as a pure
+Single runtime dep besides `@cfxdevkit/cdk`: **viem** (used purely as a pure
 encoder/decoder library — no `PublicClient` or `WalletClient` is constructed
 here; the framework's `Client.request()` handles transport, the framework's
 `Signer.signTransaction()` handles signing). This keeps the boundary tight:

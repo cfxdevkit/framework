@@ -1,0 +1,80 @@
+{
+  "name": "@cfxdevkit/cdk",
+  "version": "2.0.0",
+  "private": false,
+  "description": "Conflux RPC client, contract I/O, addresses, units, errors.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./address": {
+      "types": "./dist/address/index.d.ts",
+      "import": "./dist/address/index.js"
+    },
+    "./chains": {
+      "types": "./dist/chains/index.d.ts",
+      "import": "./dist/chains/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.js"
+    },
+    "./errors": {
+      "types": "./dist/errors/index.d.ts",
+      "import": "./dist/errors/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js"
+    },
+    "./units": {
+      "types": "./dist/units/index.d.ts",
+      "import": "./dist/units/index.js"
+    },
+    "./wallet": {
+      "types": "./dist/wallet/index.d.ts",
+      "import": "./dist/wallet/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "API.md",
+    "STRUCTURE.md",
+    "PORTING.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "prepublishOnly": "pnpm clean",
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:network": "RUN_NETWORK_TESTS=1 vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "clean": "rm -rf dist .vitest coverage"
+  },
+  "dependencies": {
+    "@scure/bip32": "^2.2.0",
+    "@scure/bip39": "^2.2.0",
+    "cive": "^0.8.1",
+    "viem": "^2.48.11"
+  },
+  "devDependencies": {
+    "@cfxdevkit/tsconfig": "workspace:*",
+    "@cfxdevkit/biome-config": "workspace:*",
+    "@biomejs/biome": "^2.4.15",
+    "@types/node": "^22.10.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.12",
+    "vite-plugin-dts": "^5.0.0",
+    "vitest": "^4.1.6"
+  }
+}

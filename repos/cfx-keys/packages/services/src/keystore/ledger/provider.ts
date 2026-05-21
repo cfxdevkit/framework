@@ -1,5 +1,5 @@
-import { KeystoreError, type Signer } from '@cfxdevkit/core';
-import { DEFAULT_CORE_PATH, DEFAULT_ESPACE_PATH } from '@cfxdevkit/core/wallet';
+import { KeystoreError, type Signer } from '@cfxdevkit/cdk';
+import { DEFAULT_CORE_PATH, DEFAULT_ESPACE_PATH } from '@cfxdevkit/cdk/wallet';
 import {
   type AuditLogger,
   type Capability,

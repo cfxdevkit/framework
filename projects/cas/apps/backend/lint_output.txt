@@ -1,15 +1,15 @@
 Scope: 48 of 49 workspace projects
-../../../../repos/cfx-core/packages/core lint$ biome check src
+../../../../repos/cfx-core/packages/cdk lint$ biome check src
 .../../repos/cfx-llm/packages/llm-client lint$ biome check src workers
 .../repos/cfx-meta/packages/arch-rules lint$ biome check src
 .../../repos/cfx-solidity/packages/abis lint$ biome check src
 .../repos/cfx-meta/packages/arch-rules lint: Checked 4 files in 4ms. No fixes applied.
 .../../repos/cfx-llm/packages/llm-client lint: Checked 19 files in 8ms. No fixes applied.
 .../../repos/cfx-solidity/packages/abis lint: Checked 12 files in 9ms. No fixes applied.
-../../../../repos/cfx-core/packages/core lint: Checked 25 files in 10ms. No fixes applied.
+../../../../repos/cfx-core/packages/cdk lint: Checked 25 files in 10ms. No fixes applied.
 .../repos/cfx-meta/packages/arch-rules lint: Done
 .../packages/contracts-extract lint$ biome check src
-../../../../repos/cfx-core/packages/core lint: Done
+../../../../repos/cfx-core/packages/cdk lint: Done
 .../../repos/cfx-llm/packages/llm-client lint: Done
 .../../repos/cfx-solidity/packages/abis lint: Done
 .../../repos/cfx-tools/packages/client lint$ biome check src

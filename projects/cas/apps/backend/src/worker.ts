@@ -19,8 +19,8 @@ import {
   http,
   signerFromPrivateKey,
   ZERO_ADDRESS,
-} from '@cfxdevkit/core';
-import { espaceMainnet, espaceTestnet } from '@cfxdevkit/core/chains';
+} from '@cfxdevkit/cdk';
+import { espaceMainnet, espaceTestnet } from '@cfxdevkit/cdk/chains';
 import { decodeFunctionResult, encodeFunctionData } from 'viem';
 import type { CasBackendState } from './types.js';
 

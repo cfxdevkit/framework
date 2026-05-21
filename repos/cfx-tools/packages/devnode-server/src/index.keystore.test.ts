@@ -1,7 +1,7 @@
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { deriveAccount } from '@cfxdevkit/core';
+import { deriveAccount } from '@cfxdevkit/cdk';
 import { describe, expect, it } from 'vitest';
 import { createDevnodeServerApp } from './index.js';
 import { createMockNode, TEST_MNEMONIC } from './index.test-support.js';

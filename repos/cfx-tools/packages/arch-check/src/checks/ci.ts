@@ -17,7 +17,7 @@ const requiredFiles = [
   '.github/workflows/changeset-release.yml',
   '.github/workflows/release.yml',
   'repos/cfx-tools/packages/docs-site/Dockerfile',
-  'repos/cfx-tools/packages/docs-site/scripts/sync-wiki.mjs',
+  'repos/cfx-tools/packages/docs-pipeline/package.json',
   'scripts/publish-packages.mjs',
   'infrastructure/ansible/inventory.ini',
   'infrastructure/ansible/vars/all.yml',
@@ -43,8 +43,8 @@ export async function runCiCheck(opts: { silent?: boolean } = {}): Promise<Agent
     ['/docs-site', 'docs image should use the docs-site image name'],
     ['docker/build-push-action@v6', 'docs workflow should use Buildx image publishing'],
     [
-      'node repos/cfx-tools/packages/docs-site/scripts/sync-wiki.mjs',
-      'docs workflow should sync generated wiki content before building',
+      'pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync wiki',
+      'docs workflow should sync generated wiki content through the docs-pipeline before building',
     ],
   ]);
   await checkContains(findings, '.github/workflows/deploy-docs.yml', [

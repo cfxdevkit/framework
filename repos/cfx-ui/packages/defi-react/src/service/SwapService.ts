@@ -6,8 +6,8 @@ import {
   SWAPPI_ROUTER_ADDRESS,
   WCFX_ADDRESS,
 } from '@cfxdevkit/abis/swappi';
-import type { EspaceClient } from '@cfxdevkit/core/client';
-import type { Address } from '@cfxdevkit/core/types';
+import type { EspaceClient } from '@cfxdevkit/cdk/client';
+import type { Address } from '@cfxdevkit/cdk/types';
 import { CFX_NATIVE_ADDRESS, normalizeAddress, resolveTokenAddress } from '@cfxdevkit/ui-core';
 import { type Abi, decodeFunctionResult, encodeFunctionData, getAddress } from 'viem';
 import {
@@ -22,7 +22,7 @@ import {
 export interface SwapServiceConfig {
   /** eSpace chain ID — 1030 (mainnet) or 71 (testnet). */
   chainId: number;
-  /** eSpace public client from `@cfxdevkit/core`. */
+  /** eSpace public client from `@cfxdevkit/cdk`. */
   client: EspaceClient;
 }
 

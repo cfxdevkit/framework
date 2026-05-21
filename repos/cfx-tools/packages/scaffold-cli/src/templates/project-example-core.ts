@@ -28,7 +28,7 @@ export const PROJECT_EXAMPLE_CORE_FILES: TemplateFile[] = [
   "type": "module",
   "scripts": { "dev": "vite", "build": "vite build" },
   "dependencies": {
-    "@cfxdevkit/core":           "*",
+    "@cfxdevkit/cdk":           "*",
     "@cfxdevkit/react":          "*",
     "@cfxdevkit/theme":          "*",
     "@cfxdevkit/wallet-connect": "*",
@@ -51,9 +51,9 @@ export const PROJECT_EXAMPLE_CORE_FILES: TemplateFile[] = [
   {
     path: 'packages/frontend/src/main.tsx',
     content: `import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createEspaceClient } from '@cfxdevkit/core';
+import { createEspaceClient } from '@cfxdevkit/cdk';
 import { CfxProvider } from '@cfxdevkit/react';
-import { espaceTestnet } from '@cfxdevkit/core/chains';
+import { espaceTestnet } from '@cfxdevkit/cdk/chains';
 import { createCfxConfig } from '@cfxdevkit/wallet-connect';
 import '@cfxdevkit/theme/css';
 import { WagmiProvider } from 'wagmi';
@@ -124,7 +124,7 @@ export function App() {
   "type": "module",
   "scripts": { "dev": "node --watch dist/server.js", "build": "tsc" },
   "dependencies": {
-    "@cfxdevkit/core":    "*",
+    "@cfxdevkit/cdk":    "*",
     "@cfxdevkit/wallet":  "*",
     "hono": "^4.0.0"
   },

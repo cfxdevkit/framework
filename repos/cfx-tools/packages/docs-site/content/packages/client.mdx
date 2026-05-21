@@ -1,0 +1,178 @@
+---
+title: "@cfxdevkit/client"
+description: "Typed HTTP client for the Conflux Devkit devnode-server control plane."
+---
+
+import { Callout, Tabs } from 'nextra/components'
+
+# @cfxdevkit/client
+
+> Typed HTTP client for the Conflux Devkit devnode-server control plane.
+
+## Install
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/client
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/client
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/client
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+## Usage
+
+```typescript
+import { createConfluxDevkitClient } from '@cfxdevkit/client';
+
+const client = createConfluxDevkitClient({
+  baseUrl: 'http://localhost:12345',
+});
+
+// Start a node with a specific profile
+await client.node.start({ profile: 'devnet' });
+
+// Restart the node
+await client.node.restart();
+
+// Wipe node state and restart
+await client.node.wipe({ profile: 'devnet' });
+
+// Start/stop mining
+await client.node.mine({ start: true });
+
+// Deploy a contract from a compiled artifact
+const artifact = { /* compiled artifact */ };
+const receipt = await client.deploy.deployContract({
+  artifact,
+  constructorArgs: [],
+  sender: '0x...',
+});
+
+console.log('Deployed at:', receipt.contractAddress);
+
+// Compile Solidity source
+const result = await client.compiler.compile({
+  sources: { 'Greeter.sol': 'pragma solidity ^0.8.0; contract Greeter {}' },
+  outputSelection: { '*': { '*': ['abi', 'evm.bytecode.object'] } },
+});
+
+// Manage accounts and wallets
+const accounts = await client.accounts.list();
+const wallet = await client.keystore.createWallet({ password: 'secret' });
+
+// Bootstrap a node from a template
+const templates = await client.bootstrap.listTemplates();
+const deployResult = await client.bootstrap.deployTemplate({
+  templateName: 'devnet',
+  config: { /* template-specific config */ },
+});
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 76 symbols |
+
+## Tier
+
+**Tier 1 — platform** — May import Tier 0 framework packages.
+
+## API Reference
+
+## `.`
+
+```ts
+export declare const __packageName: "@cfxdevkit/client";
+export { ConfluxDevkitClientOptions }
+export { HttpClient }
+export { CompilerNamespace }
+export { DeployNamespace }
+export { MiningNamespace }
+export { NetworkNamespace }
+export { SessionKeysNamespace }
+export { createCompilerNamespace }
+export { createDeployNamespace }
+export { createMiningNamespace }
+export { createNetworkNamespace }
+export { createSessionKeysNamespace }
+export declare class ConfluxDevkitClient {
+export declare function createConfluxDevkitClient(options: ConfluxDevkitClientOptions): ConfluxDevkitClient;
+export declare function createNodeNamespace(http: HttpClient): NodeNamespace;
+export declare function createHealthNamespace(http: HttpClient): HealthNamespace;
+export declare function createKeystoreNamespace(http: HttpClient): KeystoreNamespace;
+export declare function createAccountsNamespace(http: HttpClient): AccountsNamespace;
+export declare function createContractsNamespace(http: HttpClient): ContractsNamespace;
+export declare function createBootstrapNamespace(http: HttpClient): BootstrapNamespace;
+export interface NodeStartInput {
+export interface NodeRestartInput {
+export interface NodeWipeInput {
+export interface NodeMineInput {
+export interface NodeNamespace {
+export interface HealthNamespace {
+export interface KeystoreNamespace {
+export interface AccountsNamespace {
+export interface ContractsNamespace {
+export interface BootstrapNamespace {
+export interface OkResponse {
+export interface HealthResponse {
+export interface AccountInfo {
+export interface WalletSummary {
+export interface ActiveWalletSummary extends WalletSummary {
+export interface WalletAccountSummary {
+export interface RevealRequestInput {
+export interface RevealRequestSummary {
+export interface RevealRequestResponse {
+export interface RevealedSecret {
+export interface RevealConsumeResponse {
+export interface KeystoreStatus {
+export interface NodeProfileSummary {
+export interface NodeProfileState {
+export interface NodeProfileSelection {
+export interface ContractRecord {
+export interface CompileWarning {
+export interface CompileArtifact {
+export interface SessionCapability {
+export interface SessionKeyIssueResponse {
+export interface SessionKeyVerifyResponse {
+export interface DeployReceiptSummary {
+export interface DeployRunResponse {
+export interface BootstrapTemplateSummary {
+export interface BootstrapTemplate extends BootstrapTemplateSummary {
+export interface BootstrapCatalogResponse {
+export interface BootstrapTemplateResponse {
+export interface BootstrapDeployInput {
+export interface BootstrapDeployResponse {
+export interface NetworkConfig {
+export interface NetworkChainIds {
+export interface NetworkCapabilities {
+export interface NetworkProfileResponse {
+export interface NetworkCapabilitiesResponse {
+export interface NetworkConfigResponse {
+export interface ContractReadResponse {
+export interface ContractWriteResponse {
+export interface MiningStatus {
+export interface NodeStatus {
+export type RevealKind = 'mnemonic' | 'private-key';
+export type Network = 'local' | 'testnet' | 'mainnet';
+export type NetworkMode = 'local' | 'public';
+export type Space = 'core' | 'espace';
+export type SignerSource = 'env' | 'request' | 'keystore' | (string & {});
+export type TrackedContractCallResponse = ContractReadResponse | ContractWriteResponse;
+```
+
+{/* readme-hash: 8b26d96af53f65c5a892b6df83a869b19020ca9a617f27f7dea1e554e235eafd */}

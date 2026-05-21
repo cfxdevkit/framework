@@ -1,4 +1,4 @@
-import type { CoreSpaceClient, Hex, SignableTx } from '@cfxdevkit/core';
+import type { CoreSpaceClient, Hex, SignableTx } from '@cfxdevkit/cdk';
 import type { Abi, ContractFunctionName } from 'viem';
 import { encodeFunctionData, hexToBigInt, isAddress, toHex } from 'viem';
 import { ContractsError } from '../errors/index.js';

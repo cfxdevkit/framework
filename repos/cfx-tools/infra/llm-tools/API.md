@@ -1,19 +1,23 @@
-# API
+# `@cfxdevkit/llm-tools` — Public API
 
-`@cfxdevkit/llm-tools` exposes command metadata for tooling integrations.
+> CLI dispatcher for local LLM automation workflows.
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 5 symbols |
+
+---
+
+## `.`
 
 ```ts
-import { llmCommands, findLlmCommand } from '@cfxdevkit/llm-tools';
+export type LlmWorker = 'lemonade' | 'deterministic';
+export type LlmCommandName = (typeof llmCommands)[number]['name'];
+export interface LlmCommandDefinition {
+export declare const llmCommands: readonly [
+export declare function findLlmCommand(name: string): LlmCommandDefinition | undefined;
 ```
 
-The runtime CLI is available as `cfx-llm` after building the package, and can be invoked via the package script during workspace development:
-
-```bash
-pnpm --filter @cfxdevkit/llm-tools llm -- <command>
-```
-
-The deterministic hotspot scanner is available through the same CLI surface:
-
-```bash
-pnpm --filter @cfxdevkit/llm-tools llm -- hotspots --fail-on-hard
-```
+<!-- api-hash: a3314d590235c2bb513bc3091e8469108d289650cbc7a6d69c36581c0d2d92b9 -->

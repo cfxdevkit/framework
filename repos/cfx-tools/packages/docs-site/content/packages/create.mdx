@@ -1,0 +1,129 @@
+---
+title: "@cfxdevkit/create"
+description: "Project scaffolder (npm create @cfxdevkit)."
+---
+
+import { Callout, Tabs } from 'nextra/components'
+
+# @cfxdevkit/create
+
+> Project scaffolder (npm create @cfxdevkit).
+
+## Install
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/create
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/create
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/create
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+**Scope:** Project generator. `npx @cfxdevkit/create <template>`.
+
+**Responsibilities**
+- Template discovery from [`../../templates/`](../../templates/)
+- Variable substitution using `{{ variable }}` syntax
+- Post-install setup (runs `pnpm install`, `git init`, and creates `.env` if present in template)
+- Optional integrations (wallet, MCP, devcontainer) via template-specific hooks
+
+## Usage
+
+```bash
+npx @cfxdevkit/create <template-name> [project-dir]
+```
+
+If `project-dir` is omitted, defaults to `<template-name>`.
+
+## API Reference
+
+### `.`
+
+| Symbol | Description |
+|--------|-------------|
+| `scaffoldProject` | Main entry point. Accepts `templateName`, `targetDir`, and optional `options` (e.g., `skipInstall`, `skipGit`, `vars`). |
+| `parseArgs` | Parses CLI arguments into structured options. |
+| `validateName` | Validates project name against npm naming rules. |
+| `getTemplate` | Fetches a template definition by name. |
+| `listTemplates` | Lists all available templates. |
+| `getTemplateFiles` | Returns files to be generated for a given template and optional target (e.g., `"client"`, `"server"`). |
+| `renderFile` | Renders a template file with variable substitution. |
+| `TemplateDefinition`, `TemplateFile`, `TemplateTarget` | Type definitions for templates and their structure. |
+
+### `./templates`
+
+Re-exports core template-related types and utilities:
+
+| Symbol | Description |
+|--------|-------------|
+| `listTemplates` | Returns `TemplateDefinition[]`. |
+| `getTemplate(name)` | Returns `TemplateDefinition | undefined`. |
+| `renderFile(content, values)` | Substitutes `{{ key }}` placeholders in `content` with `values`. |
+| `getTemplateFiles(template, target?)` | Returns `TemplateFile[]` for the given template and optional target (e.g., `"client"`, `"server"`). |
+| `TemplateDefinition`, `TemplateFile`, `TemplateTarget` | Type definitions for templates and their structure. |
+
+## Template Format
+
+Templates are defined in `../../templates/` as directories containing:
+- `template.json`: metadata (`name`, `description`, `vars`, `files`, `hooks`)
+- `files/`: template files with `{{ variable }}` placeholders
+- Optional `hooks/`: scripts executed post-scaffold (e.g., `setup-wallet.sh`, `init-mcp.sh`)
+
+## Example
+
+```ts
+import { scaffoldProject } from '@cfxdevkit/create';
+
+await scaffoldProject('basic', './my-project', {
+  skipInstall: false,
+  skipGit: false,
+  vars: {
+    projectName: 'My Awesome Project',
+    author: 'Jane Doe',
+  },
+});
+```
+
+## API Reference
+
+## `.`
+
+```ts
+export declare const __packageName: "@cfxdevkit/create";
+export { parseArgs }
+export { scaffoldProject }
+export { TemplateDefinition }
+export { TemplateFile }
+export { TemplateTarget }
+export { getTemplate }
+export { getTemplateFiles }
+export { listTemplates }
+export { renderFile }
+export { validateName }
+```
+
+---
+
+## `./templates`
+
+```ts
+export { TemplateDefinition }
+export { TemplateFile }
+export { TemplateTarget }
+export declare function listTemplates(): TemplateDefinition[];
+export declare function getTemplate(name: string): TemplateDefinition | undefined;
+export declare function renderFile(content: string, values: Record<string, string>): string;
+export declare function getTemplateFiles(template: TemplateDefinition, target?: TemplateTarget): TemplateFile[];
+```
+
+{/* readme-hash: caad6d04917ce16498120498a167fab532855a6df11a1ee9dda6e92d19bf582f */}

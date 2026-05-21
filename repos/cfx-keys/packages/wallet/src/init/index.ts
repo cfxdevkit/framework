@@ -20,9 +20,9 @@
  */
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import type { Signer } from '@cfxdevkit/core';
-import { KeystoreError } from '@cfxdevkit/core';
-import { deriveAccount, generateMnemonic } from '@cfxdevkit/core/wallet';
+import type { Signer } from '@cfxdevkit/cdk';
+import { KeystoreError } from '@cfxdevkit/cdk';
+import { deriveAccount, generateMnemonic } from '@cfxdevkit/cdk/wallet';
 import type { Capability, KeystoreProvider, SecretRef } from '@cfxdevkit/services/keystore';
 import {
   changeFilePassphrase,

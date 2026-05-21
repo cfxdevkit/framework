@@ -46,7 +46,7 @@
     "vitest": "^4.1.6"
   },
   "dependencies": {
-    "@cfxdevkit/core": "workspace:^",
+    "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/executor": "workspace:^",
     "@cfxdevkit/protocol": "workspace:^",
     "better-sqlite3": "^12.10.0",

@@ -2,306 +2,225 @@
 title: "Other — cfx-solidity"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Other — cfx-solidity
 
-# `@cfxdevkit/repo-cfx-solidity` — Solidity Pipeline Module
+# cfx-solidity
 
-The **Other — cfx-solidity** module (package name `@cfxdevkit/repo-cfx-solidity`) is a self-contained workspace that provides the full Solidity toolchain for Conflux development: ABI definitions, compiler integration, contract bindings, and deployment tooling. It is a *carve-out* from `cfx-core`, designed to be reusable across layers — including `@cfxdevkit/core` itself — without circular dependencies.
+The `cfx-solidity` workspace provides the Solidity pipeline for the Conflux development kit. It handles standard ABIs, contract bindings, and compiler tooling. This module was carved out from `cfx-core` to operate independently, allowing any layer of the stack (including `@cfxdevkit/cdk`) to consume ABI definitions without pulling in contract-execution machinery.
 
-This module is **not a runtime dependency** of end users. Instead, it is a *monorepo* containing several internal packages that power higher-level tooling (e.g., `@cfxdevkit/contracts`, `@cfxdevkit/compiler`, `@cfxdevkit/codegen-contracts`). Developers interact with it indirectly via its public packages.
+## Package Structure
 
----
+The workspace is organized into distinct packages based on responsibility:
 
-## High-Level Architecture
+| Package | Purpose | Dependencies |
+| :--- | :--- | :--- |
+| `@cfxdevkit/abis` | Standard EVM ABI shapes (ERC-20/721/1155, Multicall3). Re-exported from `viem`. | `viem` |
+| `@cfxdevkit/contracts` | Contract bindings, read/write/deploy surface, and bridge utilities. | `@cfxdevkit/abis`, `@cfxdevkit/cdk`, `viem` |
+| `@cfxdevkit/compiler` | Solidity compilation pipeline. | *(Internal)* |
+| `@cfxdevkit/contracts-extract` | Contract artifact extraction. | *(Internal)* |
 
-```mermaid
-flowchart TD
-    subgraph "Public Packages"
-        A["@cfxdevkit/abis"] -->|re-exports| B["@cfxdevkit/contracts"]
-        C["@cfxdevkit/compiler"] -->|compiles| D["@cfxdevkit/contracts"]
-        E["@cfxdevkit/codegen-contracts"] -->|extracts| D
-    end
+## ABI Definitions (`@cfxdevkit/abis`)
 
-    subgraph "Core Dependencies"
-        B -->|uses| F["@cfxdevkit/core"]
-        C -->|uses| F
-        D -->|uses| F
-    end
+The `@cfxdevkit/abis` package is the leaf package for ABI definitions. It ensures framework-stable aliases for standard EVM interfaces sourced from `viem`.
 
-    subgraph "External"
-        C -->|uses| G["solc (Solidity compiler)"]
-        A -->|uses| H["viem"]
-    end
+### Key Exports
+
+*   **Standard ABIs:** `ERC20_ABI`, `ERC721_ABI`, `ERC1155_ABI`, `MULTICALL3_ABI`, `ERC2612_ABI`, `ERC4626_ABI`.
+*   **CamelCase Aliases:** `erc20Abi`, `erc721Abi`, `erc1155Abi`, etc. (Point to uppercase constants).
+*   **Constants:** `MULTICALL3_ADDRESS` (`0xcA11bde05977b3631167028862bE2a173976CA11`).
+
+### Usage
+
+```typescript
+import { ERC20_ABI, erc20Abi } from '@cfxdevkit/abis';
+
+// Prefer direct import for tree-shaking
+import { ERC20_ABI } from '@cfxdevkit/abis';
 ```
 
-### Key Design Principles
+## Contract Interaction (`@cfxdevkit/contracts`)
 
-- **Zero circular dependencies**: `@cfxdevkit/abis` has *no* `cfxdevkit` dependencies, enabling safe use in `@cfxdevkit/core`.
-- **Modular exports**: Each package exposes granular sub-paths (`./solc`, `./resolver`, `./deploy`) for optimal tree-shaking.
-- **Test-first**: All packages include integration tests (e.g., `integration.test.ts`) that compile → deploy → read contracts against a real `devnode`.
-- **Conflux-aware**: Bridge helpers (`@cfxdevkit/contracts/bridge`) handle Core/eSpace address mapping and cross-space calls.
+The `@cfxdevkit/contracts` package provides the execution layer. It abstracts the differences between Conflux **Core Space** (base32 addresses, `cfx_*` RPC) and **eSpace** (0x addresses, `eth_*` RPC).
 
----
+### Sub-Paths
 
-## Package Breakdown
+Import from sub-paths to maintain tree-shaking efficiency:
 
-### 1. `@cfxdevkit/abis` — Standard ABI Shapes
+*   `@cfxdevkit/contracts/abis`: Back-compat re-exports of ABI shapes.
+*   `@cfxdevkit/contracts/read`: Read-only contract calls.
+*   `@cfxdevkit/contracts/write`: Transaction preparation and signing.
+*   `@cfxdevkit/contracts/deploy`: Contract deployment logic.
+*   `@cfxdevkit/contracts/bridge`: Cross-space transfer utilities.
+*   `@cfxdevkit/contracts/erc20`: Typed helpers for ERC-20 tokens.
+*   `@cfxdevkit/contracts/errors`: Custom error classes.
 
-**Purpose**: Re-export canonical EVM ABIs (ERC-20/721/1155, Multicall3) from `viem` under stable aliases.
+### Read Operations
 
-**Why separate?**  
-ABI definitions are *pure data* — they don’t need compiler or runtime logic. Isolating them avoids pulling heavy dependencies into `@cfxdevkit/core`.
+The `readContract` function automatically detects the client family to select the correct RPC method.
 
-**Public Surface** (`src/index.ts`):
-```ts
-export const ERC20_ABI, ERC721_ABI, ERC1155_ABI, MULTICALL3_ABI;
-export const MULTICALL3_ADDRESS = '0xcA11bde05977b3631167028862bE2a173976CA11';
-```
+*   **eSpace:** Uses `eth_call`.
+*   **Core:** Uses `cfx_call` with `epochTag`.
 
-**Key Properties**:
-- Zero `cfxdevkit` dependencies.
-- Type-safe re-exports (`export type ERC20_ABI = typeof ERC20_ABI`).
-- Canonical Multicall3 address (verified per chain).
-
-**Usage**:
-```ts
-import { ERC20_ABI, MULTICALL3_ADDRESS } from '@cfxdevkit/abis';
-```
-
-> 💡 **Prefer this over `@cfxdevkit/contracts/abis`** in new code — the latter is a back-compat re-export.
-
----
-
-### 2. `@cfxdevkit/compiler` — Solidity Compilation Pipeline
-
-**Purpose**: Compile Solidity sources to artifacts using `solc` standard JSON, plus import resolvers and template helpers.
-
-**Core Components**:
-
-| Module | Purpose |
-|--------|---------|
-| `./solc` | Low-level `solc` loader + `compile()` shim |
-| `./resolver` | Import resolution strategies (`npmResolver`, `remappingResolver`, `compose`) |
-| `./templates` | Pre-baked Solidity templates (e.g., `basicErc20`) |
-| `./artifacts` | Artifact I/O helpers (`selectorsOf`, `readArtifact`, `writeArtifact`) |
-| `./errors` | Typed compile errors (`CompileError`, `CompileErrorCode`) |
-
-**Key Functions**:
-
-- `compile(input: CompileInput): Promise<CompileOutput>`  
-  Compiles sources with `solc`, caches binaries in `$XDG_CACHE_HOME/cfxdevkit/solc`, and returns artifacts + diagnostics.
-
-- `npmResolver()` / `remappingResolver(mappings: string[])`  
-  Resolves imports like `import "@openzeppelin/contracts/token/ERC20/ERC20.sol";` or `import "ds-test/test.sol";`.
-
-- `compose(resolvers: ImportResolver[])`  
-  Chain resolvers — returns the first non-null hit.
-
-- `selectorsOf(abi: Abi)`  
-  Extracts function selectors (e.g., `0xa9059cbb` for `transfer(address,uint256)`).
-
-**Templates** (`src/templates/erc20/source.ts`):
-- `basicErc20`: A minimal, self-contained `BasicErc20` contract (no external imports), ideal for devnode tests.
-
-**Integration Test** (`src/integration.test.ts`):
-- Compiles `basicErc20` → deploys to `devnode` → reads state via `@cfxdevkit/contracts`.
-- Requires `RUN_SOLC_TESTS=1` and `RUN_DEVNODE_TESTS=1` to run.
-
----
-
-### 3. `@cfxdevkit/contracts` — Contract Bindings & Operations
-
-**Purpose**: High-level helpers for reading, writing, deploying, and interacting with contracts — with first-class support for **Core Space** and **eSpace**.
-
-**Sub-Packages**:
-
-| Path | Purpose |
-|------|---------|
-| `./abis` | Back-compat re-exports of `@cfxdevkit/abis` |
-| `./read` | `readContract()` — type-safe `eth_call`/`cfx_call` |
-| `./write` | `prepareWrite()` + `sendWrite()` — transaction signing & broadcasting |
-| `./deploy` | `deployContract()` — deploy with nonce/gas estimation for both spaces |
-| `./erc20` | Typed helpers (`erc20.balanceOf`, `erc20.transfer`, etc.) |
-| `./bridge` | Cross-space helpers (`transferToEspace`, `callEspace`, `withdrawFromMapped`) |
-
-**Core Helpers**:
-
-- `readContract({ client, address, abi, functionName, args, blockTag/epochTag })`  
-  - Uses `eth_call` for eSpace, `cfx_call` for Core Space.
-  - Validates address format (`0x` for eSpace, base32 for Core).
-
-- `prepareWrite({ address, abi, functionName, args, chainId })`  
-  Returns a `SignableTx` with encoded calldata.
-
-- `sendWrite({ client, signer, ...tx })`  
-  Fills nonce/gas/fees, signs, broadcasts, and optionally waits for receipt.
-
-- `deployContract({ client, signer, abi, bytecode, args })`  
-  - For **eSpace**: uses `eth_sendRawTransaction`.
-  - For **Core**: uses `cfx_sendRawTransaction` with `cip2930`-style gas estimation (`gasLimit`, `storageLimit`, `epochHeight`).
-
-**Bridge Helpers** (`src/bridge/index.ts`):
-- `mappedEspaceAddress(coreHex: HexAddress)`  
-  Derives eSpace address via `keccak256(coreHex)[12:32]`.
-- `transferToEspace({ client, signer, to, value })`  
-  Encodes `transferEVM(bytes20)` and sends to `CrossSpaceCall` (`0x0888...0006`).
-- `callEspace({ client, signer, to, data, value })`  
-  Encodes `callEVM(bytes20, bytes)` for cross-space calls.
-- `getMappedBalance({ client, coreHexAddress })`  
-  Reads balance via `cfx_call` against `CrossSpaceCall`.
-
----
-
-### 4. `@cfxdevkit/codegen-contracts` — Contract Extraction Tool
-
-**Purpose**: Extract ABI + bytecode from Hardhat artifacts and generate TypeScript modules for `@cfxdevkit/contracts`.
-
-**Current State**:  
-- Empty CLI scaffold (`src/index.ts`).
-- Real implementation deferred to `extract.ts`/`render.ts` per `tools/STRUCTURE.md`.
-
-**Intended Workflow**:
-```bash
-cfxdevkit-extract-contracts \
-  --artifacts ./artifacts \
-  --output ./src/contracts/generated
-```
-
----
-
-## Package Dependencies & Tree-Shaking
-
-### Dependency Graph (Simplified)
-
-```
-@cfxdevkit/abis
-  └── viem
-
-@cfxdevkit/compiler
-  ├── @cfxdevkit/core
-  ├── @cfxdevkit/abis
-  ├── solc
-  └── viem
-
-@cfxdevkit/contracts
-  ├── @cfxdevkit/core
-  ├── @cfxdevkit/abis
-  └── viem
-
-@cfxdevkit/codegen-contracts
-  └── (none yet)
-```
-
-### Tree-Shaking Strategy
-
-- **Barrel exports discouraged**: Prefer sub-paths (`import { compile } from '@cfxdevkit/compiler/solc'`).
-- **No runtime side effects**: All packages use `"type": "module"` and ESM-only exports.
-- **Dedicated entry points**: `vite.config.ts` builds multiple entry points (e.g., `./solc`, `./resolver`).
-
----
-
-## Testing Strategy
-
-### Unit Tests
-- All packages include `*.test.ts` files.
-- Use `vitest` with `node` environment.
-- Mock helpers (`src/test/mocks.ts`) provide `makeMockClient()`, `makeMockSigner()`, `getRecordedCalls()`.
-
-### Integration Tests
-- `compiler/src/integration.test.ts`:
-  - Compiles `basicErc20` → deploys to `devnode` → reads state.
-  - Requires `RUN_SOLC_TESTS=1` and `RUN_DEVNODE_TESTS=1`.
-- `bridge.test.ts`:
-  - Tests Core/eSpace address mapping and cross-space calls.
-- `deploy.test.ts`:
-  - Validates Core/eSpace deployment flows.
-
----
-
-## Configuration & Tooling
-
-### Build System
-- **Vite** for bundling (ESM only).
-- **vite-plugin-dts** for `.d.ts` generation.
-- **Biome** for linting/formatting (via `@cfxdevkit/biome-config`).
-
-### TypeScript
-- Shared `tsconfig` (`@cfxdevkit/tsconfig/lib.json`).
-- Strict mode enabled (`strict: true`, `noUnusedLocals: true`).
-
-### Cache
-- `solc` binaries cached in `$XDG_CACHE_HOME/cfxdevkit/solc` (or `~/.cache/cfxdevkit/solc`).
-
----
-
-## Usage Examples
-
-### Compile a Template Contract
-```ts
-import { compile, basicErc20 } from '@cfxdevkit/compiler';
-
-const out = await compile({
-  sources: basicErc20.sources,
-  solcVersion: basicErc20.solcVersion,
-  evmVersion: 'paris',
-  optimizer: { enabled: true, runs: 200 },
-});
-const artifact = out.artifacts.find(a => a.contractName === 'BasicErc20');
-```
-
-### Deploy to eSpace
-```ts
-import { deployContract } from '@cfxdevkit/contracts';
-import { createClient, espaceLocal, http } from '@cfxdevkit/core';
-
-const client = createClient({
-  chain: espaceLocal,
-  transport: http(),
-});
-
-const receipt = await deployContract({
-  client,
-  signer,
-  abi: artifact.abi,
-  bytecode: artifact.bytecode,
-  args: ['DevToken', 'DEV', 18, 1_000_000n],
-  waitForReceipt: true,
-});
-```
-
-### Read ERC-20 Balance (Core Space)
-```ts
+```typescript
 import { readContract } from '@cfxdevkit/contracts/read';
-import { createClient } from '@cfxdevkit/core';
-
-const client = createClient({
-  chain: { ...coreLocal, id: 1029 },
-  transport: http(),
-});
+import { ERC20_ABI } from '@cfxdevkit/contracts/abis';
 
 const balance = await readContract({
   client,
-  address: 'cfxtest:acg158kvr8zanb1bs048ryb6rtrhr283ma70vz70tx',
+  address: '0x...', // eSpace) or 'cfxtest:...' (Core)
   abi: ERC20_ABI,
   functionName: 'balanceOf',
-  args: ['cfxtest:...user'],
-  epochTag: 'latest_state',
+  args: ['0x...'],
 });
 ```
 
----
+**Validation:**
+*   Rejects `0x` addresses on Core Space clients.
+*   Rejects base32 addresses on eSpace clients.
+*   Wraps decode errors in `ContractsError`.
 
-## Migration Notes
+### Write Operations
 
-- **`@cfxdevkit/contracts/abis` → `@cfxdevkit/abis`**:  
-  Use the leaf package for ABI definitions to avoid pulling compiler/runtime deps.
-- **`@cfxdevkit/compiler` sub-paths**:  
-  Prefer `import { compile } from '@cfxdevkit/compiler/solc'` over barrel imports.
+Write operations handle nonce management, gas estimation, and transaction signing.
 
----
+*   **`prepareWrite`**: Encodes call data and returns a `SignableTx` object.
+*   **`sendWrite`**: Fills missing fields (nonce, gas, fees), signs via `signer`, and broadcasts.
 
-## Future Work
+```typescript
+import { sendWrite } from '@cfxdevkit/contracts/write';
 
-- Implement `@cfxdevkit/codegen-contracts` extraction/rendering logic.
-- Add `@cfxdevkit/contracts/erc721`/`erc1155` typed helpers.
-- Expand `@cfxdevkit/compiler/templates` with more patterns (e.g., `basic-multicall`, `basic-bridge`).
+const result = await sendWrite({
+  client,
+  signer,
+  address: TOKEN_ADDRESS,
+  abi: ERC20_ABI,
+  functionName: 'transfer',
+  args: [RECIPIENT, 100n],
+  waitForReceipt: true, // Polls for receipt if true
+});
+```
+
+**Core Space Specifics:**
+*   Uses `cfx_sendRawTransaction`.
+*   Requires `coreAddress` on the signer.
+*   Calculates `gas`, `storageLimit`, and `epochHeight` based on `cfx_estimateGasAndCollateral`.
+*   Applies a 25% safety buffer to gas limits.
+
+### Deployment
+
+The `deployContract` function supports deployment on both spaces.
+
+*   **eSpace:** Broadcasts via `eth_sendRawTransaction`. Extracts `contractAddress` from receipt.
+*   **Core:** Broadcasts via `cfx_sendRawTransaction`. Extracts `contractCreated` from receipt.
+
+```typescript
+import { deployContract } from '@cfxdevkit/contracts/deploy';
+
+const result = await deployContract({
+  client,
+  signer,
+  abi: ERC20_ABI,
+  bytecode: '0x60006000',
+  waitForReceipt: true,
+});
+// result.address contains the deployed contract address
+```
+
+### Cross-Space Bridge
+
+The `bridge` namespace handles interactions with the `CrossSpaceCall` contract (`0x0888000000000000000000000000000000000006`).
+
+*   **`transferToEspace`**: Encodes `transferEVM(bytes20)` and broadcasts from Core to eSpace.
+*   **`callEspace`**: Encodes `callEVM(bytes20, bytes)` to invoke eSpace contracts from Core.
+*   **`withdrawFromMapped`**: Encodes `withdrawFromMapped(uint256)` to move funds from eSpace back to Core.
+*   **`mappedEspaceAddress`**: Derives the eSpace address from a Core hex address using `keccak256(coreHex)[12:32]`.
+*   **`getMappedBalance`**: Queries the balance of a mapped address on Core.
+
+```typescript
+import { bridge } from '@cfxdevkit/contracts';
+
+// Transfer from Core to eSpace
+await bridge.transferToEspace({
+  client,
+  signer,
+  to: '0x000000000000000000000000000000000000c0de',
+  value: 1_000_000_000_000_000_000n,
+});
+```
+
+## Architecture & Execution Flow
+
+The module routes requests based on the `client` configuration. The following diagram illustrates the dispatch logic for read/write operations:
+
+<Mermaid chart={`flowchart TD
+    User[User Code] --> Lib["@cfxdevkit/contracts"]
+    Lib --> Read[readContract]
+    Lib --> Write[sendWrite]
+    
+    Read --> Check{Client Family?}
+    Write --> Check
+    
+    Check -- eSpace --> EthRPC[eth_call / eth_sendRawTransaction]
+    Check -- Core --> CfxRPC[cfx_call / cfx_sendRawTransaction]
+    
+    EthRPC --> Node[EVM Node]
+    CfxRPC --> Conflux[Conflux Core Node]
+    
+    subgraph Validation
+    Check -.-> AddrCheck[Address Format Check]
+    AddrCheck -- Invalid --> Err[ContractsError]
+    end
+`} />
+
+## Development & Build
+
+### Tooling
+
+*   **Build:** `vite` with `vite-plugin-dts` for TypeScript declaration generation.
+*   **Test:** `vitest` with `node` environment.
+*   **Lint:** `@biomejs/biome`.
+*   **Config:** `moon` for workspace project configuration.
+
+### Scripts
+
+Run the following from the package root:
+
+```bash
+pnpm build          # Compile to dist/
+pnpm test           # Run vitest
+pnpm typecheck      # Run tsc --noEmit
+pnpm lint           # Run biome check
+pnpm clean          # Remove dist, coverage, and cache
+```
+
+### Testing Utilities
+
+The package exports mock utilities for testing contract interactions:
+
+*   `makeMockClient`: Creates a mock RPC client with recorded calls.
+*   `makeMockSigner`: Creates a mock signer that records transaction history.
+*   `getRecordedCalls`: Retrieves the list of RPC methods invoked during a test.
+
+```typescript
+import { makeMockClient, makeMockSigner } from '@cfxdevkit/contracts/test/mocks';
+
+const client = makeMockClient({ rpc: { eth_call: '0x...' } });
+const signer = makeMockSigner();
+```
+
+## Error Handling
+
+The module defines specific error codes within `ContractsError`:
+
+*   `contracts/invalid-argument`: Thrown when address formats mismatch the client family (e.g., 0x address on Core).
+*   `contracts/reverted`: Thrown when a transaction receipt indicates failure.
+*   `contracts/timeout`: Thrown when `waitForReceipt` exceeds `receiptTimeoutMs`.
+
+## Contributing
+
+1.  Ensure `@cfxdevkit/abis` remains dependency-free of `cfxdevkit` logic.
+2.  When adding new contract bindings, prefer sub-path exports (e.g., `./erc20`) over the main barrel export.
+3.  Update `moon.yml` if adding new packages to the workspace.
+4.  Verify dual-space compatibility (Core vs eSpace) for all new RPC interactions.

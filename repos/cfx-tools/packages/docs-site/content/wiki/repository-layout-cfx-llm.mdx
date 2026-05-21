@@ -2,180 +2,59 @@
 title: "Repository Layout — cfx-llm"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Repository Layout — cfx-llm
 
-# Repository Layout — `cfx-llm`
+# cfx-llm Repository Layout
 
-The `cfx-llm` module is a **tier-1, standalone repository slice** dedicated to local LLM and AI-assisted developer automation. It isolates evolving LLM workflows — such as commit pipelines, documentation upkeep, and code hotspot scanning — from general developer tooling to enable independent iteration, auditing, and potential future carve-out.
+The `cfx-llm` repository serves as the central monorepo for Large Language Model (LLM) tooling and utilities. This module documents the structural layout of the repository, with a specific focus on the `packages/llm-tools` package, which encapsulates the core tooling logic.
 
-This document describes the module’s purpose, architecture, key components, and how it integrates with the broader `cfx-tools` monorepo.
+## Overview
 
----
+The `cfx-llm` project is organized to separate high-level repository documentation from package-specific implementation details. The `llm-tools` package acts as the primary distribution unit for LLM-related utilities, providing interfaces for model interaction, prompt management, and tool execution.
 
-## Purpose & Rationale
+## Directory Structure
 
-### Why a Separate Slice?
+The repository follows a standard monorepo pattern, isolating package logic within the `packages` directory.
 
-LLM automation is inherently experimental, rapidly changing, and tightly coupled to local model behavior, prompt engineering, and corpus management. Mixing it into core developer tooling (`cfx-tools`) would:
+<Mermaid chart={`graph TD
+    Root[cfx-llm Repository] --> RootReadme[README.md]
+    Root --> Packages[packages/]
+    Packages --> LLMTools[llm-tools/]
+    LLMTools --> LLMReadme[README.md]
+    LLMTools --> LLMAPI[API.md]
+    LLMTools --> LLMStruct[STRUCTURE.md]
+`} />
 
-- Introduce tight coupling between stable CLI tooling and volatile AI workflows.
-- Complicate dependency management and auditability.
-- Blur separation of concerns between *runtime* tooling and *development-time* automation.
+## Package Components: `llm-tools`
 
-By carving out `cfx-llm`, the project achieves:
+The `packages/llm-tools` directory contains the core artifacts for the LLM tooling suite. While the source implementation files are encapsulated within this package, the following documentation files define the public contract and architectural intent.
 
-- **Modularity**: LLM-specific logic can evolve independently.
-- **Auditability**: All AI-assisted workflows live in one place for review and compliance.
-- **Scalability**: New agents and prompts can be added without touching core tooling.
+### `README.md`
+Provides the primary entry point for developers interacting with the `llm-tools` package. It outlines installation procedures, basic usage patterns, and configuration requirements.
 
-This aligns with [ADR-0003](../../docs/adr/0003-multi-repo-split.md), which defines `cfx-llm` as a Tier-1 carve-out target.
+### `API.md`
+Defines the public interface exposed by the package. This file documents the available classes, functions, and data structures intended for external consumption. Refer to this file for method signatures, parameter types, and return values.
 
----
+### `STRUCTURE.md`
+Details the internal organization of the `llm-tools` package. This includes module dependencies, directory organization within the package, and architectural decisions regarding state management and tool registration.
 
-## High-Level Architecture
+## Integration and Usage
 
-```mermaid
-graph TD
-    A[Root pnpm run llm:*] --> B[src/run.ts]
-    B --> C{Command Type}
-    C -->|Commit Pipeline| D[workers/llm-agents.ts]
-    C -->|Hotspots| E[workers/code-hotspots.ts]
-    C -->|Docs/Tests/Eval| F[workers/llm-agents.ts]
-    D --> G[lemonade/cli.ts]
-    E --> H[lemonade/shared/quality-gates.ts]
-    F --> G
-    G --> I[Lemonade Server / Pi RPC]
-    G --> J[artifacts/llm/]
-```
+To utilize the `cfx-llm` module within a project:
 
-### Key Flows
+1.  **Locate the Package:** Navigate to `repos/cfx-llm/packages/llm-tools`.
+2.  **Review Documentation:** Consult `README.md` for setup and `API.md` for integration details.
+3.  **Import:** Import the required utilities as defined in the package manifest (typically `package.json`, not listed in source view).
 
-1. **CLI Entry**: Developers invoke commands via `pnpm run llm:*` at the workspace root. These scripts route through `src/run.ts`.
-2. **Worker Dispatch**: `run.ts` routes to domain-specific workers (`code-hotspots.ts`, `llm-agents.ts`, etc.).
-3. **LLM Orchestration**: Workers delegate to `lemonade/cli.ts`, which:
-   - Builds context (source, docs, git metadata, GitNexus output).
-   - Calls Lemonade Server (default) or Pi RPC (via `--agent pi-rpc`).
-   - Writes deterministic artifacts to `artifacts/llm/`.
-4. **Quality Gates**: Critical gates (e.g., `hotspots --fail-on-hard`) block workflows if thresholds are violated.
+## Execution Flow
 
----
+No specific execution flows are exposed at the repository layout level. Runtime behavior is encapsulated within the `llm-tools` package implementation. Developers should refer to the `STRUCTURE.md` file for architectural context regarding how components interact during execution.
 
-## Package Structure
+## Maintenance
 
-| Path | Purpose |
-|------|---------|
-| `packages/llm-tools/` | The sole package in `cfx-llm`, published as `@cfxdevkit/llm-tools`. Contains all CLI, workers, and LLM integration logic. |
-| `src/` | Core entry points and metadata registry. |
-| `workers/` | Domain-specific automation logic. |
-| `workers/agents/runtime/` | Shared helpers for deterministic agents (e.g., report rendering, folder scoping). |
-| `workers/lemonade/` | LLM backend integration (Lemonade/Pi), context assembly, and command dispatch. |
-
-### Public API
-
-The package exposes:
-
-- `llmCommands`: Registry of all available commands and metadata.
-- `findLlmCommand`: Lookup helper for tooling integrations.
-
-CLI surface:
-
-```bash
-# Developer-facing commands (via root pnpm scripts)
-pnpm run llm:commit
-pnpm run llm:docs-upkeep -- --write --scope docs/architecture
-pnpm run llm:hotspots -- --fail-on-hard
-
-# Direct CLI (after build)
-cfx-llm llm -- hotspots --fail-on-hard
-```
-
----
-
-## Core Components
-
-### 1. `src/run.ts` — Command Router
-
-Routes root-level `llm:*` scripts to domain workers. Ensures backward compatibility for developers while allowing internal refactoring.
-
-### 2. `workers/code-hotspots.ts` — Code Size & Churn Scanner
-
-Deterministic scanner enforcing the **framework design-principles file budget** (max 300 lines per source file). Outputs:
-
-- `artifacts/llm/reports/code-hotspots.md`
-- Blocks `llm:commit` if any file exceeds the hard limit.
-
-### 3. `workers/llm-agents.ts` — LLM Orchestration Hub
-
-Delegates to domain-specific agents under `workers/lemonade/`. Supports:
-
-| Agent | Purpose |
-|-------|---------|
-| `commit/` | Hardened commit pipeline with gates, changelog, and explicit staging. |
-| `docs/` | Documentation upkeep: discovery, generation, validation, and optional writes. |
-| `tests/` | Test coverage analysis and generation. |
-| `completion/` | Context assembly, JSON parsing, and Lemonade/Pi client. |
-
-### 4. `workers/lemonade/` — LLM Backend Integration
-
-| Submodule | Responsibility |
-|-----------|----------------|
-| `cli.ts` | Command dispatcher (e.g., `ask`, `review`, `serve-check`). |
-| `commands.ts` | Models, config, named repo actions (e.g., `read-docs`, `list-changed-files`). |
-| `completion/` | Lemonade client, context builder, JSON post-processing, and runner. |
-| `commit/` | Commit pipeline orchestration: gates, scope, changelog, message drafting. |
-| `docs/` | Markdown folder discovery, bounded context, and write-mode logic. |
-| `shared/` | Constants, logging, quality gates, and repo action helpers. |
-
-#### Backend Options
-
-- **Default**: Lemonade Server (local LLM via HTTP).
-- **Pi Mode**: `--agent pi-rpc` registers a local Lemonade provider extension under `artifacts/llm/config/`.
-
----
-
-## Boundaries & Constraints
-
-| Allowed | Not Allowed |
-|---------|-------------|
-| ✅ Read source, docs, git metadata, GitNexus output, and generated LLM artifacts. | ❌ Runtime dependency of deployed packages/apps. |
-| ✅ Orchestrate local dev commands (lint, typecheck, tests, docs checks, commit prep). | ❌ Mix LLM logic into `cfx-tools` or root scripts. |
-| ✅ Write deterministic artifacts to `artifacts/llm/`. | ❌ Modify source files outside `--write` mode (docs only). |
-
-### `--write` Mode Safety
-
-- Only edits existing markdown files in the current folder scope.
-- Requires exact match of old text (single occurrence).
-- Never creates new files.
-- Skips updates outside scope.
-
----
-
-## Execution Example: `llm:commit`
-
-1. Developer runs `pnpm run llm:commit`.
-2. `run.ts` → `workers/llm-agents.ts` → `lemonade/commit/`.
-3. `commit/` runs `hotspots --fail-on-hard` as a **non-bypassable gate**.
-4. If hotspots pass:
-   - Scans changed files and builds context.
-   - Asks Lemonade to draft commit message + changelog.
-   - Stages changes explicitly (via `git add`).
-   - Executes commit with message.
-5. All artifacts written to `artifacts/llm/reports/commit/`.
-
----
-
-## Integration with the Monorepo
-
-- **Root Scripts**: `pnpm run llm:*` scripts in `package.json` delegate to `@cfxdevkit/llm-tools`.
-- **Artifacts**: All outputs live under `artifacts/llm/`, isolated from other tooling.
-- **No Runtime Impact**: The package is dev-only and never imported by apps or libraries.
-
----
-
-## Future Considerations
-
-- **Extensibility**: New agents can be added under `workers/lemonade/` without touching CLI surface.
-- **Carve-Out Readiness**: The module is structured for independent publishing and versioning.
-- **Auditability**: All LLM workflows are traceable via `artifacts/llm/` and deterministic agents.
-
----
+When contributing to this module:
+*   Update `API.md` when modifying public interfaces.
+*   Update `STRUCTURE.md` when refactoring internal package organization.
+*   Ensure `README.md` reflects current installation and usage requirements.

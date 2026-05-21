@@ -1,4 +1,4 @@
-import type { Hash, TxReceipt, Wei } from '@cfxdevkit/core/types';
+import type { Hash, TxReceipt, Wei } from '@cfxdevkit/cdk/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useClient, useSigner } from './context.js';
 

@@ -1,4 +1,4 @@
-import type { DualAddressAccount } from '@cfxdevkit/core';
+import type { DualAddressAccount } from '@cfxdevkit/cdk';
 
 /** A genesis account exposed by the dev node. */
 export interface DevNodeAccount extends DualAddressAccount {

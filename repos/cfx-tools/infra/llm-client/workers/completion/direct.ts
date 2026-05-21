@@ -6,6 +6,7 @@ import {
   extractAssistantText,
   formatFetchError,
   readConfig,
+  resolveRequestTimeoutMs,
 } from './client.ts';
 
 export async function completeDirect({
@@ -22,6 +23,7 @@ export async function completeDirect({
     modelOverride ?? config.actions?.[action] ?? config.defaultModel ?? chooseModel(models)?.id;
   if (!modelId)
     throw new Error('No Lemonade model available. Run pnpm run llm:models to inspect inventory.');
+  const requestTimeoutMs = resolveRequestTimeoutMs(config);
 
   const body = {
     model: modelId,
@@ -42,7 +44,7 @@ export async function completeDirect({
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(120000),
+        signal: AbortSignal.timeout(requestTimeoutMs),
       });
       const text = await response.text();
       attempts.push({ url, ok: response.ok, status: response.status });

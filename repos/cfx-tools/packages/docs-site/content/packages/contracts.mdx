@@ -1,26 +1,272 @@
 ---
 title: "@cfxdevkit/contracts"
-description: ABIs, bytecodes, and on-chain deployment addresses for Conflux contracts.
+description: "Standard contract bindings (ERC-20/721/1155, multicall3) and a thin read/write/deploy surface for @cfxdevkit/cdk."
 ---
+
+import { Callout, Tabs } from 'nextra/components'
 
 # @cfxdevkit/contracts
 
-> Curated contract artifacts — ABIs, bytecodes, and deployment addresses for mainnet and testnet.
+> Standard contract bindings (ERC-20/721/1155, multicall3) and a thin read/write/deploy surface for @cfxdevkit/cdk.
+
+## Install
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/contracts
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/contracts
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/contracts
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+Standard contract bindings (ERC-20 / 721 / 1155 / Multicall3) and a thin,
+framework-native `read` / `write` / `deploy` surface for `@cfxdevkit/cdk`.
+
+```ts
+import { erc20 } from '@cfxdevkit/contracts/erc20';
+import { createClient, http } from '@cfxdevkit/cdk';
+import { espaceTestnet } from '@cfxdevkit/cdk/chains';
+
+const client = createClient({ chain: espaceTestnet, transport: http() });
+const symbol = await erc20.symbol({ client, address: '0xToken…' });
+```
+
+## Installation
 
 ```bash
-pnpm add @cfxdevkit/contracts
+npm install @cfxdevkit/contracts @cfxdevkit/cdk
+```
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 23 symbols |
+| `./abis` | 5 symbols |
+| `./read` | 3 symbols |
+| `./write` | 6 symbols |
+| `./deploy` | 4 symbols |
+| `./erc20` | 2 symbols |
+| `./bridge` | 10 symbols |
+| `./errors` | 2 symbols |
+
+## Usage
+
+### Read calls
+
+Use `readContract` for view/pure functions:
+
+```ts
+import { readContract } from '@cfxdevkit/contracts';
+import { erc20 } from '@cfxdevkit/contracts/erc20';
+
+const balance = await readContract({
+  client,
+  abi: erc20.abi,
+  address: '0xToken…',
+  functionName: 'balanceOf',
+  args: ['0xUser…'],
+});
+```
+
+### Write calls
+
+Use `prepareWrite` to construct a transaction, then `sendWrite` to submit it:
+
+```ts
+import { prepareWrite, sendWrite } from '@cfxdevkit/contracts';
+import { erc20 } from '@cfxdevkit/contracts/erc20';
+
+const tx = await prepareWrite({
+  client,
+  abi: erc20.abi,
+  address: '0xToken…',
+  functionName: 'transfer',
+  args: ['0xUser…', 1000n],
+});
+
+const receipt = await sendWrite({ client, tx });
+```
+
+### Deploy
+
+Deploy contracts using `deployContract`:
+
+```ts
+import { deployContract } from '@cfxdevkit/contracts';
+
+const result = await deployContract({
+  client,
+  abi: myContractAbi,
+  bytecode: '0x...',
+  args: ['arg1', 42n],
+});
+```
+
+### ERC-20 helpers
+
+Convenience wrappers for common ERC-20 functions:
+
+```ts
+import { erc20 } from '@cfxdevkit/contracts/erc20';
+
+const symbol = await erc20.symbol({ client, address: '0xToken…' });
+const decimals = await erc20.decimals({ client, address: '0xToken…' });
+```
+
+### Bridge support
+
+Bridge contract bindings and helpers are available under `./bridge`:
+
+```ts
+import { bridge } from '@cfxdevkit/contracts/bridge';
+
+// Example: get cross-space transfer status
+const status = await bridge.getTransferStatus({ client, id: '0x...' });
+```
+
+## Error handling
+
+All errors are typed under `ContractsErrorCode` and extend `ContractsError`:
+
+```ts
+import { ContractsError } from '@cfxdevkit/contracts';
+
+try {
+  await readContract(...);
+} catch (err) {
+  if (err instanceof ContractsError) {
+    console.error(err.code); // e.g., 'contracts/reverted'
+  }
+}
+```
+
+## eSpace & Core Space
+
+Fully compatible with both eSpace and Core Space chains. Specify your target chain via `client.chain`.
+
+See [API.md](./API.md) for the full surface and [STRUCTURE.md](./STRUCTURE.md)
+for the layout.
+
+## API Reference
+
+## `.`
+
+```ts
+export { ERC20_ABI }
+export { ERC721_ABI }
+export { ERC1155_ABI }
+export { MULTICALL3_ABI }
+export { MULTICALL3_ADDRESS }
+export { DeployContractInput }
+export { DeployContractResult }
+export { toHex }
+export { Erc20Bind }
+export { erc20 }
+export { waitForReceipt }
+export declare function deployContract<TAbi extends Abi>(input: DeployContractInput<TAbi>): Promise<DeployContractResult>;
+export declare function readContract<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'pure' | 'view'>>(input: ReadContractInput<TAbi, TName>): Promise<ReturnType<typeof decodeFunctionResult<TAbi, TName>>>;
+export declare function prepareWrite<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>>(input: PrepareWriteInput<TAbi, TName>): SignableTx;
+export declare function sendWrite<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>>(input: SendWriteInput<TAbi, TName>): Promise<SendWriteResult>;
+export type ContractsErrorCode = 'contracts/unsupported-family' | 'contracts/decode-failure' | 'contracts/receipt-timeout' | 'contracts/reverted' | 'contracts/invalid-argument';
+export type ReadEpochTag = Exclude<EpochTag, 'latest_confirmed'>;
+export declare class ContractsError extends CfxError {
+export interface ReadContractInput<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'pure' | 'view'>> {
+export interface PrepareWriteInput<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>> {
+export interface SendWriteInput<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>> extends Omit<PrepareWriteInput<TAbi, TName>, 'chainId' | 'family'> {
+export interface SendWriteResult {
+export declare const __packageName: "@cfxdevkit/contracts";
 ```
 
 ---
 
-```typescript
-import { ERC20_ABI, SWAPPI_ROUTER_ABI, SWAPPI_ROUTER_ADDRESS } from '@cfxdevkit/contracts'
+## `./abis`
 
-// Use with @cfxdevkit/core/contract
-const balance = await client.readContract({
-  address: SWAPPI_ROUTER_ADDRESS.testnet,
-  abi: SWAPPI_ROUTER_ABI,
-  functionName: 'getAmountsOut',
-  args: [amountIn, [tokenA, tokenB]],
-})
+```ts
+export { ERC20_ABI }
+export { ERC721_ABI }
+export { ERC1155_ABI }
+export { MULTICALL3_ABI }
+export { MULTICALL3_ADDRESS }
 ```
+
+---
+
+## `./read`
+
+```ts
+export type ReadEpochTag = Exclude<EpochTag, 'latest_confirmed'>;
+export interface ReadContractInput<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'pure' | 'view'>> {
+export declare function readContract<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'pure' | 'view'>>(input: ReadContractInput<TAbi, TName>): Promise<ReturnType<typeof decodeFunctionResult<TAbi, TName>>>;
+```
+
+---
+
+## `./write`
+
+```ts
+export { waitForReceipt }
+export interface PrepareWriteInput<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>> {
+export interface SendWriteInput<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>> extends Omit<PrepareWriteInput<TAbi, TName>, 'chainId' | 'family'> {
+export interface SendWriteResult {
+export declare function prepareWrite<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>>(input: PrepareWriteInput<TAbi, TName>): SignableTx;
+export declare function sendWrite<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>>(input: SendWriteInput<TAbi, TName>): Promise<SendWriteResult>;
+```
+
+---
+
+## `./deploy`
+
+```ts
+export { DeployContractInput }
+export { DeployContractResult }
+export { toHex }
+export declare function deployContract<TAbi extends Abi>(input: DeployContractInput<TAbi>): Promise<DeployContractResult>;
+```
+
+---
+
+## `./erc20`
+
+```ts
+export interface Erc20Bind {
+export declare const erc20: {
+```
+
+---
+
+## `./bridge`
+
+```ts
+export { CROSS_SPACE_CALL_ABI }
+export { CROSS_SPACE_CALL_HEX }
+export declare function mappedEspaceAddress(coreHexAddress: Hex): HexAddress;
+export declare function transferToEspace(opts: BridgeBaseOptions & {
+export declare function callEspace(opts: BridgeBaseOptions & {
+export declare function withdrawFromMapped(opts: BridgeBaseOptions & {
+export declare function getMappedBalance(input: {
+export declare function getMappedNonce(input: {
+export declare function uint256Hex(n: bigint): Hex;
+export declare function hexToUint256(hex: Hex): bigint;
+```
+
+---
+
+## `./errors`
+
+```ts
+export type ContractsErrorCode = 'contracts/unsupported-family' | 'contracts/decode-failure' | 'contracts/receipt-timeout' | 'contracts/reverted' | 'contracts/invalid-argument';
+export declare class ContractsError extends CfxError {
+```
+
+{/* readme-hash: 860dcea73eb55d85e0183ee49291f464993f94927b2f2d907d0b7ccf801e9b30 */}

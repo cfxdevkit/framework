@@ -14,7 +14,7 @@
  * - `@cfxdevkit/services/keystore-kms`    — cloud KMS / Vault
  * - `@cfxdevkit/services/keystore-forward`— host socket → container bridge
  */
-import type { Address, ChainId, Hex, Signer } from '@cfxdevkit/core';
+import type { Address, ChainId, Hex, Signer } from '@cfxdevkit/cdk';
 
 /** Stable identifier for a stored secret within a backend. */
 export interface SecretRef {

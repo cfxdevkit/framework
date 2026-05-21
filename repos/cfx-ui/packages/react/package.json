@@ -2,7 +2,7 @@
   "name": "@cfxdevkit/react",
   "version": "2.0.0",
   "private": false,
-  "description": "React hooks over @cfxdevkit/core.",
+  "description": "React hooks over @cfxdevkit/cdk.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -77,7 +77,7 @@
     "viem": "^2.21.0"
   },
   "dependencies": {
-    "@cfxdevkit/core": "workspace:^"
+    "@cfxdevkit/cdk": "workspace:^"
   },
   "sideEffects": false
 }

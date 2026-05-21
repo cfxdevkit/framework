@@ -1,4 +1,4 @@
-import { type Address, type Hex, KeystoreError, type SignableTx } from '@cfxdevkit/core';
+import { type Address, type Hex, KeystoreError, type SignableTx } from '@cfxdevkit/cdk';
 import { base32AddressToHex, publicKeyToAddress } from 'cive/utils';
 import {
   bytesToHex,

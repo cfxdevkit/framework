@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@cfxdevkit/automation": "workspace:*",
-    "@cfxdevkit/core": "workspace:*",
+    "@cfxdevkit/cdk": "workspace:*",
     "@cfxdevkit/protocol": "workspace:*"
   },
   "devDependencies": {

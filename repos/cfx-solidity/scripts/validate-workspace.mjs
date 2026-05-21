@@ -53,7 +53,7 @@ for (const pattern of patterns) {
     continue;
   }
 
-  const entries = readdirSync(baseDir).filter(e => {
+  const entries = readdirSync(baseDir).filter((e) => {
     const p = join(baseDir, e);
     return statSync(p).isDirectory();
   });
@@ -66,7 +66,9 @@ for (const pattern of patterns) {
   for (const entry of entries) {
     const pkgJsonPath = join(baseDir, entry, 'package.json');
     if (!existsSync(pkgJsonPath)) {
-      console.warn(`  WARN  ${pattern.slice(0, -2)}/${entry}  (no package.json — non-package directory)`);
+      console.warn(
+        `  WARN  ${pattern.slice(0, -2)}/${entry}  (no package.json — non-package directory)`,
+      );
     } else {
       const pkg = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
       console.log(`  OK  ${pattern.slice(0, -2)}/${entry}  (${pkg.name ?? 'unnamed'})`);

@@ -1,0 +1,147 @@
+---
+title: "@cfxdevkit/testing"
+description: "Shared test fixtures and matchers."
+---
+
+import { Callout, Tabs } from 'nextra/components'
+
+# @cfxdevkit/testing
+
+> Shared test fixtures and matchers.
+
+## Install
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/testing
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/testing
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/testing
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+**Scope:** Shared test utilities used by every package and project. **Test-only.**
+
+**Responsibilities**
+- Mock chain client (`createMockClient`)
+- Contract test fixtures via `createDevNodeFixture`
+- Integration helpers wrapping `framework/devnode`
+- Vitest matchers for chain assertions (e.g., `toBeHexHash`, `toBeHexAddress`)
+- Utilities for async coordination (`createDeferred`, `waitFor`)
+
+Dev-dependency only.
+
+## Planned Mock Inventory
+
+This package is the home for reusable test doubles shared across backend logic packages. Add these before automation, protocol consumers, and MCP tools grow their own local mocks:
+
+- `MockJobRepository implements JobRepository` for deterministic automation job tests.
+- `MockExecutionRepository implements ExecutionRepository` for execution audit tests.
+- `MockKeeperClient implements KeeperClient` with configurable success and error responses.
+- `MockPriceSource implements PriceSource` keyed by token pair.
+- `jobFactory(type, overrides?)` and `strategyFactory(type, overrides?)` for valid automation fixtures.
+- Vitest matchers such as `toBeHexHash()` and `toBeHexAddress()`.
+
+When these land, add `@cfxdevkit/automation` as a test-facing dependency or peer so runtime packages can import only the mocks they need.
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 8 symbols |
+
+---
+
+## `.`
+
+```ts
+export declare const __packageName: "@cfxdevkit/testing";
+
+export interface Deferred<T> {
+  resolve(value: T | PromiseLike<T>): void;
+  reject(reason?: any): void;
+  promise: Promise<T>;
+}
+
+export interface MockClientOptions {
+  /**
+   * Initial block number to report.
+   * @default 1
+   */
+  blockNumber?: bigint;
+  /**
+   * Whether to simulate chain reorgs.
+   * @default false
+   */
+  simulateReorgs?: boolean;
+}
+
+export interface DevNodeFixtureOptions {
+  /**
+   * Path to a custom devnode binary.
+   * Falls back to `framework/devnode` if omitted.
+   */
+  devnodePath?: string;
+  /**
+   * Additional environment variables for the devnode process.
+   */
+  env?: Record<string, string>;
+  /**
+   * Timeout for devnode startup (ms).
+   * @default 10_000
+   */
+  startupTimeout?: number;
+}
+
+export declare function createDeferred<T>(): Deferred<T>;
+
+export declare function waitFor(
+  assertion: () => boolean | Promise<boolean>,
+  options?: {
+    /**
+     * Maximum time to wait (ms).
+     * @default 5_000
+     */
+    timeout?: number;
+    /**
+     * Poll interval (ms).
+     * @default 100
+     */
+    interval?: number;
+  }
+): Promise<void>;
+
+export declare function createMockClient(
+  options?: MockClientOptions
+): Client;
+
+export declare function createDevNodeFixture(
+  options?: DevNodeFixtureOptions
+): Promise<DevNode>;
+```
+
+## API Reference
+
+## `.`
+
+```ts
+export declare const __packageName: "@cfxdevkit/testing";
+export interface Deferred<T> {
+export interface MockClientOptions {
+export interface DevNodeFixtureOptions {
+export declare function createDeferred<T>(): Deferred<T>;
+export declare function waitFor(assertion: () => boolean | Promise<boolean>, options?: {
+export declare function createMockClient(options?: MockClientOptions): Client;
+export declare function createDevNodeFixture(options?: DevNodeFixtureOptions): Promise<DevNode>;
+```
+
+{/* readme-hash: d3effca7a4c39e22a26235d61732b86fbc0e214fd691adb39667907b591a142f */}

@@ -1,4 +1,4 @@
-import type { Hex } from '@cfxdevkit/core';
+import type { Hex } from '@cfxdevkit/cdk';
 import { CryptoError } from './errors.js';
 
 const HEX = '0123456789abcdef';

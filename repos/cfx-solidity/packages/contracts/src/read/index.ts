@@ -9,7 +9,7 @@
  * - **Core Space** (`family: 'core'`): `cfx_call` with a base32 `to` address
  *   (`cfx:…` / `cfxtest:…` / `net<id>:…`) and an optional `epochTag`.
  */
-import type { Client, EpochTag } from '@cfxdevkit/core';
+import type { Client, EpochTag } from '@cfxdevkit/cdk';
 import type { Abi, ContractFunctionArgs, ContractFunctionName } from 'viem';
 import { decodeFunctionResult, encodeFunctionData, isAddress, toHex } from 'viem';
 import { ContractsError } from '../errors/index.js';

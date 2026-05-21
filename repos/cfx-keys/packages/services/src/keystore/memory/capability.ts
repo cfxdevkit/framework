@@ -6,9 +6,9 @@
  * capability model in `services/keystore` only constrains transactions.
  */
 
-import type { Signer } from '@cfxdevkit/core';
-import { KeystoreError } from '@cfxdevkit/core';
-import type { SignableTx } from '@cfxdevkit/core/wallet';
+import type { Signer } from '@cfxdevkit/cdk';
+import { KeystoreError } from '@cfxdevkit/cdk';
+import type { SignableTx } from '@cfxdevkit/cdk/wallet';
 import type { Capability } from '../index.js';
 
 export function applyCapability(base: Signer, capability: Capability): Signer {

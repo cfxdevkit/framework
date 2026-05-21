@@ -23,6 +23,6 @@ through stable npm ranges, so chain code is not blocked by UI iteration.
 
 ## Boundaries
 
-- **MAY** depend on `@cfxdevkit/core`, `@cfxdevkit/wallet`.
+- **MAY** depend on `@cfxdevkit/cdk`, `@cfxdevkit/wallet`.
 - **MUST NOT** depend on `cfx-domain`, `cfx-tools`.
 - React + Tailwind allowed; no chain-primitive duplication.

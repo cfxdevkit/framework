@@ -238,7 +238,9 @@ function isGeneratedPath(path: string): boolean {
   const basename = parts.at(-1) ?? '';
   return (
     parts.some((part) => generatedDirs.has(part)) ||
+    basename.endsWith('.d.ts') ||
     generatedFileNames.has(basename) ||
+    basename.endsWith('.generated.d.ts') ||
     basename.endsWith('.generated.ts') ||
     basename.endsWith('.generated.js')
   );

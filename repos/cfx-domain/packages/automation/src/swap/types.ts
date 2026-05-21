@@ -1,4 +1,4 @@
-import type { Hex } from '@cfxdevkit/core';
+import type { Hex } from '@cfxdevkit/cdk';
 import type { HexAddress, HexHash } from '../types.js';
 
 export interface SwapRouterAddresses {

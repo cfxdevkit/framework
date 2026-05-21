@@ -16,7 +16,7 @@ export default defineConfig({
         'src/abis/**',
         'src/deploy/types.ts',
       ],
-      reporter: ['text', 'lcov', 'html'],
+      reporter: ['text', 'lcov', 'html', 'json-summary'],
       reportsDirectory: 'coverage',
       thresholds: { lines: 80, functions: 80, branches: 65, statements: 80 },
     },

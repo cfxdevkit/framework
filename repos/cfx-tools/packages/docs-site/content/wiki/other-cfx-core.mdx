@@ -2,297 +2,487 @@
 title: "Other — cfx-core"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Other — cfx-core
 
-# `@cfxdevkit/core` — Tier 0a Chain Primitives
+# cfx-core
 
-`@cfxdevkit/core` is the foundational library for interacting with Conflux networks. It provides **type-safe, low-level primitives** for addresses, units, RPC clients, wallet operations, and chain metadata — all without opinionated abstractions. As the Tier 0a module per ADR-0003, it is designed to be **reusable across higher-level tooling**, including contracts, protocol extensions, and testing utilities.
+**Tier 0a — chain primitives.** This monorepo provides foundational infrastructure for Conflux development: local node lifecycle management, background job execution, protocol helpers, and testing utilities.
+
+## Packages
+
+| Package | Purpose |
+|---------|---------|
+| `@cfxdevkit/devnode` | Local Conflux dev node lifecycle (Core + eSpace) |
+| `@cfxdevkit/executor` | Generic background job runner with queues and scheduler |
+| `@cfxdevkit/protocol` | Conflux protocol helpers, precompile ABIs, contract metadata |
+| `@cfxdevkit/testing` | Shared test fixtures and matchers |
 
 ---
 
-## Overview
+## @cfxdevkit/devnode
 
-This module delivers:
+Local Conflux node lifecycle management. Wraps the native `@xcfx/node` binary to spawn a dual-space (Core + eSpace) chain with deterministic ports and pre-funded genesis accounts.
 
-- ✅ **Dual-space support**: Core Space (Conflux native) and eSpace (EVM-compatible)
-- ✅ **Strict address encoding**: Base32 ↔ hex conversion with correct network prefixes (`cfx:`, `cfxtest:`, `net2029:`, etc.)
-- ✅ **Client abstraction**: Extensible RPC client with transport pluggability (`http`, `ws`, `fallback`)
-- ✅ **Wallet primitives**: BIP-39/44 derivation, signing, and dual-address account generation
-- ✅ **Unit helpers**: `CFX`/`drip`, `GDrip`, and generic token formatting with `bigint` safety
-- ✅ **Error taxonomy**: Rich, serializable error types (`CfxError`, `RpcError`, `WalletError`, `ContractError`)
-- ✅ **Chain catalog**: Predefined mainnet/testnet/local chains for both spaces
+### Purpose
 
-It is intentionally **stateless and transport-agnostic**, making it suitable for browser, Node.js, and test environments alike.
+Bring up a local Conflux node for development and testing with sensible defaults that match `@cfxdevkit/cdk/chains`'s `core-local` (chainId 2029, port 12537) and `espace-local` (chainId 2030, port 8545).
+
+### Key APIs
+
+```typescript
+import { createDevNode, DevNode } from '@cfxdevkit/devnode';
+
+const node = createDevNode({
+  mnemonic: 'test test test test test test test test test test test junk',
+  accounts: 5,
+  balanceCfx: '10000',
+  coreRpcPort: 12537,
+  evmRpcPort: 8545,
+});
+
+await node.start();
+const status = node.getStatus(); // 'running' | 'stopped' | 'error'
+await node.mine(1);
+await node.stop();
+```
+
+### Configuration
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `mnemonic` | Required | BIP-39 mnemonic for account derivation |
+| `accounts` | 10 | Number of pre-funded dual-address accounts |
+| `balanceCfx` | `'10000'` | Initial balance per account (in CFX) |
+| `coreRpcPort` | `12537` | Core Space RPC port |
+| `evmRpcPort` | `8545` | eSpace RPC port |
+| `miningIntervalMs` | `1000` | Mining interval (0 for no mining) |
+| `logging` | `false` | Enable node logging |
+
+### Account Derivation
+
+Accounts use separate BIP-44 coin types:
+- **eSpace**: `m/44'/60'/0'/0/{index}` (coin type 60)
+- **Core**: `m/44'/503'/0'/0/{index}` (coin type 503)
+
+The faucet/mining account uses a separate derivation path (`m/44'/60'/1'/0/0`) to stay clear of user account indices.
+
+### CLI
+
+```bash
+cfxdevkit-devnode --core-port 3000 --espace-port 4000 --accounts 5 --balance 500
+```
+
+| Flag | Description |
+|------|-------------|
+| `--core-port` | Core Space RPC port |
+| `--espace-port` | eSpace RPC port |
+| `--accounts` | Number of pre-funded accounts |
+| `--balance` | Initial balance per account |
+| `--no-mining` | Disable mining (interval = 0) |
+| `--logging` | Enable node logging |
+| `--help` | Show help |
+
+### URLs
+
+```typescript
+node.urls.core      // http://127.0.0.1:12537
+node.urls.espace    // http://127.0.0.1:8545
+node.urls.coreWs    // ws://127.0.0.1:12536
+```
+
+### Errors
+
+```typescript
+import { DevNodeError, DevNodeErrorCode } from '@cfxdevkit/devnode';
+
+try {
+  await node.start();
+} catch (error) {
+  if (error instanceof DevNodeError) {
+    console.error(error.code); // 'ALREADY_RUNNING' | 'NOT_RUNNING' | 'INVALID_CONFIG'
+  }
+}
+```
+
+---
+
+## @cfxdevkit/executor
+
+Generic background job runner with queues, schedulers, and concurrency control.
+
+### Purpose
+
+Execute tasks with retry policies, timeouts, abort signals, and optional locking. Useful for automation, polling, and batch processing.
+
+### Key APIs
+
+#### `execute`
+
+Run a single task with retry, timeout, and abort support.
+
+```typescript
+import { execute } from '@cfxdevkit/executor';
+
+const result = await execute(
+  async (ctx) => {
+    // ctx.attempt, ctx.signal, ctx.metadata
+    return await doWork();
+  },
+  {
+    attempts: 3,
+    timeoutMs: 5000,
+    delayMs: (attempt, error) => attempt * 1000,
+    shouldRetry: (error, attempt) => attempt < 3,
+    signal: abortController.signal,
+  },
+);
+
+if (result.ok) {
+  console.log(result.value, result.attempts, result.durationMs);
+} else {
+  console.error(result.error, result.attempts);
+}
+```
+
+#### `executeBatch`
+
+Run multiple tasks with concurrency control.
+
+```typescript
+import { executeBatch } from '@cfxdevkit/executor';
+
+const results = await executeBatch(
+  [
+    () => task1(),
+    () => task2(),
+    () => task3(),
+  ],
+  { concurrency: 2, stopOnError: true },
+);
+```
+
+#### `createTaskQueue`
+
+Queue tasks for batch execution.
+
+```typescript
+import { createTaskQueue } from '@cfxdevkit/executor';
+
+const queue = createTaskQueue({
+  onResult: (result, index) => {
+    if (!result.ok) console.error(result.error);
+  },
+});
+
+queue.add(() => work1());
+queue.add(() => work2());
+await queue.run();
+```
+
+#### `createPoller`
+
+Create a polling loop.
+
+```typescript
+import { createPoller } from '@cfxdevkit/executor';
+
+const poller = createPoller(
+  async ({ signal }) => {
+    if (signal.aborted) return;
+    await checkStatus();
+  },
+  1000, // intervalMs
+);
+
+poller.start();
+await poller.stop();
+```
+
+#### `withLock`
+
+Serialize tasks sharing the same key.
+
+```typescript
+import { withLock } from '@cfxdevkit/executor';
+
+await Promise.all([
+  withLock('job:1', async () => {
+    await workA();
+  }),
+  withLock('job:1', async () => {
+    await workB(); // Waits for workA to complete
+  }),
+]);
+```
+
+### Execution Result
+
+```typescript
+type ExecutionResult<T> =
+  | { ok: true; value: T; attempts: number; durationMs: number }
+  | { ok: false; error: unknown; attempts: number; durationMs: number };
+```
+
+---
+
+## @cfxdevkit/protocol
+
+Conflux protocol helpers, precompile ABIs, and reusable DevKit contract metadata.
+
+### Purpose
+
+Provide common utilities for interacting with Core Space and eSpace, including transaction receipt handling, gas estimation, and chain progress tracking.
+
+### Key APIs
+
+#### `waitForTransactionReceipt`
+
+Wait for a transaction to be confirmed.
+
+```typescript
+import { waitForTransactionReceipt } from '@cfxdevkit/protocol';
+
+const receipt = await waitForTransactionReceipt(client, hash, {
+  intervalMs: 1000,
+  timeoutMs: 60000,
+  signal: abortController.signal,
+});
+```
+
+#### `getChainProgress`
+
+Get current chain height (epoch for Core, block for eSpace).
+
+```typescript
+import { getChainProgress } from '@cfxdevkit/protocol';
+
+const progress = await getChainProgress(client);
+// { family: 'core' | 'espace', chainId: number, height: bigint }
+```
+
+#### `estimateTransaction`
+
+Estimate gas and collateral.
+
+```typescript
+import { estimateTransaction } from '@cfxdevkit/protocol';
+
+const estimate = await estimateTransaction(client, {
+  from: 'cfx:...',
+  to: 'cfx:...',
+  value: 1000000000000000000n,
+});
+// { gas: bigint, storageCollateral?: bigint }
+```
+
+#### `collectLogs`
+
+Collect logs (Core Space only).
+
+```typescript
+import { collectLogs } from '@cfxdevkit/protocol';
+
+const logs = await collectLogs(client, {
+  fromEpoch: 100n,
+  toEpoch: 200n,
+  address: ['cfx:contract'],
+});
+```
+
+#### `assertSuccessfulReceipt` / `isSuccessfulReceipt`
+
+Check transaction status.
+
+```typescript
+import { assertSuccessfulReceipt, isSuccessfulReceipt } from '@cfxdevkit/protocol';
+
+const receipt = await client.getTransactionReceipt(hash);
+if (!isSuccessfulReceipt(receipt)) {
+  throw new Error('Transaction reverted');
+}
+assertSuccessfulReceipt(receipt, hash); // Throws if failed
+```
+
+### Precompile ABIs
+
+```typescript
+import {
+  CROSS_SPACE_CALL_ABI,
+  crossSpaceCallAddress,
+  STAKING_ABI,
+  stakingAddress,
+  SPONSOR_WHITELIST_ABI,
+  sponsorWhitelistAddress,
+  WCFX_ABI,
+  WCFX_ADDRESSES,
+} from '@cfxdevkit/protocol';
+```
+
+### DevKit Contract Metadata
+
+```typescript
+import {
+  AUTOMATION_MANAGER_ABI,
+  automationManagerAddress,
+  automationManagerBytecode,
+  PERMIT_HANDLER_ABI,
+  permitHandlerAddress,
+  SWAPPI_PRICE_ADAPTER_ABI,
+  swappiPriceAdapterAddress,
+} from '@cfxdevkit/protocol';
+```
+
+---
+
+## @cfxdevkit/testing
+
+Shared test fixtures and matchers for Conflux development.
+
+### Purpose
+
+Provide mock clients, DevNode fixtures, and utility functions for testing.
+
+### Key APIs
+
+#### `createMockClient`
+
+Create a mock client for Core or eSpace.
+
+```typescript
+import { createMockClient } from '@cfxdevkit/testing';
+
+const client = createMockClient({
+  family: 'core',
+  chainId: 2029,
+  receipts: new Map([['0x1', receipt]]),
+  logs: [{ address: 'cfx:test' }],
+  request: (method, params) => ({ method, params }),
+});
+
+await client.getEpochNumber();
+await client.getLogs({});
+await client.request({ method: 'cfx_getStatus' });
+```
+
+#### `createDevNodeFixture`
+
+Create a DevNode instance for testing.
+
+```typescript
+import { createDevNodeFixture } from '@cfxdevkit/testing';
+
+const node = await createDevNodeFixture({
+  mnemonic: 'test...',
+  accounts: 5,
+  autoStart: true, // Start node automatically
+});
+
+// node.isRunning(), node.start(), node.stop(), etc.
+```
+
+#### `createDeferred`
+
+Create a deferred promise.
+
+```typescript
+import { createDeferred } from '@cfxdevkit/testing';
+
+const deferred = createDeferred<string>();
+deferred.resolve('ok');
+await deferred.promise;
+```
+
+#### `waitFor`
+
+Wait for a condition to be true.
+
+```typescript
+import { waitFor } from '@cfxdevkit/testing';
+
+await waitFor(() => someCondition(), {
+  timeoutMs: 5000,
+  intervalMs: 100,
+});
+```
 
 ---
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    subgraph "Public API"
-        A["address/"] --> I
-        B["chains/"] --> I
-        C["client/"] --> I
-        D["errors/"] --> I
-        E["units/"] --> I
-        F["wallet/"] --> I
-        G["types/"] --> I
-        I["index.ts (barrel)"]
+<Mermaid chart={`graph TB
+    subgraph "cfx-core"
+        devnode["@cfxdevkit/devnode"]
+        executor["@cfxdevkit/executor"]
+        protocol["@cfxdevkit/protocol"]
+        testing["@cfxdevkit/testing"]
     end
 
-    subgraph "Core primitives"
-        A --> A1["hex/base32 conversion"]
-        B --> B1["chain metadata + catalog"]
-        C --> C1["http/ws transports"]
-        C --> C2["client factory"]
-        D --> D1["error classes"]
-        E --> E1["unit parsing/formatting"]
-        F --> F1["BIP-39/44 derivation"]
-        F --> F2["signer + key management"]
+    subgraph "Dependencies"
+        cdk["@cfxdevkit/cdk"]
+        xcfx["@xcfx/node"]
     end
 
-    I -->|"used by"| H["@cfxdevkit/devnode"]
-    I -->|"used by"| J["@cfxdevkit/protocol"]
-    I -->|"used by"| K["@cfxdevkit/testing"]
-```
+    devnode --> xcfx
+    protocol --> cdk
+    testing --> devnode
+    testing --> cdk
+`} />
 
-All submodules are exported via **subpath exports** (e.g., `@cfxdevkit/core/client`) to enable granular bundling and tree-shaking.
+### Integration Points
 
----
+| Package | Depends On | Used By |
+|---------|------------|---------|
+| `devnode` | `@xcfx/node` | `testing`, automation |
+| `executor` | — | `automation`, `batcher` |
+| `protocol` | `@cfxdevkit/cdk` | `integration` tests, `keeper` |
+| `testing` | `devnode`, `cdk` | All test suites |
 
-## Key Components
+### Common Patterns
 
-### 1. Address Handling (`address/`)
-
-Conflux uses **base32-encoded addresses** with network-specific prefixes. This module implements:
-
-- `hexToBase32(hex: HexAddress, networkId: number): string`  
-  Converts a 20-byte hex address to a Conflux base32 address (e.g., `cfx:aarc9...`).
-- `base32ToHex(base32: string): HexAddress`  
-  Decodes base32 back to hex, validating checksums.
-- `isBase32Address(addr: string): boolean`  
-  Validates base32 format and prefix.
-- `getCoreAddress(addr: string): string`  
-  Normalizes verbose uppercase format (`CFX:TYPE.USER:...`) for `cive` compatibility.
-
-> ✅ **Tested against known mainnet vector** (`0x1a2f...aa55` → `cfx:aarc9...`).
-
-### 2. Chain Catalog (`chains/`)
-
-Predefined chains for both spaces:
-
-| Chain ID | Name             | Network | Family | RPC (HTTP)                     |
-|----------|------------------|---------|--------|--------------------------------|
-| `1`      | `core-testnet`   | testnet | core   | `https://test.confluxrpc.com` |
-| `71`     | `espace-testnet` | testnet | espace | `https://evmtestnet.confluxrpc.com` |
-| `1029`   | `core-mainnet`   | mainnet | core   | `https://main.confluxrpc.com` |
-| `1030`   | `espace-mainnet` | mainnet | espace | `https://evm.confluxrpc.com` |
-| `2029`   | `core-local`     | local   | core   | `http://127.0.0.1:12537`      |
-| `2030`   | `espace-local`   | local   | espace | `http://127.0.0.1:8545`       |
-
-- `listChains(filter?: { family?: 'core' \| 'espace'; network?: 'mainnet' \| 'testnet' \| 'local' })`
-- `getChain(idOrSlug: number \| string)`
-- `defineChain(chain: ChainConfig): Chain`  
-  Validates `id > 0`, `rpc.http.length > 0`, and `displayName`.
-
-> ✅ `getChain(1030)` returns `espaceMainnet`; `getChain('espace-mainnet')` is equivalent.
-
-### 3. RPC Client (`client/`)
-
-A minimal, transport-agnostic client supporting **both Core Space and eSpace RPC methods**.
-
-#### Transports
-- `http(url?: string)` → `{ kind: 'http' }`
-- `ws(url: string)` → `{ kind: 'ws' }`
-- `fallback(transports: Transport[])` → `{ kind: 'fallback' }`
-
-#### Client Creation
-```ts
-import { createClient, http } from '@cfxdevkit/core/client';
-import { espaceTestnet } from '@cfxdevkit/core/chains';
-
-const client = createClient({
-  chain: espaceTestnet,
-  transport: http(),
-});
-```
-
-#### Methods
-- **eSpace (EVM)**: `getBlockNumber`, `getBalance`, `getTransactionReceipt`, `sendRawTransaction`, etc.
-- **Core Space**: `getEpochNumber`, `getStatus`, `getSponsorInfo`, `getAdmin`, `getLogs`, etc.
-
-> ✅ **Network tests** (`RUN_NETWORK_TESTS=1 vitest`) verify against real testnet endpoints.
-
-#### Error Wrapping
-- `wrapRpc(promise, code, meta?)` → Catches non-`CfxError` exceptions and rethrows as `RpcError`.
-- `nullWhenNotFound(promise, notFoundName)` → Converts `NotFoundError` to `null`.
-
-### 4. Wallet & Keys (`wallet/`)
-
-#### Mnemonics
-- `generateMnemonic(strength = 128): string`  
-  12-word (128-bit) or 24-word (256-bit) BIP-39 mnemonic.
-- `validateMnemonic(mnemonic: string): boolean`
-
-#### Derivation
-- `deriveAccount({ mnemonic, path = "m/44'/60'/0'/0/0", passphrase? })`  
-  Returns `{ privateKey, account: { address, publicKey } }`.
-- `deriveAccounts({ mnemonic, basePath, count })`  
-  Sequential derivation (e.g., for test fixtures).
-- `DEFAULT_ESPACE_PATH = "m/44'/60'/0'/0/0"`
-- `DEFAULT_CORE_PATH = "m/44'/503'/0'/0/0"`
-
-#### Dual-Space Accounts
-- `deriveDualAccount({ mnemonic, index, accountType = 'user', coreNetworkId })`  
-  Derives **same private key** for both EVM and Core addresses (critical for genesis funding).
-- `deriveDualAccounts({ mnemonic, count, startIndex })`
-
-#### Signers
-- `signerFromPrivateKey(privateKey: HexAddress)`  
-  Returns `{ account, signMessage, signTransaction, signTypedData }`.
-
-#### Core Address Encoding
-- `coreAddressFromPrivateKey(privateKey, networkId)`  
-  Encodes Core Space address with correct prefix (`cfx:`, `cfxtest:`, `net2029:`).
-
-> ✅ **Deterministic test vectors** (e.g., `test test test ... junk`) validate derivation paths.
-
-### 5. Units (`units/`)
-
-All helpers use `bigint` to avoid floating-point errors.
-
-| Function             | Description                                  |
-|----------------------|----------------------------------------------|
-| `parseUnits(value, decimals)` | `"1.5"` → `1_500_000_000_000_000_000n` |
-| `formatUnits(value, decimals)` | `1_500_000_000_000_000_000n` → `"1.5"` |
-| `parseCFX(value)` / `formatCFX(value)` | 18-decimal helpers for `CFX`/`drip` |
-| `parseDrip(value)` / `formatDrip(value)` | Alias for `parseCFX`/`formatCFX` |
-| `parseGDrip(value)` / `formatGDrip(value)` | 9-decimal gas-price unit (`1 GDrip = 1e9 drip`) |
-| `formatToken(value, { decimals, symbol })` | `"2 USDC"` |
-| `stringifyBigInt(value, indent?)` | JSON-safe serialization of `bigint` |
-
-> ✅ Round-trip tests confirm precision and correctness.
-
-### 6. Errors (`errors/`)
-
-A unified error hierarchy:
-
-```ts
-class CfxError extends Error {
-  code: string; // e.g., 'core/chains/unknown'
-  message: string;
-  cause?: Error;
-  meta?: Record<string, unknown>;
-  toJSON(): { name, code, message, meta? };
-}
-
-class RpcError extends CfxError { ... }
-class WalletError extends CfxError { ... }
-class ContractError extends CfxError { ... }
-
-function isCfxError(err: unknown): err is CfxError;
-```
-
-> ✅ `toJSON` omits `meta` when absent for clean serialization.
+1. **Test Setup**: Use `createDevNodeFixture` + `createMockClient` for isolated tests
+2. **Transaction Flow**: `estimateTransaction` → send → `waitForTransactionReceipt`
+3. **Background Jobs**: `createPoller` for periodic tasks, `withLock` for serialization
+4. **Error Handling**: Check `result.ok` from `execute`, use `assertSuccessfulReceipt` for transactions
 
 ---
 
-## Package Structure
+## Development
 
-```
-packages/core/
-├── src/
-│   ├── address/          # Base32/hex conversion
-│   ├── chains/           # Chain catalog + definitions
-│   ├── client/           # RPC client + transports
-│   │   └── errors.ts     # Error wrappers
-│   ├── errors/           # Error classes
-│   ├── types/            # Shared TypeScript types
-│   ├── units/            # Unit formatting
-│   ├── wallet/           # Key management + derivation
-│   └── index.ts          # Barrel re-export
-├── dist/                 # ESM build (Vite + dts)
-├── *.test.ts             # Unit tests (Vitest)
-└── vitest.config.ts
+### Build
+
+```bash
+pnpm build          # Build all packages
+pnpm test           # Run tests
+pnpm typecheck      # Type check
+pnpm lint           # Lint
 ```
 
-- **Build**: `vite build` → ESM output (`dist/index.js`, `dist/index.d.ts`)
-- **Test**: `vitest run` / `RUN_NETWORK_TESTS=1 vitest run`
-- **Typecheck**: `tsc --noEmit`
+### Package Structure
+
+```
+packages/
+├── devnode/        # Node lifecycle
+├── executor/       # Job runner
+├── protocol/       # Protocol helpers
+└── testing/        # Test utilities
+```
+
+### TypeScript Config
+
+All packages extend `@cfxdevkit/tsconfig/lib.json` with:
+- ES modules output
+- Declaration files
+- ES2023 target
+- Vite + vite-plugin-dts for builds
+- Vitest for testing
 
 ---
 
-## Integration with Other Modules
+## Notes
 
-`@cfxdevkit/core` is the **base dependency** for:
-
-| Module                 | Usage of `@cfxdevkit/core`                                  |
-|------------------------|-------------------------------------------------------------|
-| `@cfxdevkit/devnode`   | Uses `chains`, `wallet`, `address` to generate genesis accounts |
-| `@cfxdevkit/protocol`  | Depends on `client` and `types` for sponsor/staking methods |
-| `@cfxdevkit/testing`   | Uses `devnode`, `core`, and `contracts` for test fixtures   |
-
----
-
-## Usage Examples
-
-### 1. Create an eSpace Client
-```ts
-import { createClient, http } from '@cfxdevkit/core/client';
-import { espaceMainnet } from '@cfxdevkit/core/chains';
-
-const client = createClient({
-  chain: espaceMainnet,
-  transport: http(),
-});
-
-const block = await client.getBlock('latest');
-console.log(block.number); // 1234567890n
-```
-
-### 2. Derive a Dual-Space Account
-```ts
-import { deriveDualAccount } from '@cfxdevkit/core/wallet';
-
-const { evmAddress, coreAddress, privateKey } = deriveDualAccount({
-  mnemonic: 'test test test ... junk',
-  index: 0,
-  coreNetworkId: 2029,
-});
-
-console.log(evmAddress); // 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
-console.log(coreAddress); // net2029:arc9abycue0hhzgyrr53m6cxedgccrmmyybjgh4xg
-```
-
-### 3. Format Gas Price in GDrip
-```ts
-import { formatGDrip } from '@cfxdevkit/core/units';
-
-const gasPrice = 20_000_000_000n; // 20 GDrip
-console.log(formatGDrip(gasPrice)); // "20"
-```
-
----
-
-## Design Principles
-
-- **No side effects**: Pure functions, no global state.
-- **Explicit over implicit**: Network IDs required for address encoding.
-- **Type safety first**: All APIs use precise types (HexAddress, `bigint`, etc.).
-- **Test-driven**: Every public function has unit tests; network tests are opt-in.
-- **Extensibility**: `defineChain` and transport pluggability support custom networks.
-
----
-
-## Future Work
-
-- `types/`: Expand type definitions for RPC responses (currently minimal).
-- `client/`: Add request batching and retry policies.
-- `wallet/`: Support hardware wallets (Trezor, Ledger) via `viem` integrations.
-
----
-
-## License
-
-MIT — see root `LICENSE`.
+- **Node.js Only**: `devnode` requires Node.js (native binary dependency)
+- **Dual-Space**: Core (chainId 2029) and eSpace (chainId 2030) run simultaneously
+- **Deterministic**: Default ports and chain IDs match `@cfxdevkit/cdk/chains`
+- **Test-Only**: `devnode` and `testing` packages are for development/testing, not production

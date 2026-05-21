@@ -31,7 +31,7 @@
 The `@cfxdevkit/arch-rules` package at `repos/cfx-meta/packages/arch-rules/` SHALL export a typed API derived from `arch-rules.yaml`. It SHALL be importable as a workspace devDependency by any other package.
 
 #### Scenario: getTierFor resolves a workspace-relative path to a tier
-- **WHEN** `getTierFor('repos/cfx-core/packages/core/src/index.ts')` is called
+- **WHEN** `getTierFor('repos/cfx-core/packages/cdk/src/index.ts')` is called
 - **THEN** it returns `{ id: 'framework', level: 0 }`
 
 #### Scenario: getTierFor returns cross-cutting for cfx-meta and cfx-config paths

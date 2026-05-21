@@ -6,7 +6,7 @@ import {
   espaceLocal,
   formatCFX,
   http,
-} from '@cfxdevkit/core';
+} from '@cfxdevkit/cdk';
 import { type Abi, createPublicClient, parseAbi, http as viemHttp } from 'viem';
 import { getControlPlaneClient } from '../control-plane.js';
 

@@ -34,7 +34,7 @@ await fetch('/api/keystore/accounts', {
   }),
 });`;
 
-export const SESSION_KEY_SNIPPET = `import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
+export const SESSION_KEY_SNIPPET = `import { signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
 import { createSessionKey } from '@cfxdevkit/wallet/session-key';
 
 const parent = signerFromPrivateKey(process.env.LOCAL_PRIVATE_KEY!);
@@ -66,9 +66,9 @@ const result = await compile({
 const artifact = result.artifacts[0];
 console.log(artifact?.abi, artifact?.bytecode);`;
 
-export const DEPLOY_SNIPPET = `import { espaceLocal } from '@cfxdevkit/core/chains';
-import { createClient, http } from '@cfxdevkit/core/client';
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
+export const DEPLOY_SNIPPET = `import { espaceLocal } from '@cfxdevkit/cdk/chains';
+import { createClient, http } from '@cfxdevkit/cdk/client';
+import { signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
 import { deployContract } from '@cfxdevkit/contracts/deploy';
 
 const client = createClient({

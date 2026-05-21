@@ -70,7 +70,7 @@ chainbrawler/
 
 ### Framework / domain usage
 
-- `@cfxdevkit/core`, `@cfxdevkit/react`, `@cfxdevkit/wallet-connect`
+- `@cfxdevkit/cdk`, `@cfxdevkit/react`, `@cfxdevkit/wallet-connect`
 - `@cfxdevkit/game-engine` (state machine, chain-bridge, react adapter)
 
 ### Migration notes

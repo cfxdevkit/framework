@@ -12,7 +12,7 @@ import { Cards } from 'nextra/components'
 cfxdevkit provides a full stack — from low-level chain clients and wallet primitives, through smart contract tooling, to React components and VS Code extensions — as a single, cohesive workspace.
 
 ```bash
-pnpm add @cfxdevkit/core
+pnpm add @cfxdevkit/cdk
 ```
 
 ---
@@ -20,7 +20,7 @@ pnpm add @cfxdevkit/core
 ## What's included
 
 <Cards>
-  <Cards.Card title="@cfxdevkit/core" href="/packages/core" description="Chain clients, HD wallet, contract read/write, address utilities" />
+  <Cards.Card title="@cfxdevkit/cdk" href="/packages/cdk" description="Chain clients, HD wallet, contract read/write, address utilities" />
   <Cards.Card title="@cfxdevkit/executor" href="/packages/executor" description="Safe multi-step transaction sequencer" />
   <Cards.Card title="@cfxdevkit/protocol" href="/packages/protocol" description="Cross-space bridge, automation, permit transfers" />
   <Cards.Card title="@cfxdevkit/wallet" href="/packages/wallet" description="Session keys, capability-scoped signers, batching" />
@@ -39,8 +39,8 @@ pnpm add @cfxdevkit/core
 ## Quick example
 
 ```typescript
-import { createClient, http } from '@cfxdevkit/core/client'
-import { espaceTestnet } from '@cfxdevkit/core/chains'
+import { createClient, http } from '@cfxdevkit/cdk/client'
+import { espaceTestnet } from '@cfxdevkit/cdk/chains'
 
 const client = createClient({
   chain: espaceTestnet,

@@ -17,13 +17,13 @@ cfxdevkit follows a **four-tier layered architecture**. Dependencies flow downwa
 │  projects/cas  │  projects/chainbrawler  │  projects/electro     │
 ├──────────────────────────────────────────────────────────────────┤
 │  Tier 2 — Domain Logic                                           │
-│  repos/cfx-domain:  automation │ game-engine                     │
+│  repos/cfx-domain                                                │
 ├──────────────────────────────────────────────────────────────────┤
 │  Tier 1 — Developer Platform                                     │
-│  repos/cfx-tools:  cli │ mcp-server │ scaffold-cli │ vscode-ext  │
+│  repos/cfx-tools                                                 │
 ├──────────────────────────────────────────────────────────────────┤
 │  Tier 0 — Framework                                              │
-│  repos/cfx-core │ cfx-keys │ cfx-ui │ cfx-solidity               │
+│  cfx-solidity │ cfx-core │ cfx-ui │ cfx-keys                     │
 └──────────────────────────────────────────────────────────────────┘
              ▲             ▲             ▲
         tools/       infrastructure/   docs/   ← cross-cutting
@@ -33,24 +33,31 @@ cfxdevkit follows a **four-tier layered architecture**. Dependencies flow downwa
 
 | Package | Tier | Repo slice |
 |---|---|---|
-| `@cfxdevkit/core` | 0 | `repos/cfx-core` |
-| `@cfxdevkit/protocol` | 0 | `repos/cfx-core` |
-| `@cfxdevkit/executor` | 0 | `repos/cfx-core` |
-| `@cfxdevkit/devnode` | 0 | `repos/cfx-core` |
-| `@cfxdevkit/testing` | 0 | `repos/cfx-core` |
-| `@cfxdevkit/wallet` | 0 | `repos/cfx-keys` |
-| `@cfxdevkit/services` | 0 | `repos/cfx-keys` |
-| `@cfxdevkit/react` | 0 | `repos/cfx-ui` |
-| `@cfxdevkit/defi-react` | 0 | `repos/cfx-ui` |
-| `@cfxdevkit/wallet-connect` | 0 | `repos/cfx-ui` |
-| `@cfxdevkit/theme` | 0 | `repos/cfx-ui` |
-| `@cfxdevkit/compiler` | 0 | `repos/cfx-solidity` |
-| `@cfxdevkit/contracts` | 0 | `repos/cfx-solidity` |
 | `@cfxdevkit/abis` | 0 | `repos/cfx-solidity` |
+| `@cfxdevkit/cdk` | 0 | `repos/cfx-core` |
+| `@cfxdevkit/contracts` | 0 | `repos/cfx-solidity` |
+| `@cfxdevkit/defi-react` | 0 | `repos/cfx-ui` |
+| `@cfxdevkit/devnode` | 0 | `repos/cfx-core` |
+| `@cfxdevkit/executor` | 0 | `repos/cfx-core` |
+| `@cfxdevkit/protocol` | 0 | `repos/cfx-core` |
+| `@cfxdevkit/react` | 0 | `repos/cfx-ui` |
+| `@cfxdevkit/services` | 0 | `repos/cfx-keys` |
+| `@cfxdevkit/testing` | 0 | `repos/cfx-core` |
+| `@cfxdevkit/theme` | 0 | `repos/cfx-ui` |
+| `@cfxdevkit/ui` | 0 | `repos/cfx-ui` |
+| `@cfxdevkit/ui-core` | 0 | `repos/cfx-ui` |
+| `@cfxdevkit/wallet` | 0 | `repos/cfx-keys` |
+| `@cfxdevkit/wallet-connect` | 0 | `repos/cfx-ui` |
 | `@cfxdevkit/cli` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/client` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/compiler` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/create` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/devnode-server` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/keystore-server` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/llm-agents` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/llm-client` | 1 | `repos/cfx-tools` |
+| `@cfxdevkit/llm-tools` | 1 | `repos/cfx-tools` |
 | `@cfxdevkit/mcp-server` | 1 | `repos/cfx-tools` |
-| `@cfxdevkit/scaffold-cli` | 1 | `repos/cfx-tools` |
-| `@cfxdevkit/vscode-extension` | 1 | `repos/cfx-tools` |
 | `@cfxdevkit/automation` | 2 | `repos/cfx-domain` |
 | `@cfxdevkit/game-engine` | 2 | `repos/cfx-domain` |
 
@@ -58,36 +65,12 @@ cfxdevkit follows a **four-tier layered architecture**. Dependencies flow downwa
 
 **One-way dependency graph** — Tiers cannot create cycles. A tier-0 package must never import from tier-1 or higher.
 
-**Domain extraction by demand** — Logic moves `projects/ → domains/ → framework/` once it proves reusable across ≥ 2 projects.
+**Explicit public surfaces** — Every publishable package exposes an `exports` map in `package.json`. Deep imports outside the declared sub-paths are not supported.
 
-**Stable public surface** — Tier-0 packages follow semver and are published to npm. Anything in `platform/devtools/` or `projects/` is internal and may change freely.
+**No circular dependencies** — Enforced by Moon task ordering and `arch-check` CI gate.
 
-## Key execution flows
+**Config packages are not tiers** — Shared config packages (`biome-config`, `tsconfig`, `moon-config`, `arch-rules`) are build-time utilities excluded from the tier model.
 
-### Smart contract deployment
-
-```
-CompilerPanel (UI)
-  → useCompilerCatalog (react)
-  → deployContract (contracts)
-  → deployCoreContract (contracts)
-  → waitForReceipt (contracts)
-  → assertSuccessfulReceipt (contracts)
-```
-
-### Wallet initialization with Argon2id key derivation
-
-```
-InitializeWallet (wallet)
-  → addWallet (wallet)
-  → initFileKeystore (services)
-  → deriveKekFromEnvelope (services)
-  → deriveKeyArgon2id (services)
-  → brandKey (services)
-```
-
-## ADRs
-
-- [ADR-0001 — Build stack](/architecture/adr-0001)
-- [ADR-0002 — Keystore design](/architecture/adr-0002)
-- [ADR-0003 — Multi-repo split](/architecture/adr-0003)
+<Callout type="info">
+  This file is fully regenerated by `pnpm sync:architecture`. Do not edit manually.
+</Callout>

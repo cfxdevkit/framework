@@ -2,284 +2,193 @@
 title: "CLI & Developer Tools"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # CLI & Developer Tools
 
-# CLI & Developer Tools Module
+# CLI & Developer Tools
+
+This module provides the command-line interface (CLI), project scaffolding utilities, and Visual Studio Code extension for the Conflux DevKit. It serves as the primary interaction layer for developers to manage wallets, derive accounts, check network status, scaffold projects, and interact with smart contracts.
+
+The module is split into three distinct packages:
+1.  **`packages/cli`**: The core command-line tool (`cfx`).
+2.  **`packages/scaffold-cli`**: Project generation and template management.
+3.  **`packages/vscode-extension`**: The IDE integration for wallet and contract management.
+
+## Architecture Overview
+
+The CLI uses a minimal, dependency-free argument parser to keep the install footprint low. The VSCode extension relies on a runtime class (`ExtensionRuntime`) to manage state, node lifecycle, and command registration.
+
+<Mermaid chart={`graph TD
+    subgraph CLI ["packages/cli"]
+        A[run] --> B[parseArgs]
+        B --> C{Command Switch}
+        C -->|status| D[statusFromFlags]
+        C -->|derive| E[deriveFromFlags]
+        C -->|generate| F[generateFromFlags]
+        C -->|contracts| G[contractsExtractFromFlags]
+        D --> H[runStatus]
+        E --> I[runDerive]
+        F --> J[runGenerate]
+    end
+
+    subgraph Scaffold ["packages/scaffold-cli"]
+        K[scaffoldProject] --> L[getTemplate]
+        L --> M[renderFile]
+        M --> N[spawnSync npm install]
+    end
 
-The **CLI & Developer Tools** module provides a lightweight, dependency-minimal command-line interface and a rich VS Code extension for interacting with the Conflux network — supporting account management, contract deployment, node control, and cross-chain development workflows.
+    subgraph VSCode ["packages/vscode-extension"]
+        O[activate] --> P[ExtensionRuntime]
+        P --> Q[registerCommands]
+        P --> R[refreshAll]
+        P --> S[startNode]
+    end
+
+    CLI -->|@cfxdevkit/cdk| CDK[Core DevKit]
+    Scaffold -->|@cfxdevkit/cdk| CDK
+    VSCode -->|@cfxdevkit/cdk| CDK
+`} />
+
+## CLI Module (`packages/cli`)
+
+The CLI entry point is `run` in `src/run.ts`. It parses arguments, routes to specific command handlers, and manages output streams.
 
-It consists of two primary packages:
+### Argument Parsing
+
+The module uses a custom parser in `src/args.ts` to avoid heavy dependencies like `commander` or `yargs`.
+
+*   **`parseArgs(argv: readonly string[])`**: Parses `argv` into `command`, `positionals`, and `flags`.
+    *   Supports `--flag` (boolean), `--key value`, and `--key=value`.
+    *   The first non-flag positional argument is treated as the `command`.
+*   **`getString(flags, key)`**: Retrieves a string value from flags.
+*   **`getNumber(flags, key)`**: Retrieves and validates a numeric value.
+*   **`getBool(flags, key)`**: Checks if a flag is `true` or `'true'`.
 
-- `@cfxdevkit/cli`: A minimal CLI (`cfx`) for scripting and automation.
-- `@cfxdevkit/scaffold-cli`: A project scaffolding tool for rapid template-based setup.
-- `@cfxdevkit/vscode-extension`: A full-featured VS Code extension for interactive development.
+### Commands
 
-All components share a common philosophy: **small surface area, zero external CLI dependencies**, and **deep integration with `@cfxdevkit/core` and related libraries**.
+Commands are implemented as modules in `src/commands/`. Each command exports a `*FromFlags` function that accepts parsed flags and an output stream.
 
----
+#### `derive`
+Derives Conflux accounts from a mnemonic or generates a new one.
+*   **`runDerive(opts: RunDeriveOptions)`**: Core logic. Validates mnemonic, derives accounts using `@cfxdevkit/cdk`.
+*   **`deriveFromFlags(flags, out)`**: CLI entry point. Handles JSON output (`--json`) and private key exposure (`--show-private-keys`).
+*   **Key Options**:
+    *   `--mnemonic <phrase>`: Input mnemonic.
+    *   `--generate`: Generate a new mnemonic (default strength 128).
+    *   `--count <N>`: Number of accounts to derive.
+    *   `--type <standard|mining>`: Account type.
+    *   `--core-network-id <id>`: Network ID (e.g., 1029 for mainnet).
 
-## Core Principles
+#### `generate`
+Generates a fresh BIP-39 mnemonic.
+*   **`runGenerate(opts: RunGenerateOptions)`**: Generates mnemonic and validates it.
+*   **`generateFromFlags(flags, out)`**: Outputs to stdout or JSON.
+*   **Key Options**:
+    *   `--strength <128|256>`: Entropy strength.
 
-| Principle | Rationale |
-|---------|-----------|
-| **No external CLI parser** | Hand-rolled `parseArgs` avoids `commander`/`yargs` bloat and keeps install footprint minimal. |
-| **Command-agnostic output** | All commands support `--json` for machine-readable output and human-friendly formatting. |
-| **Stateless CLI, stateful extension** | CLI is ephemeral; VS Code extension persists network, keystore, and deployment state. |
-| **Dual-chain first** | All tooling supports both **Core Space** (base32 addresses) and **eSpace** (EVM-compatible `0x` addresses). |
+#### `status`
+Pings Conflux chains to verify connectivity and retrieve head block/epoch numbers.
+*   **`runStatus(opts: RunStatusOptions)`**: Iterates over chains (or a specific `--chain`) and pings RPC endpoints.
+*   **`statusFromFlags(flags, out)`**: Formats output. Returns exit code `0` if all chains are OK, `1` otherwise.
+*   **Key Options**:
+    *   `--chain <id|name>`: Target specific chain.
+    *   `--rpc <url>`: Override RPC endpoint.
+    *   `--timeout-ms <ms>`: Request timeout.
+
+#### `contracts`
+*   **`contracts extract`**: Extracts ABI and bytecode from Hardhat artifacts.
+*   **`contractsExtractFromFlags(flags, opts)`**: Handles artifact directory input and output path configuration.
+
+### Entry Point
+
+*   **`run(argv, opts)`**: The main function exported from `src/run.ts`.
+    *   Handles `--help` and unknown commands.
+    *   Wraps command execution in a `try/catch` block to report errors to `stderr`.
+    *   Returns exit codes: `0` (success), `1` (error), `2` (usage error).
+
+## Scaffold Module (`packages/scaffold-cli`)
 
----
+This package handles project initialization using predefined templates.
 
-## CLI (`@cfxdevkit/cli`)
+### Project Scaffolding
 
-### Purpose
+*   **`scaffoldProject(projectDir, templateName, options)`**:
+    1.  Retrieves the template definition via `getTemplate`.
+    2.  Validates the target directory (checks `force` flag if exists).
+    3.  Renders files using `renderFile` (replaces `{{variable}}` placeholders).
+    4.  Executes `npm install` via `spawnSync` unless `skipInstall` is true.
 
-A minimal CLI for scripting, CI/CD, and developer automation. It exposes three core commands:
+### Templates
 
-- `cfx status` — Ping chains and measure RPC latency.
-- `cfx derive` — Derive accounts from a mnemonic (or generate one).
-- `cfx generate` — Generate a fresh BIP-39 mnemonic.
+Templates are defined in `src/templates.ts`.
+*   **`listTemplates()`**: Returns available template definitions.
+*   **`getTemplate(name)`**: Retrieves a specific template by name (e.g., `minimal-dapp`, `wallet-probe`, `project-example`).
+*   **`renderFile(content, values)`**: Simple string replacement for template variables.
+*   **`getTemplateFiles(template, target)`**: Resolves base files plus target-specific files (e.g., `default` vs `react`).
 
-### Command Structure
+### Validation
 
-```bash
-cfx <command> [options]
-```
+*   **`validateName(name)`**: Ensures project names follow npm conventions (no spaces, valid characters, no leading numbers). Returns `{ valid, error }`.
 
-#### Global Flags
+## VSCode Extension (`packages/vscode-extension`)
 
-| Flag | Type | Description |
-|------|------|-------------|
-| `--json` | boolean | Emit JSON output (machine-readable). |
-| `--help` | boolean | Show help. |
+The extension integrates Conflux development tools directly into the IDE. It manages a local node runtime, wallet state, and contract interactions.
 
-#### `status` Command
+### Lifecycle
 
-| Flag | Type | Description |
-|------|------|-------------|
-| `--chain <id\|name>` | string | Ping a specific chain (e.g., `core-testnet`, `espace-mainnet`). |
-| `--rpc <url>` | string | Override the RPC endpoint. |
-| `--timeout-ms <ms>` | number | HTTP timeout (default: 30s). |
+*   **`activate(context)`**: Instantiates `ExtensionRuntime`, registers commands, and triggers `refreshAll`. If `autoStartNode` is enabled and network is `local`, it starts the node.
+*   **`deactivate()`**: Awaits `stopNodeForDeactivation` to ensure ports are released before the extension host restarts.
+*   **`ExtensionRuntime`**: The central state manager.
+    *   Manages `node` (local runtime), `unlockedPassphrase`, `fileProvider`, and `cachedSigner`.
+    *   Wraps helper functions (e.g., `workspaceRoot`, `config`, `selectedNetwork`) as class methods for context access.
 
-**Output (non-JSON)**:
-```
-OK  core-testnet       id=    1 head=epoch=1234567   120ms  http://...
-ERR espace-mainnet    id=1030 head=block=9876543   210ms  http://...  (timeout)
-```
+### Runtime Management
 
-#### `derive` Command
+The extension can manage a local Conflux node:
+*   **`startNode()` / `stopNode()`**: Controls the local node process.
+*   **`restartNode()` / `wipeNode()`**: Resets the node state.
+*   **`mineBlocks()` / `startMining()`**: Development tools for block generation.
 
-| Flag | Type | Description |
-|------|------|-------------|
-| `--mnemonic "<phrase>"` | string | Use existing mnemonic. |
-| `--generate` | boolean | Generate a new mnemonic. |
-| `--count <N>` | number | Derive `N` accounts (default: `1`). |
-| `--start <I>` | number | Starting derivation index (default: `0`). |
-| `--type standard\|mining` | string | Account segment (default: `standard`). |
-| `--core-network-id <id>` | number | `1029` (main), `1` (test), `2029` (local). |
-| `--passphrase "<pass>"` | string | BIP-39 passphrase. |
-| `--strength 128\|256` | number | Mnemonic strength (12 or 24 words). |
-| `--show-private-keys` | boolean | Include private keys in output. |
-| `--show-mnemonic` | boolean | Include mnemonic (even without `--generate`). |
+### Command Registration
 
-**Output (non-JSON)**:
-```
-mnemonic: ... (only if --generate or --show-mnemonic)
-accountType: standard   coreNetworkId: 1
+Commands are registered via `registerCommands` (imported from helpers). Common commands include:
+*   **Wallet**: `addWallet`, `selectWallet`, `unlockKeystore`, `lockKeystore`.
+*   **Network**: `selectNetwork`, `pickChainTarget`.
+*   **Contracts**: `deployContractCommand`, `importContractCommand`, `abiCallRead`, `abiCallWrite`.
+*   **View**: `showAccountsQuickPick`, `showContractsQuickPick`.
 
-  [0]
-    evm  : 0x...   (path m/44'/60'/0'/0/0)
-    core : cfxtest:...   (path m/44'/60'/0'/0/0)
-    pk   : 0x... (only if --show-private-keys)
-```
+### Helper Pattern
 
-#### `generate` Command
+Most logic is delegated to helper functions imported from `./helpers/index.js`. The `ExtensionRuntime` class acts as a bridge, binding these helpers to the extension context (`vscode.ExtensionContext`).
 
-| Flag | Type | Description |
-|------|------|-------------|
-| `--strength 128\|256` | number | Mnemonic strength (default: `128` → 12 words). |
+*   **State Helpers**: `selectedNetwork`, `selectedSpace`, `selectedBackend`.
+*   **Wallet Helpers**: `ensureUnlockedWallet`, `walletSignerFor`, `deriveRunningNodeAccounts`.
+*   **Contract Helpers**: `readDeployments`, `writeDeployments`, `pickWorkspaceArtifact`.
 
-**Output**: Plain mnemonic (or JSON with `--json`).
+## Integration & Dependencies
 
----
+*   **`@cfxdevkit/cdk`**: The core dependency for cryptographic operations (mnemonic generation, derivation), chain configuration, and RPC clients.
+    *   Used heavily in `cli/commands/derive.ts` and `cli/commands/status.ts`.
+    *   Used in VSCode for `createClient`, `getChain`, and `listChains`.
+*   **Hardware Wallets**: The extension integrates with hardware wallets (e.g., Satochip) via helper calls (e.g., `selectedNetwork` -> `hardware/satochip/index.ts`).
+*   **File System**: `scaffold-cli` uses `node:fs` for template writing; VSCode uses `vscode.workspace` for file operations.
 
-### Argument Parsing (`args.ts`)
+## Contributing
 
-A hand-rolled parser supporting:
+### Adding a CLI Command
+1.  Create a new file in `packages/cli/src/commands/`.
+2.  Export `run*` (logic) and `*FromFlags` (CLI handler).
+3.  Import the handler in `packages/cli/src/run.ts`.
+4.  Add the case to the `switch (parsed.command)` block in `run`.
+5.  Update the `HELP` constant in `run.ts` with usage examples.
 
-- `--flag` → `flags.flag = true`
-- `--key value` or `--key=value` → `flags.key = "value"`
-- First non-flag token → `command`
-- Remaining tokens → `positionals`
+### Adding a Scaffold Template
+1.  Define the template structure in `packages/scaffold-cli/src/templates/`.
+2.  Register the template in `packages/scaffold-cli/src/templates.ts`.
+3.  Ensure `renderFile` placeholders (e.g., `{{name}}`) match the `ScaffoldOptions` keys.
 
-```ts
-interface ParsedArgs {
-  command: string | undefined;
-  positionals: string[];
-  flags: Record<string, string | boolean>;
-}
-```
-
-Helper functions extract typed values:
-
-```ts
-getString(flags, 'mnemonic'); // string | undefined
-getNumber(flags, 'count');    // number | undefined
-getBool(flags, 'show-keys');  // boolean
-```
-
-> ✅ **No external dependencies** — critical for CLI install speed and reproducibility.
-
----
-
-## Scaffold CLI (`@cfxdevkit/scaffold-cli`)
-
-### Purpose
-
-Bootstrap new projects using templates (e.g., `basic`, `react`, `solidity`). Designed for rapid prototyping and workshop use.
-
-### Usage
-
-```bash
-cfx-scaffold <project-name> [--template <name>] [--force]
-```
-
-### Key Functions
-
-| Function | Description |
-|---------|-------------|
-| `scaffoldProject(projectDir, templateName, options)` | Renders template files with `{{variable}}` substitution. |
-| `validateName(name)` | Enforces npm-compatible project names (no spaces, no leading digits, etc.). |
-| `renderFile(content, values)` | Replaces `{{key}}` placeholders with values. |
-
-**Example**:
-```bash
-cfx-scaffold my-dapp --template solidity --force
-# → Creates `my-dapp/`, renders `package.json` with `{{name}}` → `"my-dapp"`
-```
-
----
-
-## VS Code Extension (`@cfxdevkit/vscode-extension`)
-
-### Purpose
-
-A full-featured development environment inside VS Code, integrating:
-
-- Local node control (`devnode`)
-- Keystore management (file, OneKey, Satochip)
-- Contract deployment & ABI interaction
-- Network & chain selection (Core/eSpace)
-- Deployment tracking & history
-
-### Architecture Overview
-
-```mermaid
-flowchart TD
-  A[Extension Runtime] --> B[State Management]
-  A --> C[View Providers]
-  A --> D[Node Control]
-  A --> E[Wallet & Keystore]
-  A --> F[Contract & ABI Helpers]
-
-  B --> G[Workspace State]
-  B --> H[Configuration]
-
-  C --> I[Accounts View]
-  C --> J[Contracts View]
-  C --> K[Network/Node Views]
-
-  D --> L[DevNode]
-  E --> M[File Keystore]
-  E --> N[Hardware Wallets]
-  F --> O[Contract Deployment]
-  F --> P[ABI Calls]
-```
-
-### Key Components
-
-#### 1. Runtime (`ExtensionRuntime`)
-
-Central class managing:
-
-- Node lifecycle (`startNode`, `stopNode`, `mineBlocks`)
-- Keystore state (`unlockKeystore`, `rotateKeystorePassphrase`)
-- Network & chain selection (`selectNetwork`, `setSelectedSpace`)
-- View refresh (`refreshAll`, `buildSnapshot`)
-
-#### 2. State Management (`extension-state-helpers.ts`)
-
-Persistent state stored in `vscode.workspaceState` and config:
-
-| State Key | Type | Description |
-|-----------|------|-------------|
-| `STATE_NETWORK` | `NetworkSelection` | `local`, `testnet`, `mainnet` |
-| `STATE_SPACE` | `ChainTarget` | `espace`, `core` |
-| `STATE_KEYSTORE_BACKEND` | `KeystoreBackend` | `file`, `onekey`, `satoshi` |
-| `STATE_ACTIVE_FILE_REF` | `SecretRef` | Active mnemonic wallet |
-| `STATE_ACTIVE_ACCOUNT_INDEX` | `number` | Active derived account index |
-
-#### 3. View Providers (`views-*.ts`)
-
-Tree views for:
-
-- **Networks** — quick network switching
-- **Node** — start/stop/restart/mine
-- **Accounts** — derived accounts with balances
-- **Contracts** — deployed contracts with ABI actions
-
-Each view uses `StaticTreeProvider` for efficient rendering.
-
-#### 4. Keystore & Wallet (`extension-wallet-helpers.ts`, `extension-wallet-lock-helpers.ts`)
-
-Supports:
-
-- **File backend**: Encrypted keystore (`keystore.json`) with BIP-39 mnemonics.
-- **Hardware backends**: OneKey (SDK), Satochip (bridge).
-- Mnemonic generation/import, passphrase rotation, account derivation.
-
-#### 5. Node Control (`extension-node-helpers.ts`)
-
-Uses `@cfxdevkit/devnode` to manage a local Conflux node:
-
-- `startNode()` — starts node with mnemonic-derived accounts.
-- `mineBlocks(n)` — mines `n` empty blocks.
-- `wipeNode()` — clears node data.
-
-#### 6. Contract Helpers (`extension-contract-command-helpers.ts`, `extension-contract-import-helpers.ts`)
-
-- `deployContractCommand()` — deploy from template/workspace Solidity.
-- `importContractCommand()` — import existing contracts (manual or env var).
-- `showContractsQuickPick()` — copy deployed contract addresses.
-
-#### 7. ABI Interaction (`extension-abi-helpers.ts`)
-
-- `abiCallRead()` — call view functions, parse JSON args.
-- `abiCallWrite()` — send transactions, prompt payable value.
-- `promptAbiArgs()` — JSON array input with validation.
-- `placeholderForSolidityType()` — generates example args (e.g., `"0x..."`, `true`, `[]`).
-
----
-
-## Integration with Core Libraries
-
-All CLI and extension commands delegate to `@cfxdevkit/core` and related packages:
-
-| CLI/Extension Function | Core Library Used |
-|------------------------|-------------------|
-| `deriveDualAccounts` | `@cfxdevkit/core/wallet` |
-| `generateMnemonic`, `validateMnemonic` | `@cfxdevkit/core/wallet` |
-| `getChain`, `listChains` | `@cfxdevkit/core/chains` |
-| `createClient`, `http`, `readContract`, `sendWrite` | `@cfxdevkit/core/client`, `@cfxdevkit/contracts` |
-| `createDevNode`, `DevNode` | `@cfxdevkit/devnode` |
-| `createFileKeystore`, `rotateLocalPassphrase` | `@cfxdevkit/services/keystore-file` |
-| `signerFromOneKey`, `signerFromSatochip` | `@cfxdevkit/wallet/hardware` |
-
----
-
-## Error Handling & Cross-Module Flows
-
-The module integrates with shared error types:
-
-| Flow | Error Type | Trigger |
-|------|-----------|---------|
-| `DeriveFromFlags → ValidateMnemonic` | `CryptoError` | Invalid BIP-39
+### Adding VSCode Commands
+1.  Implement the command logic in `packages/vscode-extension/src/helpers/`.
+2.  Register the command in `packages/vscode-extension/src/extension-command-registration.ts`.
+3.  Ensure the command is added to `package.json` `contributes.commands` (not shown in source but required for VSCode).

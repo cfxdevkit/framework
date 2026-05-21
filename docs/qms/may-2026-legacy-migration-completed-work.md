@@ -16,7 +16,7 @@ The completed-task CSV now uses repository scope as the minimum subdivision. For
 | --- | --- | --- |
 | cfx-config: `@cfxdevkit/tsconfig`, `@cfxdevkit/biome-config`, `@cfxdevkit/moon-config` | Shared TypeScript, Biome, and Moon configuration packages used by the framework workspace and CI. | `repos/cfx-config/packages/*`, `tsconfig.base.json`, `biome.json` |
 | cfx-meta: `@cfxdevkit/arch-rules` architecture governance | Machine-readable architecture and dependency boundary rules used by validation and code intelligence workflows. | `repos/cfx-meta/arch-rules.yaml`, `repos/cfx-meta/packages/arch-rules` |
-| cfx-core: `@cfxdevkit/core` | Core client foundation, chain metadata, types, errors, units, and Conflux client behavior carried forward from the legacy toolkit into a typed package. | `repos/cfx-core/packages/core` |
+| cfx-core: `@cfxdevkit/cdk` | Core client foundation, chain metadata, types, errors, units, and Conflux client behavior carried forward from the legacy toolkit into a typed package. | `repos/cfx-core/packages/core` |
 | cfx-core: `@cfxdevkit/devnode` | Local devnode lifecycle package and reusable local Conflux support. | `repos/cfx-core/packages/devnode` |
 | cfx-core: `@cfxdevkit/protocol` | Protocol/RPC method consolidation and typed protocol helpers. | `repos/cfx-core/packages/protocol` |
 | cfx-core: `@cfxdevkit/executor`, `@cfxdevkit/testing` | Automation primitives and shared testing support for framework packages. | `repos/cfx-core/packages/executor`, `repos/cfx-core/packages/testing` |

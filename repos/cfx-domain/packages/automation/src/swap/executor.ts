@@ -1,4 +1,4 @@
-import type { Hex } from '@cfxdevkit/core';
+import type { Hex } from '@cfxdevkit/cdk';
 import { decodeEventLog } from 'viem';
 import type { HexAddress, HexHash } from '../types.js';
 import { buildSwapCalldata, SWAPPI_ROUTER_ABI } from './calldata.js';

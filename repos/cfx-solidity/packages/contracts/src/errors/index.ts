@@ -1,10 +1,10 @@
 /**
  * `@cfxdevkit/contracts/errors` — error codes raised by the contracts surface.
  *
- * All errors derive from `CfxError` (re-exported from `@cfxdevkit/core`) and
+ * All errors derive from `CfxError` (re-exported from `@cfxdevkit/cdk`) and
  * carry a stable string `code` so callers can branch without parsing messages.
  */
-import { CfxError, type CfxErrorInit } from '@cfxdevkit/core';
+import { CfxError, type CfxErrorInit } from '@cfxdevkit/cdk';
 
 export type ContractsErrorCode =
   /** The supplied chain family is not yet supported by this surface. */

@@ -1,5 +1,5 @@
-import type { Client, CoreSpaceClient } from '@cfxdevkit/core';
-import { hexToBase32 } from '@cfxdevkit/core/address';
+import type { Client, CoreSpaceClient } from '@cfxdevkit/cdk';
+import { hexToBase32 } from '@cfxdevkit/cdk/address';
 import { ContractsError } from '../errors/index.js';
 
 export const CROSS_SPACE_CALL_HEX = '0x0888000000000000000000000000000000000006' as const;
@@ -64,7 +64,7 @@ export const CROSS_SPACE_CALL_ABI = [
 
 export interface BridgeBaseOptions {
   client: Client;
-  signer: import('@cfxdevkit/core').Signer;
+  signer: import('@cfxdevkit/cdk').Signer;
   waitForReceipt?: boolean;
   gas?: bigint;
   storageLimit?: bigint;

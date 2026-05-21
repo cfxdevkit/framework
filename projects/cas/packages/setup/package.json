@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@cfxdevkit/contracts": "workspace:*",
-    "@cfxdevkit/core": "workspace:*",
+    "@cfxdevkit/cdk": "workspace:*",
     "@cfxdevkit/protocol": "workspace:*",
     "@inquirer/prompts": "^7.5.2",
     "commander": "^14.0.0",

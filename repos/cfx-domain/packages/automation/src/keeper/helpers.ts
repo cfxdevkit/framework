@@ -1,4 +1,4 @@
-import type { Hex, TxReceipt } from '@cfxdevkit/core';
+import type { Hex, TxReceipt } from '@cfxdevkit/cdk';
 import type { HexHash, OnChainJobStatus } from '../types.js';
 
 export function requireOnChainJobId(jobId: HexHash | undefined, localJobId: string): HexHash {

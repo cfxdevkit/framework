@@ -6,11 +6,7 @@ import { createDevnodeServerApp } from '@cfxdevkit/devnode-server';
 
 export { promises as fs } from 'node:fs';
 export { isAbsolute, join, relative } from 'node:path';
-export { type Artifact, compile, listTemplates, npmResolver } from '@cfxdevkit/compiler';
-export { deployContract } from '@cfxdevkit/contracts/deploy';
-export { readContract } from '@cfxdevkit/contracts/read';
-export { sendWrite, waitForReceipt } from '@cfxdevkit/contracts/write';
-export { hexToBase32 } from '@cfxdevkit/core/address';
+export { hexToBase32 } from '@cfxdevkit/cdk/address';
 export {
   type ChainConfig,
   coreSpaceLocal,
@@ -19,21 +15,25 @@ export {
   espaceLocal,
   espaceMainnet,
   espaceTestnet,
-} from '@cfxdevkit/core/chains';
+} from '@cfxdevkit/cdk/chains';
 export {
   type CoreSpaceClient,
   createClient,
   type EspaceClient,
   http,
-} from '@cfxdevkit/core/client';
-export { formatCFX } from '@cfxdevkit/core/units';
+} from '@cfxdevkit/cdk/client';
+export { formatCFX } from '@cfxdevkit/cdk/units';
 export {
   coreAddressFromPrivateKey,
   deriveAccount,
   generateMnemonic,
   type Signer,
   validateMnemonic,
-} from '@cfxdevkit/core/wallet';
+} from '@cfxdevkit/cdk/wallet';
+export { type Artifact, compile, listTemplates, npmResolver } from '@cfxdevkit/compiler';
+export { deployContract } from '@cfxdevkit/contracts/deploy';
+export { readContract } from '@cfxdevkit/contracts/read';
+export { sendWrite, waitForReceipt } from '@cfxdevkit/contracts/write';
 export { createAppendOnlyAuditLogger } from '@cfxdevkit/services';
 export type { KeystoreProvider, SecretRef, StoredSecret } from '@cfxdevkit/services/keystore';
 export {

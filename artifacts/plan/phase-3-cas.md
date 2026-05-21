@@ -20,7 +20,7 @@ CAS (Conflux Automation Site) is a DeFi automation platform located at `projects
 - `@cfxdevkit/protocol` — contract addresses (AutomationManager, WCFX, pools)
 - `@cfxdevkit/wallet-connect/siwe` — SIWE authentication
 - `@cfxdevkit/wallet-connect` — wagmi without ConnectKit
-- `@cfxdevkit/core`, `@cfxdevkit/services`, `viem`
+- `@cfxdevkit/cdk`, `@cfxdevkit/services`, `viem`
 
 ---
 

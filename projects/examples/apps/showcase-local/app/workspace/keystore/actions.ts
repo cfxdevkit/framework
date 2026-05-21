@@ -1,6 +1,6 @@
 'use client';
 
-import { generateMnemonic } from '@cfxdevkit/core';
+import { generateMnemonic } from '@cfxdevkit/cdk';
 import type {
   KeystoreWalletAccountSummary,
   KeystoreWalletSummary,

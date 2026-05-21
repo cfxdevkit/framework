@@ -72,7 +72,7 @@
     "vitest": "^4.1.6"
   },
   "dependencies": {
-    "@cfxdevkit/core": "workspace:^",
+    "@cfxdevkit/cdk": "workspace:^",
     "@ledgerhq/hw-app-eth": "^7.8.1",
     "@ledgerhq/hw-transport-node-hid": "^6.33.1",
     "cive": "^0.8.1",

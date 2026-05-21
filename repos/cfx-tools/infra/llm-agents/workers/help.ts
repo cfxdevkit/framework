@@ -7,6 +7,7 @@ Commands:
   config show                    Show local Lemonade CLI config
   config set base-url <url>      Pin Lemonade base URL
   config set default-model <id>  Pin default model id
+  config set request-timeout-ms <ms>  Set Lemonade request timeout in milliseconds
   config set action <name> <id>  Pin model for one repo action
   ask [--quick] "question"       Ask a repo-aware question
   docs-upkeep [flags] [prompt]   Refresh docs checks and upkeep markdown folder-by-folder
@@ -62,6 +63,7 @@ Commands:
 Examples:
   pnpm run llm:models
   pnpm run llm:config -- set default-model Qwen3-Coder-Next-GGUF
+  pnpm run llm:config -- set request-timeout-ms 600000
   pnpm run llm:commit
   pnpm run llm:commit -- --dry-run
   pnpm run llm:commit -- --yes
@@ -79,10 +81,10 @@ Examples:
   pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
 
   pnpm run llm:test-upkeep
-  pnpm run llm:test-upkeep -- --scope repos/cfx-core/packages/core
-  pnpm run llm:test-upkeep -- --quick --scope repos/cfx-core/packages/core
+  pnpm run llm:test-upkeep -- --scope repos/cfx-core/packages/cdk
+  pnpm run llm:test-upkeep -- --quick --scope repos/cfx-core/packages/cdk
   pnpm run llm:test-upkeep -- --scope repos/cfx-keys --max-packages 3
-  pnpm run llm:test-upkeep -- --write --yes --scope repos/cfx-core/packages/core
+  pnpm run llm:test-upkeep -- --write --yes --scope repos/cfx-core/packages/cdk
   pnpm run llm:test-upkeep -- --skip-test-run --quick
   pnpm run llm:docs-upkeep -- --quick --scope repos/cfx-tools/packages/docs-site/content/packages
   pnpm run llm:docs-upkeep -- --quick --write --yes --max-folders 3

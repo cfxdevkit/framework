@@ -1,4 +1,4 @@
-import type { Address } from '@cfxdevkit/core/types';
+import type { Address } from '@cfxdevkit/cdk/types';
 import { useMemo, useState } from 'react';
 import type { ChainId, TokenInfo, TokenRegistry } from '../types.js';
 

@@ -67,7 +67,7 @@
     "wagmi": "^3.6.9"
   },
   "dependencies": {
-    "@cfxdevkit/core": "workspace:^",
+    "@cfxdevkit/cdk": "workspace:^",
     "viem": "^2.21.0"
   },
   "sideEffects": false

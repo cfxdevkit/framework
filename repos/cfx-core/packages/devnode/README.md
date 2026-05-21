@@ -4,6 +4,12 @@
 > dual-space (Core + eSpace) chain on deterministic ports with pre-funded
 > genesis accounts. **Dev / test only — Node.js host required.**
 
+## Install
+
+```sh
+pnpm add @cfxdevkit/devnode
+```
+
 ## Quick start
 
 ```ts
@@ -79,3 +85,50 @@ advances are available via `node.mine(blocks)`.
 - Plugin registration on a higher-level "DevKit" object.
 - `fundAccount` / `setNextBlockTimestamp` / `getLogs` (upstream stubs).
 - `saveConfig` / `loadConfig` round-trips.
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 9 symbols |
+| `./cli` | 3 symbols |
+
+---
+
+## `.`
+
+```ts
+export { DevNodeError }
+export { DevNodeErrorCode }
+export { createDevNode }
+export { DevNode }
+export { DevNodeUrls }
+export { DevNodeAccount }
+export { DevNodeConfig }
+export { DevNodeStatus }
+export { MiningStatus }
+```
+
+---
+
+## `./cli`
+
+```ts
+export interface ParsedArgs {
+  accounts?: number;
+  balance?: number;
+  port?: number;
+  espacePort?: number;
+  wsPort?: number;
+  espaceWsPort?: number;
+  dataDir?: string;
+  mnemonic?: string;
+  autoMine?: boolean;
+  mineInterval?: number;
+}
+
+export declare function parseArgs(argv: string[]): ParsedArgs;
+export declare function printHelp(): void;
+```
+
+<!-- readme-hash: df581d492a3f371f9a46537f9acdc07d85717beb5e95f34c5422b2cd66b0e4e3 -->

@@ -1,4 +1,4 @@
-import { generateMnemonic, validateMnemonic } from '@cfxdevkit/core';
+import { generateMnemonic, validateMnemonic } from '@cfxdevkit/cdk';
 import { getControlPlaneClient } from '../control-plane.js';
 
 export interface KeystoreSession {

@@ -107,8 +107,8 @@ The tier rules from ARCHITECTURE.md still apply, just enforced by repo
 boundaries instead of folder boundaries:
 
 - `cfx-core`: zero deps on other `cfx-*` repos.
-- `cfx-keys`: depends on `@cfxdevkit/core` over npm range, never workspace.
-- `cfx-ui`: depends on `@cfxdevkit/core` and `@cfxdevkit/wallet` over npm.
+- `cfx-keys`: depends on `@cfxdevkit/cdk` over npm range, never workspace.
+- `cfx-ui`: depends on `@cfxdevkit/cdk` and `@cfxdevkit/wallet` over npm.
 - `cfx-domain`: depends on `cfx-core` (and may depend on `cfx-keys`/`cfx-ui`
   per package when a vertical requires it).
 - `cfx-tools`: depends on everything; never depended on by anything.

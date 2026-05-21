@@ -2,308 +2,385 @@
 title: "Repository Layout — cfx-ui"
 ---
 
+import { Mermaid } from '../../components/Mermaid';
+
 # Repository Layout — cfx-ui
 
-# **cfx-ui — React UI Surface Module**
+# cfx-ui
 
-> **Tier 0c — React UI surface**  
-> *Carve-out target per [ADR-0003](../../docs/adr/0003-multi-repo-split.md)*
+**Tier 0c — React UI surface.**
 
-The `cfx-ui` module provides a suite of **headless, composable React packages** for building DeFi and wallet-integrated UIs on top of the `@cfxdevkit/*` stack. It is intentionally decoupled from domain logic (`cfx-domain`) and tooling (`cfx-tools`) to enable rapid iteration on UI while maintaining stable integration with core primitives.
+This module contains packages that provide React-based UI surfaces for the `@cfxdevkit/*` stack. Packages are published as scoped npm modules and consumed by applications in `projects/` and external consumers.
 
----
+UI moves fastest (weekly releases). It is coupled to `cfx-core` and `cfx-keys` through stable npm ranges, ensuring chain code is not blocked by UI iteration.
 
-## 🎯 Purpose & Design Philosophy
+## Architecture
 
-`cfx-ui` exists to:
+The `cfx-ui` repository is organized into four distinct packages, layered by abstraction level.
 
-- **Separate concerns**: UI evolves independently from chain logic.
-- **Enable composition**: All packages are headless — no opinionated styling, no hardcoded layouts.
-- **Standardize patterns**: Shared tokens, hooks, and connectors reduce duplication across apps.
-- **Support SSR & testing**: Providers accept external state (e.g., `QueryClient`, `Signer`), avoiding hidden side effects.
-
-It follows a **layered architecture**:
-
-```
-cfx-core (primitives)
-     ↑
-cfx-ui/react (hooks + providers)
-     ↑
-cfx-ui/defi-react (DeFi UX patterns)
-     ↑
-cfx-ui/wallet-connect (wallet integration)
-     ↑
-cfx-ui/theme (design system)
-```
-
-Apps consume these packages directly — no monolithic SDK.
-
----
-
-## 📦 Package Overview
-
-| Package | npm | Responsibility | Dependencies |
-|--------|-----|----------------|--------------|
-| `@cfxdevkit/react` | `react` | Headless hooks & providers over `core` | `core`, `@tanstack/react-query` |
-| `@cfxdevkit/defi-react` | `defi-react` | DeFi widgets (swap, balance, token picker) | `react`, `services`, `core` |
-| `@cfxdevkit/theme` | `theme` | Design tokens + CSS/Tailwind presets | *none* |
-| `@cfxdevkit/wallet-connect` | `wallet-connect` | Wallet connectors + SIWE + ConnectKit wiring | `core`, optional `react`, optional `theme` |
-
-### ✅ Allowed Dependencies
-- `@cfxdevkit/core`, `@cfxdevkit/wallet`, `@cfxdevkit/services`
-- React, TanStack Query, Wagmi, Viem, ConnectKit (where applicable)
-
-### ❌ Forbidden Dependencies
-- `cfx-domain`, `cfx-tools`
-- Chain primitives duplicated (e.g., ABI parsing, encoding)
-
----
-
-## 🔗 Module Architecture
-
-```mermaid
-flowchart TD
-    subgraph "Core Layer"
-        A["@cfxdevkit/core"]
+<Mermaid chart={`graph TD
+    subgraph "External Dependencies"
+        CFX_CDK["@cfxdevkit/cdk"]
+        CFX_SERVICES["@cfxdevkit/services"]
+        REACT["react"]
+        WAGMI["wagmi / viem"]
     end
 
-    subgraph "UI Layer"
-        B["@cfxdevkit/react"]
-        C["@cfxdevkit/defi-react"]
-        D["@cfxdevkit/wallet-connect"]
-        E["@cfxdevkit/theme"]
+    subgraph "cfx-ui Packages"
+        THEME["@cfxdevkit/theme"]
+        REACT_PKG["@cfxdevkit/react"]
+        WALLET["@cfxdevkit/wallet-connect"]
+        DEFI["@cfxdevkit/defi-react"]
     end
 
-    A --> B
-    B --> C
-    B --> D
-    B --> E
-    D --> E
-    C --> B
-    C --> D
-```
+    THEME --> REACT_PKG
+    THEME --> WALLET
+    THEME --> DEFI
+    
+    CFX_CDK --> REACT_PKG
+    CFX_CDK --> WALLET
+    
+    REACT_PKG --> WALLET
+    REACT_PKG --> DEFI
+    
+    WALLET --> DEFI
+    
+    CFX_SERVICES --> DEFI
+    WAGMI --> WALLET
+    REACT --> THEME
+    REACT --> REACT_PKG
+    REACT --> WALLET
+    REACT --> DEFI
+`} />
 
-> **Key**: `cfx-ui` packages depend *only* on `core` and each other where necessary. No circular dependencies.
+### Package Boundaries
+
+| Package | Responsibility | Dependencies |
+| :--- | :--- | :--- |
+| **`theme`** | Design tokens, CSS variables, Tailwind preset. | None (Runtime) |
+| **`react`** | Headless hooks, providers, contract interaction. | `@cfxdevkit/cdk`, `@tanstack/react-query` |
+| **`wallet-connect`** | Wallet adapters, Wagmi config, SIWE. | `@cfxdevkit/cdk`, `wagmi`, `viem` |
+| **`defi-react`** | DeFi widgets (swap, portfolio, pools). | `@cfxdevkit/react`, `@cfxdevkit/services` |
+
+### Constraints
+
+- **MAY** depend on `@cfxdevkit/cdk`, `@cfxdevkit/wallet`.
+- **MUST NOT** depend on `cfx-domain`, `cfx-tools`.
+- React + Tailwind allowed; no chain-primitive duplication.
 
 ---
 
-## 🧩 Core Packages Deep Dive
+## @cfxdevkit/theme
 
-### 1. `@cfxdevkit/react` — Headless Hooks & Providers
+**Scope:** Shared design tokens (colors, spacing, typography, shadows, motion) usable from any UI library.
 
-**Purpose**: Thin React adapters over `core`, exposing **no internal state management**.
+No React, no CSS-in-JS dependency. Outputs JSON + CSS variables + (optional) Tailwind preset.
 
-#### Key Patterns
-- **Provider accepts external state**: `CfxProvider` receives `client`, `signer`, `queryClient` — *does not create them*.
-- **Hooks are pure wrappers**: `useReadContract`, `useSendTransaction`, etc., map 1:1 to `core` functions.
-- **No wallet UI**: Connection logic lives in `wallet-connect`.
+### Installation
 
-#### Public API Highlights
+```bash
+npm install @cfxdevkit/theme
+```
+
+### Usage
+
+#### Design Tokens
+Access raw tokens for non-React environments or custom styling.
+
 ```ts
-// Top-level provider (stateless)
-const CfxProvider: React.FC<{ client: Client; signer?: Signer; queryClient?: QueryClient }>
+import { colors, spacing, radius } from '@cfxdevkit/theme/tokens';
 
-// Hooks
-function useClient(): Client
-function useChain(): ChainConfig
-function useReadContract<T>(...): { data: T | undefined; error; isLoading }
-function useWriteContract(): { writeAsync; isPending; error }
+const buttonStyle = {
+  backgroundColor: colors.primary.default,
+  padding: spacing.md,
+  borderRadius: radius.md,
+};
 ```
 
-#### Structure
+#### React Integration
+Manage theme state (light/dark/system) via context.
+
+```tsx
+import { ThemeProvider, useTheme } from '@cfxdevkit/theme';
+
+function App() {
+  return (
+    <ThemeProvider defaultTheme="system" storageKey="cfx-theme">
+      <Main />
+    </ThemeProvider>
+  );
+}
+
+function Main() {
+  const { resolvedTheme } = useTheme();
+  return <div>Current: {resolvedTheme}</div>;
+}
 ```
-react/
-├── provider/     → ChainProvider, QueryProvider
-├── hooks/        → useBalance, useContractRead, useTransactionReceipt, etc.
-├── components/   → Address, Amount, TxStatus (render-prop / asChild)
-└── utils/        → SSR guards, formatting helpers
-```
+
+### API Reference
+
+| Export | Description |
+| :--- | :--- |
+| `colors`, `spacing`, `radius`, `typography`, `shadow`, `motion` | Raw design token objects. |
+| `ThemeProvider` | React context provider for theme switching. |
+| `useTheme` | Hook to access `theme` (preference) and `resolvedTheme` (effective). |
+| `Theme` | Type: `'light' | 'dark' | 'system'`. |
+| `ResolvedTheme` | Type: `'light' | 'dark'`. |
 
 ---
 
-### 2. `@cfxdevkit/defi-react` — DeFi UX Patterns
+## @cfxdevkit/react
 
-**Purpose**: Opinionated composition layer for common DeFi flows — **no protocol logic**.
+**Scope:** Headless React hooks and components built on top of `@cfxdevkit/cdk`.
 
-#### Key Patterns
-- **Hooks delegate to services**: `useSwap` → `services/dex`, `useTokenBalance` → `services/tokens`.
-- **Widgets are composable**: `SwapWidget`, `PortfolioTable`, `TokenPicker` accept props for customization.
-- **No state persistence**: Apps manage history, preferences, etc.
+Fully headless — no styling assumptions or UI dependencies. Built on React Query for caching, background updates, and state management.
 
-#### Public API Highlights
+### Installation
+
+```bash
+npm install @cfxdevkit/react @tanstack/react-query
+```
+
+### Setup
+
+Wrap your application with `CfxProvider` to inject client, signer, and query context.
+
+```tsx
+import { CfxProvider } from '@cfxdevkit/react';
+import { QueryClient } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
+<CfxProvider client={client} signer={signer} queryClient={queryClient}>
+  <App />
+</CfxProvider>
+```
+
+### Core Hooks
+
+#### Account & Balance
 ```ts
-// Swap UX
-function useSwap(input: {
-  adapter: DexAdapter
-  tokenIn: Address
-  tokenOut: Address
-  amountIn: Wei
-  slippageBps?: number
-}): { quote; isQuoting; swapAsync; isSwapping; error }
-
-const SwapWidget: React.FC<{
-  adapter: DexAdapter
-  tokens?: TokenInfo[]
-  onSwapSubmitted?: (tx: { hash }) => void
-}>
-
-// Portfolio
-function usePortfolio(input: { address; tokens; refreshMs? }): { rows; totalUsd; isLoading }
-
-// Token picker (headless)
-const TokenPicker: React.FC<{ registry; chainId; selected; onSelect }>
-
-// Tx status
-const TxStatusToast: React.FC<{ hash; onConfirm }>
+const { address, chainId } = useAccount();
+const { data: balance } = useNativeBalance({ address });
+const { data: tokenBalance } = useTokenBalance({ address, tokenAddress });
 ```
 
-#### Structure
-```
-defi-react/
-├── token/        → useToken, useTokenBalance, useApprove
-├── swap/         → useQuote, useSwap, useSlippage
-├── liquidity/    → useAddLiquidity, useRemoveLiquidity
-└── format/       → price formatting
-```
-
----
-
-### 3. `@cfxdevkit/theme` — Design Tokens
-
-**Purpose**: Shared design system — **no components**, no CSS-in-JS.
-
-#### Key Patterns
-- **Tokens → CSS variables**: `colors.bg.default` → `--cfx-color-bg-default`.
-- **Theme switching via `[data-theme]`**: SSR-safe via `ThemeProvider`.
-- **Tailwind preset**: Opt-in integration.
-
-#### Public API Highlights
+#### Contract Interaction
 ```ts
-// Tokens (JS)
-const colors: { bg: { default; subtle; emphasis }; brand: { primary; accent }; ... }
-const spacing: { 0; 1; 2; 3; 4; 6; 8; 12; 16 }
-const typography: { sans; mono; sizes; weights }
+// Read
+const { data } = useReadContract({ abi, address, functionName, args });
 
-// CSS (side-effect import)
-import '@cfxdevkit/theme/css'      // light theme
-import '@cfxdevkit/theme/dark'     // dark theme
+// Batch Read
+const { data } = useReadContracts({ contracts: [...] });
 
-// React
-const ThemeProvider: React.FC<{ defaultTheme: 'light' | 'dark' | 'system' }>
-function useTheme(): { theme; resolved; set }
+// Write
+const { writeContract, isPending } = useWriteContract();
+writeContract({ abi, address, functionName, args });
+
+// Simulate
+const { data: result } = useSimulateContract({ abi, address, functionName, args });
 ```
 
-#### Structure
-```
-theme/
-├── tokens/       → color, spacing, typography, shadow, motion
-├── modes/        → light, dark, high-contrast
-├── outputs/      → css-variables, tailwind-preset, json
-└── internal/     → token-scale helpers
-```
-
----
-
-### 4. `@cfxdevkit/wallet-connect` — Wallet Integration
-
-**Purpose**: Pre-wired wallet connectors + SIWE + ConnectKit.
-
-#### Key Patterns
-- **Connector interface**: Unified API for injected, WC, Fluent, Coinbase.
-- **Hooks manage connection flow**: `useConnect`, `useDisconnect`, `useActiveConnector`.
-- **UI primitives are unstyled**: `ConnectButton`, `AccountBadge` accept `className`.
-
-#### Public API Highlights
+#### Transactions & Events
 ```ts
-// Connectors
-const fluentConnector: () => Connector
-const walletConnectConnector: (opts: { projectId; metadata }) => Connector
+// Send Raw Tx
+const { sendTransaction } = useSendTransaction();
+sendTransaction({ to, value, data });
 
-// Hooks
-function useConnectors(): readonly Connector[]
-function useConnect(): { connectAsync; isPending; error }
-function useActiveConnector(): Connector | null
+// Wait for Confirmation
+const { data } = useWaitForTransaction({ hash });
 
-// SIWE
-function createMessage({ address, nonce, chainId }): string
-function verifySignature(message, signature, address): Promise<boolean>
+// Watch Events
+useWatchEvent({ abi, address, eventName, onLogs });
 ```
 
-#### Structure
-```
-wallet-connect/
-├── config/       → Wagmi config builder (Conflux chains + connectors)
-├── connectors/   → injected, wallet-connect, coinbase, fluent
-├── connectkit/   → ConnectKitProvider + theme mapping
-├── siwe/         → message, verify, nonce
-├── hooks/        → useConnectFlow, useSiweSession
-└── internal/     → SSR-safe storage
+### Keystore Integration
+Optional hooks for keystore management (requires `@cfxdevkit/wallet-connect` or local support).
+
+```ts
+const { wallets, addWallet, unlockWallet } = useKeystoreLifecycle();
+const { data: accounts } = useKeystoreAccounts();
 ```
 
+### API Reference
+
+| Sub-path | Exports |
+| :--- | :--- |
+| `.` | `useAccount`, `useNativeBalance`, `useReadContract`, `CfxProvider`, etc. |
+| `./account` | `useAccount` |
+| `./balance` | `useNativeBalance`, `useTokenBalance`, `useTokenMetadata` |
+| `./context` | `CfxProvider`, `useClient`, `useChain`, `useSigner` |
+| `./contract` | `useReadContract`, `useWriteContract`, `useSimulateContract` |
+| `./tx` | `useSendTransaction`, `useWaitForTransaction` |
+| `./keystore` | `useKeystoreLifecycle`, `useKeystoreAccounts`, `KeystoreProvider` |
+
 ---
 
-## 🔄 Integration Flow Example
+## @cfxdevkit/wallet-connect
 
-A typical app flow:
+**Scope:** Opinionated wallet-connection bundle for web apps targeting Conflux networks (Core & eSpace), built on Wagmi v2 and Viem.
 
-```mermaid
-sequenceDiagram
-    participant App
-    participant WC
-    participant React
-    participant Theme
-    participant Defi
+### Installation
 
-    App->>Theme: import '@cfxdevkit/theme/css'
-    App->>Theme: <ThemeProvider defaultTheme="system">
-    App->>React: <CfxProvider client=... signer=...>
-    App->>WC: <ConnectButton onSelect={connect}>
-    WC->>WC: detect connector (e.g., MetaMask)
-    WC->>WC: connectAsync → signer
-    WC->>React: CfxProvider updates signer context
-    App->>Defi: <SwapWidget adapter=... />
-    Defi->>React: useSwap → useReadContract (via core)
-    Defi->>Theme: useTheme() → [data-theme="dark"]
+```bash
+npm install @cfxdevkit/wallet-connect wagmi viem
+```
+
+### Setup
+
+Configure Wagmi providers specifically for Conflux chains.
+
+```tsx
+import { ConfluxWagmiProviders, createConfluxWagmiConfig } from '@cfxdevkit/wallet-connect';
+
+const config = createConfluxWagmiConfig();
+
+<ConfluxWagmiProviders config={config}>
+  <App />
+</ConfluxWagmiProviders>
+```
+
+### Features
+
+#### Chain Support
+Pre-configured chains for Conflux Core and eSpace.
+
+```ts
+import { espaceMainnet, espaceTestnet, CORE_CHAIN_CONFIGS } from '@cfxdevkit/wallet-connect';
+```
+
+#### Wallet Detection
+Helpers for FluentCore and standard EIP-1193 providers.
+
+```ts
+const provider = getFluentCoreProvider();
+const isConnected = await detectFluentCore();
+```
+
+#### SIWE (Sign-In With Ethereum)
+Message generation and verification helpers.
+
+```ts
+import { createSiweMessage, verifySiweMessage } from '@cfxdevkit/wallet-connect/siwe';
+
+const message = createSiweMessage({ domain, uri, address });
+const result = await verifySiweMessage({ message, signature });
+```
+
+#### UI Components
+Basic connection UI components.
+
+```tsx
+import { ConnectButton, WalletPickerModal } from '@cfxdevkit/wallet-connect/ui';
+
+<ConnectButton onConnect={handleConnect} onDisconnect={handleDisconnect} />
+```
+
+### API Reference
+
+| Sub-path | Exports |
+| :--- | :--- |
+| `.` | `ConfluxWagmiProviders`, `useCoreWallet`, `switchEspaceChain`, `detectFluentCore` |
+| `./config` | `createConfluxWagmiConfig`, `createSupportedEspaceChains` |
+| `./hooks` | `useCoreWallet`, `useEspaceConnectors` |
+| `./siwe` | `createSiweMessage`, `verifySiweMessage`, `generateSiweNonce` |
+| `./ui` | `ConnectButton`, `WalletPickerModal` |
+| `./auth` | `AuthProvider`, `useAuth` |
+
+---
+
+## @cfxdevkit/defi-react
+
+**Scope:** React helpers for common DeFi UX patterns (token balance, swap quote, allowance, pool participation, transaction status).
+
+Depends on `@cfxdevkit/react`, `@cfxdevkit/services`, `@cfxdevkit/cdk`.
+
+### Installation
+
+```bash
+npm install @cfxdevkit/defi-react
+```
+
+### Usage
+
+#### Swap Widget
+A full swap interface requiring a `SwapServiceConfig`.
+
+```tsx
+import { SwapWidget, createSwapService } from '@cfxdevkit/defi-react';
+
+const service = createSwapService({ rpcUrl, chainId, dexAdapters });
+
+<SwapWidget 
+  adapter={service} 
+  tokens={tokenList} 
+  onSwapSubmitted={handleTx} 
+/>
+```
+
+#### Portfolio & Pools
+Hooks for displaying user assets and liquidity pool data.
+
+```ts
+const { data: portfolio } = usePortfolio({ address, tokens });
+const { data: pools } = usePools({ chainId });
+const { data: prices } = useTokenPrice({ tokens });
+```
+
+#### Transaction Status
+Track transaction lifecycle.
+
+```tsx
+import { TxStatusList, TxStatusToast } from '@cfxdevkit/defi-react/tx-status';
+
+<TxStatusList recent={txHistory} onConfirm={handleConfirm} />
+```
+
+### API Reference
+
+| Sub-path | Exports |
+| :--- | :--- |
+| `.` | `SwapWidget`, `useSwap`, `PortfolioTable`, `usePortfolio`, `TokenPicker` |
+| `./swap` | `SwapWidget`, `useSwap`, `createSwappiAdapter` |
+| `./balance` | `PortfolioTable`, `usePortfolio` |
+| `./token-picker` | `TokenPicker` |
+| `./tx-status` | `TxStatusList`, `TxStatusToast`, `TxListProvider` |
+| `./primitives` | `Button`, `Card`, `Badge`, `Tabs`, `Input`, `AppNavBar` |
+| `./service` | `SwapService`, `createSwapService` |
+| `./pool` | `usePools`, `usePoolTokens`, `useTokenPrice` |
+
+### Primitives
+The package exports a set of UI primitives (`./primitives`) that can be used independently of DeFi logic.
+
+```tsx
+import { Button, Card, Badge, Tabs } from '@cfxdevkit/defi-react/primitives';
+
+<Button variant="primary">Action</Button>
+<Card elevated><Badge variant="success">Success</Badge></Card>
 ```
 
 ---
 
-## 🧪 Testing & SSR
+## Contribution Guidelines
 
-- **No hidden state**: Providers accept `client`, `signer`, `queryClient` — trivial to mock.
-- **SSR-safe**: `ThemeProvider` writes `[data-theme]` on `<html>` before hydration.
-- **Hooks are pure**: All hooks use `useQuery`/`useMutation` — testable with `@tanstack/react-query` mocks.
+### Adding New Packages
+New packages must be added to `repos/cfx-ui/packages/`. Ensure `package.json` follows the scoped naming convention `@cfxdevkit/<name>`.
 
----
+### Dependency Management
+- **Internal:** Use workspace links or version ranges compatible with `cfx-core`.
+- **External:** Pin peer dependencies (e.g., `react ^19`, `@tanstack/react-query ^5`).
+- **Forbidden:** Do not import from `cfx-domain` or `cfx-tools`.
 
-## 📦 Versioning & Stability
+### Build & Publish
+Packages are built using Vite (`vite.config.ts`) and managed via `moon.yml`.
 
-- **Packages are versioned independently** (e.g., `@cfxdevkit/react@1.2.0`, `@cfxdevkit/defi-react@0.5.3`).
-- **Stable contracts**: `cfx-ui` depends on `cfx-core` via `^` ranges — UI updates do not block chain releases.
-- **Breaking changes**: Only in major versions; minor/patch updates are additive.
+```bash
+# Build all packages
+moon run cfx-ui:build
 
----
+# Publish to npm
+moon run cfx-ui:publish
+```
 
-## 🚫 Anti-Goals
-
-- ❌ No styling assumptions (no `clsx`, no `twind`, no CSS-in-JS).
-- ❌ No wallet connection UI (modal, onboarding) — only primitives.
-- ❌ No protocol logic (e.g., swap routing, liquidity math).
-- ❌ No state persistence (history, preferences) — apps manage this.
-
----
-
-## 📚 Related Documentation
-
-- [ADR-0003: Multi-Repo Split](../../docs/adr/0003-multi-repo-split.md)
-- [Framework Core API](../../repos/cfx-core/API.md)
-- [Services Layer](../../repos/cfx-services/README.md)
-
---- 
-
-> **Tip for contributors**:  
-> When adding a new hook or component, ask:  
-> *“Does this belong in `react`, `defi-react`, or `wallet-connect`?”*  
-> If it’s generic (e.g., `useBalance`), it goes in `react`.  
-> If it’s domain-specific (e.g., `useSwap`), it goes in `defi-react`.  
-> If it’s wallet-specific (e.g., `useConnect`), it goes in `wallet-connect`.
+### Testing
+Ensure hooks are tested with `@testing-library/react` and mock providers (`CfxProvider`, `ConfluxWagmiProviders`).

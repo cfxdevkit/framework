@@ -18,7 +18,7 @@
  * — we ask the bridge for an `(r,s,v)` tuple over the unsigned tx and then
  * re-serialise via viem so consumers can broadcast directly.
  */
-import type { Account, SignableTx, Signer, SignOptions, TypedData } from '@cfxdevkit/core';
+import type { Account, SignableTx, Signer, SignOptions, TypedData } from '@cfxdevkit/cdk';
 import {
   type Hex,
   hashTypedData,

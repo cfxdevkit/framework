@@ -1,5 +1,5 @@
-import type { Hex } from '@cfxdevkit/core';
-import { signerFromPrivateKey } from '@cfxdevkit/core/wallet';
+import type { Hex } from '@cfxdevkit/cdk';
+import { signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
 import type { Capability } from '@cfxdevkit/services/keystore';
 import { describe, expect, it } from 'vitest';
 import { SessionKeyError } from '../errors/index.js';
