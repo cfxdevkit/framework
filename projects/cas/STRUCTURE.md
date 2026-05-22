@@ -1,11 +1,11 @@
 # projects/cas — Detailed Structure
 
+Workspace path: `projects/cas`
+
 ```
 cas/
 ├── README.md
 ├── STRUCTURE.md
-├── CHANGELOG.md
-├── AUDITS.md
 ├── .gitignore
 │
 ├── apps/

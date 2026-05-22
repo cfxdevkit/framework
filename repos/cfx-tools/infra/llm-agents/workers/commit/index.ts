@@ -106,7 +106,7 @@ export async function runCommit(args) {
   const { subject, body } = commit;
   logInfo(`  subject: ${subject}`);
   await writeCommitReport(commitResponse, changesetPlan);
-  logInfo('  report: artifacts/llm/reports/lemonade-commit.md');
+  logInfo('  report: artifacts/llm/reports/llm-commit.md');
 
   logStep(6, total, 'Approval');
   printProposedCommit(subject, body);

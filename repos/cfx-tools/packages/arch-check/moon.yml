@@ -26,6 +26,18 @@ tasks:
       cache: false
       runFromWorkspaceRoot: false
 
+  generate-structure:
+    command: 'pnpm exec tsx src/bin/generate-structure.ts --write'
+    inputs:
+      - '/repos/**/package.json'
+      - '/projects/**/package.json'
+      - '/repos/**/*'
+      - '/projects/**/*'
+      - 'src/**/*'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
   check-secrets:
     command: 'pnpm exec tsx src/bin/check-secrets.ts'
     inputs:

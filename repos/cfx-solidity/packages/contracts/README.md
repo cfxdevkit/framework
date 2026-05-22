@@ -39,11 +39,11 @@ Use `readContract` for view/pure functions:
 
 ```ts
 import { readContract } from '@cfxdevkit/contracts';
-import { erc20 } from '@cfxdevkit/contracts/erc20';
+import { ERC20_ABI } from '@cfxdevkit/contracts/abis';
 
 const balance = await readContract({
   client,
-  abi: erc20.abi,
+  abi: ERC20_ABI,
   address: '0xToken…',
   functionName: 'balanceOf',
   args: ['0xUser…'],
@@ -56,11 +56,11 @@ Use `prepareWrite` to construct a transaction, then `sendWrite` to submit it:
 
 ```ts
 import { prepareWrite, sendWrite } from '@cfxdevkit/contracts';
-import { erc20 } from '@cfxdevkit/contracts/erc20';
+import { ERC20_ABI } from '@cfxdevkit/contracts/abis';
 
 const tx = await prepareWrite({
   client,
-  abi: erc20.abi,
+  abi: ERC20_ABI,
   address: '0xToken…',
   functionName: 'transfer',
   args: ['0xUser…', 1000n],
@@ -128,5 +128,9 @@ Fully compatible with both eSpace and Core Space chains. Specify your target cha
 
 See [API.md](./API.md) for the full surface and [STRUCTURE.md](./STRUCTURE.md)
 for the layout.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
 
 <!-- readme-hash: f3652e82216cc229c66713999612320065765990214d7b9baa25d420d3f472c8 -->

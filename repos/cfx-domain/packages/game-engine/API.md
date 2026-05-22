@@ -12,7 +12,14 @@
 
 ## `.`
 
+### Usage
+
 ```ts
+import { __packageName } from "@cfxdevkit/game-engine";
+```
+
+```ts
+// The package name identifier.
 export declare const __packageName: "@cfxdevkit/game-engine";
 ```
 

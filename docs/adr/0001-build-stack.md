@@ -25,7 +25,7 @@ The legacy repos use a mix of Turborepo (`devkit/`, `chainbrawler/`), pnpm-only 
 | Tests | **Vitest** (unit/integration), **Playwright** (e2e), **Hardhat** (contracts) |
 | Type-check orchestration | TS project references driven by moon |
 | Releases | **Changesets** in `framework/`; tags + GitOps in `projects/` |
-| Firmware build | **PlatformIO** (kept in `projects/electro/apps/firmware`), invoked through a moon task |
+| Firmware build | **PlatformIO** (kept under `projects/electro/`), invoked through a moon task |
 
 ## Consequences
 
@@ -36,7 +36,7 @@ The legacy repos use a mix of Turborepo (`devkit/`, `chainbrawler/`), pnpm-only 
 - moon's integrated toolchain pins Node + pnpm versions for reproducibility.
 
 **Negative**
-- moon is less widespread than Turbo; contributors need a short onboarding doc (`docs/guides/moon-quickstart.md`).
+- moon is less widespread than Turbo; contributors need a short onboarding doc (`docs/README.md`).
 - Migration of existing Turbo pipelines needs a one-time rewrite (covered in MIGRATION.md step 1).
 
 ## Rejected alternatives

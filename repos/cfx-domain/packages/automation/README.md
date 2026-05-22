@@ -110,7 +110,6 @@ const keeper = new Keeper({
   safetyConfig: DEFAULT_SAFETY_CONFIG,
 });
 
-// Start polling and executing jobs
 keeper.start();
 ```
 
@@ -133,7 +132,7 @@ const backtestResult = await priceChecker.evaluate({
 
 ## API Reference
 
-See full exports in [API REFERENCE EXCERPT](#api-reference-excerpt). Key classes include:
+See full exports in [API.md](./API.md). Key classes include:
 
 - `AutomationManagerClient` — interacts with on-chain automation manager
 - `KeeperClientImpl` — low-level keeper client for custom transports
@@ -468,13 +467,10 @@ export declare class MemoryExecutionRepository implements ExecutionRepository {
   add(record: NewExecutionRecord): Promise<void>;
   listByJob(jobId: string): Promise<ExecutionRecord[]>;
 }
-
-export declare class RetryQueue {
-  constructor(options: RetryQueueOptions);
-  add(jobId: string, timestamp: number): void;
-  next(): { jobId: string; timestamp: number } | null;
-  remove(jobId: string): void;
-}
 ```
+
+## Tier
+
+**Tier 2 — domains** — May import Tier 0 and Tier 1 packages.
 
 <!-- readme-hash: e707f8ff1d47784369a26e87bc3acd9703187fc96e6b1540c74c71492f9c4488 -->

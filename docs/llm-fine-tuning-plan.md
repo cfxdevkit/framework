@@ -337,7 +337,7 @@ Repository automation services:
 
 Initial implementation status:
 
-- `@cfxdevkit/llm-tools` in `repos/cfx-llm` implements the first deterministic
+- `@cfxdevkit/llm-tools` in `repos/cfx-tools/infra/llm-tools` implements the first deterministic
   upkeep agents.
 - `pnpm run check:corpus` writes file, chunk, and documentation-heading metadata
   under `artifacts/llm/corpus/`.

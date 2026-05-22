@@ -32,12 +32,19 @@ export { LlmProviderNotFoundError } from './errors.js';
 export { createProvider } from './factory.js';
 export { GitHubModelsProvider } from './github-models.js';
 export { LemonadeProvider } from './lemonade.js';
+export { LiteLLMProvider } from './litellm.js';
 export { OpenAICompatProvider } from './openai-compat.js';
+export {
+  getProviderBaseUrl,
+  getProviderDefaultModel,
+  resolveProviderModel,
+} from './provider-meta.js';
 export { resolveProvider } from './resolve.js';
 export type {
   ChatMessage,
   CompletionAttempt,
   CompletionOptions,
+  CompletionProgressEvent,
   CompletionReport,
   LlmConfig,
   LlmModel,

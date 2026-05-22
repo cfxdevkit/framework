@@ -1,65 +1,21 @@
-# framework/executor — Detailed Structure
+# @cfxdevkit/executor
 
-Generic execution primitives. **No domain logic** (strategies live in
-`@cfxdevkit/automation`).
+## Root Files
+.gitignore — Git ignore rules  
+API.md — Public API documentation  
+README.md — Package overview and usage  
+STRUCTURE.md — This file: directory layout documentation  
+moon.yml — MoonScript workspace configuration  
+package.json — Package metadata and dependencies  
+tsconfig.json — TypeScript compiler configuration  
+vite.config.ts — Vite build configuration (for non-test builds)  
+vitest.config.ts — Vitest test runner configuration  
 
-```
-executor/
-├── README.md
-├── package.json                    @cfxdevkit/executor
-├── tsconfig.json
-├── vite.config.ts
-├── moon.yml
-└── src/
-    ├── index.ts
-    │
-    ├── job/                        ── Job lifecycle ──
-    │   ├── index.ts
-    │   ├── types.ts                Job, JobResult, JobStatus
-    │   ├── handler.ts              JobHandler interface
-    │   └── context.ts              JobContext (signer, client, logger)
-    │
-    ├── queue/                      ── Pluggable queue backend ──
-    │   ├── index.ts                Queue interface
-    │   ├── memory.ts               in-memory (tests, single-node)
-    │   ├── postgres.ts             pg-boss-style adapter
-    │   └── redis.ts                BullMQ adapter
-    │
-    ├── scheduler/                  ── Time-based triggers ──
-    │   ├── index.ts
-    │   ├── cron.ts
-    │   └── interval.ts
-    │
-    ├── policy/                     ── Execution policies ──
-    │   ├── index.ts
-    │   ├── retry.ts                exponential backoff with jitter
-    │   ├── circuit-breaker.ts
-    │   ├── rate-limit.ts
-    │   └── idempotency.ts
-    │
-    ├── gas/                        ── Gas-aware submission ──
-    │   ├── index.ts
-    │   ├── estimate.ts
-    │   ├── price-strategy.ts       fixed / oracle / replace-by-fee
-    │   └── replace.ts              speed-up / cancel
-    │
-    ├── observability/              ── Metrics & tracing hooks ──
-    │   ├── index.ts
-    │   ├── metrics.ts              OpenTelemetry counters/histograms
-    │   └── trace.ts
-    │
-    └── internal/
-        └── clock.ts                injectable clock for tests
-```
+## src/
+index.ts — Main entry point (executor logic)  
+index.test.ts — Unit tests for the executor
 
-### Public exports map
+Directory tree:
 
-```
-".", "./job", "./queue", "./queue/memory", "./queue/postgres", "./queue/redis",
-"./scheduler", "./policy", "./gas", "./observability"
-```
-
-### Dependencies
-
-- Runtime: `framework/core`, `framework/wallet` (for signing), OpenTelemetry API.
-- Queue backends are optional peer deps.
+<!-- structure-status: enriched -->
+<!-- structure-hash: 83238b9325b833a03806476191fa30f48f66b501936b7e183ebe6314cc3fc18c -->

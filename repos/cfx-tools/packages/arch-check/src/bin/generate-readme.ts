@@ -15,6 +15,7 @@ import { readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { discoverPublicPackages } from '../api/filter.js';
 import {
+  backfillReadmeSections,
   checkReadmeSections,
   computeReadmeSkeletonHash,
   embedReadmeSkeletonHash,
@@ -74,6 +75,13 @@ for (const pkg of targets) {
   if (missingKeys.length > 0) {
     incompleteCount++;
     log(`  INCOMPLETE ${pkg.rel} (missing: ${missingKeys.join(', ')})`);
+    if (write) {
+      const repaired = backfillReadmeSections(existing, pkg);
+      const hash = computeReadmeSkeletonHash(pkg);
+      await writeFile(readmePath, embedReadmeSkeletonHash(repaired, hash), 'utf8');
+      writtenCount++;
+      log(`  UPDATED  ${pkg.rel}/README.md`);
+    }
   } else {
     okCount++;
   }

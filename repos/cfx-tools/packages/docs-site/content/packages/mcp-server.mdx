@@ -56,7 +56,7 @@ That shared backend contract now includes a few important runtime guarantees:
 
 Reset and recovery follow the same shared rule as `showcase-local` and the VS Code extension: destructive reset is operator-only. MCP tools may surface backend status and guidance, but they must not implement a passwordless reset mutation; operators stop the runtime and remove the configured keystore file plus its matching `.runtime` directory when a blank-state reset is required.
 
-> **Note:** This package lives under `repos/cfx-tools/packages/mcp-server` but aligns with the `platform/` tier in the five-tier architecture. See [ARCHITECTURE.md](../../../../../docs/architecture/ARCHITECTURE.md) for tier definitions.
+> **Note:** This package lives under `repos/cfx-tools/packages/mcp-server` but aligns with the Tier 1 platform surface in the five-tier architecture. See [ARCHITECTURE.md](../../../../ARCHITECTURE.md) for tier definitions.
 
 ## Sub-paths
 
@@ -114,27 +114,135 @@ export declare function getMcpTool(name: string): McpToolDefinition | undefined;
 export declare function defineTool(definition: McpToolDefinition): McpToolDefinition;
 ```
 
+## Usage
+
+```typescript
+import { createMcpServer, listMcpTools } from '@cfxdevkit/mcp-server';
+
+// List available tools in a specific group
+const readTools = listMcpTools('blockchain-read');
+console.log('Available read tools:', readTools.map(t => t.name));
+
+// Create and start an MCP server instance
+const server = createMcpServer({
+  // Optional: configure ledger storage path
+  ledger: { basePath: './.mcp-ledger' }
+});
+
+// Start listening for MCP requests
+await server.start();
+console.log('MCP server started');
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 1 — platform** — May import Tier 0 framework packages.
+
 ## API Reference
 
 ## `.`
 
+### Usage
+
+```typescript
+import { createMcpServer, listMcpTools } from '@cfxdevkit/mcp-server';
+
+const server = createMcpServer({
+  // Configuration options
+});
+
+const tools = listMcpTools('blockchain-read');
+console.log(tools);
+```
+
 ```ts
+// The name of the package.
 export declare const __packageName: "@cfxdevkit/mcp-server";
+// The collection of all available MCP tool definitions.
 export declare const MCP_TOOL_DEFINITIONS: McpToolDefinition[];
+// Contextual information for project-related operations.
 export { ProjectContext }
-export { createMcpServer }
+// Creates a new Model Context Protocol server instance.
+export declare function createMcpServer(options?: { /* ... */ }): Server;
+// The current state of an operation.
 export type OperationStatus = 'running' | 'succeeded' | 'failed';
+// The name of an available MCP tool.
 export type McpToolName = (typeof MCP_TOOL_DEFINITIONS)[number]['name'];
+// Categories used to group MCP tools.
 export type McpToolGroup = 'node' | 'accounts' | 'blockchain-read' | 'blockchain-write' | 'compiler' | 'keystore' | 'wallet-utils' | 'scaffold';
+// The level of access or impact a tool has.
 export type McpToolMutability = 'read' | 'write' | 'admin';
+// Details of an individual step within an operation.
 export interface OperationStep {
+  // A human-readable description of the step.
+  description: string;
+  // Timestamp when the step started.
+  startTime: number;
+  // Timestamp when the step ended (or null if still running).
+  endTime?: number;
+  // Status of the step.
+  status: OperationStatus;
+}
+// A log entry for a completed or ongoing operation.
 export interface OperationRecord {
+  // Unique identifier for the operation.
+  id: string;
+  // Name of the tool invoked.
+  toolName: McpToolName;
+  // Timestamp when the operation started.
+  startTime: number;
+  // Final status of the operation.
+  status: OperationStatus;
+  // List of steps executed during the operation.
+  steps: OperationStep[];
+  // Optional metadata associated with the operation.
+  metadata?: Record<string, unknown>;
+}
+// Configuration settings for the operation ledger.
 export interface OperationLedgerOptions {
+  // Path to the ledger file (optional; defaults to in-memory only).
+  filePath?: string;
+  // Whether to auto-flush changes to disk.
+  autoFlush?: boolean;
+}
+// Metadata and schema for an MCP tool.
 export interface McpToolDefinition {
+  // Unique name of the tool.
+  name: McpToolName;
+  // Human-readable description of what the tool does.
+  description: string;
+  // Group this tool belongs to.
+  group: McpToolGroup;
+  // Mutability level: read, write, or admin.
+  mutability: McpToolMutability;
+  // JSON Schema describing the tool's input parameters.
+  inputSchema: Record<string, unknown>;
+}
+// A system for tracking and auditing operations.
 export declare class OperationLedger {
+  // Constructs a new ledger instance.
+  constructor(options?: OperationLedgerOptions);
+  // Records a new operation.
+  record(operation: OperationRecord): void;
+  // Retrieves all recorded operations.
+  getAll(): readonly OperationRecord[];
+  // Retrieves operations filtered by tool name.
+  getByToolName(toolName: McpToolName): readonly OperationRecord[];
+  // Retrieves operations filtered by status.
+  getByStatus(status: OperationStatus): readonly OperationRecord[];
+  // Persists current state to disk (if filePath is configured).
+  flush(): void;
+}
+// Retrieves a list of tools, optionally filtered by group.
 export declare function listMcpTools(group?: McpToolGroup): readonly McpToolDefinition[];
+// Retrieves a specific tool definition by its name.
 export declare function getMcpTool(name: string): McpToolDefinition | undefined;
+// Registers or validates a tool definition.
 export declare function defineTool(definition: McpToolDefinition): McpToolDefinition;
 ```
 
-{/* readme-hash: c062a36287e9f88801f0cc8f41677f4862b7b0261d4f27f9a11a178738d9e319 */}
+{/* readme-hash: 7761448207269b2a26d7339fa68a2793e6d395ac626d13e960a6304b215dc6fe */}

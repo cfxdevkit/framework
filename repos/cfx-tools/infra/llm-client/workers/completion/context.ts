@@ -95,12 +95,12 @@ export async function commitPreflightBlock() {
 }
 
 export async function writeLlmReport(action, response) {
-  const path = join(artifactsRoot, 'reports', `lemonade-${action}.md`);
+  const path = join(artifactsRoot, 'reports', `llm-${action}.md`);
   await mkdir(dirname(path), { recursive: true });
   await writeFile(
     path,
     [
-      `# Lemonade ${action}`,
+      `# LLM ${action}`,
       '',
       `Generated: ${response.generatedAt}`,
       `Model: ${response.model}`,

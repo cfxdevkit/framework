@@ -4,7 +4,7 @@ End-user applications. Each project:
 
 - Has its own deploy lifecycle (see `infrastructure/<project>/`).
 - Owns its smart contracts (if any) under `contracts/`.
-- Owns an `AUDITS.md` status file. If `contracts/` is added, contract review and deployment audit records must be tracked there.
+- Tracks contract review and deployment audit records in `README.md` and project specs when `contracts/` is present.
 - May contain project-specific `packages/` for code that does **not** belong in `repos/cfx-domain`.
 - Consumes the shared packages from `repos/cfx-*` according to the architectural tier rules.
 
@@ -16,7 +16,6 @@ projects/<name>/
 ├── apps/                  # Deployable units (frontend, backend, worker, firmware, …)
 ├── packages/              # Project-internal libraries (optional)
 ├── contracts/             # Solidity sources + deploy scripts (optional)
-├── AUDITS.md              # Current audit status and contract audit records
 └── e2e/                   # Cross-app end-to-end tests (optional)
 ```
 

@@ -35,36 +35,35 @@ Typed provider-agnostic LLM client for Conflux DevKit automation.
 
 `resolveProvider()` selects the first usable provider in this order:
 
-1. `artifacts/llm/config/lemonade.json` explicit `baseUrl`
-2. `LEMONADE_URL` or `LEMONADE_BASE_URL`
-3. Local Lemonade probe (`localhost:13305`, container host aliases, `127.0.0.1:8000`)
-4. `OPENAI_BASE_URL` + `OPENAI_API_KEY`
-5. `GITHUB_TOKEN` via GitHub Models
-6. Throws `LlmProviderNotFoundError` with diagnostics
+1. `artifacts/llm/config/llm.json` explicit `provider` + `baseUrl`  
+   If `provider` is omitted but `baseUrl` is present, the config is treated as `litellm`.
+2. `LITELLM_BASE_URL`
+3. `LEMONADE_URL` or `LEMONADE_BASE_URL`
+4. Local provider probe (`localhost:13305`, container host aliases, `127.0.0.1:8000`)
+5. `OPENAI_BASE_URL` + `OPENAI_API_KEY`
+6. `GITHUB_TOKEN` via GitHub Models
+7. Throws `LlmProviderNotFoundError` with diagnostics
 
 ## Usage
 
 ```ts
-import { createClient, resolveProvider } from '@cfxdevkit/llm-client';
+import { resolveProvider } from '@cfxdevkit/llm-client';
 
 const provider = await resolveProvider();
-const client = createClient(provider);
-
-const response = await client.complete({
-  messages: [{ role: 'user', content: 'Hello!' }],
+const text = await provider.complete([{ role: 'user', content: 'Hello!' }], {
   model: 'gpt-4o',
 });
 
-console.log(response.choices[0].message.content);
+console.log(text);
 ```
 
 ## Exports
 
 ```ts
 import {
-  createClient,
   resolveProvider,
   LemonadeProvider,
+  LiteLLMProvider,
   OpenAICompatProvider,
   GitHubModelsProvider,
   type LlmProvider,
@@ -73,11 +72,12 @@ import {
 
 Provider implementations share the `LlmProvider` interface: `complete()`, `discoverModels()`, and `chooseModel()`.
 
+The preferred local config path is `artifacts/llm/config/llm.json`. Reads still fall back to `artifacts/llm/config/lemonade.json` for compatibility, and the config remains provider-aware so it can point at LiteLLM, Lemonade, OpenAI-compatible backends, or GitHub Models.
+
 ### Core Functions
 
 | Function | Description |
 |----------|-------------|
-| `createClient(provider)` | Instantiate a client bound to a provider |
 | `resolveProvider()` | Auto-select provider using environment/config |
 | `complete(options)` | Send a chat completion request |
 | `discoverModels()` | List available models from the provider |
@@ -121,47 +121,113 @@ Provider implementations share the `LlmProvider` interface: `complete()`, `disco
 
 ## API Reference
 
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 1 — platform** — May import Tier 0 framework packages.
+
+## API Reference
+
 ## `.`
 
+### Usage
+
 ```ts
-export { chooseModel }
-export { createClient }
-export { defaultConfig }
-export { discoverModels }
-export { extractAssistantText }
-export { readConfig }
-export { writeConfig }
-export { complete }
-export { completeCommitAgent }
-export { completeStructuredAgent }
-export { buildActionContext }
-export { buildBaseContext }
-export { commitPreflightBlock }
-export { readContextFile }
-export { writeLlmReport }
-export { parseJsonObject }
-export { commandBlock }
-export { git }
-export { artifactsRoot }
-export { chatPaths }
-export { configPath }
-export { defaultBaseUrls }
-export { modelPaths }
-export { LlmProviderNotFoundError }
-export { createProvider }
-export { GitHubModelsProvider }
-export { LemonadeProvider }
-export { OpenAICompatProvider }
-export { resolveProvider }
-export { ChatMessage }
-export { CompletionAttempt }
-export { CompletionOptions }
-export { CompletionReport }
-export { LlmConfig }
-export { LlmModel }
-export { LlmProvider }
-export { LlmProviderType }
-export { ResolveProviderAttempt }
+import { chooseModel, createClient } from '@cfxdevkit/llm-client';
+
+const model = chooseModel('gpt-4o');
+const client = createClient(model);
+const response = await client.complete('Hello, world!');
 ```
 
-{/* readme-hash: 49792ef5afa436875b69c84f13b1893e438cf8151d4223cd023dd3f59191bb28 */}
+```ts
+// Selects a model from the available models based on name or priority
+export { chooseModel }
+// Creates a client instance for the chosen model and configuration
+export { createClient }
+// Default configuration for the LLM client, including provider and model defaults
+export { defaultConfig }
+// Discovers and lists all available models across configured providers
+export { discoverModels }
+// Extracts the assistant's text response from an LLM response object
+export { extractAssistantText }
+// Reads the LLM configuration from the default or specified config file
+export { readConfig }
+// Writes the current configuration to the config file
+export { writeConfig }
+// Executes a text completion request using the client
+export { complete }
+// Executes a completion request using the commit agent (specialized for Git commit messages)
+export { completeCommitAgent }
+// Executes a structured completion request using the structured agent (e.g., JSON output)
+export { completeStructuredAgent }
+// Builds the action context used by agents to understand task intent and environment
+export { buildActionContext }
+// Builds the base context (e.g., working directory, environment info) for LLM operations
+export { buildBaseContext }
+// Commits a preflight block (e.g., a staged Git commit) using the commit agent
+export { commitPreflightBlock }
+// Reads the context file from disk (used for persisting or restoring agent state)
+export { readContextFile }
+// Writes the LLM completion report to disk (e.g., for audit or debugging)
+export { writeLlmReport }
+// Safely parses a string into a JSON object, throwing on invalid input
+export { parseJsonObject }
+// Executes a command block (e.g., shell command) as part of an agent workflow
+export { commandBlock }
+// Executes Git commands via a typed interface
+export { git }
+// Root directory where all generated artifacts (e.g., reports, context files) are stored
+export { artifactsRoot }
+// Paths for chat-related files (e.g., conversation history, session logs)
+export { chatPaths }
+// Path to the default LLM configuration file
+export { configPath }
+// Default base URLs for each supported LLM provider
+export { defaultBaseUrls }
+// Paths for model metadata and cache files
+export { modelPaths }
+// Error thrown when a requested LLM provider is not found or supported
+export { LlmProviderNotFoundError }
+// Creates a provider instance for a given provider type and configuration
+export { createProvider }
+// Provider implementation for GitHub Models (e.g., `gpt-4o`, `claude-3.5-sonnet`)
+export { GitHubModelsProvider }
+// Provider implementation for Lemonade AI models
+export { LemonadeProvider }
+// Provider implementation for LiteLLM-compatible endpoints
+export { LiteLLMProvider }
+// Provider implementation for OpenAI-compatible APIs (e.g., v1/chat/completions)
+export { OpenAICompatProvider }
+// Resolves and returns the base URL for a given provider
+export { getProviderBaseUrl }
+// Returns the default model name for a given provider
+export { getProviderDefaultModel }
+// Resolves the actual model to use for a given provider (handles aliases, fallbacks)
+export { resolveProviderModel }
+// Resolves the provider type from a string or config (e.g., `"github"` → `GitHubModelsProvider`)
+export { resolveProvider }
+// Represents a chat message with role (e.g., `user`, `assistant`) and content
+export { ChatMessage }
+// Represents a single attempt to complete a request, including timing and metadata
+export { CompletionAttempt }
+// Options that control completion behavior (e.g., temperature, max tokens, stream)
+export { CompletionOptions }
+// Event emitted during streaming or polling completion progress
+export { CompletionProgressEvent }
+// Report object containing full details of a completion run (attempts, timing, output)
+export { CompletionReport }
+// Configuration object for the LLM client (provider, model, credentials, etc.)
+export { LlmConfig }
+// Definition of an LLM model, including name, provider, and capabilities
+export { LlmModel }
+// Interface defining the contract for an LLM provider (e.g., `complete`, `listModels`)
+export { LlmProvider }
+// Type union of all supported LLM provider identifiers (`'github' | 'lemonade' | 'litellm' | 'openai-compat'`)
+export { LlmProviderType }
+// Attempts to resolve a provider instance with fallback logic and error handling
+export { resolveProviderAttempt }
+```
+
+{/* readme-hash: fd2ea30160e3a9439aaf51aaa354913883b351039b064673ae819e99fd2793ec */}

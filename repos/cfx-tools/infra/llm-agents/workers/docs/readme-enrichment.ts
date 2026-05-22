@@ -21,7 +21,7 @@ import {
 } from '@cfxdevkit/arch-check';
 import { completeStructuredAgent } from '../completion/index.ts';
 import { root } from '../shared/index.ts';
-import { logInfo } from '../shared/logging.ts';
+import { createLlmProgressReporter, logInfo } from '../shared/logging.ts';
 
 type ReadmeEnrichmentResult = {
   readme: string;
@@ -31,7 +31,7 @@ async function callReadmeLlm(
   pkg: { name: string; rel: string },
   existingContent: string,
   apiMdSnippet: string,
-  flags: { quick?: boolean; model?: string },
+  flags: { quick?: boolean; model?: string; noThinking?: boolean },
 ): Promise<string | null> {
   const maxTokens = flags.quick ? 2000 : 4000;
 
@@ -59,6 +59,7 @@ async function callReadmeLlm(
       .filter(Boolean)
       .join('\n'),
     maxTokens,
+    onProgress: createLlmProgressReporter(pkg.name),
   });
 
   const raw = response.content?.trim() ?? '';

@@ -1,5 +1,7 @@
 # projects/chainbrawler — Detailed Structure
 
+Workspace path: `projects/chainbrawler`
+
 ```
 chainbrawler/
 ├── README.md
@@ -60,7 +62,7 @@ chainbrawler/
 │   ├── scripts/
 │   │   └── deploy.ts
 │   ├── deployments/
-│   └── AUDITS.md
+
 │
 └── e2e/
     ├── playwright.config.ts

@@ -1,5 +1,7 @@
 # projects/electro — Detailed Structure
 
+Workspace path: `projects/electro`
+
 ```
 electro/
 ├── README.md

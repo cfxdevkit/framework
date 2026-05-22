@@ -1,4 +1,7 @@
 import { createHash } from 'node:crypto';
+import { compile } from '@mdx-js/mdx';
+import remarkFrontmatter from 'remark-frontmatter';
+import remarkGfm from 'remark-gfm';
 
 const HASH_RE = /\n\{\/\*\s*readme-hash:\s*([a-f0-9]+)\s*\*\/\}\s*$/i;
 const SYNC_VERSION = '3';
@@ -153,4 +156,17 @@ import { } from '${name}'
 // TODO: add usage example
 \`\`\``;
   return `---\ntitle: "${name}"\ndescription: "${description.replace(/"/g, '\\"')}"\n---\n\nimport { Callout, Tabs } from 'nextra/components'\n\n# ${name}\n\n> ${description || 'TODO: add a description'}\n\n## Install\n\n${buildInstallBlock(name)}\n\n${body}\n`;
+}
+
+export async function isValidGeneratedMdx(content: string): Promise<boolean> {
+  try {
+    await compile(content, {
+      remarkPlugins: [remarkGfm, remarkFrontmatter],
+      jsx: true,
+      outputFormat: 'function-body',
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }

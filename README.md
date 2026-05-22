@@ -26,7 +26,7 @@ Everything is structured in a **strict 5-tier dependency hierarchy** enforced by
 Tier -1  cross-cutting   repos/cfx-meta, repos/cfx-config        (devDep only)
 Tier  0  framework       repos/cfx-core, cfx-keys, cfx-ui,       (published npm)
                          cfx-solidity
-Tier  1  platform        repos/cfx-tools, repos/cfx-llm          (workspace:*)
+Tier  1  platform        repos/cfx-tools (including infra/*)     (workspace:*)
 Tier  2  domains         repos/cfx-domain                        (workspace:*)
 Tier  3  projects        projects/cas, projects/examples, …      (internal)
 ```
@@ -99,12 +99,12 @@ Source of truth for these rules: `repos/cfx-meta/arch-rules.yaml`
 | `packages/devcontainer` | `@cfxdevkit/devcontainer` | Dev container feature and scripts |
 | `packages/docs-site` | `@cfxdevkit/docs-site` | Documentation site build pipeline |
 
-#### `repos/cfx-llm`
+#### `repos/cfx-tools/infra`
 | Package | npm name | Purpose |
 |---------|----------|---------|
-| `packages/llm-tools` | `@cfxdevkit/llm-tools` | CLI entry point for LLM automation pipeline (`llm commit`, `llm review`, `llm health`, etc.) |
-| `packages/llm-client` | `@cfxdevkit/llm-client` | LLM provider client abstraction (OpenAI, Anthropic) |
-| `packages/llm-agents` | `@cfxdevkit/llm-agents` | Autonomous agents (commit quality gate, doc generation, test upkeep) |
+| `infra/llm-tools` | `@cfxdevkit/llm-tools` | CLI entry point for LLM automation pipeline (`llm commit`, `llm review`, `llm health`, etc.) |
+| `infra/llm-client` | `@cfxdevkit/llm-client` | LLM provider client abstraction (OpenAI, Anthropic) |
+| `infra/llm-agents` | `@cfxdevkit/llm-agents` | Autonomous agents (commit quality gate, doc generation, test upkeep) |
 
 ### Tier 2 — Domains
 
@@ -195,6 +195,11 @@ pnpm llm:review       # code review pipeline
 pnpm llm:health       # repo health report
 pnpm llm:validation   # validation report
 
+# Root maintenance CLI
+pnpm tooling -- catalog         # machine-readable namespace + command catalog
+pnpm tooling -- llm commit      # namespaced root dispatcher for LLM workflows
+pnpm tooling -- docs sync all   # namespaced root dispatcher for docs workflows
+
 # GitNexus
 pnpm gitnexus:status  # index status + symbol list
 npx gitnexus analyze  # re-index codebase (run when index is stale)
@@ -202,6 +207,28 @@ npx gitnexus analyze  # re-index codebase (run when index is stale)
 # Dev
 pnpm showcase         # start both showcase apps in parallel
 pnpm devnode          # build + start devnode
+```
+
+---
+
+## Root Tooling CLI
+
+`pnpm tooling -- <namespace> <command> [args]` is the stable root entrypoint for monorepo maintenance workflows.
+The first registered namespaces are `llm` and `docs`, and `pnpm tooling -- catalog` returns a machine-readable command catalog intended to become the discovery surface for a future TUI.
+
+Current compatibility policy:
+- Existing `llm:*`, `docs:*`, and selected `sync:*` root scripts remain available during migration.
+- Those aliases are now shims that delegate through `pnpm tooling` instead of calling package internals directly.
+- New root maintenance workflows should be added to the namespace registry and exposed through `pnpm tooling`, not as new direct package wrappers in the root `package.json`.
+
+Examples:
+
+```bash
+pnpm tooling -- catalog
+pnpm tooling -- llm help
+pnpm tooling -- llm commit --dry-run
+pnpm tooling -- docs help
+pnpm tooling -- docs sync all
 ```
 
 ---

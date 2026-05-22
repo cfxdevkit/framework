@@ -52,7 +52,7 @@ const { address, chainId, accountType } = useAccount();
 Reads the native token balance of an account.
 
 ```ts
-const { data: balance, isLoading } = useNativeBalance({ address });
+const { data: balance, isLoading } = useNativeBalance({ chainId, account });
 ```
 
 ### `useTokenBalance(input)`
@@ -60,8 +60,9 @@ Reads the ERC-20 token balance of an account.
 
 ```ts
 const { data: balance, isLoading } = useTokenBalance({
-  address,
+  chainId,
   tokenAddress,
+  account,
 });
 ```
 
@@ -69,7 +70,10 @@ const { data: balance, isLoading } = useTokenBalance({
 Fetches metadata (name, symbol, decimals) for a token.
 
 ```ts
-const { data: metadata } = useTokenMetadata({ tokenAddress });
+const { data: metadata, isLoading } = useTokenMetadata({
+  chainId,
+  tokenAddress,
+});
 ```
 
 ### `useReadContract<T>(input)`
@@ -210,5 +214,27 @@ See `./keystore` exports for full list of types and utilities.
 - All hooks integrate with React Query for automatic caching and refetching.
 - Hooks are typed end-to-end — full TypeScript support.
 - No UI assumptions — designed for composability with any UI library.
+
+## Usage
+
+```typescript
+import { useAccount, useNativeBalance } from '@cfxdevkit/react';
+
+function AccountBalance() {
+  const { address } = useAccount();
+  const { data: balance, isLoading } = useNativeBalance({ chainId: 1, account: address });
+
+  if (isLoading) return <span>Loading…</span>;
+  return <span>Balance: {balance?.toString()}</span>;
+}
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
 
 <!-- readme-hash: 4f96a171149358c71d45a9cbbbff3cbfe74af9ba2d15d28a36d73531366672a0 -->

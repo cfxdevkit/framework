@@ -7,12 +7,14 @@ import {
   runAction,
   runCommit,
   runDocsApi,
+  runDocsApiProbe,
   runDocsPackagePages,
   runDocsReadme,
   runDocsUpkeep,
   runPrecommit,
   runStructureUpkeep,
   runTestUpkeep,
+  validateModels,
 } from '@cfxdevkit/llm-agents';
 
 const rawArgs = process.argv.slice(2);
@@ -21,11 +23,13 @@ const [command = 'help', ...args] = rawArgs;
 
 try {
   if (command === 'models') await listModels();
+  else if (command === 'validate-models') await validateModels(args);
   else if (command === 'config') await configure(args);
   else if (command === 'ask') await ask(args);
   else if (command === 'precommit') await runPrecommit(args);
   else if (command === 'commit') await runCommit(args);
   else if (command === 'docs-api') await runDocsApi(args);
+  else if (command === 'docs-api-probe') await runDocsApiProbe(args);
   else if (command === 'readme-upkeep') await runDocsReadme(args);
   else if (command === 'package-pages') await runDocsPackagePages(args);
   else if (command === 'docs-upkeep') await runDocsUpkeep(args);
@@ -44,6 +48,7 @@ function printHelp(): void {
 
 Commands:
   models       List auto-discovered models
+  validate-models Probe discovered models with cold/hot/json reliability checks
   config       Show or update local LLM config
   ask          Ask a repo-aware local LLM question
   precommit    Run hotspot + quality gates only
@@ -51,10 +56,11 @@ Commands:
   run          Run a named delegated action
   actions      List delegated actions
   docs-api       Generate deterministic API.md skeletons then enrich with local LLM
+  docs-api-probe Validate the docs-api package/model chain with a tiny probe request
   readme-upkeep      Scaffold missing READMEs then enrich with local LLM
   package-pages      Sync package MDX stubs then enrich docs-site pages with local LLM
   docs-upkeep        Run documentation upkeep recommendations
-  structure-upkeep   Generate/refresh STRUCTURE.md for every public package
+  structure-upkeep   Scaffold deterministic STRUCTURE.md files, then optionally enrich them
   test-upkeep        Run test coverage upkeep recommendations
 `);
 }

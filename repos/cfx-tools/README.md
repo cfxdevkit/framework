@@ -15,7 +15,7 @@
 | `docs-site` | — | docs.cfxdevkit.dev (Astro/VitePress) |
 | `templates` | — | starter templates referenced by scaffold-cli |
 
-Local LLM and AI-assisted repository automation lives in [`../cfx-llm/`](../cfx-llm/).
+Local LLM and AI-assisted repository automation lives in [`infra/`](infra/).
 
 ## Why standalone
 

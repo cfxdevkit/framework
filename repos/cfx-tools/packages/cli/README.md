@@ -65,4 +65,24 @@ export { run }
 
 <!-- api-hash: d062722870d1697d744ad39db1cdd215df7045463fd8f11284781107d1ade6af -->
 
+## Usage
+
+```typescript
+import { run } from '@cfxdevkit/cli';
+
+// Run CLI with default behavior (uses process.argv)
+run();
+
+// Run CLI with custom arguments
+run({
+  command: 'status',
+  chain: 'core-testnet',
+  json: true
+});
+```
+
+## Tier
+
+**Tier 1 — platform** — May import Tier 0 framework packages.
+
 <!-- readme-hash: e16eaeec910323678685cb29619a8be3ddf036d991997a48a4ee72d8e390314c -->

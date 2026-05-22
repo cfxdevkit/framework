@@ -46,8 +46,7 @@
     "dist",
     "README.md",
     "API.md",
-    "STRUCTURE.md",
-    "PORTING.md"
+    "STRUCTURE.md"
   ],
   "sideEffects": false,
   "scripts": {

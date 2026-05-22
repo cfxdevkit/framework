@@ -1,7 +1,7 @@
 # cfx-core
 
 **Tier 0a — chain primitives.** Carve-out target per
-[ADR-0003](../docs/adr/0003-multi-repo-split.md).
+[ADR-0003](../../docs/adr/0003-multi-repo-split.md).
 
 ## Packages
 

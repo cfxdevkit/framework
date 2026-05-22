@@ -1,95 +1,47 @@
-# framework/core — Detailed Structure
+# @cfxdevkit/cdk — Directory Structure
 
-Standard layout per [docs/architecture/package-layout.md](../../docs/architecture/package-layout.md). This file documents only the package-specific src tree.
+## Root Files
+- `.gitignore` — Git ignore rules  
+- `API.md` — Public API documentation  
+- `README.md` — Package overview and usage  
+- `STRUCTURE.md` — This file  
+- `moon.yml` — MoonScript build configuration  
+- `package.json` — Package metadata and dependencies  
+- `tsconfig.json` — TypeScript compiler options  
+- `vite.config.ts` — Vite bundler config (for dev/build)  
+- `vitest.config.ts` — Vitest test runner config  
 
-```
-core/
-├── README.md
-├── package.json                    @cfxdevkit/cdk
-├── tsconfig.json
-├── vite.config.ts                  lib mode, multi-entry
-├── moon.yml
-└── src/
-    ├── index.ts                    public re-exports
-    │
-    ├── chains/                     Chain definitions & registry
-    │   ├── index.ts
-    │   ├── espace.ts               eSpace mainnet/testnet/dev configs
-    │   ├── core-space.ts           Core Space mainnet/testnet/dev
-    │   ├── registry.ts             chain lookup by id/name
-    │   └── types.ts                ChainConfig, RpcEndpoint
-    │
-    ├── client/                     RPC client (Viem-based)
-    │   ├── index.ts
-    │   ├── create-client.ts        createClient(chain, transport)
-    │   ├── transport.ts            http/ws/fallback transports
-    │   ├── public-actions.ts       extended public actions for Conflux
-    │   └── types.ts
-    │
-    ├── wallet/                     Wallet primitives (HD, raw, in-memory)
-    │   ├── index.ts
-    │   ├── hd.ts                   BIP32/44 derivation
-    │   ├── account.ts              Account abstraction
-    │   ├── signer.ts               Signer interface
-    │   └── types.ts
-    │
-    ├── contract/                   Typed contract I/O
-    │   ├── index.ts
-    │   ├── read.ts                 readContract helpers
-    │   ├── write.ts                writeContract helpers
-    │   ├── simulate.ts             simulateContract
-    │   ├── deploy.ts               deployContract
-    │   └── events.ts               typed event parsing
-    │
-    ├── batch/                      Multicall / batched RPC
-    │   ├── index.ts
-    │   ├── multicall.ts
-    │   ├── multisend.ts
-    │   └── batcher.ts              request coalescing
-    │
-    ├── abi/                        Standard ABIs
-    │   ├── index.ts
-    │   ├── erc20.ts
-    │   ├── erc721.ts
-    │   ├── erc1155.ts
-    │   └── multicall3.ts
-    │
-    ├── address/                    Address utilities
-    │   ├── index.ts
-    │   ├── checksum.ts
-    │   ├── core-to-espace.ts       Conflux address-format bridge
-    │   └── validate.ts
-    │
-    ├── units/                      Token unit math (no floats)
-    │   ├── index.ts
-    │   ├── format.ts
-    │   ├── parse.ts
-    │   └── precision.ts
-    │
-    ├── errors/                     Typed error hierarchy
-    │   ├── index.ts
-    │   ├── base.ts                 CfxError root
-    │   ├── rpc.ts                  RpcError, RateLimitError
-    │   └── contract.ts             ContractRevertError
-    │
-    └── internal/                   Private helpers (not exported)
-        ├── hex.ts
-        └── retry.ts
-```
+## `src/`
+- `address/` — Address formatting and validation utilities  
+  - `index.ts` — Main address module  
+  - `index.test.ts` — Address tests  
+- `chains/` — Chain ID and network configuration  
+  - `index.ts` — Chain definitions  
+  - `index.test.ts` — Chain tests  
+- `client/` — Core client logic and transport  
+  - `core.ts` — Main client implementation  
+  - `errors.ts` — Client-specific error types  
+  - `espace.ts` — ESpace (EVM-compatible space) helpers  
+  - `transport.ts` — Network transport layer  
+  - `index.ts` — Client entry point  
+  - `*.test.ts` — Unit tests for each module  
+- `errors/` — Shared error types and utilities  
+  - `index.ts` — Error definitions  
+  - `index.test.ts` — Error tests  
+- `types/` — Shared TypeScript types  
+  - `index.ts` — Type exports  
+- `units/` — Unit conversion helpers (e.g., CFX → GCRUX)  
+  - `index.ts` — Unit conversion logic  
+  - `index.test.ts` — Unit tests  
+- `wallet/` — Wallet derivation and signing  
+  - `derivation.ts` — HD derivation logic  
+  - `signing.ts` — Transaction signing utilities  
+  - `index.ts` — Wallet entry point  
+  - `*.test.ts` — Wallet tests  
+- `index.ts` — Package entry point (re-exports public API)  
+- `index.test.ts` — Top-level integration tests  
 
-### Public exports map
+Directory tree:
 
-```
-"./chains", "./client", "./wallet", "./contract", "./batch",
-"./abi", "./address", "./units", "./errors"
-```
-
-### Dependencies
-
-- Runtime: `viem`, `@noble/hashes`, `@noble/curves`
-- Dev: `vitest`, `vite`, `vite-plugin-dts`, `framework/testing` (workspace)
-
-### Boundary
-
-- MUST NOT import from any other `framework/*` package.
-- MUST be browser-safe (no `node:*` imports).
+<!-- structure-status: enriched -->
+<!-- structure-hash: ae4d42983cbd11ffd999c0f5f79d407b631631b72a453d7f6bb2f78ad4ea481e -->

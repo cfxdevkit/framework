@@ -13,7 +13,7 @@
     "validate:wiki-fix": "pnpm --filter @cfxdevkit/docs-pipeline run docs -- validate wiki-fix",
     "validate:packages": "pnpm --filter @cfxdevkit/docs-pipeline run docs -- validate content",
     "update:wiki": "pnpm --filter @cfxdevkit/docs-pipeline run docs -- wiki",
-    "prebuild": "pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all",
+    "prebuild": "pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all && pnpm --filter @cfxdevkit/docs-pipeline run docs -- validate content",
     "build": "next build",
     "start": "next start --port 3100",
     "type-check": "tsc --noEmit"

@@ -1,0 +1,50 @@
+{
+  "name": "@cfxdevkit/tooling-cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Root maintenance CLI dispatcher for monorepo tooling workflows.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "cfx-tooling": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "prepublishOnly": "pnpm clean",
+    "build": "vite build",
+    "tooling": "tsx src/bin.ts",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "clean": "rm -rf dist .vitest coverage"
+  },
+  "dependencies": {
+    "@cfxdevkit/docs-pipeline": "workspace:*",
+    "@cfxdevkit/llm-tools": "workspace:*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/tsconfig": "workspace:*",
+    "@types/node": "^25.6.0",
+    "tsx": "^4.20.6",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.12",
+    "vite-plugin-dts": "^5.0.0",
+    "vitest": "^4.1.6"
+  },
+  "sideEffects": false
+}

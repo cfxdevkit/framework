@@ -1,62 +1,23 @@
-# domains/game-engine — Detailed Structure
+# @cfxdevkit/game-engine
 
-Engine-agnostic on-chain game primitives. **No game rules.**
+## Root
+- `.gitignore` — Git ignore rules  
+- `API.md` — Public API documentation  
+- `README.md` — Package overview and usage  
+- `STRUCTURE.md` — This file: directory layout documentation  
+- `moon.yml` — Moon repo configuration (monorepo tooling)  
+- `package.json` — Package metadata and dependencies  
 
-```
-game-engine/
-├── README.md
-├── package.json                    @cfxdevkit/game-engine
-├── tsconfig.json
-├── vite.config.ts
-├── moon.yml
-└── src/
-    ├── index.ts
-    │
-    ├── state/                      ── Local game state ──
-    │   ├── index.ts
-    │   ├── store.ts                Zustand store factory (no React import)
-    │   ├── selectors.ts            common selectors
-    │   ├── persistence.ts          IndexedDB / localStorage
-    │   └── types.ts                GameState, EntityId
-    │
-    ├── engine/                     ── Game loop / state machine ──
-    │   ├── index.ts
-    │   ├── machine.ts              XState-style turn/round/phase machine
-    │   ├── actions.ts              Action dispatcher
-    │   ├── reducer.ts              pure state transitions
-    │   └── time.ts                 tick / timing helpers
-    │
-    ├── entities/                   ── Entity interfaces ──
-    │   ├── index.ts
-    │   ├── character.ts
-    │   ├── inventory.ts
-    │   ├── item.ts
-    │   └── stats.ts                generic stats container
-    │
-    ├── chain-bridge/               ── Chain ↔ local-state bridge ──
-    │   ├── index.ts
-    │   ├── event-listener.ts       framework/core event subscription → store
-    │   ├── action-dispatcher.ts    local action → contract write
-    │   ├── optimistic.ts           optimistic updates + rollback
-    │   └── sync.ts                 reconciliation
-    │
-    ├── adapters/                   ── Renderer adapters ──
-    │   ├── index.ts
-    │   ├── react.ts                hooks for React renderers
-    │   └── phaser.ts               bridge for Phaser scenes
-    │
-    └── internal/
-        └── id.ts                   id generation
-```
+## Source
+- `src/index.ts` — Main entry point  
+- `src/index.test.ts` — Unit tests  
 
-### Public exports map
+## Config
+- `tsconfig.json` — TypeScript compiler options  
+- `vite.config.ts` — Vite build configuration (for dev/build)  
+- `vitest.config.ts` — Vitest test runner configuration  
 
-```
-".", "./state", "./engine", "./entities", "./chain-bridge",
-"./adapters/react", "./adapters/phaser"
-```
+Directory tree:
 
-### Origin
-
-Extracted from `chainbrawler/packages/core`. RPG-specific rules stay in
-`projects/chainbrawler/packages/game-rules/`. See [STRUCTURE.md](../../../../../projects/chainbrawler/packages/game-rules/STRUCTURE.md) for the project-specific rules layout.
+<!-- structure-status: enriched -->
+<!-- structure-hash: 83238b9325b833a03806476191fa30f48f66b501936b7e183ebe6314cc3fc18c -->

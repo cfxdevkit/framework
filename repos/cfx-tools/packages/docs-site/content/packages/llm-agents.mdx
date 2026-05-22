@@ -64,29 +64,104 @@ await runCommit({ provider, cwd: process.cwd() });
 
 | Sub-path | Exports |
 |----------|---------|
-| `.` | `runAll`, `runReviewAgent`, `ask`, `configure`, `listActions`, `listModels`, `runAction`, `parseCommitFlags`, `runCommit`, `runPrecommit`, `runDocsApi`, `runDocsUpkeep`, `runTestUpkeep` |
+| `.` | `runAll`, `runReviewAgent`, `ask`, `configure`, `listActions`, `listModels`, `runAction`, `parseCommitFlags`, `runCommit`, `runPrecommit`, `runDocsApi`, `runDocsUpkeep`, `runTestUpkeep`, `runDocsApiProbe`, `runDocsPackagePages`, `runDocsReadme`, `runStructureUpkeep`, `validateModels` |
+
+## Usage
+
+```typescript
+import { configure, ask, runAll } from '@cfxdevkit/llm-agents';
+
+// Configure the agent with your preferred model and API settings
+configure({ model: 'gpt-4o', apiKey: process.env.OPENAI_API_KEY });
+
+// Ask a question and get a structured response
+const response = await ask('What is the current state of the `src/` directory?');
+
+// Run all agents in sequence
+const results = await runAll({ cwd: process.cwd() });
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 1 — platform** — May import Tier 0 framework packages.
 
 ## API Reference
 
 ## `.`
 
 ```ts
+// Runs all registered agents sequentially.
 export { runAll }
+
+// Runs the review agent, which analyzes code changes and provides feedback.
 export { runReviewAgent }
+
+// Sends a natural-language query to the configured LLM agent and returns a structured response.
 export { ask }
+
+// Configures the LLM agent with provided settings (e.g., model, API key, timeout).
 export { configure }
+
+// Lists all available actions that can be executed by agents.
 export { listActions }
+
+// Lists all supported LLM models for use with agents.
 export { listModels }
+
+// Executes a named action using the configured agent.
 export { runAction }
+
+// Validates that the configured LLM models are accessible and functional.
+export { validateModels }
+
+// Parses commit-related flags (e.g., `--fix`, `--feat`) from command-line arguments.
 export { parseCommitFlags }
+
+// Runs the commit agent, which generates and commits changes based on LLM analysis.
 export { runCommit }
+
+// Runs the pre-commit agent, which performs checks and transformations before a commit.
 export { runPrecommit }
+
+// Runs the API documentation generator agent for codebases.
 export { runDocsApi }
-export { runDocsReadme }
-export { runDocsUpkeep }
+
+// Runs a lightweight probe to verify API documentation generation readiness.
+export { runDocsApiProbe }
+
+// Generates or updates package-level documentation pages (e.g., README, usage guides).
 export { runDocsPackagePages }
+
+// Runs the README generator/update agent for project documentation.
+export { runDocsReadme }
+
+// Runs the upkeep agent responsible for maintaining documentation quality and consistency.
+export { runDocsUpkeep }
+
+// Runs the structure upkeep agent, which enforces and updates project structure conventions.
 export { runStructureUpkeep }
+
+// Runs the test upkeep agent, which verifies and updates test coverage and quality.
 export { runTestUpkeep }
 ```
 
-{/* readme-hash: 9f3a53685f982197532f1c0d9e133da961207c80e171d214800dd6841c7b373f */}
+### Usage
+
+```ts
+import { configure, ask, runAll } from '@cfxdevkit/llm-agents';
+
+// Configure the agent with your preferred model and API settings
+configure({ model: 'gpt-4o', apiKey: process.env.OPENAI_API_KEY });
+
+// Ask a question and get a structured response
+const response = await ask('What is the current state of the `src/` directory?');
+
+// Run all registered agents
+await runAll();
+```
+
+{/* readme-hash: 16067e85ce2d0676c5cbfc7250a2e2be5ae766420c8938bb4708e9d2e57d20a9 */}

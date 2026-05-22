@@ -74,29 +74,28 @@ export interface Deferred<T> {
 
 export interface MockClientOptions {
   /**
-   * Initial block number to report.
-   * @default 1
+   * Whether the mock client should start in a connected state.
+   * @default true
    */
-  blockNumber?: bigint;
+  connected?: boolean;
   /**
-   * Whether to simulate chain reorgs.
-   * @default false
+   * Optional initial state for the client's connection status.
    */
-  simulateReorgs?: boolean;
+  initialState?: Partial<Client>;
 }
 
 export interface DevNodeFixtureOptions {
   /**
-   * Path to a custom devnode binary.
+   * Path to the DevNode binary to use.
    * Falls back to `framework/devnode` if omitted.
    */
-  devnodePath?: string;
+  binaryPath?: string;
   /**
-   * Additional environment variables for the devnode process.
+   * Additional arguments to pass to the DevNode process.
    */
-  env?: Record<string, string>;
+  args?: string[];
   /**
-   * Timeout for devnode startup (ms).
+   * Timeout (in ms) for DevNode startup.
    * @default 10_000
    */
   startupTimeout?: number;
@@ -108,12 +107,12 @@ export declare function waitFor(
   assertion: () => boolean | Promise<boolean>,
   options?: {
     /**
-     * Maximum time to wait (ms).
+     * Maximum time (in ms) to wait for the assertion to pass.
      * @default 5_000
      */
     timeout?: number;
     /**
-     * Poll interval (ms).
+     * Interval (in ms) between assertion checks.
      * @default 100
      */
     interval?: number;
@@ -129,19 +128,106 @@ export declare function createDevNodeFixture(
 ): Promise<DevNode>;
 ```
 
+
+
+## Usage
+
+```ts
+import { createMockClient, createDeferred, waitFor } from '@cfxdevkit/testing';
+
+// Async coordination
+const deferred = createDeferred<string>();
+setTimeout(() => deferred.resolve('done'), 100);
+await deferred.promise; // resolves after 100ms
+
+// Mock client
+const client = createMockClient({ connected: true });
+await waitFor(() => client.isConnected);
+
+// DevNode fixture
+const fixture = await createDevNodeFixture({
+  binaryPath: '/path/to/devnode',
+  args: ['--dev'],
+  startupTimeout: 15_000
+});
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
 ## API Reference
 
 ## `.`
 
+### Usage
+
 ```ts
-export declare const __packageName: "@cfxdevkit/testing";
-export interface Deferred<T> {
-export interface MockClientOptions {
-export interface DevNodeFixtureOptions {
-export declare function createDeferred<T>(): Deferred<T>;
-export declare function waitFor(assertion: () => boolean | Promise<boolean>, options?: {
-export declare function createMockClient(options?: MockClientOptions): Client;
-export declare function createDevNodeFixture(options?: DevNodeFixtureOptions): Promise<DevNode>;
+import { createMockClient, waitFor } from '@cfxdevkit/testing';
+
+const client = createMockClient();
+await waitFor(() => client.isConnected);
 ```
 
-{/* readme-hash: d3effca7a4c39e22a26235d61732b86fbc0e214fd691adb39667907b591a142f */}
+```ts
+// The name of the package.
+export declare const __packageName: "@cfxdevkit/testing";
+
+// A container for a value that will be resolved in the future.
+export interface Deferred<T> {
+  // A promise that resolves with the deferred value.
+  promise: Promise<T>;
+  // Resolves the deferred promise with the given value.
+  resolve(value: T): void;
+  // Rejects the deferred promise with the given error.
+  reject(reason?: any): void;
+}
+
+// Configuration options for the mock client.
+export interface MockClientOptions {
+  // Whether the mock client should start in a connected state.
+  connected?: boolean;
+  // Optional initial state for the client's connection status.
+  initialState?: Partial<Client>;
+}
+
+// Configuration options for the DevNode fixture.
+export interface DevNodeFixtureOptions {
+  // Path to the DevNode binary to use.
+  binaryPath?: string;
+  // Additional arguments to pass to the DevNode process.
+  args?: string[];
+  // Timeout (in ms) for DevNode startup.
+  startupTimeout?: number;
+}
+
+// Creates a new deferred object.
+export declare function createDeferred<T>(): Deferred<T>;
+
+// Polls an assertion until it returns true or the timeout is reached.
+export declare function waitFor(
+  assertion: () => boolean | Promise<boolean>,
+  options?: {
+    // Maximum time (in ms) to wait for the assertion to pass.
+    timeout?: number;
+    // Interval (in ms) between assertion checks.
+    interval?: number;
+  }
+): Promise<void>;
+
+// Creates a mock client for testing purposes.
+export declare function createMockClient(
+  options?: MockClientOptions
+): Client;
+
+// Creates a DevNode fixture for integration testing.
+export declare function createDevNodeFixture(
+  options?: DevNodeFixtureOptions
+): Promise<DevNode>;
+```
+
+{/* readme-hash: 20c11f388f447c09874475b1c5309d7d58abf11d19ca2116e71841e89180c902 */}

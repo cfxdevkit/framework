@@ -12,36 +12,35 @@ npm install @cfxdevkit/llm-client
 
 `resolveProvider()` selects the first usable provider in this order:
 
-1. `artifacts/llm/config/lemonade.json` explicit `baseUrl`
-2. `LEMONADE_URL` or `LEMONADE_BASE_URL`
-3. Local Lemonade probe (`localhost:13305`, container host aliases, `127.0.0.1:8000`)
-4. `OPENAI_BASE_URL` + `OPENAI_API_KEY`
-5. `GITHUB_TOKEN` via GitHub Models
-6. Throws `LlmProviderNotFoundError` with diagnostics
+1. `artifacts/llm/config/llm.json` explicit `provider` + `baseUrl`  
+   If `provider` is omitted but `baseUrl` is present, the config is treated as `litellm`.
+2. `LITELLM_BASE_URL`
+3. `LEMONADE_URL` or `LEMONADE_BASE_URL`
+4. Local provider probe (`localhost:13305`, container host aliases, `127.0.0.1:8000`)
+5. `OPENAI_BASE_URL` + `OPENAI_API_KEY`
+6. `GITHUB_TOKEN` via GitHub Models
+7. Throws `LlmProviderNotFoundError` with diagnostics
 
 ## Usage
 
 ```ts
-import { createClient, resolveProvider } from '@cfxdevkit/llm-client';
+import { resolveProvider } from '@cfxdevkit/llm-client';
 
 const provider = await resolveProvider();
-const client = createClient(provider);
-
-const response = await client.complete({
-  messages: [{ role: 'user', content: 'Hello!' }],
+const text = await provider.complete([{ role: 'user', content: 'Hello!' }], {
   model: 'gpt-4o',
 });
 
-console.log(response.choices[0].message.content);
+console.log(text);
 ```
 
 ## Exports
 
 ```ts
 import {
-  createClient,
   resolveProvider,
   LemonadeProvider,
+  LiteLLMProvider,
   OpenAICompatProvider,
   GitHubModelsProvider,
   type LlmProvider,
@@ -50,11 +49,12 @@ import {
 
 Provider implementations share the `LlmProvider` interface: `complete()`, `discoverModels()`, and `chooseModel()`.
 
+The preferred local config path is `artifacts/llm/config/llm.json`. Reads still fall back to `artifacts/llm/config/lemonade.json` for compatibility, and the config remains provider-aware so it can point at LiteLLM, Lemonade, OpenAI-compatible backends, or GitHub Models.
+
 ### Core Functions
 
 | Function | Description |
 |----------|-------------|
-| `createClient(provider)` | Instantiate a client bound to a provider |
 | `resolveProvider()` | Auto-select provider using environment/config |
 | `complete(options)` | Send a chat completion request |
 | `discoverModels()` | List available models from the provider |
@@ -95,5 +95,13 @@ Provider implementations share the `LlmProvider` interface: `complete()`, `disco
 | Sub-path | Exports |
 |----------|---------|
 | `.` | 38 symbols |
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 1 — platform** — May import Tier 0 framework packages.
 
 <!-- readme-hash: b8e25abd1874699584a5f02420f2f9a827c8a4a3c477f8d350881795df4807ac -->

@@ -2,11 +2,24 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { completeStructuredAgent } from '../completion/index.ts';
 import { repoActions, root } from '../shared/index.ts';
+import { createLlmProgressReporter } from '../shared/logging.ts';
 import {
   buildDocsFolderContext,
   validateDocsReplacementJson,
   validateDocsUpkeepJson,
 } from './validate.ts';
+
+export function resolveDocsUpkeepArtifactMaxTokens(promptBody, flags) {
+  const promptChars = Math.min(promptBody.length, flags.quick ? 10000 : 22000);
+  const approximatePromptTokens = Math.ceil(promptChars / 4);
+  const estimatedOutputTokens = Math.ceil(approximatePromptTokens * 0.9);
+
+  if (flags.quick) {
+    return Math.min(8000, Math.max(2400, estimatedOutputTokens + 1600));
+  }
+
+  return Math.min(32000, Math.max(12000, estimatedOutputTokens + 9000));
+}
 
 export async function generateDocsUpkeepArtifact(scope, baseContext, flags, childContext = '') {
   const folderContext = await buildDocsFolderContext(scope, flags.quick ? 20000 : 36000);
@@ -28,19 +41,24 @@ export async function generateDocsUpkeepArtifact(scope, baseContext, flags, chil
     .join('\n');
   const response = await completeDocsUpkeepArtifact({
     flags,
+    scopeLabel: scope.label,
     userPrompt: prompt,
-    maxTokens: flags.write ? (flags.quick ? 3200 : 5200) : flags.quick ? 1600 : 2600,
+    maxTokens: resolveDocsUpkeepArtifactMaxTokens(prompt, flags),
   });
-  try {
-    return validateDocsUpkeepJson(response.content, scope.label);
-  } catch {
+  const parsed = parseDocsUpkeepArtifactResponse(scope, response.content ?? '');
+  if (parsed) {
+    return parsed;
+  }
+
     const retryPrompt = [
       flags.prompt || repoActions['docs-upkeep'].defaultPrompt,
       '',
       `Folder scope: ${scope.label}`,
       `Existing files: ${scope.files.join(', ')}`,
       '',
-      'Write a concise artifact. Keep each artifactLines item short. Do not include nested JSON, markdown fences, or raw multiline strings.',
+      'Write the final folder upkeep artifact directly as markdown.',
+      'Use sections: Current State, Drift or Gaps, Recommended Edits, Validation.',
+      'Do not return JSON, markdown fences, or planning text.',
       '',
       'Repository docs context:',
       baseContext.slice(0, flags.quick ? 5000 : 12000),
@@ -53,24 +71,21 @@ export async function generateDocsUpkeepArtifact(scope, baseContext, flags, chil
       .join('\n');
     const retryResponse = await completeDocsUpkeepArtifact({
       flags,
+      scopeLabel: scope.label,
       userPrompt: retryPrompt,
-      maxTokens: flags.write ? (flags.quick ? 2600 : 4200) : flags.quick ? 1200 : 2000,
+      maxTokens: resolveDocsUpkeepArtifactMaxTokens(retryPrompt, flags),
     });
-    try {
-      return validateDocsUpkeepJson(retryResponse.content, scope.label);
-    } catch {
-      return fallbackDocsUpkeepArtifact(scope, retryResponse.content);
-    }
-  }
+    return parseDocsUpkeepArtifactResponse(scope, retryResponse.content ?? '')
+      ?? fallbackDocsUpkeepArtifact(scope, retryResponse.content ?? '');
 }
 
 export function fallbackDocsUpkeepArtifact(scope, content) {
   return {
-    summary: `Captured fallback docs-upkeep note for ${scope.label}; strict JSON was unavailable.`,
+    summary: `Captured fallback docs-upkeep note for ${scope.label}; the model response was not reusable as a final artifact.`,
     artifact: [
       '## Current State',
       '',
-      'The local model returned malformed JSON for this folder, so the raw bounded response is preserved for review.',
+      'The local model returned output that could not be normalized into a final folder artifact, so the raw bounded response is preserved for review.',
       '',
       '## Model Response Excerpt',
       '',
@@ -86,31 +101,79 @@ export function fallbackDocsUpkeepArtifact(scope, content) {
   };
 }
 
-export async function completeDocsUpkeepArtifact({ flags, userPrompt, maxTokens }) {
+export function parseDocsUpkeepArtifactResponse(scope, rawResponse) {
+  const raw = rawResponse.trim();
+  if (!raw) return null;
+
+  try {
+    return validateDocsUpkeepJson(raw, scope.label);
+  } catch {
+    // fall through to direct-markdown normalization
+  }
+
+  const fencedMarkdown = raw.match(/```(?:markdown|md)?\n([\s\S]+?)```/i)?.[1]?.trim();
+  const artifact = normalizeDocsUpkeepArtifactMarkdown(fencedMarkdown ?? raw);
+  if (!artifact) return null;
+
+  return {
+    summary: summarizeDocsUpkeepArtifact(scope.label, artifact),
+    artifact,
+    followups: extractDocsUpkeepFollowups(artifact),
+    replacements: [],
+    fileUpdates: [],
+  };
+}
+
+function normalizeDocsUpkeepArtifactMarkdown(content) {
+  const normalized = content.trim();
+  if (!normalized) return '';
+  if (normalized.startsWith('{') || normalized.startsWith('[')) return '';
+  return normalized;
+}
+
+function summarizeDocsUpkeepArtifact(scopeLabel, artifact) {
+  const lines = artifact
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const candidate = lines.find(
+    (line) =>
+      !line.startsWith('#') &&
+      !line.startsWith('```') &&
+      !line.startsWith('- ') &&
+      !line.startsWith('* '),
+  );
+  const summary = candidate?.replace(/[*_`]/g, '').trim();
+  if (!summary) return `Captured docs upkeep artifact for ${scopeLabel}.`;
+  return summary.length <= 140 ? summary : `${summary.slice(0, 137).trimEnd()}...`;
+}
+
+function extractDocsUpkeepFollowups(artifact) {
+  const lines = artifact
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('- ') || line.startsWith('* '))
+    .map((line) => line.slice(2).trim())
+    .filter(Boolean);
+  return [...new Set(lines)].slice(0, 8);
+}
+
+export async function completeDocsUpkeepArtifact({ flags, scopeLabel, userPrompt, maxTokens }) {
   return completeStructuredAgent({
     action: 'docs-upkeep',
     flags,
     systemPrompt: [
       'You are a documentation maintainer for a TypeScript monorepo.',
-      'Return strict JSON only, with no markdown fence and no explanatory text.',
-      'Use artifactLines and followups arrays so each markdown line or action item is a separate JSON string.',
-      'When asked to write docs, prefer compact exact replacements with oldLines and newLines arrays.',
-      'The Files list is authoritative: do not recommend creating a file that is already listed there.',
+      'Return ONLY the final folder upkeep artifact as markdown with no JSON, markdown fence, or planning text.',
+      'Start with the final artifact immediately.',
+      'Use sections: Current State, Drift or Gaps, Recommended Edits, Validation.',
+      'Keep the artifact concise, concrete, and tied to the listed files only.',
+      'Do not claim edits were applied.',
+      'The Files list is authoritative: do not invent checked-in files.',
     ].join(' '),
-    userPrompt: [
-      'Schema: {"summary":"one sentence","artifactLines":["markdown line"],"followups":["action item"],"replacements":[{"path":"existing markdown path","oldLines":["exact old line"],"newLines":["replacement line"]}],"fileUpdates":[{"path":"existing markdown path","contentLines":["complete file line"]}]}.',
-      'The artifact should be a practical folder-level upkeep note with sections: Current State, Drift or Gaps, Recommended Edits, Validation.',
-      flags.write
-        ? 'Also include replacements for safe exact edits of existing markdown files in this folder scope. Use fileUpdates only if an exact replacement cannot express the edit compactly.'
-        : 'Do not include fileUpdates unless the command is running in write mode.',
-      flags.write && flags.quick
-        ? 'In quick write mode, include at most one replacement for one existing file and keep artifactLines concise.'
-        : '',
-      'Prefer concrete file-specific edits. Do not invent checked-in files or claim edits were applied.',
-      'If a file is listed in the folder scope, treat it as existing even if its contents are truncated.',
-      userPrompt,
-    ].join('\n'),
+    userPrompt,
     maxTokens,
+    onProgress: createLlmProgressReporter(scopeLabel),
   });
 }
 
@@ -147,6 +210,7 @@ export async function generateDocsUpkeepReplacements(scope, baseContext, flags, 
       userPrompt,
     ].join('\n'),
     maxTokens: flags.quick ? 1200 : 2400,
+    onProgress: createLlmProgressReporter(`${scope.label} replacements`),
   });
   try {
     const replacements = validateDocsReplacementJson(response.content);
@@ -177,6 +241,7 @@ export async function generateSingleDocsReplacement(scope, flags) {
       content.slice(0, flags.quick ? 10000 : 20000),
     ].join('\n'),
     maxTokens: flags.quick ? 900 : 1600,
+    onProgress: createLlmProgressReporter(`${scope.label} single-file replacement`),
   });
   try {
     return validateDocsReplacementJson(response.content);

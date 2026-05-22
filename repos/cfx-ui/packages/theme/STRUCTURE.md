@@ -1,48 +1,60 @@
-# @cfxdevkit/theme — Detailed Structure
+# @cfxdevkit/theme
 
-UI-library agnostic. Outputs JSON + CSS variables + Tailwind preset.
+## Root
+- `.gitignore` — Git ignore rules  
+- `API.md` — Public API documentation  
+- `README.md` — Package overview and usage  
+- `STRUCTURE.md` — This file  
+- `moon.yml` — Moonrepo workspace configuration  
+- `package.json` — Package metadata and dependencies  
+- `tsconfig.json` — TypeScript compiler options  
+- `vite.config.ts` — Vite build configuration  
+- `vitest.config.ts` — Vitest test configuration  
 
+## `src/`
+- `css/` — CSS theme files  
+  - `base.css` — Base theme styles  
+  - `dark.css` — Dark theme overrides  
+- `index.test.ts` — Unit tests for core logic  
+- `index.ts` — Main entry point (exports tokens, utilities)  
+- `react.tsx` — React-specific theme hooks/components  
+- `tailwind/` — Tailwind CSS theme integration (e.g., config, plugins)  
+- `tokens.ts` — Design token definitions (colors, spacing, etc.)  
+
+## `dist/`
+- `css/` — Compiled CSS output  
+- `index.js` / `index.d.ts` — Compiled JS and type declarations  
+- `react.js` / `react.d.ts` — Compiled React exports  
+- `tailwind/` — Compiled Tailwind integration assets  
+
+Directory tree:
 ```
-theme/
-├── README.md
-├── package.json                    @cfxdevkit/theme
-├── tsconfig.json
-├── vite.config.ts
-├── moon.yml
-└── src/
-    ├── index.ts
-    │
-    ├── tokens/                     ── Design tokens ──
-    │   ├── index.ts
-    │   ├── color.ts                semantic + raw palette
-    │   ├── spacing.ts
-    │   ├── radius.ts
-    │   ├── typography.ts
-    │   ├── shadow.ts
-    │   └── motion.ts
-    │
-    ├── modes/                      ── Light / dark / high-contrast ──
-    │   ├── index.ts
-    │   ├── light.ts
-    │   ├── dark.ts
-    │   └── high-contrast.ts
-    │
-    ├── outputs/                    ── Format adapters ──
-    │   ├── index.ts
-    │   ├── css-variables.ts        emit :root { --color-… }
-    │   ├── tailwind-preset.ts
-    │   └── json.ts
-    │
-    └── internal/
-        └── scale.ts                token-scale helpers
+.gitignore
+API.md
+README.md
+STRUCTURE.md
+moon.yml
+package.json
+src
+  css
+    base.css
+    dark.css
+  index.test.ts
+  index.ts
+  react.tsx
+  tailwind
+  tokens.ts
+dist
+  css
+  index.js
+  index.d.ts
+  react.js
+  react.d.ts
+  tailwind
+tsconfig.json
+vite.config.ts
+vitest.config.ts
 ```
 
-### Public exports map
-
-```
-".", "./tokens", "./modes", "./outputs", "./outputs/css-variables", "./outputs/tailwind-preset"
-```
-
-### Dependencies
-
-- None at runtime. Pure data + small format helpers.
+<!-- structure-status: enriched -->
+<!-- structure-hash: 4ed517cde4fe69661df4c772a51973728f570d6ab4eed1b1778a6c5761f19430 -->

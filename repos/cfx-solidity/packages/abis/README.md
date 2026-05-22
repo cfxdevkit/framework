@@ -69,4 +69,12 @@ back-compat.
 | `.` | 23 symbols |
 | `./swappi` | 6 symbols |
 
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
 <!-- readme-hash: 5e898fd58ea1d481f084016bf89def196c999f46c12a593a2625242353be2763 -->

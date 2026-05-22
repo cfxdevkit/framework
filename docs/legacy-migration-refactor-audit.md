@@ -27,7 +27,7 @@ The main remaining work is:
 - The legacy local DEX stack from `devkit-workspace` has not been fully ported as a runnable first-class stack. The current repository contains DeFi UI primitives and CAS Swappi adapter configuration, but not the old `apps/dex-ui` application and DEX contract/artifact package as an integrated local DEX product.
 - The old target model (`targets/devcontainer`, `targets/code-server`) is only partially represented. Current scaffold templates have `devcontainer`/`docker` target fragments, but the legacy target directories and code-server target are not present as equivalent runtime targets.
 - Some scaffold templates have been reimplemented as TypeScript template definitions in `@cfxdevkit/create`, but they are not a one-to-one materialized port of the old folder-based template system.
-- `repos/cfx-openhands` is only a placeholder compared with the old `.cfxdevkit/openhands` configuration.
+- No dedicated OpenHands repo slice exists yet; only the legacy `.cfxdevkit/openhands/` configuration remains.
 - A few planned security/back-end items remain explicitly planned rather than implemented, such as KMS, OS keyring, and keystore-forward sidecar support.
 
 ## Evidence Snapshot
@@ -131,7 +131,7 @@ Current state:
 - Key and keystore packages live under `repos/cfx-keys`.
 - UI packages live under `repos/cfx-ui`.
 - Solidity/compiler/ABI packages live under `repos/cfx-solidity`.
-- Platform tooling lives under `repos/cfx-tools` and `repos/cfx-llm`.
+- Platform tooling lives under `repos/cfx-tools`, with local LLM automation grouped under `repos/cfx-tools/infra/`.
 - Reusable verticals live under `repos/cfx-domain`.
 - Applications live under `projects/*`.
 
@@ -299,7 +299,7 @@ Current state:
 
 - `@cfxdevkit/abis` provides a tiny standard ABI package.
 - `@cfxdevkit/contracts` provides standard contract bindings and framework-native read/write/deploy helpers.
-- `@cfxdevkit/compiler` and `@cfxdevkit/contracts-extract` are separated under `repos/cfx-solidity`.
+- `@cfxdevkit/compiler` and `@cfxdevkit/codegen-contracts` are separated under `repos/cfx-tools`.
 
 Improvement:
 
@@ -311,8 +311,8 @@ Verification paths:
 
 - `repos/cfx-solidity/packages/abis/README.md`
 - `repos/cfx-solidity/packages/contracts/README.md`
-- `repos/cfx-solidity/packages/compiler/README.md`
-- `repos/cfx-solidity/packages/contracts-extract/package.json`
+- `repos/cfx-tools/packages/compiler/README.md`
+- `repos/cfx-tools/packages/codegen-contracts/package.json`
 
 ### 2. UI and Design System
 
@@ -362,7 +362,7 @@ Verification paths:
 
 - `projects/cas/README.md`
 - `projects/cas/STRUCTURE.md`
-- `projects/cas/AUDITS.md`
+- `openspec/specs/cas-*/`
 - `projects/cas/apps/backend/package.json`
 - `projects/cas/apps/frontend/package.json`
 - `projects/cas/packages/setup/package.json`
@@ -453,7 +453,7 @@ Verification paths:
 
 Current additions with no direct equivalent in the old devkit codebase:
 
-- `repos/cfx-llm` packages: `@cfxdevkit/llm-client`, `@cfxdevkit/llm-agents`, `@cfxdevkit/llm-tools`.
+- `repos/cfx-tools/infra` packages: `@cfxdevkit/llm-client`, `@cfxdevkit/llm-agents`, `@cfxdevkit/llm-tools`.
 - Root `llm:*` scripts for actions, review, validation, docs pipeline, release readiness, CI/CD checks, corpus generation, and local Lemonade Server integration.
 - `artifacts/llm/` as ignored output for generated reports and corpus data.
 - GitNexus integration scripts in root `package.json` and project instructions.
@@ -461,11 +461,13 @@ Current additions with no direct equivalent in the old devkit codebase:
 Improvement:
 
 - The new repository has an explicit AI-assisted maintenance layer for docs, CI, changesets, validation, review, and corpus metadata.
-- LLM automation is isolated in `repos/cfx-llm` so it does not become runtime dependency surface for apps or packages.
+- LLM automation is isolated in `repos/cfx-tools/infra` so it does not become runtime dependency surface for apps or packages.
 
 Verification paths:
 
-- `repos/cfx-llm/README.md`
+- `repos/cfx-tools/infra/llm-tools/README.md`
+- `repos/cfx-tools/infra/llm-client/README.md`
+- `repos/cfx-tools/infra/llm-agents/README.md`
 - `docs/llm-automation-agents.md`
 - `docs/llm-fine-tuning-plan.md`
 - `package.json`
@@ -573,7 +575,7 @@ Legacy evidence:
 
 Current evidence:
 
-- `repos/cfx-openhands` exists as a slice in the workspace structure, but no comparable package/application surface is visible in the active package inventory.
+- `.cfxdevkit/openhands/` exists as legacy configuration, but no comparable first-class package or project surface is visible in the active package inventory.
 
 Required follow-up:
 
@@ -640,14 +642,14 @@ Required follow-up:
 | CAS | Separate attached repo | Project under `projects/cas` with setup/shared packages and specs | Ported and better structured |
 | CI/security | Basic scripts and local checks | CI, security audit, CodeQL, provenance release, docs deploy | Stronger operational controls |
 | Docs/governance | Useful legacy docs, less formal | ADRs, OpenSpec, architecture, security, package layout | Major improvement |
-| LLM automation | Not present as first-class slice | `repos/cfx-llm` and `llm:*` workflows | New addition |
+| LLM automation | Not present as first-class slice | `repos/cfx-tools/infra` and `llm:*` workflows | New addition |
 
 ## Recommended Next Work Items
 
 1. Create an OpenSpec change for `local-dex-stack-port` covering DEX contracts, seeded token pairs, DEX UI, MCP tools, VS Code extension surface, and devnode-server integration.
 2. Create an OpenSpec change for `scaffold-target-parity` covering folder-template parity, generated-output snapshots, `code-server` target decision, and materialized package strategy.
 3. Reconcile root pnpm native dependency policy for `better-sqlite3` and document the final policy in `SECURITY.md` or a release note.
-4. Decide whether `repos/cfx-openhands` is in scope. If not, archive/remove placeholder references; if yes, add docs, package ownership, and security handling.
+4. Decide whether OpenHands remains in scope. If not, archive/remove placeholder references; if yes, add docs, package ownership, and security handling around `.cfxdevkit/openhands/`.
 5. Add release-readiness evidence for each publishable package: exports maps, dist files, README/API/STRUCTURE docs, test status, and Changesets.
 6. Produce a generated-output comparison for old vs new scaffold templates and attach the output to this report or a follow-up audit artifact.
 7. Add a migration status table for each legacy package once the local DEX and scaffold parity decisions are finalized.

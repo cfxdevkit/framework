@@ -12,6 +12,7 @@ export default defineConfig({
         index: 'src/index.ts',
         'siwe/index': 'src/siwe/index.ts',
         'ui/index': 'src/ui/index.ts',
+        'auth/index': 'src/auth/index.tsx',
       },
       formats: ['es'],
       fileName: (_format, entryName) => `${entryName}.js`,

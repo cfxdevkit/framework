@@ -38,16 +38,18 @@ export class GitHubModelsProvider implements LlmProvider {
     const models = await this.discoverModels();
     const model =
       opts.model ?? modelIdentifier(this.chooseModel(models, this.defaultModel), this.defaultModel);
-    const content = await postChatCompletion({
-      baseUrl: this.endpoint,
-      chatPath: 'chat/completions',
-      model,
-      messages,
-      opts,
-      attempts,
-      headers: { authorization: `Bearer ${this.token}` },
-    });
-    if (content !== undefined) return content;
+    for (let retry = 0; retry < 2; retry++) {
+      const content = await postChatCompletion({
+        baseUrl: this.endpoint,
+        chatPath: 'chat/completions',
+        model,
+        messages,
+        opts,
+        attempts,
+        headers: { authorization: `Bearer ${this.token}` },
+      });
+      if (content !== undefined) return content;
+    }
     throw new Error(`GitHub Models chat completion failed: ${JSON.stringify(attempts)}`);
   }
 

@@ -162,7 +162,7 @@ Copy `apps/backend/.env.example` to `apps/backend/.env` and source it before run
 |----------|------|---------|-------------|
 | `PORT` | number | `3011` | TCP port |
 | `CAS_BACKEND_HOST` | string | `0.0.0.0` | Bind address |
-| `CAS_SQLITE_PATH` | string | `../../.data/cas-dev.sqlite` | SQLite file path |
+| `CAS_SQLITE_PATH` | string | `runtime-created in the repo data directory` | SQLite file path |
 | `CAS_AUTH_SECRET` | string | `cas-local-dev-secret` | SIWE session signing key |
 | `CAS_SESSION_TTL_MS` | number | `86400000` | Session token lifetime (ms) |
 | `CAS_NONCE_TTL_MS` | number | `300000` | SIWE nonce expiry (ms) |

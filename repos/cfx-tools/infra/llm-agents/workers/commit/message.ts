@@ -106,12 +106,12 @@ export function printProposedCommit(subject, body) {
 }
 
 export async function writeCommitReport(response, changesetPlan) {
-  const reportPath = join(artifactsRoot, 'reports', 'lemonade-commit.md');
+  const reportPath = join(artifactsRoot, 'reports', 'llm-commit.md');
   await mkdir(dirname(reportPath), { recursive: true });
   await writeFile(
     reportPath,
     [
-      '# Lemonade Commit',
+      '# LLM Commit',
       '',
       `Generated: ${response.generatedAt}`,
       `Model: ${response.model}`,

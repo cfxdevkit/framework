@@ -3,34 +3,23 @@
  *
  * For each public package, builds a directory tree listing (depth 3, excluding
  * node_modules/dist/coverage/.git), hashes the listing, and:
- *  - If no STRUCTURE.md exists: generates one from scratch via LLM.
+ *  - If no STRUCTURE.md exists: skips and asks the caller to run `gen:structure` first.
  *  - If STRUCTURE.md exists with a matching `<!-- structure-hash: ... -->` footer:
- *    skips (tree unchanged since last generation).
+ *    skips unless the file is still marked as needing enrichment.
  *  - If the footer hash differs: regenerates (new files/folders added).
  */
-import { createHash } from 'node:crypto';
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import {
+  computeStructureTreeHash,
+  embedStructureMetadata,
+  readEmbeddedStructureHash,
+  stripStructureMetadata,
+  structureNeedsEnrichment,
+} from '@cfxdevkit/arch-check';
 import { completeStructuredAgent } from '../completion/index.ts';
 import { root } from '../shared/index.ts';
-import { logInfo } from '../shared/logging.ts';
-
-// ── structure-hash footer ─────────────────────────────────────────────────
-const STRUCTURE_HASH_RE = /\n<!--\s*structure-hash:\s*([a-f0-9]+)\s*-->\s*$/i;
-
-function computeTreeHash(entries: string[]): string {
-  return createHash('sha256')
-    .update([...entries].sort().join('\n'))
-    .digest('hex');
-}
-
-function readEmbeddedTreeHash(content: string): string | null {
-  return content.match(STRUCTURE_HASH_RE)?.[1] ?? null;
-}
-
-function embedTreeHash(content: string, hash: string): string {
-  return content.replace(STRUCTURE_HASH_RE, '') + `\n<!-- structure-hash: ${hash} -->\n`;
-}
+import { createLlmProgressReporter, logInfo } from '../shared/logging.ts';
 
 // ── directory tree walker ─────────────────────────────────────────────────
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'coverage', '.turbo', '.moon']);
@@ -54,8 +43,9 @@ async function walkTree(dir: string, prefix = '', depth = 0): Promise<string[]> 
 // ── LLM call ─────────────────────────────────────────────────────────────
 async function callStructureLlm(
   pkg: { name: string; rel: string },
+  existingContent: string,
   treeLines: string[],
-  flags: { quick?: boolean; model?: string },
+  flags: { quick?: boolean; model?: string; noThinking?: boolean },
 ): Promise<string | null> {
   const maxTokens = flags.quick ? 1500 : 3000;
 
@@ -75,12 +65,16 @@ async function callStructureLlm(
       `Package: ${pkg.name}`,
       `Workspace path: ${pkg.rel}`,
       '',
+      'CURRENT STRUCTURE.md:',
+      stripStructureMetadata(existingContent).slice(0, flags.quick ? 5000 : 10000),
+      '',
       'Directory tree:',
       '```',
       treeText,
       '```',
     ].join('\n'),
     maxTokens,
+    onProgress: createLlmProgressReporter(pkg.name),
   });
 
   const raw = response.content?.trim() ?? '';
@@ -96,7 +90,7 @@ async function callStructureLlm(
 // ── main export ───────────────────────────────────────────────────────────
 export async function enrichStructureMd(
   pkg: { name: string; rel: string },
-  flags: { quick?: boolean; model?: string; force?: boolean },
+  flags: { quick?: boolean; model?: string; force?: boolean; noThinking?: boolean },
 ): Promise<boolean> {
   const pkgDir = join(root, pkg.rel);
   const structurePath = join(pkgDir, 'STRUCTURE.md');
@@ -107,30 +101,33 @@ export async function enrichStructureMd(
     return false;
   }
 
-  const treeHash = computeTreeHash(treeLines);
+  const treeHash = computeStructureTreeHash(treeLines);
+  let existing: string;
+
+  try {
+    existing = await readFile(structurePath, 'utf8');
+  } catch {
+    logInfo(`  [skip] ${pkg.rel}: no STRUCTURE.md found (run gen:structure first)`);
+    return false;
+  }
 
   // Check existing STRUCTURE.md for matching hash
   if (!flags.force) {
-    try {
-      const existing = await readFile(structurePath, 'utf8');
-      const embeddedHash = readEmbeddedTreeHash(existing);
-      if (embeddedHash === treeHash) {
-        logInfo(`  [skip] ${pkg.rel}: tree unchanged since last generation`);
-        return false;
-      }
-    } catch {
-      // file doesn't exist yet — proceed
+    const embeddedHash = readEmbeddedStructureHash(existing);
+    if (embeddedHash === treeHash && !structureNeedsEnrichment(existing)) {
+      logInfo(`  [skip] ${pkg.rel}: tree unchanged since last generation`);
+      return false;
     }
   }
 
   logInfo(`  generating STRUCTURE.md: ${pkg.rel}`);
-  const generated = await callStructureLlm(pkg, treeLines, flags);
+  const generated = await callStructureLlm(pkg, existing, treeLines, flags);
   if (!generated) {
     logInfo(`  [skip] ${pkg.rel}: LLM returned no usable content`);
     return false;
   }
 
-  const withFooter = embedTreeHash(generated, treeHash);
+  const withFooter = embedStructureMetadata(generated, treeHash);
   await writeFile(structurePath, withFooter, 'utf8');
   logInfo(`  [done] ${pkg.rel}/STRUCTURE.md written`);
   return true;

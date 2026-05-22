@@ -2,20 +2,29 @@ export function help() {
   console.log(`Usage: pnpm run llm -- <command>
 
 Commands:
-  models                         List auto-discovered Lemonade models
+  models                         List models for the resolved LLM provider
+  validate-models [flags]        Probe discovered models with cold/hot/json reliability checks
   actions                        List repo-specific actions
-  config show                    Show local Lemonade CLI config
-  config set base-url <url>      Pin Lemonade base URL
-  config set default-model <id>  Pin default model id
-  config set request-timeout-ms <ms>  Set Lemonade request timeout in milliseconds
+  config show                    Show local provider-aware LLM config
+  config set provider <id>       Select litellm, openai-compat, or github-models
+  config set base-url <url>      Pin the current provider base URL
+  config set default-model <id>  Pin default model id; omit <id> for interactive picker
+  config set request-timeout-ms <ms>  Set provider request timeout in milliseconds
   config set action <name> <id>  Pin model for one repo action
   ask [--quick] "question"       Ask a repo-aware question
+  validate-models [flags]        Validate discovered models with a tiny prompt
+    --model <id>                 Probe only one discovered model
+    --limit <n>                  Limit number of probed models
+    --quick                      Use a smaller response budget
+    --no-thinking                Send enable_thinking=false to the local OpenAI-compatible endpoint
   docs-upkeep [flags] [prompt]   Refresh docs checks and upkeep markdown folder-by-folder
-                                   Scans .md and .mdx files; excludes GitNexus wiki content (content/wiki/)
+                                   Default scope comes from arch-check managed docs; excludes OpenSpec/workflow archives and tooling artifacts
     --scope <path>               Limit to one docs folder prefix; repeatable
     --max-folders <n>            Limit folder count for bounded local runs
     --docs-only                  Only scan docs/ instead of every markdown/mdx file in the repo
     --write                      Apply complete-file markdown updates proposed by the local LLM
+    --force / -f                 Force re-run even when a target flow would otherwise treat content as unchanged
+    --no-thinking                Send enable_thinking=false to the local OpenAI-compatible endpoint
     --yes / -y                   Skip write confirmation prompt
     --quick                      Shorter per-folder artifact generation
     --agent <direct>             Use the resolved LLM provider directly
@@ -62,7 +71,11 @@ Commands:
 
 Examples:
   pnpm run llm:models
+  pnpm run llm:validate-models -- --no-thinking
+  pnpm run llm:config -- set provider litellm
+  pnpm run llm:config -- set base-url http://host.containers.internal:13305/api/v1
   pnpm run llm:config -- set default-model Qwen3-Coder-Next-GGUF
+  pnpm run llm:model
   pnpm run llm:config -- set request-timeout-ms 600000
   pnpm run llm:commit
   pnpm run llm:commit -- --dry-run
@@ -75,6 +88,8 @@ Examples:
   pnpm run llm:ci-cd
   pnpm run llm:docs-pipeline
   pnpm run llm:docs-upkeep -- --quick
+  pnpm run llm:docs-upkeep -- --quick --no-thinking
+  pnpm run llm:docs-upkeep -- --force --quick
   pnpm run llm:docs-upkeep -- --quick --write --yes --max-folders 3
   pnpm run llm:docs-upkeep -- --scope docs/architecture --max-folders 1
   pnpm run llm:test-audit

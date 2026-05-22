@@ -78,7 +78,7 @@ Current automation lives in `.github/workflows/ci.yml`, `.github/workflows/secur
 
 ## Smart contract security
 
-- Each project root owns an `AUDITS.md` status file. If `projects/<p>/contracts/` is added, that file must list every contract audit, review, deployment artifact, and remediation.
+- Each project root documents contract audits, reviews, deployment artifacts, and remediation in `README.md` and project specs when `projects/<p>/contracts/` is present.
 - ABIs published from `repos/cfx-solidity` packages must be derived from reviewed sources only.
 - Test coverage thresholds enforced in CI.
 

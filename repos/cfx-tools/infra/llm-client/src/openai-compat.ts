@@ -1,4 +1,4 @@
-import { chooseBestModel, modelIdentifier, postChatCompletion } from './http.js';
+import { chooseBestModel, joinEndpoint, modelIdentifier, parseModels, postChatCompletion } from './http.js';
 import type {
   ChatMessage,
   CompletionAttempt,
@@ -30,23 +30,36 @@ export class OpenAICompatProvider implements LlmProvider {
       throw new Error('OPENAI_BASE_URL and OPENAI_API_KEY are required for OpenAICompatProvider.');
     }
     const attempts: CompletionAttempt[] = [];
+    const models = await this.discoverModels();
     const model =
-      opts.model ?? modelIdentifier(this.chooseModel([], this.defaultModel), this.defaultModel);
-    const content = await postChatCompletion({
-      baseUrl: this.baseUrl,
-      chatPath: 'chat/completions',
-      model,
-      messages,
-      opts,
-      attempts,
-      headers: { authorization: `Bearer ${this.apiKey}` },
-    });
-    if (content !== undefined) return content;
+      opts.model ?? modelIdentifier(this.chooseModel(models, this.defaultModel), this.defaultModel);
+    for (let retry = 0; retry < 2; retry++) {
+      const content = await postChatCompletion({
+        baseUrl: this.baseUrl,
+        chatPath: 'chat/completions',
+        model,
+        messages,
+        opts,
+        attempts,
+        headers: { authorization: `Bearer ${this.apiKey}` },
+      });
+      if (content !== undefined) return content;
+    }
     throw new Error(`OpenAI-compatible chat completion failed: ${JSON.stringify(attempts)}`);
   }
 
   async discoverModels(): Promise<readonly LlmModel[]> {
-    return [];
+    if (!this.baseUrl || !this.apiKey) return [];
+    try {
+      const response = await fetch(joinEndpoint(this.baseUrl, 'models'), {
+        headers: { authorization: `Bearer ${this.apiKey}` },
+        signal: AbortSignal.timeout(3000),
+      });
+      if (!response.ok) return [];
+      return parseModels(await response.text(), this.baseUrl);
+    } catch {
+      return [];
+    }
   }
 
   chooseModel(models: readonly LlmModel[], preferred?: string | null): LlmModel | undefined {

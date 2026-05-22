@@ -107,7 +107,7 @@ export function renderEval(report) {
 
 export function renderServeCheck(report) {
   const lines = [
-    '# Lemonade Server Check',
+    '# LLM Provider Check',
     '',
     `Generated: ${report.generatedAt}`,
     '',

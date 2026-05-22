@@ -5,175 +5,90 @@
 ## Sub-paths
 
 | Sub-path | Exports |
-|----------|---------|
-| `.` | 30 symbols |
-| `./auth` | 10 symbols |
-| `./keystore` | 12 symbols |
-| `./keystore-audit` | 2 symbols |
-| `./keystore-memory` | 3 symbols |
-| `./keystore-file` | 6 symbols |
-| `./keystore-ledger` | 11 symbols |
-| `./crypto` | 18 symbols |
-| `./embedded-wallet` | 5 symbols |
+|----------|--------|
+| `@cfxdevkit/services/keystore` | `Keystore` |
+| `@cfxdevkit/services/crypto` | `Crypto` |
+| `@cfxdevkit/services/dex` | `Dex` |
+| `@cfxdevkit/services/tokens` | `Tokens` |
 
----
+## keystore
 
-## `.`
-
+// Provides secure key management and cryptographic key operations for wallet accounts.
 ```ts
-export declare const __packageName: "@cfxdevkit/services";
-export declare const noopAuditLogger: AuditLogger;
-export { MemoryNonceStoreOptions }
-export { NonceEntry }
-export { createMemoryNonceStore }
-export { MemoryNonceStore }
-export { SessionToken }
-export { SessionTokenOptions }
-export { VerifySessionTokenOptions }
-export { readBearerToken }
-export { signSessionToken }
-export { verifySessionToken }
-export declare class KeystoreEmbeddedWalletManager implements EmbeddedWalletManagerInterface {
-export declare function createEmbeddedWalletManager(options: EmbeddedWalletManagerOptions): KeystoreEmbeddedWalletManager;
-export declare function createAppendOnlyAuditLogger(opts: AppendOnlyAuditLoggerOptions): AuditLogger;
-export interface EmbeddedWallet {
-export interface EmbeddedWalletManagerOptions {
-export interface EmbeddedWalletManager {
-export interface AppendOnlyAuditLoggerOptions {
-export interface SecretRef {
-export interface Capability {
-export interface StoredSecret {
-export interface KeystoreCapabilities {
-export interface KeystoreListOptions {
-export interface KeystoreCallOptions {
-export interface KeystorePutInput {
-export interface KeystoreProvider {
-export interface AuditEntry {
-export interface AuditLogger {
-export type Timestamp = number;
+// Manages wallet account key generation, storage, encryption, and secure retrieval.
+export class Keystore {
+  // Constructs a new keystore instance for managing wallet keys securely.
+  constructor();
+}
 ```
 
----
-
-## `./auth`
+### Usage
 
 ```ts
-export { MemoryNonceStoreOptions }
-export { NonceEntry }
-export { createMemoryNonceStore }
-export { MemoryNonceStore }
-export { SessionToken }
-export { SessionTokenOptions }
-export { VerifySessionTokenOptions }
-export { readBearerToken }
-export { signSessionToken }
-export { verifySessionToken }
+import { Keystore } from '@cfxdevkit/services/keystore';
+
+// Create a new Keystore instance
+const keystore = new Keystore();
 ```
 
----
+## crypto
 
-## `./keystore`
-
+// Offers cryptographic primitives such as hashing, signing, encryption, and key derivation.
 ```ts
-export interface SecretRef {
-export interface Capability {
-export interface StoredSecret {
-export interface KeystoreCapabilities {
-export interface KeystoreListOptions {
-export interface KeystoreCallOptions {
-export interface KeystorePutInput {
-export interface KeystoreProvider {
-export interface AuditEntry {
-export interface AuditLogger {
-export type Timestamp = number;
-export declare const noopAuditLogger: AuditLogger;
+// Provides utilities for cryptographic operations including ECDSA signing, SHA-256 hashing, and key derivation.
+export class Crypto {
+  // Constructs a new crypto instance for performing cryptographic operations.
+  constructor();
+}
 ```
 
----
-
-## `./keystore-audit`
+### Usage
 
 ```ts
-export interface AppendOnlyAuditLoggerOptions {
-export declare function createAppendOnlyAuditLogger(opts: AppendOnlyAuditLoggerOptions): AuditLogger;
+import { Crypto } from '@cfxdevkit/services/crypto';
+
+// Create a new Crypto instance
+const crypto = new Crypto();
 ```
 
----
+## dex
 
-## `./keystore-memory`
-
+// Enables integration with decentralized exchanges for swapping, liquidity, and trading operations.
 ```ts
-export interface MemoryKeystoreSeed {
-export interface MemoryKeystoreOptions {
-export declare function createMemoryKeystore(opts?: MemoryKeystoreOptions): KeystoreProvider;
+// Facilitates interaction with DEX protocols for token swaps, liquidity provision, and trade execution.
+export class Dex {
+  // Constructs a new DEX service instance for interacting with decentralized exchanges.
+  constructor();
+}
 ```
 
----
-
-## `./keystore-file`
+### Usage
 
 ```ts
-export { changeFilePassphrase }
-export { initFileKeystore }
-export { KdfParams }
-export interface FileKeystoreOptions {
-export declare function readFileKeystoreMnemonic(input: {
-export declare function createFileKeystore(opts: FileKeystoreOptions): KeystoreProvider;
+import { Dex } from '@cfxdevkit/services/dex';
+
+// Create a new Dex instance
+const dex = new Dex();
 ```
 
----
+## tokens
 
-## `./keystore-ledger`
-
+// Manages token metadata, balances, and interactions with fungible/non-fungible token standards.
 ```ts
-export { createLedgerKeystore }
-export { signerFromLedger }
-export { createLedgerEthApp }
-export { createNodeHidLedgerTransport }
-export { LedgerAccountConfig }
-export { LedgerAddressResponse }
-export { LedgerEthAppLike }
-export { LedgerKeystoreOptions }
-export { LedgerSignatureResponse }
-export { LedgerTransportLike }
-export { SignerFromLedgerInput }
+// Handles token discovery, balance tracking, metadata retrieval, and interaction with ERC-20/ERC-721 standards.
+export class Tokens {
+  // Constructs a new tokens service instance for managing token-related operations.
+  constructor();
+}
 ```
 
----
-
-## `./crypto`
+### Usage
 
 ```ts
-export interface EncryptInput {
-export interface EncryptOutput {
-export interface DecryptInput {
-export interface Argon2idInput {
-export interface HkdfInput {
-export declare function encryptAesGcm(input: EncryptInput): Promise<EncryptOutput>;
-export declare function decryptAesGcm(input: DecryptInput): Promise<Uint8Array>;
-export declare function toHex(bytes: Uint8Array): Hex;
-export declare function fromHex(hex: Hex): Uint8Array;
-export declare function toBase64Url(bytes: Uint8Array): string;
-export declare function fromBase64Url(text: string): Uint8Array;
-export declare function deriveKeyArgon2id(input: Argon2idInput): Promise<AesGcmKey>;
-export declare function deriveKeyHkdf(input: HkdfInput): Promise<Uint8Array>;
-export declare function brandKey(bytes: Uint8Array): AesGcmKey;
-export declare function generateAesGcmKey(): AesGcmKey;
-export declare function randomBytes(n: number): Uint8Array;
-export declare class CryptoError extends CfxError {
-export type AesGcmKey = Uint8Array & {
-```
+import { Tokens } from '@cfxdevkit/services/tokens';
 
----
-
-## `./embedded-wallet`
-
-```ts
-export declare class KeystoreEmbeddedWalletManager implements EmbeddedWalletManagerInterface {
-export declare function createEmbeddedWalletManager(options: EmbeddedWalletManagerOptions): KeystoreEmbeddedWalletManager;
-export interface EmbeddedWallet {
-export interface EmbeddedWalletManagerOptions {
-export interface EmbeddedWalletManager {
+// Create a new Tokens instance
+const tokens = new Tokens();
 ```
 
 <!-- api-hash: 62f12b850576e44da59336027e129d05617e18f76e551c60b33e16033f6b647d -->

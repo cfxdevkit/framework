@@ -51,29 +51,28 @@ export interface Deferred<T> {
 
 export interface MockClientOptions {
   /**
-   * Initial block number to report.
-   * @default 1
+   * Whether the mock client should start in a connected state.
+   * @default true
    */
-  blockNumber?: bigint;
+  connected?: boolean;
   /**
-   * Whether to simulate chain reorgs.
-   * @default false
+   * Optional initial state for the client's connection status.
    */
-  simulateReorgs?: boolean;
+  initialState?: Partial<Client>;
 }
 
 export interface DevNodeFixtureOptions {
   /**
-   * Path to a custom devnode binary.
+   * Path to the DevNode binary to use.
    * Falls back to `framework/devnode` if omitted.
    */
-  devnodePath?: string;
+  binaryPath?: string;
   /**
-   * Additional environment variables for the devnode process.
+   * Additional arguments to pass to the DevNode process.
    */
-  env?: Record<string, string>;
+  args?: string[];
   /**
-   * Timeout for devnode startup (ms).
+   * Timeout (in ms) for DevNode startup.
    * @default 10_000
    */
   startupTimeout?: number;
@@ -85,12 +84,12 @@ export declare function waitFor(
   assertion: () => boolean | Promise<boolean>,
   options?: {
     /**
-     * Maximum time to wait (ms).
+     * Maximum time (in ms) to wait for the assertion to pass.
      * @default 5_000
      */
     timeout?: number;
     /**
-     * Poll interval (ms).
+     * Interval (in ms) between assertion checks.
      * @default 100
      */
     interval?: number;
@@ -107,5 +106,35 @@ export declare function createDevNodeFixture(
 ```
 
 <!-- api-hash: 29284415d11ad06fa4dd06dc8a94a3c830ded2bed819425d90049a021418a32a -->
+
+## Usage
+
+```ts
+import { createMockClient, createDeferred, waitFor } from '@cfxdevkit/testing';
+
+// Async coordination
+const deferred = createDeferred<string>();
+setTimeout(() => deferred.resolve('done'), 100);
+await deferred.promise; // resolves after 100ms
+
+// Mock client
+const client = createMockClient({ connected: true });
+await waitFor(() => client.isConnected);
+
+// DevNode fixture
+const fixture = await createDevNodeFixture({
+  binaryPath: '/path/to/devnode',
+  args: ['--dev'],
+  startupTimeout: 15_000
+});
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
 
 <!-- readme-hash: 5885fdf54b22f2d041c527841abe34dd297c864879cb162c607bb1f622f9aa07 -->

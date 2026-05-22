@@ -1,8 +1,8 @@
 # platform/docs-site
 
-**Scope:** Public documentation website, built from `root/docs/`.
+**Scope:** Public documentation website, built from the workspace `docs/` tree.
 
 Contains site configuration, theme, deployment workflow. Source content lives in
-[../../docs/](../../docs/) so it can be edited without rebuilding the site infra.
+[../../../../docs/](../../../../docs/) so it can be edited without rebuilding the site infra.
 
-⚠️ **Warning:** The referenced path `../../docs/` does not exist in the current repository layout. This symlink is created at build time in CI.
+⚠️ **Warning:** The site may still mirror checked-in docs into a build-time content directory in CI.

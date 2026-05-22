@@ -41,7 +41,7 @@ The `projects/cas/STRUCTURE.md` SHALL describe only what actually exists: `apps/
 - **THEN** `apps/backend/src/worker.ts` is listed and described as the embedded keeper factory
 
 ### Requirement: CHANGELOG documents cas-complete-porting features
-The `projects/cas/CHANGELOG.md` SHALL contain an entry for the features added during the porting work: DELETE job route, safety config API, ApprovalWidget, token display, API proxy.
+The `projects/cas/README.md` SHALL document the features added during the porting work: DELETE job route, safety config API, ApprovalWidget, token display, API proxy.
 
 #### Scenario: Developer reads CHANGELOG to understand recent changes
 - **WHEN** a developer reads CHANGELOG.md

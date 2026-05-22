@@ -1,5 +1,7 @@
 # docs — Detailed Structure (target layout)
 
+Workspace path: `docs`
+
 This file describes the intended shape of the documentation set. It is a target
 map, not a guarantee that every directory below already exists.
 
@@ -80,7 +82,7 @@ docs/
 │   ├── README.md
 │   ├── threat-model.md             system-wide STRIDE
 │   ├── key-handling.md             expanded ADR-0002
-│   ├── audit-history.md            links to per-project AUDITS.md
+│   ├── audit-history.md            links to project-level security and review records
 │   ├── disclosure.md               coordinated disclosure policy
 │   └── supply-chain.md             provenance, lockfile, sbom
 │

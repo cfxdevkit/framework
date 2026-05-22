@@ -1,4 +1,4 @@
-export type LlmProviderType = 'lemonade' | 'openai-compat' | 'github-models';
+export type LlmProviderType = 'lemonade' | 'litellm' | 'openai-compat' | 'github-models';
 
 export interface ChatMessage {
   readonly role: 'system' | 'user' | 'assistant';
@@ -20,7 +20,22 @@ export interface CompletionOptions {
   readonly model?: string;
   readonly temperature?: number;
   readonly maxTokens?: number;
+  readonly minContextTokens?: number;
   readonly quick?: boolean;
+  readonly timeoutMs?: number;
+  readonly enableThinking?: boolean;
+  readonly onProgress?: (event: CompletionProgressEvent) => void;
+}
+
+export interface CompletionProgressEvent {
+  readonly phase: 'request' | 'headers' | 'reasoning' | 'content' | 'heartbeat' | 'complete';
+  readonly url: string;
+  readonly attempt: number;
+  readonly elapsedMs: number;
+  readonly status?: number;
+  readonly contentChars?: number;
+  readonly reasoningChars?: number;
+  readonly finishReason?: string;
 }
 
 export interface LlmProvider {
@@ -31,8 +46,10 @@ export interface LlmProvider {
 }
 
 export interface LlmConfig {
+  provider?: LlmProviderType | null;
   baseUrl: string | null;
   defaultModel: string | null;
+  requestTimeoutMs?: number;
   actions: Record<string, string>;
   githubModel?: string | null;
 }
@@ -51,6 +68,8 @@ export interface CompletionAttempt {
   readonly ok: boolean;
   readonly status?: number;
   readonly error?: string;
+  readonly empty?: boolean;
+  readonly retry?: number;
 }
 
 export interface ResolveProviderAttempt {

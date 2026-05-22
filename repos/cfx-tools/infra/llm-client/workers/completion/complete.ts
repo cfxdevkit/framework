@@ -1,21 +1,35 @@
-import { chatPaths } from '../shared/index.ts';
-import {
-  chooseModel,
-  createClient,
-  discoverModels,
-  extractAssistantText,
-  readConfig,
-  resolveRequestTimeoutMs,
-} from './client.ts';
+import type { ChatMessage } from '../../src/types.ts';
+import type { CompletionProgressEvent } from '../../src/types.ts';
+import { getProviderBaseUrl, resolveProviderModel } from '../../src/provider-meta.ts';
+import { resolveProvider } from '../../src/resolve.ts';
+import { readConfig, resolveRequestTimeoutMs } from './client.ts';
 import { completeDirect } from './direct.ts';
 
-export async function completeCommitAgent({ action, flags, systemPrompt, userPrompt, maxTokens }) {
+type CompleteAgentRequest = {
+  action: string;
+  flags: { model?: string; noThinking?: boolean };
+  systemPrompt: string;
+  userPrompt: string;
+  maxTokens: number;
+  onProgress?: (event: CompletionProgressEvent) => void;
+};
+
+export async function completeCommitAgent({
+  action,
+  flags,
+  systemPrompt,
+  userPrompt,
+  maxTokens,
+  onProgress,
+}: CompleteAgentRequest) {
   return completeDirect({
     action,
     modelOverride: flags.model,
     systemPrompt,
     userPrompt,
     maxTokens,
+    enableThinking: flags.noThinking ? false : undefined,
+    onProgress,
   });
 }
 
@@ -25,26 +39,28 @@ export async function completeStructuredAgent({
   systemPrompt,
   userPrompt,
   maxTokens,
-}) {
+  onProgress,
+}: CompleteAgentRequest) {
   return completeDirect({
     action,
     modelOverride: flags.model,
     systemPrompt,
     userPrompt,
     maxTokens,
+    enableThinking: flags.noThinking ? false : undefined,
+    onProgress,
   });
 }
 export async function complete({ action, modelOverride, userPrompt, context, quick = false }) {
   const config = await readConfig();
-  const client = await createClient(config);
-  const models = await discoverModels(client.baseUrls);
-  const modelId =
-    modelOverride ?? config.actions?.[action] ?? config.defaultModel ?? chooseModel(models)?.id;
-  if (!modelId)
-    throw new Error('No Lemonade model available. Run pnpm run llm:models to inspect inventory.');
+  const provider = await resolveProvider();
+  const modelId = await resolveProviderModel(
+    provider,
+    modelOverride ?? config.actions?.[action] ?? config.defaultModel,
+  );
   const requestTimeoutMs = resolveRequestTimeoutMs(config);
 
-  const messages = [
+  const messages: readonly ChatMessage[] = [
     {
       role: 'system',
       content: [
@@ -56,38 +72,21 @@ export async function complete({ action, modelOverride, userPrompt, context, qui
     },
     { role: 'user', content: `${context}\n\nTask:\n${userPrompt}` },
   ];
-
-  const body = {
+  const content = await provider.complete(messages, {
+    action,
     model: modelId,
-    messages,
+    quick,
+    maxTokens: quick ? 256 : 1600,
     temperature: 0.2,
-    stream: false,
-    max_tokens: quick ? 256 : 1600,
+    timeoutMs: requestTimeoutMs,
+  });
+
+  return {
+    generatedAt: new Date().toISOString(),
+    action,
+    baseUrl: getProviderBaseUrl(provider),
+    model: modelId,
+    content,
+    attempts: [],
   };
-  const attempts = [];
-  for (const path of chatPaths) {
-    const url = new URL(path, client.baseUrl).toString();
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(requestTimeoutMs),
-      });
-      const text = await response.text();
-      attempts.push({ url, ok: response.ok, status: response.status });
-      if (!response.ok) continue;
-      return {
-        generatedAt: new Date().toISOString(),
-        action,
-        baseUrl: client.baseUrl,
-        model: modelId,
-        content: extractAssistantText(text),
-        attempts,
-      };
-    } catch (error) {
-      attempts.push({ url, ok: false, error: String(error) });
-    }
-  }
-  throw new Error(`Lemonade chat completion failed: ${JSON.stringify(attempts)}`);
 }

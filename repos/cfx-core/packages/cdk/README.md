@@ -125,4 +125,12 @@ try {
 }
 ```
 
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
 <!-- readme-hash: 41c6b1fa2199a55cf80519cf98cfe4b1817c4bd578d7d81d5d9b8356ab6705c6 -->

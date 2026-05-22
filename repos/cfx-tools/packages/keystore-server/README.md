@@ -13,6 +13,7 @@ pnpm add @cfxdevkit/keystore-server
 ```typescript
 import { createKeystoreApp } from '@cfxdevkit/keystore-server';
 import { KeystoreService } from '@cfxdevkit/keystore';
+import { Hono } from 'hono';
 
 const keystore = new KeystoreService();
 const app = createKeystoreApp({
@@ -43,7 +44,7 @@ See [API.md](./API.md) for the full public surface.
 ### Key exports
 
 - `createKeystoreApp(options: KeystoreServerAppOptions): Hono`  
-  Creates a Hono app instance with keystore routes mounted.
+  Creates a Hono app instance with keystore routes mounted. Accepts `port`, `host`, `keystore`, `routes`, `basePath`, and `logger` options.
 
 - `createKeystoreRoutes(keystore: KeystoreService, options?: { basePath?: string }): Hono`  
   Creates a Hono router with keystore routes, without app wrapper.
@@ -56,5 +57,11 @@ See [API.md](./API.md) for the full public surface.
 
 - `KeystoreService`  
   Core service interface for keystore operations (imported from `@cfxdevkit/keystore`).
+
+- `WalletSummary`, `ActiveWalletSummary`, `WalletAccountSummary`  
+  Interfaces describing wallet and account metadata returned by keystore endpoints.
+
+- `__packageName` (`"@cfxdevkit/keystore-server"`)  
+  Runtime identifier for package introspection.
 
 <!-- readme-hash: b5b4c421f6db64bc006934dd1e857bba55ed0d7178954db721797c5bb304d546 -->

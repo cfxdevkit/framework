@@ -31,7 +31,7 @@ plus `projects/*`.
 
 ## Conventions
 
-- **Language:** TypeScript strict everywhere except firmware (`projects/electro/apps/firmware/` — C++).
+- **Language:** TypeScript strict everywhere except the checked-in electro firmware surface under `projects/electro/` (C++).
 - **Style:** Biome, config in `repos/cfx-config/packages/biome-config/`.
 - **Commits:** Conventional Commits.
 - **Branches:** trunk-based, short-lived feature branches.
@@ -54,4 +54,4 @@ plus `projects/*`.
 1. Create `projects/<name>/` with sub-folders: `apps/`, `packages/` (optional), `contracts/` (optional), `README.md`.
 2. Add `infrastructure/<name>/` for deploy artefacts.
 3. Add CI workflow under `.github/workflows/<name>.yml`.
-4. Document in [docs/projects/](docs/projects/).
+4. Document the new project in [projects/README.md](projects/README.md).

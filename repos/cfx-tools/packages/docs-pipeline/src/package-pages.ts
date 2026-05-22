@@ -6,6 +6,7 @@ import {
   embedHash,
   extractDescription,
   generateMdxSkeleton,
+  isValidGeneratedMdx,
   readEmbeddedHash,
   toSlug,
 } from './package-content.js';
@@ -44,13 +45,15 @@ async function syncPackagePage(
 
   const embeddedHash = readEmbeddedHash(existing);
   const hasStaleContent = /<!--/.test(existing) || /\{@link\s/.test(existing);
-  if (embeddedHash === hash && !hasStaleContent) {
+  const hasValidMdx = await isValidGeneratedMdx(existing);
+  if (embeddedHash === hash && !hasStaleContent && hasValidMdx) {
     return { slug, name: pkg.name, created: false, updated: false };
   }
 
   const content = embedHash(generateMdxSkeleton({ ...pkg, description }), hash);
   await fs.writeFile(destPath, content, 'utf8');
-  console.log(`  updated  ${slug}.mdx (skeleton changed)`);
+  const reason = !hasValidMdx ? 'invalid mdx repaired' : 'skeleton changed';
+  console.log(`  updated  ${slug}.mdx (${reason})`);
   return { slug, name: pkg.name, created: false, updated: true };
 }
 

@@ -182,4 +182,40 @@ export { Artifact, readArtifact, writeArtifact } from ".";
 export { CompileError, CompileErrorCode, CompileDiagnostic } from ".";
 ```
 
+## Usage
+
+```ts
+import { compile, ensureSolc, readArtifact } from '@cfxdevkit/compiler';
+
+// Ensure solc is available
+const solc = await ensureSolc('0.8.20');
+
+// Compile a simple contract
+const output = await compile({
+  sources: {
+    'Example.sol': {
+      content: 'pragma solidity ^0.8.20; contract Example { function foo() public pure returns (uint) { return 42; } }'
+    }
+  },
+  settings: {
+    outputSelection: {
+      '*': {
+        '*': ['abi', 'evm.bytecode.object']
+      }
+    }
+  }
+});
+
+// Read a previously compiled artifact
+const artifact = readArtifact('./artifacts/Example.json');
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 1 — platform** — May import Tier 0 framework packages.
+
 <!-- readme-hash: fd6cdbf06d6bea5f2c857bfc259c71f8ce7450eaa0eb4c66ee2c7a1c7f3af0d9 -->

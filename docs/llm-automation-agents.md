@@ -41,10 +41,14 @@ Commit only small schemas, manifests, or report excerpts intentionally.
 | `check:hotspots` | Scan source file size and recent churn against the framework component budget | `artifacts/llm/reports/code-hotspots.*` |
 | `check:eval` | Summarize deterministic gates from the generated reports | `artifacts/llm/reports/eval.*` |
 
-## Lemonade CLI
+## Local LLM CLI
 
-`@cfxdevkit/llm-tools` in `repos/cfx-llm` provides a local CLI for using
-Lemonade Server models against repository upkeep tasks. It auto-discovers Lemonade at
+`@cfxdevkit/llm-tools` in `repos/cfx-tools/infra/llm-tools` provides a local CLI for using
+provider-backed models against repository upkeep tasks. The checked-in config currently points at a LiteLLM proxy URL,
+which can front the same local server that was previously addressed directly. Without an explicit config,
+the resolver checks LiteLLM first, then legacy Lemonade-compatible fallbacks.
+
+It auto-discovers a local provider at
 `http://localhost:13305/`, `http://127.0.0.1:13305/`,
 `http://host.docker.internal:13305/`, `http://host.containers.internal:13305/`,
 then `http://127.0.0.1:8000/`, unless `LEMONADE_URL` or `LEMONADE_BASE_URL` is
@@ -61,6 +65,8 @@ Useful commands:
 
 ```sh
 pnpm run llm:models
+pnpm run llm:config -- set provider litellm
+pnpm run llm:config -- set base-url http://host.containers.internal:13305/api/v1
 pnpm run llm:actions
 pnpm run llm:config -- set default-model Qwen3-Coder-Next-GGUF
 pnpm run llm:config -- set action review Qwen3-Coder-Next-GGUF
@@ -88,9 +94,9 @@ The available repo actions are:
 | `ci-cd` | Review GitHub Actions, security gates, docs image publishing, and VPS deploy wiring |
 | `docs-pipeline` | Review wiki sync, docs build, Docker image, and docs deploy readiness |
 
-Local Lemonade configuration is written to `artifacts/llm/config/lemonade.json`,
-which is ignored by git. LLM outputs are written to
-`artifacts/llm/reports/lemonade-*.md`.
+Local provider-aware configuration is written to `artifacts/llm/config/llm.json`,
+which is ignored by git. Reads still fall back to the legacy `artifacts/llm/config/lemonade.json` name.
+LLM outputs are written to `artifacts/llm/reports/llm-*.md`.
 
 ## Current Limits
 
@@ -98,7 +104,7 @@ which is ignored by git. LLM outputs are written to
 - Lemonade Server is optional for now; unavailable local inference records an
   `unavailable` report instead of failing the whole no-training loop. When
   available, the agent records discovered model ids, labels, recipes, and sizes.
-- Lemonade CLI actions ask the model for recommendations only; they do not apply
+- Local LLM CLI actions ask the model for recommendations only; they do not apply
   patches, run deployment commands, publish packages, or commit changes.
 - Dataset generation and fine-tuning remain outside this repo automation surface.
 - The review agent checks uncommitted changes. For committed ranges, compare or

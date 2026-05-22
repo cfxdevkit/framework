@@ -12,82 +12,480 @@
 
 ## `.`
 
+### Usage
+
+```typescript
+import { ConfluxDevkitClient } from '@cfxdevkit/client';
+
+const client = ConfluxDevkitClient.createConfluxDevkitClient({
+  baseUrl: 'http://localhost:8080'
+});
+
+const health = await client.createHealthNamespace().getHealth();
+```
+
 ```ts
+// Package name identifier for the client library.
 export declare const __packageName: "@cfxdevkit/client";
+// Configuration options for initializing the client, including base URL and optional HTTP client overrides.
 export { ConfluxDevkitClientOptions }
+// Interface for the underlying HTTP client abstraction used internally.
 export { HttpClient }
+// Namespace for compiler-related operations such as compiling Solidity or Vyper contracts.
 export { CompilerNamespace }
+// Namespace for deployment-related operations such as deploying contracts or managing deployments.
 export { DeployNamespace }
+// Namespace for mining-related operations such as starting/stopping mining or checking mining status.
 export { MiningNamespace }
+// Namespace for network-related operations such as retrieving network config, chain IDs, or capabilities.
 export { NetworkNamespace }
+// Namespace for session key management, including issuing and verifying session keys with limited capabilities.
 export { SessionKeysNamespace }
+// Factory function to create a compiler namespace instance bound to a given HTTP client.
 export { createCompilerNamespace }
+// Factory function to create a deploy namespace instance bound to a given HTTP client.
 export { createDeployNamespace }
+// Factory function to create a mining namespace instance bound to a given HTTP client.
 export { createMiningNamespace }
+// Factory function to create a network namespace instance bound to a given HTTP client.
 export { createNetworkNamespace }
+// Factory function to create a session keys namespace instance bound to a given HTTP client.
 export { createSessionKeysNamespace }
+// The main client for interacting with the devnode-server, providing access to all namespaces.
 export declare class ConfluxDevkitClient {
+  // Factory method to create a new client instance from configuration options.
+  static createConfluxDevkitClient(options: ConfluxDevkitClientOptions): ConfluxDevkitClient;
+
+  // Returns the namespace for node management operations (start, restart, wipe, status).
+  createNodeNamespace(): NodeNamespace;
+  // Returns the namespace for health check operations.
+  createHealthNamespace(): HealthNamespace;
+  // Returns the namespace for keystore operations (reveal secrets, manage wallets).
+  createKeystoreNamespace(): KeystoreNamespace;
+  // Returns the namespace for account management (list, create, import).
+  createAccountsNamespace(): AccountsNamespace;
+  // Returns the namespace for contract operations (compile, deploy, read, write).
+  createContractsNamespace(): ContractsNamespace;
+  // Returns the namespace for bootstrap template operations.
+  createBootstrapNamespace(): BootstrapNamespace;
+  // Returns the namespace for compiler operations.
+  createCompilerNamespace(): CompilerNamespace;
+  // Returns the namespace for mining operations.
+  createMiningNamespace(): MiningNamespace;
+  // Returns the namespace for network configuration and capabilities.
+  createNetworkNamespace(): NetworkNamespace;
+  // Returns the namespace for session key management.
+  createSessionKeysNamespace(): SessionKeysNamespace;
+}
+// Factory function to create a new client instance from configuration options.
 export declare function createConfluxDevkitClient(options: ConfluxDevkitClientOptions): ConfluxDevkitClient;
+// Factory function to create a node management namespace instance bound to a given HTTP client.
 export declare function createNodeNamespace(http: HttpClient): NodeNamespace;
+// Factory function to create a health check namespace instance bound to a given HTTP client.
 export declare function createHealthNamespace(http: HttpClient): HealthNamespace;
+// Factory function to create a keystore management namespace instance bound to a given HTTP client.
 export declare function createKeystoreNamespace(http: HttpClient): KeystoreNamespace;
+// Factory function to create an accounts management namespace instance bound to a given HTTP client.
 export declare function createAccountsNamespace(http: HttpClient): AccountsNamespace;
+// Factory function to create a contracts management namespace instance bound to a given HTTP client.
 export declare function createContractsNamespace(http: HttpClient): ContractsNamespace;
+// Factory function to create a bootstrap management namespace instance bound to a given HTTP client.
 export declare function createBootstrapNamespace(http: HttpClient): BootstrapNamespace;
+// Input parameters for starting the node (e.g., profile selection, environment).
 export interface NodeStartInput {
+  // Profile selection criteria (space, network, environment).
+  profile: NodeProfileSelection;
+  // Optional environment variables to inject at startup.
+  env?: Record<string, string>;
+}
+// Input parameters for restarting the node (e.g., preserving or wiping state).
 export interface NodeRestartInput {
+  // Whether to preserve existing state (`true`) or wipe (`false`).
+  preserveState?: boolean;
+}
+// Input parameters for wiping the node (e.g., clearing data directories).
 export interface NodeWipeInput {
+  // Whether to also wipe logs and temporary files.
+  includeLogs?: boolean;
+}
+// Input parameters for starting mining (e.g., number of threads, coinbase address).
 export interface NodeMineInput {
+  // Number of mining threads to use.
+  threads?: number;
+  // Coinbase address to receive mining rewards.
+  coinbase?: string;
+}
+// Interface for node management operations such as start, restart, wipe, and status.
 export interface NodeNamespace {
+  // Starts the node with the given profile and environment.
+  start(input: NodeStartInput): Promise<void>;
+  // Restarts the node, optionally preserving state.
+  restart(input?: NodeRestartInput): Promise<void>;
+  // Wipes the node’s data directories and resets state.
+  wipe(input?: NodeWipeInput): Promise<void>;
+  // Retrieves the current node status (syncing, block height, peers).
+  getStatus(): Promise<NodeStatus>;
+}
+// Interface for health check operations, primarily exposing `getHealth()`.
 export interface HealthNamespace {
+  // Returns the current health status of the devnode-server.
+  getHealth(): Promise<HealthResponse>;
+}
+// Interface for keystore operations such as revealing secrets, checking status, and managing wallets.
 export interface KeystoreNamespace {
+  // Reveals a secret (mnemonic or private key) for a given wallet.
+  revealSecret(input: RevealRequestInput): Promise<RevealRequestResponse>;
+  // Consumes a revealed secret to invalidate it.
+  consumeReveal(id: string): Promise<RevealConsumeResponse>;
+  // Retrieves the current keystore status (locked/unlocked).
+  getStatus(): Promise<KeystoreStatus>;
+  // Lists all wallets managed by the keystore.
+  listWallets(): Promise<WalletSummary[]>;
+  // Creates a new wallet with the given mnemonic or derivation path.
+  createWallet(mnemonic?: string): Promise<WalletSummary>;
+  // Imports an existing wallet using a private key or mnemonic.
+  importWallet(secret: string, kind: RevealKind): Promise<WalletSummary>;
+}
+// Interface for account operations such as listing accounts, creating new ones, or importing keys.
 export interface AccountsNamespace {
+  // Lists all accounts across all wallets.
+  listAccounts(): Promise<AccountInfo[]>;
+  // Creates a new account in the active wallet.
+  createAccount(): Promise<AccountInfo>;
+  // Imports an account using a private key.
+  importPrivateKey(privateKey: string): Promise<AccountInfo>;
+  // Sets the active wallet for subsequent operations.
+  setActiveWallet(walletName: string): Promise<void>;
+}
+// Interface for contract operations such as compiling, deploying, reading, and writing.
 export interface ContractsNamespace {
+  // Compiles a Solidity or Vyper contract source.
+  compile(source: string, language: 'solidity' | 'vyper'): Promise<CompileArtifact>;
+  // Deploys a compiled contract to the network.
+  deploy(artifact: CompileArtifact, constructorArgs?: any[]): Promise<DeployRunResponse>;
+  // Reads state from a deployed contract.
+  read(contractAddress: string, method: string, args?: any[]): Promise<ContractReadResponse>;
+  // Writes state to a deployed contract.
+  write(contractAddress: string, method: string, args?: any[]): Promise<ContractWriteResponse>;
+  // Lists all deployed contracts.
+  listContracts(): Promise<ContractRecord[]>;
+}
+// Interface for bootstrap operations such as listing templates and deploying from them.
 export interface BootstrapNamespace {
+  // Lists all available bootstrap templates.
+  listTemplates(): Promise<BootstrapTemplateSummary[]>;
+  // Retrieves a full bootstrap template definition by name.
+  getTemplate(name: string): Promise<BootstrapTemplateResponse>;
+  // Deploys a new instance from a bootstrap template.
+  deploy(input: BootstrapDeployInput): Promise<BootstrapDeployResponse>;
+}
+// A generic successful response type, typically used for operations with no payload.
 export interface OkResponse {
+  // Always `"ok"`.
+  status: "ok";
+}
+// Response containing node health status (e.g., ready, syncing, error).
 export interface HealthResponse {
+  // Health status: `"ready"`, `"syncing"`, or `"error"`.
+  status: "ready" | "syncing" | "error";
+  // Optional error message if status is `"error"`.
+  message?: string;
+}
+// Information about a specific account, including address and balance.
 export interface AccountInfo {
+  // Ethereum-style account address.
+  address: string;
+  // Current CFX or eSpace balance.
+  balance: string;
+  // Nonce of the account.
+  nonce: number;
+}
+// Summary of a wallet's state, including account count and active status.
 export interface WalletSummary {
+  // Name of the wallet.
+  name: string;
+  // Number of accounts in the wallet.
+  accountCount: number;
+  // Whether this wallet is currently active.
+  isActive: boolean;
+}
+// Summary of the currently active wallet, extending `WalletSummary`.
 export interface ActiveWalletSummary extends WalletSummary {
+  // The currently selected signer source (e.g., keystore, env).
+  signerSource: SignerSource;
+}
+// Summary of accounts within a wallet, typically used in bulk responses.
 export interface WalletAccountSummary {
+  // Wallet name.
+  walletName: string;
+  // List of accounts in the wallet.
+  accounts: AccountInfo[];
+}
+// Input for requesting a secret reveal (e.g., mnemonic or private key).
 export interface RevealRequestInput {
+  // Name of the wallet containing the secret.
+  walletName: string;
+  // Whether to reveal the full mnemonic or just the private key.
+  kind: RevealKind;
+}
+// Summary of a reveal request, including ID and status.
 export interface RevealRequestSummary {
+  // Unique ID for the reveal request.
+  id: string;
+  // Expiration timestamp (ISO string).
+  expiresAt: string;
+  // Whether the secret has been consumed.
+  consumed: boolean;
+}
+// Response from a reveal request, containing the secret or error.
 export interface RevealRequestResponse {
+  // Unique ID for the reveal request.
+  id: string;
+  // The revealed secret (mnemonic or private key).
+  secret: RevealedSecret;
+}
+// The secret data revealed (e.g., mnemonic phrase or private key string).
 export interface RevealedSecret {
+  // The actual secret string.
+  value: string;
+  // The kind of secret (`'mnemonic'` or `'private-key'`).
+  kind: RevealKind;
+}
+// Response after consuming a revealed secret (e.g., confirming it was used).
 export interface RevealConsumeResponse {
+  // Status of the operation.
+  status: "ok";
+}
+// Status of the keystore service (e.g., unlocked, locked, initializing).
 export interface KeystoreStatus {
+  // Current keystore state.
+  state: "locked" | "unlocked" | "initializing";
+  // Optional unlock timeout in seconds.
+  unlockTimeout?: number;
+}
+// Summary of the current node profile (e.g., name, space, network).
 export interface NodeProfileSummary {
+  // Name of the profile.
+  name: string;
+  // Execution space (`'core'` or `'espace'`).
+  space: Space;
+  // Network type (`'local'`, `'testnet'`, `'mainnet'`).
+  network: Network;
+  // Environment (e.g., `'dev'`, `'test'`).
+  environment?: string;
+}
+// State of the node profile (e.g., running, stopped, error).
 export interface NodeProfileState {
+  // Current state.
+  state: "running" | "stopped" | "error";
+  // Optional error message if state is `"error"`.
+  message?: string;
+}
+// Selection criteria for node profiles (e.g., space, network, environment).
 export interface NodeProfileSelection {
+  // Execution space (`'core'` or `'espace'`).
+  space: Space;
+  // Network type (`'local'`, `'testnet'`, `'mainnet'`).
+  network: Network;
+  // Environment (e.g., `'dev'`, `'test'`).
+  environment?: string;
+}
+// Record of a contract deployment or state, including address and metadata.
 export interface ContractRecord {
+  // Contract name.
+  name: string;
+  // Deployed address.
+  address: string;
+  // Deployment timestamp (ISO string).
+  deployedAt: string;
+  // Network and space where deployed.
+  network: Network;
+  space: Space;
+}
+// Warning generated during compilation (e.g., unused variable, deprecated API).
 export interface CompileWarning {
+  // Warning message.
+  message: string;
+  // Source location (line/column).
+  location?: { line: number; column: number };
+}
+// Artifact produced by the compiler (e.g., ABI, bytecode, source map).
 export interface CompileArtifact {
+  // Contract ABI as JSON string.
+  abi: string;
+  // Compiled bytecode (hex string).
+  bytecode: string;
+  // Optional source map for debugging.
+  sourceMap?: string;
+  // List of warnings generated during compilation.
+  warnings: CompileWarning[];
+}
+// Capabilities granted by a session key (e.g., read-only, deploy-only).
 export interface SessionCapability {
+  // Whether the key allows reading contract state.
+  read?: boolean;
+  // Whether the key allows writing to contracts.
+  write?: boolean;
+  // Whether the key allows deploying new contracts.
+  deploy?: boolean;
+  // Optional list of allowed contract addresses.
+  allowedContracts?: string[];
+}
+// Response from issuing a session key (e.g., key string and metadata).
 export interface SessionKeyIssueResponse {
+  // The generated session key string.
+  key: string;
+  // Capabilities granted by the key.
+  capabilities: SessionCapability[];
+  // Expiration timestamp (ISO string).
+  expiresAt: string;
+}
+// Response from verifying a session key (e.g., validity and capabilities).
 export interface SessionKeyVerifyResponse {
+  // Whether the key is valid.
+  valid: boolean;
+  // Capabilities granted if valid.
+  capabilities?: SessionCapability[];
+}
+// Summary of a deployment receipt (e.g., transaction hash, block number).
 export interface DeployReceiptSummary {
+  // Transaction hash.
+  transactionHash: string;
+  // Block number where included.
+  blockNumber: number;
+  // Contract address deployed.
+  contractAddress: string;
+}
+// Response from a deployment run (e.g., receipt, contract address).
 export interface DeployRunResponse {
+  // Deployment receipt summary.
+  receipt: DeployReceiptSummary;
+  // Contract address (duplicate for convenience).
+  contractAddress: string;
+}
+// Summary of a bootstrap template (e.g., name, description, version).
 export interface BootstrapTemplateSummary {
+  // Template name.
+  name: string;
+  // Human-readable description.
+  description: string;
+  // Version string.
+  version: string;
+}
+// A bootstrap template definition, including full configuration and scripts.
 export interface BootstrapTemplate extends BootstrapTemplateSummary {
+  // Full configuration object.
+  config: Record<string, any>;
+  // Deployment scripts (e.g., Solidity, shell).
+  scripts: Record<string, string>;
+}
+// Response containing the bootstrap catalog (list of available templates).
 export interface BootstrapCatalogResponse {
+  // List of template summaries.
+  templates: BootstrapTemplateSummary[];
+}
+// Response for a specific bootstrap template (full definition).
 export interface BootstrapTemplateResponse {
+  // Full template definition.
+  template: BootstrapTemplate;
+}
+// Input for deploying via bootstrap (e.g., template name, parameters).
 export interface BootstrapDeployInput {
+  // Name of the template to deploy.
+  templateName: string;
+  // Optional parameters to override defaults.
+  params?: Record<string, any>;
+}
+// Response from a bootstrap deployment (e.g., deployment ID, status).
 export interface BootstrapDeployResponse {
+  // Unique deployment ID.
+  deploymentId: string;
+  // Current status (`"pending"`, `"running"`, `"success"`, `"failed"`).
+  status: string;
+}
+// Configuration for the network (e.g., chain ID, gas limits, RPC endpoints).
 export interface NetworkConfig {
+  // Chain ID.
+  chainId: number;
+  // Default gas limit for transactions.
+  gasLimit: number;
+  // RPC endpoint URLs.
+  rpcUrls: string[];
+}
+// List of supported chain IDs for the current network.
 export interface NetworkChainIds {
+  // Supported chain IDs.
+  ids: number[];
+}
+// Capabilities of the current network (e.g., EVM support, CIP-37).
 export interface NetworkCapabilities {
+  // Whether EVM is supported.
+  evm: boolean;
+  // Whether CIP-37 (session keys) is supported.
+  cip37: boolean;
+}
+// Response containing network profile information (e.g., name, mode, space).
 export interface NetworkProfileResponse {
+  // Network name.
+  name: string;
+  // Connection mode (`'local'` or `'public'`).
+  mode: NetworkMode;
+  // Execution space (`'core'` or `'espace'`).
+  space: Space;
+}
+// Response containing network capabilities (e.g., supported features).
 export interface NetworkCapabilitiesResponse {
+  // Network capabilities.
+  capabilities: NetworkCapabilities;
+}
+// Response containing network configuration (e.g., RPC URLs, chain ID).
 export interface NetworkConfigResponse {
+  // Network configuration.
+  config: NetworkConfig;
+}
+// Response from a contract read operation (e.g., return values, logs).
 export interface ContractReadResponse {
+  // Decoded return values.
+  returnValues: any[];
+  // Logs emitted during the call.
+  logs: any[];
+}
+// Response from a contract write operation (e.g., transaction hash, receipt).
 export interface ContractWriteResponse {
+  // Transaction hash.
+  transactionHash: string;
+  // Receipt summary.
+  receipt: DeployReceiptSummary;
+}
+// Current status of the mining process (e.g., enabled, threads, hash rate).
 export interface MiningStatus {
+  // Whether mining is enabled.
+  enabled: boolean;
+  // Number of mining threads.
+  threads: number;
+  // Current hash rate in H/s.
+  hashRate: number;
+}
+// Current status of the node (e.g., syncing, block height, peers).
 export interface NodeStatus {
+  // Whether the node is syncing.
+  syncing: boolean;
+  // Current block height.
+  blockNumber: number;
+  // Number of connected peers.
+  peerCount: number;
+}
+// Type of secret being revealed: either a mnemonic phrase or a private key.
 export type RevealKind = 'mnemonic' | 'private-key';
+// Supported network environments: local devnet, testnet, or mainnet.
 export type Network = 'local' | 'testnet' | 'mainnet';
+// Mode of network connection: local (private) or public (public RPC).
 export type NetworkMode = 'local' | 'public';
+// Supported execution spaces: Core (native CFX) or eSpace (EVM-compatible).
 export type Space = 'core' | 'espace';
+// Source of the signer: environment variable, runtime request, keystore, or custom string.
 export type SignerSource = 'env' | 'request' | 'keystore' | (string & {});
+// Union type for contract call responses, distinguishing reads vs writes.
 export type TrackedContractCallResponse = ContractReadResponse | ContractWriteResponse;
 ```
 

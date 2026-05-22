@@ -2,9 +2,9 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { findLlmCommand, type LlmCommandDefinition, llmCommands } from './index.js';
+import { findLlmCommand, type LlmCommandDefinition, llmCommands } from './commands.js';
 
-const packageDir = dirname(dirname(fileURLToPath(import.meta.url)));
+const packageDir = join(findRepoRoot(dirname(fileURLToPath(import.meta.url))), 'repos/cfx-tools/infra/llm-tools');
 
 export async function runCli(rawArgs: readonly string[]): Promise<void> {
   const args = rawArgs[0] === '--' ? rawArgs.slice(1) : rawArgs;
@@ -37,7 +37,7 @@ async function runWorker(command: LlmCommandDefinition, args: readonly string[])
 }
 
 function workerScript(worker: LlmCommandDefinition['worker']): string {
-  if (worker === 'lemonade') return 'workers/lemonade/cli.ts';
+  if (worker === 'llm') return 'workers/lemonade/cli.ts';
   return 'workers/llm-agents.ts';
 }
 

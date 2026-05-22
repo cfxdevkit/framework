@@ -1,5 +1,6 @@
 import { readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { isDocumentationUpkeepPath } from '@cfxdevkit/arch-check';
 import { readContextFile } from '../completion/index.ts';
 import { root } from '../shared/index.ts';
 import { unique } from '../shared/logging.ts';
@@ -12,6 +13,8 @@ export function parseDocsUpkeepFlags(args) {
   let docsOnly = false;
   let write = false;
   let yes = false;
+  let force = false;
+  let noThinking = false;
   let agent = 'direct';
   let maxFolders = Number.POSITIVE_INFINITY;
   for (let index = 0; index < args.length; index++) {
@@ -22,6 +25,8 @@ export function parseDocsUpkeepFlags(args) {
     else if (arg === '--docs-only') docsOnly = true;
     else if (arg === '--write') write = true;
     else if (arg === '--yes' || arg === '-y') yes = true;
+    else if (arg === '--force' || arg === '-f') force = true;
+    else if (arg === '--no-thinking') noThinking = true;
     else if (arg === '--scope') scopes.push(args[++index]);
     else if (arg === '--max-folders') maxFolders = Number(args[++index]);
     else promptParts.push(arg);
@@ -37,6 +42,8 @@ export function parseDocsUpkeepFlags(args) {
     docsOnly,
     write,
     yes,
+    force,
+    noThinking,
     scopes: scopes.filter(Boolean),
     maxFolders:
       Number.isFinite(maxFolders) && maxFolders > 0 ? maxFolders : Number.POSITIVE_INFINITY,
@@ -44,7 +51,7 @@ export function parseDocsUpkeepFlags(args) {
 }
 
 export async function discoverDocsUpkeepScopes(flags) {
-  const files = (await collectDocsUpkeepFiles(flags.docsOnly)) as string[];
+  const files = (await collectDocsUpkeepFiles(flags.docsOnly, flags.scopes)) as string[];
   const scopeFilters: string[] = (flags.scopes as string[]).map(normalizeScopeFilter);
   const groups = new Map();
   for (const file of files) {
@@ -108,7 +115,7 @@ export function docsUpkeepDepth(dir) {
   return dir === 'root' ? 0 : dir.split('/').length;
 }
 
-export async function collectDocsUpkeepFiles(docsOnly) {
+export async function collectDocsUpkeepFiles(docsOnly, scopes: readonly string[] = []) {
   const files = [];
   const isDocFile = (file) => file.endsWith('.md') || file.endsWith('.mdx');
   if (docsOnly) {
@@ -116,8 +123,10 @@ export async function collectDocsUpkeepFiles(docsOnly) {
   } else {
     await walkDocsFiles(root, files, isDocFile);
   }
-  return unique(files.map((file) => file.replace(`${root}/`, ''))).filter(
-    (file) => !isIgnoredDocsPath(file),
+  const normalizedScopes = scopes.map(normalizeScopeFilter);
+  const relFiles = unique(files.map((file) => file.replace(`${root}/`, ''))) as string[];
+  return relFiles.filter((file) =>
+    isDocumentationUpkeepPath(file, { docsOnly, scopes: normalizedScopes }),
   );
 }
 
@@ -140,19 +149,6 @@ export async function walkDocsFiles(dir, files, predicate) {
     if (entry.isDirectory()) await walkDocsFiles(path, files, predicate);
     if (entry.isFile() && predicate(path)) files.push(path);
   }
-}
-
-export function isIgnoredDocsPath(file) {
-  return (
-    file.startsWith('artifacts/') ||
-    file.startsWith('node_modules/') ||
-    file.includes('/node_modules/') ||
-    file.includes('/dist/') ||
-    file.includes('/coverage/') ||
-    file.startsWith('.moon/') ||
-    // GitNexus-generated wiki content — do not edit with docs-upkeep
-    file.startsWith('repos/cfx-tools/packages/docs-site/content/wiki/')
-  );
 }
 
 export function normalizeScopeFilter(scope) {

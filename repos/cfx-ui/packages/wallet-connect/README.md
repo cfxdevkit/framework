@@ -201,4 +201,28 @@ export interface CoreChainConfig {
 }
 ```
 
+## Usage
+
+```ts
+import { createConfluxWagmiConfig, ConfluxWagmiProviders } from '@cfxdevkit/wallet-connect';
+
+const config = createConfluxWagmiConfig();
+
+function App() {
+  return (
+    <ConfluxWagmiProviders config={config}>
+      <YourApp />
+    </ConfluxWagmiProviders>
+  );
+}
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
 <!-- readme-hash: f017a75e510ff3b582d60f53d2c09b01ba570881999c7a6f57a3b13d63e4df6d -->

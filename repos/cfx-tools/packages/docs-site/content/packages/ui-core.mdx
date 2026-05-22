@@ -112,6 +112,7 @@ export declare const DEFAULT_MAINNET_ERC20_TOKENS: readonly {
 export declare const DEFAULT_MAINNET_PAIRS: readonly {
   token0: string;
   token1: string;
+  fee?: number;
 }[];
 export declare const DEFAULT_MAINNET_DISPLAY_TOKENS: readonly {
   address: string;
@@ -150,6 +151,7 @@ export interface NetworkSwitchController {
 export interface PairLike {
   token0: string;
   token1: string;
+  fee?: number;
 }
 export interface SelectableTokenLike {
   address: string;
@@ -198,8 +200,25 @@ export type WalletSessionStatus = 'disconnected' | 'connecting' | 'connected';
 
 ```ts
 export interface AddEthereumChainParameter {
+  chainId: string;
+  chainName: string;
+  nativeCurrency: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  rpcUrls: readonly string[];
+  blockExplorerUrls?: readonly string[];
+  iconUrls?: readonly string[];
+}
 export interface UseNetworkSwitchControllerOptions {
+  expectedChainId: number;
+}
 export interface NetworkSwitchController {
+  isConnected: boolean;
+  isWrongNetwork: boolean;
+  switchNetwork: () => Promise<void>;
+}
 export declare function useNetworkSwitchController(options: UseNetworkSwitchControllerOptions): NetworkSwitchController;
 ```
 
@@ -230,6 +249,7 @@ export declare const DEFAULT_MAINNET_ERC20_TOKENS: readonly {
 export declare const DEFAULT_MAINNET_PAIRS: readonly {
   token0: string;
   token1: string;
+  fee?: number;
 }[];
 export declare const DEFAULT_MAINNET_DISPLAY_TOKENS: readonly {
   address: string;
@@ -248,6 +268,7 @@ export declare const DEFAULT_MAINNET_DISPLAY_ERC20_TOKENS: readonly {
 export interface PairLike {
   token0: string;
   token1: string;
+  fee?: number;
 }
 export interface SelectableTokenLike {
   address: string;
@@ -295,47 +316,151 @@ export type WalletSessionStatus = 'disconnected' | 'connecting' | 'connected';
 
 ## API Reference
 
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
+## API Reference
+
 ## `.`
 
+### Usage
+
 ```ts
+import { useWalletSession, normalizeAddress } from '@cfxdevkit/ui-core';
+```
+
+```ts
+// Package name constant for internal identification.
 export declare const __packageName: "@cfxdevkit/ui-core";
+// The canonical address of native CFX token (used as placeholder in token resolution).
 export declare const CFX_NATIVE_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+// Mapping of network names to their respective wrapped CFX (wCFX) contract addresses.
 export declare const WCFX_ADDRESSES: {
+  // Network name → wrapped CFX address
+};
+// Default list of mainnet tokens (including native and common ERC20s) with metadata.
 export declare const DEFAULT_MAINNET_TOKENS: ({
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  icon?: string;
+})[];
+// Default list of mainnet ERC20 tokens (excluding native CFX).
 export declare const DEFAULT_MAINNET_ERC20_TOKENS: ({
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  icon?: string;
+})[];
+// Default token pairs (e.g., for DEX routing) with optional fee tier.
 export declare const DEFAULT_MAINNET_PAIRS: ({
+  token0: string;
+  token1: string;
+  fee?: number;
+})[];
+// Default display tokens for UI rendering — includes native + wrapped + common tokens.
 export declare const DEFAULT_MAINNET_DISPLAY_TOKENS: ({
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  icon?: string;
+})[];
+// Default display ERC20 tokens — subset of display tokens excluding native/wrapped.
 export declare const DEFAULT_MAINNET_DISPLAY_ERC20_TOKENS: ({
-export interface AddEthereumChainParameter {
-export interface UseNetworkSwitchControllerOptions {
-export interface NetworkSwitchController {
-export interface PairLike {
-export interface SelectableTokenLike {
-export interface TokenMetadata extends SelectableTokenLike {
-export interface TokenSelectionOptions {
-export interface UseSelectableTokensOptions<TToken extends SelectableTokenLike> {
-export interface UseWalletSessionOptions {
-export interface WalletSessionController {
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  icon?: string;
+})[];
+// EIP-1193-compatible parameters for adding a new chain via wallet providers.
+export declare const AddEthereumChainParameter = {
+  chainId: string;
+  chainName: string;
+  nativeCurrency?: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  rpcUrls: string[];
+  blockExplorerUrls?: string[];
+  iconUrls?: string[];
+};
+// Options for configuring the network switch controller behavior.
+export declare const UseNetworkSwitchControllerOptions = {
+  defaultChainId?: string;
+  supportedChainIds?: string[];
+};
+// Controller interface for managing chain switching and chain addition.
+export declare const NetworkSwitchController = {
+  currentChainId: string;
+  switchChain: (chainId: string) => Promise<void>;
+  addChain: (params: AddEthereumChainParameter) => Promise<void>;
+};
+// Hook to obtain a network switch controller instance with configurable options.
 export declare function useNetworkSwitchController(options: UseNetworkSwitchControllerOptions): NetworkSwitchController;
+// Normalizes an Ethereum-style address to checksummed format (EIP-55).
 export declare function normalizeAddress(address: string): string;
+// Returns the wrapped CFX (wCFX) address for a given network, or default if none specified.
 export declare function wcfxAddress(network?: keyof typeof WCFX_ADDRESSES): string;
+// Resolves a token address to its canonical form (e.g., native → wrapped or vice versa).
 export declare function resolveTokenAddress(address: string, wrappedNativeAddress?: string, nativeAddress?: string): string;
+// Resolves a token address for display purposes (e.g., prefers wrapped over native).
 export declare function resolveDisplayTokenAddress(address: string, wrappedNativeAddress?: string, nativeAddress?: string): string;
+// Filters and returns tokens suitable for display based on selection options.
 export declare function getDisplayTokens<TToken extends SelectableTokenLike>(tokens: readonly TToken[], options?: TokenSelectionOptions): TToken[];
+// Returns tokens paired with a given input token, based on provided pair definitions.
 export declare function getPairedTokens<TToken extends SelectableTokenLike>(pairs: readonly PairLike[], allTokens: readonly TToken[], tokenInAddress: string, options?: TokenSelectionOptions): TToken[];
+// Hook to manage a list of selectable tokens with filtering and normalization.
 export declare function useSelectableTokens<TToken extends SelectableTokenLike>(options: UseSelectableTokensOptions<TToken>): TToken[];
+// Hook to manage wallet connection session (connect/disconnect, account, chain).
 export declare function useWalletSession(options?: UseWalletSessionOptions): WalletSessionController;
-export type WalletSessionStatus = 'disconnected' | 'connecting' | 'connected';
+// Status enum for wallet session lifecycle.
+export declare type WalletSessionStatus = 'disconnected' | 'connecting' | 'connected';
 ```
 
 ---
 
 ## `./network`
 
+### Usage
+
 ```ts
-export interface AddEthereumChainParameter {
-export interface UseNetworkSwitchControllerOptions {
-export interface NetworkSwitchController {
+import { useNetworkSwitchController } from '@cfxdevkit/ui-core/network';
+```
+
+```ts
+// EIP-1193-compatible parameters for adding a new chain via wallet providers.
+export declare const AddEthereumChainParameter = {
+  chainId: string;
+  chainName: string;
+  nativeCurrency?: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  rpcUrls: string[];
+  blockExplorerUrls?: string[];
+  iconUrls?: string[];
+};
+// Options for configuring the network switch controller behavior.
+export declare const UseNetworkSwitchControllerOptions = {
+  defaultChainId?: string;
+  supportedChainIds?: string[];
+};
+// Controller interface for managing chain switching and chain addition.
+export declare const NetworkSwitchController = {
+  currentChainId: string;
+  switchChain: (chainId: string) => Promise<void>;
+  addChain: (params: AddEthereumChainParameter) => Promise<void>;
+};
+// Hook to obtain a network switch controller instance with configurable options.
 export declare function useNetworkSwitchController(options: UseNetworkSwitchControllerOptions): NetworkSwitchController;
 ```
 
@@ -343,25 +468,99 @@ export declare function useNetworkSwitchController(options: UseNetworkSwitchCont
 
 ## `./tokens`
 
+### Usage
+
 ```ts
+import { CFX_NATIVE_ADDRESS, getDisplayTokens } from '@cfxdevkit/ui-core/tokens';
+```
+
+```ts
+// The canonical address of native CFX token (used as placeholder in token resolution).
 export declare const CFX_NATIVE_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+// Mapping of network names to their respective wrapped CFX (wCFX) contract addresses.
 export declare const WCFX_ADDRESSES: {
+  // Network name → wrapped CFX address
+};
+// Default list of mainnet tokens (including native and common ERC20s) with metadata.
 export declare const DEFAULT_MAINNET_TOKENS: ({
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  icon?: string;
+})[];
+// Default list of mainnet ERC20 tokens (excluding native CFX).
 export declare const DEFAULT_MAINNET_ERC20_TOKENS: ({
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  icon?: string;
+})[];
+// Default token pairs (e.g., for DEX routing) with optional fee tier.
 export declare const DEFAULT_MAINNET_PAIRS: ({
+  token0: string;
+  token1: string;
+  fee?: number;
+})[];
+// Default display tokens for UI rendering — includes native + wrapped + common tokens.
 export declare const DEFAULT_MAINNET_DISPLAY_TOKENS: ({
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  icon?: string;
+})[];
+// Default display ERC20 tokens — subset of display tokens excluding native/wrapped.
 export declare const DEFAULT_MAINNET_DISPLAY_ERC20_TOKENS: ({
-export interface PairLike {
-export interface SelectableTokenLike {
-export interface TokenMetadata extends SelectableTokenLike {
-export interface TokenSelectionOptions {
-export interface UseSelectableTokensOptions<TToken extends SelectableTokenLike> {
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  icon?: string;
+})[];
+// Interface describing a token pair (e.g., for swap routing).
+export declare const PairLike = {
+  token0: string;
+  token1: string;
+  fee?: number;
+};
+// Interface describing a token that can be selected in UI (e.g., for swap inputs).
+export declare const SelectableTokenLike = {
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  icon?: string;
+};
+// Extended token metadata interface, potentially including tags or source info.
+export declare const TokenMetadata extends SelectableTokenLike {
+  // Additional metadata such as tags, categories, or source info
+};
+// Options to control token filtering and inclusion (e.g., for display or selection).
+export declare const TokenSelectionOptions = {
+  includeNative?: boolean;
+  includeWrappedNative?: boolean;
+  filterBySymbol?: string[];
+};
+// Options passed to the `useSelectableTokens` hook.
+export declare const UseSelectableTokensOptions<TToken extends SelectableTokenLike> = {
+  tokens: readonly TToken[];
+  options?: TokenSelectionOptions;
+};
+// Normalizes an Ethereum-style address to checksummed format (EIP-55).
 export declare function normalizeAddress(address: string): string;
+// Returns the wrapped CFX (wCFX) address for a given network, or default if none specified.
 export declare function wcfxAddress(network?: keyof typeof WCFX_ADDRESSES): string;
+// Resolves a token address to its canonical form (e.g., native → wrapped or vice versa).
 export declare function resolveTokenAddress(address: string, wrappedNativeAddress?: string, nativeAddress?: string): string;
+// Resolves a token address for display purposes (e.g., prefers wrapped over native).
 export declare function resolveDisplayTokenAddress(address: string, wrappedNativeAddress?: string, nativeAddress?: string): string;
+// Filters and returns tokens suitable for display based on selection options.
 export declare function getDisplayTokens<TToken extends SelectableTokenLike>(tokens: readonly TToken[], options?: TokenSelectionOptions): TToken[];
+// Returns tokens paired with a given input token, based on provided pair definitions.
 export declare function getPairedTokens<TToken extends SelectableTokenLike>(pairs: readonly PairLike[], allTokens: readonly TToken[], tokenInAddress: string, options?: TokenSelectionOptions): TToken[];
+// Hook to manage a list of selectable tokens with filtering and normalization.
 export declare function useSelectableTokens<TToken extends SelectableTokenLike>(options: UseSelectableTokensOptions<TToken>): TToken[];
 ```
 
@@ -369,11 +568,30 @@ export declare function useSelectableTokens<TToken extends SelectableTokenLike>(
 
 ## `./wallet`
 
+### Usage
+
 ```ts
-export type WalletSessionStatus = 'disconnected' | 'connecting' | 'connected';
-export interface UseWalletSessionOptions {
-export interface WalletSessionController {
+import { useWalletSession, type WalletSessionStatus } from '@cfxdevkit/ui-core/wallet';
+```
+
+```ts
+// Status enum for wallet session lifecycle.
+export declare type WalletSessionStatus = 'disconnected' | 'connecting' | 'connected';
+// Options for configuring wallet session behavior (e.g., auto-connect, wallet support).
+export declare const UseWalletSessionOptions = {
+  autoConnect?: boolean;
+  supportedWallets?: string[];
+};
+// Controller interface for managing wallet connection state and actions.
+export declare const WalletSessionController = {
+  status: WalletSessionStatus;
+  account?: string;
+  chainId?: string;
+  connect: () => Promise<void>;
+  disconnect: () => void;
+};
+// Hook to manage wallet connection session (connect/disconnect, account, chain).
 export declare function useWalletSession(options?: UseWalletSessionOptions): WalletSessionController;
 ```
 
-{/* readme-hash: 47244fb8d1cbbcb48f9a6881ca11cbdaad67e17a70c56ff65706242b232707a1 */}
+{/* readme-hash: 4cfbe9c698126ab0af95a6559b12d63d68a98c7d689ba2a96f474e50b9358e82 */}

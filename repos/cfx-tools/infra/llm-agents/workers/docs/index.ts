@@ -7,6 +7,7 @@ import {
 } from './discover.ts';
 
 export { runDocsApi } from './api.ts';
+export { runDocsApiProbe } from './api-probe.ts';
 export { normalizeScopeFilter } from './discover.ts';
 export { runDocsReadme } from './readme.ts';
 export { runDocsPackagePages } from './packages.ts';

@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { configPath, defaultBaseUrls, modelPaths } from '../shared/index.ts';
+import { configPath, defaultBaseUrls, legacyConfigPath, modelPaths } from '../shared/index.ts';
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 120000;
 
@@ -11,7 +11,8 @@ export function normalizeBaseUrl(url) {
 }
 
 export function resolveRequestTimeoutMs(config) {
-  const raw = config?.requestTimeoutMs ?? process.env.LEMONADE_REQUEST_TIMEOUT_MS;
+  const raw =
+    config?.requestTimeoutMs ?? process.env.LLM_REQUEST_TIMEOUT_MS ?? process.env.LEMONADE_REQUEST_TIMEOUT_MS;
   const value = Number(raw ?? DEFAULT_REQUEST_TIMEOUT_MS);
   return Number.isFinite(value) && value > 0 ? value : DEFAULT_REQUEST_TIMEOUT_MS;
 }
@@ -112,17 +113,44 @@ export function modelScore(model) {
   return score;
 }
 
+function extractTextNode(value) {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => extractTextNode(entry))
+      .filter((entry) => typeof entry === 'string' && entry.trim())
+      .join('')
+      .trim();
+  }
+  if (!value || typeof value !== 'object') return '';
+  if (typeof value.text === 'string') return value.text;
+  if (typeof value.content === 'string') return value.content;
+  if (Array.isArray(value.content)) return extractTextNode(value.content);
+  return '';
+}
+
 export function extractAssistantText(text) {
-  const parsed = JSON.parse(text);
-  const message =
-    parsed?.choices?.[0]?.message?.content ?? parsed?.choices?.[0]?.text ?? parsed?.message;
-  if (typeof message !== 'string') return text;
-  return message.trim();
+  try {
+    const parsed = JSON.parse(text);
+    const choice = Array.isArray(parsed?.choices) ? parsed.choices[0] : undefined;
+    const message = choice?.message?.content ?? choice?.text ?? parsed?.message ?? parsed?.content;
+    const extracted = extractTextNode(message);
+    if (extracted.trim()) return extracted.trim();
+    if (message !== undefined) return '';
+    return text.trim();
+  } catch {
+    return text.trim();
+  }
 }
 
 export async function readConfig() {
   try {
     return { ...defaultConfig(), ...JSON.parse(await readFile(configPath, 'utf8')) };
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
+  try {
+    return { ...defaultConfig(), ...JSON.parse(await readFile(legacyConfigPath, 'utf8')) };
   } catch (error) {
     if (error?.code === 'ENOENT') return defaultConfig();
     throw error;
@@ -136,6 +164,7 @@ export async function writeConfig(config) {
 
 export function defaultConfig() {
   return {
+    provider: 'litellm',
     baseUrl: null,
     defaultModel: null,
     requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,

@@ -129,6 +129,13 @@ export type ReadmeSectionCheck = {
   hasTier: boolean;
 };
 
+const requiredReadmeHeadings = {
+  hasInstall: 'Install',
+  hasUsage: 'Usage',
+  hasApiLink: 'API Reference',
+  hasTier: 'Tier',
+} satisfies Record<keyof ReadmeSectionCheck, string>;
+
 export function checkReadmeSections(content: string): ReadmeSectionCheck {
   return {
     hasInstall: /##\s+install/i.test(content),
@@ -136,6 +143,35 @@ export function checkReadmeSections(content: string): ReadmeSectionCheck {
     hasApiLink: /API\.md/i.test(content),
     hasTier: /tier\s+\d/i.test(content) || /\*\*tier/i.test(content),
   };
+}
+
+function extractSection(content: string, heading: string): string {
+  const marker = `## ${heading}`;
+  const start = content.indexOf(marker);
+  if (start === -1) return '';
+
+  const nextSection = content.indexOf('\n## ', start + marker.length);
+  const end = nextSection === -1 ? content.length : nextSection;
+  return content.slice(start, end).trimEnd();
+}
+
+export function backfillReadmeSections(
+  existing: string,
+  pkg: Pick<PublicPackageInfo, 'name' | 'description' | 'rel' | 'subpaths'>,
+): string {
+  const current = stripReadmeSkeletonHash(existing).trimEnd();
+  const checks = checkReadmeSections(current);
+  const skeleton = renderReadmeSkeleton(pkg);
+  const missingSections = (Object.entries(checks) as [keyof ReadmeSectionCheck, boolean][])
+    .filter(([, present]) => !present)
+    .map(([key]) => extractSection(skeleton, requiredReadmeHeadings[key]))
+    .filter((section) => section.length > 0);
+
+  if (missingSections.length === 0) {
+    return current;
+  }
+
+  return [current, ...missingSections].filter(Boolean).join('\n\n').trimEnd();
 }
 
 // ─── Skeleton hash utilities ───────────────────────────────────────────────

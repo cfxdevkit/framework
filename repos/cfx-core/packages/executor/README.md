@@ -200,4 +200,12 @@ const result = await withLock('dca:account-0x...', async () => {
 });
 ```
 
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
 <!-- readme-hash: 2438a0d3c4009bb83fda7aa8eee76b83eedf14ccc4ff0ed75b6f401c3e0d2a08 -->

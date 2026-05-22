@@ -28,8 +28,8 @@ If `project-dir` is omitted, defaults to `<template-name>`.
 
 | Symbol | Description |
 |--------|-------------|
-| `scaffoldProject` | Main entry point. Accepts `templateName`, `targetDir`, and optional `options` (e.g., `skipInstall`, `skipGit`, `vars`). |
-| `parseArgs` | Parses CLI arguments into structured options. |
+| `scaffoldProject` | Main entry point. Accepts `projectName` and `options` (`name`, `description?`). |
+| `parseArgs` | Parses CLI arguments into `{ name, description? }`. |
 | `validateName` | Validates project name against npm naming rules. |
 | `getTemplate` | Fetches a template definition by name. |
 | `listTemplates` | Lists all available templates. |
@@ -52,7 +52,7 @@ Re-exports core template-related types and utilities:
 ## Template Format
 
 Templates are defined in `../../templates/` as directories containing:
-- `template.json`: metadata (`name`, `description`, `vars`, `files`, `hooks`)
+- `template.json`: metadata (`name`, `description`, `files`, `target?`)
 - `files/`: template files with `{{ variable }}` placeholders
 - Optional `hooks/`: scripts executed post-scaffold (e.g., `setup-wallet.sh`, `init-mcp.sh`)
 
@@ -61,14 +61,18 @@ Templates are defined in `../../templates/` as directories containing:
 ```ts
 import { scaffoldProject } from '@cfxdevkit/create';
 
-await scaffoldProject('basic', './my-project', {
-  skipInstall: false,
-  skipGit: false,
-  vars: {
-    projectName: 'My Awesome Project',
-    author: 'Jane Doe',
-  },
+await scaffoldProject('basic', {
+  name: 'my-project',
+  description: 'My generated project',
 });
 ```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 1 — platform** — May import Tier 0 framework packages.
 
 <!-- readme-hash: 3e5f44181711a8bdbf829db2918d70dd571b8de74eaead5616c8de3fa9fbace2 -->

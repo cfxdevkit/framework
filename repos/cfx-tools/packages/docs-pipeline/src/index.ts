@@ -1,4 +1,6 @@
 export { runCli } from './run.js';
+export { docsCommands, findDocsCommand, type DocsCliCommandDefinition } from './commands.js';
+export { docsToolingNamespace } from './namespace.js';
 export { runCommand, type DocsCommandName } from './scripts.js';
 export { syncPackages } from './package-pages.js';
 export { validateGeneratedContent } from './validate-content.js';

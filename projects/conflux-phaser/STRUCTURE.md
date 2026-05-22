@@ -1,5 +1,7 @@
 # projects/conflux-phaser — Detailed Structure
 
+Workspace path: `projects/conflux-phaser`
+
 Smallest project. Plain single-app Vite layout.
 
 ```

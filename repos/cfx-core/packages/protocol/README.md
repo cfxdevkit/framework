@@ -107,4 +107,31 @@ export declare function estimateTransaction(client: Client, request: TxRequest):
 export declare function collectLogs(client: Client, filter: CoreLogFilter): Promise<CoreLog[]>;
 ```
 
+## Usage
+
+```ts
+import { automationManagerAddress, waitForTransactionReceipt, estimateTransaction } from '@cfxdevkit/protocol';
+import { createClient } from '@cfxdevkit/cdk';
+
+const client = createClient({ url: 'https://main.confluxrpc.com' });
+
+// Estimate gas for a transaction
+const gas = await estimateTransaction(client, {
+  from: '0x...',
+  to: automationManagerAddress,
+  data: '0x',
+});
+
+// Wait for a transaction receipt
+const receipt = await waitForTransactionReceipt(client, '0x...');
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
 <!-- readme-hash: 7454a57844eeb7916ea7e01afbac53e97e52c1bbe3a450c88d8db7bc877b6181 -->

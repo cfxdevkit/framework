@@ -131,4 +131,24 @@ export declare function parseArgs(argv: string[]): ParsedArgs;
 export declare function printHelp(): void;
 ```
 
+## Usage
+
+```ts
+import { parseArgs, printHelp } from '@cfxdevkit/devnode/cli';
+
+// Parse CLI arguments
+const args = parseArgs(process.argv.slice(2));
+
+// Print help
+printHelp();
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
 <!-- readme-hash: df581d492a3f371f9a46537f9acdc07d85717beb5e95f34c5422b2cd66b0e4e3 -->

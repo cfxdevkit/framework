@@ -113,4 +113,28 @@ export interface SwapServiceConfig {
 
 > **Note:** All hooks and components assume `@cfxdevkit/cdk` is initialized (e.g., wallet connected, provider available).
 
+## Usage
+
+```ts
+import { SwapWidget } from '@cfxdevkit/defi-react';
+
+// Configure your DEX adapters and RPC
+const config: SwapServiceConfig = {
+  rpcUrl: 'https://main.confluxrpc.com',
+  chainId: 1030,
+  dexAdapters: [/* your adapters */],
+};
+
+// Use the SwapWidget in your app
+<SwapWidget config={config} />;
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
 <!-- readme-hash: 8bf46925318b9cefa4c043956dfa0f06e99ecd714777896a39e22b850eec04e1 -->

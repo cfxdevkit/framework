@@ -257,4 +257,55 @@ export declare function createSessionKey(input: CreateSessionKeyInput): Promise<
 export declare function canonicalAttestationMessage(sessionAddress: Address, parent: Address, c: Capability): string;
 ```
 
+## Usage
+
+```ts
+import {
+  initLocalWallet,
+  createSessionKey,
+  withCapability,
+  TransactionBatcher,
+  BatchTask
+} from '@cfxdevkit/wallet';
+
+// Initialize a new local wallet
+const { keystorePath, address } = await initLocalWallet({
+  keystorePath: '/path/to/keystore',
+  passphrase: 'secure-passphrase'
+});
+
+// Create a session key with limited capability
+const parentSigner = await signerFromKeystore({ keystorePath, passphrase: 'secure-passphrase' });
+const sessionKey = await createSessionKey({
+  parentSigner,
+  capability: {
+    gasLimit: 1_000_000n,
+    methods: ['cfx_sendTransaction']
+  }
+});
+
+// Wrap the session key with capability enforcement
+const sessionSigner = withCapability(sessionKey, sessionKey.capability);
+
+// Batch multiple transactions
+const batcher = new TransactionBatcher();
+batcher.add(BatchTask.multicall([
+  { to: '0x...', data: '0x...' },
+  { to: '0x...', data: '0x...' }
+]));
+batcher.add(BatchTask.multisend([
+  { to: '0x...', value: 1n },
+  { to: '0x...', value: 2n }
+]));
+const result = await batcher.execute();
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
 <!-- readme-hash: 7a4da19edb9bcd4ad58f3345d5bfe908cdefdbe1412f84b8014368b68428c649 -->

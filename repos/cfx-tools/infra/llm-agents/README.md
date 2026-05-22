@@ -41,6 +41,29 @@ await runCommit({ provider, cwd: process.cwd() });
 
 | Sub-path | Exports |
 |----------|---------|
-| `.` | `runAll`, `runReviewAgent`, `ask`, `configure`, `listActions`, `listModels`, `runAction`, `parseCommitFlags`, `runCommit`, `runPrecommit`, `runDocsApi`, `runDocsUpkeep`, `runTestUpkeep` |
+| `.` | `runAll`, `runReviewAgent`, `ask`, `configure`, `listActions`, `listModels`, `runAction`, `parseCommitFlags`, `runCommit`, `runPrecommit`, `runDocsApi`, `runDocsUpkeep`, `runTestUpkeep`, `runDocsApiProbe`, `runDocsPackagePages`, `runDocsReadme`, `runStructureUpkeep`, `validateModels` |
+
+## Usage
+
+```typescript
+import { configure, ask, runAll } from '@cfxdevkit/llm-agents';
+
+// Configure the agent with your preferred model and API settings
+configure({ model: 'gpt-4o', apiKey: process.env.OPENAI_API_KEY });
+
+// Ask a question and get a structured response
+const response = await ask('What is the current state of the `src/` directory?');
+
+// Run all agents in sequence
+const results = await runAll({ cwd: process.cwd() });
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 1 — platform** — May import Tier 0 framework packages.
 
 <!-- readme-hash: 584a088e5fd3fbb12aebc9d8ce909f3b17062110569265017b2442e08738e07a -->

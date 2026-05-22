@@ -1,0 +1,6 @@
+
+[1/2] Discovering package for API enrichment probe
+  probing repos/cfx-core/packages/executor
+
+[2/2] LLM probe
+Invalid docs-api probe response: 

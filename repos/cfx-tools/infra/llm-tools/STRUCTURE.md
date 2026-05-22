@@ -1,18 +1,27 @@
-# Structure
-
 ```text
-repos/cfx-llm/packages/llm-tools/
-  src/
-    bin.ts       # CLI entry point
-    index.ts     # command registry and public metadata
-    run.ts       # worker routing into shim dispatchers
-  workers/
-    llm-agents.ts    # Shim dispatcher into @cfxdevkit/llm-agents review/all
-    lemonade/
-      cli.ts         # Shim dispatcher into @cfxdevkit/llm-agents commands
-  package.json
-  tsconfig.json
-  vite.config.ts
+.gitignore — Git ignore rules
+API.md — API documentation
+README.md — Package overview and usage
+STRUCTURE.md — This file: directory layout documentation
+artifacts
+  llm
+    reports — Generated LLM-related reports (e.g., benchmarks, logs)
+moon.yml — Moon repo configuration (monorepo tooling)
+package.json — Package metadata and dependencies
+src
+  bin.ts — CLI entry point
+  commands.ts — CLI command definitions
+  index.ts — Main module export
+  namespace.ts — Namespace/type definitions
+  run.test.ts — Unit/integration tests for `run.ts`
+  run.ts — Core execution logic (e.g., LLM orchestration)
+tsconfig.json — TypeScript compiler configuration
+vite.config.ts — Vite bundler config (for workers or dev tooling)
+workers
+  lemonade
+    cli.ts — Lemonade worker CLI entry point
+  llm-agents.ts — LLM agent worker implementation
 ```
 
-The implementation lives in sibling packages. Root `pnpm run llm:*` commands route through `src/run.ts`, keeping the public script surface stable while provider and workflow logic stay in `llm-client` and `llm-agents`.
+<!-- structure-status: enriched -->
+<!-- structure-hash: cff94119e71e63acbbf25a077c299da38745de914c69f3623e90340c4e84eed3 -->

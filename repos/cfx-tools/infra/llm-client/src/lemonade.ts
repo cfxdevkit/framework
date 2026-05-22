@@ -39,15 +39,17 @@ export class LemonadeProvider implements LlmProvider {
     const baseUrl = chosen?.baseUrl ?? this.baseUrls[0];
     if (!baseUrl) throw new Error('No Lemonade base URL configured.');
     for (const path of chatPaths) {
-      const content = await postChatCompletion({
-        baseUrl,
-        chatPath: path,
-        model,
-        messages,
-        opts,
-        attempts,
-      });
-      if (content !== undefined) return content;
+      for (let retry = 0; retry < 2; retry++) {
+        const content = await postChatCompletion({
+          baseUrl,
+          chatPath: path,
+          model,
+          messages,
+          opts,
+          attempts,
+        });
+        if (content !== undefined) return content;
+      }
     }
     throw new Error(`Lemonade chat completion failed: ${JSON.stringify(attempts)}`);
   }

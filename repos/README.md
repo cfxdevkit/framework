@@ -29,4 +29,4 @@ When a slice is ready to be carved out:
 | [cfx-ui](./cfx-ui/) | 0c | React, theme, defi-react, wallet-connect |
 | [cfx-domain](./cfx-domain/) | 2 | game-engine, automation |
 | [cfx-tools](./cfx-tools/) | 1 | scaffold-cli, mcp-server, vscode-extension, devtools, devcontainer |
-| [cfx-llm](./cfx-llm/) | 1 | local LLM automation, repo review, hotspot scanning, commit assistance |
+| [cfx-tools](./cfx-tools/) | 1 | developer tooling plus `infra/` for local LLM automation, repo review, hotspot scanning, and commit assistance |

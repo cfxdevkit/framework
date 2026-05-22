@@ -20,12 +20,14 @@ type DocsReadmeFlags = {
   yes?: boolean;
   package?: string;
   force?: boolean;
+  noThinking?: boolean;
 };
 
 function parseDocsReadmeFlags(args: string[]): DocsReadmeFlags {
   const flags: DocsReadmeFlags = {};
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--quick') flags.quick = true;
+    if (args[i] === '--no-thinking') flags.noThinking = true;
     if (args[i] === '--yes' || args[i] === '-y') flags.yes = true;
     if (args[i] === '--force') flags.force = true;
     if (args[i] === '--model' && args[i + 1]) {

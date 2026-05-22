@@ -2,7 +2,6 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { artifactsRoot, root } from '../shared/index.ts';
 import { logInfo } from '../shared/logging.ts';
-import { isIgnoredDocsPath } from './discover.ts';
 
 export async function applyDocsUpkeepUpdates(scope, result) {
   const allowed = new Set(scope.files);
@@ -10,10 +9,6 @@ export async function applyDocsUpkeepUpdates(scope, result) {
   for (const replacement of result.replacements ?? []) {
     if (!allowed.has(replacement.path)) {
       logInfo(`    ! skipped replacement outside scope: ${replacement.path}`);
-      continue;
-    }
-    if (isIgnoredDocsPath(replacement.path)) {
-      logInfo(`    ! skipped ignored docs path: ${replacement.path}`);
       continue;
     }
     const path = join(root, replacement.path);
@@ -29,10 +24,6 @@ export async function applyDocsUpkeepUpdates(scope, result) {
   for (const update of result.fileUpdates ?? []) {
     if (!allowed.has(update.path)) {
       logInfo(`    ! skipped update outside scope: ${update.path}`);
-      continue;
-    }
-    if (isIgnoredDocsPath(update.path)) {
-      logInfo(`    ! skipped ignored docs path: ${update.path}`);
       continue;
     }
     await writeFile(join(root, update.path), update.content, 'utf8');
@@ -72,7 +63,7 @@ export async function writeDocsUpkeepIndex(results, flags) {
     '',
     `Generated: ${new Date().toISOString()}`,
     `Mode: ${flags.quick ? 'quick' : 'full'}`,
-    `Scope: ${flags.docsOnly ? 'docs/' : 'all markdown'}`,
+    `Scope: ${flags.docsOnly ? 'docs/' : 'arch-check managed documentation'}`,
     `Write mode: ${flags.write ? 'yes' : 'no'}`,
     'Processing order: main-folder batches, leaf-to-root inside each batch, then workspace root',
     'Context flow: child artifacts are shared only inside the current main folder; root receives compact main-folder summaries',

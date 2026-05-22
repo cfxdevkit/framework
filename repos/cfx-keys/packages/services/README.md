@@ -272,4 +272,40 @@ export class KeystoreEmbeddedWalletManager implements EmbeddedWalletManager {
 export function createEmbeddedWalletManager(options: EmbeddedWalletManagerOptions): KeystoreEmbeddedWalletManager;
 ```
 
+## Usage
+
+```ts
+import { KeystoreFileProvider, encryptData, generateKey } from '@cfxdevkit/services';
+
+// Derive encryption key from password
+const salt = new Uint8Array(16);
+const key = deriveKeyFromPassword('my-password', salt);
+
+// Encrypt data
+const plaintext = new TextEncoder().encode('secret data');
+const { ciphertext, nonce } = encryptData(plaintext, key);
+
+// Initialize file-backed keystore
+const keystore = new KeystoreFileProvider({
+  path: './keystore.json',
+  password: () => 'my-password'
+});
+
+// Store encrypted secret
+await keystore.put({
+  id: 'my-secret',
+  path: ['wallets', 'main'],
+  value: ciphertext,
+  capabilities: [{ name: 'sign' }]
+});
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
 <!-- readme-hash: 37c1d0dc903a25f5a89302c4f79b44a71b54a4bbc01070fe0c61f661281e1cc2 -->

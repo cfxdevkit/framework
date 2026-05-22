@@ -115,4 +115,62 @@ export declare const __packageName: "@cfxdevkit/game-engine";
 
 <!-- api-hash: 5119ebb383421364720f996e4e91c953a356795c94f23bce8c18e7ba2e9faee6 -->
 
+## Usage
+
+```ts
+import { GameEngine, GameState, dispatchAction, createStoreAdapter } from '@cfxdevkit/game-engine';
+
+// Define initial state
+const initialState: GameState = {
+  currentRound: 1,
+  currentPlayerIndex: 0,
+  status: 'idle'
+};
+
+// Implement a simple engine
+class SimpleEngine implements GameEngine {
+  private state: GameState = initialState;
+
+  getState(): GameState {
+    return this.state;
+  }
+
+  applyTransition(transition: (state: GameState) => GameState): void {
+    this.state = transition(this.state);
+  }
+
+  reset(): void {
+    this.state = initialState;
+  }
+}
+
+// Create engine and adapter
+const engine = new SimpleEngine();
+const storeAdapter = createStoreAdapter({
+  subscribe: (listener) => {
+    // Hook into engine state changes (e.g., via event emitter or polling)
+    const onChange = () => listener();
+    // In practice, wire this to engine state updates
+    return () => {};
+  },
+  getState: () => engine.getState(),
+  dispatch: (action) => dispatchAction(action)
+});
+
+// Example: advance round
+engine.applyTransition((state) => ({
+  ...state,
+  status: 'active',
+  currentRound: state.currentRound + 1
+}));
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 2 — domains** — May import Tier 0 and Tier 1 packages.
+
 <!-- readme-hash: 25935059625d2a68564de4c525ca0ba903c3a9add7e8b1d77eb6c2dca017711a -->

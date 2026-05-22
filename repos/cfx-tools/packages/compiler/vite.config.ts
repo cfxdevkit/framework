@@ -4,9 +4,16 @@ import dts from 'vite-plugin-dts';
 export default defineConfig({
   build: {
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+        'solc/index': 'src/solc/index.ts',
+        'resolver/index': 'src/resolver/index.ts',
+        'templates/index': 'src/templates/index.ts',
+        artifacts: 'src/artifacts.ts',
+        errors: 'src/errors.ts',
+      },
       formats: ['es'],
-      fileName: () => 'index.js',
+      fileName: (_format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
       external: (id) => !id.startsWith('.') && !id.startsWith('/'),

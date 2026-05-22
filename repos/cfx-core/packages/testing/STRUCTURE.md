@@ -1,53 +1,15 @@
-# @cfxdevkit/testing — Detailed Structure
+.gitignore — Git ignore rules
+API.md — API documentation
+README.md — Package overview and usage
+STRUCTURE.md — This file: directory layout documentation
+moon.yml — Moon repo configuration
+package.json — Package metadata and dependencies
+src/
+  index.test.ts — Test entry point
+  index.ts — Main source entry point
+tsconfig.json — TypeScript configuration
+vite.config.ts — Vite build config (unused in test-only package)
+vitest.config.ts — Vitest test runner configuration
 
-Dev-dependency only. Used by every package and project. **Test-only.**
-
-```
-testing/
-├── README.md
-├── package.json                    @cfxdevkit/testing
-├── tsconfig.json
-├── vite.config.ts
-├── moon.yml
-└── src/
-    ├── index.ts
-    │
-    ├── chain/                      ── Mock & in-memory chains ──
-    │   ├── index.ts
-    │   ├── mock-client.ts          Viem-shaped mock
-    │   ├── anvil-like.ts           thin wrapper for ephemeral local node
-    │   └── fixtures.ts
-    │
-    ├── contract/                   ── Contract test harness ──
-    │   ├── index.ts
-    │   ├── deploy-helper.ts
-    │   ├── snapshot-revert.ts
-    │   └── time-travel.ts
-    │
-    ├── fixtures/                   ── Reusable data ──
-    │   ├── index.ts
-    │   ├── accounts.ts             well-known dev addresses
-    │   ├── tokens.ts
-    │   └── txs.ts
-    │
-    ├── matchers/                   ── Vitest matchers ──
-    │   ├── index.ts
-    │   ├── toEmitEvent.ts
-    │   ├── toRevertWith.ts
-    │   └── toEqualAddress.ts
-    │
-    └── msw/                        ── MSW handlers for RPC mocking ──
-        ├── index.ts
-        └── rpc-handlers.ts
-```
-
-### Public exports map
-
-```
-".", "./chain", "./contract", "./fixtures", "./matchers", "./msw"
-```
-
-### Dependencies
-
-- Peer: `vitest`, `msw`.
-- Runtime: `framework/core`, `framework/devnode` (optional).
+<!-- structure-status: enriched -->
+<!-- structure-hash: 83238b9325b833a03806476191fa30f48f66b501936b7e183ebe6314cc3fc18c -->

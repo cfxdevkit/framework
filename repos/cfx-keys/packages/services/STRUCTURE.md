@@ -1,88 +1,72 @@
-# framework/services — Detailed Structure
+# @cfxdevkit/services
 
-This package is a **container of pluggable service modules**. Each backend lives in its
-own subfolder and is a separate `exports` entry; consumers import only what they configure.
+## Root  
+.gitignore — Git ignore rules  
+API.md — Public API documentation  
+README.md — Package overview and usage  
+STRUCTURE.md — This file  
+moon.yml — MoonScript build configuration  
+package.json — Package metadata and dependencies  
 
-```
-services/
-├── README.md
-├── package.json                    @cfxdevkit/services
-├── tsconfig.json
-├── vite.config.ts                  multi-entry lib build
-├── moon.yml
-└── src/
-    ├── index.ts                    re-exports the interfaces below; backends are sub-paths
-    │
-    ├── keystore/                   ── Keystore subsystem (see ADR-0002) ──
-    │   ├── index.ts                KeystoreProvider interface, AuditLogger
-    │   ├── types.ts                Secret, SecretRef, Capability, AuditEntry
-    │   ├── audit.ts                file & noop audit sinks
-    │   │
-    │   ├── kms/                    framework/services/keystore-kms entry
-    │   │   ├── index.ts
-    │   │   ├── aws.ts              AWS KMS adapter
-    │   │   ├── gcp.ts              GCP KMS adapter
-    │   │   ├── vault.ts            HashiCorp Vault adapter
-    │   │   └── ledger.ts           Ledger HW wallet adapter
-    │   │
-    │   ├── os/                     framework/services/keystore-os entry
-    │   │   ├── index.ts            wraps @napi-rs/keyring
-    │   │   └── platforms.md        per-OS notes (macOS/Windows/Linux)
-    │   │
-    │   ├── file/                   framework/services/keystore-file entry
-    │   │   ├── index.ts
-    │   │   ├── format.ts           on-disk format spec (versioned)
-    │   │   ├── crypto.ts           AES-256-GCM + Argon2id KEK derivation
-    │   │   ├── sops.ts             SOPS+age compatibility export/import
-    │   │   └── unlock.ts           passphrase prompt flow
-    │   │
-    │   ├── forward/                framework/services/keystore-forward entry
-    │   │   ├── index.ts
-    │   │   ├── libsecret-socket.ts D-Bus socket forwarding (Linux host → container)
-    │   │   └── ssh-agent.ts        ssh-agent style protocol
-    │   │
-    │   └── memory/                 tests-only backend
-    │       └── index.ts
-    │
-    ├── crypto/                     ── Crypto primitives ──
-    │   ├── index.ts
-    │   ├── aes-gcm.ts              AES-256-GCM helpers
-    │   ├── kdf.ts                  Argon2id, HKDF
-    │   ├── random.ts               CSPRNG wrappers
-    │   └── encoding.ts             base64url, hex
-    │
-    ├── dex/                        ── DEX adapters ──
-    │   ├── index.ts                DexAdapter interface (quote, swap, route)
-    │   ├── swappi/
-    │   │   ├── index.ts
-    │   │   ├── router.ts
-    │   │   └── pools.ts
-    │   └── (future: meson, sushi…)
-    │
-    ├── tokens/                     ── Token metadata service ──
-    │   ├── index.ts
-    │   ├── registry.ts             curated token list
-    │   └── resolver.ts             on-chain fallback (ERC-20 metadata)
-    │
-    └── internal/
-        └── http.ts                 shared fetch wrapper with retries
-```
+## src/  
+auth/ — Authentication and token management  
+  index.ts — Entry point for auth module  
+  nonces.test.ts — Tests for nonce generation  
+  nonces.ts — Nonce generation and validation  
+  token.test.ts — Tests for token handling  
+  token.ts — JWT-like token creation and verification  
 
-### Public exports map
+crypto/ — Core cryptographic primitives  
+  aead.ts — Authenticated encryption with associated data  
+  constants.ts — Shared crypto constants  
+  encoding.ts — Base encoding utilities (e.g., base64, hex)  
+  errors.ts — Custom crypto error types  
+  index.test.ts — Integration tests for crypto module  
+  index.ts — Entry point for crypto module  
+  kdf.ts — Key derivation functions  
+  keys.ts — Key generation and management  
+  random.ts — Cryptographically secure random utilities  
 
-```
-".", "./keystore",
-"./keystore-kms", "./keystore-os", "./keystore-file", "./keystore-forward", "./keystore-memory",
-"./crypto", "./dex", "./dex/swappi", "./tokens"
-```
+embedded-wallet/ — Embedded wallet service logic  
+  index.ts — Entry point for embedded wallet  
+  manager.test.ts — Tests for wallet manager  
+  manager.ts — Wallet lifecycle and session management  
+  types.ts — Shared type definitions  
 
-### Dependencies
+index.test.ts — Top-level integration tests  
+index.ts — Main entry point for the package  
 
-- Runtime: `framework/core`, `@napi-rs/keyring` (optional peer for `keystore-os`),
-  `argon2-browser` or `@noble/hashes` for KDF, `age-encryption` for SOPS export.
-- Cloud SDKs (AWS/GCP/Vault) are **optional peer deps**; only installed where needed.
+keystore/ — Key storage backends and management  
+  audit.test.ts — Tests for keystore audit logging  
+  audit.ts — Audit trail utilities  
+  file/ — File-based keystore implementation  
+    index.test.ts — Tests for file keystore  
+    index.ts — Entry point for file keystore  
+    internals.ts — Internal helpers for file keystore  
+  index.test.ts — Tests for keystore module entry  
+  index.ts — Entry point for keystore module  
+  ledger/ — Ledger hardware wallet integration  
+    core-apdu.ts — APDU command handling for Ledger  
+    core-framing.test.ts — Tests for Ledger framing protocol  
+    core-framing.ts — Ledger transport framing logic  
+    core-transaction.ts — Ledger transaction signing logic  
+    index.test.ts — Tests for Ledger integration  
+    index.ts — Entry point for Ledger provider  
+    provider.ts — Ledger device provider abstraction  
+    signature.ts — Ledger signature utilities  
+    signer.ts — Ledger-based key signer  
+    transport.ts — Ledger transport layer  
+    types.ts — Ledger-specific type definitions  
+  memory/ — In-memory keystore implementation  
+    capability.test.ts — Tests for capability-based access  
+    capability.ts — Capability-based access control  
+    index.test.ts — Tests for memory keystore  
+    index.ts — Entry point for memory keystore  
 
-### Boundary
+## Config  
+tsconfig.json — TypeScript compiler options  
+vite.config.ts — Vite build configuration  
+vitest.config.ts — Vitest test runner configuration
 
-- MAY depend on `framework/core` only.
-- Each keystore backend is independently published-friendly (separate exports entry).
+<!-- structure-status: enriched -->
+<!-- structure-hash: 868ee4a5725174f11fb6d037a68cec0b271950993d6b238371ca6fed7c0cef8b -->

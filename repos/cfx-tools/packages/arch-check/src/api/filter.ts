@@ -36,6 +36,8 @@ export type PublicPackageInfo = {
   distDir: string;
   /** Absolute path to API.md (may not exist yet) */
   apiMdPath: string;
+  /** Absolute path to STRUCTURE.md (may not exist yet) */
+  structureMdPath: string;
 };
 
 export async function discoverPublicPackages(): Promise<PublicPackageInfo[]> {
@@ -99,6 +101,7 @@ export async function discoverPublicPackages(): Promise<PublicPackageInfo[]> {
       subpaths,
       distDir,
       apiMdPath: join(root, rel, 'API.md'),
+      structureMdPath: join(root, rel, 'STRUCTURE.md'),
     });
   }
   return results;

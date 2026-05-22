@@ -14,30 +14,36 @@ type WikiUpdateOptions = {
   args?: readonly string[];
 };
 
-async function readLemonadeConfig(configPath: string) {
-  try {
-    const raw = await fs.readFile(configPath, 'utf8');
-    const config = JSON.parse(raw) as LemonadeConfig;
-    const baseUrl = config.baseUrl
-      ? config.baseUrl.endsWith('/')
-        ? config.baseUrl
-        : `${config.baseUrl}/`
-      : 'http://host.containers.internal:13305/api/v1/';
-    const model = config.defaultModel ?? 'Qwen3-Coder-Next-GGUF';
-    return { baseUrl, model };
-  } catch {
-    console.log(`  No Lemonade config at ${configPath} — using defaults.`);
-    return {
-      baseUrl: 'http://host.containers.internal:13305/api/v1/',
-      model: 'Qwen3-Coder-Next-GGUF',
-    };
+async function readLlmConfig(configPaths: readonly string[]) {
+  for (const configPath of configPaths) {
+    try {
+      const raw = await fs.readFile(configPath, 'utf8');
+      const config = JSON.parse(raw) as LemonadeConfig;
+      const baseUrl = config.baseUrl
+        ? config.baseUrl.endsWith('/')
+          ? config.baseUrl
+          : `${config.baseUrl}/`
+        : 'http://host.containers.internal:13305/api/v1/';
+      const model = config.defaultModel ?? 'Qwen3-Coder-Next-GGUF';
+      return { baseUrl, model };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') throw error;
+    }
   }
+  console.log(`  No LLM config at ${configPaths.join(' or ')} — using defaults.`);
+  return {
+    baseUrl: 'http://host.containers.internal:13305/api/v1/',
+    model: 'Qwen3-Coder-Next-GGUF',
+  };
 }
 
 export async function updateWiki(options: WikiUpdateOptions = {}): Promise<void> {
   const repoRoot = findRepoRoot();
-  const configPath = path.join(repoRoot, 'artifacts/llm/config/lemonade.json');
-  const { baseUrl, model } = await readLemonadeConfig(configPath);
+  const configPaths = [
+    path.join(repoRoot, 'artifacts/llm/config/llm.json'),
+    path.join(repoRoot, 'artifacts/llm/config/lemonade.json'),
+  ] as const;
+  const { baseUrl, model } = await readLlmConfig(configPaths);
   const extraArgs = [...(options.args ?? [])];
 
   console.log('\n[1/2] Regenerating GitNexus wiki');

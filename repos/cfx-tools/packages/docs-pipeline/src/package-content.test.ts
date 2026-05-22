@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   embedHash,
   generateMdxSkeleton,
+  isValidGeneratedMdx,
   readEmbeddedHash,
   stripEmbeddedHash,
 } from './package-content.js';
@@ -73,5 +74,18 @@ describe('package-content', () => {
       Uses \`ExampleApi\`.
       "
     `);
+  });
+
+  it('accepts generated MDX and rejects truncated MDX', async () => {
+    const mdx = generateMdxSkeleton({
+      name: '@cfxdevkit/example',
+      description: 'Example package',
+      exports: { '.': './src/index.ts' },
+      readme: null,
+      api: null,
+    });
+
+    expect(await isValidGeneratedMdx(mdx)).toBe(true);
+    expect(await isValidGeneratedMdx(mdx.split('\n').slice(0, 14).join('\n'))).toBe(false);
   });
 });

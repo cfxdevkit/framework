@@ -119,4 +119,38 @@ No named exports. Used internally for dark-mode token variants.
 
 <!-- api-hash: ba95a10df911d17e6a3f41fa73d6390375968421514deffab697e3cc2b3c74c3 -->
 
+## Usage
+
+```ts
+import { colors, spacing, ThemeProvider, useTheme } from '@cfxdevkit/theme';
+
+// Use tokens directly
+const styles = {
+  color: colors.text.primary,
+  padding: spacing.lg,
+};
+
+// Or use React integration
+function App() {
+  return (
+    <ThemeProvider defaultTheme="light">
+      <Content />
+    </ThemeProvider>
+  );
+}
+
+function Content() {
+  const { resolvedTheme } = useTheme();
+  return <div>Current theme: {resolvedTheme}</div>;
+}
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
 <!-- readme-hash: f321ad06e9d103e1d333e8a1dcac8ec65c94d4d553947f53e94cbf7bdfc36c3a -->

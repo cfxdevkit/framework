@@ -9,33 +9,13 @@
 import { discoverApiTargets, refreshApiSkeletons } from '@cfxdevkit/docs-pipeline';
 import { logInfo, logStep } from '../shared/logging.ts';
 import { enrichApiMd } from './api-enrichment.ts';
-
-type DocsApiFlags = {
-  quick?: boolean;
-  model?: string;
-  yes?: boolean;
-  package?: string;
-};
-
-function parseDocsApiFlags(args: string[]): DocsApiFlags {
-  const flags: DocsApiFlags = {};
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--quick') flags.quick = true;
-    if (args[i] === '--yes' || args[i] === '-y') flags.yes = true;
-    if (args[i] === '--model' && args[i + 1]) {
-      flags.model = args[++i];
-    }
-    if (args[i] === '--package' && args[i + 1]) {
-      flags.package = args[++i];
-    }
-  }
-  return flags;
-}
+import { parseDocsApiFlags } from './api-flags.ts';
+import { precheckDocsApi } from './api-probe.ts';
 
 export async function runDocsApi(args: string[]): Promise<void> {
   if (args[0] === '--') args.shift();
   const flags = parseDocsApiFlags(args);
-  const total = 3;
+  const total = flags.precheck ? 4 : 3;
 
   logStep(1, total, 'Deterministic API skeleton generation');
   await refreshApiSkeletons();
@@ -45,7 +25,12 @@ export async function runDocsApi(args: string[]): Promise<void> {
   const packages = await discoverApiTargets({ packageName: flags.package });
   logInfo(`  ${packages.length} package(s) to enrich`);
 
-  logStep(3, total, 'LLM enrichment');
+  if (flags.precheck && packages[0]) {
+    logStep(3, total, 'LLM precheck');
+    await precheckDocsApi(packages[0], flags);
+  }
+
+  logStep(flags.precheck ? 4 : 3, total, 'LLM enrichment');
   let enriched = 0;
   let skipped = 0;
   for (const pkg of packages) {

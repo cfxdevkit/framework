@@ -27,7 +27,7 @@ That shared backend contract now includes a few important runtime guarantees:
 
 Reset and recovery follow the same shared rule as `showcase-local` and the VS Code extension: destructive reset is operator-only. MCP tools may surface backend status and guidance, but they must not implement a passwordless reset mutation; operators stop the runtime and remove the configured keystore file plus its matching `.runtime` directory when a blank-state reset is required.
 
-> **Note:** This package lives under `repos/cfx-tools/packages/mcp-server` but aligns with the `platform/` tier in the five-tier architecture. See [ARCHITECTURE.md](../../../../../docs/architecture/ARCHITECTURE.md) for tier definitions.
+> **Note:** This package lives under `repos/cfx-tools/packages/mcp-server` but aligns with the Tier 1 platform surface in the five-tier architecture. See [ARCHITECTURE.md](../../../../ARCHITECTURE.md) for tier definitions.
 
 ## Install
 
@@ -90,5 +90,33 @@ export declare function listMcpTools(group?: McpToolGroup): readonly McpToolDefi
 export declare function getMcpTool(name: string): McpToolDefinition | undefined;
 export declare function defineTool(definition: McpToolDefinition): McpToolDefinition;
 ```
+
+## Usage
+
+```typescript
+import { createMcpServer, listMcpTools } from '@cfxdevkit/mcp-server';
+
+// List available tools in a specific group
+const readTools = listMcpTools('blockchain-read');
+console.log('Available read tools:', readTools.map(t => t.name));
+
+// Create and start an MCP server instance
+const server = createMcpServer({
+  // Optional: configure ledger storage path
+  ledger: { basePath: './.mcp-ledger' }
+});
+
+// Start listening for MCP requests
+await server.start();
+console.log('MCP server started');
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 1 — platform** — May import Tier 0 framework packages.
 
 <!-- readme-hash: 464e65866cc6caadab6da0d31be80698455d4ab27a7d6c8e87b262c1ccb753d6 -->

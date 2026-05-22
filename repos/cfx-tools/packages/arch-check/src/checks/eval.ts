@@ -65,7 +65,8 @@ export async function runEvalCheck(opts: { silent?: boolean } = {}): Promise<Age
 }
 
 export async function runServeCheck(opts: { silent?: boolean } = {}): Promise<AgentSummary> {
-  const configuredBaseUrl = process.env.LEMONADE_URL ?? process.env.LEMONADE_BASE_URL;
+  const configuredBaseUrl =
+    process.env.LITELLM_BASE_URL ?? process.env.LEMONADE_URL ?? process.env.LEMONADE_BASE_URL;
   const baseUrls = configuredBaseUrl
     ? [configuredBaseUrl]
     : [
@@ -176,7 +177,7 @@ function renderServeCheck(report: {
   attempts: readonly Record<string, unknown>[];
 }): string {
   const lines = [
-    '# Lemonade Server Check',
+    '# LLM Provider Check',
     '',
     `Generated: ${report.generatedAt}`,
     '',

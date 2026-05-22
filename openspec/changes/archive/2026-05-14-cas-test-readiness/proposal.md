@@ -28,4 +28,4 @@ The CAS project is fully implemented and the contracts are deployed on both test
 - `projects/cas/apps/frontend/.env.local.example` — new file
 - `projects/cas/README.md` — rewrite
 - `projects/cas/STRUCTURE.md` — rewrite
-- `projects/cas/CHANGELOG.md` — add entry
+- `projects/cas/README.md` — update feature documentation

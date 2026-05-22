@@ -64,8 +64,13 @@ Verifies that markdown documentation is internally consistent with the codebase:
 - Stale references to removed directories
 - Packages registered in `.moon/workspace.yml` but missing a `moon.yml`
 - Package `exports` entries without a matching Vite config entry
+- Required workspace/package documentation contracts, including normalized `STRUCTURE.md` identity
 
 **Output:** `artifacts/llm/reports/docs-alignment.{json,md}`
+
+### `generate-structure` — Deterministic STRUCTURE.md scaffolding
+
+Builds a checked-in `STRUCTURE.md` skeleton for each public package from the real directory tree and package exports. The generated file uses the canonical package name and workspace path, avoiding legacy `framework/`, `platform/`, and `domains/` aliases in generated titles.
 
 ### `check-ci` — CI/CD readiness
 
@@ -110,11 +115,12 @@ pnpm run check:secrets       # secret scanning
 pnpm run check:docs          # docs alignment
 pnpm run check:ci            # CI readiness
 pnpm run check:corpus        # corpus indexing
+pnpm run generate:structure  # deterministic STRUCTURE.md scaffolds
 ```
 
 ### Via llm:commit gate
 
-`arch-check` runs deterministically as part of the workspace `llm:commit` quality gate sequence. The gate is configured in `repos/cfx-llm/packages/llm-agents/workers/shared/index.ts`.
+`arch-check` runs deterministically as part of the workspace `llm:commit` quality gate sequence. The gate is configured in `repos/cfx-tools/infra/llm-agents/workers/shared/index.ts`.
 
 ---
 
@@ -133,7 +139,7 @@ Each check returns a structured result object and writes report artifacts under 
 
 ## Configuration
 
-Arch rules are defined in `@cfxdevkit/arch-rules` (`repos/cfx-tools/packages/arch-rules`). Tier assignments come from `.moon/workspace.yml` project declarations. No separate config file is needed for `arch-check` itself.
+Arch rules are defined in `@cfxdevkit/arch-rules` (`repos/cfx-meta/packages/arch-rules`). Tier assignments come from `.moon/workspace.yml` project declarations. No separate config file is needed for `arch-check` itself.
 
 **Exemptions:** To exempt a path from `no-ts-nocheck` enforcement, add it to `sourceRuleExemptions` in `src/checks/arch.ts`.
 

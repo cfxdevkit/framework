@@ -1,6 +1,6 @@
 # @cfxdevkit/codegen-contracts
 
-Extracts ABI and bytecode from Hardhat artifacts and renders TypeScript modules consumed by [`@cfxdevkit/contracts`](../../contracts).
+Extracts ABI and bytecode from Hardhat artifacts and renders TypeScript modules consumed by [`@cfxdevkit/contracts`](../../../cfx-solidity/packages/contracts).
 
 > **Status:** Phase A scaffold — empty package. Implementation pending.
 

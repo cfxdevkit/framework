@@ -83,6 +83,7 @@ export declare const DEFAULT_MAINNET_ERC20_TOKENS: readonly {
 export declare const DEFAULT_MAINNET_PAIRS: readonly {
   token0: string;
   token1: string;
+  fee?: number;
 }[];
 export declare const DEFAULT_MAINNET_DISPLAY_TOKENS: readonly {
   address: string;
@@ -121,6 +122,7 @@ export interface NetworkSwitchController {
 export interface PairLike {
   token0: string;
   token1: string;
+  fee?: number;
 }
 export interface SelectableTokenLike {
   address: string;
@@ -169,8 +171,25 @@ export type WalletSessionStatus = 'disconnected' | 'connecting' | 'connected';
 
 ```ts
 export interface AddEthereumChainParameter {
+  chainId: string;
+  chainName: string;
+  nativeCurrency: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  rpcUrls: readonly string[];
+  blockExplorerUrls?: readonly string[];
+  iconUrls?: readonly string[];
+}
 export interface UseNetworkSwitchControllerOptions {
+  expectedChainId: number;
+}
 export interface NetworkSwitchController {
+  isConnected: boolean;
+  isWrongNetwork: boolean;
+  switchNetwork: () => Promise<void>;
+}
 export declare function useNetworkSwitchController(options: UseNetworkSwitchControllerOptions): NetworkSwitchController;
 ```
 
@@ -201,6 +220,7 @@ export declare const DEFAULT_MAINNET_ERC20_TOKENS: readonly {
 export declare const DEFAULT_MAINNET_PAIRS: readonly {
   token0: string;
   token1: string;
+  fee?: number;
 }[];
 export declare const DEFAULT_MAINNET_DISPLAY_TOKENS: readonly {
   address: string;
@@ -219,6 +239,7 @@ export declare const DEFAULT_MAINNET_DISPLAY_ERC20_TOKENS: readonly {
 export interface PairLike {
   token0: string;
   token1: string;
+  fee?: number;
 }
 export interface SelectableTokenLike {
   address: string;
@@ -263,5 +284,19 @@ export interface WalletSessionController {
 export declare function useWalletSession(options?: UseWalletSessionOptions): WalletSessionController;
 export type WalletSessionStatus = 'disconnected' | 'connecting' | 'connected';
 ```
+
+## Install
+
+```bash
+pnpm add @cfxdevkit/ui-core
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
 
 <!-- readme-hash: 081a8baff38ff4805b151b6b4cb846d0bc89d5afae9119446733915b5b3193bd -->

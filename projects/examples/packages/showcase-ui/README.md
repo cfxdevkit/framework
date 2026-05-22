@@ -5,7 +5,7 @@ Shared theme, shell, backend controls, and wallet UI primitives for the example 
 ## Scope
 
 - Reusable presentational components shared by the showcase apps
-- Shared `theme.css` imported by every app for the common showcase visual system
+- Shared theme tokens consumed from `@cfxdevkit/theme/css` for the common showcase visual system
 - Shared shell helpers for top navigation, panel sidebars, and panel state
 - Shared backend/devnode operations hook and local control panel
 - Example-specific styling and UI composition
@@ -14,7 +14,7 @@ Shared theme, shell, backend controls, and wallet UI primitives for the example 
 ## Responsibilities
 
 - Export UI elements from `src/index.ts`
-- Export `./theme.css` for app-level CSS imports
+- Re-export theme-aware UI primitives for app-level composition
 - Build with Vite library mode into `dist/`
 - Generate TypeScript declarations for the shared example surface
 

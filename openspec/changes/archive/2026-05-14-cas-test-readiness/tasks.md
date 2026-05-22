@@ -22,4 +22,4 @@
 
 ## 5. CHANGELOG update
 
-- [x] 5.1 Add an entry to `projects/cas/CHANGELOG.md` dated 2026-05-14 listing: `DELETE /jobs/:id` hard-delete route, `GET|PATCH /admin/safety` safety config API, `ApprovalWidget` ERC-20 allowance manager panel, token symbol+logo display in JobsTable, Next.js API proxy at `app/api/[...path]/route.ts`
+- [x] 5.1 Document in `projects/cas/README.md` the features added during the porting work: `DELETE /jobs/:id` hard-delete route, `GET|PATCH /admin/safety` safety config API, `ApprovalWidget` ERC-20 allowance manager panel, token symbol+logo display in JobsTable, Next.js API proxy at `app/api/[...path]/route.ts`

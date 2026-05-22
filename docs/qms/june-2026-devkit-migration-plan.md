@@ -23,13 +23,13 @@ Expected evidence:
 
 ### 2. Scaffold and template parity
 
-- Compare legacy scaffold templates with `create-cfxdevkit` templates.
+- Compare legacy scaffold templates with the `@cfxdevkit/create` scaffold templates.
 - Fill the most useful missing project targets and remove obsolete template assumptions.
 - Verify generated projects install, build, and run with the current workspace conventions.
 
 Expected evidence:
 
-- Updated template files under `repos/cfx-tools/packages/create-cfxdevkit/`.
+- Updated template files under `repos/cfx-tools/packages/scaffold-cli/`.
 - Template validation commands or tests.
 - Updated docs describing supported targets.
 
