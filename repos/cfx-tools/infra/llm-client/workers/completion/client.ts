@@ -147,12 +147,12 @@ export function extractAssistantText(text) {
 
 export async function readConfig() {
   try {
-    return { ...defaultConfig(), ...JSON.parse(await readFile(configPath, 'utf8')) };
+    return normalizeConfig(JSON.parse(await readFile(configPath, 'utf8')));
   } catch (error) {
     if (error?.code !== 'ENOENT') throw error;
   }
   try {
-    return { ...defaultConfig(), ...JSON.parse(await readFile(legacyConfigPath, 'utf8')) };
+    return normalizeConfig(JSON.parse(await readFile(legacyConfigPath, 'utf8')));
   } catch (error) {
     if (error?.code === 'ENOENT') return defaultConfig();
     throw error;
@@ -161,7 +161,7 @@ export async function readConfig() {
 
 export async function writeConfig(config) {
   await mkdir(dirname(configPath), { recursive: true });
-  await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+  await writeFile(configPath, `${JSON.stringify(normalizeConfig(config), null, 2)}\n`, 'utf8');
 }
 
 export function defaultConfig() {
@@ -171,5 +171,53 @@ export function defaultConfig() {
     defaultModel: null,
     requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
     actions: {},
+    harness: {
+      version: 1,
+      defaultMode: 'deterministic',
+      providerStrategy: 'auto',
+      deterministic: {
+        preserveDeterministicArtifacts: true,
+        preserveDeterministicSections: true,
+      },
+      exploratory: {
+        allowCodeChanges: true,
+        allowWideChanges: true,
+      },
+    },
+  };
+}
+
+export function normalizeConfig(config) {
+  const defaults = defaultConfig();
+  const raw = config && typeof config === 'object' ? config : {};
+  const rawHarness = raw.harness && typeof raw.harness === 'object' ? raw.harness : {};
+  const rawDeterministic =
+    rawHarness.deterministic && typeof rawHarness.deterministic === 'object'
+      ? rawHarness.deterministic
+      : {};
+  const rawExploratory =
+    rawHarness.exploratory && typeof rawHarness.exploratory === 'object'
+      ? rawHarness.exploratory
+      : {};
+
+  return {
+    ...defaults,
+    ...raw,
+    actions:
+      raw.actions && typeof raw.actions === 'object'
+        ? { ...defaults.actions, ...raw.actions }
+        : defaults.actions,
+    harness: {
+      ...defaults.harness,
+      ...rawHarness,
+      deterministic: {
+        ...defaults.harness.deterministic,
+        ...rawDeterministic,
+      },
+      exploratory: {
+        ...defaults.harness.exploratory,
+        ...rawExploratory,
+      },
+    },
   };
 }

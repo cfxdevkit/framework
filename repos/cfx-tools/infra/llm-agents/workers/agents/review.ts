@@ -68,7 +68,7 @@ export async function runReviewAgent(opts: { silent?: boolean } = {}) {
   };
   await writeJsonReport('reports/review.json', report);
   await writeMarkdownReport('reports/review.md', renderReview(report));
-  if (!opts.silent) printSummary('llm:review', [report]);
+  if (!opts.silent) printSummary('repo:review', [report]);
   return {
     agent: 'review',
     status: report.status,

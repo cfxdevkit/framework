@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-05-22T10:02:58.203Z",
+  "status": "ok",
+  "changedFiles": [
+    "artifacts/llm/reports/llm-ask.md",
+    "package.json",
+    "repos/cfx-tools/infra/llm-client/src/index.ts",
+    "repos/cfx-tools/infra/llm-client/src/types.ts",
+    "repos/cfx-tools/infra/llm-client/workers/completion/client.test.ts",
+    "repos/cfx-tools/infra/llm-client/workers/completion/client.ts",
+    "repos/cfx-tools/infra/llm-client/workers/completion/index.ts",
+    "repos/cfx-tools/infra/tooling-cli/package.json",
+    "repos/cfx-tools/infra/tooling-cli/src/index.ts",
+    "repos/cfx-tools/infra/tooling-cli/src/registry.ts",
+    "repos/cfx-tools/packages/arch-check/src/contracts/workspace-scripts.ts",
+    "src/agent-namespace.test.ts",
+    "src/agent-namespace.ts"
+  ],
+  "findings": [
+    {
+      "severity": "warning",
+      "file": "artifacts/llm/reports/llm-ask.md",
+      "issue": "Generated or artifact path changed",
+      "recommendation": "Confirm this file should be committed rather than regenerated locally."
+    }
+  ],
+  "codeHotspots": {
+    "status": "error",
+    "hardViolations": 0,
+    "softWarnings": 0,
+    "report": "artifacts/llm/reports/code-hotspots.md"
+  },
+  "suggestedValidation": [
+    "pnpm run lint",
+    "pnpm run typecheck",
+    "pnpm exec moon run :test --concurrency 4",
+    "pnpm run check:docs",
+    "pnpm exec changeset status",
+    "pnpm run llm:changeset",
+    "pnpm run llm:release",
+    "pnpm run llm:review"
+  ]
+}

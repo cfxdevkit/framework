@@ -6,26 +6,46 @@ deploy, rotate secrets, or commit changes.
 
 ## Commands
 
-Run these from the repository root:
+The root CLI now has three primary surfaces:
+
+- `cdk repo` for repository maintenance, validation, generation, and commit workflow.
+- `cdk agent` for interactive and workflow-oriented agent execution.
+- `cdk llm` for provider/model administration and generic repo-aware prompts.
+
+Convenience aliases are available for the most common repo and agent surfaces:
 
 ```sh
-pnpm run llm:all
-pnpm run llm:models
-pnpm run llm:actions
-pnpm run llm:config -- show
-pnpm run llm:action -- review
-pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
-pnpm run check:corpus
-pnpm run check:ci
-pnpm run check:docs
-pnpm run llm:review
-pnpm run check:hotspots
-pnpm run check:eval
-pnpm run llm:changeset
-pnpm run llm:release
-pnpm run llm:ci-cd
-pnpm run llm:docs-pipeline
+pnpm run repo
+pnpm run repo:check -- hotspots
+pnpm run repo:generate -- api
+pnpm run repo:review
+pnpm run repo:precommit
+pnpm run repo:commit
+pnpm run agent:status
+pnpm run agent:modes
 ```
+
+Primary entrypoints from the repository root:
+
+```sh
+pnpm run cdk -- repo check hotspots
+pnpm run cdk -- repo check docs
+pnpm run cdk -- repo check ci
+pnpm run cdk -- repo check corpus
+pnpm run cdk -- repo arch-check
+pnpm run cdk -- repo review
+pnpm run cdk -- repo precommit
+pnpm run cdk -- repo commit -- --dry-run
+pnpm run agent:status
+pnpm run cdk -- agent modes
+pnpm run cdk -- llm models
+pnpm run cdk -- llm config show
+pnpm run cdk -- llm action review
+pnpm run cdk -- agent print -- --quick "Where should a docs alignment scanner live?"
+pnpm run cdk -- agent exploratory all
+```
+
+Legacy `pnpm run llm:*` aliases still work as compatibility shims while `cdk repo`, `cdk agent`, and `cdk llm` become the primary control surfaces. `pnpm run llm:wiki` is deprecated in favor of `pnpm run docs:wiki`.
 
 Generated outputs are written under `artifacts/llm/`, which is ignored by git.
 Commit only small schemas, manifests, or report excerpts intentionally.
@@ -34,19 +54,19 @@ Commit only small schemas, manifests, or report excerpts intentionally.
 
 | Agent | Purpose | Output |
 |-------|---------|--------|
-| `check:corpus` | Build safe repository metadata for retrieval and later eval seeds | `artifacts/llm/corpus/*.jsonl` |
-| `check:ci` | Check CI/CD workflow, docs image, release, and VPS deploy wiring | `artifacts/llm/reports/ci-cd.*` |
-| `check:docs` | Detect broken documentation references, Moon registration drift, package export drift, and current/planned wording risk | `artifacts/llm/reports/docs-alignment.*` |
-| `llm:review` | Inspect current git changes and suggest targeted validation commands | `artifacts/llm/reports/review.*` |
-| `check:hotspots` | Scan source file size and recent churn against the framework component budget | `artifacts/llm/reports/code-hotspots.*` |
-| `check:eval` | Summarize deterministic gates from the generated reports | `artifacts/llm/reports/eval.*` |
+| `cdk repo check corpus` | Build safe repository metadata for retrieval and later eval seeds | `artifacts/llm/corpus/*.jsonl` |
+| `cdk repo check ci` | Check CI/CD workflow, docs image, release, and VPS deploy wiring | `artifacts/llm/reports/ci-cd.*` |
+| `cdk repo check docs` | Detect broken documentation references, Moon registration drift, package export drift, and current/planned wording risk | `artifacts/llm/reports/docs-alignment.*` |
+| `cdk repo review` | Inspect current git changes and suggest targeted validation commands | `artifacts/llm/reports/review.*` |
+| `cdk repo check hotspots` | Scan source file size and recent churn against the framework component budget | `artifacts/llm/reports/code-hotspots.*` |
+| `cdk repo check eval` | Summarize deterministic gates from the generated reports | `artifacts/llm/reports/eval.*` |
 
 ## Local LLM CLI
 
-`@cfxdevkit/llm-tools` in `repos/cfx-tools/infra/llm-tools` provides a local CLI for using
-provider-backed models against repository upkeep tasks. The checked-in config currently points at a LiteLLM proxy URL,
+`@cfxdevkit/llm-tools` in `repos/cfx-tools/infra/llm-tools` provides the current worker layer that
+`cdk agent` and `cdk llm` delegate to during the migration. The checked-in config currently points at a LiteLLM proxy URL,
 which can front the same local server that was previously addressed directly. Without an explicit config,
-the resolver checks LiteLLM first, then legacy Lemonade-compatible fallbacks.
+the resolver checks LiteLLM first, then direct Lemonade-compatible fallbacks.
 
 It auto-discovers a local provider at
 `http://localhost:13305/`, `http://127.0.0.1:13305/`,
@@ -59,27 +79,25 @@ workstation and the container uses host networking, so `http://localhost:13305/`
 should resolve to the same service inside and outside the container. The CLI also
 probes `host.docker.internal` and `host.containers.internal` for container
 backends that expose host aliases. After rebuilding or reopening the
-devcontainer, run `pnpm run llm:models` to verify connectivity.
+devcontainer, run `pnpm run agent:status` or `pnpm run llm:models` to verify connectivity.
 
 Useful commands:
 
 ```sh
-pnpm run llm:models
-pnpm run llm:config -- set provider litellm
-pnpm run llm:config -- set base-url http://host.containers.internal:13305/api/v1
-pnpm run llm:actions
-pnpm run llm:config -- set default-model Qwen3-Coder-Next-GGUF
-pnpm run llm:config -- set action review Qwen3-Coder-Next-GGUF
-pnpm run llm:action -- docs-upkeep
-pnpm run llm:action -- review
-pnpm run llm:changeset
-pnpm run llm:release
-pnpm run llm:ci-cd
-pnpm run llm:docs-pipeline
-pnpm run llm:ask -- --quick "Which validation commands should I run for a docs-only change?"
+pnpm run agent:status
+pnpm run cdk -- llm models
+pnpm run cdk -- llm config set provider lemonade
+pnpm run cdk -- llm config set base-url http://host.containers.internal:13305/api/v1
+pnpm run cdk -- llm actions
+pnpm run cdk -- llm config set default-model Qwen3-Coder-Next-GGUF
+pnpm run cdk -- llm config set action review Qwen3-Coder-Next-GGUF
+pnpm run cdk -- llm action docs-upkeep
+pnpm run cdk -- repo review
+pnpm run cdk -- repo commit -- --dry-run
+pnpm run cdk -- agent print -- --quick "Which validation commands should I run for a docs-only change?"
 ```
 
-Add `--quick` to `llm:ask` or `llm:action` for a smaller context window and a
+Add `--quick` to `cdk llm ask` or `cdk llm action` for a smaller context window and a
 short response cap. This is useful for smoke tests on large local models.
 
 The available repo actions are:

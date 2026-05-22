@@ -1,4 +1,6 @@
 export type LlmProviderType = 'lemonade' | 'litellm' | 'openai-compat' | 'github-models';
+export type LlmHarnessMode = 'deterministic' | 'exploratory';
+export type LlmProviderStrategy = 'auto' | 'gateway' | 'direct';
 
 export interface ChatMessage {
   readonly role: 'system' | 'user' | 'assistant';
@@ -45,6 +47,20 @@ export interface LlmProvider {
   chooseModel(models: readonly LlmModel[], preferred?: string | null): LlmModel | undefined;
 }
 
+export interface LlmHarnessConfig {
+  version: 1;
+  defaultMode: LlmHarnessMode;
+  providerStrategy: LlmProviderStrategy;
+  deterministic: {
+    preserveDeterministicArtifacts: boolean;
+    preserveDeterministicSections: boolean;
+  };
+  exploratory: {
+    allowCodeChanges: boolean;
+    allowWideChanges: boolean;
+  };
+}
+
 export interface LlmConfig {
   provider?: LlmProviderType | null;
   baseUrl: string | null;
@@ -52,6 +68,7 @@ export interface LlmConfig {
   requestTimeoutMs?: number;
   actions: Record<string, string>;
   githubModel?: string | null;
+  harness: LlmHarnessConfig;
 }
 
 export interface CompletionReport {

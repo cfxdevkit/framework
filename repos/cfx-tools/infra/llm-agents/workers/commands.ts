@@ -14,7 +14,7 @@ import {
 import { repoActions } from './shared/index.ts';
 export { validateModels } from './validate-models.ts';
 
-const providerTypes = ['litellm', 'openai-compat', 'github-models'] as const;
+const providerTypes = ['lemonade', 'litellm', 'openai-compat', 'github-models'] as const;
 
 function displayModelId(model) {
   return model.id ?? model.checkpoint ?? '(unknown-model)';
@@ -109,16 +109,10 @@ export async function configure(args) {
   }
   if (key === 'provider') {
     const provider = rest[0];
-    if (provider === 'lemonade') {
-      config.provider = 'lemonade';
-      console.log(
-        'Using legacy provider alias "lemonade". Prefer litellm or openai-compat for new config.',
-      );
-    } else if (!providerTypes.includes(provider as (typeof providerTypes)[number])) {
+    if (!providerTypes.includes(provider as (typeof providerTypes)[number])) {
       throw new Error(`provider must be one of: ${providerTypes.join(', ')}`);
-    } else {
-      config.provider = provider;
     }
+    config.provider = provider;
   } else if (key === 'base-url') {
     config.baseUrl = rest[0];
   } else if (key === 'default-model') {

@@ -2,7 +2,9 @@
 
 Local LLM automation tools for the Conflux DevKit monorepo.
 
-This package is the CLI dispatcher for local LLM automation. Provider logic lives in `@cfxdevkit/llm-client`; workflow agents live in `@cfxdevkit/llm-agents`. It lives in `repos/cfx-tools/infra/llm-tools` because local LLM and AI-assisted maintenance are isolated from the general developer tooling surface.
+This package is the CLI dispatcher for the current LLM worker layer. Provider logic lives in `@cfxdevkit/llm-client`; workflow agents live in `@cfxdevkit/llm-agents`. It lives in `repos/cfx-tools/infra/llm-tools` because local LLM and AI-assisted maintenance are isolated from the general developer tooling surface.
+
+At the workspace root, `pnpm run cdk -- agent ...` is now the primary entrypoint. Root `pnpm run llm:*` scripts remain as compatibility shims during the migration, and `pnpm run llm:wiki` is deprecated in favor of `pnpm run docs:wiki`.
 
 ## Install
 
@@ -20,9 +22,9 @@ pnpm add @cfxdevkit/llm-tools
 | `llm:health` | Ask the local LLM to summarize repo health, drift, and automation gaps |
 | `llm:validation` | Ask the local LLM to choose the minimum useful validation commands for the current change |
 | `llm:changeset`, `llm:release`, `llm:ci-cd`, `llm:docs-pipeline` | Repo-aware provider-backed actions for Changesets, npm publishing, GitHub Actions, docs image publishing, and VPS deploy readiness |
-| `llm:all`, `llm:review` | LLM repo upkeep agents that produce artifacts under `artifacts/llm/` |
+| `llm:all`, `llm:review` | Compatibility aliases for aggregate and review upkeep flows; the preferred surface is `cdk agent exploratory all|review` |
 
-Root `pnpm run llm:*` scripts route through this package so developers can keep using the short commands from the workspace root.
+Root `pnpm run llm:*` scripts remain available as short compatibility commands, but new automation should target `cdk agent` directly.
 
 `llm:commit` runs `check:hotspots` as a non-bypassable quality gate. The scanner applies the framework design-principles file budget across source files in the whole repository, writes `artifacts/llm/reports/code-hotspots.md`, and blocks commits while any source file exceeds the hard 300-line limit.
 
@@ -65,7 +67,7 @@ By default the command produces reviewable artifacts only. Add `--write` to let 
 
 ## Backend
 
-Delegated commands resolve providers through `@cfxdevkit/llm-client`: provider-aware config file, `LITELLM_BASE_URL`, `LEMONADE_URL`, local provider probe, OpenAI-compatible env vars, then GitHub Models via `GITHUB_TOKEN`.
+Delegated commands resolve providers through `@cfxdevkit/llm-client`: provider-aware config file, `LITELLM_BASE_URL`, `LEMONADE_URL`, local provider probe, OpenAI-compatible env vars, then GitHub Models via `GITHUB_TOKEN`. Lemonade remains a first-class direct-provider option for local use; LiteLLM remains the optional gateway layer.
 
 ## Sub-paths
 

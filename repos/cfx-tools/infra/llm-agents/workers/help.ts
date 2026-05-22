@@ -6,7 +6,7 @@ Commands:
   validate-models [flags]        Probe discovered models with cold/hot/json reliability checks
   actions                        List repo-specific actions
   config show                    Show local provider-aware LLM config
-  config set provider <id>       Select litellm, openai-compat, or github-models
+  config set provider <id>       Select lemonade, litellm, openai-compat, or github-models
   config set base-url <url>      Pin the current provider base URL
   config set default-model <id>  Pin default model id; omit <id> for interactive picker
   config set request-timeout-ms <ms>  Set provider request timeout in milliseconds
@@ -72,6 +72,7 @@ Commands:
 Examples:
   pnpm run llm:models
   pnpm run llm:validate-models -- --no-thinking
+  pnpm run llm:config -- set provider lemonade
   pnpm run llm:config -- set provider litellm
   pnpm run llm:config -- set base-url http://host.containers.internal:13305/api/v1
   pnpm run llm:config -- set default-model Qwen3-Coder-Next-GGUF

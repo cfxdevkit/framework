@@ -1,12 +1,16 @@
-import { llmToolingNamespace } from '@cfxdevkit/llm-tools';
+import { agentToolingNamespace } from './agent-namespace.js';
+import { llmToolingNamespace } from './llm-namespace.js';
 import type {
   ToolingCatalog,
   ToolingCommandDefinition,
   ToolingNamespaceDefinition,
 } from './contracts.js';
 import { rootDocsToolingNamespace } from './docs-namespace.js';
+import { repoToolingNamespace } from './repo-namespace.js';
 
 export const toolingNamespaces = [
+  repoToolingNamespace,
+  agentToolingNamespace,
   llmToolingNamespace,
   rootDocsToolingNamespace,
 ] as const satisfies readonly ToolingNamespaceDefinition[];
@@ -32,7 +36,7 @@ export function buildToolingCatalog(
     namespaces: namespaces.map((namespace) => ({
       name: namespace.name,
       description: namespace.description,
-      commands: namespace.commands.map((command) => ({
+      commands: namespace.commands.filter((command) => command.hidden !== true).map((command) => ({
         name: command.name,
         description: command.description,
         ...(command.usage ? { usage: command.usage } : {}),
@@ -51,12 +55,15 @@ export function formatToolingHelp(
     .map(
       (namespace) =>
         `${namespace.name}:\n${namespace.commands
+          .filter((command) => command.hidden !== true)
           .map((command) => `  ${command.name.padEnd(14)} ${command.description}`)
           .join('\n')}`,
     )
     .join('\n\n');
 
-  return `Usage: pnpm run tooling -- <namespace> <command> [args]
+  return `Usage:
+  pnpm run cdk -- <namespace> <command> [args]
+  pnpm run tooling -- <namespace> <command> [args]
 
 Namespaces:
 ${namespaceBlock}

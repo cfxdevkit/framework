@@ -1,8 +1,11 @@
 export {
+  agentToolingNamespace,
   buildToolingCatalog,
   findToolingCommand,
   findToolingNamespace,
   formatToolingHelp,
+  llmToolingNamespace,
+  repoToolingNamespace,
   toolingNamespaces,
 } from './registry.js';
 export type {

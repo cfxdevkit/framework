@@ -10,6 +10,7 @@ import type { LlmProvider, ResolveProviderAttempt } from './types.js';
 function configuredProvider(config: {
   provider?: string | null;
 }): 'lemonade' | 'litellm' | 'openai-compat' | 'github-models' {
+  if (config.provider === 'lemonade') return 'lemonade';
   if (config.provider === 'litellm') return 'litellm';
   if (config.provider === 'openai-compat') return 'openai-compat';
   if (config.provider === 'github-models') return 'github-models';

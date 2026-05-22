@@ -4,6 +4,7 @@ export {
   defaultConfig,
   discoverModels,
   extractModelInventory,
+  normalizeConfig,
   readConfig,
   writeConfig,
 } from './client.ts';

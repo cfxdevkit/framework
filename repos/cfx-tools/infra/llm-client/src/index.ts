@@ -4,6 +4,7 @@ export {
   defaultConfig,
   discoverModels,
   extractAssistantText,
+  normalizeConfig,
   readConfig,
   writeConfig,
 } from '../workers/completion/client.js';
@@ -47,8 +48,11 @@ export type {
   CompletionProgressEvent,
   CompletionReport,
   LlmConfig,
+  LlmHarnessConfig,
+  LlmHarnessMode,
   LlmModel,
   LlmProvider,
+  LlmProviderStrategy,
   LlmProviderType,
   ResolveProviderAttempt,
 } from './types.js';

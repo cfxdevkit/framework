@@ -43,7 +43,7 @@ export async function runPrecommit(args) {
   if (!gatesPassed && flags.force) {
     logInfo('  ⚠ --force: proceeding despite gate failures');
   }
-  logInfo('\n  ✓ All precommit gates passed. Run `llm commit` when ready.');
+  logInfo('\n  ✓ All precommit gates passed. Run `cdk repo commit` when ready.');
 }
 
 export async function runCommit(args) {

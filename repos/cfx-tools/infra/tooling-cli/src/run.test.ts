@@ -31,6 +31,30 @@ describe('tooling-cli', () => {
     });
   });
 
+  it('omits hidden commands from the machine-readable catalog', () => {
+    const catalog = buildToolingCatalog([
+      {
+        name: 'llm',
+        description: 'llm namespace',
+        commands: [
+          { name: 'models', description: 'visible' },
+          { name: 'review', description: 'hidden', hidden: true },
+        ],
+        run: vi.fn().mockResolvedValue(undefined),
+      },
+    ]);
+
+    expect(catalog).toEqual({
+      namespaces: [
+        {
+          name: 'llm',
+          description: 'llm namespace',
+          commands: [{ name: 'models', description: 'visible' }],
+        },
+      ],
+    });
+  });
+
   it('dispatches a namespaced command through the registered runner', async () => {
     const namespace = createNamespace('docs');
 

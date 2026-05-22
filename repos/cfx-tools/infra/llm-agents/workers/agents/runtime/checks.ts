@@ -143,6 +143,6 @@ export function suggestValidationCommands(changed) {
   if (changed.some(isSecuritySensitive)) {
     commands.add('pnpm run security:check');
   }
-  commands.add('pnpm run llm:review');
+  commands.add('pnpm run repo:review');
   return [...commands];
 }

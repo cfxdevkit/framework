@@ -2,6 +2,7 @@ export interface ToolingCommandDefinition {
   readonly name: string;
   readonly description: string;
   readonly usage?: string;
+  readonly hidden?: boolean;
 }
 
 export type ToolingRunner = (args: readonly string[]) => Promise<void>;
