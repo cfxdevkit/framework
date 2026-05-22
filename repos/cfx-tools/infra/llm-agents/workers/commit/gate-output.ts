@@ -1,16 +1,32 @@
 export function extractSignalLines(output: string, maxLines = 8): string[] {
   const filtered = output
     .split('\n')
-    .map((line) => line.trim())
+    .map(normalizeOutputLine)
     .filter(Boolean)
-    .filter(
-      (line) =>
-        !line.startsWith('> ') &&
-        !/^Done in \d/.test(line) &&
-        !/^Tasks:\s+\d+\s+completed/.test(line) &&
-        !/^Time:\s/.test(line),
-    );
+    .filter((line) => !isNoiseLine(line));
   return filtered.slice(0, maxLines);
+}
+
+function normalizeOutputLine(line: string): string {
+  return stripAnsi(line).replace(/^[▮\s]+/, '').trim();
+}
+
+function stripAnsi(line: string): string {
+  return line.replace(/\u001B\[[0-?]*[ -/]*[@-~]/g, '');
+}
+
+function isNoiseLine(line: string): boolean {
+  return (
+    line.startsWith('> ') ||
+    /^Done in \d/.test(line) ||
+    /^Tasks:\s+\d+\s+completed/.test(line) ||
+    /^Time:\s/.test(line) ||
+    /^There's a new version of moon available\b/i.test(line) ||
+    /^Learn more: https:\/\/moonrepo\.dev\//i.test(line) ||
+    /^Install with: https:\/\/moonrepo\.dev\/docs\/install/i.test(line) ||
+    /^\S+:\S+\s+\((cached|no op),/i.test(line) ||
+    /^Reports?: artifacts\//i.test(line)
+  );
 }
 
 export function buildDeterministicHints(result: {

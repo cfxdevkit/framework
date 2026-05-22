@@ -118,18 +118,21 @@ describe('repoToolingNamespace', () => {
 
     await repoToolingNamespace.run(['units']);
 
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Registered monorepo units:'));
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('docs'));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Registered session presets:'));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('delivery'));
   });
 
   it('routes scoped precommit through the selected unit overlay', async () => {
+    // Ensure env var is clean before test
+    delete process.env.CFXDEVKIT_LLM_CONFIG_PATH;
+
     llmAgents.runPrecommit.mockImplementationOnce(async () => {
       expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toContain(
-        '/artifacts/llm/config/units/repos.json',
+        '/artifacts/llm/config/units/implementation.json',
       );
     });
 
-    await repoToolingNamespace.run(['precommit', '--scope', 'repos', '--force']);
+    await repoToolingNamespace.run(['precommit', '--scope', 'implementation', '--force']);
 
     expect(llmAgents.runPrecommit).toHaveBeenCalledWith(['--force']);
     expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toBeUndefined();

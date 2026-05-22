@@ -3,7 +3,11 @@ import { registerPiRepoCommands } from './commands.js';
 import { getPiActionDefinitions } from './llm-agents-runtime.js';
 import { createPiProviderBridge, registerPiProviderBridge } from './providers.js';
 import { registerPiRepoTools } from './tools.js';
-import { applyPiOperatorUiState, clearPiWorkflowProgress, createPiRuntimeUiState } from './ui.js';
+import {
+  clearPiOperatorWidgets,
+  clearPiWorkflowProgress,
+  createPiRuntimeUiState,
+} from './ui.js';
 
 export type PiScopeName = string;
 
@@ -57,21 +61,24 @@ export async function registerPiAgentProjectExtension(pi: ExtensionAPI): Promise
     }
 
     ctx.ui.setStatus('repo-agent', undefined);
-    ctx.ui.setWidget('repo-agent-context', undefined, { placement: 'aboveEditor' });
+    clearPiOperatorWidgets(ctx);
     clearPiWorkflowProgress(ctx);
   });
 }
 
 async function refreshPiRuntimeUi(ctx: ExtensionContext): Promise<void> {
+  if (!ctx.hasUI) {
+    return;
+  }
+
   const scope = resolvePiScopeFromEnv();
   const providerBridge = await createPiProviderBridge(scope);
   const actionCount = (await getPiActionDefinitions()).length;
-  applyPiOperatorUiState(
-    ctx,
-    createPiRuntimeUiState({
-      extension: createPiAgentExtension(scope),
-      providerBridge,
-      actionCount,
-    }),
-  );
+  const state = createPiRuntimeUiState({
+    extension: createPiAgentExtension(scope),
+    providerBridge,
+    actionCount,
+  });
+
+  ctx.ui.setStatus('repo-agent', state.statusText);
 }

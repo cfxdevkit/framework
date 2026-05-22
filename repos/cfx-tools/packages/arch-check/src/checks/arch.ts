@@ -43,6 +43,7 @@ export async function runArchCheck(): Promise<ArchCheckResult> {
       (rule) => rule.enforce === 'always' || getLifecycle() === 'release',
     );
     const ruleIds = new Set(rules.map((rule) => rule.id));
+    checkCliFrameworkPolicy(pkg, findings);
     if (ruleIds.has('requires-moon-yml'))
       checkRequiredFile(pkg, 'moon.yml', 'requires-moon-yml', findings);
     if (ruleIds.has('requires-src-index'))
@@ -60,6 +61,50 @@ export async function runArchCheck(): Promise<ArchCheckResult> {
 
   const status = findings.some((finding) => finding.severity === 'error') ? 'error' : 'ok';
   return { status, lifecycle: getLifecycle(), packageCount: packages.length, findings };
+}
+
+export function checkCliFrameworkPolicy(
+  pkg: Pick<PackageInfo, 'name' | 'path' | 'packageJson'>,
+  findings: Finding[],
+): void {
+  if (pkg.path !== 'repos/cfx-tools/infra/tooling-cli') {
+    return;
+  }
+
+  const runtimeDependencies = pkg.packageJson.dependencies ?? {};
+  const allDependencies = {
+    ...runtimeDependencies,
+    ...pkg.packageJson.devDependencies,
+    ...pkg.packageJson.peerDependencies,
+    ...pkg.packageJson.optionalDependencies,
+  };
+
+  if ('commander' in allDependencies) {
+    findings.push({
+      severity: 'error',
+      file: `${pkg.path}/package.json`,
+      rule: 'cli-framework-standard',
+      issue: `${pkg.name} must use Clipanion instead of commander for root CLI parsing`,
+    });
+  }
+
+  if (!('clipanion' in runtimeDependencies)) {
+    findings.push({
+      severity: 'error',
+      file: `${pkg.path}/package.json`,
+      rule: 'cli-framework-standard',
+      issue: `${pkg.name} must declare clipanion as a runtime dependency`,
+    });
+  }
+
+  if (!('@inquirer/prompts' in runtimeDependencies)) {
+    findings.push({
+      severity: 'error',
+      file: `${pkg.path}/package.json`,
+      rule: 'cli-framework-standard',
+      issue: `${pkg.name} must declare @inquirer/prompts as a runtime dependency for setup-phase prompts`,
+    });
+  }
 }
 
 async function collectPackages(): Promise<PackageInfo[]> {

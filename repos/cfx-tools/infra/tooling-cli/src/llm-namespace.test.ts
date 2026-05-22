@@ -39,6 +39,32 @@ describe('llmToolingNamespace', () => {
     expect(agentNamespace.run).toHaveBeenCalledWith(['deterministic', 'models']);
   });
 
+  it('routes the legacy model picker command through agent config', async () => {
+    await llmToolingNamespace.run(['model']);
+
+    expect(agentNamespace.run).toHaveBeenCalledWith(['config', 'set', 'default-model']);
+  });
+
+  it('passes an explicit model id through the legacy model command', async () => {
+    await llmToolingNamespace.run(['model', 'Qwen3-Coder-Next-GGUF']);
+
+    expect(agentNamespace.run).toHaveBeenCalledWith([
+      'config',
+      'set',
+      'default-model',
+      'Qwen3-Coder-Next-GGUF',
+    ]);
+  });
+
+  it('prints help instead of treating --help as a model id', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await llmToolingNamespace.run(['model', '--help']);
+
+    expect(agentNamespace.run).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('cdk llm model [id]'));
+  });
+
   it('routes deprecated repo workflows through repo with a warning', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 

@@ -8,6 +8,7 @@ import {
   printProvidersStrategy,
 } from './agent-help.js';
 import { printModes, printStatus, runConfigCli } from './agent-config.js';
+import { resolvePiSessionSetup } from './agent-session-setup.js';
 import { isHelpToken, withAgentScope, withLlmAgents, withPiAgent } from './agent-runtime.js';
 import { parseScopeFlag } from './monorepo-units.js';
 
@@ -23,47 +24,51 @@ async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
   const args = [...parsed.args];
   while (args[0] === '--') args.shift();
 
-  await withAgentScope(parsed.scope, async () => {
-    const [command = 'help'] = args;
-    if (isHelpToken(command)) {
-      printAgentHelp();
-      return;
-    }
-
-    if (command === 'config') return await runConfigCli(args.slice(1));
-    if (command === 'modes') return await printModes();
-    if (command === 'status') return await printStatus();
-    if (command === 'deterministic') return await runDeterministicCli(args.slice(1));
-    if (command === 'exploratory') return await runExploratoryCli(args.slice(1));
-    if (command === 'interactive') {
-      const promptArgs = normalizePromptArgs(args.slice(1));
-      return await withPiAgent((piAgent) =>
-        piAgent.runPiInteractive(
-          parsed.scope ? { scope: parsed.scope, promptArgs } : { promptArgs },
-        ),
-      );
-    }
-    if (command === 'commit') {
-      const promptArgs = normalizePromptArgs(args.slice(1));
-      return await withPiAgent((piAgent) =>
-        piAgent.runPiCommit(parsed.scope ? { scope: parsed.scope, promptArgs } : { promptArgs }),
-      );
-    }
-    if (command === 'print') {
-      const promptArgs = normalizePromptArgs(args.slice(1));
-      return await withPiAgent((piAgent) =>
-        piAgent.runPiPrint(parsed.scope ? { scope: parsed.scope, promptArgs } : { promptArgs }),
-      );
-    }
-    if (command === 'rpc') {
-      return await withPiAgent((piAgent) =>
-        piAgent.runPiRpc(parsed.scope ? { scope: parsed.scope } : {}),
-      );
-    }
-    if (command === 'providers') return printProvidersStrategy();
-
+  const [command = 'help'] = args;
+  if (isHelpToken(command)) {
     printAgentHelp();
-  });
+    return;
+  }
+
+  if (command === 'config') return await withAgentScope(parsed.scope, async () => runConfigCli(args.slice(1)));
+  if (command === 'modes') return await withAgentScope(parsed.scope, async () => printModes());
+  if (command === 'status') return await withAgentScope(parsed.scope, async () => printStatus());
+  if (command === 'deterministic') {
+    return await withAgentScope(parsed.scope, async () => runDeterministicCli(args.slice(1)));
+  }
+  if (command === 'exploratory') {
+    return await withAgentScope(parsed.scope, async () => runExploratoryCli(args.slice(1)));
+  }
+  if (command === 'interactive') {
+    const session = await resolvePiSessionSetup({
+      kind: 'interactive',
+      promptArgs: normalizePromptArgs(args.slice(1)),
+      ...(parsed.scope ? { scope: parsed.scope } : {}),
+    });
+    if (!session) return;
+    return await withPiAgent((piAgent) => piAgent.runPiInteractive(buildSessionOptions(session)));
+  }
+  if (command === 'commit') {
+    const session = await resolvePiSessionSetup({
+      kind: 'commit',
+      promptArgs: normalizePromptArgs(args.slice(1)),
+      ...(parsed.scope ? { scope: parsed.scope } : {}),
+    });
+    if (!session) return;
+    return await withPiAgent((piAgent) => piAgent.runPiCommit(buildSessionOptions(session)));
+  }
+  if (command === 'print') {
+    const promptArgs = normalizePromptArgs(args.slice(1));
+    return await withPiAgent((piAgent) =>
+      piAgent.runPiPrint(parsed.scope ? { scope: parsed.scope, promptArgs } : { promptArgs }),
+    );
+  }
+  if (command === 'rpc') {
+    return await withPiAgent((piAgent) => piAgent.runPiRpc(parsed.scope ? { scope: parsed.scope } : {}));
+  }
+  if (command === 'providers') return printProvidersStrategy();
+
+  printAgentHelp();
 }
 
 async function runDeterministicCli(rawArgs: readonly string[]): Promise<void> {
@@ -161,4 +166,16 @@ function normalizePromptArgs(rawArgs: readonly string[]): string[] {
   const args = [...rawArgs];
   while (args[0] === '--') args.shift();
   return args;
+}
+
+function buildSessionOptions(session: {
+  readonly scope?: string;
+  readonly promptArgs?: readonly string[];
+}): { readonly scope?: string; readonly promptArgs?: readonly string[] } {
+  return {
+    ...(session.scope ? { scope: session.scope } : {}),
+    ...(session.promptArgs && session.promptArgs.length > 0
+      ? { promptArgs: session.promptArgs }
+      : {}),
+  };
 }

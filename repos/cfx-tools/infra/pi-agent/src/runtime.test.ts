@@ -19,7 +19,7 @@ vi.mock('./extension.js', () => ({
   piScopeEnvVar: 'CFXDEVKIT_PI_SCOPE',
 }));
 
-import { runPiCommit, runPiPrint, runPiRpc } from './runtime.js';
+import { runPiCommit, runPiInteractive, runPiPrint, runPiRpc } from './runtime.js';
 
 const spawnMock = vi.mocked(spawn);
 
@@ -131,5 +131,74 @@ describe('pi runtime delegation', () => {
         }),
       }),
     );
+  });
+
+  it('awaits terminal setup before starting the PI interactive session', async () => {
+    const order: string[] = [];
+    providerBridgeFactory.mockResolvedValueOnce({
+      configPath: '/workspaces/root/artifacts/llm/config/llm.json',
+      scope: undefined,
+      pi: {
+        provider: 'openai',
+        model: 'demo-model',
+        env: {},
+      },
+    });
+    spawnMock.mockImplementationOnce(() => {
+      order.push('spawn');
+      return {
+        on(event: string, callback: (value?: number | null) => void) {
+          if (event === 'exit') {
+            callback(0);
+          }
+          return this;
+        },
+      } as never;
+    });
+
+    await runPiInteractive({
+      promptArgs: ['review'],
+      terminalPhases: {
+        beforeStart: async () => {
+          order.push('beforeStart');
+        },
+      },
+    });
+
+    expect(order).toEqual(['beforeStart', 'spawn']);
+  });
+
+  it('runs the optional post-session terminal phase after PI exits', async () => {
+    const order: string[] = [];
+    providerBridgeFactory.mockResolvedValueOnce({
+      configPath: '/workspaces/root/artifacts/llm/config/llm.json',
+      scope: undefined,
+      pi: {
+        provider: 'openai',
+        model: 'demo-model',
+        env: {},
+      },
+    });
+    spawnMock.mockImplementationOnce(() => {
+      order.push('spawn');
+      return {
+        on(event: string, callback: (value?: number | null) => void) {
+          if (event === 'exit') {
+            callback(0);
+          }
+          return this;
+        },
+      } as never;
+    });
+
+    await runPiInteractive({
+      terminalPhases: {
+        afterExit: async () => {
+          order.push('afterExit');
+        },
+      },
+    });
+
+    expect(order).toEqual(['spawn', 'afterExit']);
   });
 });

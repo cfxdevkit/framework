@@ -1,19 +1,33 @@
-import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import type { ExtensionAPI, ExtensionCommandContext } from '@earendil-works/pi-coding-agent';
+import { Box, Text } from '@earendil-works/pi-tui';
 import { createPiAgentExtension, resolvePiScopeFromEnv } from './extension.js';
 import { getPiActionDefinitions } from './llm-agents-runtime.js';
 import { createPiProviderBridge } from './providers.js';
 import { executePiCommitSession, executePiRepoAction } from './tools.js';
 import {
-  applyPiOperatorUiState,
+  clearPiOperatorWidgets,
   createPiCommitWorkflowUiState,
   clearPiWorkflowProgress,
   createPiRepoActionUiState,
   createPiRuntimeUiState,
   renderPiActionCatalogLines,
   setPiWorkflowProgress,
+  type PiOperatorUiState,
 } from './ui.js';
 
+const piOperatorMessageType = 'repo-agent-summary';
+
+type PiOperatorMessageTone = 'info' | 'success' | 'warning' | 'error';
+
+type PiOperatorMessageDetails = {
+  readonly title: string;
+  readonly lines: readonly string[];
+  readonly tone: PiOperatorMessageTone;
+};
+
 export function registerPiRepoCommands(pi: ExtensionAPI): void {
+  registerPiOperatorMessageRenderer(pi);
+
   pi.registerCommand('repo-status', {
     description: 'Show the current repo agent scope, provider, and model context.',
     handler: async (_args, ctx) => {
@@ -24,10 +38,10 @@ export function registerPiRepoCommands(pi: ExtensionAPI): void {
         providerBridge,
         actionCount: entries.length,
       });
-      applyPiOperatorUiState(ctx, state);
       if (ctx.hasUI) {
-        ctx.ui.notify('Updated repo agent context.', 'info');
+        ctx.ui.setStatus('repo-agent', state.statusText);
       }
+      emitPiOperatorMessage(pi, ctx, state, { tone: 'info' });
     },
   });
 
@@ -36,15 +50,11 @@ export function registerPiRepoCommands(pi: ExtensionAPI): void {
     handler: async (args, ctx) => {
       const mode = normalizeModeArg(args);
       const entries = await getPiActionDefinitions();
-      const lines = [...renderPiActionCatalogLines(entries, mode)];
-      applyPiOperatorUiState(ctx, {
+      emitPiOperatorMessage(pi, ctx, {
         statusText: `repo actions${mode ? ` · ${mode}` : ''}`,
         widgetKey: 'repo-agent-actions',
-        widgetLines: lines,
+        widgetLines: [...renderPiActionCatalogLines(entries, mode)],
       });
-      if (ctx.hasUI) {
-        ctx.ui.notify(`Listed ${Math.max(lines.length - 1, 0)} repo actions.`, 'info');
-      }
     },
   });
 
@@ -67,10 +77,7 @@ export function registerPiRepoCommands(pi: ExtensionAPI): void {
           ...(parsed.quick ? { quick: true } : {}),
           ...(parsed.model ? { model: parsed.model } : {}),
         });
-        applyPiOperatorUiState(ctx, createPiRepoActionUiState(result));
-        if (ctx.hasUI) {
-          ctx.ui.notify(`Repo action completed: ${result.action}`, 'info');
-        }
+        emitPiOperatorMessage(pi, ctx, createPiRepoActionUiState(result), { tone: 'success' });
       } catch (error) {
         if (ctx.hasUI) {
           ctx.ui.notify(error instanceof Error ? error.message : String(error), 'error');
@@ -93,10 +100,9 @@ export function registerPiRepoCommands(pi: ExtensionAPI): void {
           ...(parsed.quick ? { quick: true } : {}),
           ...(parsed.model ? { model: parsed.model } : {}),
         });
-        applyPiOperatorUiState(ctx, createPiCommitWorkflowUiState(result));
-        if (ctx.hasUI) {
-          ctx.ui.notify(describeCommitResult(result), 'info');
-        }
+        emitPiOperatorMessage(pi, ctx, createPiCommitWorkflowUiState(result), {
+          tone: classifyCommitTone(result),
+        });
       } catch (error) {
         if (ctx.hasUI) {
           ctx.ui.notify(error instanceof Error ? error.message : String(error), 'error');
@@ -106,6 +112,82 @@ export function registerPiRepoCommands(pi: ExtensionAPI): void {
       }
     },
   });
+}
+
+function registerPiOperatorMessageRenderer(pi: ExtensionAPI): void {
+  pi.registerMessageRenderer<PiOperatorMessageDetails>(
+    piOperatorMessageType,
+    (message, { expanded }, theme) => {
+      const details = message.details;
+      if (!isPiOperatorMessageDetails(details)) {
+        return undefined;
+      }
+
+      const title = theme.fg(toThemeColor(details.tone), details.title);
+      const visibleLines = expanded ? [...details.lines] : details.lines.slice(0, 4);
+      const lines = [title, ...visibleLines];
+      if (!expanded && details.lines.length > visibleLines.length) {
+        lines.push(theme.fg('dim', `... ${details.lines.length - visibleLines.length} more lines`));
+      }
+
+      const box = new Box(1, 0, (text) => theme.bg('customMessageBg', text));
+      box.addChild(new Text(lines.join('\n'), 0, 0));
+      return box;
+    },
+  );
+}
+
+function emitPiOperatorMessage(
+  pi: ExtensionAPI,
+  ctx: ExtensionCommandContext,
+  state: PiOperatorUiState,
+  options: { readonly tone?: PiOperatorMessageTone } = {},
+): void {
+  if (ctx.hasUI) {
+    clearPiOperatorWidgets(ctx);
+  }
+
+  const [title = state.statusText, ...lines] = state.widgetLines;
+  pi.sendMessage({
+    customType: piOperatorMessageType,
+    content: title,
+    display: true,
+    details: {
+      title,
+      lines,
+      tone: options.tone ?? 'info',
+    },
+  });
+}
+
+function isPiOperatorMessageDetails(value: unknown): value is PiOperatorMessageDetails {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as { title?: unknown; lines?: unknown; tone?: unknown };
+  return (
+    typeof candidate.title === 'string' &&
+    Array.isArray(candidate.lines) &&
+    candidate.lines.every((line) => typeof line === 'string') &&
+    (candidate.tone === 'info' ||
+      candidate.tone === 'success' ||
+      candidate.tone === 'warning' ||
+      candidate.tone === 'error')
+  );
+}
+
+function toThemeColor(tone: PiOperatorMessageTone): 'accent' | 'success' | 'warning' | 'error' {
+  switch (tone) {
+    case 'success':
+      return 'success';
+    case 'warning':
+      return 'warning';
+    case 'error':
+      return 'error';
+    default:
+      return 'accent';
+  }
 }
 
 function parseRepoRunArgs(rawArgs: string): {
@@ -155,21 +237,17 @@ function tokenizeArgs(value: string): string[] {
   return matches.map((token) => token.replace(/^['"]|['"]$/g, ''));
 }
 
-function describeCommitResult(result: Awaited<ReturnType<typeof executePiCommitSession>>): string {
+function classifyCommitTone(
+  result: Awaited<ReturnType<typeof executePiCommitSession>>,
+): PiOperatorMessageTone {
   if (!result) {
-    return 'Commit workflow found no changed scopes.';
+    return 'info';
   }
-  if (result.status === 'blocked') {
-    return `Commit workflow paused in ${result.phase}.`;
+  if (result.status === 'blocked' || result.status === 'aborted') {
+    return 'warning';
   }
-  if (result.status === 'approval-required') {
-    return 'Commit workflow is ready for approval.';
+  if (result.status === 'approval-required' || result.status === 'dry-run') {
+    return 'info';
   }
-  if (result.status === 'dry-run') {
-    return 'Commit workflow completed in dry-run mode.';
-  }
-  if (result.status === 'aborted') {
-    return 'Commit workflow was aborted before commit execution.';
-  }
-  return 'Commit workflow completed successfully.';
+  return 'success';
 }

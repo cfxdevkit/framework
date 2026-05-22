@@ -185,10 +185,16 @@ function validateUnitConfig(unit: MonorepoUnit, rawConfig: unknown): string[] {
     findings.push('unit metadata missing');
   } else {
     if (metadata.name !== unit.name) findings.push(`unit.name should be ${unit.name}`);
+    if (JSON.stringify(metadata.aliases ?? []) !== JSON.stringify(unit.aliases)) {
+      findings.push('unit.aliases do not match registry');
+    }
     if (metadata.rootDir !== unit.rootDir) findings.push(`unit.rootDir should be ${unit.rootDir}`);
     if (metadata.description !== unit.description)
       findings.push('unit.description does not match registry');
     if (metadata.focus !== unit.focus) findings.push('unit.focus does not match registry');
+    if (metadata.sessionEffect !== unit.sessionEffect) {
+      findings.push('unit.sessionEffect does not match registry');
+    }
   }
 
   const harness = isRecord(rawConfig.harness) ? rawConfig.harness : null;

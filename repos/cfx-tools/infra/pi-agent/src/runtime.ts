@@ -8,9 +8,15 @@ import { piScopeEnvVar } from './extension.js';
 import type { PiScopeName } from './extension.js';
 import { createPiProviderBridge } from './providers.js';
 
+export interface PiTerminalPhaseHooks {
+  readonly beforeStart?: () => Promise<void> | void;
+  readonly afterExit?: () => Promise<void> | void;
+}
+
 export interface PiAgentSessionOptions {
   readonly scope?: PiScopeName;
   readonly promptArgs?: readonly string[];
+  readonly terminalPhases?: PiTerminalPhaseHooks;
 }
 
 export interface PiAgentPrintOptions extends PiAgentSessionOptions {
@@ -29,6 +35,7 @@ export async function runPiInteractive(options: PiAgentSessionOptions = {}): Pro
     promptArgs: options.promptArgs ?? [],
     extension,
     providerBridge,
+    terminalPhases: options.terminalPhases,
   });
 }
 
@@ -40,6 +47,7 @@ export async function runPiPrint(options: PiAgentPrintOptions): Promise<void> {
     promptArgs: options.promptArgs,
     extension,
     providerBridge,
+    terminalPhases: options.terminalPhases,
   });
 }
 
@@ -51,6 +59,7 @@ export async function runPiRpc(options: PiAgentRpcOptions = {}): Promise<void> {
     promptArgs: [],
     extension,
     providerBridge,
+    terminalPhases: options.terminalPhases,
   });
 }
 
@@ -66,6 +75,7 @@ interface PiCliRunOptions {
   readonly promptArgs: readonly string[];
   readonly extension: ReturnType<typeof createPiAgentExtension>;
   readonly providerBridge: Awaited<ReturnType<typeof createPiProviderBridge>>;
+  readonly terminalPhases?: PiTerminalPhaseHooks;
 }
 
 async function runPiCli(options: PiCliRunOptions): Promise<void> {
@@ -89,13 +99,15 @@ async function runPiCli(options: PiCliRunOptions): Promise<void> {
     args.push(options.promptArgs.join(' '));
   }
 
-  const exitCode = await spawnPnpm(piBinaryPath, args, repoRoot, {
-    ...process.env,
-    PATH: prependPathEntries(process.env.PATH, [resolvePiAgentBinDir(), dirname(piBinaryPath)]),
-    CFXDEVKIT_LLM_CONFIG_PATH: options.providerBridge.configPath,
-    ...(options.providerBridge.scope ? { [piScopeEnvVar]: options.providerBridge.scope } : {}),
-    ...options.providerBridge.pi.env,
-  });
+  const exitCode = await withTerminalPhases(options.terminalPhases, async () =>
+    await spawnPnpm(piBinaryPath, args, repoRoot, {
+      ...process.env,
+      PATH: prependPathEntries(process.env.PATH, [resolvePiAgentBinDir(), dirname(piBinaryPath)]),
+      CFXDEVKIT_LLM_CONFIG_PATH: options.providerBridge.configPath,
+      ...(options.providerBridge.scope ? { [piScopeEnvVar]: options.providerBridge.scope } : {}),
+      ...options.providerBridge.pi.env,
+    }),
+  );
 
   if (exitCode !== 0) {
     throw new Error(
@@ -125,6 +137,20 @@ async function spawnPnpm(
       resolve(code ?? 1);
     });
   });
+}
+
+// Terminal ownership must stay exclusive by phase:
+// 1. optional prompt/setup hooks (for example Inquirer) fully resolve and restore stdin state
+// 2. PI takes over stdio for the main TUI / interactive session
+// 3. optional post-session hooks run only after the PI subprocess exits
+async function withTerminalPhases<T>(
+  phases: PiTerminalPhaseHooks | undefined,
+  run: () => Promise<T>,
+): Promise<T> {
+  await phases?.beforeStart?.();
+  const result = await run();
+  await phases?.afterExit?.();
+  return result;
 }
 
 function resolvePiBinaryPath(): string {

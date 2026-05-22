@@ -18,6 +18,27 @@ describe('commit gate signal extraction', () => {
       'Sort the exported names.',
     ]);
   });
+
+  it('drops moon notices, cache chatter, and artifact footers from signal output', () => {
+    expect(
+      extractSignalLines(
+        [
+          "\u001b[38;5;208m▮\u001b[0m\u001b[38;5;214m▮\u001b[0m\u001b[38;5;220m▮\u001b[0m\u001b[38;5;226m▮\u001b[0m There's a new version of moon available, 2.2.5 (currently on 2.2.4)!",
+          'Learn more: https://moonrepo.dev/blog/moon-v2.2',
+          'Install with: https://moonrepo.dev/docs/install',
+          '▮▮▮▮ executor:test (cached, 403078e2)',
+          'Code hotspots: error',
+          'Hard violations:',
+          '- repos/cfx-tools/infra/tooling-cli/src/agent-config.ts: 370 lines',
+          'Reports: artifacts/llm/reports/code-hotspots.{md,json}',
+        ].join('\n'),
+      ),
+    ).toEqual([
+      'Code hotspots: error',
+      'Hard violations:',
+      '- repos/cfx-tools/infra/tooling-cli/src/agent-config.ts: 370 lines',
+    ]);
+  });
 });
 
 describe('commit gate hints', () => {

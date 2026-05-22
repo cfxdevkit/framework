@@ -1,6 +1,14 @@
 import { join } from 'node:path';
 import { execFileAsync, QUALITY_GATES, root } from '../shared/index.ts';
-import { buildDeterministicHints, collectOutput, extractSignalLines } from './gate-output.ts';
+import { collectOutput } from './gate-output.ts';
+import {
+  createGateResult,
+  extractGateSummary,
+  extractHotspotSummary,
+  extractKebabGroupStatus,
+  extractKebabGroupSummary,
+  extractUnitConfigSummary,
+} from './gate-results.ts';
 
 type RepositoryPolicyStatus = 'ok' | 'warning' | 'error';
 export type GateStatus = RepositoryPolicyStatus | 'skipped';
@@ -25,6 +33,22 @@ export type GateReport = {
   passed: boolean;
   skipped: boolean;
   results: GateResult[];
+};
+
+export type GateRunHooks = {
+  onGroupStart?: (group: {
+    kind: 'repository-policy' | 'quality';
+    label: string;
+    gates: readonly { id: string; label: string; required: boolean }[];
+  }) => void;
+  onGateStart?: (gate: {
+    kind: 'repository-policy' | 'quality';
+    id: string;
+    label: string;
+    required: boolean;
+  }) => void;
+  onGateFinish?: (result: GateResult) => void;
+  onGroupFinish?: (report: GateReport) => void;
 };
 
 type RepositoryPolicyGate = {
@@ -83,31 +107,49 @@ const REPOSITORY_POLICY_GATES: readonly RepositoryPolicyGate[] = [
   },
 ];
 
-export async function runRepositoryPolicyGates() {
+export async function runRepositoryPolicyGates(hooks?: GateRunHooks) {
   const results: GateResult[] = [];
 
+  hooks?.onGroupStart?.({
+    kind: 'repository-policy',
+    label: 'Repository policy gates',
+    gates: REPOSITORY_POLICY_GATES.map((gate) => ({
+      id: gate.id,
+      label: gate.label,
+      required: gate.required,
+    })),
+  });
+
   for (const gate of REPOSITORY_POLICY_GATES) {
-    results.push(await runRepositoryPolicyGate(gate));
+    results.push(await runRepositoryPolicyGate(gate, hooks));
   }
 
-  return {
+  const report = {
     kind: 'repository-policy' as const,
     label: 'Repository policy gates',
     passed: results.every((result) => result.status !== 'error' || !result.required),
     skipped: false,
     results,
   };
+
+  hooks?.onGroupFinish?.(report);
+
+  return report;
 }
 
-export async function runQualityGates(flags) {
+export async function runQualityGates(flags, hooks?: GateRunHooks) {
   if (flags.skipChecks) {
-    return {
+    const report = {
       kind: 'quality' as const,
       label: 'Quality gates',
       passed: true,
       skipped: true,
       results: [],
     };
+
+    hooks?.onGroupFinish?.(report);
+
+    return report;
   }
 
   const gates = QUALITY_GATES.filter((g) => {
@@ -117,21 +159,39 @@ export async function runQualityGates(flags) {
   });
 
   const results: GateResult[] = [];
+  hooks?.onGroupStart?.({
+    kind: 'quality',
+    label: 'Quality gates',
+    gates: gates.map((gate) => ({ id: gate.id, label: gate.label, required: gate.required })),
+  });
   for (const gate of gates) {
-    results.push(await runQualityGate(gate));
+    results.push(await runQualityGate(gate, hooks));
   }
 
-  return {
+  const report = {
     kind: 'quality' as const,
     label: 'Quality gates',
     passed: results.every((result) => result.status !== 'error' || !result.required),
     skipped: false,
     results,
   };
+
+  hooks?.onGroupFinish?.(report);
+
+  return report;
 }
 
-async function runRepositoryPolicyGate(gate: RepositoryPolicyGate): Promise<GateResult> {
+async function runRepositoryPolicyGate(
+  gate: RepositoryPolicyGate,
+  hooks?: GateRunHooks,
+): Promise<GateResult> {
   const start = Date.now();
+  hooks?.onGateStart?.({
+    kind: 'repository-policy',
+    id: gate.id,
+    label: gate.label,
+    required: gate.required,
+  });
 
   try {
     const { stdout, stderr } = await execFileAsync('pnpm', gate.args, {
@@ -142,7 +202,7 @@ async function runRepositoryPolicyGate(gate: RepositoryPolicyGate): Promise<Gate
     });
     const output = `${stdout}${stderr}`;
     const status = gate.detectSuccessStatus?.(output) ?? 'ok';
-    return createGateResult({
+    const result = createGateResult({
       kind: 'repository-policy',
       id: gate.id,
       label: gate.label,
@@ -153,8 +213,10 @@ async function runRepositoryPolicyGate(gate: RepositoryPolicyGate): Promise<Gate
       output,
       summary: gate.summarize(output).trim(),
     });
+    hooks?.onGateFinish?.(result);
+    return result;
   } catch (error) {
-    return createGateResult({
+    const result = createGateResult({
       kind: 'repository-policy',
       id: gate.id,
       label: gate.label,
@@ -165,11 +227,19 @@ async function runRepositoryPolicyGate(gate: RepositoryPolicyGate): Promise<Gate
       output: collectOutput(error),
       summary: '',
     });
+    hooks?.onGateFinish?.(result);
+    return result;
   }
 }
 
-async function runQualityGate(gate): Promise<GateResult> {
+async function runQualityGate(gate, hooks?: GateRunHooks): Promise<GateResult> {
   const start = Date.now();
+  hooks?.onGateStart?.({
+    kind: 'quality',
+    id: gate.id,
+    label: gate.label,
+    required: gate.required,
+  });
 
   try {
     const { stdout, stderr } = await execFileAsync(gate.cmd, gate.args, {
@@ -179,7 +249,7 @@ async function runQualityGate(gate): Promise<GateResult> {
       env: { ...process.env, NO_COLOR: '1', MOON_COLOR: 'false', FORCE_COLOR: '0' },
     });
     const output = `${stdout}${stderr}`;
-    return createGateResult({
+    const result = createGateResult({
       kind: 'quality',
       id: gate.id,
       label: gate.label,
@@ -190,8 +260,10 @@ async function runQualityGate(gate): Promise<GateResult> {
       output,
       summary: extractGateSummary(output),
     });
+    hooks?.onGateFinish?.(result);
+    return result;
   } catch (error) {
-    return createGateResult({
+    const result = createGateResult({
       kind: 'quality',
       id: gate.id,
       label: gate.label,
@@ -202,63 +274,9 @@ async function runQualityGate(gate): Promise<GateResult> {
       output: collectOutput(error),
       summary: '',
     });
+    hooks?.onGateFinish?.(result);
+    return result;
   }
-}
-
-export function extractGateSummary(output) {
-  // Moon task summary line: "Tasks: N completed (N cached)"
-  const moonMatch = output.match(/Tasks:\s+\d+\s+completed[^\n]*/);
-  if (moonMatch) return moonMatch[0].trim();
-  // Biome summary: "Checked N files"
-  const biomeMatch = output.match(/Checked \d+ files[^\n]*/);
-  if (biomeMatch) return biomeMatch[0].trim();
-  return '';
-}
-
-export function extractHotspotSummary(output) {
-  const match = output.match(/Scanned \d+ source files;[^\n]*/);
-  return match ? `  ${match[0].trim()}` : '';
-}
-
-export function extractKebabGroupSummary(output) {
-  const match = output.match(
-    /Scanned \d+ source files; found \d+ grouped kebab-case prefix\(es\) covering \d+ file\(s\)\./,
-  );
-  return match ? `  ${match[0].trim()}` : '';
-}
-
-export function extractUnitConfigSummary(output) {
-  const match = output.match(
-    /Checked \d+ unit config\(s\); \d+ missing, \d+ drifted, \d+ written\./,
-  );
-  return match ? `  ${match[0].trim()}` : '';
-}
-
-function extractKebabGroupStatus(output: string): RepositoryPolicyStatus {
-  const match = output.match(/Kebab filename groups:\s+(ok|warning|error)/);
-  return (match?.[1] as RepositoryPolicyStatus | undefined) ?? 'ok';
-}
-
-function createGateResult(params: {
-  kind: 'repository-policy' | 'quality';
-  id: string;
-  label: string;
-  command: string;
-  required: boolean;
-  status: GateStatus;
-  elapsedMs: number;
-  output: string;
-  summary: string;
-}): GateResult {
-  const output = params.output.trim();
-  const signalLines = extractSignalLines(output);
-  return {
-    ...params,
-    output,
-    summary: params.summary || signalLines[0] || '',
-    signalLines,
-    hints: buildDeterministicHints({ id: params.id, command: params.command, output }),
-  };
 }
 
 // ─── Scope detection ──────────────────────────────────────────────────────────

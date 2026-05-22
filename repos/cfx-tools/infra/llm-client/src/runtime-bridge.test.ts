@@ -52,14 +52,16 @@ describe('runtime bridge scope handling', () => {
         : '/workspaces/root/artifacts/llm/config/llm.json',
     );
     mocks.findMonorepoUnit.mockReturnValue({
-      name: 'docs',
-      rootDir: '/workspaces/root/docs',
-      rootPath: '/workspaces/root/docs',
-      relativeRootPath: 'docs',
-      configPath: '/workspaces/root/artifacts/llm/config/units/docs.json',
-      relativeConfigPath: 'artifacts/llm/config/units/docs.json',
-      description: 'Docs unit',
-      focus: 'Documentation',
+      name: 'delivery',
+      aliases: ['docs', 'openspec', 'plan'],
+      rootDir: '/workspaces/root/openspec',
+      rootPath: '/workspaces/root/openspec',
+      relativeRootPath: 'openspec',
+      configPath: '/workspaces/root/artifacts/llm/config/units/delivery.json',
+      relativeConfigPath: 'artifacts/llm/config/units/delivery.json',
+      description: 'Planning, OpenSpec changes, docs, and delivery artifacts',
+      focus: 'Delivery planning',
+      sessionEffect: 'Preloads planning and docs context.',
       defaultMode: 'deterministic',
     });
     mocks.readConfig.mockImplementation(async () => {
@@ -101,7 +103,7 @@ describe('runtime bridge scope handling', () => {
   it('applies and restores the scoped config path while resolving runtime state', async () => {
     mocks.readConfig.mockImplementationOnce(async () => {
       expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toBe(
-        '/workspaces/root/artifacts/llm/config/units/docs.json',
+        '/workspaces/root/artifacts/llm/config/units/delivery.json',
       );
       return {
         provider: 'litellm',
@@ -126,12 +128,12 @@ describe('runtime bridge scope handling', () => {
       };
     });
 
-    const state = await resolveRuntimeBridgeState('docs');
+    const state = await resolveRuntimeBridgeState('delivery');
 
     expect(state).toEqual(
       expect.objectContaining({
-        scope: 'docs',
-        configPath: '/workspaces/root/artifacts/llm/config/units/docs.json',
+        scope: 'delivery',
+        configPath: '/workspaces/root/artifacts/llm/config/units/delivery.json',
         providerType: 'litellm',
         providerBaseUrl: 'http://litellm.test/v1',
         defaultModel: 'demo-model',
@@ -144,7 +146,7 @@ describe('runtime bridge scope handling', () => {
   it('restores any previous scoped config env after provider resolution', async () => {
     process.env.CFXDEVKIT_LLM_CONFIG_PATH = '/tmp/original.json';
 
-    await expect(resolveScopedProviderType('docs')).resolves.toBe('litellm');
+    await expect(resolveScopedProviderType('delivery')).resolves.toBe('litellm');
     expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toBe('/tmp/original.json');
   });
 
@@ -182,7 +184,7 @@ describe('runtime bridge scope handling', () => {
       },
     });
 
-    const state = await resolveRuntimeBridgeState('docs', { action: 'review' });
+    const state = await resolveRuntimeBridgeState('delivery', { action: 'review' });
 
     expect(state.providerType).toBe('litellm');
     expect(state.defaultModel).toBe('demo-model');

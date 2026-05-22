@@ -33,14 +33,16 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
+    "@inquirer/prompts": "^8.4.3",
     "@cfxdevkit/docs-pipeline": "workspace:*",
-    "@cfxdevkit/pi-agent": "workspace:*",
     "@cfxdevkit/llm-tools": "workspace:*",
-    "commander": "^14.0.2"
+    "@cfxdevkit/pi-agent": "workspace:*",
+    "clipanion": "^4.0.0-rc.4"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
     "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/testing": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
     "@types/node": "^25.6.0",
     "tsx": "^4.20.6",

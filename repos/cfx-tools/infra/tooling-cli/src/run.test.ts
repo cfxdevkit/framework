@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ToolingNamespaceDefinition } from './contracts.js';
-import { buildToolingCatalog } from './registry.js';
+import { buildToolingCatalog, formatToolingHelp } from './registry.js';
 import { runCli } from './run.js';
 
 function createNamespace(name: string): ToolingNamespaceDefinition {
   return {
     name,
     description: `${name} namespace`,
-    commands: [{ name: 'status', description: `${name} status` }],
+    commands: [{ name: 'status', description: `${name} status`, usage: 'status [--json]' }],
     run: vi.fn().mockResolvedValue(undefined),
   };
 }
@@ -25,7 +25,7 @@ describe('tooling-cli', () => {
         {
           name: 'llm',
           description: 'llm namespace',
-          commands: [{ name: 'status', description: 'llm status' }],
+          commands: [{ name: 'status', description: 'llm status', usage: 'status [--json]' }],
         },
       ],
     });
@@ -62,6 +62,14 @@ describe('tooling-cli', () => {
 
     expect(namespace.run).toHaveBeenCalledWith(['status', '--json']);
     expect(process.exitCode).toBe(0);
+  });
+
+  it('formats top-level help with the actual invocation forms and command usage', () => {
+    const help = formatToolingHelp([createNamespace('docs')]);
+
+    expect(help).toContain('pnpm cdk -- <namespace> <command> [args]');
+    expect(help).toContain('pnpm tooling -- <namespace> <command> [args]');
+    expect(help).toContain('usage: docs status [--json]');
   });
 
   it('falls back to namespace help when a subcommand is unknown', async () => {

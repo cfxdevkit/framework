@@ -60,14 +60,18 @@ export function formatToolingHelp(
       (namespace) =>
         `${namespace.name}:\n${namespace.commands
           .filter((command) => command.hidden !== true)
-          .map((command) => `  ${command.name.padEnd(14)} ${command.description}`)
+          .map((command) => {
+            const summary = `  ${command.name.padEnd(14)} ${command.description}`;
+            if (!command.usage) return summary;
+            return `${summary}\n${' '.repeat(18)}usage: ${namespace.name} ${command.usage}`;
+          })
           .join('\n')}`,
     )
     .join('\n\n');
 
   return `Usage:
-  pnpm run cdk -- <namespace> <command> [args]
-  pnpm run tooling -- <namespace> <command> [args]
+  pnpm cdk -- <namespace> <command> [args]
+  pnpm tooling -- <namespace> <command> [args]
 
 Namespaces:
 ${namespaceBlock}

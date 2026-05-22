@@ -3,6 +3,7 @@ export {
   type PiAgentPrintOptions,
   type PiAgentRpcOptions,
   type PiAgentSessionOptions,
+  type PiTerminalPhaseHooks,
   runPiCommit,
   runPiInteractive,
   runPiPrint,

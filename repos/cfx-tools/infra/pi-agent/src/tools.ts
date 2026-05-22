@@ -16,6 +16,7 @@ import {
   type PiRepoActionExecutionResult,
 } from './llm-agents-runtime.js';
 import {
+  clearPiOperatorWidgets,
   createPiCommitWorkflowUiState,
   createPiRepoActionUiState,
   renderPiActionCatalogLines,
@@ -77,7 +78,7 @@ const repoRunActionTool = defineTool({
     if (ctx.hasUI) {
       const uiState = createPiRepoActionUiState(result);
       ctx.ui.setStatus('repo-action-tool', uiState.statusText);
-      ctx.ui.setWidget(uiState.widgetKey, [...uiState.widgetLines], { placement: 'aboveEditor' });
+      clearPiOperatorWidgets(ctx);
     }
 
     return {
@@ -118,7 +119,7 @@ const repoCommitWorkflowTool = defineTool({
     if (ctx.hasUI) {
       const uiState = createPiCommitWorkflowUiState(result);
       ctx.ui.setStatus('repo-commit-tool', uiState.statusText);
-      ctx.ui.setWidget(uiState.widgetKey, [...uiState.widgetLines], { placement: 'aboveEditor' });
+      clearPiOperatorWidgets(ctx);
     }
 
     return {

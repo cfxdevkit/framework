@@ -22,8 +22,8 @@ const repoCommands = [
   },
   {
     name: 'units',
-    description: 'List or inspect monorepo units and their agent-config overlays',
-    usage: 'units [list|show <unit>]',
+    description: 'List or inspect session presets and their agent-config overlays',
+    usage: 'units [list|show <preset>]',
   },
   {
     name: 'review',
@@ -161,44 +161,45 @@ function printRepoHelp(): void {
 Usage:
   cdk repo check <hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [args]
   cdk repo generate <api|readme|structure|unit-configs> [args]
-  cdk repo units [list|show <unit>]
+  cdk repo units [list|show <preset>]
   cdk repo arch-check [args]
-  cdk repo [--scope <unit>] review
-  cdk repo [--scope <unit>] precommit [args]
-  cdk repo [--scope <unit>] commit [args]
+  cdk repo [--scope <preset>] review
+  cdk repo [--scope <preset>] precommit [args]
+  cdk repo [--scope <preset>] commit [args]
 
-Intent:
-  - deterministic repo maintenance belongs here
-  - review, precommit, and commit are repo operations even when they delegate to the agent layer
-  - use repo units to discover the major monorepo areas and their scoped agent overlays
-  - use cdk llm for provider/model administration and generic repo-aware prompts`);
+Notes:
+  - use repo units to discover the available session presets and their scoped agent overlays
+  - use --scope <preset> when review, precommit, or commit should honor a preset-specific overlay
+  - use cdk agent for direct PI sessions and provider/runtime administration`);
 }
 
 function printMonorepoUnits(): void {
   const units = listMonorepoUnits();
   const lines = units.map(
     (unit) =>
-      `  - ${unit.name.padEnd(14)} ${unit.description} | mode ${unit.defaultMode} | ${unit.relativeConfigPath}`,
+      `  - ${unit.name.padEnd(14)} ${unit.description} | mode ${unit.defaultMode} | aliases ${unit.aliases.join(', ')} | ${unit.relativeConfigPath}`,
   );
   console.log(`cdk repo units
 
-Registered monorepo units:
+Registered session presets:
 ${lines.join('\n')}`);
 }
 
 function printMonorepoUnit(name: string): void {
   const unit = findMonorepoUnit(name);
-  if (!unit) throw new Error(`Unknown monorepo unit: ${name}`);
+  if (!unit) throw new Error(`Unknown agent scope preset: ${name}`);
   console.log(`cdk repo units show ${unit.name}
 
 Root:
   - path: ${unit.relativeRootPath}
   - description: ${unit.description}
+  - aliases: ${unit.aliases.join(', ')}
 
 Agent overlay:
   - config: ${unit.relativeConfigPath}
   - default mode: ${unit.defaultMode}
-  - focus: ${unit.focus}`);
+  - focus: ${unit.focus}
+  - session effect: ${unit.sessionEffect}`);
 }
 
 async function runRootScript(script: string, forwardedArgs: readonly string[]): Promise<void> {

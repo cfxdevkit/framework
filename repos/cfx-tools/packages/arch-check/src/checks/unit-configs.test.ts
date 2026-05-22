@@ -14,14 +14,15 @@ describe('parseUnitConfigFlags', () => {
 
 describe('buildMonorepoUnitConfig', () => {
   it('produces deterministic unit metadata for known monorepo units', () => {
-    const docsUnit = listMonorepoUnits().find((unit) => unit.name === 'docs');
-    if (!docsUnit) {
-      throw new Error('Expected docs unit to be registered');
+    const deliveryUnit = listMonorepoUnits().find((unit) => unit.name === 'delivery');
+    if (!deliveryUnit) {
+      throw new Error('Expected delivery preset to be registered');
     }
-    expect(buildMonorepoUnitConfig(docsUnit)).toMatchObject({
+    expect(buildMonorepoUnitConfig(deliveryUnit)).toMatchObject({
       unit: {
-        name: 'docs',
-        rootDir: 'docs',
+        name: 'delivery',
+        aliases: ['docs', 'openspec', 'plan'],
+        rootDir: 'openspec',
       },
       harness: {
         defaultMode: 'deterministic',

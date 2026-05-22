@@ -1,10 +1,14 @@
 import { resolveExecutionContext, toExecutionContextRuntimePayload } from '../shared/execution-context.ts';
-import { logInfo, logStep } from '../shared/logging.ts';
 import { analyzeGateFailures } from './failure-analysis.ts';
 import { parseCommitFlags } from './flags.ts';
 import { runQualityGates, runRepositoryPolicyGates } from './gates.ts';
-import { logFailureAnalysis, logGateReport, logOperationHud, summarizeWorkingSet } from './hud.ts';
+import { summarizeWorkingSet } from './hud.ts';
 import { detectChangedScopes } from './scope.ts';
+import {
+  createWorkflowTerminalUi,
+  summarizeFailureAnalysis,
+  summarizeGateFailures,
+} from './terminal-ui.ts';
 import type { PrecommitWorkflowResult } from './types.ts';
 
 export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResult> {
@@ -16,15 +20,15 @@ export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResul
     modelOverride: flags.model,
   });
   const scopes = await detectChangedScopes();
-  logOperationHud({
-    title: 'Repo Precommit HUD',
+  const ui = createWorkflowTerminalUi({
+    commandLabel: 'repo precommit',
     executionContext,
     workingSet: summarizeWorkingSet(scopes),
     llmFailureAnalysis: executionContext.llm.status === 'ready',
   });
-  logStep(1, 1, 'Repository policy and quality gates');
-  const policyReport = await runRepositoryPolicyGates();
-  logGateReport(policyReport);
+  ui.start();
+  ui.startStep(1, 1, 'Repository policy and quality gates');
+  const policyReport = await runRepositoryPolicyGates(ui.gateHooks);
   if (!policyReport.passed) {
     const failureAnalysis = await analyzeGateFailures({
       command: 'precommit',
@@ -32,9 +36,11 @@ export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResul
       reports: [policyReport],
       modelOverride: flags.model,
     });
-    logFailureAnalysis(failureAnalysis);
-    logInfo('\n  ✗ Precommit failed: repository policy hard-gate failures.');
-    logInfo('  Resolve blocking repository-policy findings before committing.');
+    ui.finish('blocked', [
+      ...summarizeGateFailures(policyReport),
+      ...summarizeFailureAnalysis(failureAnalysis),
+      'precommit blocked: resolve repository-policy failures before retrying',
+    ]);
     return {
       command: 'precommit',
       status: 'blocked',
@@ -47,8 +53,7 @@ export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResul
       blockedBy: 'repository-policy',
     };
   }
-  const qualityReport = await runQualityGates(flags);
-  logGateReport(qualityReport);
+  const qualityReport = await runQualityGates(flags, ui.gateHooks);
   let failureAnalysis = null;
   if (!qualityReport.passed) {
     failureAnalysis = await analyzeGateFailures({
@@ -57,10 +62,13 @@ export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResul
       reports: [policyReport, qualityReport],
       modelOverride: flags.model,
     });
-    logFailureAnalysis(failureAnalysis);
   }
   if (!qualityReport.passed && !flags.force) {
-    logInfo('\n  ✗ Precommit failed: quality gate failures. Use --force to bypass.');
+    ui.finish('blocked', [
+      ...summarizeGateFailures(qualityReport),
+      ...summarizeFailureAnalysis(failureAnalysis),
+      'precommit blocked: failing quality gates prevent commit',
+    ]);
     return {
       command: 'precommit',
       status: 'blocked',
@@ -74,9 +82,9 @@ export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResul
     };
   }
   if (!qualityReport.passed && flags.force) {
-    logInfo('  ⚠ --force: proceeding despite gate failures');
+    ui.note('--force enabled: continuing past failing quality gates');
   }
-  logInfo('\n  ✓ All precommit gates passed. Run `cdk repo commit` when ready.');
+  ui.finish(qualityReport.passed ? 'passed' : 'forced', ['all precommit gates passed; run `cdk repo commit` when ready']);
   return {
     command: 'precommit',
     status: qualityReport.passed ? 'passed' : 'forced',

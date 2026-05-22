@@ -327,6 +327,13 @@ Success criteria:
 - `tooling-cli` owns command discovery and command help entirely
 - subpackages stop defining user-facing taxonomy independently
 
+Phase boundary standard:
+
+- Clipanion owns argv parsing and command dispatch only
+- setup prompts must fully resolve before PI or any other TUI starts
+- `@inquirer/prompts` is allowed only in pre-session or post-session phases, never while PI owns the terminal
+- PI / pi-tui owns the terminal only after the setup phase has restored raw mode and removed prompt listeners
+
 ### Phase 3: Migrate docs first
 
 Deliverables:

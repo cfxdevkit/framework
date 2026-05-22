@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyWorkflowMockDefaults, resetWorkflowMocks } from './workflow.test-support.ts';
+import {
+  applyWorkflowMockDefaults,
+  resetWorkflowMocks,
+} from '@cfxdevkit/testing/llm-agents-test-support';
 
 const mocks = vi.hoisted(() => ({
   commandBlock: vi.fn(),
@@ -18,6 +21,15 @@ const mocks = vi.hoisted(() => ({
   logGateReport: vi.fn(),
   logOperationHud: vi.fn(),
   summarizeWorkingSet: vi.fn(),
+  workflowUi: {
+    gateHooks: {},
+    start: vi.fn(),
+    startStep: vi.fn(),
+    note: vi.fn(),
+    pause: vi.fn(),
+    finish: vi.fn(),
+  },
+  createWorkflowTerminalUi: vi.fn(),
   assertNoUnexpectedChanges: vi.fn(),
   confirmPrompt: vi.fn(),
   executeCommit: vi.fn(),
@@ -65,6 +77,16 @@ vi.mock('./hud.ts', () => ({
   summarizeWorkingSet: mocks.summarizeWorkingSet,
 }));
 
+vi.mock('./terminal-ui.ts', () => ({
+  createWorkflowTerminalUi: mocks.createWorkflowTerminalUi,
+  summarizeCommitPreview: vi.fn((subject: string, body: string) => [
+    `commit: ${subject}`,
+    `body: ${body}`,
+  ]),
+  summarizeFailureAnalysis: vi.fn(() => ['analysis: available']),
+  summarizeGateFailures: vi.fn(() => ['blocked: gate failed']),
+}));
+
 vi.mock('./message.ts', () => ({
   assertNoUnexpectedChanges: mocks.assertNoUnexpectedChanges,
   confirmPrompt: mocks.confirmPrompt,
@@ -89,6 +111,7 @@ import {
 describe('commit workflow services', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    process.exitCode = 0;
     resetWorkflowMocks(mocks);
     applyWorkflowMockDefaults(mocks);
   });
@@ -220,11 +243,7 @@ describe('commit workflow services', () => {
     );
   });
 
-  it('keeps deterministic wrappers exiting on blocked commit and precommit workflows', async () => {
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
-      return undefined as never;
-    }) as never);
-
+  it('keeps deterministic wrappers setting exit codes on blocked commit and precommit workflows', async () => {
     mocks.runRepositoryPolicyGates
       .mockResolvedValueOnce({
         kind: 'repository-policy',
@@ -249,12 +268,23 @@ describe('commit workflow services', () => {
     });
 
     const precommitResult = await runPrecommit([]);
+    expect(process.exitCode).toBe(1);
+
+    process.exitCode = 0;
     const commitResult = await runCommit([]);
 
     expect(precommitResult.status).toBe('blocked');
     expect(commitResult?.status).toBe('blocked');
-    expect(exitSpy).toHaveBeenCalledTimes(2);
-    expect(exitSpy).toHaveBeenNthCalledWith(1, 1);
-    expect(exitSpy).toHaveBeenNthCalledWith(2, 1);
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('marks aborted deterministic commit runs as non-zero without hard exiting', async () => {
+    mocks.confirmPrompt.mockResolvedValueOnce(false);
+
+    const result = await runCommit([]);
+
+    expect(result?.status).toBe('aborted');
+    expect(process.exitCode).toBe(1);
+    expect(mocks.workflowUi.pause).toHaveBeenCalledTimes(1);
   });
 });

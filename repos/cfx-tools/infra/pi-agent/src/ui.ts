@@ -13,6 +13,14 @@ export interface PiOperatorUiState {
   readonly widgetLines: readonly string[];
 }
 
+const piOperatorWidgetKeys = [
+  'repo-agent-context',
+  'repo-agent-actions',
+  'repo-agent-workflow',
+  'repo-agent-gates',
+  'repo-agent-commit',
+] as const;
+
 export function createPiRuntimeUiState(options: {
   extension: PiAgentExtension;
   providerBridge: PiProviderBridge;
@@ -22,7 +30,7 @@ export function createPiRuntimeUiState(options: {
   const scopeLabel = providerBridge.scope ?? 'shared-repo';
   const modelLabel = providerBridge.defaultModel ?? providerBridge.pi.model ?? 'auto';
   return {
-    statusText: `${scopeLabel} · ${providerBridge.providerType} · ${modelLabel}`,
+    statusText: formatPiRuntimeStatusText(scopeLabel),
     widgetKey: 'repo-agent-context',
     widgetLines: [
       'Repo agent context',
@@ -163,6 +171,16 @@ export function applyPiOperatorUiState(ctx: ExtensionContext, state: PiOperatorU
   ctx.ui.setWidget(state.widgetKey, [...state.widgetLines], { placement: 'aboveEditor' });
 }
 
+export function clearPiOperatorWidgets(ctx: ExtensionContext): void {
+  if (!ctx.hasUI) {
+    return;
+  }
+
+  for (const widgetKey of piOperatorWidgetKeys) {
+    ctx.ui.setWidget(widgetKey, undefined, { placement: 'aboveEditor' });
+  }
+}
+
 export function setPiWorkflowProgress(ctx: ExtensionContext, phase: string): void {
   if (!ctx.hasUI) {
     return;
@@ -220,6 +238,10 @@ function normalizeMode(value?: string): 'deterministic' | 'exploratory' | undefi
     return value;
   }
   return undefined;
+}
+
+function formatPiRuntimeStatusText(scopeLabel: string): string {
+  return scopeLabel === 'shared-repo' ? 'repo' : `repo:${scopeLabel}`;
 }
 
 function capitalize(value: string): string {

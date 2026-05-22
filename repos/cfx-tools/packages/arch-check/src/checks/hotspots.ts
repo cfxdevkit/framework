@@ -200,10 +200,9 @@ export function renderConsoleReport(report: HotspotReport): string {
   lines.push('', 'Top hotspots:');
   for (const file of report.hotspots.slice(0, 10)) {
     lines.push(
-      `- ${file.path}: ${file.lines} lines, ${file.commits} commit(s), +${file.addedLines}/-${file.deletedLines}, score ${file.hotspotScore}`,
+      `- ${file.path}: ${file.lines} lines, ${file.commits} commit(s), score ${file.hotspotScore}`,
     );
   }
-  lines.push('', 'Reports: artifacts/llm/reports/code-hotspots.{md,json}');
   return lines.join('\n');
 }
 

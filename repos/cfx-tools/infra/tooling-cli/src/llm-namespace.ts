@@ -8,6 +8,10 @@ const llmCommands = [
     description: 'List models for the resolved LLM provider',
   },
   {
+    name: 'model',
+    description: 'Interactive default-model picker compatibility command',
+  },
+  {
     name: 'validate-models',
     description: 'Probe discovered models with cold/hot/json reliability checks',
   },
@@ -142,6 +146,15 @@ async function runLlmCli(rawArgs: readonly string[]): Promise<void> {
     return;
   }
 
+  if (command === 'model') {
+    if (isHelpToken(rest[0] ?? '')) {
+      printLlmHelp();
+      return;
+    }
+    await agentToolingNamespace.run(['config', 'set', 'default-model', ...rest]);
+    return;
+  }
+
   if (command === 'validate-models') {
     await agentToolingNamespace.run(['deterministic', 'validate-models', ...rest]);
     return;
@@ -215,6 +228,7 @@ function printLlmHelp(): void {
 
 Usage:
   cdk llm models
+  cdk llm model [id]
   cdk llm validate-models [args]
   cdk llm config [show|reset|set ...]
   cdk llm ask -- [prompt]
@@ -223,6 +237,7 @@ Usage:
 
 Intent:
   - provider, model, and backend administration belongs here
+  - cdk llm model preserves the legacy interactive default-model picker
   - generic repo-aware prompts and named actions belong here
   - repository maintenance flows now live under cdk repo
   - interactive and sessioned agent workflows live under cdk agent`);
