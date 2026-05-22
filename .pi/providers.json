@@ -1,0 +1,22 @@
+{
+  "provider": "lemonade",
+  "baseUrl": "http://host.containers.internal:13305/",
+  "defaultModel": "Qwen3-Coder-Next-GGUF",
+  "requestTimeoutMs": 600000,
+  "actions": {},
+  "providerProfiles": {},
+  "actionPolicies": {},
+  "harness": {
+    "version": 1,
+    "defaultMode": "deterministic",
+    "providerStrategy": "auto",
+    "deterministic": {
+      "preserveDeterministicArtifacts": true,
+      "preserveDeterministicSections": true
+    },
+    "exploratory": {
+      "allowCodeChanges": true,
+      "allowWideChanges": true
+    }
+  }
+}

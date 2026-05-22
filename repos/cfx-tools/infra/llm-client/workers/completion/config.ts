@@ -5,14 +5,24 @@ import type {
   LlmActionPolicy,
   LlmProviderProfile,
 } from '../../src/types.ts';
-import { configPath, configPathEnvVar, legacyConfigPath } from '../shared/index.ts';
+import {
+  configPath,
+  configPathEnvVar,
+  legacyCompatConfigPath,
+  legacyConfigPath,
+} from '../shared/index.ts';
 
 export const DEFAULT_REQUEST_TIMEOUT_MS = 120000;
 
 export async function readConfig() {
   const baseConfig = await readBaseConfig();
   const scopedPath = process.env[configPathEnvVar];
-  if (!scopedPath || scopedPath === configPath || scopedPath === legacyConfigPath) {
+  if (
+    !scopedPath ||
+    scopedPath === configPath ||
+    scopedPath === legacyConfigPath ||
+    scopedPath === legacyCompatConfigPath
+  ) {
     return baseConfig;
   }
 
@@ -135,6 +145,9 @@ async function readBaseConfig() {
 
   const legacyConfig = await readConfigFile(legacyConfigPath);
   if (legacyConfig) return normalizeConfig(legacyConfig);
+
+  const legacyCompatConfig = await readConfigFile(legacyCompatConfigPath);
+  if (legacyCompatConfig) return normalizeConfig(legacyCompatConfig);
 
   return defaultConfig();
 }

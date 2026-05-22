@@ -80,7 +80,7 @@ describe('pi runtime delegation', () => {
 
   it('throws when the PI subprocess exits unsuccessfully', async () => {
     providerBridgeFactory.mockResolvedValueOnce({
-      configPath: '/workspaces/root/artifacts/llm/config/llm.json',
+      configPath: '/workspaces/root/.pi/providers.json',
       scope: undefined,
       pi: {
         provider: 'github',
@@ -102,7 +102,7 @@ describe('pi runtime delegation', () => {
 
   it('boots interactive commit mode with a seeded commit-session prompt', async () => {
     providerBridgeFactory.mockResolvedValueOnce({
-      configPath: '/workspaces/root/artifacts/llm/config/llm.json',
+      configPath: '/workspaces/root/.pi/providers.json',
       scope: undefined,
       pi: {
         provider: 'openai',
@@ -127,7 +127,7 @@ describe('pi runtime delegation', () => {
       expect.objectContaining({
         cwd: '/workspaces/root',
         env: expect.objectContaining({
-          CFXDEVKIT_LLM_CONFIG_PATH: '/workspaces/root/artifacts/llm/config/llm.json',
+          CFXDEVKIT_LLM_CONFIG_PATH: '/workspaces/root/.pi/providers.json',
         }),
       }),
     );
@@ -136,7 +136,7 @@ describe('pi runtime delegation', () => {
   it('awaits terminal setup before starting the PI interactive session', async () => {
     const order: string[] = [];
     providerBridgeFactory.mockResolvedValueOnce({
-      configPath: '/workspaces/root/artifacts/llm/config/llm.json',
+      configPath: '/workspaces/root/.pi/providers.json',
       scope: undefined,
       pi: {
         provider: 'openai',
@@ -171,7 +171,7 @@ describe('pi runtime delegation', () => {
   it('runs the optional post-session terminal phase after PI exits', async () => {
     const order: string[] = [];
     providerBridgeFactory.mockResolvedValueOnce({
-      configPath: '/workspaces/root/artifacts/llm/config/llm.json',
+      configPath: '/workspaces/root/.pi/providers.json',
       scope: undefined,
       pi: {
         provider: 'openai',

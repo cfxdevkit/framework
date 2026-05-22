@@ -142,10 +142,7 @@ type PiAgentModule = {
 export function relativeConfigPath(scope?: string): string {
   if (scope) return relativeAgentConfigPath(scope, process.cwd());
   const repoRoot = resolveRepoRoot(process.cwd());
-  return (
-    relative(process.cwd(), join(repoRoot, 'artifacts', 'llm', 'config', 'llm.json')) ||
-    'artifacts/llm/config/llm.json'
-  );
+  return relative(process.cwd(), join(repoRoot, '.pi', 'providers.json')) || '.pi/providers.json';
 }
 
 export async function withLlmClient<T>(

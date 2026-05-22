@@ -49,7 +49,7 @@ describe('runtime bridge scope handling', () => {
     mocks.resolveAgentConfigPath.mockImplementation((scope?: string) =>
       scope
         ? `/workspaces/root/artifacts/llm/config/units/${scope}.json`
-        : '/workspaces/root/artifacts/llm/config/llm.json',
+        : '/workspaces/root/.pi/providers.json',
     );
     mocks.findMonorepoUnit.mockReturnValue({
       name: 'delivery',

@@ -137,9 +137,13 @@ describe('agentToolingNamespace config and status', () => {
     await agentToolingNamespace.run(['providers']);
 
     expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Recommendation: keep both LiteLLM and direct providers.'),
+      expect.stringContaining(
+        'Recommendation: use PI as the runtime entrypoint and Lemonade as the default local backend.',
+      ),
     );
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('default to auto selection'));
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining('LiteLLM remains a compatibility path, not the intended long-term local default.'),
+    );
   });
 
   it('prints the planned command surface in help output', async () => {
@@ -175,7 +179,7 @@ describe('agentToolingNamespace config and status', () => {
       }),
     );
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Updated '));
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('llm.json'));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('.pi/providers.json'));
   });
 
   it('delegates provider config updates through the current llm-agents config flow', async () => {

@@ -4,6 +4,6 @@
     "controlPlane": "cdk"
   },
   "providers": {
-    "source": "artifacts/llm/config/llm.json"
+    "source": ".pi/providers.json"
   }
 }

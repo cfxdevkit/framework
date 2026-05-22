@@ -85,13 +85,13 @@ Useful commands:
 
 ```sh
 pnpm run agent:status
-pnpm run cdk -- llm models
-pnpm run cdk -- llm config set provider lemonade
-pnpm run cdk -- llm config set base-url http://host.containers.internal:13305/api/v1
-pnpm run cdk -- llm actions
+pnpm run cdk -- agent deterministic models
+pnpm run cdk -- agent config set provider lemonade
+pnpm run cdk -- agent config set base-url http://host.containers.internal:13305/
+pnpm run cdk -- agent exploratory actions
 pnpm run cdk -- llm config set default-model Qwen3-Coder-Next-GGUF
 pnpm run cdk -- llm config set action review Qwen3-Coder-Next-GGUF
-pnpm run cdk -- llm action docs-upkeep
+pnpm run cdk -- agent exploratory action docs-upkeep
 pnpm run cdk -- repo review
 pnpm run cdk -- repo commit -- --dry-run
 pnpm run cdk -- agent print -- --quick "Which validation commands should I run for a docs-only change?"

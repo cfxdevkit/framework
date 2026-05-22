@@ -28,6 +28,7 @@ export {
   configPath,
   configPathEnvVar,
   defaultBaseUrls,
+  legacyCompatConfigPath,
   modelPaths,
 } from '../workers/shared/index.js';
 export {

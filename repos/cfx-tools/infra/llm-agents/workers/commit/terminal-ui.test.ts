@@ -104,7 +104,7 @@ describe('commit terminal ui', () => {
         llm: {
           used: true,
           status: 'ready',
-          configPath: 'artifacts/llm/config/llm.json',
+          configPath: '.pi/providers.json',
           provider: 'litellm',
           model: 'demo-model',
           baseUrl: 'http://127.0.0.1:4000/v1',

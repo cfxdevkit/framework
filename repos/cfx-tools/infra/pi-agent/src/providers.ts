@@ -94,7 +94,7 @@ async function withScopedConfig<T>(
 function resolveScopedConfigPath(scope?: PiScopeName): string {
   const repoRoot = process.cwd();
   if (!scope) {
-    return join(repoRoot, 'artifacts', 'llm', 'config', 'llm.json');
+    return join(repoRoot, '.pi', 'providers.json');
   }
 
   return join(repoRoot, 'artifacts', 'llm', 'config', 'units', `${scope}.json`);

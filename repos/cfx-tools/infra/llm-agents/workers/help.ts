@@ -73,7 +73,7 @@ Examples:
   pnpm run llm:validate-models -- --no-thinking
   pnpm run llm:config -- set provider lemonade
   pnpm run llm:config -- set provider litellm
-  pnpm run llm:config -- set base-url http://host.containers.internal:13305/api/v1
+  pnpm run llm:config -- set base-url http://host.containers.internal:13305/
   pnpm run llm:config -- set default-model Qwen3-Coder-Next-GGUF
   pnpm run llm:model
   pnpm run llm:config -- set request-timeout-ms 600000

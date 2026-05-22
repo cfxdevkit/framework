@@ -113,27 +113,32 @@ Current role:
 export function printProvidersStrategy(): void {
   console.log(`cdk agent provider strategy
 
-Recommendation: keep both LiteLLM and direct providers.
+Recommendation: use PI as the runtime entrypoint and Lemonade as the default local backend.
 
-Use LiteLLM when you want:
-  - one gateway URL for multiple models
-  - shared routing, policy, quotas, or observability
-  - a team-default control point for model access
+Use direct Lemonade when you want:
+  - local model discovery from the shared host Lemonade service
+  - the simplest path for repository-local model work
+  - PI and repo tooling to describe the same backend consistently
 
-Use direct providers when you want:
-  - local or provider-specific debugging
-  - features that are awkward to preserve through a gateway
-  - GitHub or custom provider flows that already exist in the repo
+Use PI cloud providers when you want:
+  - remote coding models through authenticated PI sessions
+  - the built-in provider/auth flow instead of custom gateway wiring
+  - one operator surface for interactive, print, and RPC modes
+
+Keep LiteLLM only when you need:
+  - short-term compatibility with older direct worker flows
+  - a temporary external gateway during the migration
+  - explicit shared routing behavior that has not been moved into PI yet
 
 Planned cdk agent behavior:
-  - default to auto selection
-  - prefer LiteLLM when configured as the team gateway
-  - allow explicit direct provider selection for local and advanced workflows
-  - keep current provider discovery logic reusable during the first migration
+  - default local runs to Lemonade-compatible configuration
+  - keep PI as the only interactive/runtime gateway for LLM work
+  - preserve explicit provider selection for compatibility while legacy flows remain
+  - remove LiteLLM-first guidance as direct worker paths are retired
 
 Conclusion:
-  LiteLLM should not be treated as the only backend and does not need to be removed.
-  cdk agent should sit above the provider layer and support both gateway and direct modes.
+  New local setups should target Lemonade or PI cloud providers, not LiteLLM.
+  LiteLLM remains a compatibility path, not the intended long-term local default.
 `);
 }
 
