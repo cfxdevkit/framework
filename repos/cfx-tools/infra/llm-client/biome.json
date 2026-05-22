@@ -1,8 +1,4 @@
 {
   "extends": ["../../../../repos/cfx-config/packages/biome-config/biome.json"],
-  "root": false,
-  "vcs": {
-    "enabled": false,
-    "useIgnoreFile": false
-  }
+  "root": false
 }

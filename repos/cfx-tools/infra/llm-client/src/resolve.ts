@@ -7,7 +7,9 @@ import { LiteLLMProvider } from './litellm.js';
 import { OpenAICompatProvider } from './openai-compat.js';
 import type { LlmProvider, ResolveProviderAttempt } from './types.js';
 
-function configuredProvider(config: { provider?: string | null }): 'lemonade' | 'litellm' | 'openai-compat' | 'github-models' {
+function configuredProvider(config: {
+  provider?: string | null;
+}): 'lemonade' | 'litellm' | 'openai-compat' | 'github-models' {
   if (config.provider === 'litellm') return 'litellm';
   if (config.provider === 'openai-compat') return 'openai-compat';
   if (config.provider === 'github-models') return 'github-models';
@@ -29,7 +31,10 @@ export async function resolveProvider(): Promise<LlmProvider> {
       return new LiteLLMProvider({ baseUrl: config.baseUrl, defaultModel: config.defaultModel });
     }
     if (provider === 'openai-compat') {
-      return new OpenAICompatProvider({ baseUrl: config.baseUrl, defaultModel: config.defaultModel });
+      return new OpenAICompatProvider({
+        baseUrl: config.baseUrl,
+        defaultModel: config.defaultModel,
+      });
     }
     return new LemonadeProvider({ baseUrl: config.baseUrl, defaultModel: config.defaultModel });
   }

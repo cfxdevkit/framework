@@ -6,8 +6,10 @@ import type {
 } from './contracts.js';
 import { rootDocsToolingNamespace } from './docs-namespace.js';
 
-export const toolingNamespaces = [llmToolingNamespace, rootDocsToolingNamespace] as const satisfies
-  readonly ToolingNamespaceDefinition[];
+export const toolingNamespaces = [
+  llmToolingNamespace,
+  rootDocsToolingNamespace,
+] as const satisfies readonly ToolingNamespaceDefinition[];
 
 export function findToolingNamespace(
   name: string,

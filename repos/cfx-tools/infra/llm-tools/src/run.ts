@@ -4,7 +4,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findLlmCommand, type LlmCommandDefinition, llmCommands } from './commands.js';
 
-const packageDir = join(findRepoRoot(dirname(fileURLToPath(import.meta.url))), 'repos/cfx-tools/infra/llm-tools');
+const packageDir = join(
+  findRepoRoot(dirname(fileURLToPath(import.meta.url))),
+  'repos/cfx-tools/infra/llm-tools',
+);
 
 export async function runCli(rawArgs: readonly string[]): Promise<void> {
   const args = rawArgs[0] === '--' ? rawArgs.slice(1) : rawArgs;

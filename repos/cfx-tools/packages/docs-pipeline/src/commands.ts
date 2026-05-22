@@ -33,7 +33,13 @@ export function resolveDocsInvocation(
   args: readonly string[],
 ): { command: DocsCommandName; extraArgs: readonly string[] } {
   if (commandName === 'sync') {
-    const target = normalizeTarget(args[0], ['all', 'packages', 'wiki', 'architecture', 'coverage']);
+    const target = normalizeTarget(args[0], [
+      'all',
+      'packages',
+      'wiki',
+      'architecture',
+      'coverage',
+    ]);
     const command: DocsCommandName =
       target === 'all'
         ? 'sync:all'

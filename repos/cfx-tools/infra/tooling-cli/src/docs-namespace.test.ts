@@ -15,7 +15,9 @@ describe('rootDocsToolingNamespace', () => {
     await rootDocsToolingNamespace.run(['help']);
 
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Enrichment patterns:'));
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('enrich [all|api|readme|packages|structure|content] [args]'));
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining('enrich [all|api|readme|packages|structure|content] [args]'),
+    );
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('probe api [args]'));
   });
 

@@ -107,7 +107,9 @@ export function renderStructureSkeleton(
 }
 
 function renderExportLines(pkg: StructurePackageInfo): string {
-  const subpaths = Object.entries(pkg.subpaths ?? {}).filter(([subpath]) => subpath !== './package.json');
+  const subpaths = Object.entries(pkg.subpaths ?? {}).filter(
+    ([subpath]) => subpath !== './package.json',
+  );
   if (subpaths.length === 0) {
     return '- No package.json exports map was detected.';
   }

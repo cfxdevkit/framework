@@ -5,9 +5,9 @@ import {
   embedStructureMetadata,
   readEmbeddedStructureHash,
   renderStructureSkeleton,
+  stripStructureMetadata,
   structureIdentityTokens,
   structureNeedsEnrichment,
-  stripStructureMetadata,
 } from './structure.js';
 
 describe('structure helpers', () => {

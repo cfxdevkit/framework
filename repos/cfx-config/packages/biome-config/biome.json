@@ -10,9 +10,18 @@
     "ignoreUnknown": true,
     "includes": [
       "**",
+      "!artifacts",
+      "!artifacts/**",
+      "!.gitnexus",
+      "!.gitnexus/**",
+      "!payload.json",
       "!**/dist",
+      "!**/build",
+      "!**/out",
       "!**/node_modules",
       "!**/coverage",
+      "!**/.next",
+      "!**/.vite",
       "!**/.moon/cache",
       "!**/.vitest"
     ]

@@ -1,4 +1,10 @@
-import { chooseBestModel, joinEndpoint, modelIdentifier, parseModels, postChatCompletion } from './http.js';
+import {
+  chooseBestModel,
+  joinEndpoint,
+  modelIdentifier,
+  parseModels,
+  postChatCompletion,
+} from './http.js';
 import type {
   ChatMessage,
   CompletionAttempt,
@@ -22,8 +28,7 @@ export class LiteLLMProvider implements LlmProvider {
   constructor(options: LiteLLMProviderOptions = {}) {
     this.baseUrl =
       options.baseUrl ?? process.env.LITELLM_BASE_URL ?? process.env.OPENAI_BASE_URL ?? '';
-    this.apiKey =
-      options.apiKey ?? process.env.LITELLM_API_KEY ?? process.env.OPENAI_API_KEY ?? '';
+    this.apiKey = options.apiKey ?? process.env.LITELLM_API_KEY ?? process.env.OPENAI_API_KEY ?? '';
     this.defaultModel =
       options.defaultModel ??
       process.env.LITELLM_MODEL ??

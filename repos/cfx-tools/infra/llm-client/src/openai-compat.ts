@@ -1,4 +1,10 @@
-import { chooseBestModel, joinEndpoint, modelIdentifier, parseModels, postChatCompletion } from './http.js';
+import {
+  chooseBestModel,
+  joinEndpoint,
+  modelIdentifier,
+  parseModels,
+  postChatCompletion,
+} from './http.js';
 import type {
   ChatMessage,
   CompletionAttempt,

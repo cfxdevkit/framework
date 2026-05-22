@@ -13,15 +13,23 @@ import {
 
 describe('workspace document contract', () => {
   it('requires README and STRUCTURE for public tooling packages', () => {
-    const requirements = getPublicPackageDocumentRequirements('repos/cfx-tools/packages/mcp-server');
+    const requirements = getPublicPackageDocumentRequirements(
+      'repos/cfx-tools/packages/mcp-server',
+    );
 
-    expect(requirements.map((requirement) => requirement.path)).toEqual(['README.md', 'STRUCTURE.md']);
+    expect(requirements.map((requirement) => requirement.path)).toEqual([
+      'README.md',
+      'STRUCTURE.md',
+    ]);
   });
 
   it('requires README and STRUCTURE for non-tooling public packages too', () => {
     const requirements = getPublicPackageDocumentRequirements('repos/cfx-core/packages/cdk');
 
-    expect(requirements.map((requirement) => requirement.path)).toEqual(['README.md', 'STRUCTURE.md']);
+    expect(requirements.map((requirement) => requirement.path)).toEqual([
+      'README.md',
+      'STRUCTURE.md',
+    ]);
   });
 
   it('treats projects/examples as a lighter project-root contract', () => {
@@ -117,14 +125,22 @@ describe('workspace document contract', () => {
   });
 
   it('keeps default docs upkeep scoped to managed documentation paths', () => {
-    expect(isDocumentationUpkeepPath('docs/architecture/framework-design-principles.md')).toBe(true);
+    expect(isDocumentationUpkeepPath('docs/architecture/framework-design-principles.md')).toBe(
+      true,
+    );
     expect(isDocumentationUpkeepPath('infrastructure/README.md')).toBe(true);
     expect(isDocumentationUpkeepPath('repos/cfx-tools/README.md')).toBe(true);
     expect(isDocumentationUpkeepPath('projects/cas/README.md')).toBe(true);
 
-    expect(isDocumentationUpkeepPath('openspec/changes/archive/unify-root-tooling-cli/tasks.md')).toBe(false);
+    expect(
+      isDocumentationUpkeepPath('openspec/changes/archive/unify-root-tooling-cli/tasks.md'),
+    ).toBe(false);
     expect(isDocumentationUpkeepPath('repos/cfx-core/packages/cdk/README.md')).toBe(false);
-    expect(isDocumentationUpkeepPath('repos/cfx-tools/packages/docs-site/content/packages/llm-client.mdx')).toBe(false);
+    expect(
+      isDocumentationUpkeepPath(
+        'repos/cfx-tools/packages/docs-site/content/packages/llm-client.mdx',
+      ),
+    ).toBe(false);
   });
 
   it('allows explicit docs upkeep scopes outside the default managed set', () => {
@@ -134,9 +150,12 @@ describe('workspace document contract', () => {
       }),
     ).toBe(true);
     expect(
-      isDocumentationUpkeepPath('repos/cfx-tools/packages/docs-site/content/packages/llm-client.mdx', {
-        scopes: ['repos/cfx-tools/packages/docs-site/content/packages'],
-      }),
+      isDocumentationUpkeepPath(
+        'repos/cfx-tools/packages/docs-site/content/packages/llm-client.mdx',
+        {
+          scopes: ['repos/cfx-tools/packages/docs-site/content/packages'],
+        },
+      ),
     ).toBe(true);
     expect(
       isDocumentationUpkeepPath('openspec/changes/archive/unify-root-tooling-cli/tasks.md', {

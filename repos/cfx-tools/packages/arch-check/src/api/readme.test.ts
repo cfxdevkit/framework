@@ -13,9 +13,7 @@ const pkg = {
 
 describe('readme helpers', () => {
   it('detects missing required sections', () => {
-    expect(
-      checkReadmeSections(['# `@cfxdevkit/devnode`', '', '## Install'].join('\n')),
-    ).toEqual({
+    expect(checkReadmeSections(['# `@cfxdevkit/devnode`', '', '## Install'].join('\n'))).toEqual({
       hasInstall: true,
       hasUsage: false,
       hasApiLink: false,

@@ -21,7 +21,8 @@ export function parseDocsApiProbeResponse(content: string): DocsApiProbeResult {
     .find((line) => /^OK\|/.test(line));
 
   if (lineMatch) {
-    const [, pkg, heading, hasTsFenceToken] = lineMatch.match(/^OK\|([^|]+)\|([^|]+)\|(yes|no)$/i) ?? [];
+    const [, pkg, heading, hasTsFenceToken] =
+      lineMatch.match(/^OK\|([^|]+)\|([^|]+)\|(yes|no)$/i) ?? [];
     if (pkg && heading && hasTsFenceToken) {
       return {
         status: 'ok',
@@ -59,7 +60,10 @@ async function callDocsApiProbe(
   apiContent: string,
   flags: DocsApiFlags,
 ): Promise<{ result: DocsApiProbeResult; model: string; baseUrl: string }> {
-  const snippet = apiContent.split('\n').slice(0, flags.quick ? 24 : 40).join('\n');
+  const snippet = apiContent
+    .split('\n')
+    .slice(0, flags.quick ? 24 : 40)
+    .join('\n');
   const systemPrompt = [
     'You are validating a TypeScript API documentation enrichment pipeline.',
     'Return exactly one line using this format and nothing else:',

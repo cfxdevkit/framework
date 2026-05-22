@@ -112,17 +112,14 @@ function rebuildSubpathsSection(
   for (const [index, existingRow] of existingTable.rows.entries()) {
     const candidateRow = candidateTable.rows[index];
     if (candidateRow.importPath !== existingRow.importPath) return null;
-    if (!candidateRow.description || isPlaceholderDescription(candidateRow.description)) return null;
+    if (!candidateRow.description || isPlaceholderDescription(candidateRow.description))
+      return null;
     rebuiltRows.push(`| \`${existingRow.importPath}\` | ${candidateRow.description} |`);
   }
 
-  return [
-    '## Sub-paths',
-    '',
-    existingTable.header,
-    existingTable.separator,
-    ...rebuiltRows,
-  ].join('\n');
+  return ['## Sub-paths', '', existingTable.header, existingTable.separator, ...rebuiltRows].join(
+    '\n',
+  );
 }
 
 function isValidPackagePageTail(candidateTail: string, existingTail: string): boolean {
@@ -172,7 +169,9 @@ export function validatePackagePageEnrichment(
     const candidateTail = candidate.slice(candidateSubpaths.end).trim();
     if (!isValidPackagePageTail(candidateTail, existingTail)) return null;
 
-    return [existingPrefix, install.text.trimEnd(), rebuiltSubpaths, candidateTail].join('\n\n').trimEnd();
+    return [existingPrefix, install.text.trimEnd(), rebuiltSubpaths, candidateTail]
+      .join('\n\n')
+      .trimEnd();
   }
 
   const existingTail = existing.slice(install.end).trim();

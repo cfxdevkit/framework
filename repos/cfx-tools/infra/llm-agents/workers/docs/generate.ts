@@ -50,33 +50,35 @@ export async function generateDocsUpkeepArtifact(scope, baseContext, flags, chil
     return parsed;
   }
 
-    const retryPrompt = [
-      flags.prompt || repoActions['docs-upkeep'].defaultPrompt,
-      '',
-      `Folder scope: ${scope.label}`,
-      `Existing files: ${scope.files.join(', ')}`,
-      '',
-      'Write the final folder upkeep artifact directly as markdown.',
-      'Use sections: Current State, Drift or Gaps, Recommended Edits, Validation.',
-      'Do not return JSON, markdown fences, or planning text.',
-      '',
-      'Repository docs context:',
-      baseContext.slice(0, flags.quick ? 5000 : 12000),
-      childContext ? `\n${childContext.slice(0, flags.quick ? 2000 : 6000)}` : '',
-      '',
-      'Folder contents:',
-      retryFolderContext,
-    ]
-      .filter((s) => s !== '')
-      .join('\n');
-    const retryResponse = await completeDocsUpkeepArtifact({
-      flags,
-      scopeLabel: scope.label,
-      userPrompt: retryPrompt,
-      maxTokens: resolveDocsUpkeepArtifactMaxTokens(retryPrompt, flags),
-    });
-    return parseDocsUpkeepArtifactResponse(scope, retryResponse.content ?? '')
-      ?? fallbackDocsUpkeepArtifact(scope, retryResponse.content ?? '');
+  const retryPrompt = [
+    flags.prompt || repoActions['docs-upkeep'].defaultPrompt,
+    '',
+    `Folder scope: ${scope.label}`,
+    `Existing files: ${scope.files.join(', ')}`,
+    '',
+    'Write the final folder upkeep artifact directly as markdown.',
+    'Use sections: Current State, Drift or Gaps, Recommended Edits, Validation.',
+    'Do not return JSON, markdown fences, or planning text.',
+    '',
+    'Repository docs context:',
+    baseContext.slice(0, flags.quick ? 5000 : 12000),
+    childContext ? `\n${childContext.slice(0, flags.quick ? 2000 : 6000)}` : '',
+    '',
+    'Folder contents:',
+    retryFolderContext,
+  ]
+    .filter((s) => s !== '')
+    .join('\n');
+  const retryResponse = await completeDocsUpkeepArtifact({
+    flags,
+    scopeLabel: scope.label,
+    userPrompt: retryPrompt,
+    maxTokens: resolveDocsUpkeepArtifactMaxTokens(retryPrompt, flags),
+  });
+  return (
+    parseDocsUpkeepArtifactResponse(scope, retryResponse.content ?? '') ??
+    fallbackDocsUpkeepArtifact(scope, retryResponse.content ?? '')
+  );
 }
 
 export function fallbackDocsUpkeepArtifact(scope, content) {

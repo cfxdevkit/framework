@@ -16,15 +16,21 @@ export function createLlmProgressReporter(label: string) {
       return;
     }
     if (event.phase === 'headers') {
-      logInfo(`    [llm] endpoint responded with status ${event.status ?? 'unknown'} after ${elapsedSeconds}s`);
+      logInfo(
+        `    [llm] endpoint responded with status ${event.status ?? 'unknown'} after ${elapsedSeconds}s`,
+      );
       return;
     }
     if (event.phase === 'reasoning') {
-      logInfo(`    [llm] model is reasoning... (${event.reasoningChars ?? 0} chars, ${elapsedSeconds}s)`);
+      logInfo(
+        `    [llm] model is reasoning... (${event.reasoningChars ?? 0} chars, ${elapsedSeconds}s)`,
+      );
       return;
     }
     if (event.phase === 'content') {
-      logInfo(`    [llm] model started emitting answer text (${event.contentChars ?? 0} chars, ${elapsedSeconds}s)`);
+      logInfo(
+        `    [llm] model started emitting answer text (${event.contentChars ?? 0} chars, ${elapsedSeconds}s)`,
+      );
       return;
     }
     if (event.phase === 'heartbeat') {

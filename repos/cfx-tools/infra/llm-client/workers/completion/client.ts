@@ -12,7 +12,9 @@ export function normalizeBaseUrl(url) {
 
 export function resolveRequestTimeoutMs(config) {
   const raw =
-    config?.requestTimeoutMs ?? process.env.LLM_REQUEST_TIMEOUT_MS ?? process.env.LEMONADE_REQUEST_TIMEOUT_MS;
+    config?.requestTimeoutMs ??
+    process.env.LLM_REQUEST_TIMEOUT_MS ??
+    process.env.LEMONADE_REQUEST_TIMEOUT_MS;
   const value = Number(raw ?? DEFAULT_REQUEST_TIMEOUT_MS);
   return Number.isFinite(value) && value > 0 ? value : DEFAULT_REQUEST_TIMEOUT_MS;
 }

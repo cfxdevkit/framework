@@ -11,29 +11,29 @@ describe('parseApiEnrichmentResponse', () => {
   });
 
   it('accepts fenced JSON responses', () => {
-    const lines = parseApiEnrichmentResponse([
-      '```json',
-      '{"enrichedLines":["# title","","## `.`"]}',
-      '```',
-    ].join('\n'));
+    const lines = parseApiEnrichmentResponse(
+      ['```json', '{"enrichedLines":["# title","","## `.`"]}', '```'].join('\n'),
+    );
 
     expect(lines).toEqual(['# title', '', '## `.`']);
   });
 
   it('accepts markdown responses when the model skips JSON', () => {
-    const lines = parseApiEnrichmentResponse([
-      '# `@cfxdevkit/executor` — Public API',
-      '',
-      '## `.`',
-      '',
-      '### Usage',
-      '',
-      '```ts',
-      'export {}',
-      '```',
-      '',
-      '<!-- api-hash: deadbeef -->',
-    ].join('\n'));
+    const lines = parseApiEnrichmentResponse(
+      [
+        '# `@cfxdevkit/executor` — Public API',
+        '',
+        '## `.`',
+        '',
+        '### Usage',
+        '',
+        '```ts',
+        'export {}',
+        '```',
+        '',
+        '<!-- api-hash: deadbeef -->',
+      ].join('\n'),
+    );
 
     expect(lines).toEqual([
       '# `@cfxdevkit/executor` — Public API',

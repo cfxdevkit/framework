@@ -129,10 +129,7 @@ async function callEnrichmentLlm(
   return parseApiEnrichmentResponse(response.content ?? '');
 }
 
-export async function enrichApiMd(
-  rel: string,
-  flags: DocsApiEnrichmentFlags,
-): Promise<boolean> {
+export async function enrichApiMd(rel: string, flags: DocsApiEnrichmentFlags): Promise<boolean> {
   const apiMdPath = join(root, rel, 'API.md');
   let existing: string;
   try {
