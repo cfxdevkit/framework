@@ -34,7 +34,9 @@
   },
   "dependencies": {
     "@cfxdevkit/docs-pipeline": "workspace:*",
-    "@cfxdevkit/llm-tools": "workspace:*"
+    "@cfxdevkit/pi-agent": "workspace:*",
+    "@cfxdevkit/llm-tools": "workspace:*",
+    "commander": "^14.0.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",

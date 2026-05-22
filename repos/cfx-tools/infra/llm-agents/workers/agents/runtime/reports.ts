@@ -60,14 +60,12 @@ export function renderFindings(title, findings) {
 }
 
 export function renderReview(report) {
-  const lines = [
-    '# LLM Review Agent Report',
-    '',
-    `Generated: ${report.generatedAt}`,
-    '',
-    '## Changed Files',
-    '',
-  ];
+  const lines = ['# LLM Review Agent Report', '', `Generated: ${report.generatedAt}`, ''];
+  if (report.executionContext) {
+    lines.push('## Execution Context', '');
+    lines.push(...renderExecutionContext(report.executionContext), '');
+  }
+  lines.push('## Changed Files', '');
   lines.push(
     ...(report.changedFiles.length
       ? report.changedFiles.map((file) => `- ${file}`)
@@ -138,18 +136,44 @@ export function renderServeCheck(report) {
 }
 
 export function renderAgentRun(report) {
-  return [
-    '# LLM Agent Run',
-    '',
-    `Generated: ${report.generatedAt}`,
-    '',
-    ...report.results.map((result) => `- ${result.agent}: ${result.status}`),
-  ].join('\n');
+  const lines = ['# LLM Agent Run', '', `Generated: ${report.generatedAt}`, ''];
+  if (report.executionContext) {
+    lines.push('## Execution Context', '', ...renderExecutionContext(report.executionContext), '');
+  }
+  lines.push(...report.results.map((result) => `- ${result.agent}: ${result.status}`));
+  return lines.join('\n');
 }
 
 export function printSummary(label, results) {
   console.log(`${label} complete`);
   for (const result of results) {
+    if (isRecord(result.executionContext)) {
+      for (const line of renderExecutionContext(result.executionContext)) {
+        console.log(line);
+      }
+    }
     console.log(JSON.stringify(result));
   }
+}
+
+function renderExecutionContext(context) {
+  const unit = context.unit
+    ? `${context.unit.name} (${context.unit.rootDir})`
+    : 'shared repo config';
+  const llm =
+    context.llm?.status === 'not-used'
+      ? 'not used'
+      : context.llm?.status === 'ready'
+        ? `${context.llm.provider} :: ${context.llm.model ?? 'auto'}${context.llm.baseUrl ? ` @ ${context.llm.baseUrl}` : ''}`
+        : `unavailable${context.llm?.error ? ` (${context.llm.error})` : ''}`;
+
+  return [
+    `- Unit: ${unit}`,
+    `- Config: ${context.llm?.configPath ?? 'artifacts/llm/config/llm.json'}`,
+    `- LLM: ${llm}`,
+  ];
+}
+
+function isRecord(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }

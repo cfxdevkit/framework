@@ -11,7 +11,6 @@ Commands:
   config set default-model <id>  Pin default model id; omit <id> for interactive picker
   config set request-timeout-ms <ms>  Set provider request timeout in milliseconds
   config set action <name> <id>  Pin model for one repo action
-  ask [--quick] "question"       Ask a repo-aware question
   validate-models [flags]        Validate discovered models with a tiny prompt
     --model <id>                 Probe only one discovered model
     --limit <n>                  Limit number of probed models
@@ -94,8 +93,6 @@ Examples:
   pnpm run llm:docs-upkeep -- --quick --write --yes --max-folders 3
   pnpm run llm:docs-upkeep -- --scope docs/architecture --max-folders 1
   pnpm run llm:test-audit
-  pnpm run llm:ask -- --quick "Where should a docs alignment scanner live?"
-
   pnpm run llm:test-upkeep
   pnpm run llm:test-upkeep -- --scope repos/cfx-core/packages/cdk
   pnpm run llm:test-upkeep -- --quick --scope repos/cfx-core/packages/cdk

@@ -17,6 +17,7 @@ host baseline.
 ## What It Enables
 
 - Node `24.x`, pnpm `10.33.2`, Moon `2.2.3`, TypeScript `6`, Vite `8`, Vitest `4`, and Biome `2`
+- Native search tools available in the base image, including `rg` and `fd`
 - Docker CLI access through the host Docker socket for compose/image workflows
 - GitHub CLI for repository automation
 - GitNexus CLI from the workspace dependency, registered on container start
@@ -101,6 +102,12 @@ To check what the devcontainer can see, run:
 If every endpoint fails but the host shell can reach Lemonade, the container is
 still running with isolated networking. Rebuild the devcontainer rather than only
 reloading VS Code, because `runArgs` only apply when the container is created.
+
+## PI Runtime Prerequisites
+
+The base image now installs `fd` at build time through Debian's `fd-find` package
+and a compatibility symlink. That avoids PI's first-run fallback download path and
+keeps `cdk agent interactive|print|rpc` startup deterministic inside fresh containers.
 
 ## Notes
 

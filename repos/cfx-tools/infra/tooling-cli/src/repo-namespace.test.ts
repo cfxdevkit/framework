@@ -9,7 +9,32 @@ const llmAgents = vi.hoisted(() => ({
 
 const spawnMock = vi.hoisted(() => vi.fn());
 
-vi.mock('../../llm-agents/src/index.js', () => llmAgents);
+vi.mock('./agent-runtime.js', async () => {
+  const actual = await vi.importActual<typeof import('./agent-runtime.js')>('./agent-runtime.js');
+  return {
+    ...actual,
+    withLlmAgents: async (run: (agents: typeof llmAgents) => Promise<unknown> | unknown) => {
+      await run(llmAgents);
+    },
+    withAgentScope: async (scope: string | undefined, work: () => Promise<unknown> | unknown) => {
+      if (!scope) {
+        return await work();
+      }
+
+      const previous = process.env.CFXDEVKIT_LLM_CONFIG_PATH;
+      process.env.CFXDEVKIT_LLM_CONFIG_PATH = `/workspaces/root/artifacts/llm/config/units/${scope}.json`;
+      try {
+        return await work();
+      } finally {
+        if (previous === undefined) {
+          delete process.env.CFXDEVKIT_LLM_CONFIG_PATH;
+        } else {
+          process.env.CFXDEVKIT_LLM_CONFIG_PATH = previous;
+        }
+      }
+    },
+  };
+});
 
 vi.mock('node:child_process', () => ({
   spawn: spawnMock,
@@ -40,7 +65,9 @@ describe('repoToolingNamespace', () => {
 
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('cdk repo'));
     expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining('check <hotspots|docs|ci|secrets|corpus|eval>'),
+      expect.stringContaining(
+        'check <hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval>',
+      ),
     );
   });
 
@@ -50,6 +77,26 @@ describe('repoToolingNamespace', () => {
     expect(spawnMock).toHaveBeenCalledWith(
       'pnpm',
       ['run', 'check:hotspots'],
+      expect.objectContaining({ stdio: 'inherit' }),
+    );
+  });
+
+  it('routes kebab-group checks through the root script', async () => {
+    await repoToolingNamespace.run(['check', 'kebab-groups']);
+
+    expect(spawnMock).toHaveBeenCalledWith(
+      'pnpm',
+      ['run', 'check:kebab-groups'],
+      expect.objectContaining({ stdio: 'inherit' }),
+    );
+  });
+
+  it('routes unit-config checks through the root script', async () => {
+    await repoToolingNamespace.run(['check', 'unit-configs']);
+
+    expect(spawnMock).toHaveBeenCalledWith(
+      'pnpm',
+      ['run', 'check:unit-configs'],
       expect.objectContaining({ stdio: 'inherit' }),
     );
   });
@@ -64,6 +111,28 @@ describe('repoToolingNamespace', () => {
     await repoToolingNamespace.run(['precommit', '--force']);
 
     expect(llmAgents.runPrecommit).toHaveBeenCalledWith(['--force']);
+  });
+
+  it('lists the registered monorepo units', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await repoToolingNamespace.run(['units']);
+
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Registered monorepo units:'));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('docs'));
+  });
+
+  it('routes scoped precommit through the selected unit overlay', async () => {
+    llmAgents.runPrecommit.mockImplementationOnce(async () => {
+      expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toContain(
+        '/artifacts/llm/config/units/repos.json',
+      );
+    });
+
+    await repoToolingNamespace.run(['precommit', '--scope', 'repos', '--force']);
+
+    expect(llmAgents.runPrecommit).toHaveBeenCalledWith(['--force']);
+    expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toBeUndefined();
   });
 
   it('routes commit through the current llm-agents commit worker', async () => {

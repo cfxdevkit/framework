@@ -1,7 +1,7 @@
 import { createInterface } from 'node:readline/promises';
+import { relative } from 'node:path';
 import {
   buildActionContext,
-  buildBaseContext,
   complete,
   defaultConfig,
   getProviderBaseUrl,
@@ -11,8 +11,27 @@ import {
   writeConfig,
   writeLlmReport,
 } from './completion/index.ts';
-import { repoActions } from './shared/index.ts';
+import {
+  configPathEnvVar,
+  listRepoActions,
+  repoActions,
+  type RepoActionDefinition,
+  type RepoActionName,
+} from './shared/index.ts';
+import {
+  logExecutionContext,
+  resolveExecutionContext,
+  toExecutionContextRuntimePayload,
+  type ExecutionContextRuntimePayload,
+} from './shared/execution-context.ts';
 export { validateModels } from './validate-models.ts';
+
+export interface RepoActionExecutionResult {
+  readonly action: RepoActionName;
+  readonly definition: RepoActionDefinition;
+  readonly executionContext: ExecutionContextRuntimePayload;
+  readonly response: Awaited<ReturnType<typeof complete>>;
+}
 
 const providerTypes = ['lemonade', 'litellm', 'openai-compat', 'github-models'] as const;
 
@@ -140,25 +159,23 @@ export async function configure(args) {
   console.log(`Updated ${relativeConfigPath()}`);
 }
 
-export async function ask(args) {
-  const { prompt, model, quick } = parsePromptAndFlags(args);
-  if (!prompt) throw new Error('Usage: pnpm run llm:ask -- "your repo question"');
-  const response = await complete({
-    action: 'ask',
-    modelOverride: model,
-    userPrompt: prompt,
-    context: await buildBaseContext({ quick }),
-    quick,
-  });
-  await writeLlmReport('ask', response);
-  console.log(response.content);
+export async function runAction(args) {
+  const result = await executeAction(args);
+  console.log(result.response.content);
+  return result;
 }
 
-export async function runAction(args) {
+export async function executeAction(args): Promise<RepoActionExecutionResult> {
   if (args[0] === '--') args.shift();
   const [action, ...rest] = args;
   assertAction(action);
   const { prompt, model, quick } = parsePromptAndFlags(rest);
+  const executionContext = await resolveExecutionContext({
+    useLlm: true,
+    action,
+    modelOverride: model,
+  });
+  logExecutionContext(executionContext);
   const spec = repoActions[action];
   const context = await buildActionContext(spec, { quick });
   const response = await complete({
@@ -169,13 +186,25 @@ export async function runAction(args) {
     quick,
   });
   await writeLlmReport(action, response);
-  console.log(response.content);
+  return {
+    action,
+    definition: spec,
+    executionContext: toExecutionContextRuntimePayload(executionContext),
+    response,
+  };
 }
 
 export function listActions() {
-  for (const [name, spec] of Object.entries(repoActions)) {
+  for (const [name, spec] of listRepoActions()) {
     console.log(`${name}: ${spec.title}`);
   }
+}
+
+export function getActionDefinitions(): readonly {
+  name: RepoActionName;
+  definition: RepoActionDefinition;
+}[] {
+  return listRepoActions().map(([name, definition]) => ({ name, definition }));
 }
 
 // ─── Docs upkeep pipeline ────────────────────────────────────────────────────
@@ -206,5 +235,9 @@ export function assertAction(action) {
 }
 
 export function relativeConfigPath() {
+  const scopedPath = process.env[configPathEnvVar];
+  if (scopedPath) {
+    return relative(process.cwd(), scopedPath) || scopedPath;
+  }
   return 'artifacts/llm/config/llm.json';
 }

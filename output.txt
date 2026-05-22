@@ -1,0 +1,328 @@
+▮▮▮▮ There's a new version of moon available, 2.2.5 (currently on 2.2.4)!
+▮▮▮▮ Daemon, AI skill, async experiments, and more!
+▮▮▮▮ Learn more: https://moonrepo.dev/blog/moon-v2.2
+▮▮▮▮ Install with: https://moonrepo.dev/docs/install
+▮▮▮▮ contracts:typecheck (8e13a319)
+▮▮▮▮ contracts:typecheck (1s 618ms, 8e13a319)
+▮▮▮▮ react:typecheck (f4093997)
+▮▮▮▮ react:typecheck (1s 531ms, f4093997)
+▮▮▮▮ biome-config:typecheck (no op, 01749021)
+▮▮▮▮ testing:typecheck (e3d5a9e3)
+▮▮▮▮ testing:typecheck (1s 236ms, e3d5a9e3)
+▮▮▮▮ showcase-local:typecheck (eb789235)
+▮▮▮▮ showcase-local:typecheck (2s 352ms, eb789235)
+▮▮▮▮ game-engine:typecheck (fe65355d)
+▮▮▮▮ game-engine:typecheck (641ms, fe65355d)
+▮▮▮▮ arch-rules:typecheck (23a99836)
+▮▮▮▮ arch-rules:typecheck (650ms, 23a99836)
+▮▮▮▮ wallet:typecheck (bf933021)
+▮▮▮▮ wallet:typecheck (1s 436ms, bf933021)
+▮▮▮▮ tsconfig:typecheck (no op, 6b6d5cd3)
+▮▮▮▮ automation:typecheck (681f0566)
+▮▮▮▮ automation:typecheck (1s 610ms, 681f0566)
+▮▮▮▮ codegen-contracts:typecheck (e61f085b)
+▮▮▮▮ codegen-contracts:typecheck (654ms, e61f085b)
+▮▮▮▮ llm-agents:typecheck (afc18b5a)
+▮▮▮▮ llm-agents:typecheck (967ms, afc18b5a)
+▮▮▮▮ cdk:typecheck (7ec1dbe7)
+▮▮▮▮ cdk:typecheck (2s 394ms, 7ec1dbe7)
+▮▮▮▮ abis:typecheck (eff2c1ec)
+▮▮▮▮ abis:typecheck (859ms, eff2c1ec)
+▮▮▮▮ client:typecheck (e31ddbb9)
+▮▮▮▮ client:typecheck (705ms, e31ddbb9)
+▮▮▮▮ defi-react:typecheck (91c8e944)
+▮▮▮▮ defi-react:typecheck (2s 88ms, 91c8e944)
+▮▮▮▮ ui:typecheck (41af1791)
+▮▮▮▮ ui:typecheck (1s 255ms, 41af1791)
+▮▮▮▮ scaffold-cli:typecheck (d9b6e0fc)
+▮▮▮▮ scaffold-cli:typecheck (694ms, d9b6e0fc)
+▮▮▮▮ ui-core:typecheck (c41e49d3)
+▮▮▮▮ ui-core:typecheck (1s 86ms, c41e49d3)
+▮▮▮▮ executor:typecheck (33aed402)
+▮▮▮▮ executor:typecheck (696ms, 33aed402)
+▮▮▮▮ cli:typecheck (693edf50)
+▮▮▮▮ cli:typecheck (1s 307ms, 693edf50)
+▮▮▮▮ protocol:typecheck (e5f9194b)
+▮▮▮▮ protocol:typecheck (1s 276ms, e5f9194b)
+▮▮▮▮ moon-config:typecheck (no op, dc072ad2)
+▮▮▮▮ mcp-server:typecheck (46de998d)
+▮▮▮▮ mcp-server:typecheck (1s 644ms, 46de998d)
+▮▮▮▮ llm-client:typecheck (19f5fbeb)
+▮▮▮▮ llm-client:typecheck (843ms, 19f5fbeb)
+▮▮▮▮ showcase-public:typecheck (268a472a)
+▮▮▮▮ showcase-public:typecheck (2s 793ms, 268a472a)
+▮▮▮▮ services:typecheck (f1105623)
+▮▮▮▮ services:typecheck (1s 577ms, f1105623)
+▮▮▮▮ showcase-ui:typecheck (8a37b916)
+▮▮▮▮ showcase-ui:typecheck (1s 695ms, 8a37b916)
+▮▮▮▮ theme:typecheck (6ffea640)
+▮▮▮▮ theme:typecheck (721ms, 6ffea640)
+▮▮▮▮ wallet-connect:typecheck (68125eee)
+▮▮▮▮ wallet-connect:typecheck (2s 300ms, 68125eee)
+▮▮▮▮ llm-tools:typecheck (59d32aea)
+▮▮▮▮ llm-tools:typecheck (2s 693ms, 59d32aea)
+▮▮▮▮ vscode-extension:typecheck (ef71d8d0)
+▮▮▮▮ vscode-extension:typecheck (990ms, ef71d8d0)
+▮▮▮▮ devnode:typecheck (d4e62df2)
+▮▮▮▮ devnode:typecheck (1s 212ms, d4e62df2)
+▮▮▮▮ compiler:typecheck (2580a930)
+▮▮▮▮ compiler:typecheck (1s 293ms, 2580a930)
+▮▮▮▮ devnode-server:typecheck (05c89c8e)
+▮▮▮▮ devnode-server:typecheck (1s 781ms, 05c89c8e)
+▮▮▮▮ keystore-server:typecheck (515b4e82)
+▮▮▮▮ keystore-server:typecheck (1s 437ms, 515b4e82)
+▮▮▮▮ arch-check:typecheck (0e027a85)
+       arch-check:typecheck | ../../infra/llm-client/src/http-response.ts(33,5): error TS2322: Type '{ id: string | undefined; checkpoint: string | undefined; labels: string[]; recipe: string | undefined; size: number | undefined; suggested: boolean; baseUrl: string | undefined; }[]' is not assignable to type 'readonly LlmModel[]'.
+       arch-check:typecheck |   Type '{ id: string | undefined; checkpoint: string | undefined; labels: string[]; recipe: string | undefined; size: number | undefined; suggested: boolean; baseUrl: string | undefined; }' is not assignable to type 'LlmModel' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |     Types of property 'id' are incompatible.
+       arch-check:typecheck |       Type 'string | undefined' is not assignable to type 'string'.
+       arch-check:typecheck |         Type 'undefined' is not assignable to type 'string'.
+       arch-check:typecheck | ../../infra/llm-client/src/http-response.ts(90,54): error TS2379: Argument of type '{ content: string; reasoning: string; finishReason: string | undefined; }' is not assignable to parameter of type '{ content: string; reasoning: string; finishReason?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |   Types of property 'finishReason' are incompatible.
+       arch-check:typecheck |     Type 'string | undefined' is not assignable to type 'string'.
+       arch-check:typecheck |       Type 'undefined' is not assignable to type 'string'.
+       arch-check:typecheck | ../../infra/llm-client/src/http-response.ts(140,54): error TS2379: Argument of type '{ content: string; reasoning: string; finishReason: string | undefined; }' is not assignable to parameter of type '{ content: string; reasoning: string; finishReason?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |   Types of property 'finishReason' are incompatible.
+       arch-check:typecheck |     Type 'string | undefined' is not assignable to type 'string'.
+       arch-check:typecheck |       Type 'undefined' is not assignable to type 'string'.
+       arch-check:typecheck | ../../infra/llm-client/src/http-response.ts(146,29): error TS2379: Argument of type '{ phase: "complete"; url: string; attempt: number; elapsedMs: number; status: number; reasoningChars: number; contentChars: number; finishReason: string | undefined; }' is not assignable to parameter of type 'CompletionProgressEvent' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |   Types of property 'finishReason' are incompatible.
+       arch-check:typecheck |     Type 'string | undefined' is not assignable to type 'string'.
+       arch-check:typecheck |       Type 'undefined' is not assignable to type 'string'.
+       arch-check:typecheck | ../../infra/llm-client/src/http-response.ts(227,3): error TS2375: Type '{ content: string; reasoning: string; finishReason: string | undefined; contentChanged: boolean; reasoningChanged: boolean; }' is not assignable to type '{ content: string; reasoning: string; finishReason?: string; contentChanged: boolean; reasoningChanged: boolean; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |   Types of property 'finishReason' are incompatible.
+       arch-check:typecheck |     Type 'string | undefined' is not assignable to type 'string'.
+       arch-check:typecheck |       Type 'undefined' is not assignable to type 'string'.
+       arch-check:typecheck | ../../infra/llm-client/src/http.ts(6,8): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/http-response.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck | ../../infra/llm-client/src/index.ts(10,8): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/client.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via '../workers/completion/client.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck |     Imported via '../workers/completion/client.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/resolve.ts'
+       arch-check:typecheck |     Imported via './client.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/complete.ts'
+       arch-check:typecheck |     Imported via './client.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/direct.ts'
+       arch-check:typecheck |     Imported via '../workers/completion/client.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/runtime-bridge.ts'
+       arch-check:typecheck | ../../infra/llm-client/src/index.ts(15,8): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/complete.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck | ../../infra/llm-client/src/index.ts(22,8): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/context.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck | ../../infra/llm-client/src/index.ts(23,33): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/json.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck | ../../infra/llm-client/src/index.ts(41,8): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/shared/units.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via '../workers/shared/units.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck |     Imported via '../workers/shared/units.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/runtime-bridge.ts'
+       arch-check:typecheck | ../../infra/llm-client/src/index.ts(43,32): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/factory.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck | ../../infra/llm-client/src/index.ts(62,8): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/runtime-bridge.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck | ../../infra/llm-client/src/litellm.ts(48,48): error TS2379: Argument of type '{ baseUrl: string; chatPath: string; model: string; messages: readonly ChatMessage[]; opts: CompletionOptions; attempts: CompletionAttempt[]; headers: { ...; } | undefined; }' is not assignable to parameter of type '{ readonly baseUrl: string; readonly chatPath: string; readonly model: string; readonly messages: readonly ChatMessage[]; readonly opts?: CompletionOptions; readonly headers?: HeadersInit; readonly attempts: CompletionAttempt[]; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |   Types of property 'headers' are incompatible.
+       arch-check:typecheck |     Type '{ authorization: string; } | undefined' is not assignable to type 'HeadersInit'.
+       arch-check:typecheck |       Type 'undefined' is not assignable to type 'HeadersInit'.
+       arch-check:typecheck | ../../infra/llm-client/src/litellm.ts(65,74): error TS2769: No overload matches this call.
+       arch-check:typecheck |   Overload 1 of 2, '(input: string | URL | Request, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+       arch-check:typecheck |     Argument of type '{ headers: { authorization: string; } | undefined; signal: AbortSignal; }' is not assignable to parameter of type 'RequestInit' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |       Types of property 'headers' are incompatible.
+       arch-check:typecheck |         Type '{ authorization: string; } | undefined' is not assignable to type 'HeadersInit'.
+       arch-check:typecheck |           Type 'undefined' is not assignable to type 'HeadersInit'.
+       arch-check:typecheck |   Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+       arch-check:typecheck |     Argument of type '{ headers: { authorization: string; } | undefined; signal: AbortSignal; }' is not assignable to parameter of type 'RequestInit' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |       Types of property 'headers' are incompatible.
+       arch-check:typecheck |         Type '{ authorization: string; } | undefined' is not assignable to type 'HeadersInit'.
+       arch-check:typecheck |           Type 'undefined' is not assignable to type 'HeadersInit'.
+       arch-check:typecheck | ../../infra/llm-client/src/provider-meta.ts(1,33): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/http.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via './http.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/provider-meta.ts'
+       arch-check:typecheck |     Imported via './http.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/github-models.ts'
+       arch-check:typecheck |     Imported via './http.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/lemonade.ts'
+       arch-check:typecheck |     Imported via './http.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/litellm.ts'
+       arch-check:typecheck |     Imported via './http.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/openai-compat.ts'
+       arch-check:typecheck | ../../infra/llm-client/src/resolve.ts(3,42): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/errors.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via './errors.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/resolve.ts'
+       arch-check:typecheck |     Imported via './errors.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck | ../../infra/llm-client/src/resolve.ts(4,38): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/github-models.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via './github-models.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/resolve.ts'
+       arch-check:typecheck |     Imported via './github-models.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/factory.ts'
+       arch-check:typecheck |     Imported via './github-models.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck | ../../infra/llm-client/src/resolve.ts(5,34): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/lemonade.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via './lemonade.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/resolve.ts'
+       arch-check:typecheck |     Imported via './lemonade.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/factory.ts'
+       arch-check:typecheck |     Imported via './lemonade.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck | ../../infra/llm-client/src/resolve.ts(6,33): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/litellm.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via './litellm.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/resolve.ts'
+       arch-check:typecheck |     Imported via './litellm.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/factory.ts'
+       arch-check:typecheck |     Imported via './litellm.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck | ../../infra/llm-client/src/resolve.ts(7,38): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/openai-compat.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via './openai-compat.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/resolve.ts'
+       arch-check:typecheck |     Imported via './openai-compat.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/factory.ts'
+       arch-check:typecheck |     Imported via './openai-compat.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck | ../../infra/llm-client/src/runtime-bridge.ts(19,3): error TS2375: Type '{ scope: string | undefined; unit: MonorepoUnit | null; configPath: string; config: any; providerType: LlmProviderType; providerBaseUrl: string; defaultModel: any; models: readonly LlmModel[]; providerStrategy: any; effectivePolicy: LlmEffectiveActionPolicy; }' is not assignable to type 'LlmRuntimeBridgeState' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |   Types of property 'scope' are incompatible.
+       arch-check:typecheck |     Type 'string | undefined' is not assignable to type 'string'.
+       arch-check:typecheck |       Type 'undefined' is not assignable to type 'string'.
+       arch-check:typecheck | ../../infra/llm-client/src/runtime-bridge.ts(100,3): error TS2375: Type '{ action: string | undefined; phase: string | undefined; source: "default" | "action" | "phase"; legacyActionModel: string | null; profile: LlmResolvedProviderProfile; model: string | null; }' is not assignable to type 'LlmEffectiveActionPolicy' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |   Types of property 'action' are incompatible.
+       arch-check:typecheck |     Type 'string | undefined' is not assignable to type 'string'.
+       arch-check:typecheck |       Type 'undefined' is not assignable to type 'string'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(1,45): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(1,45): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/shared/index.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via '../shared/index.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/client.ts'
+       arch-check:typecheck |     Imported via '../shared/index.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/config.ts'
+       arch-check:typecheck |     Imported via '../workers/shared/index.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/resolve.ts'
+       arch-check:typecheck |     Imported via '../workers/shared/index.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/lemonade.ts'
+       arch-check:typecheck |     Imported via '../shared/index.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/context.ts'
+       arch-check:typecheck |     Imported via '../shared/index.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/runner.ts'
+       arch-check:typecheck |     Imported via '../workers/shared/index.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck |     Imported via '../workers/shared/index.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/runtime-bridge.ts'
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(2,56): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(2,56): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/config.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via './config.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/client.ts'
+       arch-check:typecheck |     Imported via './config.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/client.ts'
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(11,8): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(13,34): error TS7006: Parameter 'url' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(19,41): error TS7006: Parameter 'config' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(37,18): error TS7006: Parameter 'model' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(41,38): error TS7006: Parameter 'baseUrls' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(57,46): error TS7006: Parameter 'model' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(71,34): error TS7006: Parameter 'error' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(79,39): error TS7006: Parameter 'text' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(84,13): error TS7006: Parameter 'model' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(88,34): error TS7006: Parameter 'label' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(94,16): error TS7006: Parameter 'model' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(100,29): error TS7006: Parameter 'models' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(103,8): error TS7006: Parameter 'model' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(110,28): error TS7006: Parameter 'model' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(124,10): error TS7023: 'extractTextNode' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(124,26): error TS7006: Parameter 'value' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(128,12): error TS7024: Function implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/client.ts(140,38): error TS7006: Parameter 'text' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(3,58): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(3,58): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/provider-meta.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via '../../src/provider-meta.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/complete.ts'
+       arch-check:typecheck |     Imported via '../../src/provider-meta.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/direct.ts'
+       arch-check:typecheck |     Imported via './provider-meta.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck |     Imported via './provider-meta.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/runtime-bridge.ts'
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(4,33): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(4,33): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/resolve.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via '../../src/resolve.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/complete.ts'
+       arch-check:typecheck |     Imported via '../../src/resolve.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/direct.ts'
+       arch-check:typecheck |     Imported via './resolve.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck |     Imported via './resolve.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/runtime-bridge.ts'
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(5,53): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(6,32): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(6,32): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/direct.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(25,25): error TS2379: Argument of type '{ action: string; modelOverride: string | undefined; systemPrompt: string; userPrompt: string; maxTokens: number; enableThinking: false | undefined; onProgress: ((event: CompletionProgressEvent) => void) | undefined; }' is not assignable to parameter of type 'CompleteDirectParams' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |   Types of property 'modelOverride' are incompatible.
+       arch-check:typecheck |     Type 'string | undefined' is not assignable to type 'string'.
+       arch-check:typecheck |       Type 'undefined' is not assignable to type 'string'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(44,25): error TS2379: Argument of type '{ action: string; modelOverride: string | undefined; systemPrompt: string; userPrompt: string; maxTokens: number; enableThinking: false | undefined; onProgress: ((event: CompletionProgressEvent) => void) | undefined; }' is not assignable to parameter of type 'CompleteDirectParams' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |   Types of property 'modelOverride' are incompatible.
+       arch-check:typecheck |     Type 'string | undefined' is not assignable to type 'string'.
+       arch-check:typecheck |       Type 'undefined' is not assignable to type 'string'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(54,34): error TS7031: Binding element 'action' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(54,42): error TS7031: Binding element 'modelOverride' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(54,57): error TS7031: Binding element 'userPrompt' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/complete.ts(54,69): error TS7031: Binding element 'context' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(7,8): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/types.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via '../../src/types.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/config.ts'
+       arch-check:typecheck |     Imported via '../../src/types.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/complete.ts'
+       arch-check:typecheck |     Imported via '../../src/types.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/complete.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/http-response.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/http.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/provider-meta.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/errors.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/github-models.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/lemonade.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/litellm.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/openai-compat.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/resolve.ts'
+       arch-check:typecheck |     Imported via '../../src/types.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/direct.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/factory.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/runtime-bridge.ts'
+       arch-check:typecheck |     Imported via './types.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(8,64): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(24,35): error TS7006: Parameter 'config' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(30,35): error TS7006: Parameter 'baseConfig' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(30,47): error TS7006: Parameter 'scopedConfig' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(95,33): error TS7006: Parameter 'config' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(142,31): error TS7006: Parameter 'filePath' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(146,16): error TS2339: Property 'code' does not exist on type '{}'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(193,11): error TS2412: Type 'LlmProviderType | null | undefined' is not assignable to type 'LlmProviderType | null' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+       arch-check:typecheck |   Type 'undefined' is not assignable to type 'LlmProviderType | null'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(196,11): error TS2412: Type 'string | null | undefined' is not assignable to type 'string | null' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+       arch-check:typecheck |   Type 'undefined' is not assignable to type 'string | null'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(199,11): error TS2412: Type 'string | null | undefined' is not assignable to type 'string | null' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+       arch-check:typecheck |   Type 'undefined' is not assignable to type 'string | null'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(203,11): error TS2412: Type 'string | null | undefined' is not assignable to type 'string | null' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+       arch-check:typecheck |   Type 'undefined' is not assignable to type 'string | null'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(207,11): error TS2412: Type 'number | undefined' is not assignable to type 'number' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+       arch-check:typecheck |   Type 'undefined' is not assignable to type 'number'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(211,11): error TS2412: Type 'LlmProviderStrategy | null | undefined' is not assignable to type 'LlmProviderStrategy | null' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+       arch-check:typecheck |   Type 'undefined' is not assignable to type 'LlmProviderStrategy | null'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(235,23): error TS2412: Type 'string | null | undefined' is not assignable to type 'string | null' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+       arch-check:typecheck |   Type 'undefined' is not assignable to type 'string | null'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(239,23): error TS2412: Type 'string | null | undefined' is not assignable to type 'string | null' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+       arch-check:typecheck |   Type 'undefined' is not assignable to type 'string | null'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(251,11): error TS2412: Type 'string | null | undefined' is not assignable to type 'string | null' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+       arch-check:typecheck |   Type 'undefined' is not assignable to type 'string | null'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/config.ts(254,11): error TS2412: Type 'string | null | undefined' is not assignable to type 'string | null' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+       arch-check:typecheck |   Type 'undefined' is not assignable to type 'string | null'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/context.ts(3,37): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/context.ts(4,35): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/context.ts(4,35): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/runner.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck |   The file is in the program because:
+       arch-check:typecheck |     Imported via './runner.ts' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/completion/context.ts'
+       arch-check:typecheck |     Imported via '../workers/completion/runner.js' from file '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts'
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/context.ts(6,42): error TS7006: Parameter 'spec' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/context.ts(34,39): error TS7006: Parameter 'path' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/context.ts(107,38): error TS7006: Parameter 'action' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/context.ts(107,46): error TS7006: Parameter 'response' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/direct.ts(2,58): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/direct.ts(3,33): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/direct.ts(4,53): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/direct.ts(36,53): error TS2379: Argument of type '{ action: string; model: string; maxTokens: number; temperature: number; timeoutMs: number; enableThinking: boolean | undefined; onProgress: ((event: CompletionProgressEvent) => void) | undefined; }' is not assignable to parameter of type 'CompletionOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+       arch-check:typecheck |   Types of property 'enableThinking' are incompatible.
+       arch-check:typecheck |     Type 'boolean | undefined' is not assignable to type 'boolean'.
+       arch-check:typecheck |       Type 'undefined' is not assignable to type 'boolean'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/json.ts(1,24): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/json.ts(1,24): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/workers/shared/logging.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/json.ts(3,33): error TS7006: Parameter 'content' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/json.ts(13,44): error TS7006: Parameter 'text' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/json.ts(20,37): error TS7006: Parameter 'text' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/json.ts(20,43): error TS7006: Parameter 'start' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/json.ts(43,38): error TS7006: Parameter 'candidate' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/json.ts(60,48): error TS7006: Parameter 'text' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/json.ts(88,37): error TS7006: Parameter 'text' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(1,37): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(4,3): error TS7006: Parameter 'title' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(5,3): error TS7006: Parameter 'command' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(6,3): error TS7006: Parameter 'args' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(20,14): error TS2339: Property 'code' does not exist on type '{}'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(21,14): error TS2339: Property 'stdout' does not exist on type '{}'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(22,14): error TS2339: Property 'stderr' does not exist on type '{}'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(22,31): error TS2339: Property 'message' does not exist on type '{}'.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(28,36): error TS7006: Parameter 'title' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(28,43): error TS7006: Parameter 'exitCode' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(28,53): error TS7006: Parameter 'stdout' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(28,61): error TS7006: Parameter 'stderr' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/completion/runner.ts(35,27): error TS7006: Parameter 'args' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/shared/logging.ts(1,25): error TS7006: Parameter 'n' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/shared/logging.ts(1,28): error TS7006: Parameter 'total' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/shared/logging.ts(1,35): error TS7006: Parameter 'label' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/shared/logging.ts(5,25): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+       arch-check:typecheck | ../../infra/llm-client/workers/shared/logging.ts(11,24): error TS7006: Parameter 'values' implicitly has an 'any' type.
+       arch-check:typecheck | src/checks/unit-configs.ts(6,8): error TS6059: File '/workspaces/root/repos/cfx-tools/infra/llm-client/src/index.ts' is not under 'rootDir' '/workspaces/root/repos/cfx-tools/packages/arch-check/src'. 'rootDir' is expected to contain all source files.
+       arch-check:typecheck | src/checks/unit-configs.ts(88,21): error TS2367: This comparison appears to be unintentional because the types '"missing" | "drift"' and '"ok"' have no overlap.
+       arch-check:typecheck | src/checks/unit-configs.ts(181,29): error TS7006: Parameter 'unit' implicitly has an 'any' type.
+       arch-check:typecheck | src/checks/unit-configs.ts(212,26): error TS7006: Parameter 'unit' implicitly has an 'any' type.
+▮▮▮▮ arch-check:typecheck (1s 5ms, 0e027a85)
+Error: task_runner::run_failed
+
+  × Task arch-check:typecheck failed to run.
+  ╰─▶ Process pnpm failed: exit code 2
+

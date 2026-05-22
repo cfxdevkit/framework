@@ -1,5 +1,12 @@
 import { printConfigHelp } from './agent-help.js';
 import {
+  ensureActionPolicies,
+  ensureProviderProfiles,
+  printActionPolicy,
+  printProviderProfile,
+  printProviderProfiles,
+} from './agent-config-details.js';
+import {
   formatBoolean,
   isHelpToken,
   parseBoolean,
@@ -20,6 +27,18 @@ export async function runConfigCli(rawArgs: readonly string[]): Promise<void> {
   }
 
   if (subcommand === 'show') {
+    if (key === 'profiles') {
+      await printProviderProfiles();
+      return;
+    }
+    if (key === 'profile') {
+      await printProviderProfile(rest[0]);
+      return;
+    }
+    if (key === 'action-policy') {
+      await printActionPolicy(rest[0], rest[1]);
+      return;
+    }
     console.log(JSON.stringify(await withLlmClient((client) => client.readConfig()), null, 2));
     return;
   }
@@ -65,9 +84,80 @@ export async function runConfigCli(rawArgs: readonly string[]): Promise<void> {
     config.harness.exploratory.allowCodeChanges = parseBoolean(value, key);
   } else if (key === 'exploratory-wide-changes') {
     config.harness.exploratory.allowWideChanges = parseBoolean(value, key);
+  } else if (key === 'profile-provider') {
+    const [profileName, provider] = rest;
+    if (!profileName) throw new Error('Usage: cdk agent config set profile-provider <name> <provider>');
+    if (
+      provider !== 'lemonade' &&
+      provider !== 'litellm' &&
+      provider !== 'openai-compat' &&
+      provider !== 'github-models'
+    ) {
+      throw new Error('profile-provider must be lemonade, litellm, openai-compat, or github-models');
+    }
+    ensureProviderProfiles(config)[profileName] = {
+      ...(config.providerProfiles?.[profileName] ?? {}),
+      provider,
+    };
+  } else if (key === 'profile-base-url') {
+    const [profileName, baseUrl] = rest;
+    if (!profileName || !baseUrl) {
+      throw new Error('Usage: cdk agent config set profile-base-url <name> <url>');
+    }
+    ensureProviderProfiles(config)[profileName] = {
+      ...(config.providerProfiles?.[profileName] ?? {}),
+      baseUrl,
+    };
+  } else if (key === 'profile-default-model') {
+    const [profileName, defaultModel] = rest;
+    if (!profileName || !defaultModel) {
+      throw new Error('Usage: cdk agent config set profile-default-model <name> <id>');
+    }
+    ensureProviderProfiles(config)[profileName] = {
+      ...(config.providerProfiles?.[profileName] ?? {}),
+      defaultModel,
+    };
+  } else if (key === 'profile-strategy') {
+    const [profileName, strategy] = rest;
+    if (!profileName) {
+      throw new Error('Usage: cdk agent config set profile-strategy <name> <auto|gateway|direct>');
+    }
+    if (strategy !== 'auto' && strategy !== 'gateway' && strategy !== 'direct') {
+      throw new Error('profile-strategy must be auto, gateway, or direct');
+    }
+    ensureProviderProfiles(config)[profileName] = {
+      ...(config.providerProfiles?.[profileName] ?? {}),
+      providerStrategy: strategy,
+    };
+  } else if (key === 'action-policy') {
+    const [actionName, profileName] = rest;
+    if (!actionName || !profileName) {
+      throw new Error('Usage: cdk agent config set action-policy <action> <profile>');
+    }
+    ensureActionPolicies(config)[actionName] = {
+      ...(config.actionPolicies?.[actionName] ?? {}),
+      profile: profileName,
+      phases: config.actionPolicies?.[actionName]?.phases ?? {},
+    };
+  } else if (key === 'phase-policy') {
+    const [actionName, phaseName, profileName] = rest;
+    if (!actionName || !phaseName || !profileName) {
+      throw new Error('Usage: cdk agent config set phase-policy <action> <phase> <profile>');
+    }
+    const actionPolicy = ensureActionPolicies(config)[actionName] ?? {};
+    ensureActionPolicies(config)[actionName] = {
+      ...actionPolicy,
+      phases: {
+        ...(actionPolicy.phases ?? {}),
+        [phaseName]: {
+          ...(actionPolicy.phases?.[phaseName] ?? {}),
+          profile: profileName,
+        },
+      },
+    };
   } else {
     throw new Error(
-      'Config keys: mode, provider-strategy, preserve-deterministic-artifacts, preserve-deterministic-sections, exploratory-code-changes, exploratory-wide-changes',
+      'Config keys: mode, provider-strategy, preserve-deterministic-artifacts, preserve-deterministic-sections, exploratory-code-changes, exploratory-wide-changes, profile-provider, profile-base-url, profile-default-model, profile-strategy, action-policy, phase-policy',
     );
   }
 
@@ -96,6 +186,9 @@ export async function printStatus(): Promise<void> {
 
     console.log(`cdk agent status
 
+Scope:
+  - config: ${relativeConfigPath()}
+
 Mode:
   - default mode: ${config.harness.defaultMode}
   - provider strategy: ${config.harness.providerStrategy}
@@ -104,6 +197,10 @@ Configured backend:
   - provider: ${config.provider ?? 'auto'}
   - baseUrl: ${config.baseUrl ?? 'auto'}
   - defaultModel: ${config.defaultModel ?? 'auto'}
+
+Policy registry:
+  - provider profiles: ${Object.keys(config.providerProfiles ?? {}).length}
+  - action policies: ${Object.keys(config.actionPolicies ?? {}).length}
 
 Resolved backend:
   - provider: ${provider.type}
@@ -119,6 +216,9 @@ Notes:
     const message = error instanceof Error ? error.message : String(error);
     console.log(`cdk agent status
 
+Scope:
+  - config: ${relativeConfigPath()}
+
 Mode:
   - default mode: ${config.harness.defaultMode}
   - provider strategy: ${config.harness.providerStrategy}
@@ -127,6 +227,10 @@ Configured backend:
   - provider: ${config.provider ?? 'auto'}
   - baseUrl: ${config.baseUrl ?? 'auto'}
   - defaultModel: ${config.defaultModel ?? 'auto'}
+
+Policy registry:
+  - provider profiles: ${Object.keys(config.providerProfiles ?? {}).length}
+  - action policies: ${Object.keys(config.actionPolicies ?? {}).length}
 
 Resolved backend:
   - status: unavailable
@@ -137,6 +241,8 @@ Resolved backend:
 export async function printModes(): Promise<void> {
   const config = await withLlmClient((client) => client.readConfig());
   console.log(`cdk agent operating modes
+
+Config path: ${relativeConfigPath()}
 
 Active default mode: ${config.harness.defaultMode}
 
@@ -152,12 +258,17 @@ Exploratory mode:
 
 Shared backend policy:
   - provider strategy: ${config.harness.providerStrategy}
+  - provider profiles: ${Object.keys(config.providerProfiles ?? {}).length}
+  - action policies: ${Object.keys(config.actionPolicies ?? {}).length}
   - cdk agent sits above both LiteLLM gateways and direct providers`);
 }
 
 export async function printInteractiveMode(): Promise<void> {
   const config = await withLlmClient((client) => client.readConfig());
   console.log(`cdk agent interactive
+
+Config path:
+  - ${relativeConfigPath()}
 
 Current role:
   - route into the current llm-agents workflow layer without moving packages yet

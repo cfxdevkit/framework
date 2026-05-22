@@ -1,0 +1,9 @@
+{
+  "runtime": {
+    "entrypoint": "cdk agent",
+    "controlPlane": "cdk"
+  },
+  "providers": {
+    "source": "artifacts/llm/config/llm.json"
+  }
+}

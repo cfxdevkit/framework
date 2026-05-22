@@ -50,10 +50,7 @@ describe('fallbackCommitMessage', () => {
 
 describe('commit worker wiring', () => {
   it('imports every helper it calls during approval', async () => {
-    const source = await readFile(
-      fileURLToPath(import.meta.url).replace(/\.test\.ts$/, '.ts'),
-      'utf8',
-    );
+    const source = await readFile(fileURLToPath(new URL('./commit.ts', import.meta.url)), 'utf8');
 
     expect(source).toContain('confirmPrompt(');
     expect(source).toMatch(/import\s*\{[\s\S]*confirmPrompt[\s\S]*\}\s*from '\.\/message\.ts'/);

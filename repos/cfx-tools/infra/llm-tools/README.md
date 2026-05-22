@@ -6,6 +6,10 @@ This package is the CLI dispatcher for the current LLM worker layer. Provider lo
 
 At the workspace root, `pnpm run cdk -- agent ...` is now the primary entrypoint. Root `pnpm run llm:*` scripts remain as compatibility shims during the migration, and `pnpm run llm:wiki` is deprecated in favor of `pnpm run docs:wiki`.
 
+Interactive, print, and RPC agent modes now delegate to `@cfxdevkit/pi-agent` instead of launching
+ad hoc worker scripts directly. The compatibility layer keeps `llm-tools` entrypoints available while
+the canonical control plane stays on `cdk agent`.
+
 ## Install
 
 ```bash
@@ -24,7 +28,21 @@ pnpm add @cfxdevkit/llm-tools
 | `llm:changeset`, `llm:release`, `llm:ci-cd`, `llm:docs-pipeline` | Repo-aware provider-backed actions for Changesets, npm publishing, GitHub Actions, docs image publishing, and VPS deploy readiness |
 | `llm:all`, `llm:review` | Compatibility aliases for aggregate and review upkeep flows; the preferred surface is `cdk agent exploratory all|review` |
 
+PI-backed compatibility entrypoints:
+
+| Command | Preferred surface |
+|---------|-------------------|
+| `pnpm --filter @cfxdevkit/llm-tools llm -- ask -- <prompt>` | `pnpm run cdk -- agent print -- <prompt>` |
+| `pnpm --filter @cfxdevkit/llm-tools llm -- interactive` | `pnpm run cdk -- agent interactive` |
+| `pnpm --filter @cfxdevkit/llm-tools llm -- print -- <prompt>` | `pnpm run cdk -- agent print -- <prompt>` |
+| `pnpm --filter @cfxdevkit/llm-tools llm -- rpc` | `pnpm run cdk -- agent rpc` |
+
 Root `pnpm run llm:*` scripts remain available as short compatibility commands, but new automation should target `cdk agent` directly.
+
+Commit flows now have an explicit split:
+
+- `pnpm run cdk -- repo commit` remains the deterministic commit pipeline for stable scripted runs.
+- `pnpm run cdk -- agent commit` starts the PI-backed interactive commit session, keeps remediation in-session, and pauses at the final approval boundary.
 
 `llm:commit` runs `check:hotspots` as a non-bypassable quality gate. The scanner applies the framework design-principles file budget across source files in the whole repository, writes `artifacts/llm/reports/code-hotspots.md`, and blocks commits while any source file exceeds the hard 300-line limit.
 
@@ -68,6 +86,13 @@ By default the command produces reviewable artifacts only. Add `--write` to let 
 ## Backend
 
 Delegated commands resolve providers through `@cfxdevkit/llm-client`: provider-aware config file, `LITELLM_BASE_URL`, `LEMONADE_URL`, local provider probe, OpenAI-compatible env vars, then GitHub Models via `GITHUB_TOKEN`. Lemonade remains a first-class direct-provider option for local use; LiteLLM remains the optional gateway layer.
+
+For PI-backed runtime modes, `llm-tools` delegates into the same provider bridge used by `cdk agent`,
+so scoped config, model selection, and repository-local `.pi` resources stay aligned across both entrypoints.
+
+The shared `@cfxdevkit/llm-client` config now supports named provider profiles plus action and phase policies.
+That lets `cdk agent commit` pick a backend intentionally for the commit session while still splitting model
+selection between commit-message generation and failure analysis.
 
 ## Sub-paths
 

@@ -44,7 +44,9 @@ describe('llmToolingNamespace', () => {
 
     await llmToolingNamespace.run(['review']);
 
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Deprecated llm workflow surface'));
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Deprecated llm workflow surface'),
+    );
     expect(repoNamespace.run).toHaveBeenCalledWith(['review']);
   });
 });

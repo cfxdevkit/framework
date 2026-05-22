@@ -26,9 +26,19 @@ export {
   artifactsRoot,
   chatPaths,
   configPath,
+  configPathEnvVar,
   defaultBaseUrls,
   modelPaths,
 } from '../workers/shared/index.js';
+export {
+  buildMonorepoUnitConfig,
+  findMonorepoUnit,
+  findMonorepoUnitByConfigPath,
+  listMonorepoUnits,
+  relativeAgentConfigPath,
+  renderMonorepoUnitConfig,
+  resolveAgentConfigPath,
+} from '../workers/shared/units.js';
 export { LlmProviderNotFoundError } from './errors.js';
 export { createProvider } from './factory.js';
 export { GitHubModelsProvider } from './github-models.js';
@@ -41,18 +51,34 @@ export {
   resolveProviderModel,
 } from './provider-meta.js';
 export { resolveProvider } from './resolve.js';
+export {
+  listProviderProfiles,
+  listScopedRuntimeModels,
+  resolveEffectiveActionPolicy,
+  resolveNamedProviderProfile,
+  resolveRuntimeBridgeState,
+  resolveScopedProviderType,
+  resolveScopedRuntimeConfig,
+} from './runtime-bridge.js';
 export type {
   ChatMessage,
   CompletionAttempt,
   CompletionOptions,
   CompletionProgressEvent,
   CompletionReport,
+  LlmActionPhasePolicy,
+  LlmActionPolicy,
   LlmConfig,
+  LlmEffectiveActionPolicy,
   LlmHarnessConfig,
   LlmHarnessMode,
   LlmModel,
   LlmProvider,
+  LlmProviderProfile,
   LlmProviderStrategy,
   LlmProviderType,
+  LlmResolvedProviderProfile,
+  LlmRuntimeBridgeState,
+  MonorepoUnit,
   ResolveProviderAttempt,
 } from './types.js';

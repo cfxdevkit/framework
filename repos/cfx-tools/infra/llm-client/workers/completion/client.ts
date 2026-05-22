@@ -1,8 +1,14 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
-import { configPath, defaultBaseUrls, legacyConfigPath, modelPaths } from '../shared/index.ts';
+import { defaultBaseUrls, modelPaths } from '../shared/index.ts';
+import { DEFAULT_REQUEST_TIMEOUT_MS, readConfig } from './config.ts';
 
-const DEFAULT_REQUEST_TIMEOUT_MS = 120000;
+export {
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  defaultConfig,
+  mergeConfigLayers,
+  normalizeConfig,
+  readConfig,
+  writeConfig,
+} from './config.ts';
 
 export function normalizeBaseUrl(url) {
   const value = String(url || '').trim();
@@ -143,81 +149,4 @@ export function extractAssistantText(text) {
   } catch {
     return text.trim();
   }
-}
-
-export async function readConfig() {
-  try {
-    return normalizeConfig(JSON.parse(await readFile(configPath, 'utf8')));
-  } catch (error) {
-    if (error?.code !== 'ENOENT') throw error;
-  }
-  try {
-    return normalizeConfig(JSON.parse(await readFile(legacyConfigPath, 'utf8')));
-  } catch (error) {
-    if (error?.code === 'ENOENT') return defaultConfig();
-    throw error;
-  }
-}
-
-export async function writeConfig(config) {
-  await mkdir(dirname(configPath), { recursive: true });
-  await writeFile(configPath, `${JSON.stringify(normalizeConfig(config), null, 2)}\n`, 'utf8');
-}
-
-export function defaultConfig() {
-  return {
-    provider: 'litellm',
-    baseUrl: null,
-    defaultModel: null,
-    requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
-    actions: {},
-    harness: {
-      version: 1,
-      defaultMode: 'deterministic',
-      providerStrategy: 'auto',
-      deterministic: {
-        preserveDeterministicArtifacts: true,
-        preserveDeterministicSections: true,
-      },
-      exploratory: {
-        allowCodeChanges: true,
-        allowWideChanges: true,
-      },
-    },
-  };
-}
-
-export function normalizeConfig(config) {
-  const defaults = defaultConfig();
-  const raw = config && typeof config === 'object' ? config : {};
-  const rawHarness = raw.harness && typeof raw.harness === 'object' ? raw.harness : {};
-  const rawDeterministic =
-    rawHarness.deterministic && typeof rawHarness.deterministic === 'object'
-      ? rawHarness.deterministic
-      : {};
-  const rawExploratory =
-    rawHarness.exploratory && typeof rawHarness.exploratory === 'object'
-      ? rawHarness.exploratory
-      : {};
-
-  return {
-    ...defaults,
-    ...raw,
-    actions:
-      raw.actions && typeof raw.actions === 'object'
-        ? { ...defaults.actions, ...raw.actions }
-        : defaults.actions,
-    harness: {
-      ...defaults.harness,
-      ...rawHarness,
-      deterministic: {
-        ...defaults.harness.deterministic,
-        ...rawDeterministic,
-      },
-      exploratory: {
-        ...defaults.harness.exploratory,
-        ...rawExploratory,
-      },
-    },
-  };
 }

@@ -24,15 +24,19 @@ export const agentCommands = [
   },
   {
     name: 'interactive',
-    description: 'Current mode-aware agent shim; planned TUI entrypoint later',
+    description: 'Launch the PI-backed interactive agent session',
+  },
+  {
+    name: 'commit',
+    description: 'Launch the PI-backed interactive commit session',
   },
   {
     name: 'print',
-    description: 'Run a one-shot exploratory prompt through the current agent stack',
+    description: 'Run a one-shot prompt through the PI print runtime',
   },
   {
     name: 'rpc',
-    description: 'Planned headless RPC agent host mode',
+    description: 'Start the PI-backed headless RPC runtime',
   },
   {
     name: 'providers',
@@ -44,13 +48,14 @@ export function printAgentHelp(): void {
   console.log(`cdk agent shapes the future interactive agent layer behind the root CLI.
 
 Usage:
-  cdk agent config [show|reset|set ...]
-  cdk agent status
-  cdk agent modes
-  cdk agent deterministic <workflow> [args]
-  cdk agent exploratory <workflow> [args]
-  cdk agent interactive [workflow|prompt]
-  cdk agent print -- [prompt]
+  cdk agent [--scope <unit>] config [show|reset|set ...]
+  cdk agent [--scope <unit>] status
+  cdk agent [--scope <unit>] modes
+  cdk agent [--scope <unit>] deterministic <workflow> [args]
+  cdk agent [--scope <unit>] exploratory <workflow> [args]
+  cdk agent [--scope <unit>] interactive [workflow|prompt]
+  cdk agent [--scope <unit>] commit [prompt]
+  cdk agent [--scope <unit>] print -- [prompt]
   cdk agent rpc
   cdk agent providers
 
@@ -60,14 +65,15 @@ Current stance:
   - keep both LiteLLM and direct provider paths in the first migration
 
 Commands:
-  config        Show or update the shared repo agent harness config
+  config        Show or update the global or scoped agent harness config
   status        Show the current provider, mode, and backend resolution state
   modes         Explain the deterministic and exploratory operating modes
   deterministic Run constrained deterministic-first workflows via the current llm-agents layer
   exploratory   Run broader maintenance workflows via the current llm-agents layer
-  interactive   Route to the current default mode from the shared harness config
-  print         Run a one-shot exploratory prompt through the current agent stack
-  rpc           Planned host mode for editor and dashboard integrations
+  interactive   Start the PI-backed interactive session with repo-local resources
+  commit        Start the PI-backed interactive commit session
+  print         Run a one-shot prompt through the PI print runtime
+  rpc           Start the PI-backed host mode for editor and dashboard integrations
   providers     Explain when to use LiteLLM, direct providers, or both
 
 First implementation slice:
@@ -81,23 +87,21 @@ export function printPrintMode(): void {
   console.log(`cdk agent print
 
 Current role:
-  - run a one-shot repo-aware prompt through the existing llm-agents ask flow
-  - use the shared harness config and current provider resolution
-  - keep this shape stable so it can later map to the pi print mode
+  - run a one-shot repo-aware prompt through the PI print runtime
+  - use the active global or scoped harness config and current provider resolution
+  - load the checked-in .pi resources from this repository
 
 Usage:
-  cdk agent print -- --quick "Where should a docs alignment scanner live?"`);
+  cdk agent --scope docs print -- --quick "Where should a docs alignment scanner live?"`);
 }
 
 export function printRpcMode(): void {
   console.log(`cdk agent rpc
 
-Planned role:
-  - expose a headless agent host for editor, dashboard, or service integrations
+Current role:
+  - expose a headless PI host for editor, dashboard, or service integrations
   - keep the same repo-local tools, prompts, and provider registrations
-  - provide a clean bridge for future UI surfaces without redefining agent logic
-
-Status: not wired yet; this command currently documents the target shape.`);
+  - provide a clean bridge for future UI surfaces without redefining agent logic`);
 }
 
 export function printProvidersStrategy(): void {
@@ -170,19 +174,29 @@ Exploratory mode is intended for repo maintenance and broader agent-driven work.
 
 export function printConfigHelp(): void {
   console.log(`Usage:
-  cdk agent config show
-  cdk agent config reset
-  cdk agent config set provider <lemonade|litellm|openai-compat|github-models>
-  cdk agent config set base-url <url>
-  cdk agent config set default-model <id>
-  cdk agent config set request-timeout-ms <ms>
-  cdk agent config set action <name> <id>
-  cdk agent config set mode <deterministic|exploratory>
-  cdk agent config set provider-strategy <auto|gateway|direct>
-  cdk agent config set preserve-deterministic-artifacts <true|false>
-  cdk agent config set preserve-deterministic-sections <true|false>
-  cdk agent config set exploratory-code-changes <true|false>
-  cdk agent config set exploratory-wide-changes <true|false>
+  cdk agent [--scope <unit>] config show
+  cdk agent [--scope <unit>] config show profiles
+  cdk agent [--scope <unit>] config show profile <name>
+  cdk agent [--scope <unit>] config show action-policy <action> [phase]
+  cdk agent [--scope <unit>] config reset
+  cdk agent [--scope <unit>] config set provider <lemonade|litellm|openai-compat|github-models>
+  cdk agent [--scope <unit>] config set base-url <url>
+  cdk agent [--scope <unit>] config set default-model <id>
+  cdk agent [--scope <unit>] config set request-timeout-ms <ms>
+  cdk agent [--scope <unit>] config set action <name> <id>
+  cdk agent [--scope <unit>] config set profile-provider <name> <lemonade|litellm|openai-compat|github-models>
+  cdk agent [--scope <unit>] config set profile-base-url <name> <url>
+  cdk agent [--scope <unit>] config set profile-default-model <name> <id>
+  cdk agent [--scope <unit>] config set profile-strategy <name> <auto|gateway|direct>
+  cdk agent [--scope <unit>] config set action-policy <action> <profile>
+  cdk agent [--scope <unit>] config set phase-policy <action> <phase> <profile>
+  cdk agent [--scope <unit>] config set mode <deterministic|exploratory>
+  cdk agent [--scope <unit>] config set provider-strategy <auto|gateway|direct>
+  cdk agent [--scope <unit>] config set preserve-deterministic-artifacts <true|false>
+  cdk agent [--scope <unit>] config set preserve-deterministic-sections <true|false>
+  cdk agent [--scope <unit>] config set exploratory-code-changes <true|false>
+  cdk agent [--scope <unit>] config set exploratory-wide-changes <true|false>
 
-This updates the shared repo harness config at ${relativeConfigPath()}.`);
+Without --scope this updates the shared repo harness config at ${relativeConfigPath()}.
+With --scope it updates the unit overlay at ${relativeConfigPath('docs')} or another selected unit.`);
 }

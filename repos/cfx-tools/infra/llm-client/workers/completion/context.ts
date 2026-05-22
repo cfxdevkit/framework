@@ -75,6 +75,16 @@ export async function commitPreflightBlock() {
       ['exec', 'tsx', join(root, 'repos/cfx-tools/packages/arch-check/src/bin/check-hotspots.ts')],
       { maxChars: 12000 },
     ),
+    commandBlock(
+      'kebab filename groups',
+      'pnpm',
+      [
+        'exec',
+        'tsx',
+        join(root, 'repos/cfx-tools/packages/arch-check/src/bin/check-kebab-groups.ts'),
+      ],
+      { maxChars: 12000 },
+    ),
     commandBlock('deterministic repo review', 'pnpm', ['run', 'repo:review'], { maxChars: 12000 }),
     commandBlock(
       'gitnexus detect-changes',

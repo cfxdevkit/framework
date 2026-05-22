@@ -20,7 +20,6 @@ npm install @cfxdevkit/llm-agents
 | `runAction()` | Executes a named LLM-driven action (e.g., `changelog`, `release-notes`) |
 | `listActions()` | Lists all registered named actions available in the current environment |
 | `runAll()` | Runs all agents sequentially, aggregating results and errors |
-| `ask()` | Sends a free-form prompt to the LLM and returns the response |
 | `configure()` | Configures agent behavior (e.g., model selection, temperature, timeout) |
 | `listModels()` | Lists available LLM models for use with agents |
 | `parseCommitFlags()` | Parses commit flags (e.g., `--fix`, `--feat`) into structured metadata |
@@ -41,18 +40,18 @@ await runCommit({ provider, cwd: process.cwd() });
 
 | Sub-path | Exports |
 |----------|---------|
-| `.` | `runAll`, `runReviewAgent`, `ask`, `configure`, `listActions`, `listModels`, `runAction`, `parseCommitFlags`, `runCommit`, `runPrecommit`, `runDocsApi`, `runDocsUpkeep`, `runTestUpkeep`, `runDocsApiProbe`, `runDocsPackagePages`, `runDocsReadme`, `runStructureUpkeep`, `validateModels` |
+| `.` | `runAll`, `runReviewAgent`, `configure`, `listActions`, `listModels`, `runAction`, `parseCommitFlags`, `runCommit`, `runPrecommit`, `runDocsApi`, `runDocsUpkeep`, `runTestUpkeep`, `runDocsApiProbe`, `runDocsPackagePages`, `runDocsReadme`, `runStructureUpkeep`, `validateModels` |
 
 ## Usage
 
 ```typescript
-import { configure, ask, runAll } from '@cfxdevkit/llm-agents';
+import { configure, runAction, runAll } from '@cfxdevkit/llm-agents';
 
 // Configure the agent with your preferred model and API settings
 configure({ model: 'gpt-4o', apiKey: process.env.OPENAI_API_KEY });
 
-// Ask a question and get a structured response
-const response = await ask('What is the current state of the `src/` directory?');
+// Run a named repo-aware action through the shared workflow layer
+await runAction(['repo-health']);
 
 // Run all agents in sequence
 const results = await runAll({ cwd: process.cwd() });

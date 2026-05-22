@@ -1,22 +1,21 @@
 import { execFile } from 'node:child_process';
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join, relative } from 'node:path';
 import { promisify } from 'node:util';
 import { root } from '../runtime.js';
 import { renderMarkdownReport } from './hotspots-render.js';
+import {
+  collectRepoSourceFiles,
+  countFileLines,
+  isGeneratedRepoSourcePath,
+  repoSourceExtensions,
+} from './source-files.js';
 
 const execFileAsync = promisify(execFile);
 const artifactsRoot = join(root, 'artifacts', 'llm', 'reports');
 const defaultSoftLimit = 250;
 const defaultHardLimit = 300;
 const defaultSince = '90 days ago';
-const generatedDirs = new Set(
-  '.git .gitnexus .moon .pnpm-store .tmp .vite .vitest .cfxdevkit artifacts build coverage dist node_modules out'.split(
-    ' ',
-  ),
-);
-const generatedFileNames = new Set('generated.ts generated.js'.split(' '));
-const sourceExtensions = new Set('.cjs .css .js .jsx .mjs .mts .sol .ts .tsx'.split(' '));
 
 export type HotspotOptions = {
   softLimit: number;
@@ -93,14 +92,14 @@ export async function runHotspotsCheck(options: HotspotOptions): Promise<Hotspot
 }
 
 async function buildHotspotReport(options: HotspotOptions): Promise<HotspotReport> {
-  const files = await collectSourceFiles(root);
+  const files = await collectRepoSourceFiles(root);
   const churnByPath = await readRecentChurn(options.since);
   const records: HotspotRecord[] = [];
 
   for (const filePath of files) {
     const rel = toRel(filePath);
     const content = await readFile(filePath, 'utf8');
-    const lineCount = content ? content.split('\n').length - (content.endsWith('\n') ? 1 : 0) : 0;
+    const lineCount = countFileLines(content);
     const churn = churnByPath.get(rel) ?? { added: 0, deleted: 0, commits: 0 };
     const churnLines = churn.added + churn.deleted;
     const score = lineCount + churnLines * 2 + churn.commits * 25;
@@ -143,31 +142,6 @@ async function buildHotspotReport(options: HotspotOptions): Promise<HotspotRepor
   };
 }
 
-async function collectSourceFiles(dir: string): Promise<string[]> {
-  const files: string[] = [];
-  await walk(dir, files);
-  return files.sort((left, right) => toRel(left).localeCompare(toRel(right)));
-}
-
-async function walk(dir: string, files: string[]): Promise<void> {
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (entry.name.startsWith('.') && entry.name !== '.github' && entry.name !== '.moon') continue;
-    if (entry.isDirectory() && generatedDirs.has(entry.name)) continue;
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      await walk(path, files);
-      continue;
-    }
-    if (
-      entry.isFile() &&
-      sourceExtensions.has(extname(entry.name)) &&
-      !isGeneratedPath(toRel(path))
-    ) {
-      files.push(path);
-    }
-  }
-}
-
 async function readRecentChurn(since: string): Promise<Map<string, Churn>> {
   const churn = new Map<string, Churn>();
   try {
@@ -187,7 +161,7 @@ async function readRecentChurn(since: string): Promise<Map<string, Churn>> {
       const match = line.match(/^(\d+)\s+(\d+)\s+(.+)$/);
       if (!match) continue;
       const path = match[3] ?? '';
-      if (!sourceExtensions.has(extname(path)) || isGeneratedPath(path)) continue;
+      if (!repoSourceExtensions.has(extname(path)) || isGeneratedRepoSourcePath(path)) continue;
       const current = churn.get(path) ?? { added: 0, deleted: 0, commits: 0 };
       current.added += Number(match[1] ?? 0);
       current.deleted += Number(match[2] ?? 0);
@@ -231,19 +205,6 @@ export function renderConsoleReport(report: HotspotReport): string {
   }
   lines.push('', 'Reports: artifacts/llm/reports/code-hotspots.{md,json}');
   return lines.join('\n');
-}
-
-function isGeneratedPath(path: string): boolean {
-  const parts = path.split('/');
-  const basename = parts.at(-1) ?? '';
-  return (
-    parts.some((part) => generatedDirs.has(part)) ||
-    basename.endsWith('.d.ts') ||
-    generatedFileNames.has(basename) ||
-    basename.endsWith('.generated.d.ts') ||
-    basename.endsWith('.generated.ts') ||
-    basename.endsWith('.generated.js')
-  );
 }
 
 function toRel(path: string): string {

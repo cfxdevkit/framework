@@ -9,8 +9,10 @@ import {
   writeJsonReport,
   writeMarkdownReport,
 } from './runtime/index.ts';
+import { resolveExecutionContext } from '../shared/execution-context.ts';
 
 export async function runReviewAgent(opts: { silent?: boolean } = {}) {
+  const executionContext = await resolveExecutionContext({ useLlm: false });
   const changed = await gitChangedFiles();
   const findings = [];
   const hotspotReport = await codeHotspotReport();
@@ -56,6 +58,7 @@ export async function runReviewAgent(opts: { silent?: boolean } = {}) {
   const report = {
     generatedAt: new Date().toISOString(),
     status: findings.some((finding) => finding.severity === 'error') ? 'error' : 'ok',
+    executionContext,
     changedFiles: changed,
     findings,
     codeHotspots: {
@@ -74,5 +77,6 @@ export async function runReviewAgent(opts: { silent?: boolean } = {}) {
     status: report.status,
     changedFiles: changed.length,
     findings: findings.length,
+    executionContext,
   };
 }

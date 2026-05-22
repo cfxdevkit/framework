@@ -4,7 +4,9 @@ import { runCiCheck } from './ci.js';
 import { runCorpusCheck } from './corpus.js';
 import { runDocsCheck } from './docs.js';
 import { type HotspotRecord, runHotspotsCheck } from './hotspots.js';
+import { type KebabGroupRecord, runKebabGroupsCheck } from './kebab-groups.js';
 import { runSecretsCheck, type SecretScanResult } from './secrets.js';
+import { runUnitConfigsCheck, type UnitConfigRecord } from './unit-configs.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -37,10 +39,12 @@ const defaultHotspotOptions = {
 } as const;
 
 export async function runFullReport(): Promise<FullReport> {
-  const [arch, secrets, hotspots, docs, ci, corpus] = await Promise.all([
+  const [arch, secrets, hotspots, kebabGroups, unitConfigs, docs, ci, corpus] = await Promise.all([
     runArchCheck(),
     runSecretsCheck(),
     runHotspotsCheck(defaultHotspotOptions),
+    runKebabGroupsCheck({ json: false, failOnGroups: false, minGroupSize: 2 }),
+    runUnitConfigsCheck({ json: false, write: false, failOnDrift: false }),
     runDocsCheck({ silent: true }),
     runCiCheck({ silent: true }),
     runCorpusCheck({ silent: true }),
@@ -56,6 +60,26 @@ export async function runFullReport(): Promise<FullReport> {
       findings: hotspots.totals.hardViolations + hotspots.totals.softWarnings,
       notes: `${hotspots.totals.scannedFiles} files — ${hotspots.totals.hardViolations} hard, ${hotspots.totals.softWarnings} soft`,
     },
+    {
+      id: 'check-kebab-groups',
+      label: 'Kebab groups',
+      status: kebabGroups.status === 'error' ? 'error' : 'ok',
+      findings: kebabGroups.totals.groups,
+      notes:
+        kebabGroups.totals.groups === 0
+          ? 'clean'
+          : `${kebabGroups.totals.groups} group(s) across ${kebabGroups.totals.groupedFiles} file(s)`,
+    },
+    {
+      id: 'check-unit-configs',
+      label: 'Unit configs',
+      status: unitConfigs.status,
+      findings: unitConfigs.totals.missing + unitConfigs.totals.drifted,
+      notes:
+        unitConfigs.status === 'ok'
+          ? 'all units configured'
+          : `${unitConfigs.totals.missing} missing, ${unitConfigs.totals.drifted} drifted`,
+    },
     buildAgentRow('check-docs', 'Docs alignment', docs),
     buildAgentRow('check-ci', 'CI readiness', ci),
     buildCorpusRow(corpus),
@@ -64,7 +88,14 @@ export async function runFullReport(): Promise<FullReport> {
   const status: 'ok' | 'error' = checks.some((c) => c.status === 'error') ? 'error' : 'ok';
   const report: FullReport = { generatedAt: new Date().toISOString(), status, checks };
 
-  const md = renderFullReportMd(report, arch, secrets, hotspots.hotspots);
+  const md = renderFullReportMd(
+    report,
+    arch,
+    secrets,
+    hotspots.hotspots,
+    kebabGroups.groups,
+    unitConfigs.units,
+  );
   await writeJsonReport('reports/arch-check-report.json', report);
   await writeMarkdownReport('reports/arch-check-report.md', md);
 
@@ -129,6 +160,8 @@ function renderFullReportMd(
   arch: ArchCheckResult,
   secrets: SecretScanResult,
   topHotspots: readonly HotspotRecord[],
+  topKebabGroups: readonly KebabGroupRecord[],
+  unitConfigs: readonly UnitConfigRecord[],
 ): string {
   const lines: string[] = [
     '# Arch-Check Status Report',
@@ -202,9 +235,26 @@ function renderFullReportMd(
     }
   }
 
+  if (topKebabGroups.length) {
+    lines.push('', '## Kebab Filename Groups', '');
+    for (const group of topKebabGroups.slice(0, 10)) {
+      lines.push(
+        `- ⚠️ \`${group.directory}\` — \`${group.prefix}*${group.extension}\` (${group.count}) → ${group.files.join(', ')}`,
+      );
+    }
+  }
+
+  const actionableUnitConfigs = unitConfigs.filter((unit) => unit.status !== 'ok');
+  if (actionableUnitConfigs.length) {
+    lines.push('', '## Monorepo Unit Configs', '');
+    for (const unit of actionableUnitConfigs.slice(0, 20)) {
+      lines.push(`- ❌ \`${unit.unit}\` — ${unit.findings.join('; ')} (${unit.configPath})`);
+    }
+  }
+
   lines.push('', '---', '');
   lines.push(
-    '_Full per-check reports: `artifacts/llm/reports/docs-alignment.md`, `code-hotspots.md`_',
+    '_Full per-check reports: `artifacts/llm/reports/docs-alignment.md`, `code-hotspots.md`, `kebab-groups.md`_',
   );
 
   return `${lines.join('\n')}\n`;

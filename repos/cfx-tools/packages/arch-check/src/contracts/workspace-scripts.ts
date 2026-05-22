@@ -22,6 +22,12 @@ const rootGenerationScriptRequirements: readonly ScriptRequirement[] = [
     severity: 'warning',
     description: 'deterministic STRUCTURE.md generator',
   },
+  {
+    name: 'gen:unit-configs',
+    expected: 'moon run arch-check:generate-unit-configs',
+    severity: 'warning',
+    description: 'deterministic monorepo unit config scaffold generator',
+  },
 ];
 
 export const rootToolingScriptRequirements: readonly ScriptRequirement[] = [

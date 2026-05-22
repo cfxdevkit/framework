@@ -5,8 +5,10 @@ import {
   writeJsonReport,
   writeMarkdownReport,
 } from './runtime/index.ts';
+import { resolveExecutionContext } from '../shared/execution-context.ts';
 
 export async function runAll() {
+  const executionContext = await resolveExecutionContext({ useLlm: false });
   const results = [];
   results.push(await runReviewAgent({ silent: true }));
 
@@ -14,6 +16,7 @@ export async function runAll() {
     generatedAt: new Date().toISOString(),
     mode: 'llm-agents',
     fineTuning: false,
+    executionContext,
     results,
   };
   await writeJsonReport('reports/agent-run.json', report);

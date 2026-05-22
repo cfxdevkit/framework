@@ -1,23 +1,29 @@
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
 import type { ToolingNamespaceDefinition } from './contracts.js';
+import { isHelpToken, withAgentScope, withLlmAgents } from './agent-runtime.js';
+import { findMonorepoUnit, listMonorepoUnits, parseScopeFlag } from './monorepo-units.js';
+import { findRepoRoot } from './workspace-paths.js';
 
 const repoCommands = [
   {
     name: 'check',
     description: 'Run deterministic repo validation checks',
-    usage: 'check <hotspots|docs|ci|secrets|corpus|eval> [args]',
+    usage: 'check <hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [args]',
   },
   {
     name: 'generate',
     description: 'Run deterministic repo reference document generators',
-    usage: 'generate <api|readme|structure> [args]',
+    usage: 'generate <api|readme|structure|unit-configs> [args]',
   },
   {
     name: 'arch-check',
     description: 'Run the full repository architecture and docs contract check',
     usage: 'arch-check [args]',
+  },
+  {
+    name: 'units',
+    description: 'List or inspect monorepo units and their agent-config overlays',
+    usage: 'units [list|show <unit>]',
   },
   {
     name: 'review',
@@ -38,6 +44,8 @@ const repoCommands = [
 
 const repoCheckScriptMap = {
   hotspots: 'check:hotspots',
+  'kebab-groups': 'check:kebab-groups',
+  'unit-configs': 'check:unit-configs',
   docs: 'check:docs',
   ci: 'check:ci',
   secrets: 'check:secrets',
@@ -49,6 +57,7 @@ const repoGenerateScriptMap = {
   api: 'gen:api',
   readme: 'gen:readme',
   structure: 'gen:structure',
+  'unit-configs': 'gen:unit-configs',
 } as const;
 
 export const repoToolingNamespace = {
@@ -59,7 +68,8 @@ export const repoToolingNamespace = {
 } as const satisfies ToolingNamespaceDefinition;
 
 async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
-  const args = [...rawArgs];
+  const parsed = parseScopeFlag(rawArgs);
+  const args = [...parsed.args];
   while (args[0] === '--') args.shift();
 
   const [command = 'help', ...rest] = args;
@@ -107,18 +117,38 @@ async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
     return;
   }
 
+  if (command === 'units') {
+    const [subcommand = 'list', unitName] = rest;
+    if (subcommand === 'list') {
+      printMonorepoUnits();
+      return;
+    }
+    if (subcommand === 'show') {
+      if (!unitName) throw new Error('Usage: cdk repo units show <unit>');
+      printMonorepoUnit(unitName);
+      return;
+    }
+    throw new Error(`Unknown repo units subcommand: ${subcommand}`);
+  }
+
   if (command === 'review') {
-    await withLlmAgents((agents) => agents.runReviewAgent());
+    await withAgentScope(parsed.scope, async () =>
+      withLlmAgents((agents) => agents.runReviewAgent()),
+    );
     return;
   }
 
   if (command === 'precommit') {
-    await withLlmAgents((agents) => agents.runPrecommit(rest));
+    await withAgentScope(parsed.scope, async () =>
+      withLlmAgents((agents) => agents.runPrecommit(rest)),
+    );
     return;
   }
 
   if (command === 'commit') {
-    await withLlmAgents((agents) => agents.runCommit(rest));
+    await withAgentScope(parsed.scope, async () =>
+      withLlmAgents((agents) => agents.runCommit(rest)),
+    );
     return;
   }
 
@@ -129,17 +159,46 @@ function printRepoHelp(): void {
   console.log(`cdk repo
 
 Usage:
-  cdk repo check <hotspots|docs|ci|secrets|corpus|eval> [args]
-  cdk repo generate <api|readme|structure> [args]
+  cdk repo check <hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [args]
+  cdk repo generate <api|readme|structure|unit-configs> [args]
+  cdk repo units [list|show <unit>]
   cdk repo arch-check [args]
-  cdk repo review
-  cdk repo precommit [args]
-  cdk repo commit [args]
+  cdk repo [--scope <unit>] review
+  cdk repo [--scope <unit>] precommit [args]
+  cdk repo [--scope <unit>] commit [args]
 
 Intent:
   - deterministic repo maintenance belongs here
   - review, precommit, and commit are repo operations even when they delegate to the agent layer
+  - use repo units to discover the major monorepo areas and their scoped agent overlays
   - use cdk llm for provider/model administration and generic repo-aware prompts`);
+}
+
+function printMonorepoUnits(): void {
+  const units = listMonorepoUnits();
+  const lines = units.map(
+    (unit) =>
+      `  - ${unit.name.padEnd(14)} ${unit.description} | mode ${unit.defaultMode} | ${unit.relativeConfigPath}`,
+  );
+  console.log(`cdk repo units
+
+Registered monorepo units:
+${lines.join('\n')}`);
+}
+
+function printMonorepoUnit(name: string): void {
+  const unit = findMonorepoUnit(name);
+  if (!unit) throw new Error(`Unknown monorepo unit: ${name}`);
+  console.log(`cdk repo units show ${unit.name}
+
+Root:
+  - path: ${unit.relativeRootPath}
+  - description: ${unit.description}
+
+Agent overlay:
+  - config: ${unit.relativeConfigPath}
+  - default mode: ${unit.defaultMode}
+  - focus: ${unit.focus}`);
 }
 
 async function runRootScript(script: string, forwardedArgs: readonly string[]): Promise<void> {
@@ -165,38 +224,4 @@ function spawnPnpm(args: readonly string[], cwd: string): Promise<number> {
       resolve(code ?? 1);
     });
   });
-}
-
-function findRepoRoot(startDir: string): string {
-  let current = startDir;
-  while (current !== dirname(current)) {
-    if (existsSync(join(current, 'pnpm-workspace.yaml')) && existsSync(join(current, 'package.json'))) {
-      return current;
-    }
-    current = dirname(current);
-  }
-  throw new Error(`Unable to find repository root from ${startDir}`);
-}
-
-async function withLlmAgents<T>(
-  run: (agents: typeof import('../../llm-agents/src/index.js')) => Promise<T> | T,
-): Promise<T> {
-  return runInRepoRoot(async () => run(await import('../../llm-agents/src/index.js')));
-}
-
-async function runInRepoRoot<T>(work: () => Promise<T> | T): Promise<T> {
-  const previousCwd = process.cwd();
-  const repoRoot = findRepoRoot(previousCwd);
-  if (repoRoot === previousCwd) return await work();
-
-  process.chdir(repoRoot);
-  try {
-    return await work();
-  } finally {
-    process.chdir(previousCwd);
-  }
-}
-
-function isHelpToken(value: string): boolean {
-  return value === 'help' || value === '--help' || value === '-h';
 }

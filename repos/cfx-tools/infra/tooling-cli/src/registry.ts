@@ -8,6 +8,8 @@ import type {
 import { rootDocsToolingNamespace } from './docs-namespace.js';
 import { repoToolingNamespace } from './repo-namespace.js';
 
+export { agentToolingNamespace, llmToolingNamespace, repoToolingNamespace };
+
 export const toolingNamespaces = [
   repoToolingNamespace,
   agentToolingNamespace,
@@ -36,11 +38,13 @@ export function buildToolingCatalog(
     namespaces: namespaces.map((namespace) => ({
       name: namespace.name,
       description: namespace.description,
-      commands: namespace.commands.filter((command) => command.hidden !== true).map((command) => ({
-        name: command.name,
-        description: command.description,
-        ...(command.usage ? { usage: command.usage } : {}),
-      })),
+      commands: namespace.commands
+        .filter((command) => command.hidden !== true)
+        .map((command) => ({
+          name: command.name,
+          description: command.description,
+          ...(command.usage ? { usage: command.usage } : {}),
+        })),
     })),
   };
 }

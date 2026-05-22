@@ -1,6 +1,6 @@
 # @cfxdevkit/arch-check
 
-Deterministic monorepo architecture and repository health checks. Runs as part of the `llm:commit` quality gate and can be invoked individually via `moon` or `pnpm`.
+Deterministic monorepo architecture and repository health checks. Runs as part of the `cdk repo precommit` and `cdk repo commit` quality flow and can be invoked individually via `moon` or `pnpm`.
 
 ---
 
@@ -41,6 +41,21 @@ Scans all source files for size and git churn. Produces a scored hotspot list to
 ```
 
 **Output:** `artifacts/llm/reports/code-hotspots.{json,md}`
+
+### `check-kebab-groups` — Grouped kebab-case sibling detection
+
+Scans source files across the monorepo and groups sibling filenames that share a common kebab-case prefix before a final suffix segment, such as `workspace-scripts-docs.ts`, `workspace-scripts-llm.ts`, and `workspace-scripts-repo.ts`.
+
+The intent is to surface places where repeated suffix files should likely become an explicit module directory or another clearer shape instead of growing a flat sibling cluster.
+
+**Options:**
+```
+--min-group-size <n>  Minimum number of sibling files required to report a group (default: 2)
+--fail-on-groups      Exit non-zero if any grouped prefix is found
+--json                Output raw JSON to stdout
+```
+
+**Output:** `artifacts/llm/reports/kebab-groups.{json,md}`
 
 ### `check-secrets` — Secret pattern scanning
 
@@ -96,6 +111,7 @@ Orchestrates evaluation runs against the LLM agent suite.
 # Run all checks
 moon run arch-check:check-secrets
 moon run arch-check:check-hotspots
+moon run arch-check:check-kebab-groups
 moon run arch-check:check-docs
 moon run arch-check:check-ci
 moon run arch-check:check-corpus
@@ -111,6 +127,7 @@ cd repos/cfx-tools/packages/arch-check
 
 pnpm run check:arch          # architecture rules
 pnpm run check:hotspots      # size + churn
+pnpm run check:kebab-groups  # grouped kebab-case sibling files
 pnpm run check:secrets       # secret scanning
 pnpm run check:docs          # docs alignment
 pnpm run check:ci            # CI readiness
@@ -118,9 +135,9 @@ pnpm run check:corpus        # corpus indexing
 pnpm run generate:structure  # deterministic STRUCTURE.md scaffolds
 ```
 
-### Via llm:commit gate
+### Via repo precommit / commit
 
-`arch-check` runs deterministically as part of the workspace `llm:commit` quality gate sequence. The gate is configured in `repos/cfx-tools/infra/llm-agents/workers/shared/index.ts`.
+`arch-check` runs deterministically as part of the workspace `cdk repo precommit` / `cdk repo commit` quality-gate sequence. The gate wiring lives in `repos/cfx-tools/infra/llm-agents/workers/commit/gates.ts`.
 
 ---
 
@@ -134,6 +151,8 @@ Each check returns a structured result object and writes report artifacts under 
 | `artifacts/llm/reports/docs-alignment.md` | check-docs |
 | `artifacts/llm/reports/code-hotspots.json` | check-hotspots |
 | `artifacts/llm/reports/code-hotspots.md` | check-hotspots |
+| `artifacts/llm/reports/kebab-groups.json` | check-kebab-groups |
+| `artifacts/llm/reports/kebab-groups.md` | check-kebab-groups |
 
 ---
 
@@ -157,6 +176,7 @@ src/
     docs.ts       Documentation alignment
     eval.ts       LLM evaluation orchestration
     hotspots.ts   Code size + churn hotspots
+    kebab-groups.ts  Grouped kebab-case sibling detection
     secrets.ts    Secret pattern scanning
   runtime.ts      Shared utilities (root resolution, file I/O, report writing)
   index.ts        Public exports

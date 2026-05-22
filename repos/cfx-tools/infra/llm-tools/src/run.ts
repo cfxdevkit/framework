@@ -4,6 +4,14 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findLlmCommand, type LlmCommandDefinition, llmCommands } from './commands.js';
 
+type PiAgentModule = {
+  readonly runPiInteractive: (options?: {
+    readonly promptArgs?: readonly string[];
+  }) => Promise<void>;
+  readonly runPiPrint: (options: { readonly promptArgs: readonly string[] }) => Promise<void>;
+  readonly runPiRpc: () => Promise<void>;
+};
+
 const packageDir = join(
   findRepoRoot(dirname(fileURLToPath(import.meta.url))),
   'repos/cfx-tools/infra/llm-tools',
@@ -30,6 +38,11 @@ export async function runCli(rawArgs: readonly string[]): Promise<void> {
 }
 
 async function runWorker(command: LlmCommandDefinition, args: readonly string[]): Promise<void> {
+  if (command.worker === 'pi') {
+    await runPiRuntime(command.workerArgs, args);
+    return;
+  }
+
   const repoRoot = findRepoRoot(packageDir);
   const script = workerScript(command.worker);
   const exitCode = await spawnNode(
@@ -42,6 +55,28 @@ async function runWorker(command: LlmCommandDefinition, args: readonly string[])
 function workerScript(worker: LlmCommandDefinition['worker']): string {
   if (worker === 'llm') return 'workers/lemonade/cli.ts';
   return 'workers/llm-agents.ts';
+}
+
+async function runPiRuntime(workerArgs: readonly string[], args: readonly string[]): Promise<void> {
+  const piAgent = (await import('../../pi-agent/src/index.js')) as PiAgentModule;
+  const [mode] = workerArgs;
+
+  if (mode === 'interactive') {
+    await piAgent.runPiInteractive({ promptArgs: args });
+    return;
+  }
+
+  if (mode === 'print') {
+    await piAgent.runPiPrint({ promptArgs: args });
+    return;
+  }
+
+  if (mode === 'rpc') {
+    await piAgent.runPiRpc();
+    return;
+  }
+
+  throw new Error(`Unknown PI runtime mode: ${mode}`);
 }
 
 async function spawnNode(args: readonly string[], cwd: string): Promise<number> {
@@ -81,6 +116,7 @@ ${llmCommands.map((command) => `  ${command.name.padEnd(14)} ${command.descripti
 
 Examples:
   pnpm run llm:models
+  pnpm --filter @cfxdevkit/llm-tools llm -- interactive
   pnpm run llm:docs-upkeep -- --quick
   pnpm run llm:test-audit
   pnpm run llm:commit -- --dry-run

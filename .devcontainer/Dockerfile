@@ -13,6 +13,7 @@ RUN apt-get update \
     ca-certificates \
     curl \
     docker.io \
+    fd-find \
     git \
     jq \
     less \
@@ -25,6 +26,7 @@ RUN apt-get update \
     python3 \
     ripgrep \
     unzip \
+  && ln -sf /usr/bin/fdfind /usr/local/bin/fd \
   && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /usr/local/share/nvm/.cache \

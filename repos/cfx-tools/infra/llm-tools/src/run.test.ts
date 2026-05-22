@@ -2,15 +2,26 @@ import { spawn } from 'node:child_process';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runCli } from './run.js';
 
+const piAgent = vi.hoisted(() => ({
+  runPiInteractive: vi.fn(async () => undefined),
+  runPiPrint: vi.fn(async () => undefined),
+  runPiRpc: vi.fn(async () => undefined),
+}));
+
 vi.mock('node:child_process', () => ({
   spawn: vi.fn(),
 }));
+
+vi.mock('../../pi-agent/src/index.js', () => piAgent);
 
 const spawnMock = vi.mocked(spawn);
 
 describe('runCli', () => {
   beforeEach(() => {
     spawnMock.mockReset();
+    piAgent.runPiInteractive.mockClear();
+    piAgent.runPiPrint.mockClear();
+    piAgent.runPiRpc.mockClear();
     spawnMock.mockReturnValue({
       on(event: string, callback: (code?: number) => void) {
         if (event === 'exit') callback(0);
@@ -53,5 +64,12 @@ describe('runCli', () => {
       expect.any(Object),
     );
     expect(process.exitCode).toBe(0);
+  });
+
+  it('routes interactive mode through the pi-agent compatibility runtime', async () => {
+    await runCli(['interactive', 'review']);
+
+    expect(piAgent.runPiInteractive).toHaveBeenCalledWith({ promptArgs: ['review'] });
+    expect(spawnMock).not.toHaveBeenCalled();
   });
 });

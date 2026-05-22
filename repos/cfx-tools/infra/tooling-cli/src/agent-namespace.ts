@@ -6,20 +6,10 @@ import {
   printExploratoryHelp,
   printPrintMode,
   printProvidersStrategy,
-  printRpcMode,
 } from './agent-help.js';
-import {
-  printInteractiveMode,
-  printModes,
-  printStatus,
-  runConfigCli,
-} from './agent-config.js';
-import {
-  isHelpToken,
-  isUnknownWorkflowError,
-  withLlmAgents,
-  withLlmClient,
-} from './agent-runtime.js';
+import { printModes, printStatus, runConfigCli } from './agent-config.js';
+import { isHelpToken, withAgentScope, withLlmAgents, withPiAgent } from './agent-runtime.js';
+import { parseScopeFlag } from './monorepo-units.js';
 
 export const agentToolingNamespace = {
   name: 'agent',
@@ -29,26 +19,51 @@ export const agentToolingNamespace = {
 } as const satisfies ToolingNamespaceDefinition;
 
 async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
-  const args = [...rawArgs];
+  const parsed = parseScopeFlag(rawArgs);
+  const args = [...parsed.args];
   while (args[0] === '--') args.shift();
 
-  const [command = 'help'] = args;
-  if (isHelpToken(command)) {
+  await withAgentScope(parsed.scope, async () => {
+    const [command = 'help'] = args;
+    if (isHelpToken(command)) {
+      printAgentHelp();
+      return;
+    }
+
+    if (command === 'config') return await runConfigCli(args.slice(1));
+    if (command === 'modes') return await printModes();
+    if (command === 'status') return await printStatus();
+    if (command === 'deterministic') return await runDeterministicCli(args.slice(1));
+    if (command === 'exploratory') return await runExploratoryCli(args.slice(1));
+    if (command === 'interactive') {
+      const promptArgs = normalizePromptArgs(args.slice(1));
+      return await withPiAgent((piAgent) =>
+        piAgent.runPiInteractive(
+          parsed.scope ? { scope: parsed.scope, promptArgs } : { promptArgs },
+        ),
+      );
+    }
+    if (command === 'commit') {
+      const promptArgs = normalizePromptArgs(args.slice(1));
+      return await withPiAgent((piAgent) =>
+        piAgent.runPiCommit(parsed.scope ? { scope: parsed.scope, promptArgs } : { promptArgs }),
+      );
+    }
+    if (command === 'print') {
+      const promptArgs = normalizePromptArgs(args.slice(1));
+      return await withPiAgent((piAgent) =>
+        piAgent.runPiPrint(parsed.scope ? { scope: parsed.scope, promptArgs } : { promptArgs }),
+      );
+    }
+    if (command === 'rpc') {
+      return await withPiAgent((piAgent) =>
+        piAgent.runPiRpc(parsed.scope ? { scope: parsed.scope } : {}),
+      );
+    }
+    if (command === 'providers') return printProvidersStrategy();
+
     printAgentHelp();
-    return;
-  }
-
-  if (command === 'config') return await runConfigCli(args.slice(1));
-  if (command === 'modes') return await printModes();
-  if (command === 'status') return await printStatus();
-  if (command === 'deterministic') return await runDeterministicCli(args.slice(1));
-  if (command === 'exploratory') return await runExploratoryCli(args.slice(1));
-  if (command === 'interactive') return await runInteractiveCli(args.slice(1));
-  if (command === 'print') return await runPrintCli(args.slice(1));
-  if (command === 'rpc') return printRpcMode();
-  if (command === 'providers') return printProvidersStrategy();
-
-  printAgentHelp();
+  });
 }
 
 async function runDeterministicCli(rawArgs: readonly string[]): Promise<void> {
@@ -130,40 +145,6 @@ async function runExploratoryCli(rawArgs: readonly string[]): Promise<void> {
   throw new Error(`Unknown exploratory workflow: ${workflow}`);
 }
 
-async function runInteractiveCli(rawArgs: readonly string[]): Promise<void> {
-  const args = [...rawArgs];
-  while (args[0] === '--') args.shift();
-
-  if (args.length === 0 || isHelpToken(args[0] ?? '')) {
-    await printInteractiveMode();
-    return;
-  }
-
-  const config = await withLlmClient((client) => client.readConfig());
-  if (config.harness.defaultMode === 'deterministic') {
-    try {
-      await runDeterministicCli(args);
-      return;
-    } catch (error) {
-      if (!isUnknownWorkflowError(error, 'deterministic')) throw error;
-    }
-  }
-
-  try {
-    await runExploratoryCli(args);
-    return;
-  } catch (error) {
-    if (!isUnknownWorkflowError(error, 'exploratory')) throw error;
-  }
-
-  if (config.harness.defaultMode === 'exploratory') {
-    await runDeterministicCli(args);
-    return;
-  }
-
-  throw new Error(`Unknown agent workflow: ${args[0]}`);
-}
-
 async function runPrintCli(rawArgs: readonly string[]): Promise<void> {
   const args = [...rawArgs];
   while (args[0] === '--') args.shift();
@@ -173,5 +154,11 @@ async function runPrintCli(rawArgs: readonly string[]): Promise<void> {
     return;
   }
 
-  await withLlmAgents((agents) => agents.ask(args));
+  await withPiAgent((piAgent) => piAgent.runPiPrint({ promptArgs: args }));
+}
+
+function normalizePromptArgs(rawArgs: readonly string[]): string[] {
+  const args = [...rawArgs];
+  while (args[0] === '--') args.shift();
+  return args;
 }

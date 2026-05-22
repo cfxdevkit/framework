@@ -22,8 +22,10 @@ export { runCorpusCheck } from './checks/corpus.js';
 export { runDocsCheck } from './checks/docs.js';
 export { runEvalCheck, runServeCheck } from './checks/eval.js';
 export { runHotspotsCheck } from './checks/hotspots.js';
+export { findKebabGroupRecords, runKebabGroupsCheck } from './checks/kebab-groups.js';
 export { runFullReport } from './checks/report.js';
 export { runSecretsCheck } from './checks/secrets.js';
+export { runUnitConfigsCheck } from './checks/unit-configs.js';
 export {
   findUnexpectedReferenceDocuments,
   getDocsRootDocumentRequirements,

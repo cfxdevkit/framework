@@ -1,5 +1,22 @@
 # Pi Coding Agent Fit Assessment
 
+## Current Status
+
+The recommended integration path in this document is now partially implemented.
+
+Current shipped shape:
+
+- `cdk agent interactive|print|rpc` delegates into `@cfxdevkit/pi-agent`
+- `cdk agent commit` delegates into a PI-backed interactive commit workflow that keeps remediation and approval inside the session
+- `@cfxdevkit/pi-agent` launches `pi` from the repository root so project-local `.pi/` resources resolve correctly
+- `.pi/extensions/repo-agent.ts` registers the project-local PI extension from the `pi-agent` package source
+- scoped `cdk agent --scope <unit> ...` runs resolve the matching `artifacts/llm/config/units/<unit>.json` overlay and pass the scope into the PI subprocess
+- PI slash commands and tools now expose the shared repo action registry, a dedicated repo commit workflow command, and runtime workflow context in the operator UI
+- `@cfxdevkit/llm-client` now resolves named provider profiles plus action and phase policies so PI commit sessions can select local or cloud backends intentionally
+- `@cfxdevkit/llm-tools` keeps compatibility entrypoints for PI-backed `interactive`, `print`, and `rpc` modes while the root control plane stays on `cdk`
+
+What remains after this slice is representative smoke validation of live `repo commit`, `agent commit`, and policy-routed local-versus-cloud runs.
+
 ## Recommendation
 
 Adopt `pi` as the interactive agent runtime and TUI layer for repository-aware LLM work,
@@ -109,6 +126,7 @@ Use `pi` as the engine behind interactive agent workflows.
 Preferred shapes:
 
 - `cdk agent` launches `pi` in project-local mode with repo extensions loaded
+- `cdk agent commit` launches the interactive repo commit operator loop while `cdk repo commit` remains deterministic
 - `cdk agent rpc` exposes a hostable RPC session for future editor or dashboard integrations
 - `cdk agent print` or `cdk llm ask` uses the `pi` SDK for single-shot prompts where that is simpler than maintaining a custom runtime
 
@@ -119,9 +137,11 @@ Create a project-local `pi` extension package that exposes repo-specific capabil
 - docs upkeep commands
 - review and commit flows
 - model validation helpers
-- provider registration for local and proxy endpoints
+- provider registration for local and proxy endpoints plus action-policy-aware commit routing
 - path protection and safety policies aligned with this monorepo
 - custom TUI widgets for current repo workflows
+
+This is now implemented through `repos/cfx-tools/infra/pi-agent` plus the repo-local entrypoint in `.pi/extensions/repo-agent.ts`.
 
 This extension layer is the natural replacement for most of `llm-tools`.
 

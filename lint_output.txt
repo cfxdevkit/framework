@@ -1,0 +1,328 @@
+
+> @cfxdevkit/llm-agents@2.0.0 lint /workspaces/root/repos/cfx-tools/infra/llm-agents
+> biome check src workers
+
+workers/docs/api-enrichment.test.ts:54:21 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    52 │ describe('resolveApiEnrichmentMaxTokens', () => {
+    53 │   it('raises the non-quick output budget for larger API pages', () => {
+  > 54 │     const content = '# api\n\n' + 'export declare function example(): void;\n'.repeat(180);
+       │                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    55 │ 
+    56 │     expect(resolveApiEnrichmentMaxTokens(content, {})).toBeGreaterThanOrEqual(24000);
+  
+  i Unsafe fix: Use a template literal.
+  
+    52 52 │   describe('resolveApiEnrichmentMaxTokens', () => {
+    53 53 │     it('raises the non-quick output budget for larger API pages', () => {
+    54    │ - ····const·content·=·'#·api\n\n'·+·'export·declare·function·example():·void;\n'.repeat(180);
+       54 │ + ····const·content·=·`#·api\n\n${'export·declare·function·example():·void;\n'.repeat(180)}`;
+    55 55 │   
+    56 56 │       expect(resolveApiEnrichmentMaxTokens(content, {})).toBeGreaterThanOrEqual(24000);
+  
+
+workers/docs/api-enrichment.test.ts:60:21 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    59 │   it('keeps quick mode on a smaller bounded budget', () => {
+  > 60 │     const content = '# api\n\n' + 'export declare function example(): void;\n'.repeat(40);
+       │                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    61 │ 
+    62 │     expect(resolveApiEnrichmentMaxTokens(content, { quick: true })).toBeLessThanOrEqual(16000);
+  
+  i Unsafe fix: Use a template literal.
+  
+    58 58 │   
+    59 59 │     it('keeps quick mode on a smaller bounded budget', () => {
+    60    │ - ····const·content·=·'#·api\n\n'·+·'export·declare·function·example():·void;\n'.repeat(40);
+       60 │ + ····const·content·=·`#·api\n\n${'export·declare·function·example():·void;\n'.repeat(40)}`;
+    61 61 │   
+    62 62 │       expect(resolveApiEnrichmentMaxTokens(content, { quick: true })).toBeLessThanOrEqual(16000);
+  
+
+workers/docs/package-page-enrichment.test.ts:100:18 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+     98 │ describe('resolvePackagePageMaxTokens', () => {
+     99 │   it('raises the non-quick output budget for longer MDX pages', () => {
+  > 100 │     const page = ['---', 'title: "pkg"', '---', '', 'body'].join('\n') + '\n' + 'A'.repeat(9000);
+        │                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    101 │     const readme = '# README\n' + 'B'.repeat(2500);
+    102 │ 
+  
+  i Unsafe fix: Use a template literal.
+  
+     98  98 │   describe('resolvePackagePageMaxTokens', () => {
+     99  99 │     it('raises the non-quick output budget for longer MDX pages', () => {
+    100     │ - ····const·page·=·['---',·'title:·"pkg"',·'---',·'',·'body'].join('\n')·+·'\n'·+·'A'.repeat(9000);
+        100 │ + ····const·page·=·`${['---',·'title:·"pkg"',·'---',·'',·'body'].join('\n')}\n${'A'.repeat(9000)}`;
+    101 101 │       const readme = '# README\n' + 'B'.repeat(2500);
+    102 102 │   
+  
+
+workers/docs/package-page-enrichment.test.ts:101:20 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+     99 │   it('raises the non-quick output budget for longer MDX pages', () => {
+    100 │     const page = ['---', 'title: "pkg"', '---', '', 'body'].join('\n') + '\n' + 'A'.repeat(9000);
+  > 101 │     const readme = '# README\n' + 'B'.repeat(2500);
+        │                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    102 │ 
+    103 │     expect(resolvePackagePageMaxTokens(page, readme, {})).toBeGreaterThanOrEqual(8000);
+  
+  i Unsafe fix: Use a template literal.
+  
+     99  99 │     it('raises the non-quick output budget for longer MDX pages', () => {
+    100 100 │       const page = ['---', 'title: "pkg"', '---', '', 'body'].join('\n') + '\n' + 'A'.repeat(9000);
+    101     │ - ····const·readme·=·'#·README\n'·+·'B'.repeat(2500);
+        101 │ + ····const·readme·=·`#·README\n${'B'.repeat(2500)}`;
+    102 102 │   
+    103 103 │       expect(resolvePackagePageMaxTokens(page, readme, {})).toBeGreaterThanOrEqual(8000);
+  
+
+workers/docs/package-page-enrichment.test.ts:107:18 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    106 │   it('keeps quick mode on a smaller bounded budget', () => {
+  > 107 │     const page = ['---', 'title: "pkg"', '---', '', 'body'].join('\n') + '\n' + 'A'.repeat(2000);
+        │                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    108 │     const readme = '# README\n' + 'B'.repeat(500);
+    109 │ 
+  
+  i Unsafe fix: Use a template literal.
+  
+    105 105 │   
+    106 106 │     it('keeps quick mode on a smaller bounded budget', () => {
+    107     │ - ····const·page·=·['---',·'title:·"pkg"',·'---',·'',·'body'].join('\n')·+·'\n'·+·'A'.repeat(2000);
+        107 │ + ····const·page·=·`${['---',·'title:·"pkg"',·'---',·'',·'body'].join('\n')}\n${'A'.repeat(2000)}`;
+    108 108 │       const readme = '# README\n' + 'B'.repeat(500);
+    109 109 │   
+  
+
+workers/docs/package-page-enrichment.test.ts:108:20 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    106 │   it('keeps quick mode on a smaller bounded budget', () => {
+    107 │     const page = ['---', 'title: "pkg"', '---', '', 'body'].join('\n') + '\n' + 'A'.repeat(2000);
+  > 108 │     const readme = '# README\n' + 'B'.repeat(500);
+        │                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    109 │ 
+    110 │     expect(resolvePackagePageMaxTokens(page, readme, { quick: true })).toBeLessThanOrEqual(7000);
+  
+  i Unsafe fix: Use a template literal.
+  
+    106 106 │     it('keeps quick mode on a smaller bounded budget', () => {
+    107 107 │       const page = ['---', 'title: "pkg"', '---', '', 'body'].join('\n') + '\n' + 'A'.repeat(2000);
+    108     │ - ····const·readme·=·'#·README\n'·+·'B'.repeat(500);
+        108 │ + ····const·readme·=·`#·README\n${'B'.repeat(500)}`;
+    109 109 │   
+    110 110 │       expect(resolvePackagePageMaxTokens(page, readme, { quick: true })).toBeLessThanOrEqual(7000);
+  
+
+workers/docs/package-page-enrichment.test.ts:149:11 lint/suspicious/noUselessEscapeInString  FIXABLE  ━━━━━━━━━━
+
+  ! The character doesn't need to be escaped.
+  
+    148 │     expect(validatePackagePageEnrichment(existing, candidate)).toContain(
+  > 149 │       '| \`@cfxdevkit/example\` | Primary client entrypoint. |',
+        │           ^
+    150 │     );
+    151 │   });
+  
+  i Only quotes that enclose the string and special characters need to be escaped.
+  
+  i Safe fix: Unescape the character.
+  
+    149 │ ······'|·\`@cfxdevkit/example\`·|·Primary·client·entrypoint.·|',
+        │          -                                                      
+
+workers/commands.ts:15:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━
+
+  × This statement must be preceded by a blank line. Add a newline before this statement.
+  
+    13 │ } from './completion/index.ts';
+    14 │ import { repoActions } from './shared/index.ts';
+  > 15 │ export { validateModels } from './validate-models.ts';
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    16 │ 
+    17 │ const providerTypes = ['lemonade', 'litellm', 'openai-compat', 'github-models'] as const;
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+     13  13 │   } from './completion/index.ts';
+     14  14 │   import { repoActions } from './shared/index.ts';
+         15 │ + 
+     15  16 │   export { validateModels } from './validate-models.ts';
+     16  17 │   
+  
+
+workers/commit/gates.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     97  97 │   }
+     98  98 │   
+     99     │ - async·function·runRepositoryPolicyGate(gate:·RepositoryPolicyGate):·Promise<RepositoryPolicyStatus>·{
+         99 │ + async·function·runRepositoryPolicyGate(
+        100 │ + ··gate:·RepositoryPolicyGate,
+        101 │ + ):·Promise<RepositoryPolicyStatus>·{
+    100 102 │     process.stdout.write(`  › ${gate.label}...`);
+    101 103 │     const start = Date.now();
+    ······· │ 
+    142 144 │   
+    143 145 │   export function extractKebabGroupSummary(output) {
+    144     │ - ··const·match·=·output.match(/Scanned·\d+·source·files;·found·\d+·grouped·kebab-case·prefix\(es\)·covering·\d+·file\(s\)\./);
+        146 │ + ··const·match·=·output.match(
+        147 │ + ····/Scanned·\d+·source·files;·found·\d+·grouped·kebab-case·prefix\(es\)·covering·\d+·file\(s\)\./,
+        148 │ + ··);
+    145 149 │     return match ? `  ${match[0].trim()}` : '';
+    146 150 │   }
+  
+
+workers/docs/index.ts:9:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━
+
+  × Sort these exports.
+  
+     7 │ } from './discover.ts';
+     8 │ 
+   > 9 │ export { runDocsApi } from './api.ts';
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 10 │ export { runDocsApiProbe } from './api-probe.ts';
+  > 11 │ export { normalizeScopeFilter } from './discover.ts';
+  > 12 │ export { runDocsReadme } from './readme.ts';
+  > 13 │ export { runDocsPackagePages } from './packages.ts';
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    14 │ export { runStructureUpkeep } from './structure.ts';
+    15 │ 
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+     10  10 │   export { runDocsApiProbe } from './api-probe.ts';
+     11  11 │   export { normalizeScopeFilter } from './discover.ts';
+     12     │ - export·{·runDocsReadme·}·from·'./readme.ts';
+     13     │ - export·{·runDocsPackagePages·}·from·'./packages.ts';
+         12 │ + export·{·runDocsPackagePages·}·from·'./packages.ts';
+         13 │ + export·{·runDocsReadme·}·from·'./readme.ts';
+     14  14 │   export { runStructureUpkeep } from './structure.ts';
+     15  15 │   
+  
+
+workers/docs/package-page-enrichment.ts:10:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × Sort the imported names.
+  
+     8 │  */
+     9 │ import { readFile, writeFile } from 'node:fs/promises';
+  > 10 │ import {
+       │ ^^^^^^^^
+  > 11 │   getPackagePagePath,
+        ...
+  > 15 │   writePackagePageHash,
+  > 16 │ } from '@cfxdevkit/docs-pipeline';
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    17 │ import { completeStructuredAgent } from '../completion/index.ts';
+    18 │ import { createLlmProgressReporter, logInfo } from '../shared/logging.ts';
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+     10  10 │   import {
+     11  11 │     getPackagePagePath,
+     12     │ - ··readPackagePageHash,
+     13     │ - ··stripPackagePageHash,
+     14     │ - ··type·PackagePageTarget,
+         12 │ + ··type·PackagePageTarget,
+         13 │ + ··readPackagePageHash,
+         14 │ + ··stripPackagePageHash,
+     15  15 │     writePackagePageHash,
+     16  16 │   } from '@cfxdevkit/docs-pipeline';
+  
+
+workers/docs/structure-enrichment.ts:11:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × Sort the imported names.
+  
+     9 │  *  - If the footer hash differs: regenerates (new files/folders added).
+    10 │  */
+  > 11 │ import { readFile, readdir, writeFile } from 'node:fs/promises';
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    12 │ import { join } from 'node:path';
+    13 │ import {
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+      9   9 │    *  - If the footer hash differs: regenerates (new files/folders added).
+     10  10 │    */
+     11     │ - import·{·readFile,·readdir,·writeFile·}·from·'node:fs/promises';
+         11 │ + import·{·readdir,·readFile,·writeFile·}·from·'node:fs/promises';
+     12  12 │   import { join } from 'node:path';
+     13  13 │   import {
+  
+
+workers/validate-models.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × Sort these imports.
+  
+   > 1 │ import { getProviderBaseUrl, readConfig, resolveProvider } from './completion/index.ts';
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   > 2 │ import {
+   > 3 │   displayModelId,
+   > 4 │   displayModelLabels,
+        ...
+  > 13 │ } from './validate-models-report.ts';
+  > 14 │ import { runValidationProbe } from './validate-models-probe.ts';
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    15 │ 
+    16 │ const MIN_VALIDATION_CONTEXT_TOKENS = 30000;
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+      1   1 │   import { getProviderBaseUrl, readConfig, resolveProvider } from './completion/index.ts';
+      2     │ - import·{
+      3     │ - ··displayModelId,
+      4     │ - ··displayModelLabels,
+      5     │ - ··findValidationError,
+      6     │ - ··type·ModelValidationResult,
+      7     │ - ··parseValidateModelsFlags,
+      8     │ - ··renderValidationTable,
+      9     │ - ··summarizeValidationResult,
+     10     │ - ··validateJsonProbe,
+     11     │ - ··writeModelValidationReport,
+     12     │ - ··type·ValidationReport,
+     13     │ - }·from·'./validate-models-report.ts';
+     14     │ - import·{·runValidationProbe·}·from·'./validate-models-probe.ts';
+          2 │ + import·{·runValidationProbe·}·from·'./validate-models-probe.ts';
+          3 │ + import·{
+          4 │ + ··displayModelId,
+          5 │ + ··displayModelLabels,
+          6 │ + ··findValidationError,
+          7 │ + ··type·ModelValidationResult,
+          8 │ + ··parseValidateModelsFlags,
+          9 │ + ··renderValidationTable,
+         10 │ + ··summarizeValidationResult,
+         11 │ + ··type·ValidationReport,
+         12 │ + ··validateJsonProbe,
+         13 │ + ··writeModelValidationReport,
+         14 │ + }·from·'./validate-models-report.ts';
+     15  15 │   
+     16  16 │   const MIN_VALIDATION_CONTEXT_TOKENS = 30000;
+  
+
+Checked 51 files in 22ms. No fixes applied.
+Found 6 errors.
+Found 1 warning.
+Found 6 infos.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
+/workspaces/root/repos/cfx-tools/infra/llm-agents:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @cfxdevkit/llm-agents@2.0.0 lint: `biome check src workers`
+Exit status 1

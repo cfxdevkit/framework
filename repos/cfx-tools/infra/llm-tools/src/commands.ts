@@ -1,4 +1,4 @@
-export type LlmWorker = 'llm' | 'deterministic';
+export type LlmWorker = 'llm' | 'deterministic' | 'pi';
 
 export interface LlmCommandDefinition {
   readonly name: string;
@@ -29,8 +29,26 @@ export const llmCommands = [
   {
     name: 'ask',
     description: 'Ask a repo-aware local LLM question',
-    worker: 'llm',
-    workerArgs: ['ask'],
+    worker: 'pi',
+    workerArgs: ['print'],
+  },
+  {
+    name: 'print',
+    description: 'Run a one-shot prompt through the PI print runtime',
+    worker: 'pi',
+    workerArgs: ['print'],
+  },
+  {
+    name: 'interactive',
+    description: 'Launch the PI-backed interactive runtime',
+    worker: 'pi',
+    workerArgs: ['interactive'],
+  },
+  {
+    name: 'rpc',
+    description: 'Start the PI-backed RPC runtime',
+    worker: 'pi',
+    workerArgs: ['rpc'],
   },
   {
     name: 'precommit',

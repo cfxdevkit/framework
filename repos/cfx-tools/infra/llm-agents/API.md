@@ -6,7 +6,7 @@
 
 | Sub-path | Exports |
 |----------|---------|
-| `.` | 18 symbols |
+| `.` | 17 symbols |
 
 ---
 
@@ -18,9 +18,6 @@ export { runAll }
 
 // Runs the review agent, which analyzes code changes and provides feedback.
 export { runReviewAgent }
-
-// Sends a natural-language query to the configured LLM agent and returns a structured response.
-export { ask }
 
 // Configures the LLM agent with provided settings (e.g., model, API key, timeout).
 export { configure }
@@ -71,13 +68,13 @@ export { runTestUpkeep }
 ### Usage
 
 ```ts
-import { configure, ask, runAll } from '@cfxdevkit/llm-agents';
+import { configure, runAction, runAll } from '@cfxdevkit/llm-agents';
 
 // Configure the agent with your preferred model and API settings
 configure({ model: 'gpt-4o', apiKey: process.env.OPENAI_API_KEY });
 
-// Ask a question and get a structured response
-const response = await ask('What is the current state of the `src/` directory?');
+// Run a named repo-aware action
+await runAction(['repo-health']);
 
 // Run all registered agents
 await runAll();

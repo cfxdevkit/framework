@@ -1,0 +1,77 @@
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
+import { registerPiRepoCommands } from './commands.js';
+import { getPiActionDefinitions } from './llm-agents-runtime.js';
+import { createPiProviderBridge, registerPiProviderBridge } from './providers.js';
+import { registerPiRepoTools } from './tools.js';
+import { applyPiOperatorUiState, clearPiWorkflowProgress, createPiRuntimeUiState } from './ui.js';
+
+export type PiScopeName = string;
+
+export const piScopeEnvVar = 'CFXDEVKIT_PI_SCOPE';
+
+export interface PiAgentExtension {
+  readonly name: 'cfxdevkit-repo-agent';
+  readonly scope?: PiScopeName;
+  readonly resources: {
+    readonly settingsPath: string;
+    readonly promptPath: string;
+    readonly skillPath: string;
+    readonly extensionPath: string;
+  };
+}
+
+export function createPiAgentExtension(scope?: PiScopeName): PiAgentExtension {
+  return {
+    name: 'cfxdevkit-repo-agent',
+    scope,
+    resources: {
+      settingsPath: '.pi/settings.json',
+      promptPath: '.pi/prompts/repo-system.md',
+      skillPath: '.pi/skills/repo-actions.md',
+      extensionPath: '.pi/extensions/repo-agent.ts',
+    },
+  };
+}
+
+export function resolvePiScopeFromEnv(): PiScopeName | undefined {
+  const scope = process.env[piScopeEnvVar]?.trim();
+  return scope ? scope : undefined;
+}
+
+export async function registerPiAgentProjectExtension(pi: ExtensionAPI): Promise<void> {
+  registerPiProviderBridge(pi, await createPiProviderBridge(resolvePiScopeFromEnv()));
+  registerPiRepoCommands(pi);
+  registerPiRepoTools(pi);
+
+  pi.on('session_start', async (_event, ctx) => {
+    await refreshPiRuntimeUi(ctx);
+  });
+
+  pi.on('session_tree', async (_event, ctx) => {
+    await refreshPiRuntimeUi(ctx);
+  });
+
+  pi.on('session_shutdown', async (_event, ctx) => {
+    if (!ctx.hasUI) {
+      return;
+    }
+
+    ctx.ui.setStatus('repo-agent', undefined);
+    ctx.ui.setWidget('repo-agent-context', undefined, { placement: 'aboveEditor' });
+    clearPiWorkflowProgress(ctx);
+  });
+}
+
+async function refreshPiRuntimeUi(ctx: ExtensionContext): Promise<void> {
+  const scope = resolvePiScopeFromEnv();
+  const providerBridge = await createPiProviderBridge(scope);
+  const actionCount = (await getPiActionDefinitions()).length;
+  applyPiOperatorUiState(
+    ctx,
+    createPiRuntimeUiState({
+      extension: createPiAgentExtension(scope),
+      providerBridge,
+      actionCount,
+    }),
+  );
+}

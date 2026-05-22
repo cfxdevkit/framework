@@ -1,27 +1,197 @@
-import { existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { relativeAgentConfigPath, resolveAgentConfigPath } from './monorepo-units.js';
+import {
+  findRepoRoot as resolveRepoRoot,
+  relativeParent as resolveRelativeParent,
+} from './workspace-paths.js';
 
-export function relativeConfigPath(): string {
-  const repoRoot = findRepoRoot(process.cwd());
-  return relative(process.cwd(), join(repoRoot, 'artifacts', 'llm', 'config', 'llm.json')) ||
-    'artifacts/llm/config/llm.json';
+const scopedConfigEnvVar = 'CFXDEVKIT_LLM_CONFIG_PATH';
+const llmClientModulePath = '../../llm-client/src/index.js';
+const llmAgentsModulePath = '../../llm-agents/src/index.js';
+const piAgentModulePath = '../../pi-agent/src/index.js';
+
+type LlmConfig = {
+  provider?: string | null;
+  baseUrl: string | null;
+  defaultModel: string | null;
+  requestTimeoutMs?: number;
+  actions: Record<string, string>;
+  providerProfiles?: Record<
+    string,
+    {
+      provider?: string | null;
+      baseUrl?: string | null;
+      defaultModel?: string | null;
+      githubModel?: string | null;
+      requestTimeoutMs?: number;
+      providerStrategy?: 'auto' | 'gateway' | 'direct' | null;
+    }
+  >;
+  actionPolicies?: Record<
+    string,
+    {
+      profile?: string | null;
+      model?: string | null;
+      phases?: Record<string, { profile?: string | null; model?: string | null }>;
+    }
+  >;
+  harness: {
+    version: number;
+    defaultMode: 'deterministic' | 'exploratory';
+    providerStrategy: 'auto' | 'gateway' | 'direct';
+    deterministic: {
+      preserveDeterministicArtifacts: boolean;
+      preserveDeterministicSections: boolean;
+    };
+    exploratory: {
+      allowCodeChanges: boolean;
+      allowWideChanges: boolean;
+    };
+  };
+};
+
+type LlmProvider = {
+  readonly type: string;
+  discoverModels(): Promise<readonly unknown[]>;
+  chooseModel(models: readonly unknown[], preferred?: string | null): unknown;
+};
+
+type LlmClientModule = {
+  readonly defaultConfig: () => LlmConfig;
+  readonly readConfig: () => Promise<LlmConfig>;
+  readonly writeConfig: (config: LlmConfig) => Promise<void>;
+  readonly resolveNamedProviderProfile: (
+    config: LlmConfig,
+    profileName?: string | null,
+  ) => {
+    readonly name: string | null;
+    readonly exists: boolean;
+    readonly provider: string | null;
+    readonly baseUrl: string | null;
+    readonly defaultModel: string | null;
+    readonly githubModel: string | null;
+    readonly requestTimeoutMs: number | null;
+    readonly providerStrategy: 'auto' | 'gateway' | 'direct';
+  };
+  readonly resolveRuntimeBridgeState: (
+    scope?: string,
+    options?: { action?: string; phase?: string },
+  ) => Promise<{
+    readonly effectivePolicy: {
+      readonly action?: string;
+      readonly phase?: string;
+      readonly source: 'default' | 'action' | 'phase';
+      readonly legacyActionModel: string | null;
+      readonly model: string | null;
+      readonly profile: {
+        readonly name: string | null;
+        readonly exists: boolean;
+        readonly provider: string | null;
+        readonly baseUrl: string | null;
+        readonly defaultModel: string | null;
+        readonly githubModel: string | null;
+        readonly requestTimeoutMs: number | null;
+        readonly providerStrategy: 'auto' | 'gateway' | 'direct';
+      };
+    };
+  }>;
+  readonly resolveProvider: () => Promise<LlmProvider>;
+  readonly getProviderBaseUrl: (provider: LlmProvider) => string;
+  readonly getProviderDefaultModel: (provider: LlmProvider) => string | null;
+  readonly resolveProviderModel: (
+    provider: LlmProvider,
+    preferred?: string | null,
+  ) => Promise<string>;
+};
+
+type LlmAgentsModule = {
+  readonly configure: (args: readonly string[]) => Promise<unknown>;
+  readonly listActions: () => Promise<unknown> | unknown;
+  readonly listModels: () => Promise<unknown>;
+  readonly runAction: (args: readonly string[]) => Promise<unknown>;
+  readonly runAll: () => Promise<unknown>;
+  readonly runCommit: (args: readonly string[]) => Promise<unknown>;
+  readonly runDocsApi: (args: readonly string[]) => Promise<unknown>;
+  readonly runDocsApiProbe: (args: readonly string[]) => Promise<unknown>;
+  readonly runDocsPackagePages: (args: readonly string[]) => Promise<unknown>;
+  readonly runDocsReadme: (args: readonly string[]) => Promise<unknown>;
+  readonly runDocsUpkeep: (args: readonly string[]) => Promise<unknown>;
+  readonly runPrecommit: (args: readonly string[]) => Promise<unknown>;
+  readonly runReviewAgent: () => Promise<unknown>;
+  readonly runStructureUpkeep: (args: readonly string[]) => Promise<unknown>;
+  readonly runTestUpkeep: (args: readonly string[]) => Promise<unknown>;
+  readonly validateModels: (args: readonly string[]) => Promise<unknown>;
+};
+
+type PiAgentModule = {
+  readonly runPiCommit: (options?: {
+    readonly scope?: string;
+    readonly promptArgs?: readonly string[];
+  }) => Promise<void>;
+  readonly runPiInteractive: (options?: {
+    readonly scope?: string;
+    readonly promptArgs?: readonly string[];
+  }) => Promise<void>;
+  readonly runPiPrint: (options: {
+    readonly scope?: string;
+    readonly promptArgs: readonly string[];
+  }) => Promise<void>;
+  readonly runPiRpc: (options?: { readonly scope?: string }) => Promise<void>;
+};
+
+export function relativeConfigPath(scope?: string): string {
+  if (scope) return relativeAgentConfigPath(scope, process.cwd());
+  const repoRoot = resolveRepoRoot(process.cwd());
+  return (
+    relative(process.cwd(), join(repoRoot, 'artifacts', 'llm', 'config', 'llm.json')) ||
+    'artifacts/llm/config/llm.json'
+  );
 }
 
 export async function withLlmClient<T>(
-  run: (client: typeof import('../../llm-client/src/index.js')) => Promise<T> | T,
+  run: (client: LlmClientModule) => Promise<T> | T,
 ): Promise<T> {
-  return runInRepoRoot(async () => run(await import('../../llm-client/src/index.js')));
+  return runInRepoRoot(async () => run((await import(llmClientModulePath)) as LlmClientModule));
 }
 
-export async function withLlmAgents<T>(
-  run: (agents: typeof import('../../llm-agents/src/index.js')) => Promise<T> | T,
+export async function withLlmAgents(
+  run: (agents: LlmAgentsModule) => Promise<unknown> | unknown,
+): Promise<void> {
+  await runInRepoRoot(async () => {
+    await run((await import(llmAgentsModulePath)) as LlmAgentsModule);
+  });
+}
+
+export async function withPiAgent(
+  run: (piAgent: PiAgentModule) => Promise<unknown> | unknown,
+): Promise<void> {
+  await runInRepoRoot(async () => {
+    await run((await import(piAgentModulePath)) as PiAgentModule);
+  });
+}
+
+export async function withAgentScope<T>(
+  scope: string | undefined,
+  work: () => Promise<T> | T,
 ): Promise<T> {
-  return runInRepoRoot(async () => run(await import('../../llm-agents/src/index.js')));
+  if (!scope) return await work();
+
+  const previousValue = process.env[scopedConfigEnvVar];
+  process.env[scopedConfigEnvVar] = resolveAgentConfigPath(scope, process.cwd());
+  try {
+    return await work();
+  } finally {
+    if (previousValue === undefined) {
+      delete process.env[scopedConfigEnvVar];
+    } else {
+      process.env[scopedConfigEnvVar] = previousValue;
+    }
+  }
 }
 
 export async function runInRepoRoot<T>(work: () => Promise<T> | T): Promise<T> {
   const previousCwd = process.cwd();
-  const repoRoot = findRepoRoot(previousCwd);
+  const repoRoot = resolveRepoRoot(previousCwd);
   if (repoRoot === previousCwd) return await work();
 
   process.chdir(repoRoot);
@@ -33,20 +203,11 @@ export async function runInRepoRoot<T>(work: () => Promise<T> | T): Promise<T> {
 }
 
 export function findRepoRoot(startDir: string): string {
-  let current = startDir;
-  while (current !== relativeParent(current)) {
-    if (existsSync(`${current}/pnpm-workspace.yaml`) && existsSync(`${current}/package.json`)) {
-      return current;
-    }
-    current = relativeParent(current);
-  }
-  return startDir;
+  return resolveRepoRoot(startDir);
 }
 
 export function relativeParent(path: string): string {
-  const normalized = path.replace(/\\/g, '/');
-  const parent = normalized.slice(0, normalized.lastIndexOf('/')) || normalized;
-  return parent === normalized ? normalized : parent;
+  return resolveRelativeParent(path);
 }
 
 export function isUnknownWorkflowError(

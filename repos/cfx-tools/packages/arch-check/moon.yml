@@ -63,6 +63,60 @@ tasks:
       cache: false
       runFromWorkspaceRoot: false
 
+  check-kebab-groups:
+    command: 'pnpm exec tsx src/bin/check-kebab-groups.ts'
+    inputs:
+      - '/repos/**/*'
+      - '/projects/**/*'
+      - '/scripts/**/*'
+      - 'src/**/*'
+    outputs:
+      - '/artifacts/llm/reports/kebab-groups.json'
+      - '/artifacts/llm/reports/kebab-groups.md'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
+  check-unit-configs:
+    command: 'pnpm exec tsx src/bin/check-unit-configs.ts --fail-on-drift'
+    inputs:
+      - '/artifacts/llm/config/units/**/*'
+      - '/docs/**/*'
+      - '/infrastructure/**/*'
+      - '/openspec/**/*'
+      - '/plan/**/*'
+      - '/projects/**/*'
+      - '/repos/**/*'
+      - '/scripts/**/*'
+      - '/workspaces/**/*'
+      - 'src/**/*'
+    outputs:
+      - '/artifacts/llm/reports/unit-configs.json'
+      - '/artifacts/llm/reports/unit-configs.md'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
+  generate-unit-configs:
+    command: 'pnpm exec tsx src/bin/generate-unit-configs.ts'
+    inputs:
+      - '/docs/**/*'
+      - '/infrastructure/**/*'
+      - '/openspec/**/*'
+      - '/plan/**/*'
+      - '/projects/**/*'
+      - '/repos/**/*'
+      - '/scripts/**/*'
+      - '/workspaces/**/*'
+      - 'src/**/*'
+    outputs:
+      - '/artifacts/llm/config/units/**/*'
+      - '/artifacts/llm/reports/unit-configs.json'
+      - '/artifacts/llm/reports/unit-configs.md'
+    options:
+      cache: false
+      runFromWorkspaceRoot: false
+
   check-ci:
     command: 'pnpm exec tsx src/bin/check-ci.ts'
     inputs:

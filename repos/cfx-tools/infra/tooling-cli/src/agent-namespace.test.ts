@@ -1,94 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-
-const llmClient = vi.hoisted(() => ({
-  configPath: '/workspaces/root/artifacts/llm/config/llm.json',
-  defaultConfig: vi.fn(() => ({
-    provider: 'litellm',
-    baseUrl: null,
-    defaultModel: null,
-    requestTimeoutMs: 120000,
-    actions: {},
-    harness: {
-      version: 1,
-      defaultMode: 'deterministic',
-      providerStrategy: 'auto',
-      deterministic: {
-        preserveDeterministicArtifacts: true,
-        preserveDeterministicSections: true,
-      },
-      exploratory: {
-        allowCodeChanges: true,
-        allowWideChanges: true,
-      },
-    },
-  })),
-  readConfig: vi.fn(async () => ({
-    provider: 'litellm',
-    baseUrl: null,
-    defaultModel: null,
-    requestTimeoutMs: 120000,
-    actions: {},
-    harness: {
-      version: 1,
-      defaultMode: 'deterministic',
-      providerStrategy: 'auto',
-      deterministic: {
-        preserveDeterministicArtifacts: true,
-        preserveDeterministicSections: true,
-      },
-      exploratory: {
-        allowCodeChanges: true,
-        allowWideChanges: true,
-      },
-    },
-  })),
-  writeConfig: vi.fn(async () => undefined),
-  resolveProvider: vi.fn(async () => ({
-    type: 'lemonade',
-    discoverModels: async () => [{ id: 'Qwen3-Coder-Next-GGUF' }],
-    chooseModel: (models) => models[0],
-  })),
-  getProviderBaseUrl: vi.fn(() => 'http://host.containers.internal:13305/api/v1'),
-  getProviderDefaultModel: vi.fn(() => 'Qwen3-Coder-Next-GGUF'),
-  resolveProviderModel: vi.fn(async () => 'Qwen3-Coder-Next-GGUF'),
-}));
-
-const llmAgents = vi.hoisted(() => ({
-  ask: vi.fn(async () => undefined),
-  listActions: vi.fn(() => undefined),
-  listModels: vi.fn(async () => undefined),
-  runAction: vi.fn(async () => undefined),
-  runCommit: vi.fn(async () => undefined),
-  runDocsApi: vi.fn(async () => undefined),
-  runDocsApiProbe: vi.fn(async () => undefined),
-  runDocsPackagePages: vi.fn(async () => undefined),
-  runDocsReadme: vi.fn(async () => undefined),
-  runDocsUpkeep: vi.fn(async () => undefined),
-  runPrecommit: vi.fn(async () => undefined),
-  runAll: vi.fn(async () => undefined),
-  runReviewAgent: vi.fn(async () => undefined),
-  runStructureUpkeep: vi.fn(async () => undefined),
-  runTestUpkeep: vi.fn(async () => undefined),
-  validateModels: vi.fn(async () => undefined),
-  configure: vi.fn(async () => undefined),
-}));
-
-vi.mock('../../llm-client/src/index.js', () => llmClient);
-vi.mock('../../llm-agents/src/index.js', () => llmAgents);
+import {
+  llmAgents,
+  llmClient,
+  piAgent,
+  resetAgentNamespaceMocks,
+} from './agent-namespace.test-support.ts';
 
 import { agentToolingNamespace } from './agent-namespace.js';
 
 describe('agentToolingNamespace', () => {
   afterEach(() => {
-    vi.restoreAllMocks();
-    llmClient.readConfig.mockClear();
-    llmClient.writeConfig.mockClear();
-    llmClient.resolveProvider.mockClear();
-    llmAgents.ask.mockClear();
-    llmAgents.configure.mockClear();
-    llmAgents.runAll.mockClear();
-    llmAgents.runDocsApiProbe.mockClear();
-    llmAgents.runReviewAgent.mockClear();
+    resetAgentNamespaceMocks();
   });
 
   it('prints provider guidance that keeps LiteLLM and direct providers', async () => {
@@ -107,7 +29,9 @@ describe('agentToolingNamespace', () => {
 
     await agentToolingNamespace.run(['help']);
 
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('cdk agent interactive'));
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining('cdk agent [--scope <unit>] interactive'),
+    );
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Commands:'));
   });
 
@@ -136,6 +60,125 @@ describe('agentToolingNamespace', () => {
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('llm.json'));
   });
 
+  it('prints configured provider profiles', async () => {
+    llmClient.readConfig.mockResolvedValueOnce({
+      provider: 'litellm',
+      baseUrl: null,
+      defaultModel: null,
+      requestTimeoutMs: 120000,
+      actions: {},
+      providerProfiles: {
+        'local-fast': {
+          provider: 'litellm',
+          defaultModel: 'qwen-local',
+        },
+      },
+      actionPolicies: {},
+      harness: {
+        version: 1,
+        defaultMode: 'deterministic',
+        providerStrategy: 'auto',
+        deterministic: {
+          preserveDeterministicArtifacts: true,
+          preserveDeterministicSections: true,
+        },
+        exploratory: {
+          allowCodeChanges: true,
+          allowWideChanges: true,
+        },
+      },
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await agentToolingNamespace.run(['config', 'show', 'profiles']);
+
+    expect(llmClient.resolveNamedProviderProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ providerProfiles: expect.any(Object) }),
+      'local-fast',
+    );
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Configured provider profiles:'));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('local-fast'));
+  });
+
+  it('prints the effective action policy for an action phase', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await agentToolingNamespace.run(['config', 'show', 'action-policy', 'commit', 'failure-analysis']);
+
+    expect(llmClient.resolveRuntimeBridgeState).toHaveBeenCalledWith(undefined, {
+      action: 'commit',
+      phase: 'failure-analysis',
+    });
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Effective policy:'));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('cloud-strong'));
+  });
+
+  it('updates a named provider profile', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await agentToolingNamespace.run(['config', 'set', 'profile-provider', 'local-fast', 'litellm']);
+
+    expect(llmClient.writeConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerProfiles: expect.objectContaining({
+          'local-fast': expect.objectContaining({ provider: 'litellm' }),
+        }),
+      }),
+    );
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Updated '));
+  });
+
+  it('updates an action policy binding', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await agentToolingNamespace.run(['config', 'set', 'action-policy', 'review', 'local-fast']);
+
+    expect(llmClient.writeConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionPolicies: expect.objectContaining({
+          review: expect.objectContaining({ profile: 'local-fast' }),
+        }),
+      }),
+    );
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Updated '));
+  });
+
+  it('applies scoped config commands through the selected monorepo overlay', async () => {
+    llmClient.readConfig.mockImplementationOnce(async () => {
+      expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toContain(
+        '/artifacts/llm/config/units/docs.json',
+      );
+      return {
+        provider: 'litellm',
+        baseUrl: null,
+        defaultModel: null,
+        requestTimeoutMs: 120000,
+        actions: {},
+        providerProfiles: {},
+        actionPolicies: {},
+        harness: {
+          version: 1,
+          defaultMode: 'deterministic',
+          providerStrategy: 'auto',
+          deterministic: {
+            preserveDeterministicArtifacts: true,
+            preserveDeterministicSections: true,
+          },
+          exploratory: {
+            allowCodeChanges: true,
+            allowWideChanges: true,
+          },
+        },
+      };
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await agentToolingNamespace.run(['config', 'show', '--scope', 'docs']);
+
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('"defaultMode": "deterministic"'));
+    expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toBeUndefined();
+  });
+
   it('delegates provider config updates through the current llm-agents config flow', async () => {
     await agentToolingNamespace.run(['config', 'set', 'provider', 'lemonade']);
 
@@ -158,37 +201,53 @@ describe('agentToolingNamespace', () => {
     expect(llmAgents.runDocsApiProbe).toHaveBeenCalledWith(['--quick']);
   });
 
-  it('routes print mode through the existing ask flow', async () => {
+  it('routes print mode through the pi runtime', async () => {
     await agentToolingNamespace.run(['print', '--', '--quick', 'hello']);
 
-    expect(llmAgents.ask).toHaveBeenCalledWith(['--quick', 'hello']);
+    expect(piAgent.runPiPrint).toHaveBeenCalledWith({ promptArgs: ['--quick', 'hello'] });
   });
 
-  it('routes interactive mode through the configured default mode', async () => {
-    llmClient.readConfig.mockResolvedValueOnce({
-      provider: 'litellm',
-      baseUrl: null,
-      defaultModel: null,
-      requestTimeoutMs: 120000,
-      actions: {},
-      harness: {
-        version: 1,
-        defaultMode: 'exploratory',
-        providerStrategy: 'auto',
-        deterministic: {
-          preserveDeterministicArtifacts: true,
-          preserveDeterministicSections: true,
-        },
-        exploratory: {
-          allowCodeChanges: true,
-          allowWideChanges: true,
-        },
-      },
-    });
+  it('routes scoped print mode through the pi runtime', async () => {
+    await agentToolingNamespace.run(['--scope', 'docs', 'print', '--', 'hello']);
 
+    expect(piAgent.runPiPrint).toHaveBeenCalledWith({
+      scope: 'docs',
+      promptArgs: ['hello'],
+    });
+    expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toBeUndefined();
+  });
+
+  it('routes exploratory ask through the pi print runtime', async () => {
+    await agentToolingNamespace.run(['exploratory', 'ask', '--quick', 'hello']);
+
+    expect(piAgent.runPiPrint).toHaveBeenCalledWith({ promptArgs: ['--quick', 'hello'] });
+  });
+
+  it('routes interactive mode through the pi runtime', async () => {
     await agentToolingNamespace.run(['interactive', 'review']);
 
-    expect(llmAgents.runReviewAgent).toHaveBeenCalledTimes(1);
+    expect(piAgent.runPiInteractive).toHaveBeenCalledWith({ promptArgs: ['review'] });
+  });
+
+  it('routes commit mode through the pi runtime', async () => {
+    await agentToolingNamespace.run(['commit', 'Focus', 'the', 'docs', 'release']);
+
+    expect(piAgent.runPiCommit).toHaveBeenCalledWith({
+      promptArgs: ['Focus', 'the', 'docs', 'release'],
+    });
+  });
+
+  it('routes scoped rpc mode through the pi runtime', async () => {
+    await agentToolingNamespace.run(['--scope', 'docs', 'rpc']);
+
+    expect(piAgent.runPiRpc).toHaveBeenCalledWith({ scope: 'docs' });
+    expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toBeUndefined();
+  });
+
+  it('routes rpc mode through the pi runtime', async () => {
+    await agentToolingNamespace.run(['rpc']);
+
+    expect(piAgent.runPiRpc).toHaveBeenCalledWith({});
   });
 
   it('routes exploratory all through the current llm-agents aggregate flow', async () => {

@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import {
-  ask,
   configure,
   listActions,
   listModels,
@@ -16,6 +15,7 @@ import {
   runTestUpkeep,
   validateModels,
 } from '@cfxdevkit/llm-agents';
+import { runPiPrint } from '../../../pi-agent/src/index.js';
 
 const rawArgs = process.argv.slice(2);
 if (rawArgs[0] === '--') rawArgs.shift();
@@ -25,7 +25,7 @@ try {
   if (command === 'models') await listModels();
   else if (command === 'validate-models') await validateModels(args);
   else if (command === 'config') await configure(args);
-  else if (command === 'ask') await ask(args);
+  else if (command === 'ask') await runPiPrint({ promptArgs: args });
   else if (command === 'precommit') await runPrecommit(args);
   else if (command === 'commit') await runCommit(args);
   else if (command === 'docs-api') await runDocsApi(args);
@@ -50,7 +50,7 @@ Commands:
   models       List auto-discovered models
   validate-models Probe discovered models with cold/hot/json reliability checks
   config       Show or update local LLM config
-  ask          Ask a repo-aware local LLM question
+  ask          Ask a repo-aware question through the PI print runtime
   precommit    Run hotspot + quality gates only
   commit       Run the local LLM commit pipeline
   run          Run a named delegated action
