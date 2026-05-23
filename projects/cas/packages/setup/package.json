@@ -21,7 +21,7 @@
     "@cfxdevkit/contracts": "workspace:*",
     "@cfxdevkit/cdk": "workspace:*",
     "@cfxdevkit/protocol": "workspace:*",
-    "@inquirer/prompts": "^7.5.2",
+    "@inquirer/prompts": "^8.4.3",
     "commander": "^14.0.0",
     "viem": "^2.21.0"
   },
