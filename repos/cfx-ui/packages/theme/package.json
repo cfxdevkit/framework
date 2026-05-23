@@ -48,7 +48,7 @@
     "vite": "^8.0.12",
     "vite-plugin-dts": "^5.0.0",
     "vitest": "^4.1.6",
-    "@types/react": "^19.0.0"
+    "@types/react": "^19.2.15"
   },
   "peerDependencies": {
     "react": "^19.2.5"
