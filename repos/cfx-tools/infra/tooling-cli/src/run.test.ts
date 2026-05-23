@@ -67,8 +67,8 @@ describe('tooling-cli', () => {
   it('formats top-level help with the actual invocation forms and command usage', () => {
     const help = formatToolingHelp([createNamespace('docs')]);
 
+    expect(help).toContain('cdk <namespace> <command> [args]');
     expect(help).toContain('pnpm cdk -- <namespace> <command> [args]');
-    expect(help).toContain('pnpm tooling -- <namespace> <command> [args]');
     expect(help).toContain('usage: docs status [--json]');
   });
 

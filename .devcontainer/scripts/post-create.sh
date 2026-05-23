@@ -28,6 +28,7 @@ pnpm --filter cfxdevkit-vscode-extension... build
 pnpm exec moon --version >/dev/null
 pnpm exec gitnexus --version >/dev/null || true
 .devcontainer/scripts/ensure-gitnexus.sh || true
+.devcontainer/scripts/install-cdk.sh
 
 if command -v openspec >/dev/null 2>&1 \
   && [[ -d openspec ]] \

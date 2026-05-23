@@ -40,7 +40,8 @@ const docsEnrichmentCommands: readonly ToolingCommandDefinition[] = [
   },
 ];
 
-const helpText = `Usage: pnpm tooling -- docs <command> [args]
+const helpText = `Usage: cdk docs <command> [args]
+       pnpm cdk -- docs <command> [args]
 
 Deterministic commands:
 ${docsToolingNamespace.commands.map((command) => `  ${command.usage ?? command.name}`).join('\n')}
@@ -53,18 +54,18 @@ Enrichment patterns:
 Common enrich args pass through to the worker flows: --model <id>, --quick, --force, --no-thinking
 
 Examples:
-  pnpm tooling -- docs sync all
-  pnpm tooling -- docs validate content
-  pnpm tooling -- docs wiki --review
-  pnpm tooling -- docs enrich all --quick
-  pnpm tooling -- docs enrich all --no-thinking --quick
-  pnpm tooling -- docs enrich all --force --quick
-  pnpm tooling -- docs enrich api --package @cfxdevkit/executor --precheck
-  pnpm tooling -- docs enrich api
-  pnpm tooling -- docs probe api --package @cfxdevkit/executor --quick
-  pnpm tooling -- docs enrich packages
-  pnpm tooling -- docs enrich content --quick
-  pnpm tooling -- docs review
+  cdk docs sync all
+  cdk docs validate content
+  cdk docs wiki --review
+  cdk docs enrich all --quick
+  cdk docs enrich all --no-thinking --quick
+  cdk docs enrich all --force --quick
+  cdk docs enrich api --package @cfxdevkit/executor --precheck
+  cdk docs enrich api
+  cdk docs probe api --package @cfxdevkit/executor --quick
+  cdk docs enrich packages
+  cdk docs enrich content --quick
+  cdk docs review
 `;
 
 export const rootDocsToolingNamespace: ToolingNamespaceDefinition = {

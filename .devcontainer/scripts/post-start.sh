@@ -28,3 +28,4 @@ cd "${containerWorkspaceFolder:-/workspaces/root}"
 .devcontainer/scripts/ensure-gitnexus.sh || true
 .devcontainer/scripts/check-lemonade.sh || true
 .devcontainer/scripts/install-vscode-extension.sh
+.devcontainer/scripts/install-cdk.sh

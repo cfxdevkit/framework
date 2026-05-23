@@ -15,9 +15,10 @@ const piAgentDistEntry = new URL('../../pi-agent/dist/index.js', import.meta.url
 const llmAgentsDistEntry = new URL('../../llm-agents/dist/index.js', import.meta.url);
 
 function hasBuiltCdkAiRuntime(): boolean {
-  return (
-    existsSync(cdkAiDistEntry) && existsSync(piAgentDistEntry) && existsSync(llmAgentsDistEntry)
-  );
+  // When Vite compiles the dist, new URL(..., import.meta.url) becomes data: URLs.
+  // In that case module content is already inlined — treat as built.
+  if (cdkAiDistEntry.protocol === 'data:') return true;
+  return existsSync(cdkAiDistEntry) && existsSync(piAgentDistEntry) && existsSync(llmAgentsDistEntry);
 }
 
 type LlmConfig = {
@@ -203,7 +204,13 @@ export async function withPiAgentSource(
   run: (piAgent: PiAgentModule) => Promise<unknown> | unknown,
 ): Promise<void> {
   await runInRepoRoot(async () => {
-    await run((await import(piAgentSourceModulePath)) as PiAgentModule);
+    // In compiled dist (Vite inlines data: URLs), source path resolution is invalid.
+    // Fall back to the package specifier, which re-exports everything from pi-agent.
+    const mod =
+      cdkAiDistEntry.protocol === 'data:'
+        ? await import(cdkAiPackageName)
+        : await import(piAgentSourceModulePath);
+    await run(mod as PiAgentModule);
   });
 }
 

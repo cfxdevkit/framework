@@ -70,8 +70,8 @@ export function formatToolingHelp(
     .join('\n\n');
 
   return `Usage:
+  cdk <namespace> <command> [args]
   pnpm cdk -- <namespace> <command> [args]
-  pnpm tooling -- <namespace> <command> [args]
 
 Namespaces:
 ${namespaceBlock}
