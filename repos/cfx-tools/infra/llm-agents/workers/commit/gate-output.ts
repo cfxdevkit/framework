@@ -38,6 +38,16 @@ export function buildDeterministicHints(result: {
   output: string;
 }): string[] {
   const hints = new Set<string>();
+  if (result.id === 'gitnexus-analyze') {
+    hints.add(
+      'GitNexus analysis failed; ensure the index bootstrap succeeds, then rerun the validation sequence.',
+    );
+  }
+  if (result.id === 'format') {
+    hints.add(
+      'Formatter or write step failed; resolve the first file-system or parser error, then rerun.',
+    );
+  }
   if (result.id === 'lint') {
     hints.add(
       'Fix the first reported lint finding before rerunning; later diagnostics are often cascading.',
@@ -66,11 +76,6 @@ export function buildDeterministicHints(result: {
   if (result.id === 'test') {
     hints.add('Reproduce the failing test package directly before rerunning the full gate.');
   }
-  if (result.id === 'validate:repos') {
-    hints.add(
-      'The repo contract validator failed; fix the first schema or package-layout violation it reports.',
-    );
-  }
   if (result.id === 'build') {
     hints.add(
       'A build target failed; rerun the failing project build directly for the complete stack trace.',
@@ -84,8 +89,10 @@ export function buildDeterministicHints(result: {
       'Rename grouped sibling files so one kebab prefix does not sprawl across unrelated modules.',
     );
   }
-  if (result.id === 'unit-configs') {
-    hints.add('Regenerate the scoped unit overlays with `pnpm run gen:unit-configs`.');
+  if (result.id === 'check') {
+    hints.add(
+      'The root repo check failed; fix the first failing workspace task it reports before rerunning the full sequence.',
+    );
   }
   hints.add(`Reproduce with: ${result.command}`);
   return [...hints].slice(0, 4);

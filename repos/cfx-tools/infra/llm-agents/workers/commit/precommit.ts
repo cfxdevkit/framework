@@ -30,19 +30,59 @@ export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResul
     llmFailureAnalysis: executionContext.llm.status === 'ready',
   });
   ui.start();
-  ui.startStep(1, 1, 'Repository policy and quality gates');
-  const policyReport = await runRepositoryPolicyGates(ui.gateHooks);
-  if (!policyReport.passed) {
+  ui.startStep(1, 1, 'Incremental validation sequence');
+  ui.note(
+    'order: gitnexus analyze -> format -> lint -> typecheck -> tests -> hotspots -> kebab-groups -> repo check',
+  );
+  const qualityReport = await runQualityGates(flags, ui.gateHooks);
+  if (!qualityReport.passed) {
     const failureAnalysis = await analyzeGateFailures({
       command: 'precommit',
       executionContext,
-      reports: [policyReport],
+      reports: [qualityReport],
       modelOverride: flags.model,
     });
+    if (!flags.force) {
+      ui.finish('blocked', [
+        ...summarizeGateFailures(qualityReport),
+        ...summarizeFailureAnalysis(failureAnalysis),
+        'precommit blocked: failing validation gates prevent commit',
+      ]);
+      return {
+        command: 'precommit',
+        status: 'blocked',
+        phase: 'quality-gates',
+        executionContext: toExecutionContextRuntimePayload(executionContext),
+        scopes,
+        repositoryPolicies: {
+          kind: 'repository-policy',
+          label: 'Repository policy follow-up gates',
+          passed: false,
+          skipped: true,
+          results: [],
+        },
+        qualityGates: qualityReport,
+        failureAnalysis,
+        blockedBy: 'quality-gates',
+      };
+    }
+    ui.note('--force enabled: continuing past failing validation gates');
+  }
+  const policyReport = await runRepositoryPolicyGates(ui.gateHooks);
+  let failureAnalysis = null;
+  if (!policyReport.passed) {
+    failureAnalysis = await analyzeGateFailures({
+      command: 'precommit',
+      executionContext,
+      reports: [qualityReport, policyReport],
+      modelOverride: flags.model,
+    });
+  }
+  if (!policyReport.passed && !flags.force) {
     ui.finish('blocked', [
       ...summarizeGateFailures(policyReport),
       ...summarizeFailureAnalysis(failureAnalysis),
-      'precommit blocked: resolve repository-policy failures before retrying',
+      'precommit blocked: resolve repository-policy follow-up failures before retrying',
     ]);
     return {
       command: 'precommit',
@@ -51,54 +91,20 @@ export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResul
       executionContext: toExecutionContextRuntimePayload(executionContext),
       scopes,
       repositoryPolicies: policyReport,
-      qualityGates: {
-        kind: 'quality',
-        label: 'Quality gates',
-        passed: false,
-        skipped: true,
-        results: [],
-      },
+      qualityGates: qualityReport,
       failureAnalysis,
       blockedBy: 'repository-policy',
     };
   }
-  const qualityReport = await runQualityGates(flags, ui.gateHooks);
-  let failureAnalysis = null;
-  if (!qualityReport.passed) {
-    failureAnalysis = await analyzeGateFailures({
-      command: 'precommit',
-      executionContext,
-      reports: [policyReport, qualityReport],
-      modelOverride: flags.model,
-    });
+  if (!policyReport.passed && flags.force) {
+    ui.note('--force enabled: continuing past failing repository-policy follow-up gates');
   }
-  if (!qualityReport.passed && !flags.force) {
-    ui.finish('blocked', [
-      ...summarizeGateFailures(qualityReport),
-      ...summarizeFailureAnalysis(failureAnalysis),
-      'precommit blocked: failing quality gates prevent commit',
-    ]);
-    return {
-      command: 'precommit',
-      status: 'blocked',
-      phase: 'quality-gates',
-      executionContext: toExecutionContextRuntimePayload(executionContext),
-      scopes,
-      repositoryPolicies: policyReport,
-      qualityGates: qualityReport,
-      failureAnalysis,
-      blockedBy: 'quality-gates',
-    };
-  }
-  if (!qualityReport.passed && flags.force) {
-    ui.note('--force enabled: continuing past failing quality gates');
-  }
-  ui.finish(qualityReport.passed ? 'passed' : 'forced', [
+  ui.finish(qualityReport.passed && policyReport.passed ? 'passed' : 'forced', [
     'all precommit gates passed; run `cdk repo commit` when ready',
   ]);
   return {
     command: 'precommit',
-    status: qualityReport.passed ? 'passed' : 'forced',
+    status: qualityReport.passed && policyReport.passed ? 'passed' : 'forced',
     phase: 'completed',
     executionContext: toExecutionContextRuntimePayload(executionContext),
     scopes,

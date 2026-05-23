@@ -33,12 +33,15 @@ Open the repository in a Dev Container. The `postCreateCommand` runs:
 pnpm install --frozen-lockfile
 pnpm --filter cfxdevkit-vscode-extension... build
 .devcontainer/scripts/install-vscode-extension.sh --build
+openspec init --tools pi   # only when openspec is present and .pi bootstrap is missing
 ```
 
 That builds the new extension package plus its framework dependencies, then
 symlinks it into the remote VS Code extension directories so the node,
 keystore, compiler, wallet, and contract deployment flows are available inside
-the editor.
+the editor. When the workspace already contains `openspec/` but has not been
+bootstrapped for PI yet, the post-create script also runs `openspec init --tools pi`
+once so the repo-local `.pi/` prompts, skills, and extension entrypoint exist.
 
 ## Common Commands
 
@@ -108,6 +111,12 @@ reloading VS Code, because `runArgs` only apply when the container is created.
 The base image now installs `fd` at build time through Debian's `fd-find` package
 and a compatibility symlink. That avoids PI's first-run fallback download path and
 keeps `cdk agent interactive|print|rpc` startup deterministic inside fresh containers.
+
+If you want PI to expose GitNexus as first-class tools through
+`pi-gitnexus`, set `CFXDEVKIT_INSTALL_PI_GITNEXUS=1` before the container's
+post-create run or rerun `.devcontainer/scripts/post-create.sh` with that
+environment variable. This stays opt-in because it installs external PI state
+and depends on GitNexus licensing/policy being acceptable for the environment.
 
 ## Notes
 

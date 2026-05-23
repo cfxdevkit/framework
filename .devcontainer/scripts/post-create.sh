@@ -29,6 +29,17 @@ pnpm exec moon --version >/dev/null
 pnpm exec gitnexus --version >/dev/null || true
 .devcontainer/scripts/ensure-gitnexus.sh || true
 
+if command -v openspec >/dev/null 2>&1 \
+  && [[ -d openspec ]] \
+  && [[ ! -f .pi/skills/openspec-propose/SKILL.md ]]; then
+  openspec init --tools pi || true
+fi
+
+if command -v pi >/dev/null 2>&1 \
+  && [[ "${CFXDEVKIT_INSTALL_PI_GITNEXUS:-0}" == "1" ]]; then
+  pi install npm:pi-gitnexus || true
+fi
+
 mkdir -p .cfxdevkit "$HOME/.cfxdevkit"
 
 cat <<'MSG'
@@ -42,5 +53,8 @@ Useful commands:
   pnpm devnode
   pnpm --filter cfxdevkit-vscode-extension build
   pnpm exec gitnexus analyze
+
+Optional PI bootstrap:
+  CFXDEVKIT_INSTALL_PI_GITNEXUS=1 .devcontainer/scripts/post-create.sh
 
 MSG

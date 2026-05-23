@@ -52,20 +52,60 @@ export async function runCommitWorkflow(
     llmFailureAnalysis: executionContext.llm.status === 'ready',
   });
   ui.start();
-  ui.startStep(1, 8, 'Repository policy and quality gates');
-  const policyReport = await runRepositoryPolicyGates(ui.gateHooks);
+  ui.startStep(1, 8, 'Incremental validation sequence');
+  ui.note(
+    'order: gitnexus analyze -> format -> lint -> typecheck -> tests -> hotspots -> kebab-groups -> repo check',
+  );
+  const qualityReport = await runQualityGates(flags, ui.gateHooks);
   let failureAnalysis = null;
+  if (!qualityReport.passed) {
+    failureAnalysis = await analyzeGateFailures({
+      command: 'commit',
+      executionContext,
+      reports: [qualityReport],
+      modelOverride: failureAnalysisModel,
+    });
+    if (!flags.force) {
+      ui.finish('blocked', [
+        ...summarizeGateFailures(qualityReport),
+        ...summarizeFailureAnalysis(failureAnalysis),
+        'commit blocked: failing validation gates prevented commit',
+      ]);
+      return {
+        command: 'commit',
+        status: 'blocked',
+        phase: 'quality-gates',
+        executionContext: toExecutionContextRuntimePayload(executionContext),
+        scopes,
+        repositoryPolicies: {
+          kind: 'repository-policy',
+          label: 'Repository policy follow-up gates',
+          passed: false,
+          skipped: true,
+          results: [],
+        },
+        qualityGates: qualityReport,
+        approval: { required: false, approved: false, declined: false },
+        failureAnalysis,
+        blockedBy: 'quality-gates',
+      };
+    }
+    ui.note('--force enabled: continuing past failing validation gates');
+  }
+  const policyReport = await runRepositoryPolicyGates(ui.gateHooks);
   if (!policyReport.passed) {
     failureAnalysis = await analyzeGateFailures({
       command: 'commit',
       executionContext,
-      reports: [policyReport],
+      reports: [qualityReport, policyReport],
       modelOverride: failureAnalysisModel,
     });
+  }
+  if (!policyReport.passed && !flags.force) {
     ui.finish('blocked', [
       ...summarizeGateFailures(policyReport),
       ...summarizeFailureAnalysis(failureAnalysis),
-      'commit blocked: resolve repository-policy failures before retrying',
+      'commit blocked: resolve repository-policy follow-up failures before retrying',
     ]);
     return {
       command: 'commit',
@@ -74,48 +114,14 @@ export async function runCommitWorkflow(
       executionContext: toExecutionContextRuntimePayload(executionContext),
       scopes,
       repositoryPolicies: policyReport,
-      qualityGates: {
-        kind: 'quality',
-        label: 'Quality gates',
-        passed: false,
-        skipped: true,
-        results: [],
-      },
+      qualityGates: qualityReport,
       approval: { required: false, approved: false, declined: false },
       failureAnalysis,
       blockedBy: 'repository-policy',
     };
   }
-  const qualityReport = await runQualityGates(flags, ui.gateHooks);
-  if (!qualityReport.passed) {
-    failureAnalysis = await analyzeGateFailures({
-      command: 'commit',
-      executionContext,
-      reports: [policyReport, qualityReport],
-      modelOverride: failureAnalysisModel,
-    });
-  }
-  if (!qualityReport.passed && !flags.force) {
-    ui.finish('blocked', [
-      ...summarizeGateFailures(qualityReport),
-      ...summarizeFailureAnalysis(failureAnalysis),
-      'commit blocked: failing quality gates prevented commit',
-    ]);
-    return {
-      command: 'commit',
-      status: 'blocked',
-      phase: 'quality-gates',
-      executionContext: toExecutionContextRuntimePayload(executionContext),
-      scopes,
-      repositoryPolicies: policyReport,
-      qualityGates: qualityReport,
-      approval: { required: false, approved: false, declined: false },
-      failureAnalysis,
-      blockedBy: 'quality-gates',
-    };
-  }
-  if (!qualityReport.passed && flags.force)
-    ui.note('--force enabled: continuing past failing quality gates');
+  if (!policyReport.passed && flags.force)
+    ui.note('--force enabled: continuing past failing repository-policy follow-up gates');
   ui.startStep(2, 8, 'Preflight checks');
   ui.note('ensuring GitNexus is registered');
   await commandBlock('gitnexus ensure', 'pnpm', ['run', 'gitnexus:ensure'], { timeoutMs: 60000 });

@@ -1,4 +1,0 @@
-{
-  "extends": ["../../../../repos/cfx-config/packages/biome-config/biome.json"],
-  "root": false
-}

@@ -6,10 +6,6 @@ import type { PiCliInvocation, PiLlmModel, PiProviderBridge } from './provider-t
 import type { PiLlmProviderType } from './config.js';
 
 export function registerPiProviderBridge(pi: ExtensionAPI, bridge: PiProviderBridge): void {
-  if (bridge.pi.provider === 'github') {
-    return;
-  }
-
   pi.registerProvider('openai', {
     name: 'CFX DevKit OpenAI-Compatible',
     baseUrl: bridge.providerBaseUrl ?? undefined,
@@ -46,15 +42,16 @@ function resolvePiCliInvocation(
   defaultModel: string | null,
   models: readonly PiLlmModel[],
 ): PiCliInvocation {
+  const env: Record<string, string> = {};
   if (providerType === 'github-models') {
+    env.OPENAI_API_KEY = process.env.GITHUB_TOKEN ?? process.env.OPENAI_API_KEY ?? '';
     return {
-      provider: 'github',
+      provider: 'openai',
       model: resolvePiModel(defaultModel, models),
-      env: {},
+      env,
     };
   }
 
-  const env: Record<string, string> = {};
   if (providerBaseUrl) {
     env.OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? 'cfxdevkit-local-placeholder';
   }

@@ -11,6 +11,8 @@ export const artifactsRoot = join(root, 'artifacts', 'llm');
 export const configDir = join(artifactsRoot, 'config');
 export const piConfigDir = join(root, '.pi');
 export const configPathEnvVar = 'CFXDEVKIT_LLM_CONFIG_PATH';
+/** Preserved agent config path — not overridden by --github or --local PI session temp configs. */
+export const agentConfigPathEnvVar = 'CFXDEVKIT_LLM_AGENT_CONFIG_PATH';
 export const configPath = join(piConfigDir, 'providers.json');
 export const legacyConfigPath = join(configDir, 'llm.json');
 export const legacyCompatConfigPath = join(configDir, 'lemonade.json');
@@ -35,6 +37,22 @@ export {
 
 export const QUALITY_GATES = [
   {
+    id: 'gitnexus-analyze',
+    label: 'GitNexus analyze',
+    cmd: 'pnpm',
+    args: ['run', 'gitnexus:analyze'],
+    required: true,
+    timeoutMs: 300000,
+  },
+  {
+    id: 'format',
+    label: 'Format write',
+    cmd: 'pnpm',
+    args: ['run', 'format'],
+    required: true,
+    timeoutMs: 180000,
+  },
+  {
     id: 'lint',
     label: 'Lint',
     cmd: 'pnpm',
@@ -51,12 +69,12 @@ export const QUALITY_GATES = [
     timeoutMs: 180000,
   },
   {
-    id: 'validate:repos',
-    label: 'Repo validation',
-    cmd: 'node',
-    args: ['scripts/validate-repos.mjs'],
+    id: 'test',
+    label: 'Test',
+    cmd: 'pnpm',
+    args: ['exec', 'moon', 'run', ':test', '--concurrency', '1'],
     required: true,
-    timeoutMs: 30000,
+    timeoutMs: 600000,
   },
   {
     id: 'build',
@@ -65,13 +83,5 @@ export const QUALITY_GATES = [
     args: ['exec', 'moon', 'run', ':build', '--concurrency', '4'],
     required: false,
     timeoutMs: 300000,
-  },
-  {
-    id: 'test',
-    label: 'Test',
-    cmd: 'pnpm',
-    args: ['exec', 'moon', 'run', ':test', '--concurrency', '1'],
-    required: true,
-    timeoutMs: 600000,
   },
 ];

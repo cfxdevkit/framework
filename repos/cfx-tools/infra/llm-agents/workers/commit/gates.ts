@@ -7,7 +7,6 @@ import {
   extractHotspotSummary,
   extractKebabGroupStatus,
   extractKebabGroupSummary,
-  extractUnitConfigSummary,
 } from './gate-results.ts';
 
 type RepositoryPolicyStatus = 'ok' | 'warning' | 'error';
@@ -92,18 +91,13 @@ const REPOSITORY_POLICY_GATES: readonly RepositoryPolicyGate[] = [
     detectSuccessStatus: extractKebabGroupStatus,
   },
   {
-    id: 'unit-configs',
-    label: 'Monorepo unit configs',
-    args: [
-      'exec',
-      'tsx',
-      join(root, 'repos/cfx-tools/packages/arch-check/src/bin/check-unit-configs.ts'),
-      '--fail-on-drift',
-    ],
-    displayCommand: 'pnpm cdk repo check unit-configs',
-    timeoutMs: 120000,
+    id: 'check',
+    label: 'Repo check',
+    args: ['run', 'check'],
+    displayCommand: 'pnpm run check',
+    timeoutMs: 300000,
     required: true,
-    summarize: extractUnitConfigSummary,
+    summarize: extractGateSummary,
   },
 ];
 
@@ -112,7 +106,7 @@ export async function runRepositoryPolicyGates(hooks?: GateRunHooks) {
 
   hooks?.onGroupStart?.({
     kind: 'repository-policy',
-    label: 'Repository policy gates',
+    label: 'Repository policy follow-up gates',
     gates: REPOSITORY_POLICY_GATES.map((gate) => ({
       id: gate.id,
       label: gate.label,
@@ -126,7 +120,7 @@ export async function runRepositoryPolicyGates(hooks?: GateRunHooks) {
 
   const report = {
     kind: 'repository-policy' as const,
-    label: 'Repository policy gates',
+    label: 'Repository policy follow-up gates',
     passed: results.every((result) => result.status !== 'error' || !result.required),
     skipped: false,
     results,
@@ -141,7 +135,7 @@ export async function runQualityGates(flags, hooks?: GateRunHooks) {
   if (flags.skipChecks) {
     const report = {
       kind: 'quality' as const,
-      label: 'Quality gates',
+      label: 'Incremental validation gates',
       passed: true,
       skipped: true,
       results: [],
@@ -155,13 +149,13 @@ export async function runQualityGates(flags, hooks?: GateRunHooks) {
   const gates = QUALITY_GATES.filter((g) => {
     if (g.id === 'test') return flags.withTests;
     if (g.id === 'build') return flags.withBuild;
-    return true; // lint + typecheck always run
+    return true;
   });
 
   const results: GateResult[] = [];
   hooks?.onGroupStart?.({
     kind: 'quality',
-    label: 'Quality gates',
+    label: 'Incremental validation gates',
     gates: gates.map((gate) => ({ id: gate.id, label: gate.label, required: gate.required })),
   });
   for (const gate of gates) {
@@ -170,7 +164,7 @@ export async function runQualityGates(flags, hooks?: GateRunHooks) {
 
   const report = {
     kind: 'quality' as const,
-    label: 'Quality gates',
+    label: 'Incremental validation gates',
     passed: results.every((result) => result.status !== 'error' || !result.required),
     skipped: false,
     results,

@@ -18,7 +18,7 @@ export interface PiResolvedProviderState {
   readonly models: readonly PiLlmModel[];
 }
 
-export type PiCliProvider = 'github' | 'openai';
+export type PiCliProvider = 'openai';
 
 export interface PiCliInvocation {
   readonly provider: PiCliProvider;

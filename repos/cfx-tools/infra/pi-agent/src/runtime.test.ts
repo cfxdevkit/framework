@@ -83,9 +83,11 @@ describe('pi runtime delegation', () => {
       configPath: '/workspaces/root/.pi/providers.json',
       scope: undefined,
       pi: {
-        provider: 'github',
+        provider: 'openai',
         model: null,
-        env: {},
+        env: {
+          OPENAI_API_KEY: 'github-token',
+        },
       },
     });
     spawnMock.mockReturnValueOnce({

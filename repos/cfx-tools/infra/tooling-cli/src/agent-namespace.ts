@@ -1,5 +1,10 @@
 import { printModes, printStatus, runConfigCli } from './agent-config.js';
 import {
+  parsePiEndpointArgs,
+  printAgentEndpoints,
+  withPiAgentForEndpoint,
+} from './agent-endpoint.js';
+import {
   agentCommands,
   printAgentHelp,
   printDeterministicHelp,
@@ -7,6 +12,7 @@ import {
   printPrintMode,
   printProvidersStrategy,
 } from './agent-help.js';
+import { runAgentMergeCli } from './agent-merge.js';
 import { isHelpToken, withAgentScope, withLlmAgents, withPiAgent } from './agent-runtime.js';
 import { resolvePiSessionSetup } from './agent-session-setup.js';
 import type { ToolingNamespaceDefinition } from './contracts.js';
@@ -30,6 +36,15 @@ async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
     return;
   }
 
+  if (command === 'check') {
+    return await withAgentScope(parsed.scope, async () => runAgentCheckCli(args.slice(1)));
+  }
+  if (command === 'merge') {
+    return await withAgentScope(parsed.scope, async () => runAgentMergeCli(args.slice(1)));
+  }
+  if (command === 'endpoints') {
+    return await withAgentScope(parsed.scope, async () => printAgentEndpoints(parsed.scope));
+  }
   if (command === 'config')
     return await withAgentScope(parsed.scope, async () => runConfigCli(args.slice(1)));
   if (command === 'modes') return await withAgentScope(parsed.scope, async () => printModes());
@@ -41,22 +56,30 @@ async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
     return await withAgentScope(parsed.scope, async () => runExploratoryCli(args.slice(1)));
   }
   if (command === 'interactive') {
+    const { endpoint, args: sessionArgs } = parsePiEndpointArgs(args.slice(1));
     const session = await resolvePiSessionSetup({
       kind: 'interactive',
-      promptArgs: normalizePromptArgs(args.slice(1)),
+      promptArgs: normalizePromptArgs(sessionArgs),
+      endpoint: endpoint === 'default' ? undefined : endpoint,
       ...(parsed.scope ? { scope: parsed.scope } : {}),
     });
     if (!session) return;
-    return await withPiAgent((piAgent) => piAgent.runPiInteractive(buildSessionOptions(session)));
+    return await withPiAgentForEndpoint(session.endpoint ?? endpoint, (piAgent) =>
+      piAgent.runPiInteractive(buildSessionOptions(session)),
+    );
   }
   if (command === 'commit') {
+    const { endpoint, args: sessionArgs } = parsePiEndpointArgs(args.slice(1));
     const session = await resolvePiSessionSetup({
       kind: 'commit',
-      promptArgs: normalizePromptArgs(args.slice(1)),
+      promptArgs: normalizePromptArgs(sessionArgs),
+      endpoint: endpoint === 'default' ? undefined : endpoint,
       ...(parsed.scope ? { scope: parsed.scope } : {}),
     });
     if (!session) return;
-    return await withPiAgent((piAgent) => piAgent.runPiCommit(buildSessionOptions(session)));
+    return await withPiAgentForEndpoint(session.endpoint ?? endpoint, (piAgent) =>
+      piAgent.runPiCommit(buildSessionOptions(session)),
+    );
   }
   if (command === 'print') {
     const promptArgs = normalizePromptArgs(args.slice(1));
@@ -163,6 +186,12 @@ async function runPrintCli(rawArgs: readonly string[]): Promise<void> {
   }
 
   await withPiAgent((piAgent) => piAgent.runPiPrint({ promptArgs: args }));
+}
+
+async function runAgentCheckCli(rawArgs: readonly string[]): Promise<void> {
+  const args = [...rawArgs];
+  while (args[0] === '--') args.shift();
+  await withLlmAgents((agents) => agents.runAgentCheck(args));
 }
 
 function normalizePromptArgs(rawArgs: readonly string[]): string[] {
