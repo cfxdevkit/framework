@@ -18,7 +18,9 @@ function hasBuiltCdkAiRuntime(): boolean {
   // When Vite compiles the dist, new URL(..., import.meta.url) becomes data: URLs.
   // In that case module content is already inlined — treat as built.
   if (cdkAiDistEntry.protocol === 'data:') return true;
-  return existsSync(cdkAiDistEntry) && existsSync(piAgentDistEntry) && existsSync(llmAgentsDistEntry);
+  return (
+    existsSync(cdkAiDistEntry) && existsSync(piAgentDistEntry) && existsSync(llmAgentsDistEntry)
+  );
 }
 
 type LlmConfig = {

@@ -1,3 +1,11 @@
+export { registerPiRepoCommands } from './commands.js';
+export {
+  createPiAgentExtension,
+  piScopeEnvVar,
+  registerPiAgentProjectExtension,
+  resolvePiScopeFromEnv,
+} from './extension.js';
+export { createPiProviderBridge, type PiProviderBridge } from './providers.js';
 export {
   type PiAgentCommitOptions,
   type PiAgentPrintOptions,
@@ -20,14 +28,6 @@ export {
   resolveRuntimeBridgeState,
   writeConfig,
 } from './tooling-runtime.js';
-export {
-  createPiAgentExtension,
-  piScopeEnvVar,
-  registerPiAgentProjectExtension,
-  resolvePiScopeFromEnv,
-} from './extension.js';
-export { createPiProviderBridge, type PiProviderBridge } from './providers.js';
-export { registerPiRepoCommands } from './commands.js';
 export { executePiRepoAction, registerPiRepoTools } from './tools.js';
 export {
   applyPiOperatorUiState,
@@ -35,7 +35,7 @@ export {
   createPiGateUiState,
   createPiRepoActionUiState,
   createPiRuntimeUiState,
+  type PiOperatorUiState,
   renderPiActionCatalogLines,
   setPiWorkflowProgress,
-  type PiOperatorUiState,
 } from './ui.js';

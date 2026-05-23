@@ -3,9 +3,8 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createPiAgentExtension } from './extension.js';
-import { piScopeEnvVar } from './extension.js';
 import type { PiScopeName } from './extension.js';
+import { createPiAgentExtension, piScopeEnvVar } from './extension.js';
 import { createPiProviderBridge } from './providers.js';
 
 export interface PiTerminalPhaseHooks {

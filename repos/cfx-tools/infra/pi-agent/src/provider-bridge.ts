@@ -1,9 +1,9 @@
 import type { ExtensionAPI, ProviderModelConfig } from '@earendil-works/pi-coding-agent';
-import type { PiScopeName } from './extension.js';
+import type { PiLlmProviderType } from './config.js';
 import { readPiConfig, resolvePiConfigPath } from './config.js';
+import type { PiScopeName } from './extension.js';
 import { resolvePiModel, resolveProviderState } from './provider-discovery.js';
 import type { PiCliInvocation, PiLlmModel, PiProviderBridge } from './provider-types.js';
-import type { PiLlmProviderType } from './config.js';
 
 export function registerPiProviderBridge(pi: ExtensionAPI, bridge: PiProviderBridge): void {
   pi.registerProvider('openai', {

@@ -166,25 +166,25 @@ function normalizeProviderProfiles(value: unknown): NonNullable<PiLlmConfig['pro
       .filter(([, profile]) => isRecord(profile))
       .map(([name, profile]) => {
         const normalizedProfile: Record<string, unknown> = {};
-        if (Object.prototype.hasOwnProperty.call(profile, 'provider')) {
+        if (Object.hasOwn(profile, 'provider')) {
           normalizedProfile.provider = normalizeProviderType(profile.provider);
         }
-        if (Object.prototype.hasOwnProperty.call(profile, 'baseUrl')) {
+        if (Object.hasOwn(profile, 'baseUrl')) {
           normalizedProfile.baseUrl = typeof profile.baseUrl === 'string' ? profile.baseUrl : null;
         }
-        if (Object.prototype.hasOwnProperty.call(profile, 'defaultModel')) {
+        if (Object.hasOwn(profile, 'defaultModel')) {
           normalizedProfile.defaultModel =
             typeof profile.defaultModel === 'string' ? profile.defaultModel : null;
         }
-        if (Object.prototype.hasOwnProperty.call(profile, 'githubModel')) {
+        if (Object.hasOwn(profile, 'githubModel')) {
           normalizedProfile.githubModel =
             typeof profile.githubModel === 'string' ? profile.githubModel : null;
         }
-        if (Object.prototype.hasOwnProperty.call(profile, 'requestTimeoutMs')) {
+        if (Object.hasOwn(profile, 'requestTimeoutMs')) {
           normalizedProfile.requestTimeoutMs =
             typeof profile.requestTimeoutMs === 'number' ? profile.requestTimeoutMs : undefined;
         }
-        if (Object.prototype.hasOwnProperty.call(profile, 'providerStrategy')) {
+        if (Object.hasOwn(profile, 'providerStrategy')) {
           normalizedProfile.providerStrategy = normalizeNullableProviderStrategy(
             profile.providerStrategy,
           );
@@ -217,10 +217,10 @@ function normalizeActionPolicies(value: unknown): NonNullable<PiLlmConfig['actio
                   return [
                     phaseName,
                     {
-                      ...(Object.prototype.hasOwnProperty.call(phase, 'profile')
+                      ...(Object.hasOwn(phase, 'profile')
                         ? { profile: typeof phase.profile === 'string' ? phase.profile : null }
                         : {}),
-                      ...(Object.prototype.hasOwnProperty.call(phase, 'model')
+                      ...(Object.hasOwn(phase, 'model')
                         ? { model: typeof phase.model === 'string' ? phase.model : null }
                         : {}),
                     },
@@ -232,10 +232,10 @@ function normalizeActionPolicies(value: unknown): NonNullable<PiLlmConfig['actio
         return [
           name,
           {
-            ...(Object.prototype.hasOwnProperty.call(policy, 'profile')
+            ...(Object.hasOwn(policy, 'profile')
               ? { profile: typeof policy.profile === 'string' ? policy.profile : null }
               : {}),
-            ...(Object.prototype.hasOwnProperty.call(policy, 'model')
+            ...(Object.hasOwn(policy, 'model')
               ? { model: typeof policy.model === 'string' ? policy.model : null }
               : {}),
             phases,

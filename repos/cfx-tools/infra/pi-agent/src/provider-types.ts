@@ -1,5 +1,5 @@
-import type { PiScopeName } from './extension.js';
 import type { PiLlmConfig, PiLlmProviderType, PiProviderStrategy } from './config.js';
+import type { PiScopeName } from './extension.js';
 
 export interface PiLlmModel {
   readonly id?: string;
