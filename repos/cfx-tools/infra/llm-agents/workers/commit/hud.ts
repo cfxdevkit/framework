@@ -90,7 +90,8 @@ export function logFailureAnalysis(analysis: GateFailureAnalysis | null): void {
 
   logInfo('');
   if (analysis.status === 'ready' && analysis.content) {
-    for (const line of renderBox('Commit Failure Result', analysis.content.split('\n'))) logInfo(line);
+    for (const line of renderBox('Commit Failure Result', analysis.content.split('\n')))
+      logInfo(line);
     return;
   }
 
@@ -98,14 +99,16 @@ export function logFailureAnalysis(analysis: GateFailureAnalysis | null): void {
     for (const line of renderBox('Commit Failure Result', [
       'LLM failure analysis is unavailable for this run.',
       ...(analysis.error ? [`Reason: ${analysis.error}`] : []),
-    ])) logInfo(line);
+    ]))
+      logInfo(line);
     return;
   }
 
   for (const line of renderBox('Commit Failure Result', [
     'LLM failure analysis could not complete.',
     ...(analysis.error ? [`Reason: ${analysis.error}`] : []),
-  ])) logInfo(line);
+  ]))
+    logInfo(line);
 }
 
 function renderBox(title: string, rows: readonly string[]): string[] {

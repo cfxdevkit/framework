@@ -169,7 +169,7 @@ function renderExecutionContext(context) {
 
   return [
     `- Unit: ${unit}`,
-    `- Config: ${context.llm?.configPath ?? 'artifacts/llm/config/llm.json'}`,
+    `- Config: ${context.llm?.configPath ?? '.pi/providers.json'}`,
     `- LLM: ${llm}`,
   ];
 }

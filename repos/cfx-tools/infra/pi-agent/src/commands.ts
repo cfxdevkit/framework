@@ -89,7 +89,8 @@ export function registerPiRepoCommands(pi: ExtensionAPI): void {
   });
 
   pi.registerCommand('repo-commit', {
-    description: 'Run the non-exiting repository commit workflow: /repo-commit [--quick] [--model <id>] [prompt]',
+    description:
+      'Run the non-exiting repository commit workflow: /repo-commit [--quick] [--model <id>] [prompt]',
     handler: async (args, ctx) => {
       const parsed = parseRepoRunArgs(args);
 

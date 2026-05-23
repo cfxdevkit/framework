@@ -1,4 +1,4 @@
-import type { CompletionProgressEvent } from '@cfxdevkit/llm-client';
+import type { CompletionProgressEvent } from '../completion/index.ts';
 
 export function logStep(n, total, label) {
   console.log(`\n[${n}/${total}] ${label}`);

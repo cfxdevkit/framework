@@ -6,7 +6,7 @@ import {
 } from './workspace-paths.js';
 
 const scopedConfigEnvVar = 'CFXDEVKIT_LLM_CONFIG_PATH';
-const llmClientModulePath = '../../llm-client/src/index.js';
+const llmClientModulePath = '../../pi-agent/src/tooling-runtime.js';
 const llmAgentsModulePath = '../../llm-agents/src/index.js';
 const piAgentModulePath = '../../pi-agent/src/index.js';
 

@@ -3,7 +3,11 @@ import { parseCommitFlags } from './flags.ts';
 import { runPrecommitWorkflow } from './precommit.ts';
 import type { CommitWorkflowResult, PrecommitWorkflowResult } from './types.ts';
 export { changedFilesList, detectChangedScopes, resolveScope } from './scope.ts';
-export type { CommitWorkflowOptions, CommitWorkflowResult, PrecommitWorkflowResult } from './types.ts';
+export type {
+  CommitWorkflowOptions,
+  CommitWorkflowResult,
+  PrecommitWorkflowResult,
+} from './types.ts';
 export { parseCommitFlags, runCommitWorkflow, runPrecommitWorkflow };
 
 export async function runPrecommit(args): Promise<PrecommitWorkflowResult> {

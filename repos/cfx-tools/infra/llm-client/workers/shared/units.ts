@@ -44,7 +44,8 @@ const monorepoUnitSpecs = [
     aliases: ['infrastructure', 'scripts'],
     rootDir: 'infrastructure',
     description: 'Infrastructure, CI, release, and operational automation',
-    focus: 'Operational maintenance for infrastructure, release flow, CI, and repository automation',
+    focus:
+      'Operational maintenance for infrastructure, release flow, CI, and repository automation',
     sessionEffect:
       'Preloads infrastructure and automation context for release, CI, and operational workflows.',
     defaultMode: 'exploratory',
@@ -88,7 +89,10 @@ export function findMonorepoUnitByConfigPath(
     return directMatch;
   }
 
-  const fileName = normalized.split('/').at(-1)?.replace(/\.json$/i, '');
+  const fileName = normalized
+    .split('/')
+    .at(-1)
+    ?.replace(/\.json$/i, '');
   return fileName ? findMonorepoUnit(fileName, startDir) : undefined;
 }
 

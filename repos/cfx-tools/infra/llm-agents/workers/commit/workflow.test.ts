@@ -101,12 +101,7 @@ vi.mock('./scope.ts', () => ({
   detectChangedScopes: mocks.detectChangedScopes,
 }));
 
-import {
-  runCommit,
-  runCommitWorkflow,
-  runPrecommit,
-  runPrecommitWorkflow,
-} from './index.ts';
+import { runCommit, runCommitWorkflow, runPrecommit, runPrecommitWorkflow } from './index.ts';
 
 describe('commit workflow services', () => {
   beforeEach(() => {

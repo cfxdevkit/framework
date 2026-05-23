@@ -1,0 +1,93 @@
+import type { ExtensionAPI, ProviderModelConfig } from '@earendil-works/pi-coding-agent';
+import type { PiScopeName } from './extension.js';
+import { readPiConfig, resolvePiConfigPath } from './config.js';
+import { resolvePiModel, resolveProviderState } from './provider-discovery.js';
+import type { PiCliInvocation, PiLlmModel, PiProviderBridge } from './provider-types.js';
+import type { PiLlmProviderType } from './config.js';
+
+export function registerPiProviderBridge(pi: ExtensionAPI, bridge: PiProviderBridge): void {
+  if (bridge.pi.provider === 'github') {
+    return;
+  }
+
+  pi.registerProvider('openai', {
+    name: 'CFX DevKit OpenAI-Compatible',
+    baseUrl: bridge.providerBaseUrl ?? undefined,
+    apiKey: 'OPENAI_API_KEY',
+    api: 'openai-completions',
+    models: createPiProviderModels(bridge.models, bridge.defaultModel, bridge.providerBaseUrl),
+  });
+}
+
+export async function createPiProviderBridge(scope?: PiScopeName): Promise<PiProviderBridge> {
+  const configPath = resolvePiConfigPath(scope);
+  const config = await readPiConfig(configPath);
+  const provider = await resolveProviderState(config);
+  const providerBaseUrl = provider.baseUrl;
+  const defaultModel = provider.defaultModel ?? config.defaultModel ?? null;
+  const providerStrategy = config.harness.providerStrategy;
+
+  return {
+    config,
+    providerType: provider.type,
+    models: provider.models,
+    configPath,
+    providerStrategy,
+    providerBaseUrl,
+    defaultModel,
+    pi: resolvePiCliInvocation(provider.type, providerBaseUrl, defaultModel, provider.models),
+    scope,
+  };
+}
+
+function resolvePiCliInvocation(
+  providerType: PiLlmProviderType,
+  providerBaseUrl: string | null,
+  defaultModel: string | null,
+  models: readonly PiLlmModel[],
+): PiCliInvocation {
+  if (providerType === 'github-models') {
+    return {
+      provider: 'github',
+      model: resolvePiModel(defaultModel, models),
+      env: {},
+    };
+  }
+
+  const env: Record<string, string> = {};
+  if (providerBaseUrl) {
+    env.OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? 'cfxdevkit-local-placeholder';
+  }
+
+  return {
+    provider: 'openai',
+    model: resolvePiModel(defaultModel, models),
+    env,
+  };
+}
+
+function createPiProviderModels(
+  models: readonly PiLlmModel[],
+  defaultModel: string | null,
+  providerBaseUrl: string | null,
+): ProviderModelConfig[] {
+  const providerModels = models.length > 0 ? models : [{ id: defaultModel ?? 'default-model' }];
+  return providerModels.map((model) => {
+    const id = model.id ?? model.checkpoint ?? model.recipe ?? defaultModel ?? 'default-model';
+    return {
+      id,
+      name: id,
+      ...(providerBaseUrl ? { baseUrl: providerBaseUrl } : {}),
+      reasoning: false,
+      input: ['text'],
+      cost: {
+        input: 0,
+        output: 0,
+        cacheRead: 0,
+        cacheWrite: 0,
+      },
+      contextWindow: 128000,
+      maxTokens: 8192,
+    };
+  });
+}

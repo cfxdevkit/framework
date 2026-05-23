@@ -8,7 +8,9 @@ export function extractSignalLines(output: string, maxLines = 8): string[] {
 }
 
 function normalizeOutputLine(line: string): string {
-  return stripAnsi(line).replace(/^[▮\s]+/, '').trim();
+  return stripAnsi(line)
+    .replace(/^[▮\s]+/, '')
+    .trim();
 }
 
 function stripAnsi(line: string): string {

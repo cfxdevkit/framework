@@ -43,7 +43,9 @@ describe('resolvePiSessionSetup', () => {
       ]),
     );
     expect(input).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Session prompt or context for delivery preset (optional)' }),
+      expect.objectContaining({
+        message: 'Session prompt or context for delivery preset (optional)',
+      }),
       expect.objectContaining({ clearPromptOnDone: true }),
     );
   });
@@ -61,7 +63,9 @@ describe('resolvePiSessionSetup', () => {
     });
 
     expect(input).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Commit session context for operations preset (optional)' }),
+      expect.objectContaining({
+        message: 'Commit session context for operations preset (optional)',
+      }),
       expect.objectContaining({ clearPromptOnDone: true }),
     );
     expect(result).toEqual({ scope: 'operations', promptArgs: ['stage the release notes'] });

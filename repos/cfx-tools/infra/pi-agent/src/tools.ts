@@ -5,9 +5,10 @@ import { format } from 'node:util';
 import { defineTool, type ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
 import {
-  loadLlmClientModule,
+  readPiConfig,
+  resolveEffectiveActionPolicy,
   type PiEffectiveActionPolicy,
-} from './llm-client-runtime.js';
+} from './config.js';
 import {
   executePiAction,
   executePiCommitWorkflow,
@@ -186,7 +187,8 @@ export async function executePiCommitSession(options: {
   const commitPolicy = await resolveCommitRuntimePolicy(options.model);
   const { result } = await withScopedCommitPolicy(commitPolicy.profileOverride, async () =>
     withCapturedConsole(
-      async () => await executePiCommitWorkflow(args, { modelPolicies: commitPolicy.modelPolicies }),
+      async () =>
+        await executePiCommitWorkflow(args, { modelPolicies: commitPolicy.modelPolicies }),
     ),
   );
   return result;
@@ -199,14 +201,13 @@ async function resolveCommitRuntimePolicy(explicitModel?: string): Promise<{
   };
   readonly profileOverride?: Record<string, unknown>;
 }> {
-  const llmClient = await loadLlmClientModule();
-  const config = await llmClient.readConfig();
-  const commitPolicy = llmClient.resolveEffectiveActionPolicy(config, { action: 'commit' });
-  const messagePolicy = llmClient.resolveEffectiveActionPolicy(config, {
+  const config = await readPiConfig();
+  const commitPolicy = resolveEffectiveActionPolicy(config, { action: 'commit' });
+  const messagePolicy = resolveEffectiveActionPolicy(config, {
     action: 'commit',
     phase: 'message-generation',
   });
-  const failurePolicy = llmClient.resolveEffectiveActionPolicy(config, {
+  const failurePolicy = resolveEffectiveActionPolicy(config, {
     action: 'commit',
     phase: 'failure-analysis',
   });

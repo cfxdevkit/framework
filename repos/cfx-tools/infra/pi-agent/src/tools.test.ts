@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const llmClientRuntime = vi.hoisted(() => ({
-  loadLlmClientModule: vi.fn(),
+const configRuntime = vi.hoisted(() => ({
+  readPiConfig: vi.fn(),
+  resolveEffectiveActionPolicy: vi.fn(),
 }));
 
 const llmAgentsRuntime = vi.hoisted(() => ({
@@ -11,8 +12,9 @@ const llmAgentsRuntime = vi.hoisted(() => ({
   getPiActionDefinitions: vi.fn(async () => []),
 }));
 
-vi.mock('./llm-client-runtime.js', () => ({
-  loadLlmClientModule: llmClientRuntime.loadLlmClientModule,
+vi.mock('./config.js', () => ({
+  readPiConfig: configRuntime.readPiConfig,
+  resolveEffectiveActionPolicy: configRuntime.resolveEffectiveActionPolicy,
 }));
 
 vi.mock('./llm-agents-runtime.js', () => ({
@@ -37,20 +39,21 @@ describe('executePiCommitSession', () => {
   const originalConfigPath = process.env.CFXDEVKIT_LLM_CONFIG_PATH;
 
   beforeEach(() => {
-    llmClientRuntime.loadLlmClientModule.mockReset();
+    configRuntime.readPiConfig.mockReset();
+    configRuntime.resolveEffectiveActionPolicy.mockReset();
     llmAgentsRuntime.executePiCommitWorkflow.mockReset();
 
-    llmClientRuntime.loadLlmClientModule.mockResolvedValue({
-      readConfig: async () => ({
-        provider: 'litellm',
-        baseUrl: null,
-        defaultModel: null,
-        actions: {},
-        providerProfiles: {},
-        actionPolicies: {},
-        harness: { providerStrategy: 'auto' },
-      }),
-      resolveEffectiveActionPolicy: (_config, options?: { action?: string; phase?: string }) => ({
+    configRuntime.readPiConfig.mockResolvedValue({
+      provider: 'litellm',
+      baseUrl: null,
+      defaultModel: null,
+      actions: {},
+      providerProfiles: {},
+      actionPolicies: {},
+      harness: { providerStrategy: 'auto' },
+    });
+    configRuntime.resolveEffectiveActionPolicy.mockImplementation(
+      (_config, options?: { action?: string; phase?: string }) => ({
         action: options?.action,
         phase: options?.phase,
         source: options?.phase ? 'phase' : 'action',
@@ -72,7 +75,7 @@ describe('executePiCommitSession', () => {
           providerStrategy: 'auto',
         },
       }),
-    });
+    );
     llmAgentsRuntime.executePiCommitWorkflow.mockResolvedValue(null);
   });
 
@@ -87,15 +90,12 @@ describe('executePiCommitSession', () => {
   it('derives commit and failure-analysis models from action policies', async () => {
     await executePiCommitSession({ prompt: 'Prepare the commit' });
 
-    expect(llmAgentsRuntime.executePiCommitWorkflow).toHaveBeenCalledWith(
-      ['Prepare the commit'],
-      {
-        modelPolicies: {
-          messageGenerationModel: 'message-model',
-          failureAnalysisModel: 'failure-model',
-        },
+    expect(llmAgentsRuntime.executePiCommitWorkflow).toHaveBeenCalledWith(['Prepare the commit'], {
+      modelPolicies: {
+        messageGenerationModel: 'message-model',
+        failureAnalysisModel: 'failure-model',
       },
-    );
+    });
   });
 
   it('lets an explicit model override both policy-selected models', async () => {
@@ -139,22 +139,23 @@ describe('executePiCommitSession', () => {
 
 describe('registerPiRepoTools', () => {
   beforeEach(() => {
-    llmClientRuntime.loadLlmClientModule.mockReset();
+    configRuntime.readPiConfig.mockReset();
+    configRuntime.resolveEffectiveActionPolicy.mockReset();
     llmAgentsRuntime.executePiAction.mockReset();
     llmAgentsRuntime.executePiCommitWorkflow.mockReset();
     llmAgentsRuntime.getPiActionDefinitions.mockReset();
 
-    llmClientRuntime.loadLlmClientModule.mockResolvedValue({
-      readConfig: async () => ({
-        provider: 'litellm',
-        baseUrl: null,
-        defaultModel: null,
-        actions: {},
-        providerProfiles: {},
-        actionPolicies: {},
-        harness: { providerStrategy: 'auto' },
-      }),
-      resolveEffectiveActionPolicy: (_config: unknown, options?: { action?: string; phase?: string }) => ({
+    configRuntime.readPiConfig.mockResolvedValue({
+      provider: 'litellm',
+      baseUrl: null,
+      defaultModel: null,
+      actions: {},
+      providerProfiles: {},
+      actionPolicies: {},
+      harness: { providerStrategy: 'auto' },
+    });
+    configRuntime.resolveEffectiveActionPolicy.mockImplementation(
+      (_config: unknown, options?: { action?: string; phase?: string }) => ({
         action: options?.action,
         phase: options?.phase,
         source: options?.phase ? 'phase' : 'action',
@@ -171,7 +172,7 @@ describe('registerPiRepoTools', () => {
           providerStrategy: 'auto',
         },
       }),
-    });
+    );
   });
 
   it('clears operator widgets instead of pinning a repo action widget', async () => {
@@ -182,8 +183,18 @@ describe('registerPiRepoTools', () => {
       action: 'review',
       definition: { title: 'Review changes', mode: 'deterministic' },
       executionContext: {
-        unit: { name: 'delivery', rootDir: 'openspec', configPath: 'artifacts/llm/config/units/delivery.json' },
-        llm: { used: true, status: 'ready', configPath: 'artifacts/llm/config/units/delivery.json', provider: 'litellm', model: 'Qwen3-Coder-Next-GGUF' },
+        unit: {
+          name: 'delivery',
+          rootDir: 'openspec',
+          configPath: 'artifacts/llm/config/units/delivery.json',
+        },
+        llm: {
+          used: true,
+          status: 'ready',
+          configPath: 'artifacts/llm/config/units/delivery.json',
+          provider: 'litellm',
+          model: 'Qwen3-Coder-Next-GGUF',
+        },
       },
       response: { content: 'Review summary' },
     });
@@ -217,10 +228,25 @@ describe('registerPiRepoTools', () => {
       status: 'approval-required',
       phase: 'approval',
       executionContext: {
-        unit: { name: 'implementation', rootDir: 'repos', configPath: 'artifacts/llm/config/units/implementation.json' },
-        llm: { used: true, status: 'ready', configPath: 'artifacts/llm/config/units/implementation.json', provider: 'litellm', model: 'Qwen3-Coder-Next-GGUF' },
+        unit: {
+          name: 'implementation',
+          rootDir: 'repos',
+          configPath: 'artifacts/llm/config/units/implementation.json',
+        },
+        llm: {
+          used: true,
+          status: 'ready',
+          configPath: 'artifacts/llm/config/units/implementation.json',
+          provider: 'litellm',
+          model: 'Qwen3-Coder-Next-GGUF',
+        },
       },
-      repositoryPolicies: { label: 'Repository policy gates', passed: true, skipped: false, results: [] },
+      repositoryPolicies: {
+        label: 'Repository policy gates',
+        passed: true,
+        skipped: false,
+        results: [],
+      },
       qualityGates: { label: 'Quality gates', passed: true, skipped: false, results: [] },
       approval: { required: true, approved: false, declined: false },
       failureAnalysis: null,
@@ -235,9 +261,7 @@ describe('registerPiRepoTools', () => {
       },
     };
 
-    await tools
-      .get('repo_commit_workflow')
-      ?.execute('tool-call', {}, undefined, undefined, ctx);
+    await tools.get('repo_commit_workflow')?.execute('tool-call', {}, undefined, undefined, ctx);
 
     expect(ctx.ui.setStatus).toHaveBeenCalledWith(
       'repo-commit-tool',

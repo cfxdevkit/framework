@@ -43,7 +43,11 @@ describe('createPiCommitWorkflowUiState', () => {
       status: 'blocked',
       phase: 'quality-gates',
       executionContext: {
-        unit: { name: 'docs', rootDir: '/workspaces/root/docs', configPath: 'artifacts/llm/config/units/docs.json' },
+        unit: {
+          name: 'docs',
+          rootDir: '/workspaces/root/docs',
+          configPath: 'artifacts/llm/config/units/docs.json',
+        },
         llm: {
           used: true,
           status: 'ready',

@@ -86,14 +86,17 @@ export async function runConfigCli(rawArgs: readonly string[]): Promise<void> {
     config.harness.exploratory.allowWideChanges = parseBoolean(value, key);
   } else if (key === 'profile-provider') {
     const [profileName, provider] = rest;
-    if (!profileName) throw new Error('Usage: cdk agent config set profile-provider <name> <provider>');
+    if (!profileName)
+      throw new Error('Usage: cdk agent config set profile-provider <name> <provider>');
     if (
       provider !== 'lemonade' &&
       provider !== 'litellm' &&
       provider !== 'openai-compat' &&
       provider !== 'github-models'
     ) {
-      throw new Error('profile-provider must be lemonade, litellm, openai-compat, or github-models');
+      throw new Error(
+        'profile-provider must be lemonade, litellm, openai-compat, or github-models',
+      );
     }
     ensureProviderProfiles(config)[profileName] = {
       ...(config.providerProfiles?.[profileName] ?? {}),

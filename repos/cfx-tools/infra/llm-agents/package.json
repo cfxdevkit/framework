@@ -31,7 +31,6 @@
   "dependencies": {
     "@cfxdevkit/arch-check": "workspace:*",
     "@cfxdevkit/docs-pipeline": "workspace:*",
-    "@cfxdevkit/llm-client": "workspace:*",
     "tsx": "^4.20.6"
   },
   "devDependencies": {

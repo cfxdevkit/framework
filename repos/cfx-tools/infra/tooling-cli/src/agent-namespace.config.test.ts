@@ -1,7 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  resetToolingCliAgentNamespaceHarness,
-} from '@cfxdevkit/testing/tooling-cli-test-support';
+import { resetToolingCliAgentNamespaceHarness } from '@cfxdevkit/testing/tooling-cli-test-support';
 
 const harness = vi.hoisted(() => ({
   prompts: {
@@ -96,7 +94,9 @@ vi.mock('./agent-runtime.js', async () => {
     ...actual,
     withLlmClient: async (run: (client: typeof harness.llmClient) => Promise<unknown> | unknown) =>
       await run(harness.llmClient),
-    withLlmAgents: async (run: (agents: typeof harness.llmAgents) => Promise<unknown> | unknown) => {
+    withLlmAgents: async (
+      run: (agents: typeof harness.llmAgents) => Promise<unknown> | unknown,
+    ) => {
       await run(harness.llmAgents);
     },
     withPiAgent: async (run: (agent: typeof harness.piAgent) => Promise<unknown> | unknown) => {
@@ -142,7 +142,9 @@ describe('agentToolingNamespace config and status', () => {
       ),
     );
     expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining('LiteLLM remains a compatibility path, not the intended long-term local default.'),
+      expect.stringContaining(
+        'LiteLLM remains a compatibility path, not the intended long-term local default.',
+      ),
     );
   });
 

@@ -33,7 +33,9 @@ vi.mock('./agent-runtime.js', async () => {
     ...actual,
     withLlmClient: async (run: (client: typeof harness.llmClient) => Promise<unknown> | unknown) =>
       await run(harness.llmClient),
-    withLlmAgents: async (run: (agents: typeof harness.llmAgents) => Promise<unknown> | unknown) => {
+    withLlmAgents: async (
+      run: (agents: typeof harness.llmAgents) => Promise<unknown> | unknown,
+    ) => {
       await run(harness.llmAgents);
     },
     withPiAgent: async (run: (agent: typeof harness.piAgent) => Promise<unknown> | unknown) => {
@@ -125,7 +127,9 @@ describe('agentToolingNamespace runtime flows', () => {
       expect.objectContaining({ clearPromptOnDone: true }),
     );
     expect(prompts.input).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Session prompt or context for delivery preset (optional)' }),
+      expect.objectContaining({
+        message: 'Session prompt or context for delivery preset (optional)',
+      }),
       expect.objectContaining({ clearPromptOnDone: true }),
     );
     expect(piAgent.runPiInteractive).toHaveBeenCalledWith({

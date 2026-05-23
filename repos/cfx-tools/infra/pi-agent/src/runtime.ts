@@ -99,14 +99,16 @@ async function runPiCli(options: PiCliRunOptions): Promise<void> {
     args.push(options.promptArgs.join(' '));
   }
 
-  const exitCode = await withTerminalPhases(options.terminalPhases, async () =>
-    await spawnPnpm(piBinaryPath, args, repoRoot, {
-      ...process.env,
-      PATH: prependPathEntries(process.env.PATH, [resolvePiAgentBinDir(), dirname(piBinaryPath)]),
-      CFXDEVKIT_LLM_CONFIG_PATH: options.providerBridge.configPath,
-      ...(options.providerBridge.scope ? { [piScopeEnvVar]: options.providerBridge.scope } : {}),
-      ...options.providerBridge.pi.env,
-    }),
+  const exitCode = await withTerminalPhases(
+    options.terminalPhases,
+    async () =>
+      await spawnPnpm(piBinaryPath, args, repoRoot, {
+        ...process.env,
+        PATH: prependPathEntries(process.env.PATH, [resolvePiAgentBinDir(), dirname(piBinaryPath)]),
+        CFXDEVKIT_LLM_CONFIG_PATH: options.providerBridge.configPath,
+        ...(options.providerBridge.scope ? { [piScopeEnvVar]: options.providerBridge.scope } : {}),
+        ...options.providerBridge.pi.env,
+      }),
   );
 
   if (exitCode !== 0) {
@@ -171,13 +173,16 @@ function prependPathEntries(currentPath: string | undefined, entries: readonly s
 }
 
 function buildCommitSessionPrompt(promptArgs: readonly string[]): string {
-  const operatorContext = promptArgs.length > 0 ? `\n\nOperator context: ${promptArgs.join(' ')}` : '';
-  return [
-    'Start an interactive repository commit session.',
-    'Run /repo-commit to begin or rerun the commit workflow inside PI.',
-    'Inspect repository-policy and quality-gate status, keep the session open for remediation, and stop before final commit approval.',
-    'Use the shared repository workflows and remain in the PI session while issues are resolved.',
-  ].join(' ') + operatorContext;
+  const operatorContext =
+    promptArgs.length > 0 ? `\n\nOperator context: ${promptArgs.join(' ')}` : '';
+  return (
+    [
+      'Start an interactive repository commit session.',
+      'Run /repo-commit to begin or rerun the commit workflow inside PI.',
+      'Inspect repository-policy and quality-gate status, keep the session open for remediation, and stop before final commit approval.',
+      'Use the shared repository workflows and remain in the PI session while issues are resolved.',
+    ].join(' ') + operatorContext
+  );
 }
 
 function findRepoRoot(startDir: string): string {

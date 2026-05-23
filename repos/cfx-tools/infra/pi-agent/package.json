@@ -29,7 +29,6 @@
   },
   "dependencies": {
     "@cfxdevkit/llm-agents": "workspace:*",
-    "@cfxdevkit/llm-client": "workspace:*",
     "@earendil-works/pi-coding-agent": "^0.75.4",
     "@earendil-works/pi-tui": "^0.75.4",
     "typebox": "1.1.38"

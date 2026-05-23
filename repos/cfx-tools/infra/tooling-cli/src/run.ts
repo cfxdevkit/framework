@@ -41,13 +41,12 @@ export async function runCli(rawArgs: readonly string[], opts: RunCliOptions = {
     stdout: toWritable(stdout),
     stderr: toWritable(stderr),
     env: process.env,
-    colorDepth: typeof process.stdout.getColorDepth === 'function' ? process.stdout.getColorDepth() : 1,
+    colorDepth:
+      typeof process.stdout.getColorDepth === 'function' ? process.stdout.getColorDepth() : 1,
   });
 }
 
-function buildCli(
-  namespaces: readonly ToolingNamespaceDefinition[],
-): Cli {
+function buildCli(namespaces: readonly ToolingNamespaceDefinition[]): Cli {
   const cli = new Cli({
     binaryLabel: 'cdk',
     binaryName: 'cdk',
@@ -62,9 +61,7 @@ function buildCli(
   return cli;
 }
 
-function createCatalogCommand(
-  namespaces: readonly ToolingNamespaceDefinition[],
-): CommandClass {
+function createCatalogCommand(namespaces: readonly ToolingNamespaceDefinition[]): CommandClass {
   return class CatalogCommand extends Command {
     static override paths = [['catalog']];
 

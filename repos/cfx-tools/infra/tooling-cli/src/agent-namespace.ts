@@ -30,7 +30,8 @@ async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
     return;
   }
 
-  if (command === 'config') return await withAgentScope(parsed.scope, async () => runConfigCli(args.slice(1)));
+  if (command === 'config')
+    return await withAgentScope(parsed.scope, async () => runConfigCli(args.slice(1)));
   if (command === 'modes') return await withAgentScope(parsed.scope, async () => printModes());
   if (command === 'status') return await withAgentScope(parsed.scope, async () => printStatus());
   if (command === 'deterministic') {
@@ -64,7 +65,9 @@ async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
     );
   }
   if (command === 'rpc') {
-    return await withPiAgent((piAgent) => piAgent.runPiRpc(parsed.scope ? { scope: parsed.scope } : {}));
+    return await withPiAgent((piAgent) =>
+      piAgent.runPiRpc(parsed.scope ? { scope: parsed.scope } : {}),
+    );
   }
   if (command === 'providers') return printProvidersStrategy();
 

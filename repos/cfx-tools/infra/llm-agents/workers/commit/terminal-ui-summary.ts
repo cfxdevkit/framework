@@ -37,7 +37,10 @@ export function summarizeFailureAnalysis(analysis: GateFailureAnalysis | null): 
   for (const rawLine of analysis.content.split(/\r?\n/)) {
     const line = rawLine.trim();
     if (!line || line === '```') continue;
-    const heading = line.replace(/^#+\s*/, '').replace(/:$/, '').toLowerCase();
+    const heading = line
+      .replace(/^#+\s*/, '')
+      .replace(/:$/, '')
+      .toLowerCase();
     if (
       heading === 'summary' ||
       heading === 'root causes' ||
@@ -74,7 +77,10 @@ export function summarizeCommitPreview(subject: string, body: string): string[] 
     .map((line) => line.trim())
     .filter(Boolean)
     .slice(0, 2);
-  return [`commit: ${truncate(subject, 108)}`, ...bodyLines.map((line) => `body: ${truncate(line, 108)}`)];
+  return [
+    `commit: ${truncate(subject, 108)}`,
+    ...bodyLines.map((line) => `body: ${truncate(line, 108)}`),
+  ];
 }
 
 function pickGateSummary(result: GateResult): string {
@@ -97,7 +103,9 @@ function takeSection(
   prefix: string,
   limit: number,
 ): string[] {
-  return (sections.get(name) ?? []).slice(0, limit).map((line) => `${prefix}: ${truncate(line, 104)}`);
+  return (sections.get(name) ?? [])
+    .slice(0, limit)
+    .map((line) => `${prefix}: ${truncate(line, 104)}`);
 }
 
 function stripBullet(line: string): string {

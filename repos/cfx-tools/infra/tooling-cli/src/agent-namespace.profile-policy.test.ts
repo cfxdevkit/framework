@@ -1,7 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  resetToolingCliAgentNamespaceHarness,
-} from '@cfxdevkit/testing/tooling-cli-test-support';
+import { resetToolingCliAgentNamespaceHarness } from '@cfxdevkit/testing/tooling-cli-test-support';
 
 const harness = vi.hoisted(() => ({
   prompts: {
@@ -93,7 +91,9 @@ vi.mock('./agent-runtime.js', async () => {
     ...actual,
     withLlmClient: async (run: (client: typeof harness.llmClient) => Promise<unknown> | unknown) =>
       await run(harness.llmClient),
-    withLlmAgents: async (run: (agents: typeof harness.llmAgents) => Promise<unknown> | unknown) => {
+    withLlmAgents: async (
+      run: (agents: typeof harness.llmAgents) => Promise<unknown> | unknown,
+    ) => {
       await run(harness.llmAgents);
     },
     withPiAgent: async (run: (agent: typeof harness.piAgent) => Promise<unknown> | unknown) => {
@@ -171,7 +171,13 @@ describe('agentToolingNamespace profile and policy config', () => {
   it('prints the effective action policy for an action phase', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    await agentToolingNamespace.run(['config', 'show', 'action-policy', 'commit', 'failure-analysis']);
+    await agentToolingNamespace.run([
+      'config',
+      'show',
+      'action-policy',
+      'commit',
+      'failure-analysis',
+    ]);
 
     expect(llmClient.resolveRuntimeBridgeState).toHaveBeenCalledWith(undefined, {
       action: 'commit',

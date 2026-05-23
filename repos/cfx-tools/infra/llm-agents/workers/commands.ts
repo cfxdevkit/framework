@@ -12,6 +12,7 @@ import {
   writeLlmReport,
 } from './completion/index.ts';
 import {
+  configPath,
   configPathEnvVar,
   listRepoActions,
   repoActions,
@@ -239,5 +240,5 @@ export function relativeConfigPath() {
   if (scopedPath) {
     return relative(process.cwd(), scopedPath) || scopedPath;
   }
-  return 'artifacts/llm/config/llm.json';
+  return relative(process.cwd(), configPath) || '.pi/providers.json';
 }

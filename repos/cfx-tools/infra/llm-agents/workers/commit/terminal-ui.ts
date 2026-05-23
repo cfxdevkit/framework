@@ -134,14 +134,18 @@ export function createWorkflowTerminalUi(options: {
         renderBlock();
         return;
       }
-      output.write(`${formatGateLine(state.gates.find((gate) => gate.label === result.label) ?? {
-        id: result.id,
-        label: result.label,
-        required: result.required,
-        status: result.status,
-        summary: pickGateSummary(result),
-        elapsedMs: result.elapsedMs,
-      })}\n`);
+      output.write(
+        `${formatGateLine(
+          state.gates.find((gate) => gate.label === result.label) ?? {
+            id: result.id,
+            label: result.label,
+            required: result.required,
+            status: result.status,
+            summary: pickGateSummary(result),
+            elapsedMs: result.elapsedMs,
+          },
+        )}\n`,
+      );
     },
     onGroupFinish(report) {
       state.noteLine = summarizeFinishedReport(report);
@@ -211,7 +215,8 @@ function formatHeader(
 function formatGateLine(gate: GateView): string {
   const status = `${statusTag(gate.status, gate.required)}`.padEnd(6);
   const label = truncate(gate.label, 22).padEnd(22);
-  const elapsed = gate.elapsedMs !== undefined ? `${(gate.elapsedMs / 1000).toFixed(1)}s`.padStart(6) : '   ...';
+  const elapsed =
+    gate.elapsedMs !== undefined ? `${(gate.elapsedMs / 1000).toFixed(1)}s`.padStart(6) : '   ...';
   return `  ${status}${label}${elapsed}  ${truncate(gate.summary, 76)}`;
 }
 

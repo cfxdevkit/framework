@@ -1,4 +1,7 @@
-import { resolveExecutionContext, toExecutionContextRuntimePayload } from '../shared/execution-context.ts';
+import {
+  resolveExecutionContext,
+  toExecutionContextRuntimePayload,
+} from '../shared/execution-context.ts';
 import { analyzeGateFailures } from './failure-analysis.ts';
 import { parseCommitFlags } from './flags.ts';
 import { runQualityGates, runRepositoryPolicyGates } from './gates.ts';
@@ -48,7 +51,13 @@ export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResul
       executionContext: toExecutionContextRuntimePayload(executionContext),
       scopes,
       repositoryPolicies: policyReport,
-      qualityGates: { kind: 'quality', label: 'Quality gates', passed: false, skipped: true, results: [] },
+      qualityGates: {
+        kind: 'quality',
+        label: 'Quality gates',
+        passed: false,
+        skipped: true,
+        results: [],
+      },
       failureAnalysis,
       blockedBy: 'repository-policy',
     };
@@ -84,7 +93,9 @@ export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResul
   if (!qualityReport.passed && flags.force) {
     ui.note('--force enabled: continuing past failing quality gates');
   }
-  ui.finish(qualityReport.passed ? 'passed' : 'forced', ['all precommit gates passed; run `cdk repo commit` when ready']);
+  ui.finish(qualityReport.passed ? 'passed' : 'forced', [
+    'all precommit gates passed; run `cdk repo commit` when ready',
+  ]);
   return {
     command: 'precommit',
     status: qualityReport.passed ? 'passed' : 'forced',

@@ -13,7 +13,9 @@ export async function printProviderProfiles(): Promise<void> {
 
   const lines = await Promise.all(
     names.map(async (name) => {
-      const profile = await withLlmClient((client) => client.resolveNamedProviderProfile(config, name));
+      const profile = await withLlmClient((client) =>
+        client.resolveNamedProviderProfile(config, name),
+      );
       return `  - ${name}: provider ${profile.provider ?? 'auto'} | model ${profile.defaultModel ?? 'auto'} | strategy ${profile.providerStrategy}`;
     }),
   );
@@ -30,7 +32,9 @@ export async function printProviderProfile(profileName: string | undefined): Pro
   }
 
   const config = await withLlmClient((client) => client.readConfig());
-  const profile = await withLlmClient((client) => client.resolveNamedProviderProfile(config, profileName));
+  const profile = await withLlmClient((client) =>
+    client.resolveNamedProviderProfile(config, profileName),
+  );
 
   console.log(`cdk agent config profile ${profileName}
 
@@ -82,11 +86,19 @@ export function ensureProviderProfiles(config: {
 export function ensureActionPolicies(config: {
   actionPolicies?: Record<
     string,
-    { profile?: string | null; model?: string | null; phases?: Record<string, Record<string, unknown>> }
+    {
+      profile?: string | null;
+      model?: string | null;
+      phases?: Record<string, Record<string, unknown>>;
+    }
   >;
 }): Record<
   string,
-  { profile?: string | null; model?: string | null; phases?: Record<string, Record<string, unknown>> }
+  {
+    profile?: string | null;
+    model?: string | null;
+    phases?: Record<string, Record<string, unknown>>;
+  }
 > {
   config.actionPolicies ??= {};
   return config.actionPolicies;

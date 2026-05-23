@@ -59,9 +59,11 @@ describe('registerPiRepoCommands', () => {
     const registerMessageRenderer = vi.fn();
     const sendMessage = vi.fn();
     registerPiRepoCommands({
-      registerCommand: vi.fn((name: string, options: { handler: (args: string, ctx: any) => Promise<void> }) => {
-        commands.set(name, options.handler);
-      }),
+      registerCommand: vi.fn(
+        (name: string, options: { handler: (args: string, ctx: any) => Promise<void> }) => {
+          commands.set(name, options.handler);
+        },
+      ),
       registerMessageRenderer,
       sendMessage,
     } as never);
@@ -79,7 +81,10 @@ describe('registerPiRepoCommands', () => {
 
     await commands.get('repo-status')?.('', ctx);
 
-    expect(registerMessageRenderer).toHaveBeenCalledWith('repo-agent-summary', expect.any(Function));
+    expect(registerMessageRenderer).toHaveBeenCalledWith(
+      'repo-agent-summary',
+      expect.any(Function),
+    );
     expect(ctx.ui.setStatus).toHaveBeenCalledWith('repo-agent', 'repo:scripts');
     expect(sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -102,9 +107,11 @@ describe('registerPiRepoCommands', () => {
     const commands = new Map<string, (args: string, ctx: any) => Promise<void>>();
     const sendMessage = vi.fn();
     registerPiRepoCommands({
-      registerCommand: vi.fn((name: string, options: { handler: (args: string, ctx: any) => Promise<void> }) => {
-        commands.set(name, options.handler);
-      }),
+      registerCommand: vi.fn(
+        (name: string, options: { handler: (args: string, ctx: any) => Promise<void> }) => {
+          commands.set(name, options.handler);
+        },
+      ),
       registerMessageRenderer: vi.fn(),
       sendMessage,
     } as never);
@@ -156,9 +163,11 @@ describe('registerPiRepoCommands', () => {
     const commands = new Map<string, (args: string, ctx: any) => Promise<void>>();
     const sendMessage = vi.fn();
     registerPiRepoCommands({
-      registerCommand: vi.fn((name: string, options: { handler: (args: string, ctx: any) => Promise<void> }) => {
-        commands.set(name, options.handler);
-      }),
+      registerCommand: vi.fn(
+        (name: string, options: { handler: (args: string, ctx: any) => Promise<void> }) => {
+          commands.set(name, options.handler);
+        },
+      ),
       registerMessageRenderer: vi.fn(),
       sendMessage,
     } as never);

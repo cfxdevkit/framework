@@ -3,11 +3,7 @@ import { registerPiRepoCommands } from './commands.js';
 import { getPiActionDefinitions } from './llm-agents-runtime.js';
 import { createPiProviderBridge, registerPiProviderBridge } from './providers.js';
 import { registerPiRepoTools } from './tools.js';
-import {
-  clearPiOperatorWidgets,
-  clearPiWorkflowProgress,
-  createPiRuntimeUiState,
-} from './ui.js';
+import { clearPiOperatorWidgets, clearPiWorkflowProgress, createPiRuntimeUiState } from './ui.js';
 
 export type PiScopeName = string;
 

@@ -1,10 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import type {
-  LlmActionPhasePolicy,
-  LlmActionPolicy,
-  LlmProviderProfile,
-} from '../../src/types.ts';
+import type { LlmActionPhasePolicy, LlmActionPolicy, LlmProviderProfile } from '../../src/types.ts';
 import {
   configPath,
   configPathEnvVar,
