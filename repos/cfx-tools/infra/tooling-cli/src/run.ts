@@ -1,5 +1,5 @@
 import { Writable } from 'node:stream';
-import { Cli, Command, Option, type CommandClass } from 'clipanion';
+import { Cli, Command, type CommandClass, Option } from 'clipanion';
 import type { ToolingNamespaceDefinition } from './contracts.js';
 import {
   buildToolingCatalog,

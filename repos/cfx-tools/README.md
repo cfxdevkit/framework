@@ -9,6 +9,7 @@
 |---------|-----|---------|
 | `scaffold-cli` | `@cfxdevkit/scaffold-cli` | `pnpm dlx @cfxdevkit/scaffold` project bootstrapper |
 | `mcp-server` | `@cfxdevkit/mcp-server` | Model Context Protocol server for AI agents |
+| `cdk-ai` | `@cfxdevkit/cdk-ai` | unified facade for PI runtime and repo AI automation surfaces |
 | `vscode-extension` | `cfxdevkit.vscode` | VS Code integration |
 | `devcontainer` | — | reusable `.devcontainer.json` + Docker images |
 | `devtools` | — | shared dev scripts |

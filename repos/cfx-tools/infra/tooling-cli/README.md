@@ -16,13 +16,14 @@ It composes package-owned command registries into one grouped help surface and o
 
 - `llm` — local LLM automation workflows from `@cfxdevkit/llm-tools`
 - `docs` — docs pipeline workflows from `@cfxdevkit/docs-pipeline`
-- `agent` — PI-backed interactive, print, and RPC runtime from `@cfxdevkit/pi-agent`
+- `agent` — PI-backed interactive, print, and RPC runtime through `@cfxdevkit/cdk-ai`
 
 ## Agent Runtime
 
 `cdk agent` is the canonical interactive entrypoint for repository-aware agent work.
 The root CLI keeps the stable command surface and delegates the runtime itself to
-`@cfxdevkit/pi-agent`, which launches `pi` from the repository root so project-local
+`@cfxdevkit/cdk-ai`, which currently fronts the PI runtime from `@cfxdevkit/pi-agent`
+and launches `pi` from the repository root so project-local
 `.pi/` prompts, skills, and extensions stay active.
 
 Common entrypoints:

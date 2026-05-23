@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
-import type { ToolingNamespaceDefinition } from './contracts.js';
 import { isHelpToken, withAgentScope, withLlmAgents } from './agent-runtime.js';
+import type { ToolingNamespaceDefinition } from './contracts.js';
 import { findMonorepoUnit, listMonorepoUnits, parseScopeFlag } from './monorepo-units.js';
 import { findRepoRoot } from './workspace-paths.js';
 

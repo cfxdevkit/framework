@@ -9,11 +9,7 @@
     "strict": false,
     "noImplicitAny": false,
     "exactOptionalPropertyTypes": false,
-    "useUnknownInCatchVariables": false,
-    "rootDirs": [".", "../llm-agents"],
-    "paths": {
-      "@cfxdevkit/llm-agents": ["../llm-agents/src/index.ts"]
-    }
+    "useUnknownInCatchVariables": false
   },
   "include": ["src/**/*", "workers/**/*"],
   "exclude": ["dist", "node_modules", "**/*.test.ts"]

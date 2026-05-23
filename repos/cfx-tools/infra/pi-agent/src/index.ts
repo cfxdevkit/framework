@@ -10,6 +10,17 @@ export {
   runPiRpc,
 } from './runtime.js';
 export {
+  defaultConfig,
+  getProviderBaseUrl,
+  getProviderDefaultModel,
+  readConfig,
+  resolveNamedProviderProfile,
+  resolveProvider,
+  resolveProviderModel,
+  resolveRuntimeBridgeState,
+  writeConfig,
+} from './tooling-runtime.js';
+export {
   createPiAgentExtension,
   piScopeEnvVar,
   registerPiAgentProjectExtension,

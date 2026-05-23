@@ -1,4 +1,3 @@
-import { printConfigHelp } from './agent-help.js';
 import {
   ensureActionPolicies,
   ensureProviderProfiles,
@@ -6,6 +5,7 @@ import {
   printProviderProfile,
   printProviderProfiles,
 } from './agent-config-details.js';
+import { printConfigHelp } from './agent-help.js';
 import {
   formatBoolean,
   isHelpToken,

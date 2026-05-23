@@ -1,14 +1,24 @@
+import { existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { relativeAgentConfigPath, resolveAgentConfigPath } from './monorepo-units.js';
 import {
-  findRepoRoot as resolveRepoRoot,
   relativeParent as resolveRelativeParent,
+  findRepoRoot as resolveRepoRoot,
 } from './workspace-paths.js';
 
 const scopedConfigEnvVar = 'CFXDEVKIT_LLM_CONFIG_PATH';
-const llmClientModulePath = '../../pi-agent/src/tooling-runtime.js';
-const llmAgentsModulePath = '../../llm-agents/src/index.js';
-const piAgentModulePath = '../../pi-agent/src/index.js';
+const cdkAiPackageName = '@cfxdevkit/cdk-ai';
+const piAgentSourceModulePath = '../../pi-agent/src/index.js';
+const llmAgentsSourceModulePath = '../../llm-agents/src/index.js';
+const cdkAiDistEntry = new URL('../../../packages/cdk-ai/dist/index.js', import.meta.url);
+const piAgentDistEntry = new URL('../../pi-agent/dist/index.js', import.meta.url);
+const llmAgentsDistEntry = new URL('../../llm-agents/dist/index.js', import.meta.url);
+
+function hasBuiltCdkAiRuntime(): boolean {
+  return (
+    existsSync(cdkAiDistEntry) && existsSync(piAgentDistEntry) && existsSync(llmAgentsDistEntry)
+  );
+}
 
 type LlmConfig = {
   provider?: string | null;
@@ -148,14 +158,28 @@ export function relativeConfigPath(scope?: string): string {
 export async function withLlmClient<T>(
   run: (client: LlmClientModule) => Promise<T> | T,
 ): Promise<T> {
-  return runInRepoRoot(async () => run((await import(llmClientModulePath)) as LlmClientModule));
+  return runInRepoRoot(async () =>
+    run(
+      await loadWorkspaceModule<LlmClientModule>(
+        cdkAiPackageName,
+        piAgentSourceModulePath,
+        cdkAiDistEntry,
+      ),
+    ),
+  );
 }
 
 export async function withLlmAgents(
   run: (agents: LlmAgentsModule) => Promise<unknown> | unknown,
 ): Promise<void> {
   await runInRepoRoot(async () => {
-    await run((await import(llmAgentsModulePath)) as LlmAgentsModule);
+    await run(
+      await loadWorkspaceModule<LlmAgentsModule>(
+        cdkAiPackageName,
+        llmAgentsSourceModulePath,
+        cdkAiDistEntry,
+      ),
+    );
   });
 }
 
@@ -163,8 +187,30 @@ export async function withPiAgent(
   run: (piAgent: PiAgentModule) => Promise<unknown> | unknown,
 ): Promise<void> {
   await runInRepoRoot(async () => {
-    await run((await import(piAgentModulePath)) as PiAgentModule);
+    await run(
+      await loadWorkspaceModule<PiAgentModule>(
+        cdkAiPackageName,
+        piAgentSourceModulePath,
+        cdkAiDistEntry,
+      ),
+    );
   });
+}
+
+async function loadWorkspaceModule<T>(
+  packageSpecifier: string,
+  sourceSpecifier: string,
+  builtEntry: URL,
+): Promise<T> {
+  if (builtEntry.href === cdkAiDistEntry.href && hasBuiltCdkAiRuntime()) {
+    return (await import(packageSpecifier)) as T;
+  }
+
+  if (builtEntry.href !== cdkAiDistEntry.href && existsSync(builtEntry)) {
+    return (await import(packageSpecifier)) as T;
+  }
+
+  return (await import(sourceSpecifier)) as T;
 }
 
 export async function withAgentScope<T>(

@@ -2,8 +2,8 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runPiCompatibilityMode } from './cdk-ai-runtime.js';
 import { findLlmCommand, type LlmCommandDefinition, llmCommands } from './commands.js';
-import { runPiCompatibilityMode } from './pi-agent-runtime.js';
 
 const packageDir = join(
   findRepoRoot(dirname(fileURLToPath(import.meta.url))),

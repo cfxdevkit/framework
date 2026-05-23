@@ -1,4 +1,4 @@
-import type { ToolingNamespaceDefinition } from './contracts.js';
+import { printModes, printStatus, runConfigCli } from './agent-config.js';
 import {
   agentCommands,
   printAgentHelp,
@@ -7,9 +7,9 @@ import {
   printPrintMode,
   printProvidersStrategy,
 } from './agent-help.js';
-import { printModes, printStatus, runConfigCli } from './agent-config.js';
-import { resolvePiSessionSetup } from './agent-session-setup.js';
 import { isHelpToken, withAgentScope, withLlmAgents, withPiAgent } from './agent-runtime.js';
+import { resolvePiSessionSetup } from './agent-session-setup.js';
+import type { ToolingNamespaceDefinition } from './contracts.js';
 import { parseScopeFlag } from './monorepo-units.js';
 
 export const agentToolingNamespace = {

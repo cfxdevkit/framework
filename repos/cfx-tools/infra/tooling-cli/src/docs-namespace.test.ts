@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
 import { docsToolingNamespace } from '@cfxdevkit/docs-pipeline';
 import { llmToolingNamespace } from '@cfxdevkit/llm-tools';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { rootDocsToolingNamespace } from './docs-namespace.js';
 
 describe('rootDocsToolingNamespace', () => {

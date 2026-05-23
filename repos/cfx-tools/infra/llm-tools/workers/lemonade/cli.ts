@@ -1,42 +1,28 @@
 #!/usr/bin/env node
-import {
-  configure,
-  listActions,
-  listModels,
-  runAction,
-  runCommit,
-  runDocsApi,
-  runDocsApiProbe,
-  runDocsPackagePages,
-  runDocsReadme,
-  runDocsUpkeep,
-  runPrecommit,
-  runStructureUpkeep,
-  runTestUpkeep,
-  validateModels,
-} from '@cfxdevkit/llm-agents';
-import { loadPiAgentModule } from '../../src/pi-agent-runtime.js';
+import { loadPiAgentModule, loadRepoAgentsModule } from '../../src/cdk-ai-runtime.js';
+
+const repoAgents = await loadRepoAgentsModule();
 
 const rawArgs = process.argv.slice(2);
 if (rawArgs[0] === '--') rawArgs.shift();
 const [command = 'help', ...args] = rawArgs;
 
 try {
-  if (command === 'models') await listModels();
-  else if (command === 'validate-models') await validateModels(args);
-  else if (command === 'config') await configure(args);
+  if (command === 'models') await repoAgents.listModels();
+  else if (command === 'validate-models') await repoAgents.validateModels(args);
+  else if (command === 'config') await repoAgents.configure(args);
   else if (command === 'ask') await (await loadPiAgentModule()).runPiPrint({ promptArgs: args });
-  else if (command === 'precommit') await runPrecommit(args);
-  else if (command === 'commit') await runCommit(args);
-  else if (command === 'docs-api') await runDocsApi(args);
-  else if (command === 'docs-api-probe') await runDocsApiProbe(args);
-  else if (command === 'readme-upkeep') await runDocsReadme(args);
-  else if (command === 'package-pages') await runDocsPackagePages(args);
-  else if (command === 'docs-upkeep') await runDocsUpkeep(args);
-  else if (command === 'structure-upkeep') await runStructureUpkeep(args);
-  else if (command === 'test-upkeep') await runTestUpkeep(args);
-  else if (command === 'run') await runAction(args);
-  else if (command === 'actions') listActions();
+  else if (command === 'precommit') await repoAgents.runPrecommit(args);
+  else if (command === 'commit') await repoAgents.runCommit(args);
+  else if (command === 'docs-api') await repoAgents.runDocsApi(args);
+  else if (command === 'docs-api-probe') await repoAgents.runDocsApiProbe(args);
+  else if (command === 'readme-upkeep') await repoAgents.runDocsReadme(args);
+  else if (command === 'package-pages') await repoAgents.runDocsPackagePages(args);
+  else if (command === 'docs-upkeep') await repoAgents.runDocsUpkeep(args);
+  else if (command === 'structure-upkeep') await repoAgents.runStructureUpkeep(args);
+  else if (command === 'test-upkeep') await repoAgents.runTestUpkeep(args);
+  else if (command === 'run') await repoAgents.runAction(args);
+  else if (command === 'actions') await repoAgents.listActions();
   else printHelp();
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));

@@ -1,15 +1,12 @@
 {
-  "name": "@cfxdevkit/llm-tools",
-  "version": "2.0.0",
-  "private": false,
-  "description": "CLI dispatcher for local LLM automation workflows.",
+  "name": "@cfxdevkit/cdk-ai",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Unified facade for PI runtime and repository AI automation surfaces.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "cfx-llm": "./dist/bin.js"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -19,24 +16,20 @@
   },
   "files": [
     "dist",
-    "workers",
-    "README.md",
-    "API.md",
-    "STRUCTURE.md"
+    "README.md"
   ],
   "scripts": {
     "prepublishOnly": "pnpm clean",
     "build": "vite build",
-    "llm": "tsx src/bin.ts",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check src workers",
+    "lint": "biome check src",
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
-    "@cfxdevkit/cdk-ai": "workspace:*",
-    "tsx": "^4.20.6"
+    "@cfxdevkit/llm-agents": "workspace:*",
+    "@cfxdevkit/pi-agent": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",

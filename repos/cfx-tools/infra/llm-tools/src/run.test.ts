@@ -12,7 +12,7 @@ vi.mock('node:child_process', () => ({
   spawn: vi.fn(),
 }));
 
-vi.mock('./pi-agent-runtime.js', () => ({
+vi.mock('./cdk-ai-runtime.js', () => ({
   runPiCompatibilityMode: vi.fn(
     async (workerArgs: readonly string[], promptArgs: readonly string[]) => {
       const [mode] = workerArgs;

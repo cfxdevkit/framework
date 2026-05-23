@@ -31,6 +31,7 @@ projects:
   - 'repos/cfx-tools/packages/keystore-server'
   - 'repos/cfx-tools/packages/client'
   - 'repos/cfx-tools/packages/arch-check'
+  - 'repos/cfx-tools/packages/cdk-ai'
   - 'repos/cfx-tools/packages/cdk-repo-check'
   - 'repos/cfx-tools/infra/llm-agents'
   - 'repos/cfx-tools/infra/llm-tools'

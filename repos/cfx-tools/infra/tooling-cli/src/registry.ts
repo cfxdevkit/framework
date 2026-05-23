@@ -1,11 +1,11 @@
 import { agentToolingNamespace } from './agent-namespace.js';
-import { llmToolingNamespace } from './llm-namespace.js';
 import type {
   ToolingCatalog,
   ToolingCommandDefinition,
   ToolingNamespaceDefinition,
 } from './contracts.js';
 import { rootDocsToolingNamespace } from './docs-namespace.js';
+import { llmToolingNamespace } from './llm-namespace.js';
 import { repoToolingNamespace } from './repo-namespace.js';
 
 export { agentToolingNamespace, llmToolingNamespace, repoToolingNamespace };

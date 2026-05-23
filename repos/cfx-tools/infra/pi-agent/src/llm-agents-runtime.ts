@@ -1,4 +1,8 @@
-const llmAgentsModulePath = '../../llm-agents/src/index.js';
+import { existsSync } from 'node:fs';
+
+const llmAgentsPackageName = '@cfxdevkit/llm-agents';
+const llmAgentsSourceModulePath = '../../llm-agents/src/index.js';
+const llmAgentsDistEntry = new URL('../../llm-agents/dist/index.js', import.meta.url);
 
 export type PiRepoActionMode = 'deterministic' | 'exploratory';
 
@@ -143,5 +147,9 @@ export async function executePiCommitWorkflow(
 }
 
 async function loadLlmAgentsModule(): Promise<LlmAgentsModule> {
-  return (await import(llmAgentsModulePath)) as LlmAgentsModule;
+  if (existsSync(llmAgentsDistEntry)) {
+    return (await import(llmAgentsPackageName)) as LlmAgentsModule;
+  }
+
+  return (await import(llmAgentsSourceModulePath)) as LlmAgentsModule;
 }

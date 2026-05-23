@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-import { runAll, runReviewAgent } from '@cfxdevkit/llm-agents';
+import { loadRepoAgentsModule } from '../src/cdk-ai-runtime.js';
+
+const repoAgents = await loadRepoAgentsModule();
 
 const commands = new Map([
-  ['all', runAll],
-  ['review', runReviewAgent],
+  ['all', repoAgents.runAll],
+  ['review', repoAgents.runReviewAgent],
   ['help', runHelp],
 ]);
 
