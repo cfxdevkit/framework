@@ -21,7 +21,7 @@
     "@cfxdevkit/wallet": "workspace:*",
     "next": "^16.0.0",
     "react": "19.2.5",
-    "react-dom": "19.2.5",
+    "react-dom": "19.2.6",
     "viem": "^2.21.0"
   },
   "devDependencies": {
