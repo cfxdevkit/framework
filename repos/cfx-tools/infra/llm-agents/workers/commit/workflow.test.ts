@@ -114,7 +114,7 @@ describe('commit workflow services', () => {
   it('returns a recoverable blocked result for precommit repository-policy failures', async () => {
     mocks.runRepositoryPolicyGates.mockResolvedValueOnce({
       kind: 'repository-policy',
-      label: 'Repository policy gates',
+      label: 'Repository policy follow-up gates',
       passed: false,
       skipped: false,
       results: [
@@ -136,14 +136,14 @@ describe('commit workflow services', () => {
         status: 'ready',
       },
     });
-    expect(mocks.runQualityGates).not.toHaveBeenCalled();
+    expect(mocks.runQualityGates).toHaveBeenCalledTimes(1);
   });
 
   it('supports rerunning a non-exiting precommit workflow after fixing a failing gate', async () => {
     mocks.runQualityGates
       .mockResolvedValueOnce({
         kind: 'quality',
-        label: 'Quality gates',
+        label: 'Incremental validation gates',
         passed: false,
         skipped: false,
         results: [
@@ -156,7 +156,7 @@ describe('commit workflow services', () => {
       })
       .mockResolvedValueOnce({
         kind: 'quality',
-        label: 'Quality gates',
+        label: 'Incremental validation gates',
         passed: true,
         skipped: false,
         results: [],
@@ -242,21 +242,21 @@ describe('commit workflow services', () => {
     mocks.runRepositoryPolicyGates
       .mockResolvedValueOnce({
         kind: 'repository-policy',
-        label: 'Repository policy gates',
+        label: 'Repository policy follow-up gates',
         passed: false,
         skipped: false,
         results: [],
       })
       .mockResolvedValueOnce({
         kind: 'repository-policy',
-        label: 'Repository policy gates',
+        label: 'Repository policy follow-up gates',
         passed: true,
         skipped: false,
         results: [],
       });
     mocks.runQualityGates.mockResolvedValueOnce({
       kind: 'quality',
-      label: 'Quality gates',
+      label: 'Incremental validation gates',
       passed: false,
       skipped: false,
       results: [],

@@ -21,6 +21,7 @@
     "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
     "PNPM_HOME": "/home/node/.local/share/pnpm",
     "PNPM_STORE_PATH": "/home/node/.local/share/pnpm/store",
+    "CFXDEVKIT_INSTALL_PI_GITNEXUS": "0",
     "LEMONADE_URL": "http://host.containers.internal:13305/",
     "LEMONADE_BASE_URL": "http://host.containers.internal:13305/"
   },

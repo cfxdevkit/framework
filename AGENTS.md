@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **framework** (16832 symbols, 25735 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **framework-projects-examples-apps-showcase-public** (17027 symbols, 26030 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -24,10 +24,10 @@ This project is indexed by GitNexus as **framework** (16832 symbols, 25735 relat
 
 | Resource | Use for |
 |----------|---------|
-| `gitnexus://repo/framework/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/framework/clusters` | All functional areas |
-| `gitnexus://repo/framework/processes` | All execution flows |
-| `gitnexus://repo/framework/process/{name}` | Step-by-step execution trace |
+| `gitnexus://repo/framework-projects-examples-apps-showcase-public/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/framework-projects-examples-apps-showcase-public/clusters` | All functional areas |
+| `gitnexus://repo/framework-projects-examples-apps-showcase-public/processes` | All execution flows |
+| `gitnexus://repo/framework-projects-examples-apps-showcase-public/process/{name}` | Step-by-step execution trace |
 
 ## CLI
 

@@ -13,6 +13,22 @@ export const agentCommands = [
     usage: '[--scope <preset>] status',
   },
   {
+    name: 'check',
+    description: 'Run repo check, analyze findings locally, and write OpenSpec handoff artifacts',
+    usage:
+      '[--scope <preset>] check [--quick] [--dry-run|--no-write] [--create-branch] [--draft-pr]',
+  },
+  {
+    name: 'merge',
+    description: 'Validate branch mergeability, enrich with PR state, and optionally merge selected branches',
+    usage: '[--scope <preset>] merge [--dry-run] [--base <branch>] [branch...]',
+  },
+  {
+    name: 'endpoints',
+    description: 'Show local and GitHub PI endpoint readiness plus launch instructions',
+    usage: '[--scope <preset>] endpoints',
+  },
+  {
     name: 'modes',
     description: 'Show the constrained and exploratory operating modes',
     usage: '[--scope <preset>] modes',
@@ -30,22 +46,22 @@ export const agentCommands = [
   {
     name: 'interactive',
     description: 'Launch the PI-backed interactive agent session',
-    usage: '[--scope <preset>] interactive [prompt]',
+    usage: '[--scope <preset>] interactive [--local|--github] [prompt]',
   },
   {
     name: 'commit',
     description: 'Launch the PI-backed interactive commit session',
-    usage: '[--scope <preset>] commit [prompt]',
+    usage: '[--scope <preset>] commit [--local|--github] [prompt]',
   },
   {
     name: 'print',
     description: 'Run a one-shot prompt through the PI print runtime',
-    usage: '[--scope <preset>] print -- [prompt]',
+    usage: '[--scope <preset>] print [--local|--github] -- [prompt]',
   },
   {
     name: 'rpc',
     description: 'Start the PI-backed headless RPC runtime',
-    usage: 'rpc',
+    usage: '[--scope <preset>] rpc [--local|--github]',
   },
   {
     name: 'providers',
@@ -60,18 +76,24 @@ export function printAgentHelp(): void {
 Usage:
   cdk agent [--scope <preset>] config [show|reset|set ...]
   cdk agent [--scope <preset>] status
+  cdk agent [--scope <preset>] check [--quick] [--dry-run|--no-write] [--create-branch] [--draft-pr]
+  cdk agent [--scope <preset>] merge [--dry-run] [--base <branch>] [branch...]
+  cdk agent [--scope <preset>] endpoints
   cdk agent [--scope <preset>] modes
   cdk agent [--scope <preset>] deterministic <workflow> [args]
   cdk agent [--scope <preset>] exploratory <workflow> [args]
-  cdk agent [--scope <preset>] interactive [workflow|prompt]
-  cdk agent [--scope <preset>] commit [prompt]
-  cdk agent [--scope <preset>] print -- [prompt]
-  cdk agent rpc
+  cdk agent [--scope <preset>] interactive [--local|--github] [workflow|prompt]
+  cdk agent [--scope <preset>] commit [--local|--github] [prompt]
+  cdk agent [--scope <preset>] print [--local|--github] -- [prompt]
+  cdk agent [--scope <preset>] rpc [--local|--github]
   cdk agent providers
 
 Commands:
   config        Show or update the global or scoped agent harness config
   status        Show the current provider, mode, and backend resolution state
+  check         Run repo check, prepare OpenSpec remediation changes, and optionally create a handoff branch/PR
+  merge         Validate local branches and PR merge state, then optionally merge selected branches
+  endpoints     Show the local Lemonade endpoint and GitHub PI endpoint launch status
   modes         Explain the deterministic and exploratory operating modes
   deterministic Run constrained deterministic-first workflows via the current llm-agents layer
   exploratory   Run broader maintenance workflows via the current llm-agents layer
@@ -83,9 +105,40 @@ Commands:
 
 Notes:
   - use cdk repo review, precommit, and commit for the hardened repository workflows
+  - cdk agent check only prepares OpenSpec changes when repo-check finds actionable warnings or errors
+  - cdk agent merge validates local branch mergeability first; GitHub PR state is added when gh auth is available
+  - use --create-branch to switch/create the suggested handoff branch after artifacts are written
+  - use --draft-pr to create a draft PR with the generated handoff title/body; it implies --create-branch
+  - use --local to force the PI session onto the local Lemonade-compatible endpoint
+  - use --github to force the PI session onto GitHub Models; the CLI will use GITHUB_TOKEN or try gh auth token
+  - use cdk agent endpoints to verify the local planning path and GitHub implementation path before running both in parallel
   - use --scope <preset> to add a targeted session preload on top of the shared monorepo baseline
   - interactive and commit will open setup prompts before PI when launched without prompt text
   - the preset prompt changes the config overlay, default mode, and preloaded context for that session
+`);
+}
+
+export function printEndpointsHelp(): void {
+  console.log(`cdk agent endpoints
+
+Current role:
+  - show the explicit local and GitHub PI launch paths without editing shared provider config
+  - explain GitHub auth expectations for the cloud endpoint
+  - keep local planning and cloud implementation as separate operator entrypoints
+
+Usage:
+  cdk agent [--scope <preset>] endpoints
+  cdk agent [--scope <preset>] interactive --local [prompt]
+  cdk agent [--scope <preset>] interactive --github [prompt]
+  cdk agent [--scope <preset>] print --local -- [prompt]
+  cdk agent [--scope <preset>] print --github -- [prompt]
+  cdk agent [--scope <preset>] rpc --local
+  cdk agent [--scope <preset>] rpc --github
+
+GitHub auth:
+  - preferred: export GITHUB_TOKEN
+  - fallback: gh auth login, then rerun the GitHub endpoint command
+  - the CLI will try gh auth token automatically before failing
 `);
 }
 
@@ -135,6 +188,11 @@ Planned cdk agent behavior:
   - keep PI as the only interactive/runtime gateway for LLM work
   - preserve explicit provider selection for compatibility while legacy flows remain
   - remove LiteLLM-first guidance as direct worker paths are retired
+
+Operator endpoints:
+  - local PI: cdk agent interactive --local
+  - GitHub PI: cdk agent interactive --github
+  - endpoint readiness: cdk agent endpoints
 
 Conclusion:
   New local setups should target Lemonade or PI cloud providers, not LiteLLM.

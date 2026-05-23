@@ -35,6 +35,7 @@
   "dependencies": {
     "@inquirer/prompts": "^8.4.3",
     "@cfxdevkit/cdk-ai": "workspace:*",
+    "@cfxdevkit/cdk-repo-check": "workspace:*",
     "@cfxdevkit/docs-pipeline": "workspace:*",
     "@cfxdevkit/llm-tools": "workspace:*",
     "clipanion": "^4.0.0-rc.4"
