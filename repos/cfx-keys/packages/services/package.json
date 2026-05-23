@@ -73,7 +73,7 @@
   },
   "dependencies": {
     "@cfxdevkit/cdk": "workspace:^",
-    "@ledgerhq/hw-app-eth": "^7.8.1",
+    "@ledgerhq/hw-app-eth": "^7.8.3",
     "@ledgerhq/hw-transport-node-hid": "^6.33.1",
     "cive": "^0.8.1",
     "@noble/ciphers": "^1.3.0",
