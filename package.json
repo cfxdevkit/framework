@@ -102,13 +102,13 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
     "@changesets/cli": "^2.31.0",
-    "@moonrepo/cli": "^2.2.4",
+    "@moonrepo/cli": "^2.2.5",
     "gitnexus": "^1.6.3",
     "knip": "^5.61.3",
     "typescript": "^6.0.3",
-    "vite": "^8.0.12",
-    "vite-plugin-dts": "^5.0.0",
-    "vitest": "^4.1.6"
+    "vite": "^8.0.14",
+    "vite-plugin-dts": "^5.0.1",
+    "vitest": "^4.1.7"
   },
   "pnpm": {
     "overrides": {
