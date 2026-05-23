@@ -1,5 +1,5 @@
-import { extractTextNode, formatFetchError, joinEndpoint } from './provider-meta.ts';
 import { isRecord } from './guards.ts';
+import { extractTextNode, formatFetchError, joinEndpoint } from './provider-meta.ts';
 import type {
   ChatMessage,
   CompletionAttemptState,

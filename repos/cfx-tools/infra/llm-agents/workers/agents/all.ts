@@ -1,3 +1,4 @@
+import { resolveExecutionContext } from '../shared/execution-context.ts';
 import { runReviewAgent } from './review.ts';
 import {
   printSummary,
@@ -5,7 +6,6 @@ import {
   writeJsonReport,
   writeMarkdownReport,
 } from './runtime/index.ts';
-import { resolveExecutionContext } from '../shared/execution-context.ts';
 
 export async function runAll() {
   const executionContext = await resolveExecutionContext({ useLlm: false });

@@ -2,7 +2,7 @@
 
 Local LLM automation tools for the Conflux DevKit monorepo.
 
-This package is the CLI dispatcher for the current LLM worker layer. Provider logic lives in `@cfxdevkit/llm-client`; workflow agents live in `@cfxdevkit/llm-agents`. It lives in `repos/cfx-tools/infra/llm-tools` because local LLM and AI-assisted maintenance are isolated from the general developer tooling surface.
+This package is the CLI dispatcher for the current LLM worker layer. Provider/runtime resolution now delegates to `@cfxdevkit/pi-agent`; workflow agents live in `@cfxdevkit/llm-agents`. It lives in `repos/cfx-tools/infra/llm-tools` because local LLM and AI-assisted maintenance are isolated from the general developer tooling surface.
 
 At the workspace root, `pnpm run cdk -- agent ...` is now the primary entrypoint. Root `pnpm run llm:*` scripts remain as compatibility shims during the migration, and `pnpm run llm:wiki` is deprecated in favor of `pnpm run docs:wiki`.
 
@@ -85,12 +85,12 @@ By default the command produces reviewable artifacts only. Add `--write` to let 
 
 ## Backend
 
-Delegated commands resolve providers through `@cfxdevkit/llm-client`: provider-aware config file, `LITELLM_BASE_URL`, `LEMONADE_URL`, local provider probe, OpenAI-compatible env vars, then GitHub Models via `GITHUB_TOKEN`. Lemonade remains a first-class direct-provider option for local use; LiteLLM remains the optional gateway layer.
+Delegated commands resolve providers through the PI runtime bridge in `@cfxdevkit/pi-agent`: repo-local `.pi/providers.json`, scoped unit overlays, direct Lemonade configuration, optional LiteLLM gateway settings, OpenAI-compatible env vars, and GitHub Models via `GITHUB_TOKEN`.
 
 For PI-backed runtime modes, `llm-tools` delegates into the same provider bridge used by `cdk agent`,
 so scoped config, model selection, and repository-local `.pi` resources stay aligned across both entrypoints.
 
-The shared `@cfxdevkit/llm-client` config now supports named provider profiles plus action and phase policies.
+The shared PI config now supports named provider profiles plus action and phase policies.
 That lets `cdk agent commit` pick a backend intentionally for the commit session while still splitting model
 selection between commit-message generation and failure analysis.
 

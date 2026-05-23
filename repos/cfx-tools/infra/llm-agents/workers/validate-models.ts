@@ -1,4 +1,5 @@
 import { getProviderBaseUrl, readConfig, resolveProvider } from './completion/index.ts';
+import { runValidationProbe } from './validate-models-probe.ts';
 import {
   displayModelId,
   displayModelLabels,
@@ -7,11 +8,10 @@ import {
   parseValidateModelsFlags,
   renderValidationTable,
   summarizeValidationResult,
+  type ValidationReport,
   validateJsonProbe,
   writeModelValidationReport,
-  type ValidationReport,
 } from './validate-models-report.ts';
-import { runValidationProbe } from './validate-models-probe.ts';
 
 const MIN_VALIDATION_CONTEXT_TOKENS = 30000;
 

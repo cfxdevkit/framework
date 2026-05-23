@@ -12,7 +12,7 @@ Current shipped shape:
 - `.pi/extensions/repo-agent.ts` registers the project-local PI extension from the `pi-agent` package source
 - scoped `cdk agent --scope <unit> ...` runs resolve the matching `artifacts/llm/config/units/<unit>.json` overlay and pass the scope into the PI subprocess
 - PI slash commands and tools now expose the shared repo action registry, a dedicated repo commit workflow command, and runtime workflow context in the operator UI
-- `@cfxdevkit/llm-client` now resolves named provider profiles plus action and phase policies so PI commit sessions can select local or cloud backends intentionally
+- `@cfxdevkit/pi-agent` now resolves named provider profiles plus action and phase policies so PI commit sessions can select local or cloud backends intentionally
 - `@cfxdevkit/llm-tools` keeps compatibility entrypoints for PI-backed `interactive`, `print`, and `rpc` modes while the root control plane stays on `cdk`
 
 What remains after this slice is representative smoke validation of live `repo commit`, `agent commit`, and policy-routed local-versus-cloud runs.

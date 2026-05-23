@@ -97,15 +97,15 @@ function buildLegacyPage(): string {
 
 describe('resolvePackagePageMaxTokens', () => {
   it('raises the non-quick output budget for longer MDX pages', () => {
-    const page = ['---', 'title: "pkg"', '---', '', 'body'].join('\n') + '\n' + 'A'.repeat(9000);
-    const readme = '# README\n' + 'B'.repeat(2500);
+    const page = `${['---', 'title: "pkg"', '---', '', 'body'].join('\n')}\n${'A'.repeat(9000)}`;
+    const readme = `# README\n${'B'.repeat(2500)}`;
 
     expect(resolvePackagePageMaxTokens(page, readme, {})).toBeGreaterThanOrEqual(8000);
   });
 
   it('keeps quick mode on a smaller bounded budget', () => {
-    const page = ['---', 'title: "pkg"', '---', '', 'body'].join('\n') + '\n' + 'A'.repeat(2000);
-    const readme = '# README\n' + 'B'.repeat(500);
+    const page = `${['---', 'title: "pkg"', '---', '', 'body'].join('\n')}\n${'A'.repeat(2000)}`;
+    const readme = `# README\n${'B'.repeat(500)}`;
 
     expect(resolvePackagePageMaxTokens(page, readme, { quick: true })).toBeLessThanOrEqual(7000);
     expect(resolvePackagePageMaxTokens(page, readme, { quick: true })).toBeGreaterThanOrEqual(2200);
@@ -146,7 +146,7 @@ describe('validatePackagePageEnrichment', () => {
     ].join('\n');
 
     expect(validatePackagePageEnrichment(existing, candidate)).toContain(
-      '| \`@cfxdevkit/example\` | Primary client entrypoint. |',
+      '| `@cfxdevkit/example` | Primary client entrypoint. |',
     );
   });
 

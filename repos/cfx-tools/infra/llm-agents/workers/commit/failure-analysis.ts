@@ -1,7 +1,7 @@
 import { completeStructuredAgent } from '../completion/index.ts';
 import {
-  renderExecutionContextLines,
   type ExecutionContextSummary,
+  renderExecutionContextLines,
 } from '../shared/execution-context.ts';
 import { createLlmProgressReporter } from '../shared/logging.ts';
 import type { GateReport } from './gates.ts';

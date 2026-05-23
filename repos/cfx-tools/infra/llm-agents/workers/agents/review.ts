@@ -1,3 +1,4 @@
+import { resolveExecutionContext } from '../shared/execution-context.ts';
 import {
   codeHotspotReport,
   gitChangedFiles,
@@ -9,7 +10,6 @@ import {
   writeJsonReport,
   writeMarkdownReport,
 } from './runtime/index.ts';
-import { resolveExecutionContext } from '../shared/execution-context.ts';
 
 export async function runReviewAgent(opts: { silent?: boolean } = {}) {
   const executionContext = await resolveExecutionContext({ useLlm: false });

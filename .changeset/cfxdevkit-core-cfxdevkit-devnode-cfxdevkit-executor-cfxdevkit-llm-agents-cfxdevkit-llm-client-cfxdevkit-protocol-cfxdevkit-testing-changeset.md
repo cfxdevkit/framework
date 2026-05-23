@@ -3,7 +3,6 @@
 "@cfxdevkit/devnode": patch
 "@cfxdevkit/executor": patch
 "@cfxdevkit/llm-agents": minor
-"@cfxdevkit/llm-client": minor
 "@cfxdevkit/protocol": patch
 "@cfxdevkit/testing": patch
 ---

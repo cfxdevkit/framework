@@ -26,11 +26,11 @@ export const chatPaths = ['/api/v1/chat/completions', '/v1/chat/completions', '/
 export {
   getRepoAction,
   listRepoActions,
-  repoActions,
   type RepoActionDefinition,
   type RepoActionMode,
   type RepoActionName,
   type RepoActionUiMetadata,
+  repoActions,
 } from './repo-actions.ts';
 
 export const QUALITY_GATES = [

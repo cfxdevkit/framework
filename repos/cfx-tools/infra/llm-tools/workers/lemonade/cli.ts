@@ -15,7 +15,7 @@ import {
   runTestUpkeep,
   validateModels,
 } from '@cfxdevkit/llm-agents';
-import { runPiPrint } from '../../../pi-agent/src/index.js';
+import { loadPiAgentModule } from '../../src/pi-agent-runtime.js';
 
 const rawArgs = process.argv.slice(2);
 if (rawArgs[0] === '--') rawArgs.shift();
@@ -25,7 +25,7 @@ try {
   if (command === 'models') await listModels();
   else if (command === 'validate-models') await validateModels(args);
   else if (command === 'config') await configure(args);
-  else if (command === 'ask') await runPiPrint({ promptArgs: args });
+  else if (command === 'ask') await (await loadPiAgentModule()).runPiPrint({ promptArgs: args });
   else if (command === 'precommit') await runPrecommit(args);
   else if (command === 'commit') await runCommit(args);
   else if (command === 'docs-api') await runDocsApi(args);

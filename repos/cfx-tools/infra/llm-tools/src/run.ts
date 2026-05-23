@@ -3,14 +3,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findLlmCommand, type LlmCommandDefinition, llmCommands } from './commands.js';
-
-type PiAgentModule = {
-  readonly runPiInteractive: (options?: {
-    readonly promptArgs?: readonly string[];
-  }) => Promise<void>;
-  readonly runPiPrint: (options: { readonly promptArgs: readonly string[] }) => Promise<void>;
-  readonly runPiRpc: () => Promise<void>;
-};
+import { runPiCompatibilityMode } from './pi-agent-runtime.js';
 
 const packageDir = join(
   findRepoRoot(dirname(fileURLToPath(import.meta.url))),
@@ -58,25 +51,7 @@ function workerScript(worker: LlmCommandDefinition['worker']): string {
 }
 
 async function runPiRuntime(workerArgs: readonly string[], args: readonly string[]): Promise<void> {
-  const piAgent = (await import('../../pi-agent/src/index.js')) as PiAgentModule;
-  const [mode] = workerArgs;
-
-  if (mode === 'interactive') {
-    await piAgent.runPiInteractive({ promptArgs: args });
-    return;
-  }
-
-  if (mode === 'print') {
-    await piAgent.runPiPrint({ promptArgs: args });
-    return;
-  }
-
-  if (mode === 'rpc') {
-    await piAgent.runPiRpc();
-    return;
-  }
-
-  throw new Error(`Unknown PI runtime mode: ${mode}`);
+  await runPiCompatibilityMode(workerArgs, args);
 }
 
 async function spawnNode(args: readonly string[], cwd: string): Promise<number> {

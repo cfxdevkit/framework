@@ -2,8 +2,8 @@ import type {
   resolveExecutionContext,
   toExecutionContextRuntimePayload,
 } from '../shared/execution-context.ts';
-import type { GateFailureAnalysis } from './failure-analysis.ts';
 import type { generateChangesetPlan } from './changeset.ts';
+import type { GateFailureAnalysis } from './failure-analysis.ts';
 import type { GateReport, runQualityGates, runRepositoryPolicyGates } from './gates.ts';
 import type { detectChangedScopes } from './scope.ts';
 

@@ -9,8 +9,8 @@ import {
 export { runDocsApi } from './api.ts';
 export { runDocsApiProbe } from './api-probe.ts';
 export { normalizeScopeFilter } from './discover.ts';
-export { runDocsReadme } from './readme.ts';
 export { runDocsPackagePages } from './packages.ts';
+export { runDocsReadme } from './readme.ts';
 export { runStructureUpkeep } from './structure.ts';
 
 import { confirmPrompt } from '../commit/message.ts';

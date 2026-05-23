@@ -12,7 +12,29 @@ vi.mock('node:child_process', () => ({
   spawn: vi.fn(),
 }));
 
-vi.mock('../../pi-agent/src/index.js', () => piAgent);
+vi.mock('./pi-agent-runtime.js', () => ({
+  runPiCompatibilityMode: vi.fn(
+    async (workerArgs: readonly string[], promptArgs: readonly string[]) => {
+      const [mode] = workerArgs;
+      if (mode === 'interactive') {
+        await piAgent.runPiInteractive({ promptArgs });
+        return;
+      }
+
+      if (mode === 'print') {
+        await piAgent.runPiPrint({ promptArgs });
+        return;
+      }
+
+      if (mode === 'rpc') {
+        await piAgent.runPiRpc();
+        return;
+      }
+
+      throw new Error(`Unknown PI runtime mode: ${mode}`);
+    },
+  ),
+}));
 
 const spawnMock = vi.mocked(spawn);
 

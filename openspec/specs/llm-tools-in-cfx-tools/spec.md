@@ -4,11 +4,11 @@
 TBD - created by archiving change cfx-llm-merge. Update Purpose after archive.
 ## Requirements
 ### Requirement: LLM automation packages SHALL reside under repos/cfx-tools/infra/
-`@cfxdevkit/llm-client`, `@cfxdevkit/llm-agents`, and `@cfxdevkit/llm-tools` SHALL have their source directories under `repos/cfx-tools/infra/` and SHALL NOT exist under `repos/cfx-llm/`.
+`@cfxdevkit/llm-agents` and `@cfxdevkit/llm-tools` SHALL have their source directories under `repos/cfx-tools/infra/` and SHALL NOT exist under `repos/cfx-llm/`.
 
 #### Scenario: Package paths resolve under cfx-tools/infra
 - **WHEN** `pnpm ls --json` is run from the workspace root
-- **THEN** `@cfxdevkit/llm-client`, `@cfxdevkit/llm-agents`, and `@cfxdevkit/llm-tools` SHALL each report a path under `repos/cfx-tools/infra/`
+- **THEN** `@cfxdevkit/llm-agents` and `@cfxdevkit/llm-tools` SHALL each report a path under `repos/cfx-tools/infra/`
 
 #### Scenario: repos/cfx-llm directory is removed
 - **WHEN** the workspace root is listed

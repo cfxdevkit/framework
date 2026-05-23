@@ -138,7 +138,7 @@ describe('workspace document contract', () => {
     expect(isDocumentationUpkeepPath('repos/cfx-core/packages/cdk/README.md')).toBe(false);
     expect(
       isDocumentationUpkeepPath(
-        'repos/cfx-tools/packages/docs-site/content/packages/llm-client.mdx',
+        'repos/cfx-tools/packages/docs-site/content/packages/llm-tools.mdx',
       ),
     ).toBe(false);
   });
@@ -151,7 +151,7 @@ describe('workspace document contract', () => {
     ).toBe(true);
     expect(
       isDocumentationUpkeepPath(
-        'repos/cfx-tools/packages/docs-site/content/packages/llm-client.mdx',
+        'repos/cfx-tools/packages/docs-site/content/packages/llm-tools.mdx',
         {
           scopes: ['repos/cfx-tools/packages/docs-site/content/packages'],
         },

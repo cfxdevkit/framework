@@ -8,7 +8,7 @@
  *    skips unless the file is still marked as needing enrichment.
  *  - If the footer hash differs: regenerates (new files/folders added).
  */
-import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   computeStructureTreeHash,

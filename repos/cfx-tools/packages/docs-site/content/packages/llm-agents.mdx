@@ -43,18 +43,17 @@ Typed workflow agents for Conflux DevKit repository automation.
 | `runAction()` | Executes a named LLM-driven action (e.g., `changelog`, `release-notes`) |
 | `listActions()` | Lists all registered named actions available in the current environment |
 | `runAll()` | Runs all agents sequentially, aggregating results and errors |
-| `ask()` | Sends a free-form prompt to the LLM and returns the response |
 | `configure()` | Configures agent behavior (e.g., model selection, temperature, timeout) |
 | `listModels()` | Lists available LLM models for use with agents |
 | `parseCommitFlags()` | Parses commit flags (e.g., `--fix`, `--feat`) into structured metadata |
 
 ## Provider Pattern
 
-Agents consume the provider surface from `@cfxdevkit/llm-client`. CLI callers usually rely on `resolveProvider()` indirectly; tests can pass mocked provider behavior through the lower-level workflow helpers.
+Agents resolve providers through the package-local completion runtime, which reads the shared PI-owned config from `.pi/providers.json` and applies scoped overlays through `CFXDEVKIT_LLM_CONFIG_PATH` when present. CLI callers usually rely on `resolveProvider()` indirectly; tests can still pass mocked provider behavior through the lower-level workflow helpers.
 
 ```ts
 import { runReviewAgent, runCommit } from '@cfxdevkit/llm-agents';
-import { resolveProvider } from '@cfxdevkit/llm-client';
+import { resolveProvider } from './workers/completion/index.ts';
 
 const provider = await resolveProvider();
 await runCommit({ provider, cwd: process.cwd() });
@@ -64,18 +63,18 @@ await runCommit({ provider, cwd: process.cwd() });
 
 | Sub-path | Exports |
 |----------|---------|
-| `.` | `runAll`, `runReviewAgent`, `ask`, `configure`, `listActions`, `listModels`, `runAction`, `parseCommitFlags`, `runCommit`, `runPrecommit`, `runDocsApi`, `runDocsUpkeep`, `runTestUpkeep`, `runDocsApiProbe`, `runDocsPackagePages`, `runDocsReadme`, `runStructureUpkeep`, `validateModels` |
+| `.` | `runAll`, `runReviewAgent`, `configure`, `listActions`, `listModels`, `runAction`, `parseCommitFlags`, `runCommit`, `runPrecommit`, `runDocsApi`, `runDocsUpkeep`, `runTestUpkeep`, `runDocsApiProbe`, `runDocsPackagePages`, `runDocsReadme`, `runStructureUpkeep`, `validateModels` |
 
 ## Usage
 
 ```typescript
-import { configure, ask, runAll } from '@cfxdevkit/llm-agents';
+import { configure, runAction, runAll } from '@cfxdevkit/llm-agents';
 
 // Configure the agent with your preferred model and API settings
 configure({ model: 'gpt-4o', apiKey: process.env.OPENAI_API_KEY });
 
-// Ask a question and get a structured response
-const response = await ask('What is the current state of the `src/` directory?');
+// Run a named repo-aware action through the shared workflow layer
+await runAction(['repo-health']);
 
 // Run all agents in sequence
 const results = await runAll({ cwd: process.cwd() });
@@ -99,9 +98,6 @@ export { runAll }
 
 // Runs the review agent, which analyzes code changes and provides feedback.
 export { runReviewAgent }
-
-// Sends a natural-language query to the configured LLM agent and returns a structured response.
-export { ask }
 
 // Configures the LLM agent with provided settings (e.g., model, API key, timeout).
 export { configure }
@@ -152,16 +148,16 @@ export { runTestUpkeep }
 ### Usage
 
 ```ts
-import { configure, ask, runAll } from '@cfxdevkit/llm-agents';
+import { configure, runAction, runAll } from '@cfxdevkit/llm-agents';
 
 // Configure the agent with your preferred model and API settings
 configure({ model: 'gpt-4o', apiKey: process.env.OPENAI_API_KEY });
 
-// Ask a question and get a structured response
-const response = await ask('What is the current state of the `src/` directory?');
+// Run a named repo-aware action
+await runAction(['repo-health']);
 
 // Run all registered agents
 await runAll();
 ```
 
-{/* readme-hash: 16067e85ce2d0676c5cbfc7250a2e2be5ae766420c8938bb4708e9d2e57d20a9 */}
+{/* readme-hash: 7987c31cf294aafc9ee689a1d7409c93f987248b74b79f6d78b38ff4af42da61 */}

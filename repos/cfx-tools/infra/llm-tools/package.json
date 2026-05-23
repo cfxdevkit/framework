@@ -36,7 +36,6 @@
   },
   "dependencies": {
     "@cfxdevkit/llm-agents": "workspace:*",
-    "@cfxdevkit/llm-client": "workspace:*",
     "@cfxdevkit/pi-agent": "workspace:*",
     "tsx": "^4.20.6"
   },

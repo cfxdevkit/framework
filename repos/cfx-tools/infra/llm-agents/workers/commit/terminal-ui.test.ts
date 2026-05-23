@@ -1,6 +1,13 @@
-import { describe, expect, it } from 'vitest';
-import { summarizeFailureAnalysis, summarizeGateFailures } from './terminal-ui-summary.ts';
+import { describe, expect, it, vi } from 'vitest';
 import { createWorkflowTerminalUi } from './terminal-ui.ts';
+import { summarizeFailureAnalysis, summarizeGateFailures } from './terminal-ui-summary.ts';
+
+const readline = vi.hoisted(() => ({
+  moveCursor: vi.fn(),
+  clearScreenDown: vi.fn(),
+}));
+
+vi.mock('node:readline', () => readline);
 
 describe('commit terminal ui', () => {
   it('summarizes failing gates with a repro command', () => {
@@ -155,5 +162,49 @@ describe('commit terminal ui', () => {
     expect(output).toContain('ok    Lint');
     expect(output).toContain('status: passed');
     expect(output).not.toContain('+---');
+  });
+
+  it('clears wrapped interactive rows using terminal width instead of logical line count', () => {
+    readline.moveCursor.mockClear();
+    readline.clearScreenDown.mockClear();
+
+    let output = '';
+    const ui = createWorkflowTerminalUi({
+      commandLabel: 'repo commit',
+      executionContext: {
+        unit: null,
+        llm: {
+          used: true,
+          status: 'ready',
+          configPath: '.pi/providers.json',
+          provider: 'lemonade',
+          model: 'Qwen3-Coder-Next-GGUF',
+          baseUrl: 'http://host.containers.internal:13305/',
+        },
+      },
+      workingSet: {
+        fileCount: 64,
+        scopeCount: 2,
+        scopeLabels: ['delivery', 'implementation'],
+        sampleFiles: ['repos/cfx-tools/infra/llm-agents/workers/commit/terminal-ui.ts'],
+      },
+      stdout: {
+        isTTY: true,
+        columns: 24,
+        write(chunk: string) {
+          output += chunk;
+          return true;
+        },
+      } as NodeJS.WriteStream,
+      interactive: true,
+    });
+
+    ui.start();
+    ui.startStep(1, 8, 'Repository policy and quality gates');
+
+    expect(readline.moveCursor).toHaveBeenCalled();
+    expect(readline.clearScreenDown).toHaveBeenCalled();
+    expect(readline.moveCursor.mock.calls[0]?.[2]).toBeLessThan(-2);
+    expect(output).toContain('repo commit');
   });
 });

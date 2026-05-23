@@ -2,6 +2,7 @@ import { clearScreenDown, moveCursor } from 'node:readline';
 import type { ExecutionContextSummary } from '../shared/execution-context.ts';
 import type { GateReport, GateResult, GateRunHooks } from './gates.ts';
 import type { WorkingSetSummary } from './hud.ts';
+
 export {
   summarizeCommitPreview,
   summarizeFailureAnalysis,
@@ -42,7 +43,7 @@ export function createWorkflowTerminalUi(options: {
     gates: GateView[];
     noteLine: string;
     started: boolean;
-    renderedLineCount: number;
+    renderedRowCount: number;
   } = {
     stepLine: options.llmFailureAnalysis
       ? 'failure analysis: enabled when a gate fails'
@@ -50,7 +51,7 @@ export function createWorkflowTerminalUi(options: {
     gates: [],
     noteLine: '',
     started: false,
-    renderedLineCount: 0,
+    renderedRowCount: 0,
   };
 
   const renderBlock = (extraLines: readonly string[] = []): void => {
@@ -65,14 +66,14 @@ export function createWorkflowTerminalUi(options: {
 
     clearBlock();
     output.write(`${lines.join('\n')}\n`);
-    state.renderedLineCount = lines.length;
+    state.renderedRowCount = countRenderedRows(lines, output);
   };
 
   const clearBlock = (): void => {
-    if (!interactive || state.renderedLineCount === 0) return;
-    moveCursor(output, 0, -state.renderedLineCount);
+    if (!interactive || state.renderedRowCount === 0) return;
+    moveCursor(output, 0, -state.renderedRowCount);
     clearScreenDown(output);
-    state.renderedLineCount = 0;
+    state.renderedRowCount = 0;
   };
 
   const ensureStarted = (): void => {
@@ -255,4 +256,19 @@ function summarizeFinishedReport(report: GateReport): string {
 function truncate(value: string, maxLength: number): string {
   if (value.length <= maxLength) return value;
   return `${value.slice(0, maxLength - 3)}...`;
+}
+
+function countRenderedRows(lines: readonly string[], output: NodeJS.WriteStream): number {
+  const columns = output.columns && output.columns > 0 ? output.columns : 80;
+  return lines.reduce((total, line) => total + wrappedRowCount(line, columns), 0);
+}
+
+function wrappedRowCount(line: string, columns: number): number {
+  const width = stripAnsi(line).length;
+  return Math.max(1, Math.ceil(Math.max(width, 1) / columns));
+}
+
+function stripAnsi(value: string): string {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape stripping needs the ESC byte matcher.
+  return value.replace(/\x1B\[[0-9;]*[A-Za-z]/g, '');
 }

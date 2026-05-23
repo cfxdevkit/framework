@@ -51,13 +51,13 @@ describe('parseApiEnrichmentResponse', () => {
 
 describe('resolveApiEnrichmentMaxTokens', () => {
   it('raises the non-quick output budget for larger API pages', () => {
-    const content = '# api\n\n' + 'export declare function example(): void;\n'.repeat(180);
+    const content = `# api\n\n${'export declare function example(): void;\n'.repeat(180)}`;
 
     expect(resolveApiEnrichmentMaxTokens(content, {})).toBeGreaterThanOrEqual(24000);
   });
 
   it('keeps quick mode on a smaller bounded budget', () => {
-    const content = '# api\n\n' + 'export declare function example(): void;\n'.repeat(40);
+    const content = `# api\n\n${'export declare function example(): void;\n'.repeat(40)}`;
 
     expect(resolveApiEnrichmentMaxTokens(content, { quick: true })).toBeLessThanOrEqual(16000);
     expect(resolveApiEnrichmentMaxTokens(content, { quick: true })).toBeGreaterThanOrEqual(4800);

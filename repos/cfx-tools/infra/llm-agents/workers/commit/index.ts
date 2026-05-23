@@ -2,6 +2,7 @@ import { runCommitWorkflow } from './commit.ts';
 import { parseCommitFlags } from './flags.ts';
 import { runPrecommitWorkflow } from './precommit.ts';
 import type { CommitWorkflowResult, PrecommitWorkflowResult } from './types.ts';
+
 export { changedFilesList, detectChangedScopes, resolveScope } from './scope.ts';
 export type {
   CommitWorkflowOptions,

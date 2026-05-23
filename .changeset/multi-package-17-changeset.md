@@ -7,7 +7,6 @@
 "@cfxdevkit/defi-react": patch
 "@cfxdevkit/devnode-server": patch
 "@cfxdevkit/llm-agents": patch
-"@cfxdevkit/llm-client": patch
 "@cfxdevkit/llm-tools": patch
 "@cfxdevkit/react": patch
 "@cfxdevkit/services": patch

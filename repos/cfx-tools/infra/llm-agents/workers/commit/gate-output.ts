@@ -14,6 +14,7 @@ function normalizeOutputLine(line: string): string {
 }
 
 function stripAnsi(line: string): string {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape stripping needs the ESC byte matcher.
   return line.replace(/\u001B\[[0-?]*[ -/]*[@-~]/g, '');
 }
 

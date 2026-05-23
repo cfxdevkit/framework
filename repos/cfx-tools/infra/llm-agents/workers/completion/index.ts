@@ -1,5 +1,7 @@
-export { configPath, configPathEnvVar } from './config.ts';
+export { complete, completeCommitAgent, completeStructuredAgent } from './complete.ts';
 export {
+  configPath,
+  configPathEnvVar,
   defaultConfig,
   findMonorepoUnitByConfigPath,
   mergeConfigLayers,
@@ -8,7 +10,6 @@ export {
   resolveRequestTimeoutMs,
   writeConfig,
 } from './config.ts';
-export { complete, completeCommitAgent, completeStructuredAgent } from './complete.ts';
 export {
   artifactsRoot,
   buildActionContext,

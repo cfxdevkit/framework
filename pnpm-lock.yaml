@@ -927,41 +927,11 @@ importers:
         specifier: ^4.1.5
         version: 4.1.6(@types/node@25.6.0)(happy-dom@20.9.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(vite@8.0.12(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
 
-  repos/cfx-tools/infra/llm-client:
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.4.14
-        version: 2.4.15
-      '@cfxdevkit/biome-config':
-        specifier: workspace:*
-        version: link:../../../cfx-config/packages/biome-config
-      '@cfxdevkit/tsconfig':
-        specifier: workspace:*
-        version: link:../../../cfx-config/packages/tsconfig
-      '@types/node':
-        specifier: ^25.6.0
-        version: 25.6.0
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-      vite:
-        specifier: ^8.0.10
-        version: 8.0.12(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0)
-      vite-plugin-dts:
-        specifier: ^5.0.0
-        version: 5.0.0(@microsoft/api-extractor@7.58.7(@types/node@25.6.0))(esbuild@0.27.7)(rolldown@1.0.0)(rollup@4.60.2)(typescript@6.0.3)(vite@8.0.12(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
-      vitest:
-        specifier: ^4.1.5
-        version: 4.1.6(@types/node@25.6.0)(happy-dom@20.9.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(vite@8.0.12(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
-
   repos/cfx-tools/infra/llm-tools:
     dependencies:
       '@cfxdevkit/llm-agents':
         specifier: workspace:*
         version: link:../llm-agents
-      '@cfxdevkit/llm-client':
-        specifier: workspace:*
-        version: link:../llm-client
       '@cfxdevkit/pi-agent':
         specifier: workspace:*
         version: link:../pi-agent
@@ -11826,7 +11796,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(happy-dom@20.9.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(vite@8.0.12(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
+      vitest: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(happy-dom@20.9.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
     optional: true
 
   '@vitest/expect@4.1.5':

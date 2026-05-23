@@ -9,9 +9,9 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import {
   getPackagePagePath,
+  type PackagePageTarget,
   readPackagePageHash,
   stripPackagePageHash,
-  type PackagePageTarget,
   writePackagePageHash,
 } from '@cfxdevkit/docs-pipeline';
 import { completeStructuredAgent } from '../completion/index.ts';

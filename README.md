@@ -103,7 +103,6 @@ Source of truth for these rules: `repos/cfx-meta/arch-rules.yaml`
 | Package | npm name | Purpose |
 |---------|----------|---------|
 | `infra/llm-tools` | `@cfxdevkit/llm-tools` | CLI entry point for LLM automation pipeline (`llm commit`, `llm review`, `llm health`, etc.) |
-| `infra/llm-client` | `@cfxdevkit/llm-client` | LLM provider client abstraction (OpenAI, Anthropic) |
 | `infra/llm-agents` | `@cfxdevkit/llm-agents` | Autonomous agents (commit quality gate, doc generation, test upkeep) |
 
 ### Tier 2 — Domains
