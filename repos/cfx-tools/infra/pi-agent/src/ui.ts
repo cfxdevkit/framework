@@ -1,6 +1,7 @@
 import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
 import type { PiAgentExtension } from './extension.js';
 import type {
+  PiAgentCheckResult,
   PiCommitWorkflowResult,
   PiPrecommitWorkflowResult,
   PiRepoActionExecutionResult,
@@ -25,8 +26,9 @@ export function createPiRuntimeUiState(options: {
   extension: PiAgentExtension;
   providerBridge: PiProviderBridge;
   actionCount: number;
+  activeChanges?: readonly string[];
 }): PiOperatorUiState {
-  const { extension, providerBridge, actionCount } = options;
+  const { extension, providerBridge, actionCount, activeChanges = [] } = options;
   const scopeLabel = providerBridge.scope ?? 'shared-repo';
   const modelLabel = providerBridge.defaultModel ?? providerBridge.pi.model ?? 'auto';
   return {
@@ -41,6 +43,29 @@ export function createPiRuntimeUiState(options: {
       `strategy: ${providerBridge.providerStrategy}`,
       `config: ${providerBridge.configPath}`,
       `actions: ${actionCount}`,
+      ...(activeChanges.length > 0
+        ? [
+            `openspec: ${activeChanges.length} active change(s)`,
+            ...activeChanges.map((name) => `- ${name}`),
+          ]
+        : ['openspec: no active changes']),
+    ],
+  };
+}
+
+export function createPiAgentCheckUiState(result: PiAgentCheckResult): PiOperatorUiState {
+  const changeNames = result.artifacts.map((a) => a.name);
+  const statusLabel = result.status === 'ok' ? 'clean' : `${changeNames.length} change(s) planned`;
+  return {
+    statusText: `agent-check · ${result.status} · ${statusLabel}`,
+    widgetKey: 'repo-agent-workflow',
+    widgetLines: [
+      'Agent check',
+      `status: ${result.status}`,
+      `validation: ${result.validation.status} (${result.validation.summary.passed}/${result.validation.summary.totalSteps} passed)`,
+      `actionable steps: ${result.validation.actionableSteps.length}`,
+      ...(result.plan ? [`plan: ${result.plan.summary.slice(0, 80)}`] : []),
+      ...(changeNames.length > 0 ? ['changes:', ...changeNames.map((name) => `- ${name}`)] : []),
     ],
   };
 }

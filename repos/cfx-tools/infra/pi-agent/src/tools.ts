@@ -1,27 +1,75 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { format } from 'node:util';
 import { defineTool, type ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
 import {
-  readPiConfig,
-  resolveEffectiveActionPolicy,
-  type PiEffectiveActionPolicy,
-} from './config.js';
-import {
   executePiAction,
-  executePiCommitWorkflow,
+  executePiAgentCheck,
   getPiActionDefinitions,
-  type PiCommitWorkflowResult,
   type PiRepoActionExecutionResult,
 } from './llm-agents-runtime.js';
+import { executePiCommitSession } from './tools-commit.js';
+import { withCapturedConsole } from './tools-utils.js';
 import {
   clearPiOperatorWidgets,
+  createPiAgentCheckUiState,
   createPiCommitWorkflowUiState,
   createPiRepoActionUiState,
   renderPiActionCatalogLines,
 } from './ui.js';
+
+export { executePiCommitSession } from './tools-commit.js';
+
+const repoAgentCheckTool = defineTool({
+  name: 'repo_agent_check',
+  label: 'run agent check',
+  description:
+    'Run the full repo validation → OpenSpec change planning pipeline. Validates the repository and auto-creates OpenSpec changes for any error-status validation steps found.',
+  promptSnippet:
+    'Use this when validation errors are found to create OpenSpec changes for remediation. Returns status, actionable steps, and names of any created changes.',
+  parameters: Type.Object({
+    dryRun: Type.Optional(
+      Type.Boolean({ description: 'Plan without writing OpenSpec artifacts.' }),
+    ),
+    createBranch: Type.Optional(
+      Type.Boolean({ description: 'Create a git branch for the planned changes.' }),
+    ),
+    quick: Type.Optional(Type.Boolean({ description: 'Reduce LLM context for a faster pass.' })),
+  }),
+  async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+    const result = await executePiAgentCheck({
+      dryRun: params.dryRun,
+      createBranch: params.createBranch,
+      quick: params.quick,
+    });
+
+    if (ctx.hasUI) {
+      const uiState = createPiAgentCheckUiState(result);
+      ctx.ui.setStatus('repo-agent-check-tool', uiState.statusText);
+      clearPiOperatorWidgets(ctx);
+    }
+
+    const changeNames = result.artifacts.map((a) => a.name);
+    const summary =
+      result.status === 'ok'
+        ? 'Validation passed — no changes needed.'
+        : `Validation ${result.status}: ${changeNames.length} OpenSpec change(s) created: ${
+            changeNames.join(', ') || '(none)'
+          }`;
+    return {
+      content: [{ type: 'text', text: summary }],
+      details: {
+        status: result.status,
+        validationStatus: result.validation.status,
+        actionableStepCount: result.validation.actionableSteps.length,
+        changes: changeNames,
+        plan: result.plan
+          ? { summary: result.plan.summary, branch: result.plan.branch.name }
+          : null,
+        artifacts: result.artifacts,
+        dryRun: result.dryRun,
+      },
+    };
+  },
+});
 
 const repoActionCatalogTool = defineTool({
   name: 'repo_action_catalog',
@@ -140,10 +188,14 @@ const repoCommitWorkflowTool = defineTool({
 });
 
 export function registerPiRepoTools(pi: ExtensionAPI): void {
+  pi.registerTool(repoAgentCheckTool);
   pi.registerTool(repoActionCatalogTool);
   pi.registerTool(repoRunActionTool);
   pi.registerTool(repoCommitWorkflowTool);
 }
+
+export { executePiAgentCheck } from './llm-agents-runtime.js';
+export { withCapturedConsole } from './tools-utils.js';
 
 export async function executePiRepoAction(options: {
   action: string;
@@ -157,143 +209,10 @@ export async function executePiRepoAction(options: {
   }
 
   const args: string[] = [options.action];
-  if (options.quick) {
-    args.push('--quick');
-  }
-  if (options.model) {
-    args.push('--model', options.model);
-  }
-  if (options.prompt) {
-    args.push(options.prompt);
-  }
+  if (options.quick) args.push('--quick');
+  if (options.model) args.push('--model', options.model);
+  if (options.prompt) args.push(options.prompt);
 
   const { result } = await withCapturedConsole(async () => await executePiAction(args));
   return result;
-}
-
-export async function executePiCommitSession(options: {
-  prompt?: string;
-  quick?: boolean;
-  model?: string;
-}): Promise<PiCommitWorkflowResult | null> {
-  const args: string[] = [];
-  if (options.quick) {
-    args.push('--quick');
-  }
-  if (options.prompt) {
-    args.push(options.prompt);
-  }
-
-  const commitPolicy = await resolveCommitRuntimePolicy(options.model);
-  const { result } = await withScopedCommitPolicy(commitPolicy.profileOverride, async () =>
-    withCapturedConsole(
-      async () =>
-        await executePiCommitWorkflow(args, { modelPolicies: commitPolicy.modelPolicies }),
-    ),
-  );
-  return result;
-}
-
-async function resolveCommitRuntimePolicy(explicitModel?: string): Promise<{
-  readonly modelPolicies?: {
-    readonly messageGenerationModel?: string | null;
-    readonly failureAnalysisModel?: string | null;
-  };
-  readonly profileOverride?: Record<string, unknown>;
-}> {
-  const config = await readPiConfig();
-  const commitPolicy = resolveEffectiveActionPolicy(config, { action: 'commit' });
-  const messagePolicy = resolveEffectiveActionPolicy(config, {
-    action: 'commit',
-    phase: 'message-generation',
-  });
-  const failurePolicy = resolveEffectiveActionPolicy(config, {
-    action: 'commit',
-    phase: 'failure-analysis',
-  });
-
-  const messageGenerationModel = explicitModel ?? messagePolicy.model ?? commitPolicy.model ?? null;
-  const failureAnalysisModel = explicitModel ?? failurePolicy.model ?? messageGenerationModel;
-  const profileOverride = buildCommitProfileOverride(commitPolicy);
-
-  return {
-    ...(messageGenerationModel || failureAnalysisModel
-      ? {
-          modelPolicies: {
-            ...(messageGenerationModel ? { messageGenerationModel } : {}),
-            ...(failureAnalysisModel ? { failureAnalysisModel } : {}),
-          },
-        }
-      : {}),
-    ...(profileOverride ? { profileOverride } : {}),
-  };
-}
-
-function buildCommitProfileOverride(
-  commitPolicy: PiEffectiveActionPolicy,
-): Record<string, unknown> | undefined {
-  if (!commitPolicy.profile.exists || !commitPolicy.profile.provider) {
-    return undefined;
-  }
-
-  return {
-    provider: commitPolicy.profile.provider,
-    baseUrl: commitPolicy.profile.baseUrl,
-    defaultModel: commitPolicy.profile.defaultModel ?? commitPolicy.model ?? null,
-    ...(commitPolicy.profile.requestTimeoutMs !== null
-      ? { requestTimeoutMs: commitPolicy.profile.requestTimeoutMs }
-      : {}),
-    harness: {
-      providerStrategy: commitPolicy.profile.providerStrategy,
-    },
-  };
-}
-
-async function withScopedCommitPolicy<T>(
-  profileOverride: Record<string, unknown> | undefined,
-  work: () => Promise<T>,
-): Promise<T> {
-  if (!profileOverride) {
-    return await work();
-  }
-
-  const directory = await mkdtemp(join(tmpdir(), 'cfxdevkit-pi-commit-'));
-  const filePath = join(directory, 'llm.commit.json');
-  const previous = process.env.CFXDEVKIT_LLM_CONFIG_PATH;
-  await writeFile(filePath, `${JSON.stringify(profileOverride, null, 2)}\n`, 'utf8');
-  process.env.CFXDEVKIT_LLM_CONFIG_PATH = filePath;
-  try {
-    return await work();
-  } finally {
-    if (previous === undefined) {
-      delete process.env.CFXDEVKIT_LLM_CONFIG_PATH;
-    } else {
-      process.env.CFXDEVKIT_LLM_CONFIG_PATH = previous;
-    }
-    await rm(directory, { recursive: true, force: true });
-  }
-}
-
-async function withCapturedConsole<T>(
-  work: () => Promise<T>,
-): Promise<{ result: T; logs: readonly string[] }> {
-  const logs: string[] = [];
-  const originalLog = console.log;
-  const originalWarn = console.warn;
-  const originalError = console.error;
-  const sink = (...args: unknown[]) => {
-    logs.push(format(...args));
-  };
-
-  console.log = sink;
-  console.warn = sink;
-  console.error = sink;
-  try {
-    const result = await work();
-    return { result, logs };
-  } finally {
-    console.log = originalLog;
-    console.warn = originalWarn;
-    console.error = originalError;
-  }
 }

@@ -70,6 +70,70 @@ export interface PiPrecommitWorkflowResult {
   readonly blockedBy?: 'repository-policy' | 'quality-gates';
 }
 
+export interface PiAgentCheckValidationStep {
+  readonly id: string;
+  readonly status: 'ok' | 'warning' | 'error' | 'skipped';
+  readonly summary: string;
+  readonly command: string;
+}
+
+export interface PiAgentCheckArtifact {
+  readonly name: string;
+  readonly proposalPath: string;
+  readonly designPath: string;
+  readonly specPaths: readonly string[];
+  readonly tasksPath: string;
+}
+
+export interface PiAgentCheckResult {
+  readonly generatedAt: string;
+  readonly status: 'ok' | 'planned' | 'warning-planned';
+  readonly executionContext: PiExecutionContextPayload;
+  readonly validation: {
+    readonly status: 'ok' | 'warning' | 'error';
+    readonly summary: {
+      readonly totalSteps: number;
+      readonly passed: number;
+      readonly warnings: number;
+      readonly errors: number;
+    };
+    readonly actionableSteps: readonly PiAgentCheckValidationStep[];
+  };
+  readonly plan: null | {
+    readonly summary: string;
+    readonly changes: readonly {
+      readonly name: string;
+      readonly title: string;
+      readonly rationale: string;
+      readonly issues: readonly string[];
+    }[];
+    readonly branch: {
+      readonly name: string;
+      readonly title: string;
+    };
+    readonly handoff: {
+      readonly cloudPromptLines: readonly string[];
+      readonly notes: readonly string[];
+    };
+  };
+  readonly artifacts: readonly PiAgentCheckArtifact[];
+  readonly followUp: {
+    readonly branch: {
+      readonly requested: boolean;
+      readonly name: string | null;
+      readonly status: 'skipped' | 'created' | 'switched' | 'active' | 'error';
+      readonly message?: string;
+    };
+    readonly draftPr: {
+      readonly requested: boolean;
+      readonly status: 'skipped' | 'created' | 'error';
+      readonly url?: string;
+      readonly message?: string;
+    };
+  };
+  readonly dryRun: boolean;
+}
+
 export interface PiCommitWorkflowResult {
   readonly command: 'commit';
   readonly status: 'blocked' | 'approval-required' | 'aborted' | 'dry-run' | 'committed';
@@ -109,6 +173,10 @@ interface LlmAgentsModule {
     name: string;
     definition: PiRepoActionDefinition;
   }[];
+  readonly runAgentCheck: (
+    rawArgs: readonly string[],
+    opts?: { silent?: boolean },
+  ) => Promise<PiAgentCheckResult>;
   readonly runCommitWorkflow: (
     args: string[],
     options?: {
@@ -129,6 +197,18 @@ export async function getPiActionDefinitions(): Promise<
 
 export async function executePiAction(args: string[]): Promise<PiRepoActionExecutionResult> {
   return await (await loadLlmAgentsModule()).executeAction(args);
+}
+
+export async function executePiAgentCheck(options: {
+  dryRun?: boolean;
+  createBranch?: boolean;
+  quick?: boolean;
+}): Promise<PiAgentCheckResult> {
+  const args: string[] = [];
+  if (options.quick) args.push('--quick');
+  if (options.dryRun) args.push('--dry-run');
+  if (options.createBranch) args.push('--create-branch');
+  return await (await loadLlmAgentsModule()).runAgentCheck(args, { silent: true });
 }
 
 export async function executePiCommitWorkflow(

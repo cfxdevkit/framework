@@ -1,3 +1,5 @@
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
 import { registerPiRepoCommands } from './commands.js';
 import { getPiActionDefinitions } from './llm-agents-runtime.js';
@@ -70,11 +72,28 @@ async function refreshPiRuntimeUi(ctx: ExtensionContext): Promise<void> {
   const scope = resolvePiScopeFromEnv();
   const providerBridge = await createPiProviderBridge(scope);
   const actionCount = (await getPiActionDefinitions()).length;
+  const activeChanges = await readActiveOpenSpecChanges();
   const state = createPiRuntimeUiState({
     extension: createPiAgentExtension(scope),
     providerBridge,
     actionCount,
+    activeChanges,
   });
 
   ctx.ui.setStatus('repo-agent', state.statusText);
+}
+
+const execFileAsync = promisify(execFile);
+
+async function readActiveOpenSpecChanges(): Promise<readonly string[]> {
+  try {
+    const { stdout } = await execFileAsync('openspec', ['list', '--json'], {
+      cwd: process.cwd(),
+      maxBuffer: 1024 * 1024,
+    });
+    const data = JSON.parse(stdout) as { changes: { name: string; status: string }[] };
+    return data.changes.filter((c) => c.status !== 'archived').map((c) => c.name);
+  } catch {
+    return [];
+  }
 }

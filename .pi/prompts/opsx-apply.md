@@ -73,12 +73,24 @@ Implement tasks from an OpenSpec change.
    - Error or blocker encountered → report and wait for guidance
    - User interrupts
 
-7. **On completion or pause, show status**
+7. **Validate after all tasks complete**
+
+   Once all tasks are marked done, run a final repo check:
+   ```bash
+   repo_agent_check  (or: cdk repo check)
+   ```
+
+   - **If check passes**: congratulate, suggest archive with `/opsx-archive`
+   - **If check fails**: surface the failing steps. Offer to call `repo_agent_check` to
+     create follow-up OpenSpec changes for remaining failures. Do NOT archive until clean.
+
+8. **On completion or pause, show status**
 
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If all done: suggest archive
+   - Validation result (pass / fail + step names)
+   - If all done and clean: suggest archive
    - If paused: explain why and wait for guidance
 
 **Output During Implementation**
@@ -103,13 +115,14 @@ Working on task 4/7: <task description>
 **Change:** <change-name>
 **Schema:** <schema-name>
 **Progress:** 7/7 tasks complete ✓
+**Validation:** ✓ repo check passed (or ✗ N steps failing)
 
 ### Completed This Session
 - [x] Task 1
 - [x] Task 2
 ...
 
-All tasks complete! You can archive this change with `/opsx-archive`.
+All tasks complete and repo check clean! You can archive this change with `/opsx-archive`.
 ```
 
 **Output On Pause (Issue Encountered)**

@@ -1,5 +1,4 @@
-import { readFile } from 'node:fs/promises';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const configRuntime = vi.hoisted(() => ({
   readPiConfig: vi.fn(),
@@ -8,6 +7,7 @@ const configRuntime = vi.hoisted(() => ({
 
 const llmAgentsRuntime = vi.hoisted(() => ({
   executePiAction: vi.fn(),
+  executePiAgentCheck: vi.fn(),
   executePiCommitWorkflow: vi.fn(),
   getPiActionDefinitions: vi.fn(async () => []),
 }));
@@ -19,11 +19,12 @@ vi.mock('./config.js', () => ({
 
 vi.mock('./llm-agents-runtime.js', () => ({
   executePiAction: llmAgentsRuntime.executePiAction,
+  executePiAgentCheck: llmAgentsRuntime.executePiAgentCheck,
   executePiCommitWorkflow: llmAgentsRuntime.executePiCommitWorkflow,
   getPiActionDefinitions: llmAgentsRuntime.getPiActionDefinitions,
 }));
 
-import { executePiCommitSession, registerPiRepoTools } from './tools.js';
+import { registerPiRepoTools } from './tools.js';
 
 function registerToolMap(): Map<string, any> {
   const tools = new Map<string, any>();
@@ -35,113 +36,12 @@ function registerToolMap(): Map<string, any> {
   return tools;
 }
 
-describe('executePiCommitSession', () => {
-  const originalConfigPath = process.env.CFXDEVKIT_LLM_CONFIG_PATH;
-
-  beforeEach(() => {
-    configRuntime.readPiConfig.mockReset();
-    configRuntime.resolveEffectiveActionPolicy.mockReset();
-    llmAgentsRuntime.executePiCommitWorkflow.mockReset();
-
-    configRuntime.readPiConfig.mockResolvedValue({
-      provider: 'litellm',
-      baseUrl: null,
-      defaultModel: null,
-      actions: {},
-      providerProfiles: {},
-      actionPolicies: {},
-      harness: { providerStrategy: 'auto' },
-    });
-    configRuntime.resolveEffectiveActionPolicy.mockImplementation(
-      (_config, options?: { action?: string; phase?: string }) => ({
-        action: options?.action,
-        phase: options?.phase,
-        source: options?.phase ? 'phase' : 'action',
-        legacyActionModel: null,
-        model:
-          options?.phase === 'failure-analysis'
-            ? 'failure-model'
-            : options?.phase === 'message-generation'
-              ? 'message-model'
-              : 'action-model',
-        profile: {
-          name: 'cloud-strong',
-          exists: true,
-          provider: 'github-models',
-          baseUrl: null,
-          defaultModel: 'gpt-4.1',
-          githubModel: null,
-          requestTimeoutMs: 120000,
-          providerStrategy: 'auto',
-        },
-      }),
-    );
-    llmAgentsRuntime.executePiCommitWorkflow.mockResolvedValue(null);
-  });
-
-  afterEach(() => {
-    if (originalConfigPath === undefined) {
-      delete process.env.CFXDEVKIT_LLM_CONFIG_PATH;
-    } else {
-      process.env.CFXDEVKIT_LLM_CONFIG_PATH = originalConfigPath;
-    }
-  });
-
-  it('derives commit and failure-analysis models from action policies', async () => {
-    await executePiCommitSession({ prompt: 'Prepare the commit' });
-
-    expect(llmAgentsRuntime.executePiCommitWorkflow).toHaveBeenCalledWith(['Prepare the commit'], {
-      modelPolicies: {
-        messageGenerationModel: 'message-model',
-        failureAnalysisModel: 'failure-model',
-      },
-    });
-  });
-
-  it('lets an explicit model override both policy-selected models', async () => {
-    await executePiCommitSession({ model: 'explicit-model' });
-
-    expect(llmAgentsRuntime.executePiCommitWorkflow).toHaveBeenCalledWith([], {
-      modelPolicies: {
-        messageGenerationModel: 'explicit-model',
-        failureAnalysisModel: 'explicit-model',
-      },
-    });
-  });
-
-  it('applies the commit profile as a temporary scoped config overlay', async () => {
-    let observedConfigPath: string | undefined;
-    let observedConfig: Record<string, unknown> | null = null;
-
-    llmAgentsRuntime.executePiCommitWorkflow.mockImplementationOnce(async () => {
-      observedConfigPath = process.env.CFXDEVKIT_LLM_CONFIG_PATH;
-      observedConfig = observedConfigPath
-        ? (JSON.parse(await readFile(observedConfigPath, 'utf8')) as Record<string, unknown>)
-        : null;
-      return null;
-    });
-
-    await executePiCommitSession({ prompt: 'Prepare the commit' });
-
-    expect(observedConfigPath).toBeTruthy();
-    expect(observedConfig).toMatchObject({
-      provider: 'github-models',
-      baseUrl: null,
-      defaultModel: 'gpt-4.1',
-      requestTimeoutMs: 120000,
-      harness: {
-        providerStrategy: 'auto',
-      },
-    });
-    expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toBe(originalConfigPath);
-  });
-});
-
 describe('registerPiRepoTools', () => {
   beforeEach(() => {
     configRuntime.readPiConfig.mockReset();
     configRuntime.resolveEffectiveActionPolicy.mockReset();
     llmAgentsRuntime.executePiAction.mockReset();
+    llmAgentsRuntime.executePiAgentCheck.mockReset();
     llmAgentsRuntime.executePiCommitWorkflow.mockReset();
     llmAgentsRuntime.getPiActionDefinitions.mockReset();
 
@@ -271,5 +171,73 @@ describe('registerPiRepoTools', () => {
       placement: 'aboveEditor',
     });
     expect(ctx.ui.setWidget.mock.calls.every(([, lines]) => lines === undefined)).toBe(true);
+  });
+
+  it('surfaces agent check status and planned change names', async () => {
+    llmAgentsRuntime.executePiAgentCheck.mockResolvedValue({
+      generatedAt: '2026-05-23T00:00:00.000Z',
+      status: 'planned',
+      executionContext: {
+        unit: { name: 'shared-repo', rootDir: '.', configPath: '.pi/providers.json' },
+        llm: {
+          used: true,
+          status: 'ready',
+          configPath: '.pi/providers.json',
+          provider: 'litellm',
+          model: 'Qwen3',
+        },
+      },
+      validation: {
+        status: 'error',
+        summary: { totalSteps: 8, passed: 7, warnings: 0, errors: 1 },
+        actionableSteps: [
+          {
+            id: 'hotspots',
+            status: 'error',
+            summary: '2 hard violations',
+            command: 'pnpm cdk repo check hotspots',
+          },
+        ],
+      },
+      plan: {
+        summary: 'Fix hotspots',
+        changes: [],
+        branch: { name: 'opsx/fix', title: 'Fix' },
+        handoff: { cloudPromptLines: [], notes: [] },
+      },
+      artifacts: [
+        {
+          name: 'fix-hotspots',
+          proposalPath: 'openspec/changes/fix-hotspots/proposal.md',
+          designPath: 'openspec/changes/fix-hotspots/design.md',
+          specPaths: [],
+          tasksPath: 'openspec/changes/fix-hotspots/tasks.md',
+        },
+      ],
+      followUp: {
+        branch: { requested: false, name: null, status: 'skipped' },
+        draftPr: { requested: false, status: 'skipped' },
+      },
+      dryRun: false,
+    });
+
+    const tools = registerToolMap();
+    const ctx = {
+      hasUI: true,
+      ui: { setStatus: vi.fn(), setWidget: vi.fn() },
+    };
+
+    const result = await tools
+      .get('repo_agent_check')
+      ?.execute('tool-call', { quick: true }, undefined, undefined, ctx);
+
+    expect(llmAgentsRuntime.executePiAgentCheck).toHaveBeenCalledWith({ quick: true });
+    expect(result?.content[0].text).toContain('fix-hotspots');
+    expect(result?.details.status).toBe('planned');
+    expect(result?.details.changes).toEqual(['fix-hotspots']);
+    expect(ctx.ui.setStatus).toHaveBeenCalledWith(
+      'repo-agent-check-tool',
+      expect.stringContaining('agent-check'),
+    );
   });
 });

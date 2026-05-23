@@ -1,18 +1,19 @@
 import type { ExtensionAPI, ExtensionCommandContext } from '@earendil-works/pi-coding-agent';
 import { Box, Text } from '@earendil-works/pi-tui';
 import { createPiAgentExtension, resolvePiScopeFromEnv } from './extension.js';
-import { getPiActionDefinitions } from './llm-agents-runtime.js';
+import { executePiAgentCheck, getPiActionDefinitions } from './llm-agents-runtime.js';
 import { createPiProviderBridge } from './providers.js';
 import { executePiCommitSession, executePiRepoAction } from './tools.js';
 import {
   clearPiOperatorWidgets,
-  createPiCommitWorkflowUiState,
   clearPiWorkflowProgress,
+  createPiAgentCheckUiState,
+  createPiCommitWorkflowUiState,
   createPiRepoActionUiState,
   createPiRuntimeUiState,
+  type PiOperatorUiState,
   renderPiActionCatalogLines,
   setPiWorkflowProgress,
-  type PiOperatorUiState,
 } from './ui.js';
 
 const piOperatorMessageType = 'repo-agent-summary';
@@ -78,6 +79,35 @@ export function registerPiRepoCommands(pi: ExtensionAPI): void {
           ...(parsed.model ? { model: parsed.model } : {}),
         });
         emitPiOperatorMessage(pi, ctx, createPiRepoActionUiState(result), { tone: 'success' });
+      } catch (error) {
+        if (ctx.hasUI) {
+          ctx.ui.notify(error instanceof Error ? error.message : String(error), 'error');
+        }
+      } finally {
+        clearPiWorkflowProgress(ctx);
+      }
+    },
+  });
+
+  pi.registerCommand('repo-check', {
+    description:
+      'Run the full repo validation → OpenSpec change planning pipeline: /repo-check [--dry-run] [--create-branch] [--quick]',
+    handler: async (args, ctx) => {
+      const parsed = parseRepoCheckArgs(args);
+      setPiWorkflowProgress(ctx, 'Running agent check pipeline');
+      try {
+        const result = await executePiAgentCheck({
+          dryRun: parsed.dryRun,
+          createBranch: parsed.createBranch,
+          quick: parsed.quick,
+        });
+        const tone =
+          result.status === 'ok'
+            ? 'success'
+            : result.status === 'warning-planned'
+              ? 'warning'
+              : 'info';
+        emitPiOperatorMessage(pi, ctx, createPiAgentCheckUiState(result), { tone });
       } catch (error) {
         if (ctx.hasUI) {
           ctx.ui.notify(error instanceof Error ? error.message : String(error), 'error');
@@ -251,4 +281,17 @@ function classifyCommitTone(
     return 'info';
   }
   return 'success';
+}
+
+function parseRepoCheckArgs(rawArgs: string): {
+  dryRun: boolean;
+  createBranch: boolean;
+  quick: boolean;
+} {
+  const tokens = tokenizeArgs(rawArgs);
+  return {
+    dryRun: tokens.includes('--dry-run'),
+    createBranch: tokens.includes('--create-branch'),
+    quick: tokens.includes('--quick'),
+  };
 }
