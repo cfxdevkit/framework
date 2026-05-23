@@ -93,12 +93,14 @@ async function promptForEndpoint(prompts: PromptApi): Promise<PiSessionEndpoint>
         {
           value: 'local',
           name: 'local · Lemonade planning endpoint',
-          description: 'Use the local model/runtime path for repo planning, preparation, and review.',
+          description:
+            'Use the local model/runtime path for repo planning, preparation, and review.',
         },
         {
           value: 'github',
           name: 'github · cloud implementation endpoint',
-          description: 'Use the authenticated GitHub Models PI path for remote review and implementation work.',
+          description:
+            'Use the authenticated GitHub Models PI path for remote review and implementation work.',
         },
       ],
     },

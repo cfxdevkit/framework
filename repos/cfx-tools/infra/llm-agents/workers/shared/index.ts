@@ -11,6 +11,8 @@ export const artifactsRoot = join(root, 'artifacts', 'llm');
 export const configDir = join(artifactsRoot, 'config');
 export const piConfigDir = join(root, '.pi');
 export const configPathEnvVar = 'CFXDEVKIT_LLM_CONFIG_PATH';
+/** Preserved agent config path — not overridden by --github or --local PI session temp configs. */
+export const agentConfigPathEnvVar = 'CFXDEVKIT_LLM_AGENT_CONFIG_PATH';
 export const configPath = join(piConfigDir, 'providers.json');
 export const legacyConfigPath = join(configDir, 'llm.json');
 export const legacyCompatConfigPath = join(configDir, 'lemonade.json');

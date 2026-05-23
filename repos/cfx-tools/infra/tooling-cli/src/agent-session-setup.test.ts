@@ -3,9 +3,7 @@ import { resolvePiSessionSetup } from './agent-session-setup.js';
 
 describe('resolvePiSessionSetup', () => {
   it('describes how a scope changes the session before interactive mode starts', async () => {
-    const select = vi.fn()
-      .mockResolvedValueOnce('local')
-      .mockResolvedValueOnce('delivery');
+    const select = vi.fn().mockResolvedValueOnce('local').mockResolvedValueOnce('delivery');
     const input = vi.fn(async () => '');
 
     await resolvePiSessionSetup({

@@ -56,6 +56,7 @@
     "tooling": "pnpm --filter @cfxdevkit/tooling-cli tooling --",
     "cdk": "pnpm run tooling --",
     "repo": "pnpm run cdk -- repo",
+    "repo:merge": "pnpm run cdk -- repo merge",
     "repo:check": "pnpm run cdk -- repo check",
     "repo:generate": "pnpm run cdk -- repo generate",
     "repo:arch-check": "pnpm run cdk -- repo arch-check",

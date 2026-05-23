@@ -2,40 +2,27 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { checkbox, confirm } from '@inquirer/prompts';
 import { runInRepoRoot } from './agent-runtime.js';
+import type { AgentMergeCandidate, PullRequestState } from './repo-merge.js';
+import {
+  currentBranch,
+  inspectMergeCandidate,
+  listCandidateBranches,
+  loadPullRequestState,
+  renderRepoMergeResult,
+  runDeterministicMerge,
+} from './repo-merge.js';
+
+export type { AgentMergeCandidate, RepoMergeResult } from './repo-merge.js';
+export { renderRepoMergeResult, runDeterministicMerge } from './repo-merge.js';
 
 const execFileAsync = promisify(execFile);
+
+// ─── Flags ────────────────────────────────────────────────────────────────────
 
 export type AgentMergeFlags = {
   dryRun: boolean;
   base: string | null;
   branches: string[];
-};
-
-type PullRequestState = {
-  number: number;
-  title: string;
-  headRefName: string;
-  baseRefName: string;
-  state: string;
-  isDraft: boolean;
-  mergeStateStatus: string | null;
-  url: string;
-};
-
-export type AgentMergeCandidate = {
-  name: string;
-  alreadyMerged: boolean;
-  mergeable: boolean;
-  pr: PullRequestState | null;
-  mergeCheckError?: string;
-};
-
-type AgentMergeReport = {
-  baseBranch: string;
-  dryRun: boolean;
-  gitHubStatusNote: string | null;
-  candidates: AgentMergeCandidate[];
-  mergedBranches: string[];
 };
 
 export function parseAgentMergeFlags(rawArgs: readonly string[]): AgentMergeFlags {
@@ -45,78 +32,78 @@ export function parseAgentMergeFlags(rawArgs: readonly string[]): AgentMergeFlag
   let dryRun = false;
   let base: string | null = null;
   const branches: string[] = [];
-
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
     if (!arg) continue;
     if (arg === '--dry-run') {
       dryRun = true;
       continue;
     }
     if (arg === '--base') {
-      base = args[index + 1] ?? null;
-      index += 1;
+      base = args[i + 1] ?? null;
+      i += 1;
       continue;
     }
-    branches.push(arg);
+    if (!arg.startsWith('--')) branches.push(arg);
   }
-
   return { dryRun, base, branches };
 }
+
+// ─── Agent merge CLI (deterministic first → interactive fallback) ─────────────
 
 export async function runAgentMergeCli(rawArgs: readonly string[]): Promise<void> {
   await runInRepoRoot(async () => {
     const flags = parseAgentMergeFlags(rawArgs);
     const baseBranch = flags.base ?? (await currentBranch());
     const branchNames = await listCandidateBranches(baseBranch, flags.branches);
-    const prState = await loadPullRequestState();
-    const candidates = await Promise.all(
-      branchNames.map(async (branch) => await inspectMergeCandidate(branch, baseBranch, prState.map)),
+
+    // Phase 1: deterministic (gh pr merge for clean PRs)
+    const deterministic = await runDeterministicMerge(flags, branchNames);
+    console.log(renderRepoMergeResult(deterministic));
+    if (flags.dryRun) return;
+
+    // Phase 2: interactive for remaining conflicts / no-PR branches / failures
+    const needsInteraction = deterministic.results.filter(
+      (r) =>
+        r.outcome === 'skipped-conflict' || r.outcome === 'skipped-no-pr' || r.outcome === 'failed',
     );
-    const report: AgentMergeReport = {
-      baseBranch,
-      dryRun: flags.dryRun,
-      gitHubStatusNote: prState.note,
-      candidates,
-      mergedBranches: [],
-    };
-
-    console.log(renderAgentMergeReport(report));
-
-    if (flags.dryRun || process.stdin.isTTY !== true || process.stdout.isTTY !== true) {
+    if (needsInteraction.length === 0) {
+      console.log('\nAll clean PRs merged. Nothing left for interactive selection.');
+      return;
+    }
+    if (process.stdin.isTTY !== true || process.stdout.isTTY !== true) {
+      console.log(`\n${needsInteraction.length} candidate(s) need attention but no TTY available.`);
       return;
     }
 
-    const mergeableCandidates = candidates.filter((candidate) => candidate.mergeable && !candidate.alreadyMerged);
+    const prState = await loadPullRequestState();
+    const remainingCandidates = await Promise.all(
+      needsInteraction.map((r) => inspectMergeCandidate(r.branch, baseBranch, prState.map)),
+    );
+    const mergeableCandidates = remainingCandidates.filter((c) => c.mergeable && !c.alreadyMerged);
     if (mergeableCandidates.length === 0) {
-      console.log('No mergeable branches available for selection.');
+      console.log('All remaining branches have conflicts — nothing to interactively merge.');
       return;
     }
 
-    const selectedBranches =
-      flags.branches.length > 0
-        ? mergeableCandidates
-            .filter((candidate) => flags.branches.includes(candidate.name))
-            .map((candidate) => candidate.name)
-        : await checkbox(
-            {
-              message: `Select mergeable branches to merge into ${baseBranch}`,
-              choices: mergeableCandidates.map((candidate) => ({
-                value: candidate.name,
-                name: candidate.name,
-                description: formatMergeChoice(candidate),
-              })),
-            },
-            { clearPromptOnDone: true },
-          );
-
+    const selectedBranches = await checkbox(
+      {
+        message: `Select branches to merge locally into ${baseBranch}`,
+        choices: mergeableCandidates.map((c) => ({
+          value: c.name,
+          name: c.name,
+          description: formatMergeChoice(c),
+        })),
+      },
+      { clearPromptOnDone: true },
+    );
     if (selectedBranches.length === 0) {
       console.log('No branches selected.');
       return;
     }
 
     const confirmed = await confirm(
-      { message: `Merge ${selectedBranches.length} branch(es) into ${baseBranch}?` },
+      { message: `Merge ${selectedBranches.length} branch(es) into ${baseBranch} locally?` },
       { clearPromptOnDone: true },
     );
     if (!confirmed) {
@@ -125,156 +112,75 @@ export async function runAgentMergeCli(rawArgs: readonly string[]): Promise<void
     }
 
     for (const branch of selectedBranches) {
-      await execFileAsync('git', ['merge', '--no-ff', '--no-edit', branch], {
-        cwd: process.cwd(),
-        maxBuffer: 1024 * 1024 * 10,
-        env: { ...process.env, NO_COLOR: '1' },
-      });
-      report.mergedBranches.push(branch);
+      try {
+        await execFileAsync('git', ['merge', '--no-ff', '--no-edit', branch], {
+          cwd: process.cwd(),
+          maxBuffer: 1024 * 1024 * 10,
+          env: { ...process.env, NO_COLOR: '1' },
+        });
+        console.log(`  ✓ merged ${branch}`);
+      } catch (err) {
+        console.log(
+          `  ✗ ${branch}: ${err instanceof Error ? err.message.split('\n')[0] : String(err)}`,
+        );
+      }
     }
-
-    console.log(renderAgentMergeReport(report));
   });
-}
-
-async function currentBranch(): Promise<string> {
-  const { stdout } = await execFileAsync('git', ['branch', '--show-current'], {
-    cwd: process.cwd(),
-    maxBuffer: 1024 * 1024,
-  });
-  return stdout.trim() || 'HEAD';
-}
-
-async function listCandidateBranches(baseBranch: string, requestedBranches: readonly string[]): Promise<string[]> {
-  if (requestedBranches.length > 0) {
-    return [...new Set(requestedBranches.filter((branch) => branch !== baseBranch))];
-  }
-
-  const { stdout } = await execFileAsync('git', ['branch', '--format=%(refname:short)'], {
-    cwd: process.cwd(),
-    maxBuffer: 1024 * 1024,
-  });
-  return stdout
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .filter((branch) => branch !== baseBranch);
-}
-
-async function loadPullRequestState(): Promise<{
-  map: Map<string, PullRequestState>;
-  note: string | null;
-}> {
-  try {
-    const { stdout } = await execFileAsync(
-      'gh',
-      ['pr', 'list', '--limit', '200', '--json', 'number,title,headRefName,baseRefName,state,isDraft,mergeStateStatus,url'],
-      {
-        cwd: process.cwd(),
-        maxBuffer: 1024 * 1024 * 10,
-        env: { ...process.env, NO_COLOR: '1' },
-      },
-    );
-    const pullRequests = JSON.parse(stdout) as PullRequestState[];
-    return {
-      map: new Map(pullRequests.map((pr) => [pr.headRefName, pr])),
-      note: null,
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return {
-      map: new Map(),
-      note: `GitHub PR state unavailable: ${message}`,
-    };
-  }
-}
-
-async function inspectMergeCandidate(
-  branch: string,
-  baseBranch: string,
-  prMap: Map<string, PullRequestState>,
-): Promise<AgentMergeCandidate> {
-  const alreadyMerged = await isAncestor(branch, baseBranch);
-  if (alreadyMerged) {
-    return {
-      name: branch,
-      alreadyMerged: true,
-      mergeable: true,
-      pr: prMap.get(branch) ?? null,
-    };
-  }
-
-  try {
-    await execFileAsync('git', ['merge-tree', '--write-tree', baseBranch, branch], {
-      cwd: process.cwd(),
-      maxBuffer: 1024 * 1024 * 10,
-      env: { ...process.env, NO_COLOR: '1' },
-    });
-    return {
-      name: branch,
-      alreadyMerged: false,
-      mergeable: true,
-      pr: prMap.get(branch) ?? null,
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return {
-      name: branch,
-      alreadyMerged: false,
-      mergeable: false,
-      pr: prMap.get(branch) ?? null,
-      mergeCheckError: message,
-    };
-  }
-}
-
-async function isAncestor(branch: string, baseBranch: string): Promise<boolean> {
-  try {
-    await execFileAsync('git', ['merge-base', '--is-ancestor', branch, baseBranch], {
-      cwd: process.cwd(),
-      maxBuffer: 1024 * 1024,
-    });
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function formatMergeChoice(candidate: AgentMergeCandidate): string {
-  const parts = [candidate.alreadyMerged ? 'already merged' : candidate.mergeable ? 'mergeable' : 'conflicts detected'];
-  if (candidate.pr?.mergeStateStatus) {
-    parts.push(`PR: ${candidate.pr.mergeStateStatus}`);
-  }
+  const parts = [
+    candidate.alreadyMerged
+      ? 'already merged'
+      : candidate.mergeable
+        ? 'mergeable'
+        : 'conflicts detected',
+  ];
+  if (candidate.pr?.mergeStateStatus) parts.push(`PR: ${candidate.pr.mergeStateStatus}`);
   return parts.join(' · ');
 }
 
+// ─── Legacy report types/renderer (kept for test compatibility) ───────────────
+
+type AgentMergeReport = {
+  baseBranch: string;
+  dryRun: boolean;
+  gitHubStatusNote: string | null;
+  candidates: AgentMergeCandidate[];
+  mergedBranches: string[];
+};
+
 export function renderAgentMergeReport(report: AgentMergeReport): string {
-  const lines = ['# Agent Merge', '', `Base branch: ${report.baseBranch}`, `Dry run: ${report.dryRun ? 'yes' : 'no'}`, ''];
-  if (report.gitHubStatusNote) {
-    lines.push(`GitHub: ${report.gitHubStatusNote}`, '');
-  }
+  const lines = [
+    '# Agent Merge',
+    '',
+    `Base branch: ${report.baseBranch}`,
+    `Dry run: ${report.dryRun ? 'yes' : 'no'}`,
+    '',
+  ];
+  if (report.gitHubStatusNote) lines.push(`GitHub: ${report.gitHubStatusNote}`, '');
   lines.push('Candidates:', '');
   if (report.candidates.length === 0) {
     lines.push('- No candidate branches found.');
   } else {
-    for (const candidate of report.candidates) {
-      const status = candidate.alreadyMerged ? 'already merged' : candidate.mergeable ? 'mergeable' : 'not mergeable';
-      lines.push(`- ${candidate.name}: ${status}`);
-      if (candidate.pr) {
-        lines.push(`  PR: #${candidate.pr.number} ${candidate.pr.title}`);
-        lines.push(`  URL: ${candidate.pr.url}`);
-        lines.push(`  Merge state: ${candidate.pr.mergeStateStatus ?? 'unknown'}`);
+    for (const c of report.candidates) {
+      const status = c.alreadyMerged
+        ? 'already merged'
+        : c.mergeable
+          ? 'mergeable'
+          : 'not mergeable';
+      lines.push(`- ${c.name}: ${status}`);
+      if (c.pr) {
+        lines.push(`  PR: #${c.pr.number} ${c.pr.title}`);
+        lines.push(`  URL: ${c.pr.url}`);
+        lines.push(`  Merge state: ${(c.pr as PullRequestState).mergeStateStatus ?? 'unknown'}`);
       }
-      if (candidate.mergeCheckError) {
-        lines.push(`  Merge check: ${candidate.mergeCheckError}`);
-      }
+      if (c.mergeCheckError) lines.push(`  Merge check: ${c.mergeCheckError}`);
     }
   }
   if (report.mergedBranches.length > 0) {
     lines.push('', 'Merged branches:', '');
-    for (const branch of report.mergedBranches) {
-      lines.push(`- ${branch}`);
-    }
+    for (const b of report.mergedBranches) lines.push(`- ${b}`);
   }
   return lines.join('\n');
 }

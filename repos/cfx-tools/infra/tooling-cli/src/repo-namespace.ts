@@ -1,7 +1,14 @@
 import { spawn } from 'node:child_process';
+import { parseAgentMergeFlags } from './agent-merge.js';
 import { isHelpToken, withAgentScope, withLlmAgents } from './agent-runtime.js';
 import type { ToolingNamespaceDefinition } from './contracts.js';
 import { findMonorepoUnit, listMonorepoUnits, parseScopeFlag } from './monorepo-units.js';
+import {
+  listCandidateBranches,
+  renderRepoMergeResult,
+  currentBranch as repoCurrentBranch,
+  runDeterministicMerge,
+} from './repo-merge.js';
 import { findRepoRoot } from './workspace-paths.js';
 
 const repoCommands = [
@@ -9,6 +16,11 @@ const repoCommands = [
     name: 'check',
     description: 'Run deterministic repo validation checks',
     usage: 'check <hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [args]',
+  },
+  {
+    name: 'merge',
+    description: 'Deterministic PR merge: list open PRs, check mergeability, auto-merge clean ones',
+    usage: 'merge [--base <branch>] [--dry-run] [--json] [branch...]',
   },
   {
     name: 'generate',
@@ -131,6 +143,11 @@ async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
     throw new Error(`Unknown repo units subcommand: ${subcommand}`);
   }
 
+  if (command === 'merge') {
+    await runRepoMerge(rest);
+    return;
+  }
+
   if (command === 'review') {
     await withAgentScope(parsed.scope, async () =>
       withLlmAgents((agents) => agents.runReviewAgent()),
@@ -155,11 +172,35 @@ async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
   printRepoHelp();
 }
 
+async function runRepoMerge(rawArgs: readonly string[]): Promise<void> {
+  const args = [...rawArgs];
+  while (args[0] === '--') args.shift();
+  if (isHelpToken(args[0] ?? 'help')) {
+    printRepoHelp();
+    return;
+  }
+
+  const jsonOutput = args.includes('--json');
+  const flags = parseAgentMergeFlags(args.filter((a) => a !== '--json'));
+  const baseBranch = flags.base ?? (await repoCurrentBranch());
+  const branchNames =
+    flags.branches.length > 0 ? flags.branches : await listCandidateBranches(baseBranch, []);
+
+  const result = await runDeterministicMerge(flags, branchNames);
+  if (jsonOutput) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    console.log(renderRepoMergeResult(result));
+  }
+  process.exitCode = result.exitCode;
+}
+
 function printRepoHelp(): void {
   console.log(`cdk repo
 
 Usage:
   cdk repo check <hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [args]
+  cdk repo merge [--base <branch>] [--dry-run] [--json] [branch...]
   cdk repo generate <api|readme|structure|unit-configs> [args]
   cdk repo units [list|show <preset>]
   cdk repo arch-check [args]

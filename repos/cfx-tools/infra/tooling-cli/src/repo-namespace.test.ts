@@ -38,6 +38,7 @@ vi.mock('./agent-runtime.js', async () => {
 
 vi.mock('node:child_process', () => ({
   spawn: spawnMock,
+  execFile: vi.fn(),
 }));
 
 import { repoToolingNamespace } from './repo-namespace.js';

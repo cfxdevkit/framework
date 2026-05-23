@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import {
+  agentConfigPathEnvVar,
   configPath,
   configPathEnvVar,
   legacyCompatConfigPath,
@@ -75,7 +76,14 @@ async function readConfigFile(filePath: string): Promise<unknown | null> {
 }
 
 function resolveConfiguredConfigPath(): string {
-  return process.env[configPathEnvVar] ?? configPath;
+  // Prefer the agent-pinned path so agent commands (check, commit, etc.) always
+  // use the real provider config and are not affected by a --github/--local PI
+  // session that overrides CFXDEVKIT_LLM_CONFIG_PATH via withTemporaryPiEndpoint.
+  return (
+    process.env[agentConfigPathEnvVar] ??
+    process.env[configPathEnvVar] ??
+    configPath
+  );
 }
 
 function isScopedOverlayPath(filePath: string): boolean {
@@ -87,6 +95,7 @@ function normalizePath(path: string): string {
 }
 
 export {
+  agentConfigPathEnvVar,
   configPath,
   configPathEnvVar,
   defaultConfig,

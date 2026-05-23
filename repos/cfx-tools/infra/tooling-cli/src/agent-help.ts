@@ -20,7 +20,8 @@ export const agentCommands = [
   },
   {
     name: 'merge',
-    description: 'Validate branch mergeability, enrich with PR state, and optionally merge selected branches',
+    description:
+      'Validate branch mergeability, enrich with PR state, and optionally merge selected branches',
     usage: '[--scope <preset>] merge [--dry-run] [--base <branch>] [branch...]',
   },
   {
