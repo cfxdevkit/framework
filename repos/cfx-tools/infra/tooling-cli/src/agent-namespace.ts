@@ -55,7 +55,7 @@ async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
   if (command === 'exploratory') {
     return await withAgentScope(parsed.scope, async () => runExploratoryCli(args.slice(1)));
   }
-  if (command === 'interactive') {
+  if (command === 'chat') {
     const { endpoint, args: sessionArgs } = parsePiEndpointArgs(args.slice(1));
     const session = await resolvePiSessionSetup({
       kind: 'interactive',

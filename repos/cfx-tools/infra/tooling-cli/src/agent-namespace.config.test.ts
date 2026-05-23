@@ -154,7 +154,7 @@ describe('agentToolingNamespace config and status', () => {
     await agentToolingNamespace.run(['help']);
 
     expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining('cdk agent [--scope <preset>] interactive'),
+      expect.stringContaining('cdk agent [--scope <preset>] chat'),
     );
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Commands:'));
   });

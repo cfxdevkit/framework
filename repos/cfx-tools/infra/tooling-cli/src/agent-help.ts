@@ -45,9 +45,9 @@ export const agentCommands = [
     usage: '[--scope <preset>] exploratory <workflow> [args]',
   },
   {
-    name: 'interactive',
-    description: 'Launch the PI-backed interactive agent session',
-    usage: '[--scope <preset>] interactive [--local|--github] [prompt]',
+    name: 'chat',
+    description: 'Launch the PI-backed chat agent session',
+    usage: '[--scope <preset>] chat [--local|--github] [prompt]',
   },
   {
     name: 'commit',
@@ -83,7 +83,7 @@ Usage:
   cdk agent [--scope <preset>] modes
   cdk agent [--scope <preset>] deterministic <workflow> [args]
   cdk agent [--scope <preset>] exploratory <workflow> [args]
-  cdk agent [--scope <preset>] interactive [--local|--github] [workflow|prompt]
+  cdk agent [--scope <preset>] chat [--local|--github] [workflow|prompt]
   cdk agent [--scope <preset>] commit [--local|--github] [prompt]
   cdk agent [--scope <preset>] print [--local|--github] -- [prompt]
   cdk agent [--scope <preset>] rpc [--local|--github]
@@ -98,7 +98,7 @@ Commands:
   modes         Explain the deterministic and exploratory operating modes
   deterministic Run constrained deterministic-first workflows via the current llm-agents layer
   exploratory   Run broader maintenance workflows via the current llm-agents layer
-  interactive   Start the PI-backed interactive session with repo-local resources
+  chat          Start the PI-backed chat session with repo-local resources
   commit        Start the PI-backed interactive commit session directly
   print         Run a one-shot prompt through the PI print runtime
   rpc           Start the PI-backed host mode for editor and dashboard integrations
@@ -114,7 +114,7 @@ Notes:
   - use --github to force the PI session onto GitHub Models; the CLI will use GITHUB_TOKEN or try gh auth token
   - use cdk agent endpoints to verify the local planning path and GitHub implementation path before running both in parallel
   - use --scope <preset> to add a targeted session preload on top of the shared monorepo baseline
-  - interactive and commit will open setup prompts before PI when launched without prompt text
+  - chat and commit will open setup prompts before PI when launched without prompt text
   - the preset prompt changes the config overlay, default mode, and preloaded context for that session
 `);
 }
@@ -129,8 +129,8 @@ Current role:
 
 Usage:
   cdk agent [--scope <preset>] endpoints
-  cdk agent [--scope <preset>] interactive --local [prompt]
-  cdk agent [--scope <preset>] interactive --github [prompt]
+  cdk agent [--scope <preset>] chat --local [prompt]
+  cdk agent [--scope <preset>] chat --github [prompt]
   cdk agent [--scope <preset>] print --local -- [prompt]
   cdk agent [--scope <preset>] print --github -- [prompt]
   cdk agent [--scope <preset>] rpc --local
@@ -177,7 +177,7 @@ Use direct Lemonade when you want:
 Use PI cloud providers when you want:
   - remote coding models through authenticated PI sessions
   - the built-in provider/auth flow instead of custom gateway wiring
-  - one operator surface for interactive, print, and RPC modes
+  - one operator surface for chat, print, and RPC modes
 
 Keep LiteLLM only when you need:
   - short-term compatibility with older direct worker flows
@@ -186,13 +186,13 @@ Keep LiteLLM only when you need:
 
 Planned cdk agent behavior:
   - default local runs to Lemonade-compatible configuration
-  - keep PI as the only interactive/runtime gateway for LLM work
+  - keep PI as the only chat/runtime gateway for LLM work
   - preserve explicit provider selection for compatibility while legacy flows remain
   - remove LiteLLM-first guidance as direct worker paths are retired
 
 Operator endpoints:
-  - local PI: cdk agent interactive --local
-  - GitHub PI: cdk agent interactive --github
+  - local PI: cdk agent chat --local
+  - GitHub PI: cdk agent chat --github
   - endpoint readiness: cdk agent endpoints
 
 Conclusion:

@@ -268,7 +268,7 @@ Shared backend policy:
 
 export async function printInteractiveMode(): Promise<void> {
   const config = await withLlmClient((client) => client.readConfig());
-  console.log(`cdk agent interactive
+  console.log(`cdk agent chat
 
 Config path:
   - ${relativeConfigPath()}

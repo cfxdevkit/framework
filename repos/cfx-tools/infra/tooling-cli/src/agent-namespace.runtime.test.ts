@@ -134,7 +134,7 @@ describe('agentToolingNamespace runtime flows', () => {
   });
 
   it('routes interactive mode through the pi runtime', async () => {
-    await agentToolingNamespace.run(['interactive', 'review']);
+    await agentToolingNamespace.run(['chat', 'review']);
 
     expect(piAgent.runPiInteractive).toHaveBeenCalledWith({ promptArgs: ['review'] });
     expect(prompts.select).not.toHaveBeenCalled();
@@ -145,7 +145,7 @@ describe('agentToolingNamespace runtime flows', () => {
     process.env.GITHUB_TOKEN = 'test-token';
 
     try {
-      await agentToolingNamespace.run(['interactive', '--github', 'review']);
+      await agentToolingNamespace.run(['chat', '--github', 'review']);
     } finally {
       if (previousToken === undefined) {
         delete process.env.GITHUB_TOKEN;
@@ -172,7 +172,7 @@ describe('agentToolingNamespace runtime flows', () => {
     prompts.input.mockResolvedValueOnce('review the docs backlog');
 
     await withMockedTty(async () => {
-      await agentToolingNamespace.run(['interactive']);
+      await agentToolingNamespace.run(['chat']);
     });
 
     expect(prompts.select).toHaveBeenNthCalledWith(
@@ -244,8 +244,8 @@ describe('agentToolingNamespace runtime flows', () => {
     try {
       await agentToolingNamespace.run(['endpoints']);
       expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('cdk agent endpoints'));
-      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('interactive --local'));
-      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('interactive --github'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('chat --local'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('chat --github'));
     } finally {
       logSpy.mockRestore();
     }

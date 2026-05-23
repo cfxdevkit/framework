@@ -199,16 +199,16 @@ export async function printAgentEndpoints(scope?: string): Promise<void> {
 Local endpoint (lemonade):
   - ${localNote}
   - default model: ${config.provider === 'github-models' ? 'auto' : (config.defaultModel ?? 'auto')}
-  - command: cdk agent ${prefix}interactive --local [prompt]
+  - command: cdk agent ${prefix}chat --local [prompt]
 
 GitHub endpoint (GitHub Models):
   - provider override: github-models
   - baseUrl: ${githubModelsEndpoint}
   - auth: ${githubAuth.note}
   - default model: ${config.githubModel ?? defaultGithubModel}
-  - command: cdk agent ${prefix}interactive --github [prompt]
+  - command: cdk agent ${prefix}chat --github [prompt]
 
 Next:
   - local planning: cdk agent check --quick
-  - cloud review / implementation: cdk agent interactive --github`);
+  - cloud review / implementation: cdk agent chat --github`);
 }

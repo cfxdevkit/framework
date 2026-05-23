@@ -240,7 +240,7 @@ Intent:
   - cdk llm model preserves the legacy interactive default-model picker
   - generic repo-aware prompts and named actions belong here
   - repository maintenance flows now live under cdk repo
-  - interactive and sessioned agent workflows live under cdk agent`);
+  - chat and sessioned agent workflows live under cdk agent`);
 }
 
 function printDeprecated(target: string): void {
