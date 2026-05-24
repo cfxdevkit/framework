@@ -33,6 +33,11 @@ async function runExploratoryReview(args: readonly string[]): Promise<void> {
 
 const docsEnrichmentCommands: readonly ToolingCommandDefinition[] = [
   {
+    name: 'generate',
+    description: 'Run deterministic doc generation (skeleton only, no LLM)',
+    usage: 'generate [all|api|readme|structure|packages]',
+  },
+  {
     name: 'enrich',
     description: 'Run docs enrichment workflows backed by the local LLM',
     usage: 'enrich [all|api|readme|packages|structure] [args]',
@@ -54,6 +59,9 @@ const helpText = `Usage: cdk docs <command> [args]
 
 Deterministic commands:
 ${docsToolingNamespace.commands.map((command) => `  ${command.usage ?? command.name}`).join('\n')}
+
+Generation (deterministic, idempotent):
+  generate [all|api|readme|structure|packages]
 
 Enrichment patterns:
   enrich [all|api|readme|packages|structure] [args]
@@ -90,6 +98,66 @@ export const rootDocsToolingNamespace: ToolingNamespaceDefinition = {
 
     if (isHelpToken(command)) {
       console.log(helpText);
+      return;
+    }
+
+    if (command === 'generate') {
+      const [target = 'all', ...forwardedArgs] = rest;
+      if (isHelpToken(target)) {
+        console.log(helpText);
+        return;
+      }
+      if (target === 'all') {
+        // Run all generate targets in deterministic order
+        const { runRepoCommand, renderRepoResult } = await import('./repo-check-runtime.js');
+        const generateAll: import('./repo-check-runtime.js').RepoCommandTarget[] = [
+          'generate-api',
+          'generate-readme',
+          'generate-structure',
+          'generate-unit-configs',
+        ];
+        for (const t of generateAll) {
+          const result = await runRepoCommand(
+            t,
+            forwardedArgs.filter((a) => a !== '--json'),
+          );
+          console.log(await renderRepoResult(result));
+          if ((result.exitCode ?? 0) !== 0) {
+            process.exitCode = result.exitCode;
+            return;
+          }
+        }
+        // Also sync package MDX stubs
+        await docsToolingNamespace.run(['sync', 'packages']);
+        return;
+      }
+
+      if (target === 'packages') {
+        await docsToolingNamespace.run(['sync', 'packages']);
+        return;
+      }
+
+      const singleTargetMap: Record<string, import('./repo-check-runtime.js').RepoCommandTarget> = {
+        api: 'generate-api',
+        readme: 'generate-readme',
+        structure: 'generate-structure',
+        'unit-configs': 'generate-unit-configs',
+      };
+      const mappedTarget = singleTargetMap[target];
+      if (!mappedTarget) {
+        console.error(
+          `Unknown generate target: ${target}. Valid: all|api|readme|structure|packages`,
+        );
+        process.exitCode = 1;
+        return;
+      }
+      const { runRepoCommand, renderRepoResult } = await import('./repo-check-runtime.js');
+      const result = await runRepoCommand(
+        mappedTarget,
+        forwardedArgs.filter((a) => a !== '--json'),
+      );
+      console.log(await renderRepoResult(result));
+      process.exitCode = result.exitCode ?? 0;
       return;
     }
 

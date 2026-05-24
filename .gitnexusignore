@@ -1,0 +1,21 @@
+# GitNexus ignore file — excludes paths from the knowledge graph index
+# Syntax: same as .gitignore (glob patterns, one per line)
+
+# Archived packages — no longer active, do not include in wiki modules
+repos/cfx-tools/infra/archive/
+repos/cfx-tools/packages/archive/
+
+# Build outputs and generated files — not meaningful for code analysis
+**/dist/
+**/.next/
+**/node_modules/
+**/coverage/
+**/.turbo/
+
+# Artifacts — LLM reports and generated docs artifacts
+artifacts/
+
+# Lock files — too noisy for the call graph
+**/pnpm-lock.yaml
+**/package-lock.json
+**/yarn.lock

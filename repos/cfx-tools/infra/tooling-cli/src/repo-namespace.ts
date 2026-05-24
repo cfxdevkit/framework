@@ -8,6 +8,7 @@ import {
   runRepoCheck,
   runRepoCommand,
 } from './repo-check-runtime.js';
+import { runRepoGenerate } from './repo-generate.js';
 import {
   listCandidateBranches,
   currentBranch as repoCurrentBranch,
@@ -16,11 +17,7 @@ import {
 import { renderRepoMergeResult } from './repo-merge-render.js';
 
 const repoCommands = [
-  {
-    name: 'build',
-    description: 'Run the Moon build across all packages',
-    usage: 'build [--json]',
-  },
+  { name: 'build', description: 'Run the Moon build across all packages', usage: 'build [--json]' },
   {
     name: 'run',
     description: 'Run any repo command with structured output',
@@ -40,7 +37,7 @@ const repoCommands = [
   {
     name: 'generate',
     description: 'Run deterministic repo reference document generators',
-    usage: 'generate <api|readme|structure|unit-configs> [--json]',
+    usage: 'generate <all|api|readme|structure|unit-configs> [--json]',
   },
   {
     name: 'arch-check',
@@ -148,25 +145,7 @@ async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
   }
 
   if (command === 'generate') {
-    while (rest[0] === '--') rest.shift();
-    const [target = 'help', ...forwardedArgs] = rest;
-    if (isHelpToken(target)) {
-      printRepoHelp();
-      return;
-    }
-    const jsonOutput = forwardedArgs.includes('--json');
-    const generateArgs = forwardedArgs.filter((a) => a !== '--json');
-    const generateCommandMap: Record<string, RepoCommandTarget> = {
-      api: 'generate-api',
-      readme: 'generate-readme',
-      structure: 'generate-structure',
-      'unit-configs': 'generate-unit-configs',
-    };
-    const generateTarget = generateCommandMap[target];
-    if (!generateTarget) throw new Error(`Unknown repo generate target: ${target}`);
-    const result = await runRepoCommand(generateTarget, generateArgs);
-    console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
-    process.exitCode = result.exitCode;
+    await runRepoGenerate(rest, printRepoHelp);
     return;
   }
 
@@ -222,6 +201,28 @@ async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
   printRepoHelp();
 }
 
+function printRepoHelp(): void {
+  console.log(`cdk repo
+
+Usage:
+  cdk repo build [--json]
+  cdk repo run <target> [args] [--json]
+  cdk repo check <validation|hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [--json]
+  cdk repo generate <all|api|readme|structure|unit-configs> [--json]
+  cdk repo arch-check [--json]
+  cdk repo merge [--base <branch>] [--dry-run] [--json] [branch...]
+  cdk repo units [list|show <preset>]
+  cdk repo [--scope <preset>] review
+  cdk repo [--scope <preset>] precommit [args]
+  cdk repo [--scope <preset>] commit [args]
+
+Notes:
+  - all check/generate/arch-check/run/build commands accept --json for structured output
+  - use repo units to discover the available session presets and their scoped agent overlays
+  - use --scope <preset> when review, precommit, or commit should honor a preset-specific overlay
+  - use cdk agent for direct PI sessions and provider/runtime administration`);
+}
+
 async function runRepoMerge(rawArgs: readonly string[]): Promise<void> {
   const args = [...rawArgs];
   while (args[0] === '--') args.shift();
@@ -243,28 +244,6 @@ async function runRepoMerge(rawArgs: readonly string[]): Promise<void> {
     console.log(renderRepoMergeResult(result));
   }
   process.exitCode = result.exitCode;
-}
-
-function printRepoHelp(): void {
-  console.log(`cdk repo
-
-Usage:
-  cdk repo build [--json]
-  cdk repo run <target> [args] [--json]
-  cdk repo check <validation|hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [--json]
-  cdk repo generate <api|readme|structure|unit-configs> [--json]
-  cdk repo arch-check [--json]
-  cdk repo merge [--base <branch>] [--dry-run] [--json] [branch...]
-  cdk repo units [list|show <preset>]
-  cdk repo [--scope <preset>] review
-  cdk repo [--scope <preset>] precommit [args]
-  cdk repo [--scope <preset>] commit [args]
-
-Notes:
-  - all check/generate/arch-check/run/build commands accept --json for structured output
-  - use repo units to discover the available session presets and their scoped agent overlays
-  - use --scope <preset> when review, precommit, or commit should honor a preset-specific overlay
-  - use cdk agent for direct PI sessions and provider/runtime administration`);
 }
 
 function printMonorepoUnits(): void {
