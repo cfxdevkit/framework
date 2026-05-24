@@ -33,7 +33,8 @@ export async function generateCommitMessage(preflightCtx, changesetPlan, flags) 
     flags,
     systemPrompt,
     userPrompt,
-    maxTokens: flags.quick ? 512 : 1400,
+    // maxTokens intentionally omitted — resolveMaxTokens derives budget from model
+    // context window via tokenBudget config (supports thinking models like Qwen3.5-122B)
   });
   try {
     return { response, commit: validateCommitJson(response.content) };
@@ -50,7 +51,8 @@ export async function generateCommitMessage(preflightCtx, changesetPlan, flags) 
         '',
         userPrompt.slice(0, flags.quick ? 8000 : 30000),
       ].join('\n'),
-      maxTokens: flags.quick ? 512 : 1200,
+      maxTokens: flags.quick ? 2048 : undefined,
+      // no-thinking retry: keep quick budget small; full mode defers to tokenBudget
     });
     try {
       return { response: retryResponse, commit: validateCommitJson(retryResponse.content) };

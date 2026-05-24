@@ -36,12 +36,20 @@ export class LemonadeProvider implements LlmProvider {
     if (!baseUrl) throw new Error('No Lemonade base URL configured.');
     for (const path of chatPaths) {
       for (let retry = 0; retry < 2; retry++) {
+        // When the previous attempt returned 200 + empty body the model is still
+        // loading weights. Wait before retrying so it can finish initialising.
+        const lastAttempt = attempts[attempts.length - 1];
+        if (lastAttempt?.ok && lastAttempt?.empty) {
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
         const content = await postChatCompletion({
           baseUrl,
           chatPath: path,
           model,
           messages,
-          opts,
+          opts: chosen?.maxContextWindow
+            ? { ...opts, modelContextWindow: opts.modelContextWindow ?? chosen.maxContextWindow }
+            : opts,
           attempts,
         });
         if (content !== undefined) return content;
@@ -102,15 +110,20 @@ export class LiteLLMProvider implements LlmProvider {
     }
     const attempts: CompletionAttemptState[] = [];
     const models = await this.discoverModels();
-    const model =
-      opts.model ?? modelIdentifier(this.chooseModel(models, this.defaultModel), this.defaultModel);
+    const chosenLiteLlm = this.chooseModel(models, this.defaultModel);
+    const model = opts.model ?? modelIdentifier(chosenLiteLlm, this.defaultModel);
     for (let retry = 0; retry < 2; retry++) {
       const content = await postChatCompletion({
         baseUrl: this.baseUrl,
         chatPath: 'chat/completions',
         model,
         messages,
-        opts,
+        opts: chosenLiteLlm?.maxContextWindow
+          ? {
+              ...opts,
+              modelContextWindow: opts.modelContextWindow ?? chosenLiteLlm.maxContextWindow,
+            }
+          : opts,
         attempts,
         headers: this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : undefined,
       });
@@ -162,15 +175,17 @@ export class OpenAICompatProvider implements LlmProvider {
     }
     const attempts: CompletionAttemptState[] = [];
     const models = await this.discoverModels();
-    const model =
-      opts.model ?? modelIdentifier(this.chooseModel(models, this.defaultModel), this.defaultModel);
+    const chosenOai = this.chooseModel(models, this.defaultModel);
+    const model = opts.model ?? modelIdentifier(chosenOai, this.defaultModel);
     for (let retry = 0; retry < 2; retry++) {
       const content = await postChatCompletion({
         baseUrl: this.baseUrl,
         chatPath: 'chat/completions',
         model,
         messages,
-        opts,
+        opts: chosenOai?.maxContextWindow
+          ? { ...opts, modelContextWindow: opts.modelContextWindow ?? chosenOai.maxContextWindow }
+          : opts,
         attempts,
         headers: { authorization: `Bearer ${this.apiKey}` },
       });

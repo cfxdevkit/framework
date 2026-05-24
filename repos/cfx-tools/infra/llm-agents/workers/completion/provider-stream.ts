@@ -1,11 +1,41 @@
 import { isRecord } from './guards.ts';
-import { extractTextNode, formatFetchError, joinEndpoint } from './provider-meta.ts';
-import type {
-  ChatMessage,
-  CompletionAttemptState,
-  CompletionOptions,
-  CompletionProgressEvent,
-} from './types.ts';
+import { formatFetchError, joinEndpoint } from './provider-meta.ts';
+import {
+  applyChatCompletionChunk,
+  emitProgress,
+  extractAssistantText,
+} from './provider-stream-parse.ts';
+import type { ChatMessage, CompletionAttemptState, CompletionOptions } from './types.ts';
+
+/**
+ * Compute max_tokens from opts.tokenBudget + model context window.
+ *
+ * Resolution order:
+ *  1. opts.maxTokens if explicitly set
+ *  2. ctx * contextFraction, optionally capped (from tokenBudget)
+ *  3. tokenBudget.cloudFallback or 4096 when ctx is unknown
+ *
+ * For local hardware (Strix Halo etc.) set tokenBudget.cap = null and
+ * contextFraction close to 1.0 in providers.json.
+ * Cloud providers fall back to cloudFallback (default 4096) since they
+ * rarely expose a context window via discovery.
+ */
+function resolveMaxTokens(opts: CompletionOptions | undefined): number {
+  if (opts?.maxTokens !== undefined) return opts.maxTokens;
+  const budget = opts?.tokenBudget;
+  const ctx = opts?.modelContextWindow;
+  if (ctx && ctx > 0) {
+    const fraction = budget?.contextFraction ?? 0.75;
+    const computed = Math.floor(ctx * fraction);
+    const cap = budget?.cap; // null → no cap, undefined → use default code cap
+    if (cap === null) return computed; // explicitly uncapped
+    if (cap !== undefined) return Math.min(computed, cap); // explicit cap
+    return Math.min(computed, 32768); // default fallback cap for unset configs
+  }
+  // No context window — cloud model or unknown provider
+  if (opts?.quick) return budget?.quick ?? 512;
+  return budget?.cloudFallback ?? 4096;
+}
 
 export async function postChatCompletion(params: {
   readonly baseUrl: string;
@@ -37,7 +67,7 @@ export async function postChatCompletion(params: {
         messages: params.messages,
         temperature: params.opts?.temperature ?? 0.2,
         stream: Boolean(params.opts?.onProgress),
-        max_tokens: params.opts?.maxTokens ?? (params.opts?.quick ? 256 : 1600),
+        max_tokens: resolveMaxTokens(params.opts),
         ...(typeof params.opts?.minContextTokens === 'number'
           ? { n_ctx: Math.max(0, Math.trunc(params.opts.minContextTokens)) }
           : {}),
@@ -95,13 +125,29 @@ async function readStreamedChatCompletion(
   let pending = '';
   let content = '';
   let reasoning = '';
+  let peekedForErrorEnvelope = false;
   let finishReason: string | undefined;
+  let serverTimings:
+    | { promptTokens: number; completionTokens: number; tps: number; pp: number }
+    | undefined;
   let lastPhase: 'headers' | 'reasoning' | 'content' = 'headers';
   let lastHeartbeatAt = params.startedAt;
 
   while (true) {
     const { done, value } = await reader.read();
     pending += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+
+    // Detect Lemonade error envelope sent as a 200 stream body
+    // e.g. {"error":{"message":"No model loaded:...","type":"model_not_loaded"}}
+    if (!peekedForErrorEnvelope && pending.trim().startsWith('{')) {
+      peekedForErrorEnvelope = true;
+      try {
+        const peeked = JSON.parse(pending.trim()) as Record<string, unknown>;
+        if (isRecord(peeked.error)) return ''; // treat as empty — triggers retry
+      } catch {
+        // not complete JSON yet, continue streaming
+      }
+    }
 
     const blocks = pending.split(/\r?\n\r?\n/);
     pending = blocks.pop() ?? '';
@@ -110,6 +156,7 @@ async function readStreamedChatCompletion(
       content = result.content;
       reasoning = result.reasoning;
       finishReason = result.finishReason;
+      if (result.timings) serverTimings = result.timings;
 
       if (result.reasoningChanged && lastPhase !== 'reasoning') {
         lastPhase = 'reasoning';
@@ -160,6 +207,7 @@ async function readStreamedChatCompletion(
     content = result.content;
     reasoning = result.reasoning;
     finishReason = result.finishReason;
+    if (result.timings) serverTimings = result.timings;
   }
 
   emitProgress(params.opts, {
@@ -171,82 +219,8 @@ async function readStreamedChatCompletion(
     reasoningChars: reasoning.length,
     contentChars: content.length,
     finishReason,
+    ...(serverTimings ?? {}),
   });
 
   return content;
-}
-
-function applyChatCompletionChunk(
-  block: string,
-  state: { content: string; reasoning: string; finishReason?: string },
-): {
-  content: string;
-  reasoning: string;
-  finishReason?: string;
-  contentChanged: boolean;
-  reasoningChanged: boolean;
-} {
-  let content = state.content;
-  let reasoning = state.reasoning;
-  let finishReason = state.finishReason;
-  let contentChanged = false;
-  let reasoningChanged = false;
-
-  for (const line of block.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed.startsWith('data:')) continue;
-    const payload = trimmed.slice(5).trim();
-    if (!payload || payload === '[DONE]') continue;
-    try {
-      const parsed = JSON.parse(payload);
-      const choice =
-        isRecord(parsed) && Array.isArray(parsed.choices) ? parsed.choices[0] : undefined;
-      if (!isRecord(choice)) continue;
-      if (typeof choice.finish_reason === 'string') finishReason = choice.finish_reason;
-      const delta = isRecord(choice.delta) ? choice.delta : undefined;
-      const contentDelta = extractTextNode(delta?.content);
-      const reasoningDelta = extractTextNode(delta?.reasoning_content);
-      if (reasoningDelta) {
-        reasoning += reasoningDelta;
-        reasoningChanged = true;
-      }
-      if (contentDelta) {
-        content += contentDelta;
-        contentChanged = true;
-      }
-    } catch {
-      // ignore malformed chunks
-    }
-  }
-
-  return { content, reasoning, finishReason, contentChanged, reasoningChanged };
-}
-
-function emitProgress(opts: CompletionOptions | undefined, event: CompletionProgressEvent): void {
-  try {
-    opts?.onProgress?.(event);
-  } catch {
-    // progress reporting must not break completions
-  }
-}
-
-function extractAssistantText(text: string): string {
-  try {
-    const parsed = JSON.parse(text);
-    if (!isRecord(parsed) || !Array.isArray(parsed.choices)) {
-      return text.trim();
-    }
-    const first = parsed.choices[0];
-    if (!isRecord(first)) {
-      return text.trim();
-    }
-    const message = isRecord(first.message) ? first.message.content : undefined;
-    const candidate = message ?? first.text ?? parsed.message ?? parsed.content;
-    const extracted = extractTextNode(candidate);
-    if (extracted.trim()) return extracted.trim();
-    if (candidate !== undefined) return '';
-    return text.trim();
-  } catch {
-    return text.trim();
-  }
 }

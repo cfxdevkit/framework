@@ -8,3 +8,18 @@ fileGroups:
     - 'src/**/*'
     - 'package.json'
     - 'tsconfig*.json'
+
+tasks:
+  build:
+    script: 'pnpm exec vite build && ../../../../.devcontainer/scripts/install-cdk.sh'
+    deps:
+      - 'cdk-repo-check:build'
+      - 'llm-agents:build'
+    inputs:
+      - '@group(sources)'
+    outputs:
+      - 'dist'
+    options:
+      mergeArgs: 'replace'
+      mergeOutputs: 'replace'
+      cache: true

@@ -49,6 +49,8 @@ export function parseModels(text: string, baseUrl?: string): readonly LlmModel[]
         size: typeof model.size === 'number' ? model.size : undefined,
         suggested: model.suggested === true,
         baseUrl,
+        maxContextWindow:
+          typeof model.max_context_window === 'number' ? model.max_context_window : undefined,
       }))
       .filter((model) => model.id || model.checkpoint);
   } catch {

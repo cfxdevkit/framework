@@ -15,6 +15,58 @@ export interface LlmModel {
   readonly size?: number;
   readonly suggested?: boolean;
   readonly baseUrl?: string;
+  /** Maximum context window advertised by the model server (tokens). */
+  readonly maxContextWindow?: number;
+}
+
+/**
+ * Token budget configuration. Controls how max_tokens is computed
+ * when not explicitly set by the caller.
+ *
+ * For local hardware with large unified memory, set contextFraction close
+ * to 1.0 and cap to null. For cloud providers, keep conservative defaults.
+ */
+/**
+ * Informational catalog entry for a known model.
+ * Not used for runtime routing — metadata only for documentation and tooling.
+ */
+export interface LlmModelCatalogEntry {
+  /** Lemonade model ID as returned by the discovery API. */
+  readonly id: string;
+  /** Task tier: 1 = lightweight/hot, 2 = coding/docs, 3 = high-reasoning, or 'unassigned'. */
+  readonly tier: 1 | 2 | 3 | 'unassigned';
+  /** One-line role description. */
+  readonly role: string;
+  /** Actions from the `actions` map assigned to this model. */
+  readonly assignedActions?: readonly string[];
+  /** Context window in tokens as reported by the model server. */
+  readonly contextWindow?: number;
+  /** Approximate model size in GB. */
+  readonly sizeGb?: number;
+  /** Model labels from the discovery API. */
+  readonly labels?: readonly string[];
+}
+
+export interface LlmTokenBudget {
+  /**
+   * Fraction of the model’s context window to use as max_tokens budget.
+   * Applied when the model reports a context window (e.g. Lemonade models).
+   * Range: 0.0–1.0.  Default: 0.75.
+   */
+  readonly contextFraction?: number;
+  /**
+   * Hard cap on the computed budget (tokens).
+   * null or absent = no cap (recommended for local hardware).
+   * Set to e.g. 8192 for cloud providers to avoid runaway costs.
+   */
+  readonly cap?: number | null;
+  /** Budget for quick-mode calls (--quick flag). Default: 512. */
+  readonly quick?: number;
+  /**
+   * Fallback budget when the model has no context window info
+   * (typical for cloud/gateway-proxied models). Default: 4096.
+   */
+  readonly cloudFallback?: number;
 }
 
 export interface CompletionProgressEvent {
@@ -26,6 +78,13 @@ export interface CompletionProgressEvent {
   readonly contentChars?: number;
   readonly reasoningChars?: number;
   readonly finishReason?: string;
+  /** Token counts and speed from the server timing payload (phase: 'complete' only). */
+  readonly promptTokens?: number;
+  readonly completionTokens?: number;
+  /** Generation speed — predicted tokens per second. */
+  readonly tps?: number;
+  /** Prompt-processing speed — prompt tokens per second. */
+  readonly pp?: number;
 }
 
 export interface CompletionOptions {
@@ -33,6 +92,11 @@ export interface CompletionOptions {
   readonly model?: string;
   readonly temperature?: number;
   readonly maxTokens?: number;
+  /** Context window of the chosen model (tokens). Used to compute a sensible
+   * max_tokens budget when maxTokens is not set explicitly. */
+  readonly modelContextWindow?: number;
+  /** Token budget policy injected from the active provider config. */
+  readonly tokenBudget?: LlmTokenBudget;
   readonly minContextTokens?: number;
   readonly quick?: boolean;
   readonly timeoutMs?: number;
@@ -88,6 +152,13 @@ export interface LlmConfig {
   providerProfiles?: Record<string, LlmProviderProfile>;
   actionPolicies?: Record<string, LlmActionPolicy>;
   githubModel?: string | null;
+  /** Token budget policy for this provider configuration. */
+  tokenBudget?: LlmTokenBudget;
+  /**
+   * Informational model catalog. Not used for routing — metadata for docs and tooling.
+   * See `.pi/SETUP.md` for the human-readable reference.
+   */
+  catalog?: readonly LlmModelCatalogEntry[];
   harness: LlmHarnessConfig;
 }
 
@@ -126,7 +197,7 @@ export type CompleteAgentRequest = {
   flags: { model?: string; noThinking?: boolean };
   systemPrompt: string;
   userPrompt: string;
-  maxTokens: number;
+  maxTokens?: number;
   onProgress?: (event: CompletionProgressEvent) => void;
 };
 

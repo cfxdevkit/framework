@@ -8,6 +8,7 @@ export type {
   RepoCheckUnitConfigsResult,
   RepoCommandResult,
   RepoCommandTarget,
+  RepoResultRenderer,
   RepoStructuredResult,
 } from './repo-check.js';
-export { runRepoCheck, runRepoCommand } from './repo-check.js';
+export { defaultRenderer, runRepoCheck, runRepoCommand } from './repo-check.js';

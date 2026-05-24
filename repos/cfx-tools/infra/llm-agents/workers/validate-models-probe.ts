@@ -9,6 +9,12 @@ export type ValidationMetrics = {
   finishReason: string | null;
   contentChars: number;
   reasoningChars: number;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  /** Generation speed in tokens/second (from server timings). */
+  tps: number | null;
+  /** Prompt-processing speed in tokens/second (from server timings). */
+  pp: number | null;
 };
 
 export type JsonValidation = {
@@ -44,6 +50,7 @@ export async function runValidationProbe(params: {
       model: params.model,
       temperature: 0,
       maxTokens: params.maxTokens,
+      tokenBudget: params.config.tokenBudget,
       quick: params.quick,
       timeoutMs: params.config.requestTimeoutMs,
       enableThinking: params.enableThinking,
@@ -54,30 +61,16 @@ export async function runValidationProbe(params: {
     const content = response.trim();
     const probe: ValidationProbeResult = {
       ok: true,
-      headersMs: metrics.headersMs,
-      firstReasoningMs: metrics.firstReasoningMs,
-      firstContentMs: metrics.firstContentMs,
+      ...metrics,
       firstResponseMs: firstResponseMs(metrics),
-      completeMs: metrics.completeMs,
-      reasoningObserved: metrics.reasoningObserved,
-      finishReason: metrics.finishReason,
-      contentChars: metrics.contentChars,
-      reasoningChars: metrics.reasoningChars,
       contentPreview: content.slice(0, 80),
     };
     return params.validate ? { ...probe, ...params.validate(content) } : probe;
   } catch (error) {
     return {
       ok: false,
-      headersMs: metrics.headersMs,
-      firstReasoningMs: metrics.firstReasoningMs,
-      firstContentMs: metrics.firstContentMs,
+      ...metrics,
       firstResponseMs: firstResponseMs(metrics),
-      completeMs: metrics.completeMs,
-      reasoningObserved: metrics.reasoningObserved,
-      finishReason: metrics.finishReason,
-      contentChars: metrics.contentChars,
-      reasoningChars: metrics.reasoningChars,
       error: error instanceof Error ? error.message : String(error),
     };
   }
@@ -93,6 +86,10 @@ function createValidationMetrics(): ValidationMetrics {
     finishReason: null,
     contentChars: 0,
     reasoningChars: 0,
+    promptTokens: null,
+    completionTokens: null,
+    tps: null,
+    pp: null,
   };
 }
 
@@ -118,6 +115,10 @@ function applyValidationProgress(metrics: ValidationMetrics, event: CompletionPr
     metrics.finishReason = event.finishReason ?? metrics.finishReason;
     metrics.reasoningChars = event.reasoningChars ?? metrics.reasoningChars;
     metrics.contentChars = event.contentChars ?? metrics.contentChars;
+    if (event.promptTokens !== undefined) metrics.promptTokens = event.promptTokens;
+    if (event.completionTokens !== undefined) metrics.completionTokens = event.completionTokens;
+    if (event.tps !== undefined) metrics.tps = event.tps;
+    if (event.pp !== undefined) metrics.pp = event.pp;
   }
 }
 

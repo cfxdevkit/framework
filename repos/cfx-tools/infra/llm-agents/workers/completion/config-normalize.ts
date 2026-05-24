@@ -1,5 +1,5 @@
 import { isRecord, isStringRecord } from './guards.ts';
-import type { LlmConfig, LlmProviderType } from './types.ts';
+import type { LlmConfig, LlmModelCatalogEntry, LlmProviderType, LlmTokenBudget } from './types.ts';
 
 export const DEFAULT_REQUEST_TIMEOUT_MS = 600000;
 
@@ -13,6 +13,14 @@ export function defaultConfig(): LlmConfig {
     actions: {},
     providerProfiles: {},
     actionPolicies: {},
+    tokenBudget: {
+      // Conservative defaults — generous local budgets are set in providers.json
+      contextFraction: 0.75,
+      cap: 32768,
+      quick: 512,
+      cloudFallback: 4096,
+    },
+    catalog: [],
     harness: {
       version: 1,
       defaultMode: 'deterministic',
@@ -50,6 +58,10 @@ export function normalizeConfig(value: unknown): LlmConfig {
       : defaults.actions,
     providerProfiles: mergeProviderProfiles(defaults.providerProfiles, raw.providerProfiles),
     actionPolicies: mergeActionPolicies(defaults.actionPolicies, raw.actionPolicies),
+    tokenBudget: mergeTokenBudget(defaults.tokenBudget, raw.tokenBudget),
+    catalog: Array.isArray(raw.catalog)
+      ? (raw.catalog as LlmModelCatalogEntry[])
+      : defaults.catalog,
     harness: {
       ...defaults.harness,
       ...rawHarness,
@@ -90,6 +102,10 @@ export function mergeConfigLayers(baseConfig: unknown, scopedConfig: unknown): L
     actions: isRecord(scoped.actions) ? { ...base.actions, ...scoped.actions } : base.actions,
     providerProfiles: mergeProviderProfiles(base.providerProfiles, scoped.providerProfiles),
     actionPolicies: mergeActionPolicies(base.actionPolicies, scoped.actionPolicies),
+    tokenBudget: mergeTokenBudget(base.tokenBudget, scoped.tokenBudget),
+    catalog: Array.isArray(scoped.catalog)
+      ? (scoped.catalog as LlmModelCatalogEntry[])
+      : base.catalog,
     harness: isRecord(scoped.harness)
       ? {
           ...base.harness,
@@ -233,4 +249,26 @@ function normalizeProviderType(value: unknown): LlmProviderType | null {
     return value;
   }
   return null;
+}
+
+function mergeTokenBudget(
+  base: LlmTokenBudget | undefined,
+  override: unknown,
+): LlmTokenBudget | undefined {
+  if (!isRecord(override)) return base;
+  return {
+    ...base,
+    ...(typeof override.contextFraction === 'number'
+      ? { contextFraction: override.contextFraction }
+      : {}),
+    ...(override.cap === null
+      ? { cap: null }
+      : typeof override.cap === 'number'
+        ? { cap: override.cap }
+        : {}),
+    ...(typeof override.quick === 'number' ? { quick: override.quick } : {}),
+    ...(typeof override.cloudFallback === 'number'
+      ? { cloudFallback: override.cloudFallback }
+      : {}),
+  };
 }

@@ -9,7 +9,8 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "build": "moon run :build",
+    "build": "moon run :build --concurrency 3",
+    "cdk:refresh": ".devcontainer/scripts/install-cdk.sh",
     "test": "moon run :test --concurrency 1",
     "test:cover": "pnpm -r --if-present test:coverage",
     "lint": "moon run :lint",
@@ -57,6 +58,7 @@
     "cdk": "pnpm run tooling --",
     "repo": "pnpm run cdk -- repo",
     "repo:merge": "pnpm run cdk -- repo merge",
+    "repo:build": "pnpm run cdk -- repo build",
     "repo:check": "pnpm run cdk -- repo check",
     "repo:generate": "pnpm run cdk -- repo generate",
     "repo:arch-check": "pnpm run cdk -- repo arch-check",

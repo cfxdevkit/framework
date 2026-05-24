@@ -1,4 +1,3 @@
-import { EventEmitter } from 'node:events';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const llmAgents = vi.hoisted(() => ({
@@ -7,7 +6,70 @@ const llmAgents = vi.hoisted(() => ({
   runReviewAgent: vi.fn(async () => undefined),
 }));
 
-const spawnMock = vi.hoisted(() => vi.fn());
+const repoCheckMocks = vi.hoisted(() => ({
+  runRepoCheck: vi.fn(async (_target: string, _args: string[]) => ({
+    kind: 'repo-structured',
+    command: {
+      namespace: 'repo',
+      action: 'check',
+      target: 'hotspots',
+      script: 'check:hotspots',
+      args: [],
+      outputMode: 'text',
+    },
+    context: {
+      workspaceRoot: '.',
+      requestedFrom: '.',
+      metadataRoot: 'artifacts/llm/repo-check',
+      generatedAt: new Date().toISOString(),
+      gitNexus: null,
+    },
+    artifacts: {
+      reportPath: 'artifacts/llm/repo-check/checks/hotspots.json',
+      workspaceNodePath: '',
+    },
+    status: 'ok',
+    exitCode: 0,
+    summary: { scannedFiles: 0, hardViolations: 0, softWarnings: 0 },
+    report: {
+      policy: {
+        source: 'test',
+        softFileLineLimit: 250,
+        hardFileLineLimit: 300,
+        churnWindow: '90 days ago',
+      },
+      hotspots: [],
+      hardViolations: [],
+      softWarnings: [],
+    },
+  })),
+  runRepoCommand: vi.fn(async (_target: string, _args: string[]) => ({
+    kind: 'repo-structured',
+    command: {
+      namespace: 'repo',
+      action: 'command',
+      target: 'lint',
+      script: 'lint',
+      args: [],
+      outputMode: 'text',
+    },
+    context: {
+      workspaceRoot: '.',
+      requestedFrom: '.',
+      metadataRoot: 'artifacts/llm/repo-check',
+      generatedAt: new Date().toISOString(),
+      gitNexus: null,
+    },
+    artifacts: { reportPath: 'artifacts/llm/repo-check/commands/lint.json', workspaceNodePath: '' },
+    status: 'ok',
+    exitCode: 0,
+    summary: { durationMs: 100, stdoutLineCount: 1, stderrLineCount: 0 },
+    result: { stdoutTail: ['ok'], stderrTail: [] },
+  })),
+  renderRepoResult: vi.fn(async (_result: unknown, _format: string) => 'ok'),
+}));
+
+vi.mock('./repo-check-runtime.js', () => repoCheckMocks);
 
 vi.mock('./agent-runtime.js', async () => {
   const actual = await vi.importActual<typeof import('./agent-runtime.js')>('./agent-runtime.js');
@@ -36,18 +98,7 @@ vi.mock('./agent-runtime.js', async () => {
   };
 });
 
-vi.mock('node:child_process', () => ({
-  spawn: spawnMock,
-  execFile: vi.fn(),
-}));
-
 import { repoToolingNamespace } from './repo-namespace.js';
-
-function createChild(exitCode = 0): EventEmitter {
-  const child = new EventEmitter();
-  queueMicrotask(() => child.emit('exit', exitCode, null));
-  return child;
-}
 
 describe('repoToolingNamespace', () => {
   beforeEach(() => {
@@ -55,8 +106,9 @@ describe('repoToolingNamespace', () => {
     llmAgents.runCommit.mockClear();
     llmAgents.runPrecommit.mockClear();
     llmAgents.runReviewAgent.mockClear();
-    spawnMock.mockReset();
-    spawnMock.mockImplementation(() => createChild());
+    repoCheckMocks.runRepoCheck.mockClear();
+    repoCheckMocks.runRepoCommand.mockClear();
+    repoCheckMocks.renderRepoResult.mockClear();
   });
 
   it('prints repo help', async () => {
@@ -65,41 +117,51 @@ describe('repoToolingNamespace', () => {
     await repoToolingNamespace.run(['help']);
 
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('cdk repo'));
-    expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'check <hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval>',
-      ),
-    );
+    // New surface: build + run are top-level commands
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('cdk repo build'));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('cdk repo run'));
   });
 
-  it('routes check commands through root scripts', async () => {
+  it('routes hotspot checks through the structured layer', async () => {
     await repoToolingNamespace.run(['check', 'hotspots']);
 
-    expect(spawnMock).toHaveBeenCalledWith(
-      'pnpm',
-      ['run', 'check:hotspots'],
-      expect.objectContaining({ stdio: 'inherit' }),
-    );
+    expect(repoCheckMocks.runRepoCheck).toHaveBeenCalledWith('hotspots', []);
   });
 
-  it('routes kebab-group checks through the root script', async () => {
+  it('routes kebab-group checks through the structured layer', async () => {
     await repoToolingNamespace.run(['check', 'kebab-groups']);
 
-    expect(spawnMock).toHaveBeenCalledWith(
-      'pnpm',
-      ['run', 'check:kebab-groups'],
-      expect.objectContaining({ stdio: 'inherit' }),
-    );
+    expect(repoCheckMocks.runRepoCheck).toHaveBeenCalledWith('kebab-groups', []);
   });
 
-  it('routes unit-config checks through the root script', async () => {
+  it('routes unit-config checks through the structured layer', async () => {
     await repoToolingNamespace.run(['check', 'unit-configs']);
 
-    expect(spawnMock).toHaveBeenCalledWith(
-      'pnpm',
-      ['run', 'check:unit-configs'],
-      expect.objectContaining({ stdio: 'inherit' }),
-    );
+    expect(repoCheckMocks.runRepoCheck).toHaveBeenCalledWith('unit-configs', []);
+  });
+
+  it('routes docs check through runRepoCommand', async () => {
+    await repoToolingNamespace.run(['check', 'docs']);
+
+    expect(repoCheckMocks.runRepoCommand).toHaveBeenCalledWith('check-docs', []);
+  });
+
+  it('routes arch-check through runRepoCommand', async () => {
+    await repoToolingNamespace.run(['arch-check']);
+
+    expect(repoCheckMocks.runRepoCommand).toHaveBeenCalledWith('arch-check', []);
+  });
+
+  it('routes cdk repo run through runRepoCommand', async () => {
+    await repoToolingNamespace.run(['run', 'lint']);
+
+    expect(repoCheckMocks.runRepoCommand).toHaveBeenCalledWith('lint', []);
+  });
+
+  it('routes build through runRepoCommand', async () => {
+    await repoToolingNamespace.run(['build']);
+
+    expect(repoCheckMocks.runRepoCommand).toHaveBeenCalledWith('build', []);
   });
 
   it('routes review through the current llm-agents review worker', async () => {
@@ -124,7 +186,6 @@ describe('repoToolingNamespace', () => {
   });
 
   it('routes scoped precommit through the selected unit overlay', async () => {
-    // Ensure env var is clean before test
     delete process.env.CFXDEVKIT_LLM_CONFIG_PATH;
 
     llmAgents.runPrecommit.mockImplementationOnce(async () => {

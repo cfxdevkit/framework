@@ -125,6 +125,7 @@ type LlmAgentsModule = {
   readonly runAction: (args: readonly string[]) => Promise<unknown>;
   readonly runAll: () => Promise<unknown>;
   readonly runAgentCheck: (args: readonly string[]) => Promise<unknown>;
+  readonly runAgentSmoke: (args: readonly string[]) => Promise<unknown>;
   readonly runCommit: (args: readonly string[]) => Promise<unknown>;
   readonly runDocsApi: (args: readonly string[]) => Promise<unknown>;
   readonly runDocsApiProbe: (args: readonly string[]) => Promise<unknown>;

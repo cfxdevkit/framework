@@ -84,7 +84,7 @@ export function summarizeValidationResult(
   } & ValidationProbeResult,
 ): string {
   if (!result.ok) return `[error] ${result.model}: ${result.error}`;
-  return [
+  const parts = [
     `[ok] ${result.model}`,
     `headers=${result.headersMs ?? 'n/a'}ms`,
     `firstReasoning=${result.firstReasoningMs ?? 'n/a'}ms`,
@@ -92,7 +92,14 @@ export function summarizeValidationResult(
     `complete=${result.completeMs ?? 'n/a'}ms`,
     `reasoning=${result.reasoningObserved ? 'yes' : 'no'}`,
     `finish=${result.finishReason ?? 'unknown'}`,
-  ].join(', ');
+  ];
+  if (result.tps !== null && result.tps !== undefined) parts.push(`tps=${result.tps}`);
+  if (result.pp !== null && result.pp !== undefined) parts.push(`pp=${result.pp}`);
+  if (result.promptTokens !== null && result.promptTokens !== undefined)
+    parts.push(`prompt=${result.promptTokens}tok`);
+  if (result.completionTokens !== null && result.completionTokens !== undefined)
+    parts.push(`completion=${result.completionTokens}tok`);
+  return parts.join(', ');
 }
 
 export function validateJsonProbe(content: string): JsonValidation {

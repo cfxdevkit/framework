@@ -29,7 +29,7 @@ Commands:
     --agent <direct>             Use the resolved LLM provider directly
     --model <id>                 Override LLM model
   commit [flags] [prompt]        Full commit pipeline:
-                                   1. Quality gates (lint, typecheck, tests; opt-in: build)
+                                   1. Quality gates (lint, typecheck, tests, build)
                                    2. Preflight (gitnexus + git + review)
                                    3. Detect changed scopes
                                    4. Check package release intent and Changeset coverage
@@ -46,8 +46,9 @@ Commands:
     --changeset-bump <level>     Force generated Changeset bump: patch, minor, or major
     --no-changeset               Alias for intentionally committing without a generated Changeset
     --skip-tests                 Skip Moon test suite in quality gates
-    --with-build                 Also run Moon build in quality gates
     --with-tests                 Explicitly keep Moon test suite enabled (default)
+    --skip-build                 Skip Moon build suite in quality gates
+    --with-build                 Explicitly keep Moon build suite enabled (default)
     --agent <direct>              Use the resolved LLM provider directly
     --quick                      Short LLM calls (faster, less detail)
     --model <id>                 Override LLM model

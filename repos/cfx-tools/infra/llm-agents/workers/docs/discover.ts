@@ -1,6 +1,6 @@
 import { readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { isDocumentationUpkeepPath } from '@cfxdevkit/arch-check';
+import { isDocumentationUpkeepPath } from '@cfxdevkit/cdk-repo-check';
 import { readContextFile } from '../completion/index.ts';
 import { root } from '../shared/index.ts';
 import { unique } from '../shared/logging.ts';

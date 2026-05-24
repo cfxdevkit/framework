@@ -28,6 +28,7 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
+    "@cfxdevkit/cli": "workspace:*",
     "@cfxdevkit/llm-agents": "workspace:*",
     "@earendil-works/pi-coding-agent": "^0.75.4",
     "@earendil-works/pi-tui": "^0.75.4",

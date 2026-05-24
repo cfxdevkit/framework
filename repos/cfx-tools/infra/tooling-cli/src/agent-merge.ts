@@ -8,12 +8,13 @@ import {
   inspectMergeCandidate,
   listCandidateBranches,
   loadPullRequestState,
-  renderRepoMergeResult,
   runDeterministicMerge,
 } from './repo-merge.js';
+import { renderRepoMergeResult } from './repo-merge-render.js';
 
 export type { AgentMergeCandidate, RepoMergeResult } from './repo-merge.js';
-export { renderRepoMergeResult, runDeterministicMerge } from './repo-merge.js';
+export { runDeterministicMerge } from './repo-merge.js';
+export { renderRepoMergeResult } from './repo-merge-render.js';
 
 const execFileAsync = promisify(execFile);
 

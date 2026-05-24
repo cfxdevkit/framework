@@ -59,47 +59,6 @@ export type RepoMergeResult = {
   results: RepoMergeCandidateResult[];
 };
 
-const outcomeIcon: Record<RepoMergeCandidateResult['outcome'], string> = {
-  merged: '✓',
-  'already-merged': '─',
-  'skipped-conflict': '✗',
-  'skipped-no-pr': '?',
-  failed: '!',
-  'dry-run-clean': '○',
-  'dry-run-conflict': '✗',
-};
-
-export function renderRepoMergeResult(result: RepoMergeResult): string {
-  const lines = [
-    'cdk repo merge',
-    '',
-    `Status:         ${result.status.toUpperCase()} (exit ${result.exitCode})`,
-    `Base branch:    ${result.baseBranch}`,
-    `Dry run:        ${result.dryRun ? 'yes' : 'no'}`,
-    `Total:          ${result.summary.total}`,
-    `Merged:         ${result.summary.merged}`,
-    `Already merged: ${result.summary.alreadyMerged}`,
-    `Conflicts:      ${result.summary.conflicts}`,
-    `Failed:         ${result.summary.failed}`,
-    `Skipped:        ${result.summary.skipped}`,
-  ];
-  if (result.gitHubNote) lines.push(`GitHub:         ${result.gitHubNote}`);
-  lines.push('');
-  for (const item of result.results) {
-    const icon = outcomeIcon[item.outcome] ?? '·';
-    lines.push(`${icon} ${item.branch} [${item.outcome}]`);
-    if (item.pr) {
-      lines.push(`  PR #${item.pr.number}: ${item.pr.title}`);
-      lines.push(`  URL: ${item.pr.url}`);
-      if (item.pr.mergeStateStatus) lines.push(`  Merge state: ${item.pr.mergeStateStatus}`);
-    }
-    if (item.note) lines.push(`  Note: ${item.note}`);
-  }
-  return lines.join('\n');
-}
-
-// ─── Deterministic merge core ─────────────────────────────────────────────────
-
 export type RepoMergeFlags = { dryRun: boolean; base: string | null };
 
 export async function runDeterministicMerge(
@@ -140,7 +99,7 @@ export async function runDeterministicMerge(
         branch: candidate.name,
         outcome: flags.dryRun ? 'dry-run-conflict' : 'skipped-conflict',
         pr,
-        note: candidate.mergeCheckError,
+        ...(candidate.mergeCheckError !== undefined ? { note: candidate.mergeCheckError } : {}),
       });
       continue;
     }
@@ -170,9 +129,12 @@ export async function runDeterministicMerge(
         failed += 1;
         results.push({
           branch: candidate.name,
-          outcome: 'failed',
+          outcome: 'failed' as const,
           pr,
-          note: error instanceof Error ? error.message.split('\n')[0] : String(error),
+          note:
+            error instanceof Error
+              ? (error.message.split('\n')[0] ?? 'unknown error')
+              : String(error),
         });
       }
     } else {

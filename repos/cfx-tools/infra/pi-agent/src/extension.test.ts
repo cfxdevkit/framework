@@ -11,6 +11,7 @@ const actionDefinitionMocks = vi.hoisted(() => ({
 
 const commandMocks = vi.hoisted(() => ({
   registerPiRepoCommands: vi.fn(),
+  registerPiCdkCommands: vi.fn(),
 }));
 
 const toolMocks = vi.hoisted(() => ({
@@ -28,6 +29,10 @@ vi.mock('./llm-agents-runtime.js', () => ({
 
 vi.mock('./commands.js', () => ({
   registerPiRepoCommands: commandMocks.registerPiRepoCommands,
+}));
+
+vi.mock('./commands-cdk.js', () => ({
+  registerPiCdkCommands: commandMocks.registerPiCdkCommands,
 }));
 
 vi.mock('./tools.js', () => ({

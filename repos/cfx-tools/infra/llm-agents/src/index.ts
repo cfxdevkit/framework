@@ -1,6 +1,7 @@
 export { runAll } from '../workers/agents/all.js';
 export { runAgentCheck } from '../workers/agents/check.js';
 export { runReviewAgent } from '../workers/agents/review.js';
+export { runAgentSmoke } from '../workers/agents/smoke.js';
 export type { RepoActionExecutionResult } from '../workers/commands.js';
 export {
   configure,

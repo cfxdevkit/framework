@@ -27,7 +27,7 @@ export const PROJECT_EXAMPLE: TemplateDefinition = {
   "containerEnv": {
     "CFXDEVKIT_INSTALL_PI_GITNEXUS": "0"
   },
-  "postCreateCommand": "npm install && (command -v openspec >/dev/null 2>&1 && [ -d openspec ] && [ ! -f .pi/skills/openspec-propose/SKILL.md ] && openspec init --tools pi || true) && (command -v pi >/dev/null 2>&1 && [ \"$CFXDEVKIT_INSTALL_PI_GITNEXUS\" = \"1\" ] && pi install npm:pi-gitnexus || true)"
+  "postCreateCommand": "npm install && (command -v openspec >/dev/null 2>&1 && [ -d openspec ] && [ ! -f .pi/skills/openspec-propose/SKILL.md ] && openspec init --tools pi || true) && (command -v pi >/dev/null 2>&1 && [ "$CFXDEVKIT_INSTALL_PI_GITNEXUS" = "1" ] && pi install npm:pi-gitnexus || true)"
 }
 `,
       },

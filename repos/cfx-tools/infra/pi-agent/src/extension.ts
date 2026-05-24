@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
 import { registerPiRepoCommands } from './commands.js';
+import { registerPiCdkCommands } from './commands-cdk.js';
 import { getPiActionDefinitions } from './llm-agents-runtime.js';
 import { createPiProviderBridge, registerPiProviderBridge } from './providers.js';
 import { registerPiRepoTools } from './tools.js';
@@ -43,6 +44,7 @@ export function resolvePiScopeFromEnv(): PiScopeName | undefined {
 export async function registerPiAgentProjectExtension(pi: ExtensionAPI): Promise<void> {
   registerPiProviderBridge(pi, await createPiProviderBridge(resolvePiScopeFromEnv()));
   registerPiRepoCommands(pi);
+  registerPiCdkCommands(pi);
   registerPiRepoTools(pi);
 
   pi.on('session_start', async (_event, ctx) => {

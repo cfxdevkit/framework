@@ -130,7 +130,7 @@ function buildPiEndpointConfig(
     ...config,
     provider: 'lemonade',
     baseUrl: null,
-    defaultModel: config.provider === 'github-models' ? null : config.defaultModel,
+    defaultModel: config.provider === 'github-models' ? null : (config.defaultModel ?? null),
     harness: { ...config.harness, providerStrategy: 'direct' },
   };
 }

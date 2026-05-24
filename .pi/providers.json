@@ -3,9 +3,103 @@
   "baseUrl": "http://host.containers.internal:13305/",
   "defaultModel": "Qwen3-Coder-Next-GGUF",
   "requestTimeoutMs": 600000,
-  "actions": {},
+  "actions": {
+    "validation": "Gemma-4-26B-A4B-it-GGUF",
+    "docs-api": "Qwen3-Coder-Next-GGUF",
+    "readme-upkeep": "Qwen3-Coder-Next-GGUF",
+    "package-pages": "Qwen3-Coder-Next-GGUF",
+    "structure-upkeep": "Qwen3-Coder-Next-GGUF",
+    "docs-upkeep": "Qwen3-Coder-Next-GGUF",
+    "review": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
+    "commit": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
+    "test-audit": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
+    "repo-health": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
+    "changeset": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
+    "release-readiness": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
+    "ci-cd": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
+    "docs-pipeline": "Qwen3.5-122B-A10B-GGUF-Q4_K_M"
+  },
   "providerProfiles": {},
   "actionPolicies": {},
+  "tokenBudget": {
+    "contextFraction": 0.9,
+    "cap": null,
+    "quick": 8192,
+    "cloudFallback": 4096
+  },
+  "catalog": [
+    {
+      "id": "Gemma-4-26B-A4B-it-GGUF",
+      "tier": 1,
+      "role": "Lightweight always-hot model for low-latency background tasks (validation, suggestions)",
+      "assignedActions": ["validation"],
+      "contextWindow": 262144,
+      "sizeGb": 16.9,
+      "labels": ["hot", "tool-calling", "vision", "llamacpp"]
+    },
+    {
+      "id": "Qwen3-Coder-Next-GGUF",
+      "tier": 2,
+      "role": "Default coding/docs model; handles all documentation generation and the default action fallback",
+      "assignedActions": [
+        "docs-api",
+        "readme-upkeep",
+        "package-pages",
+        "structure-upkeep",
+        "docs-upkeep"
+      ],
+      "contextWindow": 262144,
+      "sizeGb": 43.7,
+      "labels": ["coding", "tool-calling", "hot"]
+    },
+    {
+      "id": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
+      "tier": 3,
+      "role": "High-reasoning model for code review, commit analysis, release sign-off, and CI risk assessment",
+      "assignedActions": [
+        "review",
+        "commit",
+        "test-audit",
+        "repo-health",
+        "changeset",
+        "release-readiness",
+        "ci-cd",
+        "docs-pipeline"
+      ],
+      "contextWindow": 262144,
+      "labels": ["custom"]
+    },
+    {
+      "id": "Qwen3-Coder-30B-A3B-Instruct-GGUF",
+      "tier": "unassigned",
+      "role": "Spare tier-2 capacity; lighter-weight coding model if VRAM pressure increases",
+      "contextWindow": 262144,
+      "sizeGb": 18.6,
+      "labels": ["coding", "tool-calling", "hot"]
+    },
+    {
+      "id": "Qwen2.5-Coder-1.5B-Instruct-GGUF",
+      "tier": "unassigned",
+      "role": "Tiny coder for very fast structured tasks or inline completions",
+      "contextWindow": 32768,
+      "labels": ["custom"]
+    },
+    {
+      "id": "MiniMax-M2.5-GGUF-UD-IQ3_XXS",
+      "tier": "unassigned",
+      "role": "Large MoE; evaluate as tier-3 alternative if 122B VRAM conflicts arise",
+      "contextWindow": 196608,
+      "labels": ["custom"]
+    },
+    {
+      "id": "gemma4-it-e4b-FLM",
+      "tier": "unassigned",
+      "role": "FLM backend; deferred until OS-level NPU changes enable parallel model use",
+      "contextWindow": 131072,
+      "sizeGb": 9.1,
+      "labels": ["audio", "vision", "reasoning", "tool-calling", "chat-transcription"]
+    }
+  ],
   "harness": {
     "version": 1,
     "defaultMode": "deterministic",

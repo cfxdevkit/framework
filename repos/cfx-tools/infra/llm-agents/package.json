@@ -29,7 +29,7 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
-    "@cfxdevkit/arch-check": "workspace:*",
+    "@cfxdevkit/cdk-repo-check": "workspace:*",
     "@cfxdevkit/docs-pipeline": "workspace:*",
     "tsx": "^4.20.6"
   },

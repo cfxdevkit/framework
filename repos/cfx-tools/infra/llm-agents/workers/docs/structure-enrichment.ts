@@ -16,7 +16,7 @@ import {
   readEmbeddedStructureHash,
   stripStructureMetadata,
   structureNeedsEnrichment,
-} from '@cfxdevkit/arch-check';
+} from '@cfxdevkit/cdk-repo-check';
 import { completeStructuredAgent } from '../completion/index.ts';
 import { root } from '../shared/index.ts';
 import { createLlmProgressReporter, logInfo } from '../shared/logging.ts';

@@ -36,6 +36,11 @@ async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
     return;
   }
 
+  if (command === 'smoke') {
+    return await withAgentScope(parsed.scope, async () =>
+      withLlmAgents((agents) => agents.runAgentSmoke(args.slice(1))),
+    );
+  }
   if (command === 'check') {
     return await withAgentScope(parsed.scope, async () => runAgentCheckCli(args.slice(1)));
   }
@@ -60,7 +65,7 @@ async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
     const session = await resolvePiSessionSetup({
       kind: 'interactive',
       promptArgs: normalizePromptArgs(sessionArgs),
-      endpoint: endpoint === 'default' ? undefined : endpoint,
+      ...(endpoint !== 'default' ? { endpoint } : {}),
       ...(parsed.scope ? { scope: parsed.scope } : {}),
     });
     if (!session) return;
@@ -73,7 +78,7 @@ async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
     const session = await resolvePiSessionSetup({
       kind: 'commit',
       promptArgs: normalizePromptArgs(sessionArgs),
-      endpoint: endpoint === 'default' ? undefined : endpoint,
+      ...(endpoint !== 'default' ? { endpoint } : {}),
       ...(parsed.scope ? { scope: parsed.scope } : {}),
     });
     if (!session) return;

@@ -14,7 +14,12 @@
  */
 
 export { type ParsedArgs, parseArgs } from './args.js';
-export { type DeriveReport, runDerive } from './commands/derive.js';
-export { type GenerateReport, runGenerate } from './commands/generate.js';
-export { runStatus, type StatusReport } from './commands/status.js';
+export {
+  type ContractsExtractReport,
+  type RunContractsExtractOptions,
+  runContractsExtract,
+} from './commands/contracts.js';
+export { type DeriveReport, type RunDeriveOptions, runDerive } from './commands/derive.js';
+export { type GenerateReport, type RunGenerateOptions, runGenerate } from './commands/generate.js';
+export { type RunStatusOptions, runStatus, type StatusReport } from './commands/status.js';
 export { run } from './run.js';

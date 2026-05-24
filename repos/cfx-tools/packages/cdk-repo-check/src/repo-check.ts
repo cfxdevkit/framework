@@ -1,6 +1,8 @@
 import { runStructuredRepoCommand } from './repo-check/commands.js';
 import { runStructuredHotspotsCheck } from './repo-check/hotspots.js';
 import { runStructuredKebabGroupsCheck } from './repo-check/kebab-groups.js';
+import type { RepoResultRenderer } from './repo-check/renderer.js';
+import { defaultRenderer } from './repo-check/renderer.js';
 import type {
   GitNexusRepositorySummary,
   GitNexusSnapshot,
@@ -28,10 +30,13 @@ export type {
   RepoCheckValidationResult,
   RepoCommandResult,
   RepoCommandTarget,
+  RepoResultRenderer,
   RepoStructuredResult,
   RepoValidationStepId,
   RepoValidationStepResult,
 };
+
+export { defaultRenderer };
 
 export async function runRepoCheck(
   target: RepoCheckTarget,

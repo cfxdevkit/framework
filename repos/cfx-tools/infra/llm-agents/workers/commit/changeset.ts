@@ -110,7 +110,7 @@ async function generateChangesetSuggestion(changedPackages, flags) {
     flags,
     systemPrompt,
     userPrompt,
-    maxTokens: flags.quick ? 512 : 1000,
+    // maxTokens omitted — resolveMaxTokens uses tokenBudget from config
   });
   try {
     return normalizeChangesetJson(JSON.parse(response.content), changedPackages, forcedBump);

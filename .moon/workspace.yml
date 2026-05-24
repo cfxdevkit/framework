@@ -35,6 +35,7 @@ projects:
   - 'repos/cfx-tools/packages/cdk-repo-check'
   - 'repos/cfx-tools/infra/llm-agents'
   - 'repos/cfx-tools/infra/llm-tools'
+  - 'repos/cfx-tools/infra/tooling-cli'
   - 'repos/cfx-tools/packages/scaffold-cli'
   - 'repos/cfx-tools/packages/cli'
   - 'repos/cfx-tools/packages/vscode-extension'

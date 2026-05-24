@@ -1,15 +1,16 @@
 import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { findRepoRoot } from './workspace-paths.js';
 
 const cdkRepoCheckPackageName = '@cfxdevkit/cdk-repo-check';
-const cdkRepoCheckSourceModulePath = '../../../packages/cdk-repo-check/src/index.js';
-const cdkRepoCheckSourceEntry = new URL(
-  '../../../packages/cdk-repo-check/src/index.ts',
-  import.meta.url,
-);
-const cdkRepoCheckDistEntry = new URL(
-  '../../../packages/cdk-repo-check/dist/index.js',
-  import.meta.url,
-);
+// Paths anchored to the workspace root so they resolve correctly
+// whether this file runs from src/ (tsx) or dist/chunks/ (compiled).
+const _repoRoot = findRepoRoot(process.cwd());
+const _pkgRoot = join(_repoRoot, 'repos/cfx-tools/packages/cdk-repo-check');
+const cdkRepoCheckSourceModulePath = join(_pkgRoot, 'src/index.js');
+const cdkRepoCheckSourceEntry = pathToFileURL(join(_pkgRoot, 'src/index.ts'));
+const cdkRepoCheckDistEntry = pathToFileURL(join(_pkgRoot, 'dist/index.js'));
 
 export type RepoCheckTarget = 'validation' | 'hotspots' | 'kebab-groups' | 'unit-configs';
 export type RepoCommandTarget =
@@ -235,6 +236,11 @@ export type RepoStructuredResult =
 type RepoCheckModule = {
   runRepoCheck(target: RepoCheckTarget, args: readonly string[]): Promise<RepoStructuredResult>;
   runRepoCommand(target: RepoCommandTarget, args: readonly string[]): Promise<RepoCommandResult>;
+  defaultRenderer: {
+    renderText(result: RepoStructuredResult): string;
+    renderJson(result: RepoStructuredResult): string;
+    renderCompact(result: RepoStructuredResult): string;
+  };
 };
 
 export async function runRepoCheck(
@@ -253,14 +259,26 @@ export async function runRepoCommand(
   return await module.runRepoCommand(target, args);
 }
 
-async function loadRepoCheckModule(): Promise<RepoCheckModule> {
-  if (existsSync(cdkRepoCheckSourceEntry)) {
-    return (await import(cdkRepoCheckSourceModulePath)) as RepoCheckModule;
-  }
+export async function renderRepoResult(
+  result: RepoStructuredResult,
+  format: 'text' | 'json' | 'compact' = 'text',
+): Promise<string> {
+  const module = await loadRepoCheckModule();
+  if (format === 'json') return module.defaultRenderer.renderJson(result);
+  if (format === 'compact') return module.defaultRenderer.renderCompact(result);
+  return module.defaultRenderer.renderText(result);
+}
 
+async function loadRepoCheckModule(): Promise<RepoCheckModule> {
+  // Prefer dist (compiled package) — available whenever cdk-repo-check:build has run.
+  // This is the correct path when `cdk` runs from its compiled dist/.
   if (existsSync(cdkRepoCheckDistEntry)) {
     return (await import(cdkRepoCheckPackageName)) as RepoCheckModule;
   }
-
-  return (await import(cdkRepoCheckSourceModulePath)) as RepoCheckModule;
+  // Fall back to source — works only via tsx (dev mode) which handles .ts → .js.
+  if (existsSync(cdkRepoCheckSourceEntry)) {
+    return (await import(cdkRepoCheckSourceModulePath)) as RepoCheckModule;
+  }
+  // Last resort: installed package specifier.
+  return (await import(cdkRepoCheckPackageName)) as RepoCheckModule;
 }

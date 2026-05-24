@@ -3,6 +3,11 @@ import type { ToolingCommandDefinition } from './contracts.js';
 
 export const agentCommands = [
   {
+    name: 'smoke',
+    description: 'Run a targeted smoke test for each action-mapped model to verify viability',
+    usage: '[--scope <preset>] smoke [--quick] [--no-thinking]',
+  },
+  {
     name: 'config',
     description: 'Show or update the shared repo agent harness config',
     usage: '[--scope <preset>] config [show|reset|set ...]',
@@ -75,6 +80,7 @@ export function printAgentHelp(): void {
   console.log(`cdk agent
 
 Usage:
+  cdk agent [--scope <preset>] smoke [--quick] [--no-thinking]
   cdk agent [--scope <preset>] config [show|reset|set ...]
   cdk agent [--scope <preset>] status
   cdk agent [--scope <preset>] check [--quick] [--dry-run|--no-write] [--create-branch] [--draft-pr]
@@ -90,6 +96,7 @@ Usage:
   cdk agent providers
 
 Commands:
+  smoke         Probe each action-mapped model with a tier-appropriate task; confirms load, first-token, and JSON output
   config        Show or update the global or scoped agent harness config
   status        Show the current provider, mode, and backend resolution state
   check         Run repo check, prepare OpenSpec remediation changes, and optionally create a handoff branch/PR
@@ -105,6 +112,7 @@ Commands:
   providers     Explain when to use LiteLLM, direct providers, or both
 
 Notes:
+  - use cdk agent smoke after loading a new model to confirm it is viable for its assigned tasks
   - use cdk repo review, precommit, and commit for the hardened repository workflows
   - cdk agent check only prepares OpenSpec changes when repo-check finds actionable warnings or errors
   - cdk agent merge validates local branch mergeability first; GitHub PR state is added when gh auth is available

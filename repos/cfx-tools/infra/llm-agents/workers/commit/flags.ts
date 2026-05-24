@@ -10,7 +10,7 @@ export function parseCommitFlags(args) {
   let skipChangeset = false;
   let changesetBump = null;
   let withTests = true;
-  let withBuild = false;
+  let withBuild = true;
   let agent = 'direct';
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
@@ -28,6 +28,7 @@ export function parseCommitFlags(args) {
     else if (arg === '--with-tests') withTests = true;
     else if (arg === '--skip-tests') withTests = false;
     else if (arg === '--with-build') withBuild = true;
+    else if (arg === '--skip-build') withBuild = false;
     else promptParts.push(arg);
   }
   if (agent !== 'direct') {

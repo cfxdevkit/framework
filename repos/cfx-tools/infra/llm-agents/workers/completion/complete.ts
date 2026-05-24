@@ -28,7 +28,7 @@ export async function complete({ action, modelOverride, userPrompt, context, qui
     action,
     model: modelId,
     quick,
-    maxTokens: quick ? 256 : 1600,
+    tokenBudget: config.tokenBudget,
     temperature: 0.2,
     timeoutMs: requestTimeoutMs,
   });
@@ -74,6 +74,7 @@ async function completeDirect({
     action,
     model: modelId,
     maxTokens,
+    tokenBudget: config.tokenBudget,
     temperature: 0.1,
     timeoutMs: requestTimeoutMs,
     enableThinking: flags.noThinking ? false : undefined,

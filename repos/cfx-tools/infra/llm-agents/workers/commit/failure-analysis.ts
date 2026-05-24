@@ -60,7 +60,8 @@ export async function analyzeGateFailures(options: {
         'Commit failure details:',
         ...formatFailedResults(failedResults),
       ].join('\n'),
-      maxTokens: 900,
+      // maxTokens intentionally omitted — budget derived from tokenBudget config.
+      // failure-analysis uses the 'validation' action routed to Gemma-4-26B (tier 1).
       onProgress: createLlmProgressReporter(`${options.command} failure analysis`),
     });
     return {

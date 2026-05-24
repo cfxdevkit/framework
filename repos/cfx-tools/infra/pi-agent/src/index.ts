@@ -1,3 +1,4 @@
+export { registerPiCdkCommands } from './commands-cdk.js';
 export { registerPiRepoCommands } from './commands.js';
 export {
   createPiAgentExtension,
@@ -29,6 +30,12 @@ export {
   writeConfig,
 } from './tooling-runtime.js';
 export { executePiRepoAction, registerPiRepoTools } from './tools.js';
+export {
+  executeCdkContractsExtract,
+  executeCdkDerive,
+  executeCdkGenerate,
+  executeCdkStatus,
+} from './tools-cdk.js';
 export {
   applyPiOperatorUiState,
   clearPiWorkflowProgress,

@@ -8,7 +8,7 @@
  */
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { computeReadmeSkeletonHash } from '@cfxdevkit/arch-check';
+import { computeReadmeSkeletonHash } from '@cfxdevkit/cdk-repo-check';
 import { commandBlock } from '../completion/index.ts';
 import { root } from '../shared/index.ts';
 import { logInfo, logStep } from '../shared/logging.ts';

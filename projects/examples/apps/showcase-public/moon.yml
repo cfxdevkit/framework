@@ -5,7 +5,9 @@ language: 'typescript'
 
 tasks:
   build:
-    command: 'next build'
+    command: 'pnpm exec next build'
+    deps:
+      - 'showcase-local:build'
     inputs:
       - 'app/**/*'
       - 'package.json'
@@ -15,6 +17,24 @@ tasks:
       - '.next'
     options:
       runInCI: false
+      mergeArgs: 'replace'
+      mergeOutputs: 'replace'
+
+  typecheck:
+    options:
+      runInCI: false
+
+  test:
+    options:
+      runInCI: false
+
+  check:
+    options:
+      runInCI: false
+
+  clean:
+    options:
+      runInCI: false
 
   lint:
     command: 'pnpm exec biome check app'
@@ -22,5 +42,6 @@ tasks:
       - 'app/**/*'
       - '/biome.json'
     options:
+      runInCI: false
       mergeArgs: 'replace'
       cache: true

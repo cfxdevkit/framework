@@ -53,6 +53,7 @@ export type RepoValidationStepId =
   | 'lint'
   | 'typecheck'
   | 'test'
+  | 'build'
   | 'hotspots'
   | 'kebab-groups'
   | 'check';

@@ -29,6 +29,7 @@ const validationStepDefinitions: readonly ValidationStepDefinition[] = [
   { id: 'lint', label: 'Lint', kind: 'command', required: true },
   { id: 'typecheck', label: 'Typecheck', kind: 'command', required: true },
   { id: 'test', label: 'Tests', kind: 'command', required: true },
+  { id: 'build', label: 'Build', kind: 'command', required: true },
   { id: 'hotspots', label: 'Hotspots', kind: 'check', required: true },
   { id: 'kebab-groups', label: 'Kebab groups', kind: 'check', required: false },
   { id: 'check', label: 'Repo check', kind: 'command', required: true },
@@ -140,6 +141,8 @@ async function runValidationStep(stepId: RepoValidationStepId): Promise<RepoStru
       return await runStructuredRepoCommand('typecheck', []);
     case 'test':
       return await runStructuredRepoCommand('test', []);
+    case 'build':
+      return await runStructuredRepoCommand('build', []);
     case 'hotspots':
       return await runStructuredHotspotsCheck(['--fail-on-hard']);
     case 'kebab-groups':
@@ -179,6 +182,8 @@ function renderValidationCommand(stepId: RepoValidationStepId): string {
       return 'pnpm run typecheck';
     case 'test':
       return 'pnpm run test';
+    case 'build':
+      return 'pnpm run build';
     case 'hotspots':
       return 'pnpm run cdk -- repo check hotspots -- --fail-on-hard';
     case 'kebab-groups':

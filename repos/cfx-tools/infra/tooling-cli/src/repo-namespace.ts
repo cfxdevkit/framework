@@ -1,21 +1,36 @@
-import { spawn } from 'node:child_process';
 import { parseAgentMergeFlags } from './agent-merge.js';
 import { isHelpToken, withAgentScope, withLlmAgents } from './agent-runtime.js';
 import type { ToolingNamespaceDefinition } from './contracts.js';
 import { findMonorepoUnit, listMonorepoUnits, parseScopeFlag } from './monorepo-units.js';
 import {
+  type RepoCommandTarget,
+  renderRepoResult,
+  runRepoCheck,
+  runRepoCommand,
+} from './repo-check-runtime.js';
+import {
   listCandidateBranches,
-  renderRepoMergeResult,
   currentBranch as repoCurrentBranch,
   runDeterministicMerge,
 } from './repo-merge.js';
-import { findRepoRoot } from './workspace-paths.js';
+import { renderRepoMergeResult } from './repo-merge-render.js';
 
 const repoCommands = [
   {
+    name: 'build',
+    description: 'Run the Moon build across all packages',
+    usage: 'build [--json]',
+  },
+  {
+    name: 'run',
+    description: 'Run any repo command with structured output',
+    usage: 'run <target> [args] [--json]',
+  },
+  {
     name: 'check',
     description: 'Run deterministic repo validation checks',
-    usage: 'check <hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [args]',
+    usage:
+      'check <validation|hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [--json]',
   },
   {
     name: 'merge',
@@ -25,12 +40,12 @@ const repoCommands = [
   {
     name: 'generate',
     description: 'Run deterministic repo reference document generators',
-    usage: 'generate <api|readme|structure|unit-configs> [args]',
+    usage: 'generate <api|readme|structure|unit-configs> [--json]',
   },
   {
     name: 'arch-check',
     description: 'Run the full repository architecture and docs contract check',
-    usage: 'arch-check [args]',
+    usage: 'arch-check [--json]',
   },
   {
     name: 'units',
@@ -54,24 +69,6 @@ const repoCommands = [
   },
 ] as const;
 
-const repoCheckScriptMap = {
-  hotspots: 'check:hotspots',
-  'kebab-groups': 'check:kebab-groups',
-  'unit-configs': 'check:unit-configs',
-  docs: 'check:docs',
-  ci: 'check:ci',
-  secrets: 'check:secrets',
-  corpus: 'check:corpus',
-  eval: 'check:eval',
-} as const;
-
-const repoGenerateScriptMap = {
-  api: 'gen:api',
-  readme: 'gen:readme',
-  structure: 'gen:structure',
-  'unit-configs': 'gen:unit-configs',
-} as const;
-
 export const repoToolingNamespace = {
   name: 'repo',
   description: 'Repository validation, generation, and maintenance workflows',
@@ -90,6 +87,30 @@ async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
     return;
   }
 
+  if (command === 'build') {
+    const jsonOutput = rest.includes('--json');
+    const buildArgs = rest.filter((a) => a !== '--json');
+    const result = await runRepoCommand('build', buildArgs);
+    console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
+    process.exitCode = result.exitCode;
+    return;
+  }
+
+  if (command === 'run') {
+    while (rest[0] === '--') rest.shift();
+    const [target, ...runRest] = rest;
+    if (!target || isHelpToken(target)) {
+      printRepoHelp();
+      return;
+    }
+    const jsonOutput = runRest.includes('--json');
+    const forwardedArgs = runRest.filter((a) => a !== '--json');
+    const result = await runRepoCommand(target as RepoCommandTarget, forwardedArgs);
+    console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
+    process.exitCode = result.exitCode;
+    return;
+  }
+
   if (command === 'check') {
     while (rest[0] === '--') rest.shift();
     const [target = 'help', ...forwardedArgs] = rest;
@@ -97,13 +118,32 @@ async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
       printRepoHelp();
       return;
     }
+    const jsonOutput = forwardedArgs.includes('--json');
+    const checkArgs = forwardedArgs.filter((a) => a !== '--json');
 
-    const script = repoCheckScriptMap[target as keyof typeof repoCheckScriptMap];
-    if (!script) {
+    const repoCheckTargets = new Set(['validation', 'hotspots', 'kebab-groups', 'unit-configs']);
+    const checkCommandMap: Record<string, RepoCommandTarget> = {
+      docs: 'check-docs',
+      ci: 'check-ci',
+      secrets: 'check-secrets',
+      corpus: 'check-corpus',
+      eval: 'check-eval',
+    };
+
+    if (repoCheckTargets.has(target)) {
+      const result = await runRepoCheck(
+        target as 'validation' | 'hotspots' | 'kebab-groups' | 'unit-configs',
+        checkArgs,
+      );
+      console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
+      process.exitCode = result.exitCode;
+    } else if (checkCommandMap[target]) {
+      const result = await runRepoCommand(checkCommandMap[target]!, checkArgs);
+      console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
+      process.exitCode = result.exitCode;
+    } else {
       throw new Error(`Unknown repo check target: ${target}`);
     }
-
-    await runRootScript(script, forwardedArgs);
     return;
   }
 
@@ -114,18 +154,28 @@ async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
       printRepoHelp();
       return;
     }
-
-    const script = repoGenerateScriptMap[target as keyof typeof repoGenerateScriptMap];
-    if (!script) {
-      throw new Error(`Unknown repo generate target: ${target}`);
-    }
-
-    await runRootScript(script, forwardedArgs);
+    const jsonOutput = forwardedArgs.includes('--json');
+    const generateArgs = forwardedArgs.filter((a) => a !== '--json');
+    const generateCommandMap: Record<string, RepoCommandTarget> = {
+      api: 'generate-api',
+      readme: 'generate-readme',
+      structure: 'generate-structure',
+      'unit-configs': 'generate-unit-configs',
+    };
+    const generateTarget = generateCommandMap[target];
+    if (!generateTarget) throw new Error(`Unknown repo generate target: ${target}`);
+    const result = await runRepoCommand(generateTarget, generateArgs);
+    console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
+    process.exitCode = result.exitCode;
     return;
   }
 
   if (command === 'arch-check') {
-    await runRootScript('arch:check', rest);
+    const jsonOutput = rest.includes('--json');
+    const archArgs = rest.filter((a) => a !== '--json');
+    const result = await runRepoCommand('arch-check', archArgs);
+    console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
+    process.exitCode = result.exitCode;
     return;
   }
 
@@ -199,16 +249,19 @@ function printRepoHelp(): void {
   console.log(`cdk repo
 
 Usage:
-  cdk repo check <hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [args]
+  cdk repo build [--json]
+  cdk repo run <target> [args] [--json]
+  cdk repo check <validation|hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [--json]
+  cdk repo generate <api|readme|structure|unit-configs> [--json]
+  cdk repo arch-check [--json]
   cdk repo merge [--base <branch>] [--dry-run] [--json] [branch...]
-  cdk repo generate <api|readme|structure|unit-configs> [args]
   cdk repo units [list|show <preset>]
-  cdk repo arch-check [args]
   cdk repo [--scope <preset>] review
   cdk repo [--scope <preset>] precommit [args]
   cdk repo [--scope <preset>] commit [args]
 
 Notes:
+  - all check/generate/arch-check/run/build commands accept --json for structured output
   - use repo units to discover the available session presets and their scoped agent overlays
   - use --scope <preset> when review, precommit, or commit should honor a preset-specific overlay
   - use cdk agent for direct PI sessions and provider/runtime administration`);
@@ -241,29 +294,4 @@ Agent overlay:
   - default mode: ${unit.defaultMode}
   - focus: ${unit.focus}
   - session effect: ${unit.sessionEffect}`);
-}
-
-async function runRootScript(script: string, forwardedArgs: readonly string[]): Promise<void> {
-  const repoRoot = findRepoRoot(process.cwd());
-  const args = ['run', script, ...(forwardedArgs.length > 0 ? ['--', ...forwardedArgs] : [])];
-  const exitCode = await spawnPnpm(args, repoRoot);
-  process.exitCode = exitCode;
-}
-
-function spawnPnpm(args: readonly string[], cwd: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const child = spawn('pnpm', args, {
-      cwd,
-      stdio: 'inherit',
-      env: process.env,
-    });
-    child.on('error', reject);
-    child.on('exit', (code, signal) => {
-      if (signal) {
-        resolve(1);
-        return;
-      }
-      resolve(code ?? 1);
-    });
-  });
 }

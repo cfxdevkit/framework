@@ -1,5 +1,19 @@
 ## ADDED Requirements
 
+### Requirement: Gate execution SHALL delegate to `@cfxdevkit/cdk-repo-check`
+
+`llm-agents/commit/gates.ts` SHALL NOT call `execFileAsync('pnpm', ...)` directly for quality gates or policy gates. Quality gates SHALL call `runRepoCommand(target, [])` from `@cfxdevkit/cdk-repo-check` and map `RepoCommandResult` → `GateResult`. Policy gates SHALL call `runRepoCheck('hotspots'|'kebab-groups', args)` or `runRepoCommand('check', [])` accordingly.
+
+#### Scenario: Quality gate result maps from RepoCommandResult
+- **WHEN** a quality gate executes
+- **THEN** `GateResult.elapsedMs` SHALL come from `RepoCommandResult.summary.durationMs`, `GateResult.status` from `RepoCommandResult.status`, and `GateResult.summary` from `defaultRenderer.renderCompact(result)`
+
+#### Scenario: QUALITY_GATE_SPECS is metadata-only
+- **WHEN** `QUALITY_GATE_SPECS` is read
+- **THEN** it SHALL contain only `id`, `label`, `target`, `required`, and `timeoutMs` — no `cmd` or `args` fields
+
+---
+
 ### Requirement: Commit agent
 `llm-agents` SHALL export `runCommit(args)` and `runPrecommit(args)` that orchestrate the commit pipeline: run quality gates, gather changeset context, generate a commit message via `LlmProvider`, and write a review report.
 
@@ -72,3 +86,13 @@ All TypeScript source files in `@cfxdevkit/llm-agents` SHALL have no `// @ts-noc
 #### Scenario: Typecheck passes without suppressors
 - **WHEN** `tsc --noEmit` is run on `llm-agents`
 - **THEN** it exits 0 with no errors
+
+### Requirement: `llm-agents` doc workers SHALL import from `@cfxdevkit/cdk-repo-check`
+
+`@cfxdevkit/arch-check` SHALL NOT appear as a direct dependency of `llm-agents`. All doc-worker imports of arch-check symbols SHALL use `@cfxdevkit/cdk-repo-check` which re-exports the same symbols via `export * from '@cfxdevkit/arch-check'`.
+
+**Status: Implemented (2026-05-23)**
+
+#### Scenario: No direct arch-check dependency in llm-agents
+- **WHEN** `llm-agents/package.json` is read
+- **THEN** `@cfxdevkit/arch-check` SHALL NOT appear in `dependencies`

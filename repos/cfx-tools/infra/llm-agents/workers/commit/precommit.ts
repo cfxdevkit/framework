@@ -32,7 +32,7 @@ export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResul
   ui.start();
   ui.startStep(1, 1, 'Incremental validation sequence');
   ui.note(
-    'order: gitnexus analyze -> format -> lint -> typecheck -> tests -> hotspots -> kebab-groups -> repo check',
+    'order: gitnexus analyze -> format -> lint -> typecheck -> tests -> build -> hotspots -> kebab-groups -> repo check',
   );
   const qualityReport = await runQualityGates(flags, ui.gateHooks);
   if (!qualityReport.passed) {

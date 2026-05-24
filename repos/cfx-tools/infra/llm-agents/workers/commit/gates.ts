@@ -1,13 +1,12 @@
-import { join } from 'node:path';
-import { execFileAsync, QUALITY_GATES, root } from '../shared/index.ts';
-import { collectOutput } from './gate-output.ts';
 import {
-  createGateResult,
-  extractGateSummary,
-  extractHotspotSummary,
-  extractKebabGroupStatus,
-  extractKebabGroupSummary,
-} from './gate-results.ts';
+  defaultRenderer,
+  runRepoCheck,
+  runRepoCommand,
+  type RepoCommandTarget,
+} from '@cfxdevkit/cdk-repo-check';
+import { QUALITY_GATE_SPECS } from '../shared/index.ts';
+import { collectOutput } from './gate-output.ts';
+import { createGateResult } from './gate-results.ts';
 
 type RepositoryPolicyStatus = 'ok' | 'warning' | 'error';
 export type GateStatus = RepositoryPolicyStatus | 'skipped';
@@ -50,55 +49,17 @@ export type GateRunHooks = {
   onGroupFinish?: (report: GateReport) => void;
 };
 
-type RepositoryPolicyGate = {
+type RepositoryPolicySpec = {
   id: string;
   label: string;
-  args: string[];
-  displayCommand: string;
   timeoutMs: number;
   required: boolean;
-  summarize: (output: string) => string;
-  detectSuccessStatus?: (output: string) => RepositoryPolicyStatus;
 };
 
-const REPOSITORY_POLICY_GATES: readonly RepositoryPolicyGate[] = [
-  {
-    id: 'hotspots',
-    label: 'Code hotspots',
-    args: [
-      'exec',
-      'tsx',
-      join(root, 'repos/cfx-tools/packages/arch-check/src/bin/check-hotspots.ts'),
-      '--fail-on-hard',
-    ],
-    displayCommand: 'pnpm cdk repo check hotspots -- --fail-on-hard',
-    timeoutMs: 120000,
-    required: true,
-    summarize: extractHotspotSummary,
-  },
-  {
-    id: 'kebab-groups',
-    label: 'Kebab file groups',
-    args: [
-      'exec',
-      'tsx',
-      join(root, 'repos/cfx-tools/packages/arch-check/src/bin/check-kebab-groups.ts'),
-    ],
-    displayCommand: 'pnpm cdk repo check kebab-groups',
-    timeoutMs: 120000,
-    required: false,
-    summarize: extractKebabGroupSummary,
-    detectSuccessStatus: extractKebabGroupStatus,
-  },
-  {
-    id: 'check',
-    label: 'Repo check',
-    args: ['run', 'check'],
-    displayCommand: 'pnpm run check',
-    timeoutMs: 300000,
-    required: true,
-    summarize: extractGateSummary,
-  },
+const REPOSITORY_POLICY_SPECS: readonly RepositoryPolicySpec[] = [
+  { id: 'hotspots', label: 'Code hotspots', timeoutMs: 120000, required: true },
+  { id: 'kebab-groups', label: 'Kebab file groups', timeoutMs: 120000, required: false },
+  { id: 'check', label: 'Repo check', timeoutMs: 300000, required: true },
 ];
 
 export async function runRepositoryPolicyGates(hooks?: GateRunHooks) {
@@ -107,14 +68,14 @@ export async function runRepositoryPolicyGates(hooks?: GateRunHooks) {
   hooks?.onGroupStart?.({
     kind: 'repository-policy',
     label: 'Repository policy follow-up gates',
-    gates: REPOSITORY_POLICY_GATES.map((gate) => ({
+    gates: REPOSITORY_POLICY_SPECS.map((gate) => ({
       id: gate.id,
       label: gate.label,
       required: gate.required,
     })),
   });
 
-  for (const gate of REPOSITORY_POLICY_GATES) {
+  for (const gate of REPOSITORY_POLICY_SPECS) {
     results.push(await runRepositoryPolicyGate(gate, hooks));
   }
 
@@ -146,7 +107,7 @@ export async function runQualityGates(flags, hooks?: GateRunHooks) {
     return report;
   }
 
-  const gates = QUALITY_GATES.filter((g) => {
+  const gates = QUALITY_GATE_SPECS.filter((g) => {
     if (g.id === 'test') return flags.withTests;
     if (g.id === 'build') return flags.withBuild;
     return true;
@@ -176,7 +137,7 @@ export async function runQualityGates(flags, hooks?: GateRunHooks) {
 }
 
 async function runRepositoryPolicyGate(
-  gate: RepositoryPolicyGate,
+  gate: RepositoryPolicySpec,
   hooks?: GateRunHooks,
 ): Promise<GateResult> {
   const start = Date.now();
@@ -188,24 +149,34 @@ async function runRepositoryPolicyGate(
   });
 
   try {
-    const { stdout, stderr } = await execFileAsync('pnpm', gate.args, {
-      cwd: root,
-      maxBuffer: 1024 * 1024 * 10,
-      signal: AbortSignal.timeout(gate.timeoutMs),
-      env: { ...process.env, NO_COLOR: '1', MOON_COLOR: 'false', FORCE_COLOR: '0' },
-    });
-    const output = `${stdout}${stderr}`;
-    const status = gate.detectSuccessStatus?.(output) ?? 'ok';
+    let structuredResult;
+    let displayCommand: string;
+    if (gate.id === 'hotspots') {
+      structuredResult = await runRepoCheck('hotspots', ['--fail-on-hard']);
+      displayCommand = 'pnpm cdk repo check hotspots -- --fail-on-hard';
+    } else if (gate.id === 'kebab-groups') {
+      structuredResult = await runRepoCheck('kebab-groups', []);
+      displayCommand = 'pnpm cdk repo check kebab-groups';
+    } else {
+      structuredResult = await runRepoCommand('check' as RepoCommandTarget, []);
+      displayCommand = 'pnpm run check';
+    }
+    const status: GateStatus =
+      structuredResult.status === 'ok'
+        ? 'ok'
+        : structuredResult.status === 'warning'
+          ? 'warning'
+          : 'error';
     const result = createGateResult({
       kind: 'repository-policy',
       id: gate.id,
       label: gate.label,
-      command: gate.displayCommand,
+      command: displayCommand,
       required: gate.required,
       status,
       elapsedMs: Date.now() - start,
-      output,
-      summary: gate.summarize(output).trim(),
+      output: defaultRenderer.renderText(structuredResult),
+      summary: defaultRenderer.renderCompact(structuredResult),
     });
     hooks?.onGateFinish?.(result);
     return result;
@@ -214,7 +185,7 @@ async function runRepositoryPolicyGate(
       kind: 'repository-policy',
       id: gate.id,
       label: gate.label,
-      command: gate.displayCommand,
+      command: gate.id,
       required: gate.required,
       status: 'error',
       elapsedMs: Date.now() - start,
@@ -226,7 +197,10 @@ async function runRepositoryPolicyGate(
   }
 }
 
-async function runQualityGate(gate, hooks?: GateRunHooks): Promise<GateResult> {
+async function runQualityGate(
+  gate: (typeof QUALITY_GATE_SPECS)[number],
+  hooks?: GateRunHooks,
+): Promise<GateResult> {
   const start = Date.now();
   hooks?.onGateStart?.({
     kind: 'quality',
@@ -236,23 +210,19 @@ async function runQualityGate(gate, hooks?: GateRunHooks): Promise<GateResult> {
   });
 
   try {
-    const { stdout, stderr } = await execFileAsync(gate.cmd, gate.args, {
-      cwd: root,
-      maxBuffer: 1024 * 1024 * 10,
-      signal: AbortSignal.timeout(gate.timeoutMs),
-      env: { ...process.env, NO_COLOR: '1', MOON_COLOR: 'false', FORCE_COLOR: '0' },
-    });
-    const output = `${stdout}${stderr}`;
+    const structuredResult = await runRepoCommand(gate.target as RepoCommandTarget, []);
     const result = createGateResult({
       kind: 'quality',
       id: gate.id,
       label: gate.label,
-      command: `${gate.cmd} ${gate.args.join(' ')}`,
+      command: `pnpm run ${structuredResult.command.script}`,
       required: gate.required,
-      status: 'ok',
-      elapsedMs: Date.now() - start,
-      output,
-      summary: extractGateSummary(output),
+      status: structuredResult.status === 'ok' ? 'ok' : 'error',
+      elapsedMs: structuredResult.summary.durationMs,
+      output: [...structuredResult.result.stdoutTail, ...structuredResult.result.stderrTail].join(
+        '\n',
+      ),
+      summary: defaultRenderer.renderCompact(structuredResult),
     });
     hooks?.onGateFinish?.(result);
     return result;
@@ -261,7 +231,7 @@ async function runQualityGate(gate, hooks?: GateRunHooks): Promise<GateResult> {
       kind: 'quality',
       id: gate.id,
       label: gate.label,
-      command: `${gate.cmd} ${gate.args.join(' ')}`,
+      command: `pnpm run ${gate.target}`,
       required: gate.required,
       status: 'error',
       elapsedMs: Date.now() - start,

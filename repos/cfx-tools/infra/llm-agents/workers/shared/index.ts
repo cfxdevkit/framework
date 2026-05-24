@@ -35,53 +35,17 @@ export {
   repoActions,
 } from './repo-actions.ts';
 
-export const QUALITY_GATES = [
+export const QUALITY_GATE_SPECS = [
   {
     id: 'gitnexus-analyze',
     label: 'GitNexus analyze',
-    cmd: 'pnpm',
-    args: ['run', 'gitnexus:analyze'],
+    target: 'gitnexus-analyze',
     required: true,
     timeoutMs: 300000,
   },
-  {
-    id: 'format',
-    label: 'Format write',
-    cmd: 'pnpm',
-    args: ['run', 'format'],
-    required: true,
-    timeoutMs: 180000,
-  },
-  {
-    id: 'lint',
-    label: 'Lint',
-    cmd: 'pnpm',
-    args: ['run', 'lint'],
-    required: true,
-    timeoutMs: 120000,
-  },
-  {
-    id: 'typecheck',
-    label: 'Typecheck',
-    cmd: 'pnpm',
-    args: ['run', 'typecheck'],
-    required: true,
-    timeoutMs: 180000,
-  },
-  {
-    id: 'test',
-    label: 'Test',
-    cmd: 'pnpm',
-    args: ['exec', 'moon', 'run', ':test', '--concurrency', '1'],
-    required: true,
-    timeoutMs: 600000,
-  },
-  {
-    id: 'build',
-    label: 'Build',
-    cmd: 'pnpm',
-    args: ['exec', 'moon', 'run', ':build', '--concurrency', '4'],
-    required: false,
-    timeoutMs: 300000,
-  },
-];
+  { id: 'format', label: 'Format write', target: 'format', required: true, timeoutMs: 180000 },
+  { id: 'lint', label: 'Lint', target: 'lint', required: true, timeoutMs: 120000 },
+  { id: 'typecheck', label: 'Typecheck', target: 'typecheck', required: true, timeoutMs: 180000 },
+  { id: 'test', label: 'Test', target: 'test', required: true, timeoutMs: 600000 },
+  { id: 'build', label: 'Build', target: 'build', required: true, timeoutMs: 300000 },
+] as const;
