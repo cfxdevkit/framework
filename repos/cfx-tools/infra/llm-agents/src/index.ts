@@ -29,8 +29,8 @@ export {
   runDocsApiProbe,
   runDocsPackagePages,
   runDocsReadme,
-  runDocsUpkeep,
   runStructureUpkeep,
+  runWikiGenerate,
 } from '../workers/docs/index.js';
 export type {
   RepoActionDefinition,

@@ -9,12 +9,12 @@
 import { discoverApiTargets, refreshApiSkeletons } from '@cfxdevkit/docs-pipeline';
 import { logInfo, logStep } from '../shared/logging.ts';
 import { enrichApiMd } from './api-enrichment.ts';
-import { parseDocsApiFlags } from './api-flags.ts';
+import { parseDocFlags } from './flags.ts';
 import { precheckDocsApi } from './api-probe.ts';
 
 export async function runDocsApi(args: string[]): Promise<void> {
   if (args[0] === '--') args.shift();
-  const flags = parseDocsApiFlags(args);
+  const flags = parseDocFlags(args);
   const total = flags.precheck ? 4 : 3;
 
   logStep(1, total, 'Deterministic API skeleton generation');

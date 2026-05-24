@@ -17,11 +17,6 @@ export const docsCommands: readonly DocsCliCommandDefinition[] = [
     description: 'Validate generated docs content',
     usage: 'validate [content|wiki|wiki-fix]',
   },
-  {
-    name: 'wiki',
-    description: 'Run wiki regeneration/update flow',
-    usage: 'wiki [extra args passed through]',
-  },
 ];
 
 export function findDocsCommand(name: string): DocsCliCommandDefinition | undefined {
@@ -62,10 +57,6 @@ export function resolveDocsInvocation(
           ? 'validate:wiki'
           : 'validate:wiki-fix';
     return { command, extraArgs: [] };
-  }
-
-  if (commandName === 'wiki' || commandName === 'update-wiki') {
-    return { command: 'update-wiki', extraArgs: args };
   }
 
   throw new Error(`Unknown docs-pipeline command: ${commandName}`);

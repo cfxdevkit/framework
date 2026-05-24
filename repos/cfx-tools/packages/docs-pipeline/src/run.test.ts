@@ -25,9 +25,10 @@ describe('runCli', () => {
     expect(runCommandMock).toHaveBeenCalledWith('validate:wiki-fix');
   });
 
-  it('passes extra args through to wiki regeneration', async () => {
+  it('sets exitCode=1 for unknown wiki command (wiki handling moved to cdk docs wiki subcommands)', async () => {
+    const original = process.exitCode;
     await runCli(['wiki', '--review']);
-
-    expect(runCommandMock).toHaveBeenCalledWith('update-wiki', ['--review']);
+    expect(process.exitCode).toBe(1);
+    process.exitCode = original;
   });
 });

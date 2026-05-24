@@ -130,8 +130,8 @@ async function runDeterministicCli(rawArgs: readonly string[]): Promise<void> {
   if (workflow === 'structure-upkeep') {
     return await withLlmAgents((agents) => agents.runStructureUpkeep(rest));
   }
-  if (workflow === 'docs-upkeep') {
-    return await withLlmAgents((agents) => agents.runDocsUpkeep(rest));
+  if (workflow === 'wiki-generate') {
+    return await withLlmAgents((agents) => agents.runWikiGenerate(rest));
   }
 
   throw new Error(`Unknown deterministic workflow: ${workflow}`);

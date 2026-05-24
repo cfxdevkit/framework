@@ -5,23 +5,6 @@ export {
   discoverDocsPackages,
   discoverDocsPagePackages,
 } from './discover-packages.js';
-export {
-  type DocsApiTarget,
-  discoverApiTargets,
-  refreshApiSkeletons,
-  refreshDocsAlignmentArtifacts,
-} from './llm/api.js';
-export { getDocsPipelineReviewContext } from './llm/context.js';
-export {
-  discoverPackagePageTargets,
-  getPackagePagePath,
-  type PackagePageTarget,
-  readPackagePageHash,
-  stripPackagePageHash,
-  syncPackagePageSkeletons,
-  writePackagePageHash,
-} from './llm/package-pages.js';
-export { regenerateWiki, syncWikiContent, validateWikiContent } from './llm/wiki.js';
 export { docsToolingNamespace } from './namespace.js';
 export {
   computeSkeletonHash,
@@ -32,10 +15,26 @@ export {
   toSlug,
 } from './package-content.js';
 export { syncPackages } from './package-pages.js';
+export {
+  type DocsApiTarget,
+  discoverApiTargets,
+  refreshApiSkeletons,
+  refreshDocsAlignmentArtifacts,
+} from './pipeline/api.js';
+export { getDocsPipelineReviewContext } from './pipeline/context.js';
+export {
+  discoverPackagePageTargets,
+  getPackagePagePath,
+  type PackagePageTarget,
+  readPackagePageHash,
+  stripPackagePageHash,
+  syncPackagePageSkeletons,
+  writePackagePageHash,
+} from './pipeline/package-pages.js';
+export { syncWikiContent, validateWikiContent } from './pipeline/wiki.js';
 export { runCli } from './run.js';
 export { type DocsCommandName, runCommand } from './scripts.js';
 export { validateGeneratedContent } from './validate-content.js';
 export { syncWiki } from './wiki-sync.js';
-export { updateWiki } from './wiki-update.js';
 export { validateWikiMermaid } from './wiki-validate.js';
 export { findRepoRoot, getDocsSitePaths } from './workspace.js';

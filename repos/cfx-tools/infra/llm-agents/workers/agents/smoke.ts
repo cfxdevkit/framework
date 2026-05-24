@@ -28,13 +28,7 @@ const TIER_PROBES: readonly TierProbe[] = [
   {
     tier: 2,
     label: 'Documentation generation',
-    representativeActions: [
-      'docs-api',
-      'readme-upkeep',
-      'docs-upkeep',
-      'structure-upkeep',
-      'package-pages',
-    ],
+    representativeActions: ['docs-api', 'readme-upkeep', 'structure-upkeep', 'package-pages'],
     taskPrompt:
       'Write a one-sentence JSDoc description for a TypeScript function named `runBuild`. ' +
       'Reply with ONLY minified JSON and no other text: {"description":"..."}',

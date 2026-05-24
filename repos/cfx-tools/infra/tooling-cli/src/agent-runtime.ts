@@ -129,11 +129,11 @@ type LlmAgentsModule = {
   readonly runDocsApiProbe: (args: readonly string[]) => Promise<unknown>;
   readonly runDocsPackagePages: (args: readonly string[]) => Promise<unknown>;
   readonly runDocsReadme: (args: readonly string[]) => Promise<unknown>;
-  readonly runDocsUpkeep: (args: readonly string[]) => Promise<unknown>;
   readonly runPrecommit: (args: readonly string[]) => Promise<unknown>;
   readonly runReviewAgent: () => Promise<unknown>;
   readonly runStructureUpkeep: (args: readonly string[]) => Promise<unknown>;
   readonly runTestUpkeep: (args: readonly string[]) => Promise<unknown>;
+  readonly runWikiGenerate: (args: readonly string[]) => Promise<unknown>;
   readonly validateModels: (args: readonly string[]) => Promise<unknown>;
 };
 

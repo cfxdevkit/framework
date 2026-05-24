@@ -16,7 +16,7 @@ describe('rootDocsToolingNamespace', () => {
 
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Enrichment patterns:'));
     expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining('enrich [all|api|readme|packages|structure|content] [args]'),
+      expect.stringContaining('enrich [all|api|readme|packages|structure] [args]'),
     );
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('probe api [args]'));
   });
@@ -36,7 +36,7 @@ describe('rootDocsToolingNamespace', () => {
       '--quick',
     ]);
     expect(agentRunSpy).toHaveBeenNthCalledWith(4, ['deterministic', 'package-pages', '--quick']);
-    expect(agentRunSpy).toHaveBeenNthCalledWith(5, ['deterministic', 'docs-upkeep', '--quick']);
+    expect(agentRunSpy).toHaveBeenCalledTimes(4);
   });
 
   it('routes docs enrich api through agent deterministic', async () => {

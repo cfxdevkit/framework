@@ -21,6 +21,14 @@ export interface RepoActionDefinition {
 }
 
 export const repoActions = {
+  'wiki-generate': {
+    title: 'Wiki Generation',
+    description: 'Generate GitNexus wiki pages using provider-routed LLM.',
+    mode: 'deterministic',
+    defaultPrompt: '',
+    context: [],
+    ui: { statusLabel: 'Wiki Generate', renderer: 'text' },
+  },
   'docs-api': {
     title: 'API Documentation Enrichment',
     description: 'Generate API descriptions and examples for public package APIs.',
@@ -56,19 +64,6 @@ export const repoActions = {
       'Generate a STRUCTURE.md for this package. Document each significant file and directory with a short inline description. Use a code block for the tree.',
     context: [],
     ui: { statusLabel: 'Structure', renderer: 'text' },
-  },
-  'docs-upkeep': {
-    title: 'Documentation Upkeep',
-    description: 'Review documentation drift and recommend the smallest useful edits.',
-    mode: 'deterministic',
-    defaultPrompt:
-      'Review documentation alignment warnings and recommend the smallest repo doc updates. Keep findings first. Focus on docs that should live in the codebase, stale structure notes, missing API docs, and package README gaps.',
-    context: [
-      'artifacts/llm/reports/docs-alignment.md',
-      'docs/README.md',
-      'docs/llm-fine-tuning-plan.md',
-    ],
-    ui: { statusLabel: 'Docs Upkeep', renderer: 'text' },
   },
   'test-audit': {
     title: 'Test and Precheck Coverage Audit',

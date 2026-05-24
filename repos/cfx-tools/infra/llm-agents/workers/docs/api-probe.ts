@@ -4,7 +4,7 @@ import { discoverApiTargets } from '@cfxdevkit/docs-pipeline';
 import { completeStructuredAgent, parseJsonObject } from '../completion/index.ts';
 import { root } from '../shared/index.ts';
 import { logInfo, logStep } from '../shared/logging.ts';
-import { type DocsApiFlags, parseDocsApiFlags } from './api-flags.ts';
+import { type DocFlags as DocsApiFlags, parseDocFlags as parseDocsApiFlags } from './flags.ts';
 
 type DocsApiProbeResult = {
   status: string;

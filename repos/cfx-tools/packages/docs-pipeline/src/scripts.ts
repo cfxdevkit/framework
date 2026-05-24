@@ -6,10 +6,9 @@ export type DocsCommandName =
   | 'sync:coverage'
   | 'validate:content'
   | 'validate:wiki'
-  | 'validate:wiki-fix'
-  | 'update-wiki';
+  | 'validate:wiki-fix';
 
-export async function runCommand(command: DocsCommandName, extraArgs: readonly string[] = []) {
+export async function runCommand(command: DocsCommandName, _extraArgs: readonly string[] = []) {
   if (command === 'sync:all') {
     await runCommand('sync:wiki');
     await runCommand('sync:packages');
@@ -59,10 +58,5 @@ export async function runCommand(command: DocsCommandName, extraArgs: readonly s
     const { validateWikiMermaid } = await import('./wiki-validate.js');
     await validateWikiMermaid({ fix: true });
     return;
-  }
-
-  if (command === 'update-wiki') {
-    const { updateWiki } = await import('./wiki-update.js');
-    await updateWiki({ args: extraArgs });
   }
 }

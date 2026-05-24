@@ -1,8 +1,12 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { readContextFile } from '../completion/index.ts';
-import { normalizeScopeFilter } from '../docs/index.ts';
 import { execFileAsync, root } from '../shared/index.ts';
+
+/** Normalize a scope filter path — was previously in docs/discover.ts. */
+function normalizeScopeFilter(scope: string): string {
+  return scope.replace(/\\/g, '/').replace(/\/$/, '');
+}
 
 export function parseTestUpkeepFlags(args) {
   const promptParts = [];

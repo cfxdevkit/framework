@@ -7,7 +7,6 @@ const docsEnrichmentTargetMap = {
   readme: 'readme-upkeep',
   packages: 'package-pages',
   structure: 'structure-upkeep',
-  content: 'docs-upkeep',
 } as const;
 
 const docsProbeTargetMap = {
@@ -19,7 +18,6 @@ const docsEnrichmentAllSequence = [
   'readme-upkeep',
   'structure-upkeep',
   'package-pages',
-  'docs-upkeep',
 ] as const;
 
 /** Route a doc enrichment command through the agent deterministic workflow.
@@ -37,7 +35,7 @@ const docsEnrichmentCommands: readonly ToolingCommandDefinition[] = [
   {
     name: 'enrich',
     description: 'Run docs enrichment workflows backed by the local LLM',
-    usage: 'enrich [all|api|readme|packages|structure|content] [args]',
+    usage: 'enrich [all|api|readme|packages|structure] [args]',
   },
   {
     name: 'probe',
@@ -58,8 +56,9 @@ Deterministic commands:
 ${docsToolingNamespace.commands.map((command) => `  ${command.usage ?? command.name}`).join('\n')}
 
 Enrichment patterns:
-  enrich [all|api|readme|packages|structure|content] [args]
+  enrich [all|api|readme|packages|structure] [args]
   probe api [args]
+  wiki [generate|sync|validate] [args]
   review [args]
 
 Common enrich args pass through to the worker flows: --model <id>, --quick, --force, --no-thinking
@@ -67,7 +66,6 @@ Common enrich args pass through to the worker flows: --model <id>, --quick, --fo
 Examples:
   cdk docs sync all
   cdk docs validate content
-  cdk docs wiki --review
   cdk docs enrich all --quick
   cdk docs enrich all --no-thinking --quick
   cdk docs enrich all --force --quick
@@ -75,7 +73,9 @@ Examples:
   cdk docs enrich api
   cdk docs probe api --package @cfxdevkit/executor --quick
   cdk docs enrich packages
-  cdk docs enrich content --quick
+  cdk docs wiki generate
+  cdk docs wiki sync
+  cdk docs wiki validate
   cdk docs review
 `;
 
@@ -146,6 +146,30 @@ export const rootDocsToolingNamespace: ToolingNamespaceDefinition = {
       }
 
       await runDeterministicEnrichment(mapped, forwardedArgs);
+      return;
+    }
+
+    if (command === 'wiki') {
+      const [subcommand = 'help', ...forwardedArgs] = rest;
+      if (isHelpToken(subcommand)) {
+        console.log(helpText);
+        return;
+      }
+
+      if (subcommand === 'generate') {
+        await runDeterministicEnrichment('wiki-generate', forwardedArgs);
+        return;
+      }
+      if (subcommand === 'sync') {
+        await docsToolingNamespace.run(['sync', 'wiki']);
+        return;
+      }
+      if (subcommand === 'validate') {
+        await docsToolingNamespace.run(['validate', 'wiki', ...forwardedArgs]);
+        return;
+      }
+      console.error(`Unknown wiki subcommand: ${subcommand}. Use: generate, sync, validate`);
+      process.exitCode = 1;
       return;
     }
 

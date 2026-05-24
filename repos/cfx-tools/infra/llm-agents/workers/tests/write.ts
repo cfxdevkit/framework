@@ -1,8 +1,15 @@
 import { mkdir, stat, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { artifactSlug } from '../docs/write.ts';
 import { artifactsRoot, root } from '../shared/index.ts';
 import { logInfo } from '../shared/logging.ts';
+
+/** Slug for an artifact path — was previously in docs/write.ts. */
+function artifactSlug(label: string): string {
+  return label
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/^-|-$/g, '')
+    .toLowerCase();
+}
 
 export async function writeTestUpkeepSuggestions(pkg, result, _flags) {
   const written = [];
