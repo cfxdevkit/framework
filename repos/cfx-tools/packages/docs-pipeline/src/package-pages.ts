@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 
-import { discoverDocsPackages, type DocsPackageRecord } from './discover-packages.js';
+import { type DocsPackageRecord, discoverDocsPackages } from './discover-packages.js';
 import {
   computeSkeletonHash,
   embedHash,

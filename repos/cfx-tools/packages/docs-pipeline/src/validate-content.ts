@@ -1,7 +1,7 @@
-import { compile } from '@mdx-js/mdx';
 import type { Dirent } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { compile } from '@mdx-js/mdx';
 import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 

@@ -25,7 +25,7 @@ import { runCommand } from './scripts.js';
 describe('runCommand', () => {
   beforeEach(() => {
     process.exitCode = undefined;
-    Object.values(mocks).forEach((mock) => mock.mockReset());
+    for (const mock of Object.values(mocks)) mock.mockReset();
     mocks.validateGeneratedContent.mockResolvedValue({ checkedFiles: 1, errors: [] });
   });
 

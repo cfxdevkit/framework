@@ -1,4 +1,4 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
-layer: 'application'
+layer: 'library'
 language: 'typescript'

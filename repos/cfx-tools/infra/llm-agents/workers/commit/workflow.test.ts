@@ -1,7 +1,4 @@
-import {
-  applyWorkflowMockDefaults,
-  resetWorkflowMocks,
-} from '@cfxdevkit/testing/llm-agents-test-support';
+import { applyWorkflowMockDefaults, resetWorkflowMocks } from '../tests/support.ts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({

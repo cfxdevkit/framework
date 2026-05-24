@@ -1,5 +1,5 @@
 import { docsToolingNamespace } from '@cfxdevkit/docs-pipeline';
-import { llmToolingNamespace } from '@cfxdevkit/llm-tools';
+import { agentToolingNamespace } from './agent-namespace.js';
 import type { ToolingCommandDefinition, ToolingNamespaceDefinition } from './contracts.js';
 
 const docsEnrichmentTargetMap = {
@@ -21,6 +21,17 @@ const docsEnrichmentAllSequence = [
   'package-pages',
   'docs-upkeep',
 ] as const;
+
+/** Route a doc enrichment command through the agent deterministic workflow.
+ *  Replaces the previous spawn-through-llm-tools path. */
+async function runDeterministicEnrichment(command: string, args: readonly string[]): Promise<void> {
+  await agentToolingNamespace.run(['deterministic', command, ...args]);
+}
+
+/** Route a doc pipeline review through the agent exploratory workflow. */
+async function runExploratoryReview(args: readonly string[]): Promise<void> {
+  await agentToolingNamespace.run(['exploratory', 'docs-pipeline', ...args]);
+}
 
 const docsEnrichmentCommands: readonly ToolingCommandDefinition[] = [
   {
@@ -97,7 +108,7 @@ export const rootDocsToolingNamespace: ToolingNamespaceDefinition = {
       if (target === 'all') {
         await docsToolingNamespace.run(['sync', 'all']);
         for (const mapped of docsEnrichmentAllSequence) {
-          await llmToolingNamespace.run([mapped, ...forwardedArgs]);
+          await runDeterministicEnrichment(mapped, forwardedArgs);
         }
         return;
       }
@@ -110,7 +121,7 @@ export const rootDocsToolingNamespace: ToolingNamespaceDefinition = {
         return;
       }
 
-      await llmToolingNamespace.run([mapped, ...forwardedArgs]);
+      await runDeterministicEnrichment(mapped, forwardedArgs);
       return;
     }
 
@@ -134,7 +145,7 @@ export const rootDocsToolingNamespace: ToolingNamespaceDefinition = {
         return;
       }
 
-      await llmToolingNamespace.run([mapped, ...forwardedArgs]);
+      await runDeterministicEnrichment(mapped, forwardedArgs);
       return;
     }
 
@@ -144,7 +155,7 @@ export const rootDocsToolingNamespace: ToolingNamespaceDefinition = {
         return;
       }
 
-      await llmToolingNamespace.run(['docs-pipeline', ...rest]);
+      await runExploratoryReview(rest);
       return;
     }
 

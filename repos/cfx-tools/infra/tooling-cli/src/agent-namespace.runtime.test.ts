@@ -1,8 +1,5 @@
-import {
-  resetToolingCliAgentNamespaceHarness,
-  withMockedTty,
-} from '@cfxdevkit/testing/tooling-cli-test-support';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resetToolingCliAgentNamespaceHarness, withMockedTty } from './test-support.js';
 
 const harness = vi.hoisted(() => ({
   prompts: {

@@ -1,7 +1,11 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
-layer: 'application'
+layer: 'library'
 language: 'typescript'
+
+dependsOn:
+  - 'cdk-repo-check'
+  - 'docs-pipeline'
 
 fileGroups:
   sources:

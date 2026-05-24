@@ -17,3 +17,4 @@ export {
   toolingNamespaces,
 } from './registry.js';
 export { runCli } from './run.js';
+export { getLlmScriptRequirements, getRootScriptRequirements } from './script-requirements.js';

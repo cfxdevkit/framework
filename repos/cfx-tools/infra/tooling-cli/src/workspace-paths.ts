@@ -1,18 +1,10 @@
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { findWorkspaceRoot } from '@cfxdevkit/workspace-utils';
 
+export { findWorkspaceRoot };
+
+/** Convenience alias — same as findWorkspaceRoot. */
 export function findRepoRoot(startDir: string): string {
-  let current = startDir;
-  while (current !== relativeParent(current)) {
-    if (
-      existsSync(join(current, 'pnpm-workspace.yaml')) &&
-      existsSync(join(current, 'package.json'))
-    ) {
-      return current;
-    }
-    current = relativeParent(current);
-  }
-  return startDir;
+  return findWorkspaceRoot(startDir);
 }
 
 export function relativeParent(path: string): string {

@@ -1,7 +1,6 @@
 import { execFile } from 'node:child_process';
-import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 import type { GitNexusRepositorySummary, GitNexusSnapshot } from './types.js';
 
@@ -161,14 +160,4 @@ export function normalizeRelativePath(value: string): string {
   return normalized === '' ? '.' : normalized;
 }
 
-export function findWorkspaceRoot(start: string): string {
-  let current = resolve(start);
-  while (true) {
-    if (existsSync(join(current, 'pnpm-workspace.yaml')) && existsSync(join(current, 'openspec'))) {
-      return current;
-    }
-    const parent = dirname(current);
-    if (parent === current) return resolve(start);
-    current = parent;
-  }
-}
+export { findWorkspaceRoot } from '@cfxdevkit/workspace-utils';

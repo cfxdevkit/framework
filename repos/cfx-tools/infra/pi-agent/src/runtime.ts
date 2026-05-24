@@ -1,8 +1,8 @@
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findWorkspaceRoot } from '@cfxdevkit/workspace-utils';
 import type { PiScopeName } from './extension.js';
 import { createPiAgentExtension, piScopeEnvVar } from './extension.js';
 import { createPiProviderBridge } from './providers.js';
@@ -185,14 +185,5 @@ function buildCommitSessionPrompt(promptArgs: readonly string[]): string {
 }
 
 function findRepoRoot(startDir: string): string {
-  let current = startDir;
-  while (current !== dirname(current)) {
-    if (existsSync(join(current, 'pnpm-workspace.yaml')) && existsSync(join(current, '.pi'))) {
-      return current;
-    }
-    current = dirname(current);
-  }
-
-  const currentFileDir = dirname(fileURLToPath(import.meta.url));
-  return join(currentFileDir, '../../../../../..');
+  return findWorkspaceRoot(startDir);
 }

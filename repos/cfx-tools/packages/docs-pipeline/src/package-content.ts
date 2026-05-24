@@ -35,7 +35,7 @@ export function readEmbeddedHash(content: string): string | null {
 }
 
 export function embedHash(content: string, hash: string): string {
-  return content.replace(HASH_RE, '') + `\n{/* readme-hash: ${hash} */}\n`;
+  return `${content.replace(HASH_RE, '')}\n{/* readme-hash: ${hash} */}\n`;
 }
 
 export function stripEmbeddedHash(content: string): string {

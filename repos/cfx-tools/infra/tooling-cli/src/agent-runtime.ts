@@ -7,20 +7,18 @@ import {
 } from './workspace-paths.js';
 
 const scopedConfigEnvVar = 'CFXDEVKIT_LLM_CONFIG_PATH';
-const cdkAiPackageName = '@cfxdevkit/cdk-ai';
+const piAgentPackageName = '@cfxdevkit/pi-agent';
+const llmAgentsPackageName = '@cfxdevkit/llm-agents';
 const piAgentSourceModulePath = '../../pi-agent/src/index.js';
 const llmAgentsSourceModulePath = '../../llm-agents/src/index.js';
-const cdkAiDistEntry = new URL('../../../packages/cdk-ai/dist/index.js', import.meta.url);
 const piAgentDistEntry = new URL('../../pi-agent/dist/index.js', import.meta.url);
 const llmAgentsDistEntry = new URL('../../llm-agents/dist/index.js', import.meta.url);
 
-function hasBuiltCdkAiRuntime(): boolean {
+function hasBuiltRuntime(): boolean {
   // When Vite compiles the dist, new URL(..., import.meta.url) becomes data: URLs.
   // In that case module content is already inlined — treat as built.
-  if (cdkAiDistEntry.protocol === 'data:') return true;
-  return (
-    existsSync(cdkAiDistEntry) && existsSync(piAgentDistEntry) && existsSync(llmAgentsDistEntry)
-  );
+  if (piAgentDistEntry.protocol === 'data:') return true;
+  return existsSync(piAgentDistEntry) && existsSync(llmAgentsDistEntry);
 }
 
 type LlmConfig = {
@@ -167,9 +165,9 @@ export async function withLlmClient<T>(
   return runInRepoRoot(async () =>
     run(
       await loadWorkspaceModule<LlmClientModule>(
-        cdkAiPackageName,
+        piAgentPackageName,
         piAgentSourceModulePath,
-        cdkAiDistEntry,
+        piAgentDistEntry,
       ),
     ),
   );
@@ -181,9 +179,9 @@ export async function withLlmAgents(
   await runInRepoRoot(async () => {
     await run(
       await loadWorkspaceModule<LlmAgentsModule>(
-        cdkAiPackageName,
+        llmAgentsPackageName,
         llmAgentsSourceModulePath,
-        cdkAiDistEntry,
+        llmAgentsDistEntry,
       ),
     );
   });
@@ -195,9 +193,9 @@ export async function withPiAgent(
   await runInRepoRoot(async () => {
     await run(
       await loadWorkspaceModule<PiAgentModule>(
-        cdkAiPackageName,
+        piAgentPackageName,
         piAgentSourceModulePath,
-        cdkAiDistEntry,
+        piAgentDistEntry,
       ),
     );
   });
@@ -208,10 +206,10 @@ export async function withPiAgentSource(
 ): Promise<void> {
   await runInRepoRoot(async () => {
     // In compiled dist (Vite inlines data: URLs), source path resolution is invalid.
-    // Fall back to the package specifier, which re-exports everything from pi-agent.
+    // Fall back to the package specifier.
     const mod =
-      cdkAiDistEntry.protocol === 'data:'
-        ? await import(cdkAiPackageName)
+      piAgentDistEntry.protocol === 'data:'
+        ? await import(piAgentPackageName)
         : await import(piAgentSourceModulePath);
     await run(mod as PiAgentModule);
   });
@@ -222,14 +220,9 @@ async function loadWorkspaceModule<T>(
   sourceSpecifier: string,
   builtEntry: URL,
 ): Promise<T> {
-  if (builtEntry.href === cdkAiDistEntry.href && hasBuiltCdkAiRuntime()) {
+  if (hasBuiltRuntime() || existsSync(builtEntry)) {
     return (await import(packageSpecifier)) as T;
   }
-
-  if (builtEntry.href !== cdkAiDistEntry.href && existsSync(builtEntry)) {
-    return (await import(packageSpecifier)) as T;
-  }
-
   return (await import(sourceSpecifier)) as T;
 }
 

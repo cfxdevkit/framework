@@ -1,7 +1,12 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
-layer: 'application'
+layer: 'tool'
 language: 'typescript'
+
+dependsOn:
+  - 'workspace-utils'
+  - 'llm-agents'
+  - 'cli'
 
 fileGroups:
   sources:

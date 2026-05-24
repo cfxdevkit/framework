@@ -121,6 +121,7 @@ function extractBlocks(text: string): MermaidBlock[] {
 
   const jsxRe = /<Mermaid\s+chart=\{`([\s\S]*?)`\}\s*\/>/g;
   let match: RegExpExecArray | null;
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard RegExp.exec loop idiom
   while ((match = jsxRe.exec(text)) !== null) {
     const diagram = (match[1] ?? '').replace(/\\`/g, '`').replace(/\\\$\{/g, '${');
     blocks.push({
@@ -132,6 +133,7 @@ function extractBlocks(text: string): MermaidBlock[] {
   }
 
   const fenceRe = /```mermaid\n([\s\S]*?)```/g;
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard RegExp.exec loop idiom
   while ((match = fenceRe.exec(text)) !== null) {
     blocks.push({
       diagram: match[1] ?? '',

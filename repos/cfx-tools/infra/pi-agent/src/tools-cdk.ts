@@ -12,11 +12,11 @@ import {
   type RunDeriveOptions,
   type RunGenerateOptions,
   type RunStatusOptions,
-  type StatusReport,
   runContractsExtract,
   runDerive,
   runGenerate,
   runStatus,
+  type StatusReport,
 } from '@cfxdevkit/cli';
 
 export type {

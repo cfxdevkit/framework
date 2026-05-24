@@ -8,3 +8,4 @@ You are operating inside the Conflux DevKit repository.
 - When `cdk repo check` surfaces error-status validation steps, call `repo_agent_check` to automatically create OpenSpec changes for those failures. Then apply them with `/opsx-apply`.
 - Treat OpenSpec changes as the standard unit of remediation for all repo-check validation failures. Never manually patch issues that the check pipeline has already planned as a change.
 - Before closing any task that involves code changes, confirm `repo_agent_check` (or `cdk repo check`) passes cleanly.
+- **Before archiving any OpenSpec change**, run `cdk repo precommit` (full — including tests and build). All gates must pass. Do not archive with failing gates.

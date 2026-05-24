@@ -1,6 +1,5 @@
 import type { ScriptRequirement } from './workspace.js';
 import { rootDocsScriptRequirements } from './workspace-scripts-docs.js';
-import { rootLlmScriptRequirements } from './workspace-scripts-llm.js';
 import { rootRepoScriptRequirements } from './workspace-scripts-repo.js';
 
 const rootGenerationScriptRequirements: readonly ScriptRequirement[] = [
@@ -30,9 +29,14 @@ const rootGenerationScriptRequirements: readonly ScriptRequirement[] = [
   },
 ];
 
+/**
+ * Core structural script requirements validated by arch-check.
+ * The full set (including llm:* and agent:* aliases) is exported by
+ * tooling-cli via getRootScriptRequirements() which derives them from
+ * the live command registry. See repos/cfx-tools/infra/tooling-cli/src/script-requirements.ts
+ */
 export const rootToolingScriptRequirements: readonly ScriptRequirement[] = [
   ...rootGenerationScriptRequirements,
   ...rootRepoScriptRequirements,
   ...rootDocsScriptRequirements,
-  ...rootLlmScriptRequirements,
 ];

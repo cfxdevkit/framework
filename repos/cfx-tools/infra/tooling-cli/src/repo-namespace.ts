@@ -138,7 +138,7 @@ async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
       console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
       process.exitCode = result.exitCode;
     } else if (checkCommandMap[target]) {
-      const result = await runRepoCommand(checkCommandMap[target]!, checkArgs);
+      const result = await runRepoCommand(checkCommandMap[target] as RepoCommandTarget, checkArgs);
       console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
       process.exitCode = result.exitCode;
     } else {

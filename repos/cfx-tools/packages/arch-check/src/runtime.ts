@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
-import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
-import { dirname, extname, join, relative, resolve } from 'node:path';
+import { dirname, extname, join, relative } from 'node:path';
+import { findWorkspaceRoot } from '@cfxdevkit/workspace-utils';
 
 export type Severity = 'error' | 'warning' | 'info';
 
@@ -84,17 +84,7 @@ export const markdownLinkPattern = /\[[^\]]+\]\(([^)\s]+)\)/g;
 export const inlineCodePattern = /`([^`\n]+)`/g;
 export const headingPattern = /^(#{1,6})\s+(.+)$/gm;
 
-export function findWorkspaceRoot(start: string): string {
-  let current = resolve(start);
-  while (true) {
-    if (existsSync(join(current, 'pnpm-workspace.yaml')) && existsSync(join(current, 'openspec'))) {
-      return current;
-    }
-    const parent = dirname(current);
-    if (parent === current) return resolve(start);
-    current = parent;
-  }
-}
+export { findWorkspaceRoot } from '@cfxdevkit/workspace-utils';
 
 export async function findFiles(dir: string, name: string): Promise<string[]> {
   const found: string[] = [];

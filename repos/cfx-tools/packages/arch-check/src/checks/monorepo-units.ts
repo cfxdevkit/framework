@@ -1,5 +1,5 @@
-import { existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { findWorkspaceRoot } from '@cfxdevkit/workspace-utils';
 
 type MonorepoUnitSpec = {
   readonly name: string;
@@ -53,7 +53,7 @@ const monorepoUnitSpecs = [
 ] as const satisfies readonly MonorepoUnitSpec[];
 
 export function listMonorepoUnits(startDir: string = process.cwd()): readonly MonorepoUnit[] {
-  const repoRoot = findRepoRoot(startDir);
+  const repoRoot = findWorkspaceRoot(startDir);
   return monorepoUnitSpecs.map((spec) => {
     const rootPath = join(repoRoot, spec.rootDir);
     const configPath = join(repoRoot, 'artifacts', 'llm', 'config', 'units', `${spec.name}.json`);
@@ -83,24 +83,4 @@ export function buildMonorepoUnitConfig(unit: MonorepoUnit) {
       providerStrategy: 'auto',
     },
   };
-}
-
-function findRepoRoot(startDir: string): string {
-  let current = startDir;
-  while (current !== relativeParent(current)) {
-    if (
-      existsSync(join(current, 'pnpm-workspace.yaml')) &&
-      existsSync(join(current, 'package.json'))
-    ) {
-      return current;
-    }
-    current = relativeParent(current);
-  }
-  return startDir;
-}
-
-function relativeParent(path: string): string {
-  const normalized = path.replace(/\\/g, '/');
-  const parent = normalized.slice(0, normalized.lastIndexOf('/')) || normalized;
-  return parent === normalized ? normalized : parent;
 }

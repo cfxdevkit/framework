@@ -12,14 +12,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./tooling-cli-test-support": {
-      "types": "./src/tooling-cli-test-support.ts",
-      "import": "./src/tooling-cli-test-support.ts"
-    },
-    "./llm-agents-test-support": {
-      "types": "./src/llm-agents-test-support.ts",
-      "import": "./src/llm-agents-test-support.ts"
-    },
     "./package.json": "./package.json"
   },
   "files": [

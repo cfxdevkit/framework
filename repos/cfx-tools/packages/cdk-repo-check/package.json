@@ -28,7 +28,8 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
-    "@cfxdevkit/arch-check": "workspace:*"
+    "@cfxdevkit/arch-check": "workspace:*",
+    "@cfxdevkit/workspace-utils": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",

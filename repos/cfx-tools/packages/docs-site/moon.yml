@@ -2,3 +2,14 @@ $schema: 'https://moonrepo.dev/schemas/project.json'
 
 layer: 'application'
 language: 'typescript'
+
+# docs-site is a Next.js app excluded from the standard :build sweep
+# (pids.max constraint). Build explicitly with: pnpm --filter @cfxdevkit/docs-site build
+tasks:
+  build:
+    command: 'echo "docs-site: use pnpm --filter @cfxdevkit/docs-site build to build explicitly"'
+    options:
+      runInCI: false
+      mergeArgs: 'replace'
+      mergeOutputs: 'replace'
+      cache: false

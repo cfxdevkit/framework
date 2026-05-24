@@ -1,7 +1,7 @@
 {
   "name": "@cfxdevkit/llm-tools",
   "version": "2.0.0",
-  "private": false,
+  "private": true,
   "description": "CLI dispatcher for local LLM automation workflows.",
   "type": "module",
   "main": "./dist/index.js",

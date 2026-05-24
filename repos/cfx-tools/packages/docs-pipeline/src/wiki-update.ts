@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { runWorkspacePnpm } from './llm/process.js';
-import { findRepoRoot } from './workspace.js';
 import { syncWiki } from './wiki-sync.js';
+import { findRepoRoot } from './workspace.js';
 
 type LemonadeConfig = {
   baseUrl?: string;

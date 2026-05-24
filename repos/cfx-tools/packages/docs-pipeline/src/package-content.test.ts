@@ -31,8 +31,8 @@ describe('package-content', () => {
 
     expect(mdx).toMatchInlineSnapshot(`
       "---
-      title: \"@cfxdevkit/example\"
-      description: \"Example package\"
+      title: "@cfxdevkit/example"
+      description: "Example package"
       ---
 
       import { Callout, Tabs } from 'nextra/components'

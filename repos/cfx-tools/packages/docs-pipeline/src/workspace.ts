@@ -1,18 +1,8 @@
-import { existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { findWorkspaceRoot } from '@cfxdevkit/workspace-utils';
 
-const packageDir = dirname(dirname(fileURLToPath(import.meta.url)));
-
-export function findRepoRoot(startDir: string = packageDir): string {
-  let current = startDir;
-  while (current !== dirname(current)) {
-    if (existsSync(join(current, 'pnpm-workspace.yaml')) && existsSync(join(current, 'repos'))) {
-      return current;
-    }
-    current = dirname(current);
-  }
-  throw new Error(`Unable to find repository root from ${startDir}`);
+export function findRepoRoot(startDir?: string): string {
+  return findWorkspaceRoot(startDir);
 }
 
 export function getDocsSitePaths(repoRoot: string = findRepoRoot()) {

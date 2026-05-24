@@ -14,9 +14,11 @@
  *   /cdk generate [--strength 128|256]
  *   /cdk contracts extract [--artifacts <dir>] [--out <dir>]
  */
+
+import { parseArgs } from '@cfxdevkit/cli';
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Box, Text } from '@earendil-works/pi-tui';
-import { parseArgs } from '@cfxdevkit/cli';
+import { bool, num, str, tokenize } from './commands-cdk-flags.js';
 import {
   executeCdkContractsExtract,
   executeCdkDerive,
@@ -34,7 +36,6 @@ import {
   createCdkGenerateUiState,
   createCdkStatusUiState,
 } from './ui-cdk.js';
-import { bool, num, str, tokenize } from './commands-cdk-flags.js';
 
 const CDK_HELP = `cfx — Conflux developer CLI (chat surface)
 
@@ -61,13 +62,10 @@ function isCdkMessageDetails(value: unknown): value is CdkMessageDetails {
   if (!value || typeof value !== 'object') return false;
   const c = value as Record<string, unknown>;
   return (
-    typeof c['title'] === 'string' &&
-    Array.isArray(c['lines']) &&
-    (c['lines'] as unknown[]).every((l) => typeof l === 'string') &&
-    (c['tone'] === 'info' ||
-      c['tone'] === 'success' ||
-      c['tone'] === 'warning' ||
-      c['tone'] === 'error')
+    typeof c.title === 'string' &&
+    Array.isArray(c.lines) &&
+    (c.lines as unknown[]).every((l) => typeof l === 'string') &&
+    (c.tone === 'info' || c.tone === 'success' || c.tone === 'warning' || c.tone === 'error')
   );
 }
 

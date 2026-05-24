@@ -1,5 +1,5 @@
-export { registerPiCdkCommands } from './commands-cdk.js';
 export { registerPiRepoCommands } from './commands.js';
+export { registerPiCdkCommands } from './commands-cdk.js';
 export {
   createPiAgentExtension,
   piScopeEnvVar,

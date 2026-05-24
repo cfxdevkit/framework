@@ -1,6 +1,6 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
-layer: 'application'
+layer: 'tool'
 language: 'typescript'
 
 fileGroups:
@@ -15,6 +15,8 @@ tasks:
     deps:
       - 'cdk-repo-check:build'
       - 'llm-agents:build'
+      - 'pi-agent:build'
+      - 'docs-pipeline:build'
     inputs:
       - '@group(sources)'
     outputs:
