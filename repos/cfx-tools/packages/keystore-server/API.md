@@ -28,9 +28,9 @@ const app = createKeystoreApp({
 ```
 
 ```ts
-// The package name identifier for runtime introspection
+// <one-line description>
 export declare const __packageName: "@cfxdevkit/keystore-server";
-// Configuration options for initializing the keystore HTTP server
+// <one-line description>
 export interface KeystoreServerAppOptions {
     // The port number the server will listen on
     port: number;
@@ -41,7 +41,7 @@ export interface KeystoreServerAppOptions {
     // The Hono router instance containing the application routes
     routes: Hono;
 }
-// Summary of a wallet with basic metadata and state
+// <one-line description>
 export interface WalletSummary {
     // The wallet address
     address: string;
@@ -54,7 +54,7 @@ export interface WalletSummary {
     // The type of the wallet (e.g., hardware, software)
     type: string;
 }
-// Extended wallet summary including display and lifecycle information
+// <one-line description>
 export interface ActiveWalletSummary extends WalletSummary {
     // The display name of the wallet
     name: string;
@@ -69,7 +69,7 @@ export interface ActiveWalletSummary extends WalletSummary {
     // The timestamp when the wallet was last updated
     updatedAt: string;
 }
-// Summary of an account within a wallet
+// <one-line description>
 export interface WalletAccountSummary {
     // The account address
     address: string;
@@ -82,7 +82,7 @@ export interface WalletAccountSummary {
     // The type of the account (e.g., external, internal)
     type: string;
 }
-// Summary of a pending secret reveal request
+// <one-line description>
 export interface RevealRequestSummary {
     // The kind of secret being requested (e.g., mnemonic, private-key)
     kind: RevealKind;
@@ -91,30 +91,30 @@ export interface RevealRequestSummary {
     // The timestamp of the request
     timestamp: string;
 }
-// A revealed secret with metadata
+// <one-line description>
 export interface RevealedSecret {
     // The revealed secret string
     secret: string;
     // The timestamp when the secret was revealed
     timestamp: string;
 }
-// Guidance message for keystore reset operations
+// <one-line description>
 export interface KeystoreResetGuidance {
     // The guidance message
     message: string;
     // The required action to take
     action: string;
 }
-// Current lifecycle status of the keystore
+// <one-line description>
 export interface KeystoreStatus {
     // The current lifecycle phase of the keystore
     phase: KeystoreLifecyclePhase;
     // The timestamp of the status update
     timestamp: string;
 }
-// Factory function to create a Hono-based keystore HTTP application
+// <one-line description>
 export declare function createKeystoreApp(options: KeystoreServerAppOptions): Hono;
-// Factory function to create keystore routes bound to a given service instance
+// <one-line description>
 export declare function createKeystoreRoutes(keystore: KeystoreService, options?: {
     // The port number for the routes
     port: number;
@@ -125,91 +125,91 @@ export declare function createKeystoreRoutes(keystore: KeystoreService, options?
     // The Hono router instance
     routes: Hono;
 }): Hono;
-// Supported kinds of secrets that can be revealed
+// <one-line description>
 export type RevealKind = 'mnemonic' | 'private-key';
-// Lifecycle phases of the keystore service
+// <one-line description>
 export type KeystoreLifecyclePhase = 'blank' | 'locked' | 'unlocked' | 'active-wallet';
-// Core service class managing keystore state and operations
+// <one-line description>
 export declare class KeystoreService {
-    // Initializes a new keystore service instance with the given options
+    // <one-line description>
     constructor(options: KeystoreServiceOptions);
-    // Starts the keystore service and begins listening for requests
+    // <one-line description>
     start(): Promise<void>;
-    // Stops the keystore service gracefully
+    // <one-line description>
     stop(): Promise<void>;
-    // Resets the keystore to its initial state
+    // <one-line description>
     reset(): Promise<void>;
-    // Retrieves the current keystore lifecycle status
+    // <one-line description>
     getKeystoreStatus(): KeystoreStatus;
-    // Returns a list of all active wallets
+    // <one-line description>
     getActiveWallets(): ActiveWalletSummary[];
-    // Returns a list of all wallet accounts
+    // <one-line description>
     getWalletAccounts(): WalletAccountSummary[];
-    // Returns a list of pending reveal requests
+    // <one-line description>
     getRevealRequests(): RevealRequestSummary[];
-    // Returns a list of revealed secrets
+    // <one-line description>
     getRevealedSecrets(): RevealedSecret[];
-    // Returns guidance for resetting the keystore
+    // <one-line description>
     getKeystoreResetGuidance(): KeystoreResetGuidance;
-    // Sets the current keystore lifecycle status
+    // <one-line description>
     setKeystoreStatus(status: KeystoreStatus): void;
-    // Replaces the list of active wallets
+    // <one-line description>
     setActiveWallets(wallets: ActiveWalletSummary[]): void;
-    // Replaces the list of wallet accounts
+    // <one-line description>
     setWalletAccounts(accounts: WalletAccountSummary[]): void;
-    // Replaces the list of reveal requests
+    // <one-line description>
     setRevealRequests(revealRequests: RevealRequestSummary[]): void;
-    // Replaces the list of revealed secrets
+    // <one-line description>
     setRevealedSecrets(revealedSecrets: RevealedSecret[]): void;
-    // Sets the keystore reset guidance
+    // <one-line description>
     setKeystoreResetGuidance(guidance: KeystoreResetGuidance): void;
-    // Adds a new active wallet to the keystore
+    // <one-line description>
     addWallet(wallet: ActiveWalletSummary): void;
-    // Removes an active wallet from the keystore
+    // <one-line description>
     removeWallet(wallet: ActiveWalletSummary): void;
-    // Adds a new wallet account to the keystore
+    // <one-line description>
     addAccount(account: WalletAccountSummary): void;
-    // Removes a wallet account from the keystore
+    // <one-line description>
     removeAccount(account: WalletAccountSummary): void;
-    // Adds a new reveal request to the keystore
+    // <one-line description>
     addRevealRequest(revealRequest: RevealRequestSummary): void;
-    // Removes a reveal request from the keystore
+    // <one-line description>
     removeRevealRequest(revealRequest: RevealRequestSummary): void;
-    // Adds a revealed secret to the keystore
+    // <one-line description>
     addRevealedSecret(revealedSecret: RevealedSecret): void;
-    // Removes a revealed secret from the keystore
+    // <one-line description>
     removeRevealedSecret(revealedSecret: RevealedSecret): void;
-    // Adds keystore reset guidance
+    // <one-line description>
     addKeystoreResetGuidance(guidance: KeystoreResetGuidance): void;
-    // Updates an existing active wallet
+    // <one-line description>
     updateWallet(wallet: ActiveWalletSummary): void;
-    // Updates an existing wallet account
+    // <one-line description>
     updateAccount(account: WalletAccountSummary): void;
-    // Updates an existing reveal request
+    // <one-line description>
     updateRevealRequest(revealRequest: RevealRequestSummary): void;
-    // Updates an existing revealed secret
+    // <one-line description>
     updateRevealedSecret(revealedSecret: RevealedSecret): void;
-    // Updates existing keystore reset guidance
+    // <one-line description>
     updateKeystoreResetGuidance(guidance: KeystoreResetGuidance): void;
-    // Retrieves a specific active wallet by ID
+    // <one-line description>
     getWallet(walletId: string): ActiveWalletSummary | undefined;
-    // Retrieves a specific wallet account by ID
+    // <one-line description>
     getAccount(accountId: string): WalletAccountSummary | undefined;
-    // Retrieves a specific reveal request by ID
+    // <one-line description>
     getRevealRequest(revealRequestId: string): RevealRequestSummary | undefined;
-    // Retrieves a specific revealed secret by ID
+    // <one-line description>
     getRevealedSecret(revealedSecretId: string): RevealedSecret | undefined;
-    // Retrieves keystore reset guidance by ID
+    // <one-line description>
     getKeystoreResetGuidance(guidanceId: string): KeystoreResetGuidance | undefined;
-    // Returns all active wallets (alias of getActiveWallets)
+    // <one-line description>
     getWallets(): ActiveWalletSummary[];
-    // Returns all wallet accounts (alias of getWalletAccounts)
+    // <one-line description>
     getAccounts(): WalletAccountSummary[];
-    // Returns all pending reveal requests (alias of getRevealRequests)
+    // <one-line description>
     getRevealRequests(): RevealRequestSummary[];
-    // Returns all revealed secrets (alias of getRevealedSecrets)
+    // <one-line description>
     getRevealedSecrets(): RevealedSecret[];
-    // Returns all keystore reset guidance entries (alias of getKeystoreResetGuidance)
+    // <one-line description>
     getKeystoreResetGuidances(): KeystoreResetGuidance[];
 }
 ```

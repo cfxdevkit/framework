@@ -1,8 +1,10 @@
+import type {
+  ContractRegistry,
+  DevnodeServerController,
+  NetworkState,
+} from '@cfxdevkit/devnode-core';
 import type { KeystoreService } from '@cfxdevkit/keystore-server';
 import { Hono } from 'hono';
-import type { ContractRegistry } from '../contracts.js';
-import type { DevnodeServerController } from '../controller.js';
-import type { NetworkState } from '../network.js';
 import { attachContractActionRoutes } from './contracts-actions.js';
 import { normalizeChainId, normalizeNetwork, normalizeSpace } from './contracts-helpers.js';
 

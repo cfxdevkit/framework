@@ -38,7 +38,8 @@
     "@cfxdevkit/pi-agent": "workspace:*",
     "@cfxdevkit/workspace-utils": "workspace:*",
     "@inquirer/prompts": "^8.4.3",
-    "clipanion": "^4.0.0-rc.4"
+    "clipanion": "^4.0.0-rc.4",
+    "@cfxdevkit/devnode-server": "workspace:^"
   },
   "peerDependencies": {
     "@cfxdevkit/llm-agents": "workspace:*"

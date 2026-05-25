@@ -1,0 +1,45 @@
+{
+  "name": "@cfxdevkit/devnode-core",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Lightweight Hono control plane for Conflux devnode — node control, compilation, and mining. No keystore or wallet deps.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cfxdevkit/cdk": "workspace:^",
+    "@cfxdevkit/compiler": "workspace:^",
+    "@cfxdevkit/devnode": "workspace:^",
+    "@hono/node-server": "^1.19.14",
+    "hono": "^4.12.18",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.14",
+    "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/tsconfig": "workspace:*",
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
+    "vite-plugin-dts": "^5.0.0"
+  },
+  "sideEffects": false
+}

@@ -16,7 +16,6 @@ export default {
   'game-engine': '@cfxdevkit/game-engine',
   'keystore-server': '@cfxdevkit/keystore-server',
   'llm-agents': '@cfxdevkit/llm-agents',
-  'llm-tools': '@cfxdevkit/llm-tools',
   'mcp-server': '@cfxdevkit/mcp-server',
   protocol: '@cfxdevkit/protocol',
   react: '@cfxdevkit/react',

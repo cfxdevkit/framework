@@ -1,4 +1,4 @@
-import type { ContractNetwork } from '../contracts.js';
+import type { ContractNetwork } from '@cfxdevkit/devnode-core';
 
 export interface ContractReadRequest {
   abi?: unknown[];

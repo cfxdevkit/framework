@@ -8,253 +8,369 @@ import { Mermaid } from '../../components/Mermaid';
 
 # LLM Agent Workflows
 
-The **LLM Agent Workflows** module orchestrates automated agent-based workflows for repository management, code review, validation, and commit preparation using large language models (LLMs). It provides a set of CLI commands and underlying functions that enable developers to automate tasks like code review, repo health checks, changeset generation, and commit message creation.
+## Overview
 
-## Purpose
+The LLM Agent Workflows module orchestrates automated repository operations using large language models. It provides three primary agent types:
 
-This module enables:
-- Automated code review and validation
-- Repo health checks and remediation planning
-- Commit message generation with LLM assistance
-- Changeset creation for publishable packages
-- Smoke testing of LLM providers and models
-- Integration with Git and CI/CD pipelines
+1. **Review Agent** - Analyzes changed files for quality issues
+2. **Check Agent** - Validates repository state and generates OpenSpec artifacts
+3. **Commit Agent** - Manages commit workflow with quality gates and changeset generation
 
-## Key Components
+All agents integrate with execution context resolution, LLM completion providers, and repository validation tools (CDK repo-check, GitNexus).
 
-### 1. Agent Runners
+## Architecture
 
-#### `runAll()`
-Executes all available agents in sequence:
-- Runs the `review` agent to analyze changed files
-- Generates reports in JSON and Markdown formats
-- Prints a summary of findings
-
-#### `runReviewAgent()`
-Performs a static analysis of changed files:
-- Identifies generated or artifact paths
-- Flags security-sensitive changes
-- Detects code hotspots exceeding size limits
-- Suggests validation commands
-
-#### `runAgentCheck()`
-Analyzes repository health using `cdk repo check`:
-- Executes repo validation commands
-- Builds a plan for remediation changes
-- Generates OpenSpec artifacts for changes
-- Creates Git branches and draft PRs (optional)
-
-### 2. Commit Workflow
-
-#### `runCommitWorkflow()`
-Manages the full commit workflow:
-- Runs quality gates (lint, typecheck, tests, etc.)
-- Analyzes gate failures with LLM assistance
-- Generates commit messages using LLMs
-- Handles changeset creation for publishable packages
-- Stages files and executes the commit
-
-#### `runPrecommitWorkflow()`
-Pre-commit validation workflow:
-- Runs quality gates and repository policy checks
-- Analyzes failures with LLM assistance
-- Blocks commits if validation fails
-
-### 3. Smoke Testing
-
-#### `runAgentSmoke()`
-Tests LLM provider responsiveness:
-- Probes cold, hot, and task execution paths
-- Validates JSON output correctness
-- Reports model viability and performance metrics
-
-### 4. Utility Functions
-
-#### `resolveExecutionContext()`
-Determines the execution context for LLM usage:
-- Resolves provider configuration
-- Sets up model and token budget
-- Handles fallbacks for unavailable LLMs
-
-#### `writeJsonReport()` / `writeMarkdownReport()`
-Writes structured reports to disk:
-- JSON reports for programmatic consumption
-- Markdown reports for human-readable summaries
-
-#### `renderReview()` / `renderAgentRun()` / `renderAgentCheckReport()`
-Formats agent output into human-readable reports.
-
-## Execution Flows
-
-### Agent Run Sequence
-
-<Mermaid chart={`graph TD
-  A[runAll] --> B[resolveExecutionContext]
-  B --> C[runReviewAgent]
-  C --> D[writeJsonReport]
-  C --> E[writeMarkdownReport]
-  C --> F[printSummary]
+<Mermaid chart={`graph TB
+    subgraph "Agent Workflows"
+        A1[runAll] --> A2[runReviewAgent]
+        A1 --> A3[runAgentCheck]
+        A4[runCommitWorkflow]
+        A5[runPrecommitWorkflow]
+    end
+    
+    subgraph "Runtime"
+        R1[Execution Context]
+        R2[LLM Completion]
+        R3[CDK Repo-Check]
+        R4[Git Operations]
+    end
+    
+    subgraph "Commit Pipeline"
+        C1[Quality Gates]
+        C2[Changeset Plan]
+        C3[Commit Message]
+        C4[Failure Analysis]
+    end
+    
+    A2 --> R1
+    A3 --> R1
+    A3 --> R3
+    A4 --> R1
+    A4 --> R2
+    A4 --> C1
+    A4 --> C2
+    A4 --> C3
+    A4 --> C4
+    A5 --> C1
+    A5 --> C4
 `} />
 
-### Commit Workflow
+## Core Agent Types
 
-<Mermaid chart={`graph TD
-  A[runCommitWorkflow] --> B[runQualityGates]
-  B --> C[analyzeGateFailures]
-  C --> D[generateCommitMessage]
-  D --> E[writeChangesetFile]
-  E --> F[executeCommit]
-`} />
+### Review Agent (`runReviewAgent`)
 
-### Agent Check Workflow
+Analyzes git changes for quality issues without requiring an LLM.
 
-<Mermaid chart={`graph TD
-  A[runAgentCheck] --> B[runRepoCheckCommand]
-  B --> C[readValidationArtifact]
-  C --> D[collectActionableValidationSteps]
-  D --> E[buildAgentCheckPlan]
-  E --> F[materializeOpenSpecChanges]
-  F --> G[writeJsonReport]
-  G --> H[writeMarkdownReport]
-`} />
+**Entry Point:** `runReviewAgent(opts: { silent?: boolean })`
 
-## CLI Commands
+**Workflow:**
+1. Resolve execution context (LLM not used)
+2. Collect git changed files
+3. Check for generated/artifact paths
+4. Check for security-sensitive files
+5. Run code hotspot analysis
+6. Suggest validation commands
+7. Write reports and print summary
 
-### `llm:all`
-Runs all agents in sequence:
-```bash
-pnpm run llm:all
+**Findings Categories:**
+- Generated/artifact paths changed
+- Security-sensitive surfaces modified
+- Code files exceeding size budgets (hard: 300 lines, soft: 250 lines)
+
+**Reports:**
+- `reports/review.json` - JSON report
+- `reports/review.md` - Markdown report
+
+### Check Agent (`runAgentCheck`)
+
+Validates repository state and generates OpenSpec remediation artifacts.
+
+**Entry Point:** `runAgentCheck(rawArgs: readonly string[], opts: { silent?: boolean })`
+
+**Workflow:**
+<Mermaid chart={`sequenceDiagram
+    participant CLI
+    participant Check
+    participant RepoCheck
+    participant Validation
+    participant Planner
+    participant Artifacts
+    participant Git
+    CLI->>Check: runAgentCheck(args)
+    Check->>Check: parseAgentCheckFlags(args)
+    Check->>Check: resolveExecutionContext(useLlm: true)
+    Check->>RepoCheck: runRepoCheckCommand()
+    RepoCheck-->>Check: { exitCode, stdout, stderr }
+    Check->>Validation: readValidationArtifact()
+    Validation-->>Check: AgentCheckValidationReport
+    Check->>Check: collectActionableValidationSteps()
+    alt has actionable steps
+        Check->>Planner: buildAgentCheckPlan()
+        Planner->>Planner: generate plan JSON via LLM
+        Planner-->>Check: AgentCheckPlan
+        Check->>Artifacts: materializeOpenSpecChanges()
+        Artifacts->>Artifacts: generate proposal/design/specs/tasks
+        Artifacts-->>Check: AgentCheckArtifact[]
+        alt create-branch flag
+            Check->>Git: maybeCreateBranchAndDraftPr()
+            Git-->>Check: AgentCheckFollowUp
+        end
+    else no actionable steps
+        Check->>Check: plan = null
+    end
+    Check->>Check: writeJsonReport + writeMarkdownReport
+    Check-->>CLI: report
+    %% (simplified — original had 32 lines)`} />
+
+**Flags:**
+| Flag | Description |
+|------|-------------|
+| `--quick` | Reduced token budgets |
+| `--dry-run` | No file writes |
+| `--create-branch` | Create git branch |
+| `--draft-pr` | Create draft PR (implies `--create-branch`) |
+
+**OpenSpec Artifacts Generated:**
+- `proposal.md` - Change proposal
+- `design.md` - Implementation design
+- `specs/{name}/spec.md` - Specification files
+- `tasks.md` - Implementation tasks
+
+### Commit Agent (`runCommitWorkflow`)
+
+Manages full commit workflow with quality gates, changeset generation, and commit message creation.
+
+**Entry Point:** `runCommitWorkflow(args, options: CommitWorkflowOptions)`
+
+**Workflow Steps:**
+1. **Incremental validation sequence** - Quality gates (format, lint, typecheck, tests, hotspots, kebab-groups, repo check)
+2. **Repository policy gates** - Hotspots, kebab-groups, repo check
+3. **Preflight checks** - GitNexus ensure, git status/diff collection
+4. **Scope detection** - Identify changed scopes
+5. **Changeset plan** - Generate changeset if publishable packages changed
+6. **Commit message generation** - LLM-generated conventional commit
+7. **Approval** - Interactive or `--yes` flag
+8. **Post-checks** - Validate changeset generation didn't break gates
+9. **Commit** - Stage files and create commit
+
+**Quality Gates:**
+```typescript
+const QUALITY_GATE_SPECS = [
+  { id: 'gitnexus-analyze', label: 'GitNexus analyze', required: true },
+  { id: 'format', label: 'Format', required: true },
+  { id: 'lint', label: 'Lint', required: true },
+  { id: 'typecheck', label: 'Typecheck', required: true },
+  { id: 'test', label: 'Test', required: false },
+  { id: 'build', label: 'Build', required: false },
+  { id: 'hotspots', label: 'Hotspots', required: true },
+  { id: 'kebab-groups', label: 'Kebab groups', required: false },
+  { id: 'check', label: 'Repo check', required: true },
+];
 ```
 
-### `llm:review`
-Performs code review:
-```bash
-pnpm run llm:review
-```
+**Commit Flags:**
+| Flag | Description |
+|------|-------------|
+| `--model <name>` | Override LLM model |
+| `--quick` | Reduced token budgets |
+| `--dry-run` | Preview only, no changes |
+| `--yes` / `-y` | Auto-approve commit |
+| `--force` / `-f` | Skip gate blocking |
+| `--skip-checks` | Skip quality gates |
+| `--skip-post-checks` | Skip post-generation validation |
+| `--skip-changeset` | Skip changeset generation |
+| `--changeset-bump <level>` | Force bump level (patch/minor/major) |
+| `--with-tests` | Include test gate (default) |
+| `--skip-tests` | Exclude test gate |
 
-### `llm:check`
-Analyzes repo health and generates remediation plan:
-```bash
-pnpm run llm:check
-```
+## Runtime Utilities
 
-### `llm:commit`
-Prepares and executes a commit with LLM assistance:
-```bash
-pnpm run llm:commit
-```
+### Execution Context
 
-### `llm:precommit`
-Validates changes before committing:
-```bash
-pnpm run llm:precommit
-```
+Resolved via `resolveExecutionContext({ useLlm, action, modelOverride })`:
 
-### `llm:smoke`
-Tests LLM provider responsiveness:
-```bash
-pnpm run llm:smoke
-```
-
-## Configuration
-
-The module relies on:
-- `.pi/providers.json` for LLM provider configuration
-- `tokenBudget` settings for token usage limits
-- `actions` mapping for model assignment to tasks
-
-## Integration Points
-
-### With Git
-- Uses `git diff` and `git status` to detect changed files
-- Manages Git branches and PR creation
-- Integrates with GitNexus for analysis
-
-### With CDK
-- Calls `pnpm cdk repo check` for validation
-- Uses `pnpm cdk repo` commands for repo operations
-
-### With Moon
-- Integrates with Moon workspace validation
-- Uses Moon's task execution for quality gates
-
-### With Changesets
-- Detects publishable packages
-- Generates changeset files for releases
-- Integrates with `.changeset/config.json` for ignored packages
-
-## Reports and Artifacts
-
-All agents write reports to `artifacts/llm/reports/`:
-- `agent-run.json` / `.md` - Summary of all agent runs
-- `review.json` / `.md` - Code review findings
-- `agent-check.json` / `.md` - Repo health check plan and artifacts
-- `llm-commit.json` / `.md` - Commit workflow summary
-
-## Error Handling
-
-The module implements:
-- Fallback mechanisms for LLM failures
-- Retry logic for invalid JSON responses
-- Graceful degradation when LLMs are unavailable
-- Detailed error reporting for debugging
-
-## Dependencies
-
-- `@cfxdevkit/cdk-repo-check` for repo validation
-- `node:fs/promises` for file I/O
-- `node:child_process` for command execution
-- `node:path` for path manipulation
-- `@cfxdevkit/llm-completion` for LLM interactions
-
-## Key Types
-
-### `AgentCheckFlags`
-```ts
+```typescript
 {
-  quick: boolean;
-  dryRun: boolean;
-  createBranch: boolean;
-  draftPr: boolean;
-}
-```
-
-### `CommitWorkflowOptions`
-```ts
-{
-  approvalMode?: 'defer' | 'prompt';
-  modelPolicies?: {
-    messageGenerationModel?: string;
-    failureAnalysisModel?: string;
-  };
-}
-```
-
-### `ExecutionContextSummary`
-```ts
-{
-  unit?: { name?: string; rootDir?: string };
-  llm?: {
-    status?: string;
-    configPath?: string;
+  unit: { name?: string; rootDir?: string } | null;
+  llm: {
+    status: 'not-used' | 'ready' | 'unavailable';
     provider?: string;
     model?: string | null;
     baseUrl?: string | null;
     error?: string;
+    configPath?: string;
   };
 }
 ```
 
-## Performance Considerations
+### Report Writing
 
-- Uses token budgeting to control LLM usage
-- Implements caching for repeated operations
-- Supports quick mode for faster execution
-- Limits output to prevent excessive token consumption
+```typescript
+// JSON reports
+await writeJsonReport('reports/agent-check.json', report);
 
-## Security
+// Markdown reports
+await writeMarkdownReport('reports/agent-check.md', content);
 
-- Filters out generated and sensitive paths
-- Validates file references in documentation
-- Sanitizes LLM inputs and outputs
-- Prevents escaping repository boundaries in file paths
+// JSONL logs
+await writeJsonl('logs/events.jsonl', records);
+```
+
+### Corpus Collection
+
+Collects files for LLM context:
+
+```typescript
+const files = await collectCorpusFiles();
+// Filters: generated paths, secrets, size > 512KB, non-text extensions
+```
+
+### Path Utilities
+
+```typescript
+isSecuritySensitive(file: string): boolean;  // keystore, wallet, secret, etc.
+isGeneratedPath(file: string): boolean;      // artifacts/, dist/, coverage/, node_modules/
+tierForPath(path: string): string;           // core, keys, solidity, ui, domain, tools, project, etc.
+packageOwner(path: string): string;          // repos/cfx-tools/packages/name
+languageForPath(path: string): string;       // typescript, javascript, markdown, etc.
+```
+
+## Failure Analysis
+
+When quality gates fail, the system can provide LLM-based analysis:
+
+```typescript
+const analysis = await analyzeGateFailures({
+  command: 'commit' | 'precommit',
+  executionContext,
+  reports: [qualityReport, policyReport],
+  modelOverride?: string,
+});
+// Returns: { attempted, usedLlm, status, content, error? }
+```
+
+**Analysis Sections:**
+- Summary
+- Root causes
+- Minimal fixes
+- Next commands
+
+## Smoke Testing
+
+Test LLM model viability before committing to workflows:
+
+```typescript
+await runAgentSmoke(['--quick', '--no-thinking']);
+```
+
+**Probes:**
+1. **Cold** - Model load time
+2. **Hot** - Warm model response
+3. **Task+Think** - Tier-appropriate JSON with thinking
+4. **Task-NoThink** - Same without thinking mode
+
+**Tier Probes:**
+| Tier | Label | Actions |
+|------|-------|---------|
+| 1 | Lightweight/structured output | validation |
+| 2 | Documentation generation | docs-api, readme-upkeep, structure-upkeep |
+| 3 | Reasoning/code review | review, commit, changeset, release-readiness, ci-cd |
+
+## Integration Points
+
+### External Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `@cfxdevkit/cdk-repo-check` | Repository validation gates |
+| `workers/completion/*` | LLM completion, providers, config |
+| `workers/shared/*` | Execution context, logging |
+| `workers/validate-models-*` | Model validation probes |
+
+### Entry Points
+
+```typescript
+// From CLI
+import { runReviewAgent, runAgentCheck, runAll } from './agents/all.ts';
+import { runCommit, runPrecommit } from './commit/index.ts';
+
+// From tests
+import { normalizeAgentCheckPlan, renderAgentCheckReport } from './agents/check-render.ts';
+import { parseCommitFlags } from './commit/flags.ts';
+```
+
+### Report Locations
+
+| Report Type | Path |
+|-------------|------|
+| Agent Check | `reports/agent-check.json`, `reports/agent-check.md` |
+| Review | `reports/review.json`, `reports/review.md` |
+| Commit | `reports/llm-commit.json`, `reports/llm-commit.md` |
+| Smoke | `reports/smoke.json` (via `runAgentSmoke`) |
+
+## Error Handling
+
+### LLM Response Validation
+
+All LLM responses are validated and retried on failure:
+
+```typescript
+try {
+  return normalizeAgentCheckPlan(response.content);
+} catch {
+  const retry = await completeStructuredAgent({
+    systemPrompt: `${basePrompt} The previous response was invalid. Return exactly one compact JSON object.`,
+    userPrompt: [
+      'Previous invalid response excerpt:',
+      response.content.slice(0, 1200),
+      userPrompt.slice(0, 8000),
+    ].join('\n'),
+  });
+  return normalizeAgentCheckPlan(retry.content);
+}
+```
+
+### Gate Failure States
+
+```typescript
+status: 'ok' | 'warning' | 'error' | 'skipped';
+required: boolean;  // If required && error, workflow blocks
+```
+
+### Commit Workflow States
+
+```typescript
+status: 'committed' | 'dry-run' | 'approval-required' | 'aborted' | 'blocked';
+phase: 'quality-gates' | 'repository-policy-gates' | 'approval' | 'post-checks' | 'completed';
+blockedBy?: 'quality-gates' | 'repository-policy' | 'post-checks';
+```
+
+## Contributing
+
+### Adding New Agents
+
+1. Create agent file in `workers/agents/`
+2. Export from `workers/agents/all.ts`
+3. Add to `runAll()` orchestration
+4. Implement report writing via `writeJsonReport`/`writeMarkdownReport`
+5. Add test coverage in `workers/agents/*.test.ts`
+
+### Adding New Gates
+
+1. Extend `QUALITY_GATE_SPECS` in `workers/shared/index.ts`
+2. Implement gate execution in `workers/commit/gates.ts`
+3. Add deterministic hints in `workers/commit/gate-output.ts`
+4. Update terminal UI in `workers/commit/terminal-ui.ts`
+
+### Testing
+
+```bash
+# Run agent tests
+pnpm test workers/agents
+
+# Run commit workflow tests
+pnpm test workers/commit
+
+# Run smoke tests
+pnpm exec tsx workers/agents/smoke.ts
+```

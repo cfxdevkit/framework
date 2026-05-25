@@ -64,4 +64,28 @@ See [API.md](./API.md) for the full public surface.
 - `__packageName` (`"@cfxdevkit/keystore-server"`)  
   Runtime identifier for package introspection.
 
-<!-- readme-hash: b5b4c421f6db64bc006934dd1e857bba55ed0d7178954db721797c5bb304d546 -->
+- `KeystoreServerAppOptions`  
+  Options object for `createKeystoreApp`, including `port`, `host`, `keystore`, `routes`, `basePath`, and `logger`.
+
+- `KeystoreServerRoutesOptions`  
+  Options object for `createKeystoreRoutes`, including optional `basePath`.
+
+- `KeystoreError`  
+  Error type used by keystore endpoints.
+
+- `KeystoreResponse`  
+  Generic response wrapper type used across keystore endpoints.
+
+- `MnemonicRevealResponse`, `PrivateKeyRevealResponse`  
+  Typed responses for secret reveal operations.
+
+- `WalletCreateRequest`, `WalletUnlockRequest`  
+  Request payload types for wallet creation and unlocking.
+
+- `AccountDeriveRequest`  
+  Request payload type for account derivation.
+
+- `WalletSummaryResponse`, `ActiveWalletSummaryResponse`  
+  Response types wrapping wallet summaries in keystore API responses.
+
+<!-- readme-hash: ee1e447f1147ad9f815676ba2966b42a92cca17ce8c44be7639c1bd95f5bf3c3 -->

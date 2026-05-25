@@ -129,9 +129,7 @@ describe('commit workflow services', () => {
       status: 'blocked',
       phase: 'repository-policy-gates',
       blockedBy: 'repository-policy',
-      failureAnalysis: {
-        status: 'ready',
-      },
+      failureAnalysis: null,
     });
     expect(mocks.runQualityGates).toHaveBeenCalledTimes(1);
   });

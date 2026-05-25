@@ -6,120 +6,99 @@ import { Mermaid } from '../../components/Mermaid';
 
 # root — Wiki
 
-# Conflux DevKit — Framework Map
+# Conflux DevKit Framework Overview
 
-Welcome to the **Conflux DevKit** monorepo (`@cfxdevkit/framework`), a comprehensive toolkit for building decentralized applications on the [Conflux Network](https://confluxnetwork.org/). This repository is structured as a **strict 5-tier dependency hierarchy** and includes shared libraries, developer tools, LLM automation, and example projects.
+Welcome to the **Conflux DevKit** (`@cfxdevkit/framework`). This monorepo serves as the canonical reference for building on the Conflux Network, encompassing shared TypeScript frameworks, developer platform tooling, LLM automation pipelines, and example applications.
 
----
+The repository is structured as a **pnpm monorepo** with a strict 5-tier dependency hierarchy enforced by `@cfxdevkit/arch-rules`. This ensures that core protocol logic remains isolated from tooling and application layers, maintaining stability across the ecosystem.
 
-## 🧩 What This Repo Does
+## High-Level Architecture
 
-This monorepo provides everything needed to build, test, and deploy applications on Conflux:
-
-- **Core Protocol & Chain Abstractions** via [`@cfxdevkit/cdk`](./modules/cdk.md)
-- **Developer Tooling** including a local devnode, CLI, and VS Code extension
-- **Wallet & Keystore Management** through [`@cfxdevkit/keystore`](./modules/keystore.md) and [`@cfxdevkit/wallet`](./modules/wallet.md)
-- **Smart Contract Interaction** with [`@cfxdevkit/contracts`](./modules/contracts.md)
-- **LLM-powered Automation** for code review, documentation, and commit generation via [`@cfxdevkit/llm`](./modules/llm.md)
-- **UI Components** for React apps in [`@cfxdevkit/ui`](./modules/ui.md)
-- **Documentation Pipeline** and architecture validation via [`@cfxdevkit/docs-pipeline`](./modules/docs-pipeline.md)
-
----
-
-## 🏗️ 5-Tier Architecture
-
-The monorepo enforces a strict 5-tier architecture to maintain clean separation of concerns:
-
-```
-Tier -1  cross-cutting   repos/cfx-meta, repos/cfx-config        (devDep only)
-Tier  0  framework       @cfxdevkit/cdk, @cfxdevkit/cli, @cfxdevkit/devnode
-Tier  1  core services   @cfxdevkit/keystore, @cfxdevkit/wallet
-Tier  2  domain logic    @cfxdevkit/contracts, @cfxdevkit/ui
-Tier  3  tooling         @cfxdevkit/llm, @cfxdevkit/docs-pipeline
-Tier  4  apps & showcases @cfxdevkit/showcase-local, @cfxdevkit/showcase-public
-```
-
----
-
-## 🧠 High-Level Architecture Diagram
+The system is organized around a central **Core Protocol** layer, with specialized modules branching out for runtime, security, development tools, and automation. The diagram below illustrates the primary dependencies and execution flow between the top 10 modules.
 
 <Mermaid chart={`graph TD
-    A["Core Protocol & Chain"] --> B["Keystore & Wallet Services"]
-    A --> C["DevNode & Runtime"]
-    A --> D["CLI & Developer Tools"]
-    A --> E["Wallet Abstraction & Hardware"]
-    B --> E
-    E --> F["UI Components & Hooks"]
-    D --> C
-    D --> A
-    F --> A
-    G[LLM Completion Engine] --> H[LLM Agent Workflows]
-    H --> I["Architecture Check & Repo Validation"]
-    G --> J[Docs Pipeline]
-    J --> K[VS Code Extension]
-    H --> K
-    K --> A
-    K --> B
-    K --> E
-    K --> D
-    K --> C
-    K --> F
+    Core["Core Protocol & Chain"]
+    Sec["Keystore & Wallet Services"]
+    Wallet[Wallet Abstraction]
+    Dev["DevNode & Runtime"]
+    Ctr[Solidity Contracts]
+    CLI["CLI & Developer Tools"]
+    Ext[VS Code Extension]
+    Agent[LLM Agent Workflows]
+    Arch[Architecture Check]
+    Docs[Docs Pipeline]
+
+    %% Core Dependencies
+    Sec --> Core
+    Wallet --> Sec
+    Ctr --> Core
+    Dev --> Core
+
+    %% Tooling & Dev
+    CLI --> Core
+    CLI --> Ctr
+    Ext --> Wallet
+    Ext --> Ctr
+    Ext --> Core
+
+    %% Automation & Governance
+    Agent --> Arch
+    Arch --> Core
+    Docs --> CLI
+    Docs --> Arch
 `} />
 
----
+## Key Capabilities
 
-## 🔄 Key End-to-End Flows
+### Development & Runtime
+To build locally, the **DevNode & Runtime** module provides a dual-space (Core + eSpace) Conflux node environment with pre-funded accounts. It wraps the native node binary to ensure deterministic ports for testing. Developers interact with this environment primarily through the **CLI & Developer Tools**, which offers commands for wallet management, contract extraction, and project scaffolding (`create-conflux`).
 
-### 1. **Local Devnode Setup**
-A developer uses [`@cfxdevkit/devnode`](./modules/devnode.md) to spawn a local Conflux node for testing. This module wraps the native `@xcfx/node` binary and provides deterministic ports and pre-funded accounts.
+### Security & Signing
+All cryptographic operations converge through the **Keystore & Wallet Services** module. It provides a unified interface for secret storage, supporting file-based encryption, memory backends, and hardware wallets (Ledger, OneKey). The **Wallet Abstraction & Hardware** layer sits on top, managing signing sessions and transaction batching. This security layer is heavily utilized by the **VS Code Extension**, which integrates wallet connection and transaction signing directly into the IDE.
 
-### 2. **Wallet Interaction**
-Using [`@cfxdevkit/wallet`](./modules/wallet.md) and [`@cfxdevkit/keystore`](./modules/keystore.md), developers can manage accounts, sign transactions, and interact with hardware wallets or session keys.
+### Smart Contracts
+The **Solidity Compiler & Contracts** package abstracts the differences between Conflux Core Space and EVM-compatible eSpace. It handles address formatting and RPC dispatch automatically, allowing developers to interact with contracts using a single TypeScript interface built on `viem`.
 
-### 3. **Smart Contract Deployment**
-With [`@cfxdevkit/contracts`](./modules/contracts.md), developers can deploy and interact with smart contracts on both Core Space and eSpace using typed interfaces and low-level RPC helpers from [`@cfxdevkit/cdk`](./modules/cdk.md).
+### Automation & Governance
+The repository is self-governing. The **Architecture Check & Repo Validation** module enforces dependency rules, security policies, and documentation standards at commit time. These checks feed into the **LLM Agent Workflows**, which automate code review, commit quality gates, and documentation upkeep. The **Docs Pipeline** then synchronizes all package metadata, READMEs, and API docs into a consistent Nextra-based documentation site.
 
-### 4. **LLM-Powered Code Review & Docs**
-The [`@cfxdevkit/llm`](./modules/llm.md) module powers automated workflows for code review, commit message generation, and documentation upkeep. It integrates with tools like [`@cfxdevkit/docs-pipeline`](./modules/docs-pipeline.md) to generate and validate API and package documentation.
+## Key Workflows
 
-### 5. **VS Code Extension Integration**
-The [`@cfxdevkit/vscode`](./modules/vscode.md) extension provides a seamless IDE experience, allowing developers to manage local nodes, deploy contracts, and interact with wallets directly from VS Code.
+### Secure Keystore Unlock
+When a user interacts with a wallet via the UI or Extension, the system follows a deterministic decryption path:
+1.  **KeystorePanel** initiates the unlock request.
+2.  The request flows through the **Keystore Service** runtime to read the stored mnemonic.
+3.  **File Keystore** operations decrypt the envelope using Argon2id key derivation.
+4.  The derived key brands the private key, which is then exposed to the signing interface.
 
----
+### Repository Governance
+CI/CD pipelines rely on the **Architecture Check** module to validate repository health:
+1.  **Agent Workflows** trigger validation checks before commits.
+2.  **Architecture Check** scans for dependency violations, secrets, and documentation staleness.
+3.  If changes are detected, the **Docs Pipeline** regenerates affected markdown artifacts (API.md, README.md) with embedded content hashes to prevent unnecessary diffs.
 
-## 🛠️ Setup Instructions
+## Getting Started
 
-To get started with this monorepo:
+This repository uses `pnpm` for package management. Ensure you have Node.js v18+ installed.
 
-1. **Install dependencies**:
-   ```bash
-   pnpm install
-   ```
+1.  **Install Dependencies**
+    ```bash
+    pnpm install
+    ```
 
-2. **Build all packages**:
-   ```bash
-   pnpm build
-   ```
+2.  **Build the Workspace**
+    ```bash
+    pnpm build
+    ```
 
-3. **Run tests**:
-   ```bash
-   pnpm test
-   ```
+3.  **Run Tests**
+    ```bash
+    pnpm test
+    ```
 
-4. **Start a local devnode**:
-   ```bash
-   pnpm --filter @cfxdevkit/devnode run devnode
-   ```
+4.  **Start Local DevNode**
+    ```bash
+    pnpm devnode:start
+    ```
 
-5. **Use the CLI**:
-   ```bash
-   pnpm --filter @cfxdevkit/cli run cli --help
-   ```
-
----
-
-## 📚 Further Reading
-
-- [Architecture Rationale](ARCHITECTURE.md)
-- [Contribution Guidelines](CONTRIBUTING.md)
-- [Module Documentation](./modules/README.md)
+For detailed workflow conventions, see [CONTRIBUTING.md](CONTRIBUTING.md). For design rationale, see [ARCHITECTURE.md](ARCHITECTURE.md).

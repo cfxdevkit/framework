@@ -1,5 +1,10 @@
 export { registerPiRepoCommands } from './commands.js';
 export { registerPiCdkCommands } from './commands-cdk.js';
+export type {
+  PiLlmConfig as LlmConfig,
+  PiLlmProviderType,
+  PiProviderStrategy,
+} from './config-types.js';
 export {
   createPiAgentExtension,
   piScopeEnvVar,

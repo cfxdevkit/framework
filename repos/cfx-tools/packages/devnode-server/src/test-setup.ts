@@ -1,11 +1,5 @@
 import { vi } from 'vitest';
-import {
-  deployContractMock,
-  readContractMock,
-  sendCoreFundsMock,
-  sendEspaceFundsMock,
-  sendWriteMock,
-} from './index.test-support.js';
+import { deployContractMock, readContractMock, sendWriteMock } from './index.test-support.js';
 
 vi.mock('@cfxdevkit/contracts/deploy', () => ({
   deployContract: deployContractMock,
@@ -19,7 +13,5 @@ vi.mock('@cfxdevkit/contracts/write', () => ({
   sendWrite: sendWriteMock,
 }));
 
-vi.mock('./routes/accounts-funding.js', () => ({
-  sendCoreFunds: sendCoreFundsMock,
-  sendEspaceFunds: sendEspaceFundsMock,
-}));
+// sendCoreFunds / sendEspaceFunds moved to @cfxdevkit/devnode-core after the split.
+// They are injected via createDevnodeServerApp options — no module mock needed.

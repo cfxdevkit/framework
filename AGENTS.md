@@ -1,7 +1,14 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **framework** (12589 symbols, 21516 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+## Commit & Implementation Gate
+
+- **MUST run `cdk repo precommit` before suggesting archive or commit.** Runs format → lint → typecheck → tests → build → repo-check. Do NOT use `cdk repo check` alone — that runs structural checks, not quality gates.
+- **NEVER suggest `/opsx-archive` or committing** until `cdk repo precommit` returns `status: passed`.
+- If precommit fails: use `cdk repo gate <name>` to re-run a single gate. Call `repo_agent_check` for LLM-assisted remediation and auto-created OpenSpec changes.
+- **Discover commands** via `cdk repo --help` or `cdk repo gate --list`. Do not assume commands exist without checking help.
+
+This project is indexed by GitNexus as **framework** (12626 symbols, 21592 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

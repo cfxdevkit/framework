@@ -38,6 +38,7 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
+    "@cfxdevkit/devnode-core": "workspace:^",
     "@cfxdevkit/compiler": "workspace:^",
     "@cfxdevkit/contracts": "workspace:^",
     "@cfxdevkit/cdk": "workspace:^",

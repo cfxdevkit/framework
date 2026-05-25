@@ -262,6 +262,7 @@ export declare function canonicalAttestationMessage(sessionAddress: Address, par
 ```ts
 import {
   initLocalWallet,
+  signerFromKeystore,
   createSessionKey,
   withCapability,
   TransactionBatcher,
@@ -308,4 +309,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 0 — framework** — Must not runtime-import from any higher tier.
 
-<!-- readme-hash: 7a4da19edb9bcd4ad58f3345d5bfe908cdefdbe1412f84b8014368b68428c649 -->
+<!-- readme-hash: 5b435c754ee1d942114cc1e3972b6f764d0c9d4273cd7586ddecc42ebe529955 -->

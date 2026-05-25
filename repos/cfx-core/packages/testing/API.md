@@ -12,70 +12,68 @@
 
 ## `.`
 
+```ts
+// The package name constant for `@cfxdevkit/testing`.
+export declare const __packageName: "@cfxdevkit/testing";
+
+// Represents a deferred value that can be resolved or rejected later.
+export interface Deferred<T> {
+  promise: Promise<T>;
+  resolve: (value: T | PromiseLike<T>) => void;
+  reject: (reason?: any) => void;
+}
+
+// Configuration options for creating a mock client.
+export interface MockClientOptions {
+  // Optional: custom endpoint URL for the mock client.
+  endpoint?: string;
+  // Optional: initial state or behavior overrides for the mock.
+  overrides?: Record<string, any>;
+}
+
+// Configuration options for creating a development node fixture.
+export interface DevNodeFixtureOptions {
+  // Optional: path to a custom configuration file.
+  configPath?: string;
+  // Optional: whether to start the node in dev mode.
+  devMode?: boolean;
+  // Optional: additional environment variables to set.
+  env?: Record<string, string>;
+}
+
+// Creates and returns a new `Deferred<T>` instance for managing async test flow.
+export declare function createDeferred<T>(): Deferred<T>;
+
+// Waits for an assertion to become true (synchronously or asynchronously), with optional timeout and polling interval.
+export declare function waitFor(assertion: () => boolean | Promise<boolean>, options?: {
+  // Maximum time to wait in milliseconds (default: 5000).
+  timeout?: number;
+  // Polling interval in milliseconds (default: 50).
+  interval?: number;
+}): Promise<void>;
+
+// Creates and returns a mock `Client` instance for testing purposes, optionally configured via `MockClientOptions`.
+export declare function createMockClient(options?: MockClientOptions): Client;
+
+// Creates and returns a `DevNode` fixture (a local development node instance), initialized and ready for testing.
+export declare function createDevNodeFixture(options?: DevNodeFixtureOptions): Promise<DevNode>;
+```
+
 ### Usage
 
 ```ts
-import { createMockClient, waitFor } from '@cfxdevkit/testing';
+import { createDeferred, waitFor, createMockClient } from '@cfxdevkit/testing';
 
-const client = createMockClient();
-await waitFor(() => client.isConnected);
+// Example: Using a deferred to control async test flow
+const deferred = createDeferred<string>();
+setTimeout(() => deferred.resolve('done'), 100);
+await deferred.promise; // resolves after 100ms
+
+// Example: Waiting for a condition
+await waitFor(() => document.querySelector('#loaded') !== null);
+
+// Example: Creating a mock client
+const client = createMockClient({ endpoint: 'http://localhost:8080' });
 ```
 
-```ts
-// The name of the package.
-export declare const __packageName: "@cfxdevkit/testing";
-
-// A container for a value that will be resolved in the future.
-export interface Deferred<T> {
-  // A promise that resolves with the deferred value.
-  promise: Promise<T>;
-  // Resolves the deferred promise with the given value.
-  resolve(value: T): void;
-  // Rejects the deferred promise with the given error.
-  reject(reason?: any): void;
-}
-
-// Configuration options for the mock client.
-export interface MockClientOptions {
-  // Whether the mock client should start in a connected state.
-  connected?: boolean;
-  // Optional initial state for the client's connection status.
-  initialState?: Partial<Client>;
-}
-
-// Configuration options for the DevNode fixture.
-export interface DevNodeFixtureOptions {
-  // Path to the DevNode binary to use.
-  binaryPath?: string;
-  // Additional arguments to pass to the DevNode process.
-  args?: string[];
-  // Timeout (in ms) for DevNode startup.
-  startupTimeout?: number;
-}
-
-// Creates a new deferred object.
-export declare function createDeferred<T>(): Deferred<T>;
-
-// Polls an assertion until it returns true or the timeout is reached.
-export declare function waitFor(
-  assertion: () => boolean | Promise<boolean>,
-  options?: {
-    // Maximum time (in ms) to wait for the assertion to pass.
-    timeout?: number;
-    // Interval (in ms) between assertion checks.
-    interval?: number;
-  }
-): Promise<void>;
-
-// Creates a mock client for testing purposes.
-export declare function createMockClient(
-  options?: MockClientOptions
-): Client;
-
-// Creates a DevNode fixture for integration testing.
-export declare function createDevNodeFixture(
-  options?: DevNodeFixtureOptions
-): Promise<DevNode>;
-```
-
-<!-- api-hash: 7c75dc1a5049ce3ce02313f28a94957c8fec2099d6daafdec297db0cb634beee -->
+<!-- api-hash: b41cce8eec14b4ea7a2e98986506d1c60652d7d5a9bc9bba47410e46741178f6 -->

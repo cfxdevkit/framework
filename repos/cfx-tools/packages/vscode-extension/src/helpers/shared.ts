@@ -2,7 +2,6 @@
 
 import { join as joinPath } from 'node:path';
 import { createConfluxDevkitClient } from '@cfxdevkit/client';
-import { createDevnodeServerApp } from '@cfxdevkit/devnode-server';
 
 export { promises as fs } from 'node:fs';
 export { isAbsolute, join, relative } from 'node:path';
@@ -130,24 +129,8 @@ export function createSharedNodeRuntime(config: {
   logging?: boolean;
   mnemonic: string;
 }) {
-  const remoteBaseUrl = process.env.CFXDEVKIT_DEVNODE_SERVER_URL?.trim();
-  const app = remoteBaseUrl
-    ? null
-    : createDevnodeServerApp({
-        keystorePath: joinPath(config.dataDir, '..', 'devnode-server-keystore.json'),
-        nodeProfileDataRoot: joinPath(config.dataDir, '..', 'node-profiles'),
-      });
-  const fetchImpl = app
-    ? async (input: RequestInfo | URL, init?: RequestInit) => {
-        if (input instanceof Request) return app.request(input);
-        const url = new URL(String(input), 'http://cfxdevkit-extension.local');
-        return app.request(`${url.pathname}${url.search}`, init);
-      }
-    : undefined;
-  const client = createConfluxDevkitClient({
-    baseUrl: remoteBaseUrl || 'http://cfxdevkit-extension.local',
-    ...(fetchImpl ? { fetch: fetchImpl as typeof fetch } : {}),
-  });
+  const baseUrl = process.env.CFXDEVKIT_DEVNODE_SERVER_URL?.trim() ?? `http://127.0.0.1:52000`;
+  const client = createConfluxDevkitClient({ baseUrl });
   let snapshot = { status: 'stopped', running: false, accounts: [] };
 
   const refresh = async (responsePromise) => {

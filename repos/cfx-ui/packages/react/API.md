@@ -19,142 +19,174 @@
 
 ## `.`
 
-### Usage
-
 ```ts
-const { address } = useAccount();
-const balance = useNativeBalance({ chainId: 1 });
+// Package name identifier for @cfxdevkit/react
+export declare const __packageName: "@cfxdevkit/react";
+
+// Represents the current account state (address, chain ID, status, etc.)
+export interface UseAccountReturn {
+// Hook to get the current wallet account state
+export declare function useAccount(): UseAccountReturn;
+
+// Hook to fetch native CFX balance of an address
+export declare function useNativeBalance(input: UseNativeBalanceInput): UseNativeBalanceReturn;
+
+// Hook to fetch balance of a specific token
+export declare function useTokenBalance(input: UseTokenBalanceInput): UseTokenBalanceReturn;
+
+// Hook to fetch token metadata (e.g., decimals, symbol)
+export declare function useTokenMetadata(input: UseTokenMetadataInput): UseTokenMetadataReturn;
+
+// Hook to perform a single read-only contract call
+export declare function useReadContract<T = unknown>(input: UseReadContractInput): UseReadContractReturn<T>;
+
+// Hook to perform multiple read-only contract calls in parallel
+export declare function useReadContracts(input: UseReadContractsInput): UseReadContractsReturn;
+
+// Hook to simulate a contract write operation (without submitting to chain)
+export declare function useSimulateContract<T = unknown>(input: UseSimulateContractInput): UseSimulateContractReturn<T>;
+
+// Hook to initiate a contract write (transaction) operation
+export declare function useWriteContract(): UseWriteContractReturn;
+
+// Hook to watch for events/logs on a contract
+export declare function useWatchEvent(input: UseWatchEventInput): void;
+
+// Hook to send a raw transaction
+export declare function useSendTransaction(): UseSendTransactionReturn;
+
+// Hook to wait for a transaction to be confirmed
+export declare function useWaitForTransaction(input: UseWaitForTransactionInput): UseWaitForTransactionReturn;
+
+// Main React provider for context and configuration
+export declare function CfxProvider({ client, signer, queryClient, children }: CfxProviderProps): import("react/jsx-runtime").JSX.Element;
+
+// Hook to access the configured CFX client instance
+export declare function useClient(): Client;
+
+// Hook to get the current chain configuration
+export declare function useChain(): ChainConfig;
+
+// Hook to get the active signer (e.g., MetaMask wallet)
+export declare function useSigner(): Signer | null;
+
+// Keystore-related types and utilities (exported from root for convenience)
+export { KeystoreContextValue }
+export { KeystoreProviderProps }
+export { KeystoreProvider }
+export { AccountType }
+export { DualChainIdentity }
+export { KeystoreAccount }
+export { KeystoreActionResult }
+export { KeystoreActiveWallet }
+export { KeystoreAddWalletInput }
+export { KeystorePhase }
+export { KeystoreService }
+export { KeystoreStatusResult }
+export { KeystoreWallet }
+export { KeystoreWalletMutationResult }
+export { UseKeystoreAccountsReturn }
+export { useKeystoreAccounts }
+export { UseKeystoreIdentityReturn }
+export { useKeystoreIdentity }
+export { UseKeystoreLifecycleReturn }
+export { useIsKeystoreActive }
+export { useIsKeystoreBlank }
+export { useIsKeystoredLocked }
+export { useIsKeystoreReady }
+export { useKeystoreLifecycle }
+export { UseKeystoreWalletsReturn }
+export { useKeystoreWallets }
+export { KeystoreAccountSwitcherProps }
+export { KeystoreIdentityStripProps }
+export { KeystoreShellProps }
+export { KeystoreWalletSwitcherProps }
+export { KeystoreAccountSwitcher }
+export { KeystoreIdentityStrip }
+export { KeystoreShell }
+export { KeystoreWalletSwitcher }
 ```
 
-```ts
-// Package name identifier for internal tooling and telemetry.
-export declare const __packageName: "@cfxdevkit/react";
-// Return type for the `useAccount` hook, containing the connected wallet address.
-export interface UseAccountReturn {
-  address: string | null;
+### Usage
+
+```tsx
+import { useAccount, useNativeBalance, CfxProvider } from '@cfxdevkit/react';
+
+function App() {
+  const account = useAccount();
+  const balance = useNativeBalance({ address: account.address });
+  return <CfxProvider>{/* ... */}</CfxProvider>;
 }
-// Input type for `useNativeBalance`, specifying chain and optional account.
-export interface UseNativeBalanceInput {
-  chainId: number;
-  account?: string;
+```
+
+```tsx
+import { useReadContract, useWriteContract } from '@cfxdevkit/react';
+
+function MyComponent() {
+  const { data: balance } = useReadContract({ /* ... */ });
+  const { writeContract } = useWriteContract();
+  // ...
 }
-// Return type for `useNativeBalance`, containing balance and loading/error state.
-export interface UseNativeBalanceReturn {
-  data: string | null;
-  isLoading: boolean;
-  error: Error | null;
-}
-// Input type for `useTokenBalance`, specifying chain, token address, and optional account.
-export interface UseTokenBalanceInput {
-  chainId: number;
-  tokenAddress: string;
-  account?: string;
-}
-// Return type for `useTokenBalance`, containing token balance and loading/error state.
-export interface UseTokenBalanceReturn {
-  data: string | null;
-  isLoading: boolean;
-  error: Error | null;
-}
-// Metadata for an ERC20-like token, including name, symbol, and decimals.
-export interface TokenMetadata {
-  name: string;
-  symbol: string;
-  decimals: number;
-}
-// Input type for `useTokenMetadata`, specifying chain and token address.
-export interface UseTokenMetadataInput {
-  chainId: number;
-  tokenAddress: string;
-}
-// Return type for `useTokenMetadata`, containing token metadata and loading/error state.
-export interface UseTokenMetadataReturn {
-  data: TokenMetadata | null;
-  isLoading: boolean;
-  error: Error | null;
-}
-// Hook to fetch native (e.g., CFX) token balance for a given account and chain.
-export declare function useNativeBalance(input: UseNativeBalanceInput): UseNativeBalanceReturn;
-// Hook to fetch ERC20-like token balance for a given account, token, and chain.
-export declare function useTokenBalance(input: UseTokenBalanceInput): UseTokenBalanceReturn;
-// Hook to fetch metadata (name, symbol, decimals) for a given token.
-export declare function useTokenMetadata(input: UseTokenMetadataInput): UseTokenMetadataReturn;
 ```
 
 ---
 
 ## `./account`
 
-### Usage
-
 ```ts
-const { address } = useAccount();
+// Return type for the useAccount hook
+export interface UseAccountReturn {
+// Hook to get the current wallet account state
+export declare function useAccount(): UseAccountReturn;
 ```
 
-```ts
-// Return type for the `useAccount` hook, containing the connected wallet address.
-export interface UseAccountReturn {
-  address: string | null;
-}
+### Usage
+
+```tsx
+import { useAccount } from '@cfxdevkit/react';
+
+const { address, isConnected } = useAccount();
 ```
 
 ---
 
 ## `./balance`
 
+```ts
+// Input for fetching native (CFX) balance
+export interface UseNativeBalanceInput;
+// Return type for native balance hook
+export interface UseNativeBalanceReturn;
+// Input for fetching token balance
+export interface UseTokenBalanceInput;
+// Return type for token balance hook
+export interface UseTokenBalanceReturn;
+// Metadata for an ERC20-like token (name, symbol, decimals, etc.)
+export interface TokenMetadata;
+// Input for fetching token metadata
+export interface UseTokenMetadataInput;
+// Return type for token metadata hook
+export interface UseTokenMetadataReturn;
+```
+
 ### Usage
 
-```ts
-const balance = useNativeBalance({ chainId: 1 });
-const tokenBalance = useTokenBalance({ chainId: 1, tokenAddress: '0x...' });
+```tsx
+import { useNativeBalance, useTokenBalance, useTokenMetadata } from '@cfxdevkit/react';
+
+const nativeBalance = useNativeBalance({ address: '0x...' });
+const tokenBalance = useTokenBalance({ address: '0x...', tokenAddress: '0x...' });
+const metadata = useTokenMetadata({ tokenAddress: '0x...' });
 ```
 
 ```ts
-// Input type for `useNativeBalance`, specifying chain and optional account.
-export interface UseNativeBalanceInput {
-  chainId: number;
-  account?: string;
-}
-// Return type for `useNativeBalance`, containing balance and loading/error state.
-export interface UseNativeBalanceReturn {
-  data: string | null;
-  isLoading: boolean;
-  error: Error | null;
-}
-// Input type for `useTokenBalance`, specifying chain, token address, and optional account.
-export interface UseTokenBalanceInput {
-  chainId: number;
-  tokenAddress: string;
-  account?: string;
-}
-// Return type for `useTokenBalance`, containing token balance and loading/error state.
-export interface UseTokenBalanceReturn {
-  data: string | null;
-  isLoading: boolean;
-  error: Error | null;
-}
-// Metadata for an ERC20-like token, including name, symbol, and decimals.
-export interface TokenMetadata {
-  name: string;
-  symbol: string;
-  decimals: number;
-}
-// Input type for `useTokenMetadata`, specifying chain and token address.
-export interface UseTokenMetadataInput {
-  chainId: number;
-  tokenAddress: string;
-}
-// Return type for `useTokenMetadata`, containing token metadata and loading/error state.
-export interface UseTokenMetadataReturn {
-  data: TokenMetadata | null;
-  isLoading: boolean;
-  error: Error | null;
-}
-// Hook to fetch native (e.g., CFX) token balance for a given account and chain.
+// Hook to fetch native CFX balance of an address
 export declare function useNativeBalance(input: UseNativeBalanceInput): UseNativeBalanceReturn;
-// Hook to fetch ERC20-like token balance for a given account, token, and chain.
+
+// Hook to fetch balance of a specific token
 export declare function useTokenBalance(input: UseTokenBalanceInput): UseTokenBalanceReturn;
-// Hook to fetch metadata (name, symbol, decimals) for a given token.
+
+// Hook to fetch token metadata (e.g., decimals, symbol)
 export declare function useTokenMetadata(input: UseTokenMetadataInput): UseTokenMetadataReturn;
 ```
 
@@ -162,35 +194,37 @@ export declare function useTokenMetadata(input: UseTokenMetadataInput): UseToken
 
 ## `./context`
 
+```ts
+// Interface representing a wallet signer (e.g., MetaMask, Ledger)
+export interface Signer;
+// Props for the CfxProvider component
+export interface CfxProviderProps;
+```
+
 ### Usage
 
-```ts
-<CfxProvider client={client} signer={signer}>
-  <App />
-</CfxProvider>
+```tsx
+import { CfxProvider, useClient, useChain, useSigner } from '@cfxdevkit/react';
+
+function App() {
+  const client = useClient();
+  const chain = useChain();
+  const signer = useSigner();
+  return <CfxProvider client={client} signer={signer}>{/* ... */}</CfxProvider>;
+}
 ```
 
 ```ts
-// Interface representing a wallet signer capable of signing transactions and messages.
-export interface Signer {
-  address: string;
-  signMessage(message: string): Promise<string>;
-  signTransaction(transaction: any): Promise<string>;
-}
-// Props for the `CfxProvider` component, enabling dependency injection of client, signer, and query client.
-export interface CfxProviderProps {
-  client: Client;
-  signer?: Signer;
-  queryClient?: QueryClient;
-  children: React.ReactNode;
-}
-// React context provider that injects CFX client, signer, and query client into the component tree.
+// Provider component to inject client, signer, and queryClient into React context
 export declare function CfxProvider({ client, signer, queryClient, children }: CfxProviderProps): import("react/jsx-runtime").JSX.Element;
-// Hook to access the injected CFX client instance from context.
+
+// Hook to access the configured CFX client
 export declare function useClient(): Client;
-// Hook to access the current chain configuration from context.
+
+// Hook to get the current chain configuration
 export declare function useChain(): ChainConfig;
-// Hook to access the current signer (wallet) instance from context, or `null` if not connected.
+
+// Hook to get the active signer (or null if not connected)
 export declare function useSigner(): Signer | null;
 ```
 
@@ -198,81 +232,50 @@ export declare function useSigner(): Signer | null;
 
 ## `./contract`
 
+```ts
+// Custom error type for contract-related errors
+export interface ContractError extends Error;
+// Represents a read-only contract call (function name, args, etc.)
+export interface ReadCall;
+// Input for a contract write operation
+export interface WriteInput;
+// Input for useReadContract hook
+export interface UseReadContractInput;
+// Return type for useReadContract hook
+export interface UseReadContractReturn<T>;
+// Input for useReadContracts hook (batched reads)
+export interface UseReadContractsInput;
+// Return type for useReadContracts hook
+export interface UseReadContractsReturn;
+// Input for useSimulateContract hook
+export interface UseSimulateContractInput;
+// Return type for useSimulateContract hook
+export interface UseSimulateContractReturn<T>;
+// Return type for useWriteContract hook
+export interface UseWriteContractReturn;
+```
+
 ### Usage
 
-```ts
-const { data } = useReadContract({ chainId: 1, contractAddress: '0x...', functionName: 'getBalance' });
-const { write } = useWriteContract();
+```tsx
+import { useReadContract, useSimulateContract, useWriteContract } from '@cfxdevkit/react';
+
+const { data: result } = useReadContract({ abi, address, functionName: 'balanceOf', args: ['0x...'] });
+const { request } = useSimulateContract({ /* ... */ });
+const { writeContract } = useWriteContract();
 ```
 
 ```ts
-// Custom error type for contract-related failures, including revert reason and transaction hash.
-export interface ContractError extends Error {
-  reason?: string;
-  hash?: string;
-}
-// Internal representation of a read call (e.g., static call) to a contract function.
-export interface ReadCall {
-  to: string;
-  data: string;
-}
-// Input type for a write contract operation (e.g., transaction).
-export interface WriteInput {
-  to: string;
-  data: string;
-  value?: string;
-}
-// Input type for `useReadContract`, specifying chain, contract address, function name, and args.
-export interface UseReadContractInput {
-  chainId: number;
-  contractAddress: string;
-  functionName: string;
-  args?: any[];
-}
-// Return type for `useReadContract`, containing result data and loading/error state.
-export interface UseReadContractReturn<T> {
-  data: T | null;
-  isLoading: boolean;
-  error: ContractError | null;
-}
-// Input type for `useReadContracts`, supporting batched read calls.
-export interface UseReadContractsInput {
-  chainId: number;
-  calls: ReadCall[];
-}
-// Return type for `useReadContracts`, containing array of results and loading/error state.
-export interface UseReadContractsReturn {
-  data: any[] | null;
-  isLoading: boolean;
-  error: ContractError | null;
-}
-// Input type for `useSimulateContract`, used to preview a write operation without sending.
-export interface UseSimulateContractInput {
-  chainId: number;
-  contractAddress: string;
-  functionName: string;
-  args?: any[];
-  value?: string;
-}
-// Return type for `useSimulateContract`, containing simulation result and loading/error state.
-export interface UseSimulateContractReturn<T> {
-  data: T | null;
-  isLoading: boolean;
-  error: ContractError | null;
-}
-// Return type for `useWriteContract`, exposing `write` function and loading/error state.
-export interface UseWriteContractReturn {
-  write: (input: WriteInput) => Promise<string>;
-  isLoading: boolean;
-  error: ContractError | null;
-}
-// Hook to perform a read-only call to a smart contract function.
+// Hook to perform a single read-only contract call
 export declare function useReadContract<T = unknown>(input: UseReadContractInput): UseReadContractReturn<T>;
-// Hook to perform multiple read-only calls in a single request.
+
+// Hook to perform multiple read-only calls in parallel
 export declare function useReadContracts(input: UseReadContractsInput): UseReadContractsReturn;
-// Hook to simulate a contract write operation before sending.
+
+// Hook to simulate a contract write (estimate gas, validate inputs)
 export declare function useSimulateContract<T = unknown>(input: UseSimulateContractInput): UseSimulateContractReturn<T>;
-// Hook to prepare and send a write (transaction) to a smart contract.
+
+// Hook to send a contract write transaction
 export declare function useWriteContract(): UseWriteContractReturn;
 ```
 
@@ -280,28 +283,28 @@ export declare function useWriteContract(): UseWriteContractReturn;
 
 ## `./events`
 
+```ts
+// Represents a single event log entry
+export interface WatchEventLog;
+// Input for useWatchEvent hook
+export interface UseWatchEventInput;
+```
+
 ### Usage
 
-```ts
-useWatchEvent({ chainId: 1, contractAddress: '0x...', eventName: 'Transfer' });
+```tsx
+import { useWatchEvent } from '@cfxdevkit/react';
+
+useWatchEvent({
+  address: '0x...',
+  abi: [...],
+  eventName: 'Transfer',
+  onLogs: (logs) => console.log(logs),
+});
 ```
 
 ```ts
-// Log entry returned by `useWatchEvent`, containing event data and metadata.
-export interface WatchEventLog {
-  address: string;
-  topics: string[];
-  data: string;
-  blockNumber: string;
-  transactionHash: string;
-}
-// Input type for `useWatchEvent`, specifying chain, contract address, and event name.
-export interface UseWatchEventInput {
-  chainId: number;
-  contractAddress: string;
-  eventName: string;
-}
-// Hook to subscribe to and receive real-time event logs for a given contract and event name.
+// Hook to subscribe to contract events/logs in real time
 export declare function useWatchEvent(input: UseWatchEventInput): void;
 ```
 
@@ -309,47 +312,33 @@ export declare function useWatchEvent(input: UseWatchEventInput): void;
 
 ## `./tx`
 
+```ts
+// Input for sending a raw transaction
+export interface SendTransactionInput;
+// Result of a sent transaction
+export interface SendTransactionResult;
+// Return type for useSendTransaction hook
+export interface UseSendTransactionReturn;
+// Input for waiting for transaction confirmation
+export interface UseWaitForTransactionInput;
+// Return type for useWaitForTransaction hook
+export interface UseWaitForTransactionReturn;
+```
+
 ### Usage
 
-```ts
-const { send } = useSendTransaction();
-const { isWaiting } = useWaitForTransaction({ hash: '0x...' });
+```tsx
+import { useSendTransaction, useWaitForTransaction } from '@cfxdevkit/react';
+
+const { sendTransaction } = useSendTransaction();
+const { data: receipt } = useWaitForTransaction({ hash: txHash });
 ```
 
 ```ts
-// Input type for `useSendTransaction`, specifying transaction parameters.
-export interface SendTransactionInput {
-  to: string;
-  data?: string;
-  value?: string;
-  gasLimit?: string;
-  gasPrice?: string;
-}
-// Result returned after sending a transaction, including hash and status.
-export interface SendTransactionResult {
-  hash: string;
-  status: 'sent' | 'confirmed' | 'failed';
-}
-// Return type for `useSendTransaction`, exposing `send` function and loading/error state.
-export interface UseSendTransactionReturn {
-  send: (input: SendTransactionInput) => Promise<SendTransactionResult>;
-  isLoading: boolean;
-  error: Error | null;
-}
-// Input type for `useWaitForTransaction`, specifying transaction hash and optional timeout.
-export interface UseWaitForTransactionInput {
-  hash: string;
-  timeout?: number;
-}
-// Return type for `useWaitForTransaction`, indicating confirmation status and loading/error state.
-export interface UseWaitForTransactionReturn {
-  isWaiting: boolean;
-  isSuccess: boolean;
-  error: Error | null;
-}
-// Hook to send a transaction and await its confirmation.
+// Hook to send a raw transaction (e.g., transfer CFX)
 export declare function useSendTransaction(): UseSendTransactionReturn;
-// Hook to wait for a transaction to be confirmed on-chain.
+
+// Hook to wait for a transaction to be mined and return receipt
 export declare function useWaitForTransaction(input: UseWaitForTransactionInput): UseWaitForTransactionReturn;
 ```
 
@@ -357,81 +346,85 @@ export declare function useWaitForTransaction(input: UseWaitForTransactionInput)
 
 ## `./keystore`
 
+```ts
+// Context value type for keystore provider
+export { KeystoreContextValue };
+// Props for KeystoreProvider
+export { KeystoreProviderProps };
+// Provider component for keystore state
+export { KeystoreProvider };
+// Enum for account types (e.g., hardware, mnemonic)
+export { AccountType };
+// Identity representation for dual-chain (Conflux eSpace & mainnet)
+export { DualChainIdentity };
+// Keystore account object
+export { KeystoreAccount };
+// Result of a keystore action (e.g., sign, import)
+export { KeystoreActionResult };
+// Currently active wallet info
+export { KeystoreActiveWallet };
+// Input for adding a new wallet
+export { KeystoreAddWalletInput };
+// Phase of keystore lifecycle (e.g., locked, unlocked)
+export { KeystorePhase };
+// Service interface for keystore operations
+export { KeystoreService };
+// Status result for keystore operations
+export { KeystoreStatusResult };
+// Wallet object in keystore
+export { KeystoreWallet };
+// Mutation result for wallet operations
+export { KeystoreWalletMutationResult };
+// Return type for useKeystoreAccounts hook
+export { UseKeystoreAccountsReturn };
+// Hook to get list of accounts in keystore
+export { useKeystoreAccounts };
+// Return type for useKeystoreIdentity hook
+export { UseKeystoreIdentityReturn };
+// Hook to get identity (dual-chain address mapping)
+export { useKeystoreIdentity };
+// Return type for keystore lifecycle hooks
+export { UseKeystoreLifecycleReturn };
+// Hook to check if keystore is active
+export { useIsKeystoreActive };
+// Hook to check if keystore is blank (no wallets)
+export { useIsKeystoreBlank };
+// Hook to check if keystore is locked
+export { useIsKeystoredLocked };
+// Hook to check if keystore is ready (unlocked & initialized)
+export { useIsKeystoreReady };
+// Hook to manage keystore lifecycle (unlock, lock, etc.)
+export { useKeystoreLifecycle };
+// Return type for useKeystoreWallets hook
+export { UseKeystoreWalletsReturn };
+// Hook to get list of wallets in keystore
+export { useKeystoreWallets };
+// Props for account switcher UI component
+export { KeystoreAccountSwitcherProps };
+// Props for identity display strip UI component
+export { KeystoreIdentityStripProps };
+// Props for keystore shell (main UI container)
+export { KeystoreShellProps };
+// Props for wallet switcher UI component
+export { KeystoreWalletSwitcherProps };
+// UI component to switch between accounts
+export { KeystoreAccountSwitcher };
+// UI component to display identity (dual-chain addresses)
+export { KeystoreIdentityStrip };
+// UI component for keystore shell/container
+export { KeystoreShell };
+// UI component to switch between wallets
+export { KeystoreWalletSwitcher };
+```
+
 ### Usage
 
-```ts
-<KeystoreShell />
+```tsx
+import { useKeystoreAccounts, useKeystoreIdentity, KeystoreShell } from '@cfxdevkit/react';
+
+const accounts = useKeystoreAccounts();
+const identity = useKeystoreIdentity();
+return <KeystoreShell>{/* ... */}</KeystoreShell>;
 ```
 
-```ts
-// Context value type for keystore state and operations.
-export { KeystoreContextValue }
-// Props for the `KeystoreProvider` component.
-export { KeystoreProviderProps }
-// React context provider for keystore state and services.
-export { KeystoreProvider }
-// Enum representing types of accounts (e.g., hardware, mnemonic, imported).
-export { AccountType }
-// Type representing a dual-chain identity (Conflux eSpace and mainnet).
-export { DualChainIdentity }
-// Type representing a keystore-managed account.
-export { KeystoreAccount }
-// Result type for keystore actions (e.g., import, unlock).
-export { KeystoreActionResult }
-// Type representing the currently active wallet in keystore.
-export { KeystoreActiveWallet }
-// Input type for adding a new wallet to keystore.
-export { KeystoreAddWalletInput }
-// Enum representing keystore lifecycle phases (e.g., locked, unlocked, ready).
-export { KeystorePhase }
-// Service interface for keystore operations (e.g., unlock, import, sign).
-export { KeystoreService }
-// Result type for keystore status queries.
-export { KeystoreStatusResult }
-// Type representing a keystore wallet (metadata + accounts).
-export { KeystoreWallet }
-// Result type for wallet mutations (e.g., rename, delete).
-export { KeystoreWalletMutationResult }
-// Return type for `useKeystoreAccounts`.
-export { UseKeystoreAccountsReturn }
-// Hook to retrieve all accounts managed by keystore.
-export { useKeystoreAccounts }
-// Return type for `useKeystoreIdentity`.
-export { UseKeystoreIdentityReturn }
-// Hook to retrieve the current dual-chain identity.
-export { useKeystoreIdentity }
-// Return type for `useKeystoreLifecycle`.
-export { UseKeystoreLifecycleReturn }
-// Hook to check if keystore is active (i.e., initialized).
-export { useIsKeystoreActive }
-// Hook to check if keystore is blank (i.e., no wallets).
-export { useIsKeystoreBlank }
-// Hook to check if keystore is locked.
-export { useIsKeystoredLocked }
-// Hook to check if keystore is ready (unlocked and initialized).
-export { useIsKeystoreReady }
-// Hook to subscribe to keystore lifecycle events.
-export { useKeystoreLifecycle }
-// Return type for `useKeystoreWallets`.
-export { UseKeystoreWalletsReturn }
-// Hook to retrieve all wallets managed by keystore.
-export { useKeystoreWallets }
-// Props for the `KeystoreAccountSwitcher` component.
-export { KeystoreAccountSwitcherProps }
-// Props for the `KeystoreIdentityStrip` component.
-export { KeystoreIdentityStripProps }
-// Props for the `KeystoreShell` component.
-export { KeystoreShellProps }
-// Props for the `KeystoreWalletSwitcher` component.
-export { KeystoreWalletSwitcherProps }
-// UI component to switch between accounts.
-export { KeystoreAccountSwitcher }
-// UI component to display and switch dual-chain identities.
-export { KeystoreIdentityStrip }
-// Main UI shell for keystore integration (includes wallet management, unlock, etc.).
-export { KeystoreShell }
-// UI component to switch between wallets.
-export { KeystoreWalletSwitcher }
-```
-
-<!-- api-hash: cb84b9888b942908683ef2f0682b1a62916507fa17141e5dd786ce71b686b296 -->
+<!-- api-hash: 90ed562a44a7f7693ae66771a962b0c69a930915bb08f8d086740728addee7ec -->

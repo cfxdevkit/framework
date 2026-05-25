@@ -6,9 +6,9 @@ import {
   signerFromPrivateKey,
 } from '@cfxdevkit/cdk';
 import { compile, getTemplate, listTemplates } from '@cfxdevkit/compiler';
+import type { DevnodeServerController } from '@cfxdevkit/devnode-core';
+import { type ContractRegistry, chainIdForContractNetwork } from '@cfxdevkit/devnode-core';
 import { Hono } from 'hono';
-import { type ContractRegistry, chainIdForContractNetwork } from '../contracts.js';
-import type { DevnodeServerController } from '../controller.js';
 
 export function createBootstrapRoutes(
   controller: DevnodeServerController,

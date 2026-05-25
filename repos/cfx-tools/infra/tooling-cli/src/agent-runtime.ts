@@ -1,121 +1,30 @@
-import { existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import {
+  defaultConfig,
+  getProviderBaseUrl,
+  getProviderDefaultModel,
+  type LlmConfig,
+  readConfig,
+  resolveNamedProviderProfile,
+  resolveProvider,
+  resolveProviderModel,
+  resolveRuntimeBridgeState,
+  runPiCommit,
+  runPiInteractive,
+  runPiPrint,
+  runPiRpc,
+  writeConfig,
+} from '@cfxdevkit/pi-agent';
 import { relativeAgentConfigPath, resolveAgentConfigPath } from './monorepo-units.js';
 import {
   relativeParent as resolveRelativeParent,
   findRepoRoot as resolveRepoRoot,
 } from './workspace-paths.js';
 
-const scopedConfigEnvVar = 'CFXDEVKIT_LLM_CONFIG_PATH';
-const piAgentPackageName = '@cfxdevkit/pi-agent';
-const llmAgentsPackageName = '@cfxdevkit/llm-agents';
-const piAgentSourceModulePath = '../../pi-agent/src/index.js';
-const llmAgentsSourceModulePath = '../../llm-agents/src/index.js';
-const piAgentDistEntry = new URL('../../pi-agent/dist/index.js', import.meta.url);
-const llmAgentsDistEntry = new URL('../../llm-agents/dist/index.js', import.meta.url);
+export type { LlmConfig };
 
-function hasBuiltRuntime(): boolean {
-  // When Vite compiles the dist, new URL(..., import.meta.url) becomes data: URLs.
-  // In that case module content is already inlined — treat as built.
-  if (piAgentDistEntry.protocol === 'data:') return true;
-  return existsSync(piAgentDistEntry) && existsSync(llmAgentsDistEntry);
-}
-
-type LlmConfig = {
-  provider?: string | null;
-  baseUrl: string | null;
-  defaultModel: string | null;
-  githubModel?: string | null;
-  requestTimeoutMs?: number;
-  actions: Record<string, string>;
-  providerProfiles?: Record<
-    string,
-    {
-      provider?: string | null;
-      baseUrl?: string | null;
-      defaultModel?: string | null;
-      githubModel?: string | null;
-      requestTimeoutMs?: number;
-      providerStrategy?: 'auto' | 'gateway' | 'direct' | null;
-    }
-  >;
-  actionPolicies?: Record<
-    string,
-    {
-      profile?: string | null;
-      model?: string | null;
-      phases?: Record<string, { profile?: string | null; model?: string | null }>;
-    }
-  >;
-  harness: {
-    version: number;
-    defaultMode: 'deterministic' | 'exploratory';
-    providerStrategy: 'auto' | 'gateway' | 'direct';
-    deterministic: {
-      preserveDeterministicArtifacts: boolean;
-      preserveDeterministicSections: boolean;
-    };
-    exploratory: {
-      allowCodeChanges: boolean;
-      allowWideChanges: boolean;
-    };
-  };
-};
-
-type LlmProvider = {
-  readonly type: string;
-  discoverModels(): Promise<readonly unknown[]>;
-  chooseModel(models: readonly unknown[], preferred?: string | null): unknown;
-};
-
-type LlmClientModule = {
-  readonly defaultConfig: () => LlmConfig;
-  readonly readConfig: () => Promise<LlmConfig>;
-  readonly writeConfig: (config: LlmConfig) => Promise<void>;
-  readonly resolveNamedProviderProfile: (
-    config: LlmConfig,
-    profileName?: string | null,
-  ) => {
-    readonly name: string | null;
-    readonly exists: boolean;
-    readonly provider: string | null;
-    readonly baseUrl: string | null;
-    readonly defaultModel: string | null;
-    readonly githubModel: string | null;
-    readonly requestTimeoutMs: number | null;
-    readonly providerStrategy: 'auto' | 'gateway' | 'direct';
-  };
-  readonly resolveRuntimeBridgeState: (
-    scope?: string,
-    options?: { action?: string; phase?: string },
-  ) => Promise<{
-    readonly effectivePolicy: {
-      readonly action?: string;
-      readonly phase?: string;
-      readonly source: 'default' | 'action' | 'phase';
-      readonly legacyActionModel: string | null;
-      readonly model: string | null;
-      readonly profile: {
-        readonly name: string | null;
-        readonly exists: boolean;
-        readonly provider: string | null;
-        readonly baseUrl: string | null;
-        readonly defaultModel: string | null;
-        readonly githubModel: string | null;
-        readonly requestTimeoutMs: number | null;
-        readonly providerStrategy: 'auto' | 'gateway' | 'direct';
-      };
-    };
-  }>;
-  readonly resolveProvider: () => Promise<LlmProvider>;
-  readonly getProviderBaseUrl: (provider: LlmProvider) => string;
-  readonly getProviderDefaultModel: (provider: LlmProvider) => string | null;
-  readonly resolveProviderModel: (
-    provider: LlmProvider,
-    preferred?: string | null,
-  ) => Promise<string>;
-};
-
+// Minimal interface for the llm-agents surface used by this CLI.
+// Full types live in @cfxdevkit/llm-agents — this is the call-site contract.
 type LlmAgentsModule = {
   readonly configure: (args: readonly string[]) => Promise<unknown>;
   readonly listActions: () => Promise<unknown> | unknown;
@@ -137,20 +46,47 @@ type LlmAgentsModule = {
   readonly validateModels: (args: readonly string[]) => Promise<unknown>;
 };
 
+// Pi-agent surface — fully typed via static import (no llm-agents chain involved).
 type PiAgentModule = {
-  readonly runPiCommit: (options?: {
-    readonly scope?: string;
-    readonly promptArgs?: readonly string[];
-  }) => Promise<void>;
-  readonly runPiInteractive: (options?: {
-    readonly scope?: string;
-    readonly promptArgs?: readonly string[];
-  }) => Promise<void>;
-  readonly runPiPrint: (options: {
-    readonly scope?: string;
-    readonly promptArgs: readonly string[];
-  }) => Promise<void>;
-  readonly runPiRpc: (options?: { readonly scope?: string }) => Promise<void>;
+  readonly runPiCommit: typeof runPiCommit;
+  readonly runPiInteractive: typeof runPiInteractive;
+  readonly runPiPrint: typeof runPiPrint;
+  readonly runPiRpc: typeof runPiRpc;
+};
+
+// LLM client config surface — fully typed via static import.
+type LlmClientModule = {
+  readonly defaultConfig: typeof defaultConfig;
+  readonly readConfig: typeof readConfig;
+  readonly writeConfig: typeof writeConfig;
+  readonly resolveNamedProviderProfile: typeof resolveNamedProviderProfile;
+  readonly resolveRuntimeBridgeState: typeof resolveRuntimeBridgeState;
+  readonly resolveProvider: typeof resolveProvider;
+  readonly getProviderBaseUrl: typeof getProviderBaseUrl;
+  readonly getProviderDefaultModel: typeof getProviderDefaultModel;
+  readonly resolveProviderModel: typeof resolveProviderModel;
+};
+
+const scopedConfigEnvVar = 'CFXDEVKIT_LLM_CONFIG_PATH';
+
+// Statically-imported pi-agent config/runtime surface
+const piAgentClient: LlmClientModule = {
+  defaultConfig,
+  readConfig,
+  writeConfig,
+  resolveNamedProviderProfile,
+  resolveRuntimeBridgeState,
+  resolveProvider,
+  getProviderBaseUrl,
+  getProviderDefaultModel,
+  resolveProviderModel,
+};
+
+const piAgentRuntime: PiAgentModule = {
+  runPiCommit,
+  runPiInteractive,
+  runPiPrint,
+  runPiRpc,
 };
 
 export function relativeConfigPath(scope?: string): string {
@@ -162,69 +98,30 @@ export function relativeConfigPath(scope?: string): string {
 export async function withLlmClient<T>(
   run: (client: LlmClientModule) => Promise<T> | T,
 ): Promise<T> {
-  return runInRepoRoot(async () =>
-    run(
-      await loadWorkspaceModule<LlmClientModule>(
-        piAgentPackageName,
-        piAgentSourceModulePath,
-        piAgentDistEntry,
-      ),
-    ),
-  );
+  return runInRepoRoot(() => run(piAgentClient));
 }
 
 export async function withLlmAgents(
   run: (agents: LlmAgentsModule) => Promise<unknown> | unknown,
 ): Promise<void> {
   await runInRepoRoot(async () => {
-    await run(
-      await loadWorkspaceModule<LlmAgentsModule>(
-        llmAgentsPackageName,
-        llmAgentsSourceModulePath,
-        llmAgentsDistEntry,
-      ),
-    );
+    // Use `as string` to prevent TypeScript from statically resolving llm-agents
+    // types (which traverse tsx .ts-extension source files incompatible with
+    // standard tsc). The LlmAgentsModule interface above is the call-site contract.
+    const specifier = '@cfxdevkit/llm-agents' as string;
+    const agents = (await import(specifier)) as unknown as LlmAgentsModule;
+    await run(agents);
   });
 }
 
 export async function withPiAgent(
-  run: (piAgent: PiAgentModule) => Promise<unknown> | unknown,
+  run: (agent: PiAgentModule) => Promise<unknown> | unknown,
 ): Promise<void> {
-  await runInRepoRoot(async () => {
-    await run(
-      await loadWorkspaceModule<PiAgentModule>(
-        piAgentPackageName,
-        piAgentSourceModulePath,
-        piAgentDistEntry,
-      ),
-    );
-  });
+  await runInRepoRoot(() => run(piAgentRuntime));
 }
 
-export async function withPiAgentSource(
-  run: (piAgent: PiAgentModule) => Promise<unknown> | unknown,
-): Promise<void> {
-  await runInRepoRoot(async () => {
-    // In compiled dist (Vite inlines data: URLs), source path resolution is invalid.
-    // Fall back to the package specifier.
-    const mod =
-      piAgentDistEntry.protocol === 'data:'
-        ? await import(piAgentPackageName)
-        : await import(piAgentSourceModulePath);
-    await run(mod as PiAgentModule);
-  });
-}
-
-async function loadWorkspaceModule<T>(
-  packageSpecifier: string,
-  sourceSpecifier: string,
-  builtEntry: URL,
-): Promise<T> {
-  if (hasBuiltRuntime() || existsSync(builtEntry)) {
-    return (await import(packageSpecifier)) as T;
-  }
-  return (await import(sourceSpecifier)) as T;
-}
+// Alias kept for call sites that previously used the "source" variant.
+export const withPiAgentSource = withPiAgent;
 
 export async function withAgentScope<T>(
   scope: string | undefined,

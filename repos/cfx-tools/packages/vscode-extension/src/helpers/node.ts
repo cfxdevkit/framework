@@ -1,7 +1,111 @@
 // @ts-nocheck
 // biome-ignore-all lint/correctness/noUnusedImports: extension helper groups share the VS Code runtime surface.
 // biome-ignore format: shared helper import is intentionally kept compact for hotspot limits.
-import { BACKEND_LABELS, compile, coreAddressFromPrivateKey, coreSpaceLocal, coreSpaceMainnet, coreSpaceTestnet, createAppendOnlyAuditLogger, createClient, createFileKeystore, createSharedNodeRuntime, DERIVATION_BASE, deployContract, deriveAccount, dynamicImport, espaceLocal, espaceMainnet, espaceTestnet, formatBalance, formatCFX, fs, generateMnemonic, hexToBase32, http, initFileKeystore, isAbsolute, isInsideWorkspace, join, KEYSTORE_SERVICE, listTemplates, makeAccountItems, makeContractItems, makeNetworkItems, makeNodeItems, NETWORKS, npmResolver, readContract, relative, rotateLocalPassphrase, STATE_ACTIVE_ACCOUNT_INDEX, STATE_ACTIVE_FILE_REF, STATE_KEYSTORE_BACKEND, STATE_NETWORK, STATE_SPACE, StaticTreeProvider, sendWrite, signerFromOneKey, signerFromSatochip, stringifyResult, validateMnemonic, vscode } from './shared.js';
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import {
+  BACKEND_LABELS,
+  compile,
+  coreAddressFromPrivateKey,
+  coreSpaceLocal,
+  coreSpaceMainnet,
+  coreSpaceTestnet,
+  createAppendOnlyAuditLogger,
+  createClient,
+  createFileKeystore,
+  createSharedNodeRuntime,
+  DERIVATION_BASE,
+  deployContract,
+  deriveAccount,
+  dynamicImport,
+  espaceLocal,
+  espaceMainnet,
+  espaceTestnet,
+  formatBalance,
+  formatCFX,
+  fs,
+  generateMnemonic,
+  hexToBase32,
+  http,
+  initFileKeystore,
+  isAbsolute,
+  isInsideWorkspace,
+  join,
+  KEYSTORE_SERVICE,
+  listTemplates,
+  makeAccountItems,
+  makeContractItems,
+  makeNetworkItems,
+  makeNodeItems,
+  NETWORKS,
+  npmResolver,
+  readContract,
+  relative,
+  rotateLocalPassphrase,
+  STATE_ACTIVE_ACCOUNT_INDEX,
+  STATE_ACTIVE_FILE_REF,
+  STATE_KEYSTORE_BACKEND,
+  STATE_NETWORK,
+  STATE_SPACE,
+  StaticTreeProvider,
+  sendWrite,
+  signerFromOneKey,
+  signerFromSatochip,
+  stringifyResult,
+  validateMnemonic,
+  vscode,
+} from './shared.js';
+
+const DEVNODE_SERVER_PORT = 52000;
+const DEVNODE_SERVER_URL = `http://127.0.0.1:${DEVNODE_SERVER_PORT}`;
+
+/** Spawned devnode-server process, kept alive for the extension lifetime. */
+let devnodeServerProcess: ReturnType<typeof spawn> | null = null;
+
+/** Spawn the devnode-server control plane if it is not already running externally. */
+async function ensureDevnodeServerRunning(
+  keystorePath: string,
+  nodeProfileDataRoot: string,
+): Promise<void> {
+  if (process.env.CFXDEVKIT_DEVNODE_SERVER_URL) return; // external server — skip spawn
+  if (devnodeServerProcess) return; // already spawned
+
+  const require = createRequire(import.meta.url);
+  const serverBin = require.resolve('@cfxdevkit/devnode-server/dist/cli.js');
+
+  devnodeServerProcess = spawn(
+    process.execPath,
+    [serverBin, 'serve', '--port', String(DEVNODE_SERVER_PORT), '--keystore-path', keystorePath],
+    { stdio: 'pipe', env: { ...process.env } },
+  );
+
+  devnodeServerProcess.stderr?.on('data', (chunk: Buffer) => {
+    // swallow server logs unless debugging
+  });
+
+  devnodeServerProcess.on('exit', () => {
+    devnodeServerProcess = null;
+  });
+
+  // Wait for the server to become reachable (up to 10s)
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch(`${DEVNODE_SERVER_URL}/health`);
+      if (res.ok) return;
+    } catch {
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
+  throw new Error(`devnode-server did not start within 10 s at ${DEVNODE_SERVER_URL}`);
+}
+
+export async function stopDevnodeServer(): Promise<void> {
+  if (devnodeServerProcess) {
+    devnodeServerProcess.kill('SIGTERM');
+    devnodeServerProcess = null;
+  }
+}
 
 export async function startRuntime(this: ExtensionRuntime): Promise<void> {
   await vscode.window
@@ -43,6 +147,9 @@ export async function startNode(this: ExtensionRuntime): Promise<void> {
   const mnemonic = await this.getOrCreateNodeMnemonic();
   await this.ensureUnlockedWallet();
   await fs.mkdir(this.nodeDataDir(), { recursive: true });
+  const keystorePath = join(this.nodeDataDir(), '..', 'devnode-server-keystore.json');
+  const nodeProfileDataRoot = join(this.nodeDataDir(), '..', 'node-profiles');
+  await ensureDevnodeServerRunning(keystorePath, nodeProfileDataRoot);
   const node = createSharedNodeRuntime({
     mnemonic,
     dataDir: this.nodeDataDir(),

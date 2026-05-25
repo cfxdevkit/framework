@@ -4,6 +4,7 @@ import type {
   ToolingCommandDefinition,
   ToolingNamespaceDefinition,
 } from './contracts.js';
+import { devnodeToolingNamespace } from './devnode-namespace.js';
 import { rootDocsToolingNamespace } from './docs-namespace.js';
 import { llmToolingNamespace } from './llm-namespace.js';
 import { repoToolingNamespace } from './repo-namespace.js';
@@ -15,6 +16,7 @@ export const toolingNamespaces = [
   agentToolingNamespace,
   llmToolingNamespace,
   rootDocsToolingNamespace,
+  devnodeToolingNamespace,
 ] as const satisfies readonly ToolingNamespaceDefinition[];
 
 export function findToolingNamespace(

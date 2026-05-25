@@ -8,6 +8,7 @@ import {
   readContractMock,
   SECOND_TEST_MNEMONIC,
   sendCoreFundsMock,
+  sendEspaceFundsMock,
   sendWriteMock,
   TEST_MNEMONIC,
 } from './index.test-support.js';
@@ -154,7 +155,11 @@ describe('@cfxdevkit/devnode-server contracts persistence', () => {
 
   it('funds Core Space addresses through the shared accounts api', async () => {
     sendCoreFundsMock.mockResolvedValueOnce('0xcorefund');
-    const app = createDevnodeServerApp({ createNode: createMockNode });
+    const app = createDevnodeServerApp({
+      createNode: createMockNode,
+      sendCoreFunds: sendCoreFundsMock,
+      sendEspaceFunds: sendEspaceFundsMock,
+    });
     await app.request('/node/start', { method: 'POST' });
 
     const response = await app.request('/accounts/fund', {

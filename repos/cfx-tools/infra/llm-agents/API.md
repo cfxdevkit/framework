@@ -6,78 +6,127 @@
 
 | Sub-path | Exports |
 |----------|---------|
-| `.` | 17 symbols |
+| `.` | 33 symbols |
 
 ---
 
 ## `.`
 
 ```ts
-// Runs all registered agents sequentially.
+// Runs all registered repository actions sequentially.
 export { runAll }
 
-// Runs the review agent, which analyzes code changes and provides feedback.
+// Executes a single agent check action (e.g., linting, formatting, or type-checking).
+export { runAgentCheck }
+
+// Runs the code review agent to analyze and suggest improvements for code changes.
 export { runReviewAgent }
 
-// Configures the LLM agent with provided settings (e.g., model, API key, timeout).
+// Executes a lightweight smoke test to verify agent functionality.
+export { runAgentSmoke }
+
+// Represents the result of executing a repository action, including status, logs, and metadata.
+export { RepoActionExecutionResult }
+
+// Configures the agent runtime with provided options (e.g., model, timeout, verbosity).
 export { configure }
 
-// Lists all available actions that can be executed by agents.
+// Executes a single repository action by name, returning its result.
+export { executeAction }
+
+// Retrieves the full set of registered action definitions.
+export { getActionDefinitions }
+
+// Lists all available action names.
 export { listActions }
 
-// Lists all supported LLM models for use with agents.
+// Lists all supported LLM model identifiers.
 export { listModels }
 
-// Executes a named action using the configured agent.
+// Runs a named action directly, with optional parameters.
 export { runAction }
 
-// Validates that the configured LLM models are accessible and functional.
+// Validates that the configured LLM models are available and usable.
 export { validateModels }
 
-// Parses commit-related flags (e.g., `--fix`, `--feat`) from command-line arguments.
+// Options for configuring commit workflow execution (e.g., branch, message, auto-merge).
+export { CommitWorkflowOptions }
+
+// Result type returned after executing a commit workflow.
+export { CommitWorkflowResult }
+
+// Result type returned after executing a precommit workflow.
+export { PrecommitWorkflowResult }
+
+// Parses commit-related flags (e.g., `--fix`, `--feat`) from a string or array.
 export { parseCommitFlags }
 
-// Runs the commit agent, which generates and commits changes based on LLM analysis.
+// Runs a commit action (e.g., staging, committing, and pushing changes).
 export { runCommit }
 
-// Runs the pre-commit agent, which performs checks and transformations before a commit.
+// Executes a full commit workflow, including precommit checks and commit message generation.
+export { runCommitWorkflow }
+
+// Runs a precommit action (e.g., linting, testing, formatting).
 export { runPrecommit }
 
-// Runs the API documentation generator agent for codebases.
+// Executes a full precommit workflow, including validation and preparation steps.
+export { runPrecommitWorkflow }
+
+// Runs the documentation API generator to produce structured API docs.
 export { runDocsApi }
 
-// Runs a lightweight probe to verify API documentation generation readiness.
+// Runs a probe to verify the documentation API endpoint is accessible.
 export { runDocsApiProbe }
 
-// Generates or updates package-level documentation pages (e.g., README, usage guides).
+// Generates package-specific documentation pages (e.g., README, usage examples).
 export { runDocsPackagePages }
 
-// Runs the README generator/update agent for project documentation.
+// Generates or updates the main README file using LLM-based analysis.
 export { runDocsReadme }
 
-// Runs the upkeep agent responsible for maintaining documentation quality and consistency.
-export { runDocsUpkeep }
-
-// Runs the structure upkeep agent, which enforces and updates project structure conventions.
+// Performs structural upkeep tasks (e.g., file reorganization, metadata updates).
 export { runStructureUpkeep }
 
-// Runs the test upkeep agent, which verifies and updates test coverage and quality.
+// Generates or updates the project’s wiki pages using LLM-generated content.
+export { runWikiGenerate }
+
+// Defines a repository action, including its name, mode, and execution logic.
+export { RepoActionDefinition }
+
+// Enum representing the execution mode of a repository action (e.g., `sync`, `async`, `parallel`).
+export { RepoActionMode }
+
+// Enum representing the canonical names of supported repository actions.
+export { RepoActionName }
+
+// Retrieves a specific repository action definition by name.
+export { getRepoAction }
+
+// Lists all registered repository actions with their definitions.
+export { listRepoActions }
+
+// A map of all registered repository actions keyed by name.
+export { repoActions }
+
+// Runs a named test upkeep action (e.g., unit tests, integration tests, coverage checks).
 export { runTestUpkeep }
 ```
 
 ### Usage
 
 ```ts
-import { configure, runAction, runAll } from '@cfxdevkit/llm-agents';
+import { configure, runAll } from '@cfxdevkit/llm-agents';
 
-// Configure the agent with your preferred model and API settings
-configure({ model: 'gpt-4o', apiKey: process.env.OPENAI_API_KEY });
+// Configure the agent runtime
+configure({
+  model: 'gpt-4o',
+  timeout: 30_000,
+  verbose: true
+});
 
-// Run a named repo-aware action
-await runAction(['repo-health']);
-
-// Run all registered agents
+// Run all registered actions
 await runAll();
 ```
 
-<!-- api-hash: ad72b6effeb1349fbf2c1690fc99f4f790154474e3416a48c5b127a0019bbe97 -->
+<!-- api-hash: d8ab9e93c1b31cb1c4daef449ae940fe02d6453671be0851185f115c35548c29 -->

@@ -311,7 +311,6 @@
     "@cfxdevkit/compiler": "workspace:^",
     "@cfxdevkit/contracts": "workspace:^",
     "@cfxdevkit/cdk": "workspace:^",
-    "@cfxdevkit/devnode-server": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
     "@cfxdevkit/wallet": "workspace:^"
   },
@@ -321,7 +320,8 @@
     "@cfxdevkit/tsconfig": "workspace:*",
     "@types/node": "^25.6.0",
     "@types/vscode": "^1.85.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "@cfxdevkit/devnode-server": "workspace:^"
   },
   "sideEffects": false
 }

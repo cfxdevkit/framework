@@ -8,6 +8,7 @@ import {
   runRepoCheck,
   runRepoCommand,
 } from './repo-check-runtime.js';
+import { runGateCommand } from './repo-gate.js';
 import { runRepoGenerate } from './repo-generate.js';
 import {
   listCandidateBranches,
@@ -24,8 +25,15 @@ const repoCommands = [
     usage: 'run <target> [args] [--json]',
   },
   {
+    name: 'gate',
+    description:
+      'Re-run a single quality gate by name (lint | test | typecheck | build | format | gitnexus-analyze)',
+    usage: 'gate <name|--list> [--json]',
+  },
+  {
     name: 'check',
-    description: 'Run deterministic repo validation checks',
+    description:
+      'Structural checks (arch rules, docs, secrets, hotspots). For quality gates use: gate',
     usage:
       'check <validation|hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [--json]',
   },
@@ -105,6 +113,11 @@ async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
     const result = await runRepoCommand(target as RepoCommandTarget, forwardedArgs);
     console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
     process.exitCode = result.exitCode;
+    return;
+  }
+
+  if (command === 'gate') {
+    await runGateCommand(rest);
     return;
   }
 
@@ -207,20 +220,26 @@ function printRepoHelp(): void {
 Usage:
   cdk repo build [--json]
   cdk repo run <target> [args] [--json]
+
+Quality gates:
+  cdk repo [--scope <preset>] precommit [args]   Run all quality gates (format→lint→typecheck→test→build→repo-check)
+  cdk repo gate <name> [--json]                  Re-run one gate (cdk repo gate --list for names)
+
+Structural checks (arch rules, docs, secrets, hotspots):
   cdk repo check <validation|hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [--json]
-  cdk repo generate <all|api|readme|structure|unit-configs> [--json]
   cdk repo arch-check [--json]
+
+Other:
+  cdk repo generate <all|api|readme|structure|unit-configs> [--json]
   cdk repo merge [--base <branch>] [--dry-run] [--json] [branch...]
   cdk repo units [list|show <preset>]
   cdk repo [--scope <preset>] review
-  cdk repo [--scope <preset>] precommit [args]
   cdk repo [--scope <preset>] commit [args]
 
 Notes:
-  - all check/generate/arch-check/run/build commands accept --json for structured output
-  - use repo units to discover the available session presets and their scoped agent overlays
   - use --scope <preset> when review, precommit, or commit should honor a preset-specific overlay
-  - use cdk agent for direct PI sessions and provider/runtime administration`);
+  - use cdk agent for direct PI sessions and provider/runtime administration
+  - if precommit fails, call repo_agent_check for LLM-assisted remediation`);
 }
 
 async function runRepoMerge(rawArgs: readonly string[]): Promise<void> {

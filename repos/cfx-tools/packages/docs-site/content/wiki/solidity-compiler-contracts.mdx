@@ -6,230 +6,226 @@ import { Mermaid } from '../../components/Mermaid';
 
 # Solidity Compiler & Contracts
 
-# Solidity Compiler & Contracts Module
+# @cfxdevkit/contracts
+
+The `@cfxdevkit/contracts` package provides a unified TypeScript interface for interacting with Solidity contracts on Conflux. It abstracts the differences between **Core Space** (native Conflux) and **eSpace** (EVM-compatible), handling address formatting, transaction construction, and RPC dispatch automatically based on the client's chain family.
 
 ## Overview
 
-The `@cfxdevkit/contracts` module provides a set of utilities and helpers for interacting with Ethereum-compatible smart contracts on both eSpace and Core Space within the Conflux ecosystem. It abstracts low-level RPC interactions, transaction signing, and contract deployment, offering a typed and ergonomic interface for developers.
+This module sits on top of `@cfxdevkit/cdk` and `viem`. It standardizes contract reads, writes, deployments, and cross-space bridging.
 
-This module is designed to work with the `@cfxdevkit/cdk` client and signer abstractions, supporting both eSpace (`eth_*`) and Core Space (`cfx_*`) RPC methods.
+*   **Dual-Space Support:** Automatically detects `client.family` (`'core'` vs `'espace'`) and routes calls to the appropriate RPC methods (`cfx_call` vs `eth_call`).
+*   **ABI Handling:** Uses `viem` for encoding/decoding function data.
+*   **Transaction Management:** Handles nonce fetching, gas estimation, and receipt polling internally.
+*   **Bridge Utilities:** Provides helpers for moving assets and calling contracts across the Core ↔ eSpace boundary.
 
-## Key Features
+## Core Concepts
 
-- **Typed Contract Reads**: Perform `eth_call` or `cfx_call` with ABI decoding.
-- **Contract Writes**: Send transactions to eSpace or Core Space with automatic gas estimation.
-- **Contract Deployments**: Deploy contracts on either eSpace or Core Space with full transaction lifecycle management.
-- **Bridge Helpers**: Utilities for cross-space communication, including mapping Core addresses to eSpace equivalents.
-- **ERC-20 Convenience**: Pre-bound helpers for common ERC-20 operations.
-- **Error Handling**: Standardized error codes and messages for predictable error handling.
+### Chain Families
+All operations rely on a `Client` instance from `@cfxdevkit/cdk`. The `family` property dictates the execution path:
 
-## Module Structure
+| Feature | Core Space (`'core'`) | eSpace (`'espace'`) |
+| :--- | :--- | :--- |
+| **Address Format** | Base32 (`cfx:…`) | Hex (`0x…`) |
+| **Read RPC** | `cfx_call` | `eth_call` |
+| **Write RPC** | `cfx_sendRawTransaction` | `eth_sendRawTransaction` |
+| **Gas Estimation** | `cfx_estimateGasAndCollateral` | `eth_estimateGas` |
+| **Transaction Type** | CIP-2930 / CIP-1559 | EIP-1559 |
 
-```
-@/contracts
-├── abis/                 # ABI re-exports for back-compatibility
-├── bridge/               # Cross-space communication helpers
-├── deploy/               # Contract deployment utilities
-├── erc20/                # ERC-20 convenience functions
-├── errors/               # Error definitions and codes
-├── read/                 # Typed contract read helpers
-├── write/                # Typed contract write helpers
-└── test/                 # Mock clients and signers for testing
-```
+### Address Validation
+The module enforces strict address formats to prevent routing errors:
+*   **Core:** Must be a valid Base32 string.
+*   **eSpace:** Must be a 20-byte hex string (`0x...`).
+*   **Bridge:** Core addresses are mapped to eSpace addresses via `mappedEspaceAddress` (Keccak256 hash suffix).
 
-## Core Components
+## Interaction Patterns
 
-### 1. `readContract` — Typed Contract Reads
+### Reading Contract State
+Use `readContract` for view/pure functions. It handles ABI encoding and RPC dispatch.
 
-Reads contract state using `eth_call` (eSpace) or `cfx_call` (Core Space).
-
-```ts
-import { readContract } from '@cfxdevkit/contracts/read';
+```typescript
+import { readContract } from '@cfxdevkit/contracts';
 
 const balance = await readContract({
-  client,
-  address: '0x1234...', // eSpace address or Core base32
-  abi: ERC20_ABI,
+  client, // Core or eSpace client
+  address: 'cfx:aaejua...', // Base32 for Core, 0x... for eSpace
+  abi: MY_ABI,
   functionName: 'balanceOf',
-  args: ['0x5678...'],
+  args: ['0x...'],
+  epochTag: 'latest_state', // Optional for Core
 });
 ```
 
-### 2. `sendWrite` — Typed Contract Writes
+### Writing Contract State
+Use `sendWrite` for state-changing transactions. It constructs the transaction, signs it via the `signer`, broadcasts it, and optionally waits for the receipt.
 
-Sends a transaction to a contract function, with automatic gas estimation and receipt polling.
-
-```ts
-import { sendWrite } from '@cfxdevkit/contracts/write';
+```typescript
+import { sendWrite } from '@cfxdevkit/contracts';
 
 const result = await sendWrite({
   client,
   signer,
-  address: '0x1234...',
-  abi: ERC20_ABI,
+  address: 'cfx:...',
+  abi: MY_ABI,
   functionName: 'transfer',
-  args: ['0x5678...', 100n],
-  waitForReceipt: true,
+  args: ['recipient', amount],
+  waitForReceipt: true, // Polls until mined
 });
+// result.receipt contains the transaction receipt
 ```
 
-### 3. `deployContract` — Contract Deployment
+### Deploying Contracts
+Use `deployContract`. It abstracts the differences in deployment data encoding and gas estimation between spaces.
 
-Deploys a contract on either eSpace or Core Space, handling transaction signing and receipt polling.
+```typescript
+import { deployContract } from '@cfxdevkit/contracts';
 
-```ts
-import { deployContract } from '@cfxdevkit/contracts/deploy';
-
-const result = await deployContract({
+const deployment = await deployContract({
   client,
   signer,
-  abi: MyContractABI,
-  bytecode: '0x...',
+  abi: MY_ABI,
+  bytecode: MY_BYTECODE,
+  args: [constructorArg],
   waitForReceipt: true,
 });
+// deployment.address is populated after receipt confirmation
 ```
 
-### 4. Bridge Helpers
+## Cross-Space Bridging
 
-Utilities for interacting with the cross-space call contract (`0x0888...`).
+The `bridge` module manages interactions with the `CrossSpaceCall` contract (`0x0888...06`), enabling value and code transfer between Core and eSpace.
 
-#### `mappedEspaceAddress`
+### Key Functions
+*   **`transferToEspace`**: Send native CFX from Core to an eSpace address.
+*   **`callEspace`**: Execute arbitrary eSpace code from Core (requires `data` payload).
+*   **`withdrawFromMapped`**: Withdraw funds from a mapped eSpace account back to Core.
+*   **`getMappedBalance` / `getMappedNonce`**: Query state for a mapped Core address within eSpace context.
 
-Maps a Core Space address to an eSpace address using keccak256.
+### Address Mapping
+Core addresses are mapped to eSpace addresses by taking the last 20 bytes of their Keccak256 hash.
 
-```ts
-import { mappedEspaceAddress } from '@cfxdevkit/contracts/bridge';
+```typescript
+import { mappedEspaceAddress, transferToEspace } from '@cfxdevkit/contracts/bridge';
 
-const espaceAddr = mappedEspaceAddress('cfx:...'); // e.g., '0x...'
-```
-
-#### `transferToEspace`
-
-Transfers CFX from Core Space to eSpace.
-
-```ts
-import { transferToEspace } from '@cfxdevkit/contracts/bridge';
+const coreAddress = 'cfx:aaejua...';
+const espaceAddress = mappedEspaceAddress(coreAddress);
 
 await transferToEspace({
-  client,
+  client, // Must be Core Space client
   signer,
-  to: '0x1234...',
-  value: 1000000000000000000n,
+  to: espaceAddress,
+  value: 1000000000000000000n, // 1 CFX
 });
 ```
 
-#### `callEspace`
+## Standard Token Helpers
 
-Calls an eSpace contract from Core Space.
+The `erc20` namespace provides typed convenience wrappers for standard ERC-20 operations. These work on both spaces automatically.
 
-```ts
-import { callEspace } from '@cfxdevkit/contracts/bridge';
+```typescript
+import { erc20 } from '@cfxdevkit/contracts';
 
-await callEspace({
-  client,
-  signer,
-  to: '0x1234...',
-  data: '0x...',
-});
-```
+const bind = { client, address: '0x...' };
 
-#### `getMappedBalance`
+// Read
+const name = await erc20.name(bind);
+const balance = await erc20.balanceOf(bind, ownerAddress);
 
-Fetches the balance of a mapped eSpace address.
-
-```ts
-import { getMappedBalance } from '@cfxdevkit/contracts/bridge';
-
-const balance = await getMappedBalance({
-  client,
-  coreHexAddress: '0x1234...',
-});
-```
-
-### 5. ERC-20 Helpers
-
-Pre-bound helpers for common ERC-20 operations.
-
-```ts
-import { erc20 } from '@cfxdevkit/contracts/erc20';
-
-const balance = await erc20.balanceOf({ client, address: '0x...' }, '0x...');
-const transferResult = await erc20.transfer(
-  { client, address: '0x...', signer },
-  '0x...',
-  100n
-);
+// Write
+await erc20.transfer({ ...bind, signer }, toAddress, amount);
+await erc20.approve({ ...bind, signer }, spenderAddress, amount);
 ```
 
 ## Error Handling
 
-All errors derive from `CfxError` and include a stable `code` for programmatic handling.
+All contract operations throw `ContractsError` (extending `CfxError`) with stable error codes for programmatic handling.
 
-```ts
-import { ContractsError } from '@cfxdevkit/contracts/errors';
+| Code | Description |
+| :--- | :--- |
+| `contracts/unsupported-family` | Client family is not Core or eSpace. |
+| `contracts/invalid-argument` | Address format mismatch or missing signer data. |
+| `contracts/decode-failure` | ABI decoding failed on response. |
+| `contracts/receipt-timeout` | Transaction not mined within timeout. |
+| `contracts/reverted` | Transaction execution reverted on-chain. |
+
+```typescript
+import { ContractsError } from '@cfxdevkit/contracts';
 
 try {
-  await readContract(...);
+  await sendWrite(...);
 } catch (err) {
-  if (err instanceof ContractsError) {
-    switch (err.code) {
-      case 'contracts/decode-failure':
-        // Handle decoding errors
-        break;
-      case 'contracts/reverted':
-        // Handle reverted transactions
-        break;
-    }
+  if (err instanceof ContractsError && err.code === 'contracts/reverted') {
+    // Handle revert
   }
 }
 ```
 
-## Integration with CDK
+## Architecture
 
-This module integrates with `@cfxdevkit/cdk`'s `Client` and `Signer` abstractions:
+The module uses a dispatch pattern to route operations based on the client family.
 
-- `Client.family` determines whether to use `eth_*` or `cfx_*` RPC methods.
-- `Signer` handles transaction signing and account management.
-- `SignableTx` is used for transaction construction and signing.
+<Mermaid chart={`flowchart TD
+    A[User Code] -->|readContract| B("read/index.ts")
+    A -->|sendWrite| C("write/index.ts")
+    A -->|deployContract| D("deploy/index.ts")
+    
+    B -->|client.family === 'core'| E(callCore)
+    B -->|client.family === 'espace'| F(callEspace)
+    
+    C -->|client.family === 'core'| G(sendCoreWrite)
+    C -->|client.family === 'espace'| H(sendEspaceWrite)
+    
+    D -->|client.family === 'core'| I(deployCoreContract)
+    D -->|client.family === 'espace'| J(deployEspaceContract)
+    
+    G --> K[waitForReceipt]
+    H --> K
+    I --> K
+    J --> K
+    
+    E --> L[cfx_call RPC]
+    F --> M[eth_call RPC]
+    G --> N[cfx_sendRawTransaction]
+    H --> O[eth_sendRawTransaction]
+`} />
 
 ## Testing Utilities
 
-The `test/mocks.ts` module provides:
+The `test/mocks` submodule provides in-memory clients and signers for unit testing without an RPC endpoint.
 
-- `makeMockClient`: A mock `Client` for testing without an RPC endpoint.
-- `makeMockSigner`: A mock `Signer` that records signed transactions.
+*   **`makeMockClient`**: Creates a `Client` stub. Configure `rpc` handlers to simulate responses.
+*   **`makeMockSigner`**: Creates a `Signer` stub. Captures signed transactions in `history` for assertions.
+*   **`getRecordedCalls`**: Inspects RPC calls made by a mock client.
 
-These are used in unit tests to isolate contract logic.
+```typescript
+import { makeMockClient, makeMockSigner, getRecordedCalls } from '@cfxdevkit/contracts/test/mocks';
 
-## Mermaid Diagram: Contract Write Flow
+const client = makeMockClient({ family: 'core' });
+const signer = makeMockSigner({ coreAddress: 'cfx:...' });
 
-<Mermaid chart={`graph TD
-  A[sendWrite] --> B["sendEspaceWrite / sendCoreWrite"]
-  B --> C[encodeFunctionData]
-  B --> D[estimateGas]
-  B --> E[signTransaction]
-  E --> F[sendRawTransaction]
-  F --> G[waitForReceipt]
-  G --> H[assertSuccessfulReceipt]
-`} />
+// Execute logic...
 
-## Re-exports
-
-The module barrel exports are available for convenience:
-
-```ts
-import * as Contracts from '@cfxdevkit/contracts';
-
-// Access via:
-Contracts.bridge.transferToEspace(...)
-Contracts.deployContract(...)
-Contracts.erc20.balanceOf(...)
+// Verify RPC interaction
+const calls = getRecordedCalls(client);
+expect(calls[0].method).toBe('cfx_call');
 ```
 
-For new code, prefer importing directly from sub-paths to enable tree-shaking:
+## API Reference
 
-```ts
-import { transferToEspace } from '@cfxdevkit/contracts/bridge';
-import { deployContract } from '@cfxdevkit/contracts/deploy';
-import { erc20 } from '@cfxdevkit/contracts/erc20';
-```
+### Exports
+
+*   **`readContract`**: Generic read function.
+*   **`sendWrite`**: Generic write function.
+*   **`prepareWrite`**: Offline transaction preparation (returns `SignableTx`).
+*   **`deployContract`**: Generic deployment function.
+*   **`erc20`**: ERC-20 helper object.
+*   **`bridge`**: Cross-space namespace.
+*   **`ContractsError`**: Error class.
+*   **`ERC20_ABI`**, **`ERC721_ABI`**, **`MULTICALL3_ABI`**: Standard ABIs.
+
+### Types
+
+*   **`DeployContractInput`**: Configuration for `deployContract`.
+*   **`SendWriteInput`**: Configuration for `sendWrite`.
+*   **`ReadContractInput`**: Configuration for `readContract`.
+*   **`BridgeBaseOptions`**: Common options for bridge functions.

@@ -51,14 +51,15 @@ If `project-dir` is omitted, defaults to `<template-name>`.
 
 | Symbol | Description |
 |--------|-------------|
-| `scaffoldProject` | Main entry point. Accepts `projectName` and `options` (`name`, `description?`). |
+| `scaffoldProject` | Main entry point. Accepts `projectName` and `options` (`name`, `description?`). Writes files to disk and runs post-install hooks. |
 | `parseArgs` | Parses CLI arguments into `{ name, description? }`. |
-| `validateName` | Validates project name against npm naming rules. |
-| `getTemplate` | Fetches a template definition by name. |
-| `listTemplates` | Lists all available templates. |
+| `validateName` | Validates project name against npm naming rules (e.g., no uppercase, no special chars except `-` and `_`). |
+| `getTemplate` | Fetches a template definition by name from `../../templates/`. Returns `undefined` if not found. |
+| `listTemplates` | Lists all available templates in `../../templates/`. |
 | `getTemplateFiles` | Returns files to be generated for a given template and optional target (e.g., `"client"`, `"server"`). |
-| `renderFile` | Renders a template file with variable substitution. |
+| `renderFile` | Renders a template file with variable substitution using `{{ key }}` syntax. |
 | `TemplateDefinition`, `TemplateFile`, `TemplateTarget` | Type definitions for templates and their structure. |
+| `__packageName` | Internal constant: `"@cfxdevkit/create"`. |
 
 ### `./templates`
 
@@ -90,13 +91,13 @@ await scaffoldProject('basic', {
 });
 ```
 
-## API Reference
-
-See [API.md](./API.md) for the full public surface.
-
 ## Tier
 
 **Tier 1 — platform** — May import Tier 0 framework packages.
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
 
 ## API Reference
 
@@ -208,4 +209,4 @@ export declare function renderFile(content: string, values: Record<string, strin
 export declare function getTemplateFiles(template: TemplateDefinition, target?: TemplateTarget): TemplateFile[];
 ```
 
-{/* readme-hash: 9fa2bbfdea8b12608a23f5a30634d34a84af4eec2e1a27c837428a6e90765b24 */}
+{/* readme-hash: ca3040c41433e987af9d74020c2712736dd69da533b703ffd7d1b8b37179b724 */}

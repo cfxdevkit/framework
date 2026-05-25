@@ -6,187 +6,206 @@ import { Mermaid } from '../../components/Mermaid';
 
 # DevNode & Runtime
 
-# DevNode & Runtime Module
+# @cfxdevkit/devnode & Runtime
 
-The `@cfxdevkit/devnode` module provides a minimal, Node.js-only interface to spawn and manage a local Conflux node for development and testing. It wraps the native `@xcfx/node` binary to offer a dual-space (Core + eSpace) chain with pre-funded genesis accounts, deterministic ports, and optional auto-mining.
+This module provides a local development environment for Conflux, wrapping the native `@xcfx/node` binary to spawn dual-space (Core + eSpace) nodes with pre-funded accounts. It includes the `@cfxdevkit/executor` utility library for managing asynchronous tasks, retries, and polling within the runtime ecosystem.
 
-## Purpose
+## Overview
 
-This module is intended for **development and testing only**. It allows developers to quickly spin up a local Conflux node with:
-- Core Space and eSpace JSON-RPC endpoints
-- Pre-funded genesis accounts
-- Auto-mining capability
-- Deterministic configuration matching `@cfxdevkit/cdk`'s local chain definitions
+The **DevNode** component is designed for development and testing only. It boots a local Conflux node on deterministic ports matching `@cfxdevkit/cdk/chains` defaults (`core-local` / `espace-local`), allowing immediate interaction via standard HTTP/WebSocket transports.
 
-## Key Components
+The **Executor** component provides generic asynchronous execution primitives (retry, concurrency, locking, polling) used by the broader runtime infrastructure (e.g., `automation`, `devnode-server`) to manage long-running tasks and state transitions safely.
 
-### `DevNode` Class
+## CLI Usage
 
-The core of the module is the `DevNode` class, which encapsulates the lifecycle of a local Conflux node.
-
-#### Properties
-
-- `config`: Resolved configuration with defaults applied.
-- `accounts`: Array of pre-funded genesis accounts.
-- `faucet`: Dedicated mining/faucet account.
-- `urls`: RPC endpoint URLs for Core and eSpace.
-
-#### Methods
-
-- `start()`: Initializes and starts the node.
-- `stop()`: Stops the node and auto-miner.
-- `restart()`: Convenience method to stop and start the node.
-- `mine(blocks?: number)`: Mines empty Core blocks.
-- `packMine()`: Packs pending transactions into the next block.
-- `startMining(intervalMs?: number)`: Begins auto-mining.
-- `stopMining()`: Stops the auto-miner.
-- `getStatus()`: Returns the current lifecycle status.
-- `isRunning()`: Checks if the node is running.
-- `getMiningStatus()`: Returns the auto-miner's status.
-
-### `createDevNode(config: DevNodeConfig)`
-
-Factory function to instantiate a `DevNode` with the given configuration.
-
-### CLI Interface
-
-The module includes a CLI (`cfxdevkit-devnode`) for quick node startup from the command line.
-
-#### Usage
+The `cfxdevkit-devnode` binary is the primary entry point for interactive development. It parses arguments, initializes a `DevNode`, and handles process signals for graceful shutdown.
 
 ```bash
-cfxdevkit-devnode                 # default ports + 10 funded accounts
+# Start with defaults (ports 12537/8545, 10 accounts)
+cfxdevkit-devnode
+
+# Customize configuration
 cfxdevkit-devnode --accounts 4 --balance 1000 --logging
-cfxdevkit-devnode --no-mining     # disable auto-miner
-```
 
-#### Options
-
-| Option | Description |
-|--------|-------------|
-| `--core-port` | Core JSON-RPC HTTP port (default 12537) |
-| `--espace-port` | eSpace JSON-RPC HTTP port (default 8545) |
-| `--core-ws-port` | Core JSON-RPC WS port (default 12536) |
-| `--espace-ws-port` | eSpace JSON-RPC WS port (default 8546) |
-| `--chain-id` | Core chain id (default 2029) |
-| `--evm-chain-id` | eSpace chain id (default 2030) |
-| `--accounts` | Pre-funded genesis accounts (default 10) |
-| `--balance` | Initial CFX balance per account (default 1000000) |
-| `--mining-interval` | Auto-miner tick (default 2000, set 0 to disable) |
-| `--no-mining` | Shortcut for `--mining-interval 0` |
-| `--mnemonic` | Override the random BIP-39 mnemonic |
-| `--data-dir` | Override the data directory |
-| `--logging` | Forward @xcfx/node logs to stdout |
-| `-h, --help` | Show help |
-
-## Configuration
-
-The `DevNodeConfig` interface defines the configuration options for the node.
-
-```ts
-interface DevNodeConfig {
-  chainId?: number;           // Core chain id (default 2029)
-  evmChainId?: number;        // eSpace chain id (default 2030)
-  coreRpcPort?: number;       // Core JSON-RPC HTTP port (default 12537)
-  evmRpcPort?: number;        // eSpace JSON-RPC HTTP port (default 8545)
-  coreWsPort?: number;        // Core JSON-RPC WS port (default 12536)
-  evmWsPort?: number;         // eSpace JSON-RPC WS port (default 8546)
-  dataDir?: string;           // Data directory (default ~/.cfxdevkit/devnode/<random>)
-  mnemonic?: string;          // BIP-39 mnemonic (random by default)
-  accounts?: number;          // Number of pre-funded accounts (default 10)
-  balanceCfx?: string;        // Initial balance per account (display only)
-  miningIntervalMs?: number;  // Auto-miner interval in ms (default 2000)
-  logging?: boolean;          // Forward logs to stdout (default false)
-}
-```
-
-## Error Handling
-
-The module throws `DevNodeError` for various failure conditions, such as:
-- Node already running
-- Node not running
-- Start/stop failures
-- Invalid configuration
-- Mining already/already not running
-
-## Integration with Other Modules
-
-### `@xcfx/node`
-
-The `DevNode` class uses `@xcfx/node` to create and manage the actual Conflux node server.
-
-### `cive`
-
-Used to create a test client for mining operations.
-
-### `@cfxdevkit/cdk`
-
-The default ports and chain IDs are aligned with `@cfxdevkit/cdk`'s local chain definitions (`coreSpaceLocal`, `espaceLocal`).
-
-## Architecture Overview
-
-<Mermaid chart={`graph TD
-  A[DevNode] --> B["@xcfx/node"]
-  A --> C[cive]
-  A --> D[Genesis Accounts]
-  B --> E[Core Node]
-  B --> F[eSpace Node]
-  C --> G[Mining Client]
-  D --> H[Account Derivation]
-  H --> I[Core Address]
-  H --> J[EVM Address]
-`} />
-
-## Lifecycle Management
-
-The `DevNode` class manages its lifecycle through the following states:
-1. `stopped`: Node is not running.
-2. `starting`: Node is initializing.
-3. `running`: Node is active.
-4. `stopping`: Node is shutting down.
-5. `error`: Node encountered an error.
-
-## Usage Example
-
-```ts
-import { createDevNode } from '@cfxdevkit/devnode';
-
-const node = createDevNode({
-  accounts: 5,
-  balanceCfx: '1000',
-  miningIntervalMs: 1000,
-});
-
-await node.start();
-
-console.log('Core RPC:', node.urls.core);
-console.log('eSpace RPC:', node.urls.espace);
-
-// Mine a block
-await node.mine(1);
-
-// Pack and mine pending transactions
-await node.packMine();
-
-// Stop the node
-await node.stop();
-```
-
-## CLI Usage Example
-
-```bash
-# Start a dev node with custom settings
-cfxdevkit-devnode --accounts 3 --balance 5000 --mining-interval 500
-
-# Start without auto-mining
+# Disable auto-mining
 cfxdevkit-devnode --no-mining
 ```
 
-## Notes
+### CLI Options
 
-- The module is **Node.js-only** and cannot be used in browser environments.
-- The `@xcfx/node` binary is required and must be available in the environment.
-- The default configuration matches `@cfxdevkit/cdk`'s local chain definitions for seamless integration.
-- Auto-mining is enabled by default with a 2000ms interval.
-- The mnemonic is randomly generated unless explicitly provided.
-- The data directory is automatically created if it doesn't exist.
+| Flag | Description | Default |
+| :--- | :--- | :--- |
+| `--core-port` | Core JSON-RPC HTTP port | `12537` |
+| `--espace-port` | eSpace JSON-RPC HTTP port | `8545` |
+| `--core-ws-port` | Core WebSocket port | `12536` |
+| `--espace-ws-port` | eSpace WebSocket port | `8546` |
+| `--chain-id` | Core chain ID | `2029` |
+| `--evm-chain-id` | eSpace chain ID | `2030` |
+| `--accounts` | Pre-funded genesis accounts | `10` |
+| `--balance` | Initial balance per account (CFX) | `1000000` |
+| `--mining-interval` | Auto-miner tick (ms) | `2000` |
+| `--no-mining` | Disable auto-miner | `false` |
+| `--mnemonic` | Override BIP-39 mnemonic | Random |
+| `--data-dir` | Override data directory | `~/.cfxdevkit/devnode/` |
+| `--logging` | Forward node logs to stdout | `false` |
+
+## Programmatic API
+
+### DevNode Lifecycle
+
+Use `createDevNode` to instantiate a node handle. The lifecycle is managed via `start()` and `stop()`.
+
+```typescript
+import { createDevNode } from '@cfxdevkit/devnode';
+
+const node = createDevNode({ 
+  accounts: 5, 
+  miningIntervalMs: 1000 
+});
+
+await node.start();
+console.log(node.urls.core); // http://127.0.0.1:12537
+
+// Manual mining
+await node.packMine(); 
+
+await node.stop();
+```
+
+#### Key Methods
+
+*   `createDevNode(config?: DevNodeConfig)`: Constructs a new instance.
+*   `start()`: Spawns the `@xcfx/node` server. Throws `devnode/already-running` if called while `running` or `starting`.
+*   `stop()`: Halts the auto-miner and shuts down the server.
+*   `restart()`: Convenience wrapper for `stop()` followed by `start()`.
+*   `getStatus()`: Returns current lifecycle state (`stopped`, `starting`, `running`, `stopping`, `error`).
+*   `getMiningStatus()`: Returns current auto-miner state (`enabled`, `intervalMs`, `ticks`).
+
+#### Mining Control
+
+*   `mine(blocks = 1)`: Mines empty Core blocks.
+*   `packMine()`: Packs pending Core and eSpace transactions into the next block.
+*   `startMining(intervalMs?)`: Enables the auto-miner loop. Prevents concurrent ticks via `autoMineInFlight` flag.
+*   `stopMining()`: Disables the auto-miner.
+
+### Executor Utilities
+
+The `@cfxdevkit/executor` module provides primitives for robust task management. These are often used in conjunction with DevNode operations in higher-level services (e.g., `devnode-server`, `automation`).
+
+#### Task Execution
+
+```typescript
+import { execute, withLock, createPoller } from '@cfxdevkit/executor';
+
+// Execute with retry logic
+const result = await execute(async (ctx) => {
+  // ctx.attempt, ctx.signal, ctx.metadata
+  return await performAsyncTask();
+}, {
+  attempts: 3,
+  timeoutMs: 5000,
+  shouldRetry: (err, attempt) => attempt < 3
+});
+
+if (result.ok) {
+  console.log(result.value);
+}
+```
+
+#### Concurrency & Locking
+
+*   `executeBatch(tasks, options)`: Runs multiple tasks with controlled concurrency.
+*   `withLock(key, task)`: Ensures mutual exclusion for tasks sharing the same `key`. Uses an in-memory `keyedLocks` map.
+*   `createPoller(task, intervalMs)`: Creates a repeating task loop that respects an `AbortSignal`.
+
+## Architecture & Flow
+
+The DevNode lifecycle relies on dynamic imports of `@xcfx/node` and `cive` to avoid bundling native binaries. The Executor module handles the orchestration of these async operations.
+
+<Mermaid chart={`flowchart TD
+    subgraph CLI
+    CLI[cli.ts main] -->|parseArgs| Parse[parseArgs]
+    Parse -->|createDevNode| Node[DevNode]
+    end
+
+    subgraph DevNode Core
+    Node -->|start| Start[start]
+    Start -->|createXcfxServer| Server[server.ts]
+    Server -->|import| Xcfx["@xcfx/node"]
+    Start -->|startMining| Mining[startMining]
+    Mining -->|requireTestClient| Client[createMiningClient]
+    Client -->|import| Cive[cive]
+    end
+
+    subgraph Executor Runtime
+    Node -.->|execute| Exec[executor: execute]
+    Node -.->|withLock| Lock[executor: withLock]
+    end
+
+    subgraph Signals
+    Signal("SIGINT/SIGTERM") -->|shutdown| CLI
+    end
+`} />
+
+### Execution Flow Details
+
+1.  **Initialization**: `main()` in `cli.ts` parses arguments and calls `createDevNode()`.
+2.  **Configuration**: `resolveConfig()` in `internals.ts` merges user input with `DEFAULTS`, generates a mnemonic if missing, and validates it via `@cfxdevkit/cdk`.
+3.  **Startup**: `DevNode.start()` creates the data directory, instantiates `XcfxServer` (via `server.ts`), and starts the native process.
+4.  **Mining**: If `miningIntervalMs > 0`, `startMining()` launches a `setInterval` loop. It checks `autoMineInFlight` to prevent `cive` RPC lockups from concurrent `mine({ numTxs: 1 })` calls.
+5.  **Shutdown**: `shutdown()` in `cli.ts` listens for `SIGINT`/`SIGTERM`, calls `node.stop()`, and waits for cleanup before exiting.
+6.  **External Integration**: External controllers (e.g., `devnode-server/src/controller.ts`) interact with `DevNode` methods directly. They often wrap these calls in `execute()` or `withLock()` to handle retries or ensure exclusive access during state changes.
+
+## Configuration
+
+The `DevNodeConfig` interface defines all tunable parameters.
+
+```typescript
+interface DevNodeConfig {
+  chainId?: number;
+  evmChainId?: number;
+  coreRpcPort?: number;
+  evmRpcPort?: number;
+  dataDir?: string;
+  mnemonic?: string;
+  accounts?: number;
+  balanceCfx?: string;
+  miningIntervalMs?: number; // 0 disables auto-miner
+  logging?: boolean;
+}
+```
+
+**Note on Funding**: `balanceCfx` is primarily for display. The actual genesis funding is hardcoded in `@xcfx/node` based on the number of `genesisSecrets` provided.
+
+## Error Handling
+
+The module throws `DevNodeError` for lifecycle and configuration issues.
+
+| Code | Description |
+| :--- | :--- |
+| `devnode/already-running` | `start()` called on a running node. |
+| `devnode/not-running` | Operation (e.g., `mine`) called on a stopped node. |
+| `devnode/start-failed` | Underlying `@xcfx/node` process failed to launch. |
+| `devnode/stop-failed` | Server shutdown encountered an error. |
+| `devnode/mining-already-running` | `startMining()` called while active. |
+| `devnode/mining-not-running` | `stopMining()` called while inactive. |
+| `devnode/invalid-config` | Mnemonic validation failed or interval < 100ms. |
+
+```typescript
+import { DevNodeError } from '@cfxdevkit/devnode';
+
+try {
+  await node.start();
+} catch (e) {
+  if (e instanceof DevNodeError) {
+    console.error(e.code); // 'devnode/start-failed'
+    console.error(e.meta); // Additional context
+  }
+}
+```
+
+## Integration Notes
+
+*   **Cross-Module Calls**: The `executor` module is frequently invoked by `automation/src/keeper.ts` (via `createPoller`) and `devnode-server` (via `execute`/`withLock`) to manage DevNode interactions safely.
+*   **Transaction Packing**: Functions like `abiCallWrite` (in `src/helpers/abi.ts`) often invoke `node.packMine()` to ensure transaction inclusion before returning results. This flow is protected by `assertRunning()` checks which throw `DevNodeError` if the node is down.
+*   **Port Conflicts**: Ensure ports (12537, 8545, etc.) are free before starting. The module does not automatically retry on port binding errors.

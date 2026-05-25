@@ -1,15 +1,22 @@
 import { readConfig, resolveRequestTimeoutMs } from './config.ts';
 import { getProviderBaseUrl, resolveProviderModel } from './provider-meta.ts';
 import { resolveProvider } from './providers.ts';
+import { resolveActionConfig } from './resolve-action.ts';
 import type { ChatMessage, CompleteAgentRequest, CompletionReport } from './types.ts';
 
 export async function complete({ action, modelOverride, userPrompt, context, quick = false }) {
   const config = await readConfig();
-  const provider = await resolveProvider(config);
-  const modelId = await resolveProviderModel(
-    provider,
-    modelOverride ?? config.actions?.[action] ?? config.defaultModel,
-  );
+  const actionConfig = resolveActionConfig(action, config);
+  // Use an action-specific config override when a cloud profile is active
+  const effectiveConfig = actionConfig.isCloud
+    ? {
+        ...config,
+        baseUrl: actionConfig.baseUrl,
+        provider: actionConfig.provider as typeof config.provider,
+      }
+    : config;
+  const provider = await resolveProvider(effectiveConfig);
+  const modelId = await resolveProviderModel(provider, modelOverride ?? actionConfig.model);
   const requestTimeoutMs = resolveRequestTimeoutMs(config);
 
   const messages: readonly ChatMessage[] = [
@@ -60,11 +67,16 @@ async function completeDirect({
   onProgress,
 }: CompleteAgentRequest): Promise<CompletionReport> {
   const config = await readConfig();
-  const provider = await resolveProvider(config);
-  const modelId = await resolveProviderModel(
-    provider,
-    flags.model ?? config.actions?.[action] ?? config.defaultModel,
-  );
+  const actionConfig = resolveActionConfig(action, config);
+  const effectiveConfig = actionConfig.isCloud
+    ? {
+        ...config,
+        baseUrl: actionConfig.baseUrl,
+        provider: actionConfig.provider as typeof config.provider,
+      }
+    : config;
+  const provider = await resolveProvider(effectiveConfig);
+  const modelId = await resolveProviderModel(provider, flags.model ?? actionConfig.model);
   const requestTimeoutMs = resolveRequestTimeoutMs(config);
   const messages: readonly ChatMessage[] = [
     { role: 'system', content: systemPrompt },

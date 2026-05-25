@@ -81,16 +81,17 @@ Implement tasks from an OpenSpec change.
 
 7. **Validate after all tasks complete**
 
-   Once all tasks are marked done, run a final repo check:
+   Once all tasks are marked done, run the full precommit gate:
    ```bash
-   # Use the tool if in a PI session:
-   repo_agent_check  (or: cdk repo check)
+   cdk repo precommit
    ```
+   This runs the complete sequence: format → lint → typecheck → **tests** → build → repo-check.
+   Do NOT use `cdk repo check` or `repo_agent_check` alone — those skip tests.
 
-   - **If check passes**: congratulate, suggest archive with `/opsx-archive`
-   - **If check fails**: surface the failing steps. Offer to call `repo_agent_check` (or
-     `cdk agent check`) to auto-create follow-up OpenSpec changes for the remaining
-     failures. Do NOT archive until the check is clean.
+   - **If precommit passes**: congratulate, suggest archive with `/opsx-archive`
+   - **If precommit fails**: surface the failing gate(s). Fix the failures before suggesting
+     archive. Offer to call `repo_agent_check` to auto-create follow-up OpenSpec changes for
+     structural failures. Do NOT archive until `cdk repo precommit` returns `status: passed`.
 
 8. **On completion or pause, show status**
 
@@ -123,14 +124,14 @@ Working on task 4/7: <task description>
 **Change:** <change-name>
 **Schema:** <schema-name>
 **Progress:** 7/7 tasks complete ✓
-**Validation:** ✓ repo check passed (or ✗ N steps failing)
+**Validation:** ✓ `cdk repo precommit` passed (or ✗ gate names failing)
 
 ### Completed This Session
 - [x] Task 1
 - [x] Task 2
 ...
 
-All tasks complete and repo check clean! Ready to archive with `/opsx-archive`.
+All tasks complete and `cdk repo precommit` clean! Ready to archive with `/opsx-archive`.
 ```
 
 **Output On Pause (Issue Encountered)**

@@ -32,27 +32,27 @@ import { Callout, Tabs } from 'nextra/components'
 ## Usage
 
 ```typescript
-import { createConfluxDevkitClient } from '@cfxdevkit/client';
+import { ConfluxDevkitClient } from '@cfxdevkit/client';
 
-const client = createConfluxDevkitClient({
+const client = ConfluxDevkitClient.createConfluxDevkitClient({
   baseUrl: 'http://localhost:12345',
 });
 
 // Start a node with a specific profile
-await client.node.start({ profile: 'devnet' });
+await client.createNodeNamespace().start({ profile: 'devnet' });
 
 // Restart the node
-await client.node.restart();
+await client.createNodeNamespace().restart();
 
 // Wipe node state and restart
-await client.node.wipe({ profile: 'devnet' });
+await client.createNodeNamespace().wipe({ profile: 'devnet' });
 
 // Start/stop mining
-await client.node.mine({ start: true });
+await client.createMiningNamespace().mine({ start: true });
 
 // Deploy a contract from a compiled artifact
 const artifact = { /* compiled artifact */ };
-const receipt = await client.deploy.deployContract({
+const receipt = await client.createDeployNamespace().deployContract({
   artifact,
   constructorArgs: [],
   sender: '0x...',
@@ -61,18 +61,18 @@ const receipt = await client.deploy.deployContract({
 console.log('Deployed at:', receipt.contractAddress);
 
 // Compile Solidity source
-const result = await client.compiler.compile({
+const result = await client.createCompilerNamespace().compile({
   sources: { 'Greeter.sol': 'pragma solidity ^0.8.0; contract Greeter {}' },
   outputSelection: { '*': { '*': ['abi', 'evm.bytecode.object'] } },
 });
 
 // Manage accounts and wallets
-const accounts = await client.accounts.list();
-const wallet = await client.keystore.createWallet({ password: 'secret' });
+const accounts = await client.createAccountsNamespace().list();
+const wallet = await client.createKeystoreNamespace().createWallet({ password: 'secret' });
 
 // Bootstrap a node from a template
-const templates = await client.bootstrap.listTemplates();
-const deployResult = await client.bootstrap.deployTemplate({
+const templates = await client.createBootstrapNamespace().listTemplates();
+const deployResult = await client.createBootstrapNamespace().deployTemplate({
   templateName: 'devnet',
   config: { /* template-specific config */ },
 });
@@ -463,114 +463,7 @@ export interface BootstrapTemplate extends BootstrapTemplateSummary {
   // Deployment scripts (e.g., Solidity, shell).
   scripts: Record<string, string>;
 }
-// Response containing the bootstrap catalog (list of available templates).
-export interface BootstrapCatalogResponse {
-  // List of template summaries.
-  templates: BootstrapTemplateSummary[];
-}
-// Response for a specific bootstrap template (full definition).
-export interface BootstrapTemplateResponse {
-  // Full template definition.
-  template: BootstrapTemplate;
-}
-// Input for deploying via bootstrap (e.g., template name, parameters).
-export interface BootstrapDeployInput {
-  // Name of the template to deploy.
-  templateName: string;
-  // Optional parameters to override defaults.
-  params?: Record<string, any>;
-}
-// Response from a bootstrap deployment (e.g., deployment ID, status).
-export interface BootstrapDeployResponse {
-  // Unique deployment ID.
-  deploymentId: string;
-  // Current status (`"pending"`, `"running"`, `"success"`, `"failed"`).
-  status: string;
-}
-// Configuration for the network (e.g., chain ID, gas limits, RPC endpoints).
-export interface NetworkConfig {
-  // Chain ID.
-  chainId: number;
-  // Default gas limit for transactions.
-  gasLimit: number;
-  // RPC endpoint URLs.
-  rpcUrls: string[];
-}
-// List of supported chain IDs for the current network.
-export interface NetworkChainIds {
-  // Supported chain IDs.
-  ids: number[];
-}
-// Capabilities of the current network (e.g., EVM support, CIP-37).
-export interface NetworkCapabilities {
-  // Whether EVM is supported.
-  evm: boolean;
-  // Whether CIP-37 (session keys) is supported.
-  cip37: boolean;
-}
-// Response containing network profile information (e.g., name, mode, space).
-export interface NetworkProfileResponse {
-  // Network name.
-  name: string;
-  // Connection mode (`'local'` or `'public'`).
-  mode: NetworkMode;
-  // Execution space (`'core'` or `'espace'`).
-  space: Space;
-}
-// Response containing network capabilities (e.g., supported features).
-export interface NetworkCapabilitiesResponse {
-  // Network capabilities.
-  capabilities: NetworkCapabilities;
-}
-// Response containing network configuration (e.g., RPC URLs, chain ID).
-export interface NetworkConfigResponse {
-  // Network configuration.
-  config: NetworkConfig;
-}
-// Response from a contract read operation (e.g., return values, logs).
-export interface ContractReadResponse {
-  // Decoded return values.
-  returnValues: any[];
-  // Logs emitted during the call.
-  logs: any[];
-}
-// Response from a contract write operation (e.g., transaction hash, receipt).
-export interface ContractWriteResponse {
-  // Transaction hash.
-  transactionHash: string;
-  // Receipt summary.
-  receipt: DeployReceiptSummary;
-}
-// Current status of the mining process (e.g., enabled, threads, hash rate).
-export interface MiningStatus {
-  // Whether mining is enabled.
-  enabled: boolean;
-  // Number of mining threads.
-  threads: number;
-  // Current hash rate in H/s.
-  hashRate: number;
-}
-// Current status of the node (e.g., syncing, block height, peers).
-export interface NodeStatus {
-  // Whether the node is syncing.
-  syncing: boolean;
-  // Current block height.
-  blockNumber: number;
-  // Number of connected peers.
-  peerCount: number;
-}
-// Type of secret being revealed: either a mnemonic phrase or a private key.
-export type RevealKind = 'mnemonic' | 'private-key';
-// Supported network environments: local devnet, testnet, or mainnet.
-export type Network = 'local' | 'testnet' | 'mainnet';
-// Mode of network connection: local (private) or public (public RPC).
-export type NetworkMode = 'local' | 'public';
-// Supported execution spaces: Core (native CFX) or eSpace (EVM-compatible).
-export type Space = 'core' | 'espace';
-// Source of the signer: environment variable, runtime request, keystore, or custom string.
-export type SignerSource = 'env' | 'request' | 'keystore' | (string & {});
-// Union type for contract call responses, distinguishing reads vs writes.
-export type TrackedContractCallResponse = ContractReadResponse | ContractWriteResponse;
+// Response containing the bootstrap catalog
 ```
 
-{/* readme-hash: 3b5e181cbd0ee30c19077b4a0d86debeb5df49da5b2c2cb69f9de5b6923ca79c */}
+{/* readme-hash: a2a7fe10d2c18eeab29280bad560c69e9ae02297352c9755b49588aa908f9a2f */}

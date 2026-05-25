@@ -16,147 +16,137 @@
 
 ## `.`
 
-### Usage
-
 ```ts
-import { ThemeProvider, useTheme, colors } from '@cfxdevkit/theme';
-```
-
-```ts
-// The package name.
+// Package name identifier for runtime introspection.
 export declare const __packageName: "@cfxdevkit/theme";
-// Color palette tokens.
+
+// Color design tokens (e.g., semantic, functional, and base colors).
 export declare const colors: {
-  // Primary color tokens.
-  primary: string;
-  // Secondary color tokens.
-  secondary: string;
-  // Background color tokens.
-  background: string;
-  // Text color tokens.
-  text: string;
-  // Border color tokens.
-  border: string;
-  // Error color tokens.
-  error: string;
+  // Color definitions (e.g., `primary`, `background`, `text`)
 };
-// Spacing and sizing tokens.
+
+// Spacing design tokens (e.g., scale-based spacing values).
 export declare const spacing: {
-  // Spacing scale values (e.g., '0', '1', '2', ..., '8', '10', '12', '16').
-  [key: string]: string;
+  // Spacing values (e.g., `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, `12`, `16`, `20`, `24`, `32`)
 };
-// Border radius tokens.
+
+// Border radius design tokens (e.g., `sm`, `md`, `lg`, `xl`, `full`).
 export declare const radius: {
-  // Radius scale values (e.g., 'none', 'sm', 'md', 'lg', 'full').
-  [key: string]: string;
+  // Radius values (e.g., `4px`, `8px`, `12px`, `9999px`)
 };
-// Typography and text style tokens.
+
+// Typography design tokens (e.g., font families, sizes, weights, line heights).
 export declare const typography: {
-  // Font families.
-  fontFamily: string;
-  // Font sizes.
-  fontSize: { [key: string]: string };
-  // Line heights.
-  lineHeight: { [key: string]: string };
-  // Font weights.
-  fontWeight: { [key: string]: string };
+  // Typography definitions (e.g., `fontFamily`, `fontSize`, `fontWeight`, `lineHeight`)
 };
-// Box shadow tokens.
+
+// Shadow design tokens (e.g., `xs`, `sm`, `md`, `lg`, `xl`, `2xl`, `inner`).
 export declare const shadow: {
-  // Shadow scale values (e.g., 'sm', 'md', 'lg', 'xl').
-  [key: string]: string;
+  // Shadow definitions (e.g., `0 1px 2px 0 rgb(0 0 0 / 0.05)`)
 };
-// Motion and animation tokens.
+
+// Motion design tokens (e.g., duration, easing, delay).
 export declare const motion: {
-  // Duration scale values (e.g., 'fast', 'normal', 'slow').
-  duration: { [key: string]: string };
-  // Easing functions.
-  easing: { [key: string]: string };
+  // Motion definitions (e.g., `duration`, `easing`, `delay`)
 };
-// Supported theme modes.
+
+// Theme variant type: `'light'`, `'dark'`, or `'system'` (auto-detected).
 export type Theme = 'light' | 'dark' | 'system';
-// The resolved theme value.
+
+// Resolved theme type: `'light'` or `'dark'` (after system detection).
 export type ResolvedTheme = 'light' | 'dark';
-// The context value for theme management.
+
+// Context value interface for theme state and helpers.
 export interface ThemeContextValue {
-  // Current resolved theme.
   theme: ResolvedTheme;
-  // Function to toggle between light and dark themes.
-  toggleTheme: () => void;
+  resolvedTheme: ResolvedTheme;
+  setTheme: (theme: Theme) => void;
+  systemTheme: ResolvedTheme;
 }
-// Props for the ThemeProvider.
+
+// Props accepted by `ThemeProvider`.
 export interface ThemeProviderProps {
-  // Default theme to use before hydration or storage is available.
   defaultTheme?: Theme;
-  // Key used to persist theme preference in storage.
   storageKey?: string;
-  // Child components to wrap with theme context.
   children: React.ReactNode;
 }
-// React component to provide theme context.
+
+// React component that provides theme context to its descendants.
 export declare function ThemeProvider({ defaultTheme, storageKey, children, }: ThemeProviderProps): import("react/jsx-runtime").JSX.Element;
-// Hook to access the current theme.
+
+// Hook to access theme context (theme state and setter).
 export declare function useTheme(): ThemeContextValue;
+```
+
+### Usage
+
+```tsx
+import { ThemeProvider, useTheme } from '@cfxdevkit/theme';
+
+function App() {
+  return (
+    <ThemeProvider defaultTheme="system">
+      <MainContent />
+    </ThemeProvider>
+  );
+}
+
+function MainContent() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <div>
+      <p>Current theme: {theme}</p>
+      <button onClick={() => setTheme('dark')}>Switch to Dark</button>
+    </div>
+  );
+}
 ```
 
 ---
 
 ## `./tokens`
 
+```ts
+// Re-export of color design tokens (same as root `colors`).
+export declare const colors: {
+  // Color definitions (e.g., `primary`, `background`, `text`)
+};
+
+// Re-export of spacing design tokens (same as root `spacing`).
+export declare const spacing: {
+  // Spacing values (e.g., `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, `12`, `16`, `20`, `24`, `32`)
+};
+
+// Re-export of border radius design tokens (same as root `radius`).
+export declare const radius: {
+  // Radius values (e.g., `4px`, `8px`, `12px`, `9999px`)
+};
+
+// Re-export of typography design tokens (same as root `typography`).
+export declare const typography: {
+  // Typography definitions (e.g., `fontFamily`, `fontSize`, `fontWeight`, `lineHeight`)
+};
+
+// Re-export of shadow design tokens (same as root `shadow`).
+export declare const shadow: {
+  // Shadow definitions (e.g., `0 1px 2px 0 rgb(0 0 0 / 0.05)`)
+};
+
+// Re-export of motion design tokens (same as root `motion`).
+export declare const motion: {
+  // Motion definitions (e.g., `duration`, `easing`, `delay`)
+};
+```
+
 ### Usage
 
 ```ts
-import { colors, spacing } from '@cfxdevkit/theme/tokens';
-```
+import { spacing, radius, colors } from '@cfxdevkit/theme/tokens';
 
-```ts
-// Color palette tokens.
-export declare const colors: {
-  // Primary color tokens.
-  primary: string;
-  // Secondary color tokens.
-  secondary: string;
-  // Background color tokens.
-  background: string;
-  // Text color tokens.
-  text: string;
-  // Border color tokens.
-  border: string;
-  // Error color tokens.
-  error: string;
-};
-// Spacing and sizing tokens.
-export declare const spacing: {
-  // Spacing scale values (e.g., '0', '1', '2', ..., '8', '10', '12', '16').
-  [key: string]: string;
-};
-// Border radius tokens.
-export declare const radius: {
-  // Radius scale values (e.g., 'none', 'sm', 'md', 'lg', 'full').
-  [key: string]: string;
-};
-// Typography and text style tokens.
-export declare const typography: {
-  // Font families.
-  fontFamily: string;
-  // Font sizes.
-  fontSize: { [key: string]: string };
-  // Line heights.
-  lineHeight: { [key: string]: string };
-  // Font weights.
-  fontWeight: { [key: string]: string };
-};
-// Box shadow tokens.
-export declare const shadow: {
-  // Shadow scale values (e.g., 'sm', 'md', 'lg', 'xl').
-  [key: string]: string;
-};
-// Motion and animation tokens.
-export declare const motion: {
-  // Duration scale values (e.g., 'fast', 'normal', 'slow').
-  duration: { [key: string]: string };
-  // Easing functions.
-  easing: { [key: string]: string };
+const styles = {
+  padding: spacing[4], // '1rem'
+  borderRadius: radius.lg, // '12px'
+  backgroundColor: colors.background,
 };
 ```
 
@@ -164,51 +154,62 @@ export declare const motion: {
 
 ## `./react`
 
-### Usage
-
 ```ts
-import { ThemeProvider, useTheme } from '@cfxdevkit/theme/react';
-```
-
-```ts
-// Supported theme modes.
+// Theme variant type: `'light'`, `'dark'`, or `'system'` (auto-detected).
 export type Theme = 'light' | 'dark' | 'system';
-// The resolved theme value.
+
+// Resolved theme type: `'light'` or `'dark'` (after system detection).
 export type ResolvedTheme = 'light' | 'dark';
-// The context value for theme management.
+
+// Context value interface for theme state and helpers.
 export interface ThemeContextValue {
-  // Current resolved theme.
   theme: ResolvedTheme;
-  // Function to toggle between light and dark themes.
-  toggleTheme: () => void;
+  resolvedTheme: ResolvedTheme;
+  setTheme: (theme: Theme) => void;
+  systemTheme: ResolvedTheme;
 }
-// Props for the ThemeProvider.
+
+// Props accepted by `ThemeProvider`.
 export interface ThemeProviderProps {
-  // Default theme to use before hydration or storage is available.
   defaultTheme?: Theme;
-  // Key used to persist theme preference in storage.
   storageKey?: string;
-  // Child components to wrap with theme context.
   children: React.ReactNode;
 }
-// React component to provide theme context.
+
+// React component that provides theme context to its descendants.
 export declare function ThemeProvider({ defaultTheme, storageKey, children, }: ThemeProviderProps): import("react/jsx-runtime").JSX.Element;
-// Hook to access the current theme.
+
+// Hook to access theme context (theme state and setter).
 export declare function useTheme(): ThemeContextValue;
+```
+
+### Usage
+
+```tsx
+import { ThemeProvider, useTheme } from '@cfxdevkit/theme/react';
+
+function App() {
+  return (
+    <ThemeProvider defaultTheme="system">
+      <MainContent />
+    </ThemeProvider>
+  );
+}
+
+function MainContent() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <div>
+      <p>Current theme: {theme}</p>
+      <button onClick={() => setTheme('dark')}>Switch to Dark</button>
+    </div>
+  );
+}
 ```
 
 ---
 
 ## `./css`
-
-### Usage
-
-```css
-/* Use theme variables in your CSS */
-.element {
-  color: var(--color-primary);
-}
-```
 
 *(no named exports detected)*
 
@@ -216,12 +217,6 @@ export declare function useTheme(): ThemeContextValue;
 
 ## `./dark`
 
-### Usage
-
-```ts
-import { darkTokens } from '@cfxdevkit/theme/dark';
-```
-
 *(no named exports detected)*
 
-<!-- api-hash: dd77b4e92e06a978b7e25afa90b0237307f2769848e547e951cc00605aafabd7 -->
+<!-- api-hash: ba95a10df911d17e6a3f41fa73d6390375968421514deffab697e3cc2b3c74c3 -->

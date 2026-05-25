@@ -1,10 +1,9 @@
 import {
-  ensureActionPolicies,
-  ensureProviderProfiles,
   printActionPolicy,
   printProviderProfile,
   printProviderProfiles,
 } from './agent-config-details.js';
+import { applyProfilePolicyKey } from './agent-config-policy.js';
 import { printConfigHelp } from './agent-help.js';
 import {
   formatBoolean,
@@ -66,105 +65,67 @@ export async function runConfigCli(rawArgs: readonly string[]): Promise<void> {
   }
 
   const config = await withLlmClient((client) => client.readConfig());
+  let updatedConfig = config;
   if (key === 'mode') {
     if (value !== 'deterministic' && value !== 'exploratory') {
       throw new Error('mode must be deterministic or exploratory');
     }
-    config.harness.defaultMode = value;
+    updatedConfig = { ...config, harness: { ...config.harness, defaultMode: value } };
   } else if (key === 'provider-strategy') {
     if (value !== 'auto' && value !== 'gateway' && value !== 'direct') {
       throw new Error('provider-strategy must be auto, gateway, or direct');
     }
-    config.harness.providerStrategy = value;
+    updatedConfig = { ...config, harness: { ...config.harness, providerStrategy: value } };
   } else if (key === 'preserve-deterministic-artifacts') {
-    config.harness.deterministic.preserveDeterministicArtifacts = parseBoolean(value, key);
-  } else if (key === 'preserve-deterministic-sections') {
-    config.harness.deterministic.preserveDeterministicSections = parseBoolean(value, key);
-  } else if (key === 'exploratory-code-changes') {
-    config.harness.exploratory.allowCodeChanges = parseBoolean(value, key);
-  } else if (key === 'exploratory-wide-changes') {
-    config.harness.exploratory.allowWideChanges = parseBoolean(value, key);
-  } else if (key === 'profile-provider') {
-    const [profileName, provider] = rest;
-    if (!profileName)
-      throw new Error('Usage: cdk agent config set profile-provider <name> <provider>');
-    if (
-      provider !== 'lemonade' &&
-      provider !== 'litellm' &&
-      provider !== 'openai-compat' &&
-      provider !== 'github-models'
-    ) {
-      throw new Error(
-        'profile-provider must be lemonade, litellm, openai-compat, or github-models',
-      );
-    }
-    ensureProviderProfiles(config)[profileName] = {
-      ...(config.providerProfiles?.[profileName] ?? {}),
-      provider,
-    };
-  } else if (key === 'profile-base-url') {
-    const [profileName, baseUrl] = rest;
-    if (!profileName || !baseUrl) {
-      throw new Error('Usage: cdk agent config set profile-base-url <name> <url>');
-    }
-    ensureProviderProfiles(config)[profileName] = {
-      ...(config.providerProfiles?.[profileName] ?? {}),
-      baseUrl,
-    };
-  } else if (key === 'profile-default-model') {
-    const [profileName, defaultModel] = rest;
-    if (!profileName || !defaultModel) {
-      throw new Error('Usage: cdk agent config set profile-default-model <name> <id>');
-    }
-    ensureProviderProfiles(config)[profileName] = {
-      ...(config.providerProfiles?.[profileName] ?? {}),
-      defaultModel,
-    };
-  } else if (key === 'profile-strategy') {
-    const [profileName, strategy] = rest;
-    if (!profileName) {
-      throw new Error('Usage: cdk agent config set profile-strategy <name> <auto|gateway|direct>');
-    }
-    if (strategy !== 'auto' && strategy !== 'gateway' && strategy !== 'direct') {
-      throw new Error('profile-strategy must be auto, gateway, or direct');
-    }
-    ensureProviderProfiles(config)[profileName] = {
-      ...(config.providerProfiles?.[profileName] ?? {}),
-      providerStrategy: strategy,
-    };
-  } else if (key === 'action-policy') {
-    const [actionName, profileName] = rest;
-    if (!actionName || !profileName) {
-      throw new Error('Usage: cdk agent config set action-policy <action> <profile>');
-    }
-    ensureActionPolicies(config)[actionName] = {
-      ...(config.actionPolicies?.[actionName] ?? {}),
-      profile: profileName,
-      phases: config.actionPolicies?.[actionName]?.phases ?? {},
-    };
-  } else if (key === 'phase-policy') {
-    const [actionName, phaseName, profileName] = rest;
-    if (!actionName || !phaseName || !profileName) {
-      throw new Error('Usage: cdk agent config set phase-policy <action> <phase> <profile>');
-    }
-    const actionPolicy = ensureActionPolicies(config)[actionName] ?? {};
-    ensureActionPolicies(config)[actionName] = {
-      ...actionPolicy,
-      phases: {
-        ...(actionPolicy.phases ?? {}),
-        [phaseName]: {
-          ...(actionPolicy.phases?.[phaseName] ?? {}),
-          profile: profileName,
+    updatedConfig = {
+      ...config,
+      harness: {
+        ...config.harness,
+        deterministic: {
+          ...config.harness.deterministic,
+          preserveDeterministicArtifacts: parseBoolean(value, key),
         },
       },
     };
+  } else if (key === 'preserve-deterministic-sections') {
+    updatedConfig = {
+      ...config,
+      harness: {
+        ...config.harness,
+        deterministic: {
+          ...config.harness.deterministic,
+          preserveDeterministicSections: parseBoolean(value, key),
+        },
+      },
+    };
+  } else if (key === 'exploratory-code-changes') {
+    updatedConfig = {
+      ...config,
+      harness: {
+        ...config.harness,
+        exploratory: { ...config.harness.exploratory, allowCodeChanges: parseBoolean(value, key) },
+      },
+    };
+  } else if (key === 'exploratory-wide-changes') {
+    updatedConfig = {
+      ...config,
+      harness: {
+        ...config.harness,
+        exploratory: { ...config.harness.exploratory, allowWideChanges: parseBoolean(value, key) },
+      },
+    };
+  } else if (
+    key !== undefined &&
+    applyProfilePolicyKey(key, rest, updatedConfig as unknown as Record<string, unknown>)
+  ) {
+    // handled by applyProfilePolicyKey (mutates updatedConfig in-place for profile/policy keys)
   } else {
     throw new Error(
       'Config keys: mode, provider-strategy, preserve-deterministic-artifacts, preserve-deterministic-sections, exploratory-code-changes, exploratory-wide-changes, profile-provider, profile-base-url, profile-default-model, profile-strategy, action-policy, phase-policy',
     );
   }
 
-  await withLlmClient((client) => client.writeConfig(config));
+  await withLlmClient((client) => client.writeConfig(updatedConfig));
   console.log(`Updated ${relativeConfigPath()}`);
 }
 

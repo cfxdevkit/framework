@@ -77,4 +77,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 0 — framework** — Must not runtime-import from any higher tier.
 
-<!-- readme-hash: 5e898fd58ea1d481f084016bf89def196c999f46c12a593a2625242353be2763 -->
+<!-- readme-hash: 34da9151afcb61387333d03187380256b465da365b6e2b2e5346c3959d75a70e -->

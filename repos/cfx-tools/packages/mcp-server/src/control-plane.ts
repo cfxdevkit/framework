@@ -1,41 +1,40 @@
 import { type ConfluxDevkitClient, createConfluxDevkitClient } from '@cfxdevkit/client';
-import { createDevnodeServerApp } from '@cfxdevkit/devnode-server';
 
-const DEFAULT_BASE_URL = 'http://cfxdevkit-mcp.local';
+export const DEFAULT_BASE_URL = 'http://127.0.0.1:52000';
 
-interface ControlPlane {
-  client: ConfluxDevkitClient;
-}
-
-let controlPlane: ControlPlane | null = null;
+let controlPlaneClient: ConfluxDevkitClient | null = null;
 
 export function getControlPlaneClient(): ConfluxDevkitClient {
-  if (!controlPlane) {
-    controlPlane = createControlPlane();
+  if (!controlPlaneClient) {
+    controlPlaneClient = createClient();
   }
-  return controlPlane.client;
+  return controlPlaneClient;
 }
 
 export async function stopControlPlaneNode(): Promise<void> {
-  if (!controlPlane) return;
-  await controlPlane.client.node.stop().catch(() => null);
+  if (!controlPlaneClient) return;
+  await controlPlaneClient.node.stop().catch(() => null);
 }
 
-function createControlPlane(): ControlPlane {
-  const baseUrl = process.env.CFXDEVKIT_DEVNODE_SERVER_URL?.trim();
-  if (baseUrl) {
-    return { client: createConfluxDevkitClient({ baseUrl }) };
+export async function assertControlPlaneReachable(): Promise<void> {
+  const baseUrl = resolveBaseUrl();
+  const client = createConfluxDevkitClient({ baseUrl });
+  try {
+    await client.health();
+  } catch {
+    const msg =
+      `devnode-server not reachable at ${baseUrl}.\n` +
+      `Start it with: cdk devnode start\n` +
+      `Or set CFXDEVKIT_DEVNODE_SERVER_URL to point to a running instance.\n`;
+    process.stderr.write(msg);
+    process.exit(1);
   }
+}
 
-  const app = createDevnodeServerApp({ keystorePath: '.cfxdevkit-mcp-keystore.json' });
-  const fetchImpl: typeof fetch = async (input, init) => {
-    if (input instanceof Request) {
-      return app.request(input);
-    }
+function createClient(): ConfluxDevkitClient {
+  return createConfluxDevkitClient({ baseUrl: resolveBaseUrl() });
+}
 
-    const url = new URL(String(input), DEFAULT_BASE_URL);
-    return app.request(`${url.pathname}${url.search}`, init);
-  };
-
-  return { client: createConfluxDevkitClient({ baseUrl: DEFAULT_BASE_URL, fetch: fetchImpl }) };
+function resolveBaseUrl(): string {
+  return process.env.CFXDEVKIT_DEVNODE_SERVER_URL?.trim() ?? DEFAULT_BASE_URL;
 }

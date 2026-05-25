@@ -67,13 +67,13 @@ RPC client, account management, chain utilities.
 - deriveDualAccounts({ mnemonic, count, startIndex }) → DualAddressAccount[]
 - DualAddressAccount: { evmAddress, coreAddress, privateKey }
 
-## @cfxdevkit/client + @cfxdevkit/devnode-server
+## @cfxdevkit/client + @cfxdevkit/devnode-core
 Shared control-plane client and backend runtime.
 - createConfluxDevkitClient({ baseUrl }) → ConfluxDevkitClient
 - client.node.start() / stop() / mine({ blocks }) / status()
 - client.accounts.list() / fund({ address, space, amount })
 - client.compiler.compileSources(...) / client.deploy.run(...)
-- MCP can embed createDevnodeServerApp() for local operation, while handlers use the client surface
+- MCP connects to an external devnode-server via ConfluxDevkitClient; handlers use the client surface
 
 ## @cfxdevkit/compiler
 Solidity compilation with bundled solc.

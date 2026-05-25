@@ -31,31 +31,31 @@ const client = createClient({
 ```
 
 ```ts
-// Converts a hex address to a base32 address
+// Converts a hex address to a base32 address, supporting both Core and eSpace networks
 export declare function hexToBase32(hexAddress: Hex, networkId: number, opts?: {
   // Whether to include the network prefix (e.g., "cfx") in the output
 }): string;
 
-// Converts a base32 address to a hex address
+// Converts a base32 address to a hex address, handling both Core and eSpace formats
 export declare function base32ToHex(base32Address: string, opts?: {
   // Whether to include the "0x" prefix in the output
 }): Hex;
 
-// Checks if a string is a valid base32 address
+// Checks if a string is a valid base32 address (Core or eSpace format)
 export declare function isBase32Address(address: string): boolean;
 
-// Returns the core address for a given address
+// Returns the canonical Core address for a given address (resolves base32 or eSpace hex to Core hex)
 export declare function getCoreAddress(address: string): string;
 
-// Retrieves the configuration for a specific chain
+// Retrieves the configuration for a specific chain by ID or name
 export declare function getChain(idOrName: ChainId | string): ChainConfig;
 
-// Returns a list of available chains
+// Returns a list of available chains, optionally filtered by family or network type
 export declare function listChains(filter?: {
   // Optional filter to restrict chains by family or network
 }): ChainConfig[];
 
-// Defines a custom chain configuration
+// Defines and registers a custom chain configuration for use with the SDK
 export declare function defineChain(input: ChainConfig): ChainConfig;
 ```
 
@@ -72,20 +72,20 @@ const base32 = hexToBase32('0x...', 1);
 ```
 
 ```ts
-// Converts a hex address to a base32 address
+// Converts a hex address to a base32 address, supporting both Core and eSpace networks
 export declare function hexToBase32(hexAddress: Hex, networkId: number, opts?: {
   // Whether to include the network prefix (e.g., "cfx") in the output
 }): string;
 
-// Converts a base32 address to a hex address
+// Converts a base32 address to a hex address, handling both Core and eSpace formats
 export declare function base32ToHex(base32Address: string, opts?: {
   // Whether to include the "0x" prefix in the output
 }): Hex;
 
-// Checks if a string is a valid base32 address
+// Checks if a string is a valid base32 address (Core or eSpace format)
 export declare function isBase32Address(address: string): boolean;
 
-// Returns the core address for a given address
+// Returns the canonical Core address for a given address (resolves base32 or eSpace hex to Core hex)
 export declare function getCoreAddress(address: string): string;
 ```
 
@@ -102,44 +102,44 @@ console.log(espaceMainnet.id);
 ```
 
 ```ts
-// Represents the family of the chain
+// Represents the family of the chain: 'core' (Conflux Core Space) or 'espace' (Conflux eSpace)
 export type ChainFamily = 'core' | 'espace';
 
-// Represents the network environment
+// Represents the network environment: mainnet, testnet, devnet, or local
 export type Network = 'mainnet' | 'testnet' | 'devnet' | 'local';
 
-// Configuration for a blockchain chain
+// Configuration for a blockchain chain, including ID, name, RPC endpoints, and metadata
 export interface ChainConfig {
   // Chain identifier, name, RPC endpoints, and other metadata
 }
 
-// Espace mainnet configuration
+// Espace mainnet configuration (public testnet for eSpace)
 export declare const espaceMainnet: ChainConfig;
 
-// Espace testnet configuration
+// Espace testnet configuration (public testnet for eSpace)
 export declare const espaceTestnet: ChainConfig;
 
-// Espace local configuration
+// Espace local configuration (for local development/testing)
 export declare const espaceLocal: ChainConfig;
 
-// Core-Espace mainnet configuration
+// Core-Espace mainnet configuration (public mainnet for Core Space)
 export declare const coreSpaceMainnet: ChainConfig;
 
-// Core-Espace testnet configuration
+// Core-Espace testnet configuration (public testnet for Core Space)
 export declare const coreSpaceTestnet: ChainConfig;
 
-// Core-Espace local configuration
+// Core-Espace local configuration (for local development/testing)
 export declare const coreSpaceLocal: ChainConfig;
 
-// Retrieves the configuration for a specific chain
+// Retrieves the configuration for a specific chain by ID or name
 export declare function getChain(idOrName: ChainId | string): ChainConfig;
 
-// Returns a list of available chains
+// Returns a list of available chains, optionally filtered by family or network type
 export declare function listChains(filter?: {
   // Optional filter to restrict chains by family or network
 }): ChainConfig[];
 
-// Defines a custom chain configuration
+// Defines and registers a custom chain configuration for use with the SDK
 export declare function defineChain(input: ChainConfig): ChainConfig;
 ```
 
@@ -160,129 +160,129 @@ const client = createClient({
 ```
 
 ```ts
-// Exported transport options
+// Options for configuring an HTTP transport (e.g., batch size, headers)
 export { HttpTransportOptions }
 
-// Exported transport type
+// Type representing a generic transport mechanism for RPC communication
 export { Transport }
 
-// Exported websocket options
+// Options for configuring a WebSocket transport (e.g., reconnect settings)
 export { WsTransportOptions }
 
-// Exported fallback transport
+// Creates a fallback transport that tries multiple transports in sequence
 export { fallback }
 
-// Exported http transport
+// Creates an HTTP transport for RPC communication
 export { http }
 
-// Exported ws transport
+// Creates a WebSocket transport for real-time RPC communication
 export { ws }
 
-// Parameters for an RPC request
+// Parameters for an RPC request, including method name and arguments
 export interface RpcRequest {
   // Method name and parameters for an RPC call
 }
 
-// Options for RPC calls
+// Common options for RPC method calls (e.g., timeout, custom headers)
 export interface CallOptions {
   // Common options for RPC method calls (e.g., timeout, headers)
 }
 
-// Options for fetching balance
+// Additional options specific to balance queries (e.g., block number)
 export interface GetBalanceOptions extends CallOptions {
   // Additional options specific to balance queries (e.g., block number)
 }
 
-// Options for Core RPC calls
+// Core-specific RPC call options (e.g., epoch parameter)
 export interface CoreCallOptions extends CallOptions {
   // Core-specific RPC call options (e.g., epoch parameter)
 }
 
-// Client for Espace network
+// Client interface for interacting with the eSpace network
 export interface EspaceClient extends ClientBase {
   // Espace-specific RPC methods and utilities
 }
 
-// Client for Core-Espace network
+// Client interface for interacting with the Core Space network
 export interface CoreSpaceClient extends ClientBase {
   // Core-specific RPC methods and utilities
 }
 
-// Input for creating a client
+// Input configuration for initializing a client instance
 export interface CreateClientInput {
   // Chain and transport configuration for client initialization
 }
 
-// Initialization parameters for CfxError
+// Initialization parameters for SDK errors (code, message, context)
 export interface CfxErrorInit {
   // Error code, message, and optional context for SDK errors
 }
 
-// Status information of a node
+// Status information of a node, including sync state, consensus info, and version
 export interface NodeStatus {
   // Node synchronization, consensus, and version info
 }
 
-// Filter for Core logs
+// Filter criteria for querying Core network logs
 export interface CoreLogFilter {
   // Criteria for filtering Core network logs (e.g., address, topics)
 }
 
-// A log entry from the Core network
+// A log entry emitted by the Core network during transaction execution
 export interface CoreLog {
   // Log data including address, topics, data, and block info
 }
 
-// Information about transaction sponsorship
+// Information about transaction sponsorship (gas limit, collateral, sponsor address)
 export interface SponsorInfo {
   // Sponsor address, gas limit, and collateral details for sponsored transactions
 }
 
-// Represents a blockchain account
+// Represents a blockchain account with optional private key or signer reference
 export interface Account {
   // Address and optional private key or signer reference
 }
 
-// A transaction that can be signed
+// A transaction object that can be signed (e.g., before submission)
 export interface SignableTx {
   // Transaction fields required for signing (e.g., nonce, gas, value)
 }
 
-// Options for signing a transaction
+// Options for signing a transaction (e.g., chain ID override, nonce hint)
 export interface SignOptions {
   // Options like chain ID override or nonce hint during signing
 }
 
-// An object capable of signing transactions
+// Interface for an object capable of signing transactions and messages
 export interface Signer {
   // Interface for signing transactions and messages
 }
 
-// Espace mainnet configuration
+// Espace mainnet configuration (re-exported for convenience)
 export declare const espaceMainnet: ChainConfig;
 
-// Espace testnet configuration
+// Espace testnet configuration (re-exported for convenience)
 export declare const espaceTestnet: ChainConfig;
 
-// Espace local configuration
+// Espace local configuration (re-exported for convenience)
 export declare const espaceLocal: ChainConfig;
 
-// Core-Espace mainnet configuration
+// Core-Espace mainnet configuration (re-exported for convenience)
 export declare const coreSpaceMainnet: ChainConfig;
 
-// Core-Espace testnet configuration
+// Core-Espace testnet configuration (re-exported for convenience)
 export declare const coreSpaceTestnet: ChainConfig;
 
-// Core-Espace local configuration
+// Core-Espace local configuration (re-exported for convenience)
 export declare const coreSpaceLocal: ChainConfig;
 
-// Maximum value of a uint256
+// Maximum value of a uint256 type (2^256 - 1)
 export declare const MAX_UINT256: bigint;
 
-// Maximum value of a uint128
+// Maximum value of a uint128 type (2^128 - 1)
 export declare const MAX_UINT128: bigint;
 
-// The zero address
+// The zero address (0x0000000000000000000000000000000000000000)
 export declare const ZERO_ADDRESS: Address;
 ```
 
@@ -305,27 +305,27 @@ try {
 ```
 
 ```ts
-// Base error class for the SDK
+// Base error class for all SDK errors, providing standardized error codes and context
 export declare class CfxError extends Error {
   // Base error with standardized code and context
 }
 
-// Error class for RPC failures
+// Error class wrapping RPC response failures (e.g., invalid method, server error)
 export declare class RpcError extends CfxError {
   // Wraps RPC response errors with status and data
 }
 
-// Error class for contract execution failures
+// Error class for contract execution failures (e.g., revert, out-of-gas)
 export declare class ContractError extends CfxError {
   // Thrown on revert, out-of-gas, or other contract execution issues
 }
 
-// Error class for wallet operations
+// Error class for wallet-related failures (e.g., account creation, signing)
 export declare class WalletError extends CfxError {
   // Thrown during account creation, signing, or key management
 }
 
-// Error class for keystore operations
+// Error class for keystore operations (e.g., encryption, decryption, file I/O)
 export declare class KeystoreError extends CfxError {
   // Thrown on keystore encryption/decryption or file I/O failures
 }
@@ -352,7 +352,7 @@ export type Hex = string;
 // Conflux address (hex or base32 format)
 export type Address = string;
 
-// Chain identifier number
+// Chain identifier number (e.g., 1029 for Core mainnet, 1030 for eSpace mainnet)
 export type ChainId = number;
 
 // Block number specifier (e.g., 'latest_mined', 'earliest', or hex)
@@ -376,7 +376,7 @@ export type Nonce = Hex;
 // Hex-encoded gas limit or used gas
 export type Gas = Hex;
 
-// Hex-encoded gas price
+// Hex-encoded gas price (in drips)
 export type GasPrice = Hex;
 
 // Hex-encoded value (in drips)
@@ -413,30 +413,30 @@ const parsed = parseUnits('1', 18); // '1000000000000000000'
 ```
 
 ```ts
-// Exported format units
+// Formats a raw value (in drips) into a human-readable unit (e.g., CFX)
 export { formatUnits }
 
-// Exported parse units
+// Parses a human-readable value (e.g., '1.5') into raw drips (as hex string)
 export { parseUnits }
 
-// Exported core network ID type
+// Core network ID type (used internally for chain identification)
 export { CoreNetworkId }
 
 // Unit name for Conflux native token (CFX)
 export type Unit = 'cfx' | 'drip';
 
-// Unit name for various denominations (including wei)
+// Unit name for various denominations (including wei, nfi, fi, drip, cfx)
 export type UnitName = 'cfx' | 'drip' | 'nfi' | 'fi' | 'wei';
 
 // Input value for unit conversion (string, number, or bigint)
 export type UnitValue = string | number | bigint;
 
-// Options for formatting units
+// Options for formatting units (e.g., rounding mode, decimal precision)
 export interface FormatUnitsOptions {
   // Rounding mode and decimal precision settings
 }
 
-// Options for parsing units
+// Options for parsing units (e.g., decimal places, validation behavior)
 export interface ParseUnitsOptions {
   // Decimal places and validation behavior
 }
@@ -456,46 +456,46 @@ const account = deriveAccount(mnemonic, { path: "m/44'/503'/0'/0/0" });
 ```
 
 ```ts
-// Exported derivation input
+// Input for deriving a single account from a mnemonic or private key
 export { DeriveAccountInput }
 
-// Exported derivation input for multiple accounts
+// Input for deriving multiple accounts from a mnemonic or private key
 export { DeriveAccountsInput }
 
-// Exported derivation input for dual accounts
+// Input for deriving both Core and eSpace addresses from a mnemonic
 export { DeriveDualAccountInput }
 
-// Exported derived account type
+// Result of account derivation: includes address, private key, and path
 export { DerivedAccount }
 
-// Exported dual address account type
+// Result of dual-address derivation: includes both Core and eSpace addresses
 export { DualAddressAccount }
 
-// Exported function to get core address
+// Derives the Core address from a raw private key
 export { coreAddressFromPrivateKey }
 
-// Exported default core path
+// Default BIP44 path for Core Space accounts
 export { DEFAULT_CORE_PATH }
 
-// Exported default espace path
+// Default BIP44 path for eSpace accounts
 export { DEFAULT_ESPACE_PATH }
 
-// Exported function to derive account
+// Derives a single account from a mnemonic or private key at a given path
 export { deriveAccount }
 
-// Exported function to derive accounts
+// Derives multiple accounts from a mnemonic or private key at sequential paths
 export { deriveAccounts }
 
-// Exported function to derive dual account
+// Derives both Core and eSpace addresses from a mnemonic at a given path
 export { deriveDualAccount }
 
-// Exported function to derive dual accounts
+// Derives multiple dual-address accounts from a mnemonic at sequential paths
 export { deriveDualAccounts }
 
-// Exported function to generate mnemonic
+// Generates a new BIP39-compliant mnemonic phrase
 export { generateMnemonic }
 
-// Exported function to validate mnemonic
+// Validates a BIP39-compliant mnemonic phrase
 export { validateMnemonic }
 ```
 

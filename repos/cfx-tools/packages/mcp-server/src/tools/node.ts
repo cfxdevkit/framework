@@ -8,7 +8,7 @@ export const nodeTools = [
     description: 'Start a local dev node through the shared @cfxdevkit/client control plane.',
     mutability: 'admin',
     requiresConfirmation: true,
-    packageHints: ['@cfxdevkit/client', '@cfxdevkit/devnode-server'],
+    packageHints: ['@cfxdevkit/client', '@cfxdevkit/devnode-core'],
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
   }),
   defineTool({
@@ -19,7 +19,7 @@ export const nodeTools = [
       'Stop a running local dev node through the shared @cfxdevkit/client control plane.',
     mutability: 'admin',
     requiresConfirmation: true,
-    packageHints: ['@cfxdevkit/client', '@cfxdevkit/devnode-server'],
+    packageHints: ['@cfxdevkit/client', '@cfxdevkit/devnode-core'],
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
   }),
   defineTool({
@@ -29,7 +29,7 @@ export const nodeTools = [
     description: 'Return node status, RPC URLs, chain IDs, accounts, and mining state.',
     mutability: 'read',
     requiresConfirmation: false,
-    packageHints: ['@cfxdevkit/client', '@cfxdevkit/devnode-server'],
+    packageHints: ['@cfxdevkit/client', '@cfxdevkit/devnode-core'],
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
   }),
   defineTool({
@@ -39,7 +39,7 @@ export const nodeTools = [
     description: 'Advance the local node by mining one or more blocks.',
     mutability: 'admin',
     requiresConfirmation: true,
-    packageHints: ['@cfxdevkit/client', '@cfxdevkit/devnode-server'],
+    packageHints: ['@cfxdevkit/client', '@cfxdevkit/devnode-core'],
     inputSchema: { type: 'object', properties: { blocks: { type: 'number', minimum: 1 } } },
   }),
 ] as const;

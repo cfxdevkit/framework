@@ -8,158 +8,418 @@ import { Mermaid } from '../../components/Mermaid';
 
 # Wallet Abstraction & Hardware
 
-This module provides core wallet abstraction and hardware wallet integration capabilities for the `@cfxdevkit/wallet` package. It enables developers to work with various wallet backends (local keystore, hardware wallets, session keys) in a consistent, policy-enforced manner.
-
-## Purpose
-
-The module abstracts wallet operations across different backends:
-- Local keystore-backed wallets with encrypted storage
-- Hardware wallets (Ledger, OneKey, Satochip)
-- Session keys with capability-based access control
-- Batched transaction execution
-- Policy enforcement for secure signing
-
-## Key Components
-
-### 1. Transaction Batching (`batcher`)
-
-The `TransactionBatcher` class enables batched execution of asynchronous tasks with configurable concurrency and error handling.
-
-```ts
-import { TransactionBatcher } from '@cfxdevkit/wallet/batcher';
-
-const batcher = new TransactionBatcher({ concurrency: 1 });
-batcher.add(async () => await fetch('/api/tx1'));
-batcher.add(async () => await fetch('/api/tx2'));
-const results = await batcher.execute();
-```
-
-### 2. Hardware Wallet Adapters
-
-Hardware wallet support is provided through vendor-specific adapters that implement a common `HardwareWalletAdapter` interface.
-
-#### Ledger
-```ts
-import { createLedgerHardwareAdapter } from '@cfxdevkit/wallet/hardware/ledger';
-
-const adapter = createLedgerHardwareAdapter({
-  coreTransport: transport,
-  path: "m/44'/60'/0'/0/0"
-});
-const signer = await adapter.getSigner();
-```
-
-#### OneKey
-```ts
-import { signerFromOneKey } from '@cfxdevkit/wallet/hardware/onekey';
-
-const signer = await signerFromOneKey({
-  sdk: HardwareSDK,
-  connectId: 'device-connect-id',
-  deviceId: 'device-id',
-  chainId: 1030
-});
-```
-
-#### Satochip
-```ts
-import { signerFromSatochip } from '@cfxdevkit/wallet/hardware/satochip';
-
-const signer = await signerFromSatochip({
-  bridgeUrl: 'http://127.0.0.1:8397',
-  pin: '123456'
-});
-```
-
-### 3. Session Keys
-
-Session keys provide ephemeral, capability-constrained signers that can be revoked or expire.
-
-```ts
-import { createSessionKey } from '@cfxdevkit/wallet/session-key';
-
-const session = await createSessionKey({
-  parent: hardwareSigner,
-  capability: {
-    chains: [1030],
-    contracts: ['0x...'],
-    maxValuePerTx: 0n,
-    notAfter: Date.now() + 3600000
-  }
-});
-// Use session.signer for signing with enforced policies
-```
-
-### 4. Policy Enforcement
-
-Capability-based policies restrict what operations a signer can perform.
-
-```ts
-import { withCapability } from '@cfxdevkit/wallet/policies';
-
-const scopedSigner = withCapability(signer, {
-  chains: [1030],
-  contracts: ['0x...'],
-  selectors: ['0xa9059cbb']
-});
-```
-
-### 5. Local Wallet Initialization
-
-Turn-key wallet initialization and management for local keystores.
-
-```ts
-import { initLocalWallet, openLocalWallet } from '@cfxdevkit/wallet/init';
-
-// First-time setup
-const wallet = await initLocalWallet({
-  passphrase: 'secure-passphrase',
-  label: 'deployer'
-});
-
-// Subsequent access
-const wallet = await openLocalWallet({
-  passphrase: 'secure-passphrase',
-  ref: { service: 'cfxdevkit', account: 'deployer' }
-});
-```
+The `@cfxdevkit/wallet` module provides wallet infrastructure for key management, signing, and transaction batching. It supports local keystore-based wallets, hardware wallet adapters (Ledger, OneKey, Satochip), and ephemeral session keys with capability-based access control.
 
 ## Architecture Overview
 
-<Mermaid chart={`graph TD
-    A[Wallet Abstraction] --> B[TransactionBatcher]
-    A --> C[HardwareWalletAdapters]
-    A --> D[SessionKeyManager]
-    A --> E[PolicyEnforcer]
-    A --> F[LocalWalletInit]
+All signing operations converge through the `Signer` interface from `@cfxdevkit/cdk`. The module provides multiple pathways to obtain a `Signer`, each with different security and operational characteristics:
+
+<Mermaid chart={`flowchart TD
+    A[Application Code] --> B{Signer Source}
+    B -->|Local Keystore| C["initLocalWallet / openLocalWallet"]
+    B -->|Hardware| D["createLedgerHardwareAdapter / signerFromOneKey / signerFromSatochip"]
+    B -->|Session Key| E[createSessionKey]
     
-    C --> C1[LedgerAdapter]
-    C --> C2[OneKeyAdapter]
-    C --> C3[SatochipAdapter]
+    C --> F[KeystoreProvider]
+    D --> G[HardwareWalletAdapter]
+    E --> H[Capability Wrapper]
     
-    D --> D1[SessionKey]
-    D --> D2[Attestation]
+    F --> I[Signer]
+    G --> I
+    H --> I
     
-    E --> E1[CapabilityValidator]
-    E --> E2[PolicyWrapper]
+    I --> J[signTransaction]
+    I --> K[signMessage]
+    I --> L[signTypedData]
     
-    F --> F1[KeystoreProvider]
-    F --> F2[FileKeystore]
+    J --> M[TransactionBatcher]
+    K --> M
+    L --> M
 `} />
 
-## Error Handling
+## Core Components
 
-All wallet operations throw specific error types:
-- `HardwareWalletError` for hardware-related failures
-- `SessionKeyError` for session key operations
-- `KeystoreError` for keystore backend issues
+### 1. Signer Interface
+
+All signers implement the `Signer` interface from `@cfxdevkit/cdk`:
+
+```typescript
+interface Signer {
+  account: Account;
+  signTransaction(tx: SignableTx, opts?: SignOptions): Promise<Hex>;
+  signMessage(message: string | Uint8Array, opts?: SignOptions): Promise<Hex>;
+  signTypedData(typedData: TypedData, opts?: SignOptions): Promise<Hex>;
+}
+```
+
+### 2. Local Keystore (`src/init/`)
+
+Manages encrypted keystore files for local key storage.
+
+#### Key Functions
+
+| Function | Purpose |
+|----------|---------|
+| `initLocalWallet()` | Creates a fresh keystore, generates mnemonic, returns signer + backup material |
+| `openLocalWallet()` | Opens existing keystore with passphrase |
+| `rotateLocalPassphrase()` | Re-encrypts keystore under new passphrase |
+| `defaultKeystorePath()` | Returns keystore path (`$CFXDEVKIT_KEYSTORE` or `~/.cfxdevkit/keystore.json`) |
+
+#### Usage
+
+```typescript
+// First boot - creates keystore
+const { signer, mnemonic, ref } = await initLocalWallet({
+  passphrase: 'secure-passphrase',
+  label: 'deployer',
+});
+
+// Subsequent boots
+const { signer } = await openLocalWallet({
+  passphrase: 'secure-passphrase',
+  ref,
+});
+```
+
+**Security Notes:**
+- Keystore uses Argon2id KDF with AES-256-GCM encryption
+- Mnemonic is returned once for backup and never persisted
+- File permissions set to mode 0600
+
+### 3. Hardware Wallet Adapters (`src/hardware/`)
+
+Supports multiple hardware wallet vendors through a unified adapter contract.
+
+#### Adapter Contract
+
+```typescript
+interface HardwareWalletAdapter {
+  readonly kind: HardwareWalletKind; // 'ledger' | 'onekey' | 'satochip'
+  getSigner(path?: string): Promise<Signer>;
+}
+```
+
+#### Supported Adapters
+
+| Adapter | Import Path | Transport |
+|---------|-------------|-----------|
+| Ledger | `@cfxdevkit/wallet/hardware/ledger` | USB/Bluetooth via `@cfxdevkit/services/keystore-ledger` |
+| OneKey | `@cfxdevkit/wallet/hardware/onekey` | SDK injection (web/ble/native) |
+| Satochip | `@cfxdevkit/wallet/hardware/satochip` | Local bridge HTTP API |
+
+#### Common Options
+
+All adapters support:
+- `path?: string` - BIP-44 derivation path (default: `m/44'/60'/0'/0/0`)
+- `expectedAddress?: HexAddress` - Device-swap protection
+- `showOnDevice?: boolean` - Show address on hardware during setup
+
+#### OneKey Example
+
+```typescript
+import HardwareSDK from '@onekeyfe/hd-common-sdk';
+import { signerFromOneKey } from '@cfxdevkit/wallet/hardware/onekey';
+
+await HardwareSDK.init({ debug: false });
+
+const signer = await signerFromOneKey({
+  sdk: HardwareSDK,
+  connectId: 'XXXX',
+  deviceId: 'XXXX',
+  chainId: 1030,
+  expectedAddress: '0x...',
+});
+```
+
+#### Satochip Bridge
+
+The Satochip adapter communicates with a local bridge service (default `http://127.0.0.1:8397`):
+
+```typescript
+// Bridge endpoints
+GET  /health           → { status, card_connected }
+POST /init             → unlock with PIN
+GET  /address?keypath  → { address, keypath }
+POST /sign-message     → { signature }
+POST /sign-transaction → { signature, txHash }
+```
+
+**Security:** Bridge should never be exposed outside localhost.
+
+### 4. Session Keys (`src/session-key/`)
+
+Ephemeral in-memory keypairs scoped by capabilities.
+
+#### Key Functions
+
+| Function | Purpose |
+|----------|---------|
+| `createSessionKey()` | Mints session key with capability constraints |
+| `canonicalAttestationMessage()` | Generates stable attestation payload |
+
+#### Usage
+
+```typescript
+const session = await createSessionKey({
+  parent: rootSigner,
+  capability: {
+    chains: [1030],
+    contracts: ['0xTokenAddress'],
+    selectors: ['0xa9059cbb'], // ERC-20 transfer
+    maxValuePerTx: 0n,
+    notAfter: Date.now() + 60 * 60_000, // 1 hour
+  },
+});
+
+// Use session.signer for constrained operations
+await session.signer.signTransaction(tx);
+
+// Revoke when done
+session.revoke();
+```
+
+#### SessionKey Interface
+
+```typescript
+interface SessionKey {
+  readonly signer: Signer;
+  readonly address: Address;
+  readonly parent: Address;
+  readonly capability: Capability;
+  readonly attestation: SessionAttestation;
+  revoke(): void;
+  readonly isRevoked: boolean;
+}
+```
+
+**Attestation Format:**
+- SHA-256 digest of canonical JSON
+- Parent signs the digest
+- Used for on-chain delegation (EIP-7702, 4337, etc.)
+
+### 5. Capability Policies (`src/policies/`)
+
+Wraps any `Signer` with capability enforcement for defense in depth.
+
+#### Key Functions
+
+| Function | Purpose |
+|----------|---------|
+| `withCapability()` | Wraps signer with capability checks |
+| `checkCapability()` | Validates transaction without signing (dry-run) |
+| `isEmptyCapability()` | Checks if capability imposes no constraints |
+
+#### Capability Fields
+
+```typescript
+interface Capability {
+  chains?: number[];              // Allowed chain IDs
+  contracts?: Address[];          // Allowed contract addresses
+  selectors?: Hex[];              // Allowed function selectors
+  maxValuePerTx?: bigint;         // Max value per transaction
+  notAfter?: number;              // Expiry timestamp
+}
+```
+
+#### Usage
+
+```typescript
+const scoped = withCapability(rootSigner, {
+  chains: [1030],
+  contracts: ['0xTokenAddress'],
+  selectors: ['0xa9059cbb'],
+  maxValuePerTx: 1e18n, // 1 token
+  notAfter: Date.now() + 3600_000,
+});
+```
+
+#### Error Codes
+
+| Code | Condition |
+|------|-----------|
+| `wallet/policies/expired` | `notAfter` in past |
+| `wallet/policies/chain-denied` | `tx.chainId` not in allowed chains |
+| `wallet/policies/contract-denied` | `tx.to` not in allowed contracts |
+| `wallet/policies/selector-denied` | Function selector not allowed |
+| `wallet/policies/value-exceeded` | `tx.value` exceeds limit |
+| `wallet/policies/missing-target` | Contract policy set but no recipient |
+| `wallet/policies/missing-selector` | Selector policy set but insufficient data |
+
+### 6. Transaction Batcher (`src/batcher/`)
+
+Executes multiple signing tasks with concurrency control.
+
+#### Key Class
+
+```typescript
+class TransactionBatcher<T = unknown> {
+  add(task: BatchTask<T>): void;
+  size(): number;
+  clear(): void;
+  execute(options?: TransactionBatcherOptions): Promise<TransactionBatchResult<T>[]>;
+}
+```
+
+#### Usage
+
+```typescript
+const batcher = new TransactionBatcher({ stopOnFailure: true });
+
+batcher.add(async () => {
+  const signedTx = await signer.signTransaction(tx1);
+  return await provider.sendTransaction(signedTx);
+});
+
+batcher.add(async () => {
+  const signedTx = await signer.signTransaction(tx2);
+  return await provider.sendTransaction(signedTx);
+});
+
+const results = await batcher.execute({ concurrency: 1 });
+```
+
+#### Options
+
+| Option | Type | Default |
+|--------|------|---------|
+| `stopOnFailure` | `boolean` | `false` |
+| `concurrency` | `number` | `1` (forced) |
+
+**Note:** Concurrency is forced to 1 to maintain transaction ordering.
+
+### 7. Error Handling (`src/errors/`)
+
+Custom error classes for wallet-specific failures.
+
+#### Error Classes
+
+| Class | Usage |
+|-------|-------|
+| `SessionKeyError` | Session key and policy failures |
+| `HardwareWalletError` | Hardware adapter failures |
+
+#### Error Code Patterns
+
+**Session Key:**
+- `wallet/session-key/expired`
+- `wallet/session-key/revoked`
+- `wallet/session-key/empty-capability`
+- `wallet/session-key/capability-denied`
+- `wallet/session-key/bad-attestation`
+
+**Hardware:**
+- `wallet/hardware/ledger/{transport-unavailable,user-cancelled,device-error,bad-response}`
+- `wallet/hardware/onekey/{init-failed,user-cancelled,device-error,bad-response}`
+- `wallet/hardware/satochip/{bridge-unreachable,no-card,bad-pin,bad-response}`
+- `wallet/hardware/{unsupported-tx-type,address-mismatch,aborted}`
+
+**Signers:**
+- `wallet/signers/readonly`
+
+## Transaction Signing Flow
+
+### EIP-1559 Transaction Signing
+
+Hardware adapters return `(r, s, v)` tuples. The module converts these to canonical raw signed transactions:
+
+```typescript
+// Hardware returns: { r: Hex, s: Hex, v: number }
+const sig = await device.signTransaction(tx);
+
+// Convert to raw signed transaction
+const rawSigned = finaliseEip1559Tx(unsignedTx, {
+  r: sig.r,
+  s: sig.s,
+  v: sig.v, // 0|1 or 27|28
+});
+
+// Result: 0x-hex RLP-encoded signed transaction
+```
+
+### Signature Normalization
+
+Multiple adapters return signatures in different formats. The module normalizes them:
+
+```typescript
+// OneKey: may return 128-byte (v=27) or 130-byte (v=0/1)
+normaliseSignature(sig) → Hex
+
+// Satochip: splits 130-byte signature into r, s, v
+splitSignature(sig) → { r: Hex, s: Hex, v: number }
+```
 
 ## Integration Points
 
-This module integrates with:
-- `@cfxdevkit/cdk` for core signer interfaces
-- `@cfxdevkit/services/keystore` for backend storage
-- `@cfxdevkit/executor` for batched execution
-- `viem` for transaction serialization and EIP-1559 support
+### With Keystore Backend
 
-The module provides a consistent interface across all wallet types, enabling seamless switching between local and hardware wallets while maintaining security through capability-based policies.
+```typescript
+// Local keystore provider
+import { createFileKeystore } from '@cfxdevkit/services/keystore-file';
+
+const provider = createFileKeystore({
+  path: defaultKeystorePath(),
+  unlock: async () => ({ passphrase }),
+});
+
+const signer = await provider.getSigner(ref, capability);
+```
+
+### With Session Key Delegation
+
+```typescript
+// 1. Create session key
+const session = await createSessionKey({ parent, capability });
+
+// 2. Send attestation to on-chain validator
+await validatorContract.authorizeSession(
+  session.attestation.digest,
+  session.attestation.signature,
+);
+
+// 3. Use session signer
+await session.signer.signTransaction(tx);
+```
+
+### With Transaction Batching
+
+```typescript
+// Combine with any signer source
+const { signer } = await openLocalWallet({ passphrase, ref });
+
+const batcher = new TransactionBatcher();
+batcher.add(() => signer.signTransaction(tx1));
+batcher.add(() => signer.signTransaction(tx2));
+
+const results = await batcher.execute();
+```
+
+## Security Considerations
+
+1. **Session Key Memory:** Private key lives only in process memory, wiped on `revoke()`
+2. **Hardware Isolation:** Private keys never leave hardware device
+3. **Keystore Encryption:** Argon2id + AES-256-GCM with AAD
+4. **Capability Defense:** Policy checks occur before secret consultation
+5. **Device Swap Protection:** `expectedAddress` validates device identity
+6. **Bridge Security:** Satochip bridge must remain on localhost only
+
+## Testing
+
+Test utilities include:
+- `generatePrivateKey()` - CSPRNG-based key generation (rejects zero)
+- `canonicalAttestationMessage()` - Deterministic attestation payload
+- `checkCapability()` - Dry-run validation without signing
+- Custom fetch for Satochip bridge mocking
+
+## Contributing
+
+When adding new hardware adapters:
+1. Implement `HardwareWalletAdapter` contract
+2. Export from `src/hardware/{vendor}/index.ts`
+3. Add vendor to `HARDWARE_WALLET_KINDS`
+4. Include error codes in `HardwareWalletError`
+5. Ensure EIP-1559 transaction support
+
+When modifying session key logic:
+1. Update `canonicalAttestationMessage()` for any capability changes
+2. Ensure attestation format is stable and reconstructable
+3. Test `isRevoked` behavior with expiry and manual revocation

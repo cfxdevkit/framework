@@ -45,21 +45,21 @@ npm install @cfxdevkit/wallet-connect
 Returns the currently connected account.
 
 ```ts
-const { address, chainId, accountType } = useAccount();
+const { address, chainId, status } = useAccount();
 ```
 
 ### `useNativeBalance(input)`
 Reads the native token balance of an account.
 
 ```ts
-const { data: balance, isLoading } = useNativeBalance({ chainId, account });
+const { data: balance, isLoading, error } = useNativeBalance({ chainId, account });
 ```
 
 ### `useTokenBalance(input)`
 Reads the ERC-20 token balance of an account.
 
 ```ts
-const { data: balance, isLoading } = useTokenBalance({
+const { data: balance, isLoading, error } = useTokenBalance({
   chainId,
   tokenAddress,
   account,
@@ -70,7 +70,7 @@ const { data: balance, isLoading } = useTokenBalance({
 Fetches metadata (name, symbol, decimals) for a token.
 
 ```ts
-const { data: metadata, isLoading } = useTokenMetadata({
+const { data: metadata, isLoading, error } = useTokenMetadata({
   chainId,
   tokenAddress,
 });
@@ -92,7 +92,7 @@ const { data, isLoading, error } = useReadContract({
 Batch read calls to multiple contracts/functions.
 
 ```ts
-const { data } = useReadContracts({
+const { data, isLoading, error } = useReadContracts({
   contracts: [
     { abi, address, functionName, args },
     // ...
@@ -104,7 +104,7 @@ const { data } = useReadContracts({
 Simulates a contract call without submitting a transaction.
 
 ```ts
-const { data: result } = useSimulateContract({
+const { data: result, isLoading, error } = useSimulateContract({
   abi,
   address,
   functionName,
@@ -222,9 +222,10 @@ import { useAccount, useNativeBalance } from '@cfxdevkit/react';
 
 function AccountBalance() {
   const { address } = useAccount();
-  const { data: balance, isLoading } = useNativeBalance({ chainId: 1, account: address });
+  const { data: balance, isLoading, error } = useNativeBalance({ chainId: 1, account: address });
 
   if (isLoading) return <span>Loading…</span>;
+  if (error) return <span>Error: {error.message}</span>;
   return <span>Balance: {balance?.toString()}</span>;
 }
 ```
@@ -237,4 +238,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 0 — framework** — Must not runtime-import from any higher tier.
 
-<!-- readme-hash: 4f96a171149358c71d45a9cbbbff3cbfe74af9ba2d15d28a36d73531366672a0 -->
+<!-- readme-hash: 177b3bfd56a7408f17c82d2e33688f71c4b09afd4126916280d6fb25dd616378 -->

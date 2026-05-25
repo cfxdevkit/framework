@@ -35,6 +35,7 @@ pnpm add -D @cfxdevkit/testing
 | Sub-path | Exports |
 |----------|---------|
 | `.` | 8 symbols |
+| `matchers` | 2 matchers |
 
 ---
 
@@ -51,31 +52,29 @@ export interface Deferred<T> {
 
 export interface MockClientOptions {
   /**
-   * Whether the mock client should start in a connected state.
-   * @default true
+   * Optional: custom endpoint URL for the mock client.
    */
-  connected?: boolean;
+  endpoint?: string;
   /**
-   * Optional initial state for the client's connection status.
+   * Optional: initial state or behavior overrides for the mock.
    */
-  initialState?: Partial<Client>;
+  overrides?: Record<string, any>;
 }
 
 export interface DevNodeFixtureOptions {
   /**
-   * Path to the DevNode binary to use.
-   * Falls back to `framework/devnode` if omitted.
+   * Optional: path to a custom configuration file.
    */
-  binaryPath?: string;
+  configPath?: string;
   /**
-   * Additional arguments to pass to the DevNode process.
+   * Optional: whether to start the node in dev mode.
+   * @default false
    */
-  args?: string[];
+  devMode?: boolean;
   /**
-   * Timeout (in ms) for DevNode startup.
-   * @default 10_000
+   * Optional: additional environment variables to set.
    */
-  startupTimeout?: number;
+  env?: Record<string, string>;
 }
 
 export declare function createDeferred<T>(): Deferred<T>;
@@ -90,7 +89,7 @@ export declare function waitFor(
     timeout?: number;
     /**
      * Interval (in ms) between assertion checks.
-     * @default 100
+     * @default 50
      */
     interval?: number;
   }
@@ -105,12 +104,29 @@ export declare function createDevNodeFixture(
 ): Promise<DevNode>;
 ```
 
-<!-- api-hash: 29284415d11ad06fa4dd06dc8a94a3c830ded2bed819425d90049a021418a32a -->
+## `matchers`
+
+```ts
+export declare function toBeHexHash(received: unknown): {
+  pass: boolean;
+  message: () => string;
+};
+
+export declare function toBeHexAddress(received: unknown): {
+  pass: boolean;
+  message: () => string;
+};
+```
+
+<!-- api-hash: b41cce8eec14b4ea7a2e98986506d1c60652d7d5a9bc9bba47410e46741178f6 -->
 
 ## Usage
 
 ```ts
-import { createMockClient, createDeferred, waitFor } from '@cfxdevkit/testing';
+import { createDeferred, waitFor, createMockClient } from '@cfxdevkit/testing';
+import { toBeHexHash, toBeHexAddress } from '@cfxdevkit/testing/matchers';
+
+expect.extend({ toBeHexHash, toBeHexAddress });
 
 // Async coordination
 const deferred = createDeferred<string>();
@@ -118,15 +134,17 @@ setTimeout(() => deferred.resolve('done'), 100);
 await deferred.promise; // resolves after 100ms
 
 // Mock client
-const client = createMockClient({ connected: true });
-await waitFor(() => client.isConnected);
+const client = createMockClient({ endpoint: 'http://localhost:8080' });
 
 // DevNode fixture
 const fixture = await createDevNodeFixture({
-  binaryPath: '/path/to/devnode',
-  args: ['--dev'],
-  startupTimeout: 15_000
+  devMode: true,
+  env: { DEBUG: '1' }
 });
+
+// Chain assertions
+expect('0x1234...').toBeHexHash();
+expect('0xabcdef...').toBeHexAddress();
 ```
 
 ## API Reference
@@ -137,4 +155,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 0 — framework** — Must not runtime-import from any higher tier.
 
-<!-- readme-hash: 5885fdf54b22f2d041c527841abe34dd297c864879cb162c607bb1f622f9aa07 -->
+<!-- readme-hash: 1d614ae238e0643964e7713d61228953b5397b9ed0dbc256501c3503f7e67af4 -->

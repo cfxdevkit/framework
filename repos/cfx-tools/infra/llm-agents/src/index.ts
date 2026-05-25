@@ -24,6 +24,8 @@ export {
   runPrecommit,
   runPrecommitWorkflow,
 } from '../workers/commit/index.js';
+export type { ActionConfig } from '../workers/completion/resolve-action.js';
+export { resolveActionConfig } from '../workers/completion/resolve-action.js';
 export {
   runDocsApi,
   runDocsApiProbe,

@@ -8,217 +8,443 @@ import { Mermaid } from '../../components/Mermaid';
 
 # LLM Completion Engine
 
-The **LLM Completion Engine** module provides core functionality for interacting with Large Language Models (LLMs) to generate text completions in the Conflux DevKit monorepo. It supports multiple LLM providers, handles configuration management, context building, and structured agent workflows.
+The LLM Completion Engine provides a unified interface for generating LLM completions across multiple provider backends. It is designed to support repository upkeep tasks in the Conflux DevKit monorepo, including code review, documentation generation, commit preparation, and validation workflows.
 
-## Purpose
+## Architecture Overview
 
-This module enables developers to:
-- Query LLMs for code and documentation assistance
-- Integrate with various LLM providers (Lemonade, LiteLLM, OpenAI-compatible, GitHub Models)
-- Manage LLM configuration and model selection
-- Build contextual prompts from repository state
-- Execute structured agent workflows for tasks like code review, documentation generation, and commit preparation
+<Mermaid chart={`flowchart TD
+    A[Agent Workflow] --> B["complete() / completeDirect()"]
+    B --> C[readConfig]
+    C --> D[resolveProvider]
+    D --> E[Provider Instance]
+    E --> F[discoverModels]
+    E --> G[complete]
+    G --> H[postChatCompletion]
+    H --> I[readStreamedChatCompletion]
+    I --> J[applyChatCompletionChunk]
+    J --> K[CompletionReport]
+    
+    L[buildActionContext] --> B
+    M[commitPreflightBlock] --> L
+    N[commandBlock] --> M
+    N --> O["git / pnpm / tsx"]
+`} />
 
-## Key Components
+## Core Functions
 
-### 1. Core Completion Functions
+### `complete()`
 
-#### `complete()`
-Main entry point for generating completions using a repository action.
+Primary entry point for standard completions. Constructs a system prompt for repository upkeep tasks and combines user prompt with repository context.
 
-```ts
-async function complete({
+```typescript
+export async function complete({
   action,
   modelOverride,
   userPrompt,
   context,
   quick = false
-}): Promise<CompletionReport>
+})
 ```
 
-- Resolves provider and model based on configuration
-- Builds system and user messages
-- Invokes provider's `complete()` method
-- Returns structured completion report
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | `string` | Action identifier for config lookup |
+| `modelOverride` | `string \| undefined` | Override default model selection |
+| `userPrompt` | `string` | User's task description |
+| `context` | `string` | Repository context to include |
+| `quick` | `boolean` | Use reduced token budget |
 
-#### `completeDirect()`
-For direct agent requests with full control over system/user prompts.
+**Returns:** `CompletionReport` with generated content, model info, and attempt history.
 
-```ts
-async function completeDirect({
-  action,
-  flags,
-  systemPrompt,
-  userPrompt,
-  maxTokens,
-  onProgress,
-}): Promise<CompletionReport>
+### `completeCommitAgent()` / `completeStructuredAgent()`
+
+Specialized wrappers for commit-related and structured agent requests. Both delegate to `completeDirect()` with different prompt patterns.
+
+```typescript
+export async function completeCommitAgent(request: CompleteAgentRequest)
+export async function completeStructuredAgent(request: CompleteAgentRequest)
 ```
 
-### 2. Provider Resolution
+### `completeDirect()`
 
-#### `resolveProvider()`
-Selects the appropriate LLM provider based on:
-- Configuration (`provider`, `baseUrl`)
-- Environment variables
-- Local fallback discovery
+Internal function for agent-specific completions with custom system prompts and progress callbacks.
 
-Supported providers:
-- `lemonade`: Local Lemonade LLM server
-- `litellm`: LiteLLM gateway
-- `openai-compat`: OpenAI-compatible API
-- `github-models`: GitHub Models API
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | `string` | Action identifier |
+| `flags` | `{ model?: string, noThinking?: boolean }` | Request flags |
+| `systemPrompt` | `string` | Custom system prompt |
+| `userPrompt` | `string` | User prompt |
+| `maxTokens` | `number \| undefined` | Token limit override |
+| `onProgress` | `(event) => void` | Progress callback |
 
-### 3. Configuration Management
+## Configuration
 
-#### `readConfig()`
-Reads and normalizes LLM configuration from:
-- Primary config file (`/.pi/providers.json`)
-- Legacy config files
-- Environment variables
+### Reading Configuration
 
-#### `normalizeConfig()`
-Merges base and scoped configurations with default values.
-
-#### `resolveRequestTimeoutMs()`
-Determines timeout based on config or environment variables.
-
-### 4. Context Building
-
-#### `buildActionContext()`
-Constructs context for repository actions by:
-- Reading specified files
-- Including changed files (`git diff`)
-- Including commit preflight checks
-- Adding base repository context
-
-#### `buildBaseContext()`
-Includes core repository documentation files.
-
-### 5. Model Resolution
-
-#### `resolveProviderModel()`
-Discovers available models and selects the best match:
-- Uses provider's discovery API
-- Falls back to configured default model
-- Applies model selection heuristics
-
-### 6. Streaming & Progress Reporting
-
-#### `postChatCompletion()`
-Handles HTTP requests to LLM endpoints with:
-- Streaming support
-- Progress event emission
-- Retry logic for loading models
-
-#### `createLlmProgressReporter()`
-Provides logging for LLM completion phases.
-
-## Architecture Overview
-
-<Mermaid chart={`graph TD
-  A["complete()"] --> B[resolveProvider]
-  A --> C[resolveProviderModel]
-  A --> D[buildActionContext]
-  B --> E["Provider.complete()"]
-  E --> F[postChatCompletion]
-  F --> G[fetch + stream]
-  A --> H[CompletionReport]
-  D --> I[readContextFile]
-  I --> J[git diff, status, etc.]
-`} />
-
-## Configuration Structure
-
-The LLM configuration supports multiple layers:
-1. **Default values** - Built-in conservative defaults
-2. **Base config** - Primary `/.pi/providers.json`
-3. **Scoped config** - Unit-specific overrides
-
-Key configuration fields:
-- `provider`: Selected LLM provider type
-- `baseUrl`: Provider endpoint URL
-- `defaultModel`: Default model identifier
-- `tokenBudget`: Controls max_tokens computation
-- `actions`: Action-to-model mapping
-- `harness`: Execution mode configuration
-
-## Usage Examples
-
-### Basic Completion
-```ts
-import { complete } from './completion/index.ts';
-
-const result = await complete({
-  action: 'review',
-  userPrompt: 'Review this change for security issues',
-  context: 'package.json'
-});
+```typescript
+export async function readConfig(configFile?: string): Promise<LlmConfig>
+export async function writeConfig(config: LlmConfig, configFile?: string): Promise<void>
 ```
 
-### Direct Agent Request
-```ts
-import { completeStructuredAgent } from './completion/index.ts';
+**Configuration Resolution Order:**
+1. Environment variable `CFXDEVKIT_LLM_AGENT_CONFIG_PATH` (agent-pinned, not overridden by sessions)
+2. Environment variable `CFXDEVKIT_LLM_CONFIG_PATH`
+3. `.pi/providers.json` (default)
+4. `artifacts/llm/config/llm.json` (legacy)
+5. `artifacts/llm/config/lemonade.json` (legacy compat)
 
-const result = await completeStructuredAgent({
-  action: 'docs-api',
-  systemPrompt: 'Generate API documentation',
-  userPrompt: 'Document the fetchUser function',
-  flags: { model: 'gpt-4o' }
-});
+**Scoped Config Merging:**
+Config files under `/artifacts/llm/config/units/` are treated as scoped overlays and merged with base config via `mergeConfigLayers()`.
+
+### Default Configuration
+
+```typescript
+export function defaultConfig(): LlmConfig
 ```
 
-### Context Building
-```ts
-import { buildActionContext } from './completion/context.ts';
+**Key defaults:**
+- `provider`: `'lemonade'`
+- `defaultModel`: `'Qwen3-Coder-Next-GGUF'`
+- `requestTimeoutMs`: `600000` (10 minutes)
+- `tokenBudget`: `{ contextFraction: 0.75, cap: 32768, quick: 512, cloudFallback: 4096 }`
+- `harness.defaultMode`: `'deterministic'`
 
-const context = await buildActionContext({
-  context: ['README.md', 'package.json'],
-  includeChangedFiles: true,
-  includeGitDiff: true
-});
+## Provider System
+
+### Supported Providers
+
+| Provider Type | Class | Environment Variables |
+|---------------|-------|----------------------|
+| `lemonade` | `LemonadeProvider` | `LEMONADE_URL`, `LEMONADE_BASE_URL` |
+| `litellm` | `LiteLLMProvider` | `LITELLM_BASE_URL`, `LITELLM_API_KEY`, `LITELLM_MODEL` |
+| `openai-compat` | `OpenAICompatProvider` | `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_MODEL` |
+| `github-models` | `GitHubModelsProvider` | `GITHUB_TOKEN`, `GITHUB_MODEL` |
+
+### Provider Resolution
+
+```typescript
+export async function resolveProvider(config?: LlmConfig): Promise<LlmProvider>
+```
+
+**Resolution Priority:**
+1. Config `provider` field
+2. Config `baseUrl` with provider type
+3. Environment variables (LiteLLM, Lemonade, OpenAI, GitHub)
+4. Local discovery (tries default Lemonade URLs)
+
+### Model Discovery
+
+Each provider implements `discoverModels()` to fetch available models from the backend. Model selection follows this priority:
+
+1. Exact match on preferred model ID or checkpoint
+2. First model marked as `suggested`
+3. First available model
+
+## Context Building
+
+### `buildActionContext()`
+
+Constructs the full context payload for a completion request by combining:
+
+```typescript
+export async function buildActionContext(spec, opts: { quick?: boolean } = {})
+```
+
+**Context Sources:**
+| Source | Description |
+|--------|-------------|
+| `spec.context` | Explicit file paths from action spec |
+| `includeChangedFiles` | Git diff --name-only, staged, untracked |
+| `includeGitDiff` | Full diff with stat (excludes pnpm-lock.yaml) |
+| `includeCommitPreflight` | Pre-commit validation checks |
+| `buildBaseContext()` | Core repo files (README, ARCHITECTURE, etc.) |
+
+**Token Limits:**
+- Quick mode: 12,000 characters total
+- Normal mode: 60,000 characters total
+
+### `commitPreflightBlock()`
+
+Runs pre-commit validation commands and formats output for LLM consumption:
+
+- `gitnexus ensure`
+- `git status --short --branch`
+- `git diff --stat` / `--cached --stat`
+- `arch-check` hotspots and kebab groups
+- `repo:review`
+- `gitnexus detect-changes`
+- `moon query changed-files`
+
+## Streaming & Progress
+
+### Progress Events
+
+```typescript
+export interface CompletionProgressEvent {
+  readonly phase: 'request' | 'headers' | 'reasoning' | 'content' | 'heartbeat' | 'complete';
+  readonly url: string;
+  readonly attempt: number;
+  readonly elapsedMs: number;
+  readonly status?: number;
+  readonly contentChars?: number;
+  readonly reasoningChars?: number;
+  readonly finishReason?: string;
+  readonly promptTokens?: number;
+  readonly completionTokens?: number;
+  readonly tps?: number;
+  readonly pp?: number;
+}
+```
+
+**Progress Phases:**
+1. `request` - Request sent
+2. `headers` - Response headers received
+3. `reasoning` - Reasoning content streaming
+4. `content` - Answer content streaming
+5. `heartbeat` - Periodic keepalive (every 15s)
+6. `complete` - Stream finished with token metrics
+
+### Streaming Implementation
+
+```typescript
+export async function postChatCompletion(params): Promise<string | undefined>
+```
+
+**Retry Logic:**
+- Up to 2 retries per chat path
+- 5-second delay when model not loaded (200 + empty body)
+- Tries multiple chat paths: `/api/v1/chat/completions`, `/v1/chat/completions`, `/chat/completions`
+
+**Error Handling:**
+- Detects Lemonade error envelopes in 200 responses
+- Merges malformed JSON chunks
+- Escapes raw newlines in JSON strings
+- Strips trailing commas
+
+## Token Budget Management
+
+### `resolveMaxTokens()`
+
+Computes `max_tokens` for requests based on context window and budget policy:
+
+**Resolution Order:**
+1. `opts.maxTokens` if explicitly set
+2. `ctx * contextFraction` (capped by `tokenBudget.cap`)
+3. `tokenBudget.cloudFallback` (4096 default) when context unknown
+
+**Local Hardware Tuning:**
+```json
+{
+  "tokenBudget": {
+    "contextFraction": 1.0,
+    "cap": null
+  }
+}
+```
+
+## Monorepo Units
+
+### Unit Discovery
+
+```typescript
+export function findMonorepoUnitByConfigPath(configFilePath: string, startDir?: string): MonorepoUnit | undefined
+```
+
+**Supported Units:**
+| Unit | Root Dir | Default Mode | Focus |
+|------|----------|--------------|-------|
+| `delivery` | `openspec` | `deterministic` | Planning, docs, OpenSpec |
+| `implementation` | `repos` | `exploratory` | Packages, examples, code |
+| `operations` | `infrastructure` | `exploratory` | CI, release, automation |
+
+## Execution Context
+
+### Context Resolution
+
+```typescript
+export async function resolveExecutionContext(options): Promise<ExecutionContextSummary>
+```
+
+**Returns:**
+```typescript
+{
+  unit: { name, rootDir, configPath } | null,
+  llm: {
+    used: boolean,
+    status: 'not-used' | 'ready' | 'unavailable',
+    configPath: string,
+    provider?: string,
+    baseUrl?: string,
+    model?: string,
+    error?: string
+  }
+}
+```
+
+**Usage:**
+```typescript
+import { resolveExecutionContext, logExecutionContext } from './workers/shared/execution-context.ts';
+
+const context = await resolveExecutionContext({ useLlm: true, action: 'review' });
+logExecutionContext(context);
+```
+
+## JSON Parsing Utilities
+
+### `parseJsonObject()`
+
+Extracts and parses JSON from LLM responses with repair strategies:
+
+```typescript
+export function parseJsonObject(content: string)
+```
+
+**Repair Attempts:**
+1. Original text
+2. Escape raw newlines in JSON strings
+3. Strip trailing commas
+
+**Fallback:**
+- Detects fenced code blocks (```json ... ```)
+- Finds balanced JSON object boundaries
+- Handles string escaping correctly
+
+## Type Definitions
+
+### Completion Report
+
+```typescript
+export interface CompletionReport {
+  readonly generatedAt: string;
+  readonly action: string;
+  readonly baseUrl: string;
+  readonly model: string;
+  readonly content: string;
+  readonly attempts: readonly CompletionAttempt[];
+}
+```
+
+### Chat Message
+
+```typescript
+export interface ChatMessage {
+  readonly role: 'system' | 'user' | 'assistant';
+  readonly content: string;
+}
 ```
 
 ## Integration Points
 
-### With Repository Actions
-The engine integrates with repository actions defined in `repo-actions.ts`:
-- `review`: Code review
-- `docs-api`: API documentation
-- `commit`: Commit preparation
-- `test-audit`: Test coverage assessment
+### Agent Workflows
 
-### With Execution Context
-The engine uses `resolveExecutionContext()` to determine:
-- Which monorepo unit is active
-- LLM provider and model configuration
-- Whether LLM is used for the current operation
+The completion engine is called by:
+- `runAgentCheck()` - Agent capability checks
+- `runReviewAgent()` - Code review tasks
+- `runAgentSmoke()` - Provider smoke tests
+- `runCommitWorkflow()` - Commit preparation
+- `runPrecommitWorkflow()` - Pre-commit validation
 
-### With Shared Utilities
-- `shared/logging.ts`: Progress reporting and logging
-- `shared/execution-context.ts`: Context resolution
-- `shared/repo-actions.ts`: Action definitions and metadata
+### Repo Actions
+
+Actions defined in `workers/shared/repo-actions.ts` specify:
+- `context` files to include
+- `includeChangedFiles` / `includeGitDiff` flags
+- `includeCommitPreflight` for commit actions
+- `defaultPrompt` templates
+
+```typescript
+export const repoActions = {
+  'review': {
+    mode: 'exploratory',
+    context: ['artifacts/llm/reports/review.md', 'SECURITY.md'],
+    includeGitDiff: true
+  },
+  'commit': {
+    mode: 'exploratory',
+    includeCommitPreflight: true
+  }
+}
+```
 
 ## Error Handling
 
-The engine handles various failure modes:
-- Provider unavailability
-- Model loading delays
-- Network timeouts
-- Invalid JSON responses
-- Configuration errors
+### Provider Errors
 
-All errors are normalized and reported through structured attempts in `CompletionReport.attempts`.
+- Missing provider: `Error('No LLM provider could be resolved...')`
+- Missing credentials: `Error('OPENAI_BASE_URL and OPENAI_API_KEY are required...')`
+- Model not loaded: Empty response triggers retry with 5s delay
 
-## Token Budget Management
+### Network Errors
 
-The engine automatically computes `max_tokens` based on:
-- Model context window (when available)
-- Configuration `tokenBudget` settings
-- Quick mode (`--quick` flag) vs. full context
+- Timeout via `AbortSignal.timeout()`
+- Retry logic with attempt tracking
+- Error messages include status codes and causes
 
-Configuration options:
-- `contextFraction`: Fraction of context window to use
-- `cap`: Hard limit on computed budget
-- `quick`: Budget for quick mode
-- `cloudFallback`: Default for cloud models without context info
+### JSON Parsing Errors
+
+- Malformed response: `Error('LLM did not return a JSON object: ...')`
+- Repair failures: Propagates last JSON parse error
+
+## Testing
+
+### Provider Smoke Test
+
+```typescript
+import { runAgentSmoke } from '../workers/agents/smoke.ts';
+
+await runAgentSmoke();
+```
+
+Validates:
+- Provider resolution
+- Model discovery
+- Basic completion capability
+
+## Configuration Examples
+
+### Local Development
+
+```json
+{
+  "provider": "lemonade",
+  "baseUrl": "http://localhost:13305/",
+  "defaultModel": "Qwen3-Coder-Next-GGUF",
+  "tokenBudget": {
+    "contextFraction": 1.0,
+    "cap": null
+  }
+}
+```
+
+### Cloud Fallback
+
+```json
+{
+  "provider": "openai-compat",
+  "baseUrl": "https://api.openai.com/v1",
+  "defaultModel": "gpt-4o-mini",
+  "tokenBudget": {
+    "contextFraction": 0.75,
+    "cap": 8192,
+    "cloudFallback": 4096
+  }
+}
+```
+
+### Unit-Specific Override
+
+`artifacts/llm/config/units/implementation.json`:
+```json
+{
+  "actions": {
+    "review": "Qwen3-Coder-Next-GGUF",
+    "test-audit": "Qwen3-Coder-Next-GGUF"
+  },
+  "tokenBudget": {
+    "contextFraction": 0.9
+  }
+}
+```

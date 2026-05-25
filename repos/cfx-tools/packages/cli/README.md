@@ -71,10 +71,10 @@ export { run }
 import { run } from '@cfxdevkit/cli';
 
 // Run CLI with default behavior (uses process.argv)
-run();
+await run();
 
 // Run CLI with custom arguments
-run({
+await run({
   command: 'status',
   chain: 'core-testnet',
   json: true
@@ -85,4 +85,116 @@ run({
 
 **Tier 1 — platform** — May import Tier 0 framework packages.
 
-<!-- readme-hash: e16eaeec910323678685cb29619a8be3ddf036d991997a48a4ee72d8e390314c -->
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+API REFERENCE EXCERPT:
+# `@cfxdevkit/cli` — Public API
+
+> Conflux developer CLI: network status + HD key derivation.
+
+## Sub-paths
+
+| Sub-path | Exports |
+|----------|---------|
+| `.` | 15 symbols |
+
+---
+
+## `.`
+
+```ts
+// Represents the parsed command-line arguments structure.
+export { ParsedArgs }
+
+// Parses raw command-line arguments into a structured format.
+export { parseArgs }
+
+// Report type returned after successfully deriving an HD wallet key.
+export { DeriveReport }
+
+// Options for configuring HD key derivation.
+export { RunDeriveOptions }
+
+// Runs HD key derivation, returning a report.
+export { runDerive }
+
+// Report type returned after successfully generating a new keypair.
+export { GenerateReport }
+
+// Options for configuring key generation.
+export { RunGenerateOptions }
+
+// Generates a new keypair, returning a report.
+export { runGenerate }
+
+// Options for querying network status.
+export { RunStatusOptions }
+
+// Queries the current network status and returns a report.
+export { runStatus }
+
+// Report type returned after successfully retrieving network status.
+export { StatusReport }
+
+// Main entry point for CLI execution, dispatching to appropriate subcommands.
+export { run }
+```
+
+### Usage
+
+```ts
+import { run } from '@cfxdevkit/cli';
+
+// Run the CLI with process.argv
+await run(process.argv.slice(2));
+```
+
+### Subcommand Usage Examples
+
+#### Derive Accounts
+
+```ts
+import { runDerive, RunDeriveOptions } from '@cfxdevkit/cli';
+
+const options: RunDeriveOptions = {
+  mnemonic: 'test test test test test test test test test test test junk',
+  count: 3,
+  coreNetworkId: 1,
+  type: 'mining',
+  showPrivateKeys: true
+};
+
+const report = await runDerive(options);
+console.log(report.accounts);
+```
+
+#### Generate Mnemonic
+
+```ts
+import { runGenerate, RunGenerateOptions } from '@cfxdevkit/cli';
+
+const options: RunGenerateOptions = {
+  // optional: strength in bits (128, 192, or 256)
+};
+
+const report = await runGenerate(options);
+console.log(report.mnemonic);
+```
+
+#### Check Network Status
+
+```ts
+import { runStatus, RunStatusOptions } from '@cfxdevkit/cli';
+
+const options: RunStatusOptions = {
+  chain: 'core-testnet',
+  json: true
+};
+
+const report = await runStatus(options);
+console.log(report);
+```
+
+<!-- readme-hash: ab5957975291c281bee4d6ffe21b77b2f7fa249c427592639063b774106361b4 -->

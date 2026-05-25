@@ -255,53 +255,53 @@ const batchResults = await executeBatch([task, task]);
 ```
 
 ```ts
-// The name of the package.
+// Package name identifier for runtime introspection.
 export declare const __packageName: "@cfxdevkit/executor";
 
-// Context provided to an execution task.
+// Metadata and runtime information for the current task execution.
 export interface ExecutionContext {
   // Metadata and runtime information for the current task execution.
 }
 
-// Configuration for task retry logic.
+// Defines how many times a failed task should be retried and the delay between retries.
 export interface RetryPolicy {
   // Defines how many times a failed task should be retried and the delay between retries.
 }
 
-// Configuration options for executing a single task.
+// Options such as timeout, labels, and retry behavior for a single task.
 export interface ExecuteOptions extends RetryPolicy {
   // Options such as timeout, labels, and retry behavior for a single task.
 }
 
-// Configuration options for executing a batch of tasks.
+// Options inherited from ExecuteOptions, plus batch-specific settings like concurrency.
 export interface BatchOptions extends ExecuteOptions {
   // Options inherited from ExecuteOptions, plus batch-specific settings like concurrency.
 }
 
-// Configuration options for creating a task queue.
+// Queue-specific settings including concurrency, priority, and persistence.
 export interface TaskQueueOptions extends BatchOptions {
   // Queue-specific settings including concurrency, priority, and persistence.
 }
 
-// Context provided to a poller task.
+// Runtime context for periodic tasks, including last execution time and metadata.
 export interface PollerContext {
   // Runtime context for periodic tasks, including last execution time and metadata.
 }
 
-// A scheduler that runs tasks at regular intervals.
+// Interface representing a running poller instance with start/stop capabilities.
 export interface Poller {
   // Interface representing a running poller instance with start/stop capabilities.
 }
 
-// A function that performs a unit of work.
+// A function that performs a unit of work and receives execution context.
 export type ExecutionTask<T> = (context: ExecutionContext) => Promise<T> | T;
 
-// The outcome of a task execution.
+// Contains the result value, status (success/failure), and optional error details.
 export type ExecutionResult<T> = {
   // Contains the result value, status (success/failure), and optional error details.
 };
 
-// A function that performs periodic work.
+// A function that performs a periodic background task and receives poller context.
 export type PollerTask = (context: PollerContext) => Promise<void> | void;
 
 // Executes a single task with the provided options.
@@ -322,4 +322,4 @@ export declare function createPoller(task: PollerTask, intervalMs: number): Poll
 export declare function withLock<T>(key: string, task: () => Promise<T> | T): Promise<T>;
 ```
 
-{/* readme-hash: 61fcf344552261111532db6403a986f9e65fa25143b4a41420e4f75633746dbb */}
+{/* readme-hash: 4664ac134274f95a9a381badd38442ce912c3771fc6657e3252dc370527678f7 */}

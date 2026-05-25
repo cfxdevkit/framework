@@ -162,295 +162,672 @@ See [API.md](./API.md) for the full public surface.
 
 ## `.`
 
-### Usage
-
 ```ts
-import { AppShell, Topbar } from '@cfxdevkit/ui';
+// Package name identifier for runtime introspection.
+export declare const __packageName: "@cfxdevkit/ui";
 
-const Layout = () => (
-  <AppShell>
-    <Topbar brand="Conflux" />
-  </AppShell>
-);
+// Root layout shell component providing consistent app structure (topbar, sidebar, main grid).
+export interface AppShellProps {
+  children: React.ReactNode;
+}
+
+// Props for the top navigation bar.
+export interface TopbarProps {
+  brand: React.ReactNode;
+  actions: React.ReactNode;
+}
+
+// Props for the main content grid layout.
+export interface MainGridProps {
+  sidebar?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+// Panel for asset conversion flows (swap, wrap/unwrap).
+export interface AssetConversionPanelProps {
+  amount: string;
+  amountLabel?: string;
+  busy?: boolean;
+  className?: string;
+  error?: string;
+  fromAssetLabel?: string;
+  maxAmountLabel?: string;
+  mode: 'swap' | 'wrap' | 'unwrap';
+  onAmountChange: (value: string) => void;
+  onMax?: () => void;
+  onModeChange: (mode: 'swap' | 'wrap' | 'unwrap') => void;
+  onSubmit: () => void;
+  submitLabel?: string;
+  success?: boolean;
+  title?: string;
+  toAssetLabel?: string;
+  wrapLabel?: string;
+  unwrapLabel?: string;
+}
+
+// Generic labeled input field wrapper with optional hint and required indicator.
+export interface FieldProps {
+  children: React.ReactNode;
+  className?: string;
+  contentClassName?: string;
+  hint?: string;
+  label?: string;
+  labelClassName?: string;
+  required?: boolean;
+}
+
+// Compact metric display showing value and optional delta.
+export interface MetricProps {
+  className?: string;
+  delta?: string;
+  deltaClassName?: string;
+  label: string;
+  labelClassName?: string;
+  value: string | number;
+  valueClassName?: string;
+}
+
+// Notice prompting user to switch networks in their wallet.
+export interface NetworkSwitchNoticeProps {
+  addChainParams?: {
+    chainId: string;
+    chainName: string;
+    nativeCurrency: { name: string; symbol: string; decimals: number };
+    rpcUrls: string[];
+    blockExplorerUrls?: string[];
+  };
+  buttonClassName?: string;
+  chainName: string;
+  className?: string;
+  expectedChainId: string;
+  message?: string;
+  preview?: boolean;
+}
+
+// Generic dismissible notice component with tone-based styling.
+export interface NoticeProps {
+  children: React.ReactNode;
+  className?: string;
+  tone: NoticeTone;
+}
+
+// Generic panel container with optional title, icon, and actions bar.
+export interface PanelProps {
+  title?: string;
+  icon?: React.ReactNode;
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+// Body content wrapper for panels.
+export interface PanelBodyProps {
+  children: React.ReactNode;
+}
+
+// Option type for segmented control.
+export interface SegmentedControlOption<TValue extends string = string> {
+  label: string;
+  value: TValue;
+}
+
+// Segmented control for mutually exclusive selection.
+export interface SegmentedControlProps<TValue extends string = string> {
+  activeOptionClassName?: string;
+  className?: string;
+  inactiveOptionClassName?: string;
+  onChange: (value: TValue) => void;
+  optionClassName?: string;
+  options: SegmentedControlOption<TValue>[];
+  value: TValue;
+}
+
+// Grid layout for status indicators.
+export interface StatusGridProps {
+  children: React.ReactNode;
+  className?: string;
+  columns?: number;
+}
+
+// Token amount input with balance display and token selection.
+export interface TokenAmountFieldProps<TToken extends TokenSelectOption = TokenSelectOption> {
+  amount: string;
+  amountClassName?: string;
+  balance?: string;
+  className?: string;
+  label?: string;
+  onAmountChange: (value: string) => void;
+  onTokenChange: (token: TToken) => void;
+  tokens: TToken[];
+  tokenValue?: TToken;
+}
+
+// Token pair selector for input/output token selection with swap affordance.
+export interface TokenPairSelectorProps<TToken extends TokenSelectOption = TokenSelectOption> {
+  className?: string;
+  inputOptions: TToken[];
+  onSwap?: () => void;
+  onTokenInChange: (token: TToken) => void;
+  onTokenOutChange: (token: TToken) => void;
+  outputOptions: TToken[];
+  tokenInValue?: TToken;
+  tokenOutValue?: TToken;
+}
+
+// Token option shape used across token selection components.
+export interface TokenSelectOption {
+  symbol: string;
+  name: string;
+  address?: string;
+  decimals?: number;
+  icon?: string;
+}
+
+// Token dropdown selector with customizable label and options.
+export interface TokenSelectProps<TToken extends TokenSelectOption = TokenSelectOption> {
+  className?: string;
+  disabled?: boolean;
+  getOptionLabel?: (option: TToken) => string;
+  onChange: (token: TToken) => void;
+  options: TToken[];
+  selectClassName?: string;
+  value?: TToken;
+}
+
+// Wallet connection button with dynamic state labels.
+export interface WalletButtonProps {
+  className?: string;
+  connectLabel?: string;
+  connectedClassName?: string;
+  disconnectedClassName?: string;
+  disconnectLabel?: string;
+}
+
+// Modal for selecting a wallet provider.
+export interface WalletPickerModalProps {
+  open: boolean;
+  onClose: () => void;
+  section?: 'all' | 'popular' | 'other';
+}
+
+// Card displaying wallet provider status and actions.
+export interface WalletProviderCardProps {
+  account?: string;
+  actions?: React.ReactNode;
+  chainLabel?: string;
+  className?: string;
+  connectLabel?: string;
+  connectPending?: boolean;
+  error?: string;
+  onConnect?: () => void;
+  onDisconnect?: () => void;
+  providerDescription?: string;
+  providerPresent?: boolean;
+  space?: string;
+  status: WalletProviderCardStatus;
+  title: string;
+}
+
+// Small badge showing wallet connection status and address.
+export interface WalletStatusChipProps {
+  address?: string;
+  className?: string;
+  status: WalletStatusChipState;
+}
+
+// Renders the full app shell layout.
+export declare function AppShell({ children }: AppShellProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders the top navigation bar with brand and actions.
+export declare function Topbar({ brand, actions }: TopbarProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders the main content grid with optional sidebar.
+export declare function MainGrid({ sidebar, children }: MainGridProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders the asset conversion panel with full flow support.
+export declare function AssetConversionPanel({ amount, amountLabel, busy, className, error, fromAssetLabel, maxAmountLabel, mode, onAmountChange, onMax, onModeChange, onSubmit, submitLabel, success, title, toAssetLabel, wrapLabel, unwrapLabel, }: AssetConversionPanelProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a labeled field with optional hint and required indicator.
+export declare function Field({ children, className, contentClassName, hint, label, labelClassName, required, }: FieldProps): import("react/jsx-runtime").JSX.Element;
+
+// Accessible icon-only button with title tooltip.
+export declare function IconButton({ title, children, ...props }: IconButtonProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a metric with optional delta indicator.
+export declare function Metric({ className, delta, deltaClassName, label, labelClassName, value, valueClassName, }: MetricProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a network switch notice prompting wallet action.
+export declare function NetworkSwitchNotice({ addChainParams, buttonClassName, chainName, className, expectedChainId, message, preview, }: NetworkSwitchNoticeProps): import("react/jsx-runtime").JSX.Element | null;
+
+// Renders a tone-styled notice component.
+export declare function Notice({ children, className, tone }: NoticeProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a panel with title, icon, and actions.
+export declare function Panel({ title, icon, actions, children }: PanelProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders the body content of a panel.
+export declare function PanelBody({ children }: PanelBodyProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a segmented control for mutually exclusive selection.
+export declare function SegmentedControl<TValue extends string = string>({ activeOptionClassName, className, inactiveOptionClassName, onChange, optionClassName, options, value, }: SegmentedControlProps<TValue>): import("react/jsx-runtime").JSX.Element;
+
+// Renders a responsive grid of status indicators.
+export declare function StatusGrid({ children, className, columns }: StatusGridProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a token amount input with balance and token selector.
+export declare function TokenAmountField<TToken extends TokenSelectOption = TokenSelectOption>({ amount, amountClassName, balance, className, label, onAmountChange, onTokenChange, tokens, tokenValue, }: TokenAmountFieldProps<TToken>): import("react/jsx-runtime").JSX.Element;
+
+// Renders a token pair selector with swap affordance.
+export declare function TokenPairSelector<TToken extends TokenSelectOption = TokenSelectOption>({ className, inputOptions, onSwap, onTokenInChange, onTokenOutChange, outputOptions, tokenInValue, tokenOutValue, }: TokenPairSelectorProps<TToken>): import("react/jsx-runtime").JSX.Element;
+
+// Renders a token selection dropdown.
+export declare function TokenSelect<TToken extends TokenSelectOption = TokenSelectOption>({ className, disabled, getOptionLabel, onChange, options, selectClassName, value, }: TokenSelectProps<TToken>): import("react/jsx-runtime").JSX.Element;
+
+// Renders a wallet connection button with dynamic state.
+export declare function WalletButton({ className, connectLabel, connectedClassName, disconnectedClassName, disconnectLabel, }: WalletButtonProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a wallet picker modal.
+export declare function WalletPickerModal({ open, onClose, section }: WalletPickerModalProps): import("react/jsx-runtime").JSX.Element | null;
+
+// Renders a wallet provider card with status and actions.
+export declare function WalletProviderCard({ account, actions, chainLabel, className, connectLabel, connectPending, error, onConnect, onDisconnect, providerDescription, providerPresent, space, status, title, }: WalletProviderCardProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a wallet status chip (address + status).
+export declare function WalletStatusChip({ address, className, status, }: WalletStatusChipProps): import("react/jsx-runtime").JSX.Element | null;
+
+// Props for icon-only buttons (extends ButtonHTMLAttributes with accessibility).
+export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'className' | 'type'> & {
+  title: string;
+};
+
+// Tone options for notice components.
+export type NoticeTone = 'neutral' | 'info' | 'ok' | 'success' | 'warning' | 'error';
+
+// Status values for wallet provider cards.
+export type WalletProviderCardStatus = 'active' | 'connecting' | 'detecting' | 'in-activating' | 'in-detecting' | 'not-active' | 'not-installed' | (string & {});
+
+// State values for wallet status chips.
+export type WalletStatusChipState = 'connected' | 'connecting' | 'disconnected';
 ```
 
-```ts
-// The package name identifier
-export declare const __packageName: "@cfxdevkit/ui";
-// Props for the application shell layout
-export interface AppShellProps {
-// Props for the top navigation bar
-export interface TopbarProps {
-// Props for the main content grid layout
-export interface MainGridProps {
-// Props for the asset conversion interface
-export interface AssetConversionPanelProps {
-// Props for form field wrappers
-export interface FieldProps {
-// Props for displaying metric values and changes
-export interface MetricProps {
-// Props for the network switch prompt
-export interface NetworkSwitchNoticeProps {
-// Props for alert notifications
-export interface NoticeProps {
-// Props for container panels
-export interface PanelProps {
-// Props for the body section of a panel
-export interface PanelBodyProps {
-// Definition of an option within a segmented control
-export interface SegmentedControlOption<TValue extends string = string> {
-// Props for the segmented control component
-export interface SegmentedControlProps<TValue extends string = string> {
-// Props for the status grid layout
-export interface StatusGridProps {
-// Props for token amount input fields
-export interface TokenAmountFieldProps<TToken extends TokenSelectOption = TokenSelectOption> {
-// Props for the token pair selection component
-export interface TokenPairSelectorProps<TToken extends TokenSelectOption = TokenSelectOption> {
-// A dropdown component for selecting tokens
-export interface TokenSelect<TToken extends TokenSelectOption = TokenSelectOption> {
-// Props for the wallet connection button
-export interface WalletButtonProps {
-// Props for the wallet selection modal
-export interface WalletPickerModalProps {
-// Props for individual wallet provider cards
-export interface WalletProviderCardProps {
-// Props for the wallet connection status chip
-export interface WalletStatusChipProps {
-// The root layout component for the application
-export declare function AppShell({ children }: AppShellProps): import("react/jsx-runtime").JSX.Element;
-// The top navigation bar component
-export declare function Topbar({ brand, actions }: TopbarProps): import("react/jsx-runtime").JSX.Element;
-// The main content grid component
-export declare function MainGrid({ sidebar, children }: MainGridProps): import("react/jsx-runtime").JSX.Element;
-// The asset conversion interface component
-export declare function AssetConversionPanel({ amount, amountLabel, busy, className, error, fromAssetLabel, maxAmountLabel, mode, onAmountChange, onMax, onModeChange, onSubmit, submitLabel, success, title, toAssetLabel, wrapLabel, unwrapLabel, }: AssetConversionPanelProps): import("react/jsx-runtime").JSX.Element;
-// The form field wrapper component
-export declare function Field({ children, className, contentClassName, hint, label, labelClassName, required, }: FieldProps): import("react/jsx-runtime").JSX.Element;
-// An icon-only button component
-export declare function IconButton({ title, children, ...props }: IconButtonProps): import("react/jsx-runtime").JSX.Element;
-// A component for displaying metric values and their deltas
-export declare function Metric({ className, delta, deltaClassName, label, labelClassName, value, valueClassName, }: MetricProps): import("react/jsx-runtime").JSX.Element;
-// A component to prompt users to switch networks
-export declare function NetworkSwitchNotice({ addChainParams, buttonClassName, chainName, className, expectedChainId, message, preview, }: NetworkSwitchNoticeProps): import("react/jsx-runtime").JSX.Element | null;
-// An alert notification component
-export declare function Notice({ children, className, tone }: NoticeProps): import("react/jsx-runtime").JSX.Element;
-// A container panel component
-export declare function Panel({ title, icon, actions, children }: PanelProps): import("react/jsx-runtime").JSX.Element;
-// The body section of a panel component
-export declare function PanelBody({ children }: PanelBodyProps): import("react/jsx-runtime").JSX.Element;
-// A segmented control selection component
-export declare function SegmentedControl<TValue extends string = string>({ activeOptionClassName, className, inactiveOptionClassName, onChange, optionClassName, options, value, }: SegmentedControlProps<TValue>): import("react/jsx-runtime").JSX.Element;
-// A grid component for displaying status information
-export declare function StatusGrid({ children, className, columns }: StatusGridProps): import("react/jsx-runtime").JSX.Element;
-// A component for inputting token amounts
-export declare function TokenAmountField<TToken extends TokenSelectOption = TokenSelectOption>({ amount, amountClassName, balance, className, label, onAmountChange, onTokenChange, tokens, tokenValue, }: TokenAmountFieldProps<TToken>): import("react/jsx-runtime").JSX.Element;
-// A component for selecting a pair of tokens
-export declare function TokenPairSelector<TToken extends TokenSelectOption = TokenSelectOption>({ className, inputOptions, onSwap, onTokenInChange, onTokenOutChange, outputOptions, tokenInValue, tokenOutValue, }: TokenPairSelectorProps<TToken>): import("react/jsx-runtime").JSX.Element;
-// A dropdown component for token selection
-export declare function TokenSelect<TToken extends TokenSelectOption = TokenSelectOption>({ className, disabled, getOptionLabel, onChange, options, selectClassName, value, }: TokenSelectProps<TToken>): import("react/jsx-runtime").JSX.Element;
-// A button to trigger wallet connection
-export declare function WalletButton({ className, connectLabel, connectedClassName, disconnectedClassName, disconnectLabel, }: WalletButtonProps): import("react/jsx-runtime").JSX.Element;
-// A modal for selecting a wallet provider
-export declare function WalletPickerModal({ open, onClose, section }: WalletPickerModalProps): import("react/jsx-runtime").JSX.Element | null;
-// A card representing a wallet provider
-export declare function WalletProviderCard({ account, actions, chainLabel, className, connectLabel, connectPending, error, onConnect, onDisconnect, providerDescription, providerPresent, space, status, title, }: WalletProviderCardProps): import("react/jsx-runtime").JSX.Element;
-// A small chip indicating wallet connection status
-export declare function WalletStatusChip({ address, className, status, }: WalletStatusChipProps): import("react/jsx-runtime").JSX.Element | null;
-// Props for the icon button component
-export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'className' | 'type'> & {
-// Available visual tones for notice components
-export type NoticeTone = 'neutral' | 'info' | 'ok' | 'success' | 'warning' | 'error';
-// Props for the notice component
-export interface NoticeProps {
-// Props for the network switch notice component
-export interface NetworkSwitchNoticeProps {
-// An alert notification component
-export declare function Notice({ children, className, tone }: NoticeProps): import("react/jsx-runtime").JSX.Element;
-// A component to prompt users to switch networks
-export declare function NetworkSwitchNotice({ addChainParams, buttonClassName, chainName, className, expectedChainId, message, preview, }: NetworkSwitchNoticeProps): import("react/jsx-runtime").JSX.Element | null;
+### Usage
+
+```tsx
+import { AppShell, Topbar, MainGrid, Panel, Notice } from '@cfxdevkit/ui';
+
+<AppShell>
+  <Topbar brand={<Logo />} actions={<UserMenu />} />
+  <MainGrid sidebar={<Sidebar />}>
+    <Panel title="Overview">
+      <Notice tone="info">Welcome back!</Notice>
+      <MainContent />
+    </Panel>
+  </MainGrid>
+</AppShell>
 ```
 
 ---
 
 ## `./shell`
 
-### Usage
-
 ```ts
-import { AppShell, Topbar, MainGrid } from '@cfxdevkit/ui/shell';
+// Root layout shell component providing consistent app structure (topbar, sidebar, main grid).
+export interface AppShellProps {
+  children: React.ReactNode;
+}
 
-const Layout = () => (
-  <AppShell>
-    <Topbar brand="Conflux" />
-    <MainGrid sidebar={<nav />} />
-  </AppShell>
-);
+// Props for the top navigation bar.
+export interface TopbarProps {
+  brand: React.ReactNode;
+  actions: React.ReactNode;
+}
+
+// Props for the main content grid layout.
+export interface MainGridProps {
+  sidebar?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+// Renders the full app shell layout.
+export declare function AppShell({ children }: AppShellProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders the top navigation bar with brand and actions.
+export declare function Topbar({ brand, actions }: TopbarProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders the main content grid with optional sidebar.
+export declare function MainGrid({ sidebar, children }: MainGridProps): import("react/jsx-runtime").JSX.Element;
 ```
 
-```ts
-// Props for the application shell layout
-export interface AppShellProps {
-// Props for the top navigation bar
-export interface TopbarProps {
-// Props for the main content grid layout
-export interface MainGridProps {
+### Usage
+
+```tsx
+import { AppShell, Topbar, MainGrid } from '@cfxdevkit/ui/shell';
+
+<AppShell>
+  <Topbar brand={<Logo />} actions={<UserMenu />} />
+  <MainGrid sidebar={<Sidebar />}>
+    <MainContent />
+  </MainGrid>
+</AppShell>
 ```
 
 ---
 
 ## `./panel`
 
-### Usage
-
 ```ts
-import { Panel, PanelBody } from '@cfxdevkit/ui/panel';
+// Props for asset conversion panel (swap/wrap/unwrap).
+export interface AssetConversionPanelProps {
+  amount: string;
+  amountLabel?: string;
+  busy?: boolean;
+  className?: string;
+  error?: string;
+  fromAssetLabel?: string;
+  maxAmountLabel?: string;
+  mode: 'swap' | 'wrap' | 'unwrap';
+  onAmountChange: (value: string) => void;
+  onMax?: () => void;
+  onModeChange: (mode: 'swap' | 'wrap' | 'unwrap') => void;
+  onSubmit: () => void;
+  submitLabel?: string;
+  success?: boolean;
+  title?: string;
+  toAssetLabel?: string;
+  wrapLabel?: string;
+  unwrapLabel?: string;
+}
 
-const MyPanel = () => (
-  <Panel title="Settings">
-    <PanelBody>Content here</PanelBody>
-  </Panel>
-);
+// Props for generic panel container.
+export interface PanelProps {
+  title?: string;
+  icon?: React.ReactNode;
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+// Props for panel body content.
+export interface PanelBodyProps {
+  children: React.ReactNode;
+}
+
+// Renders the asset conversion panel with full flow support.
+export declare function AssetConversionPanel({ amount, amountLabel, busy, className, error, fromAssetLabel, maxAmountLabel, mode, onAmountChange, onMax, onModeChange, onSubmit, submitLabel, success, title, toAssetLabel, wrapLabel, unwrapLabel, }: AssetConversionPanelProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a panel with title, icon, and actions.
+export declare function Panel({ title, icon, actions, children }: PanelProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders the body content of a panel.
+export declare function PanelBody({ children }: PanelBodyProps): import("react/jsx-runtime").JSX.Element;
 ```
 
-```ts
-// Props for container panels
-export interface PanelProps {
-// Props for the body section of a panel
-export interface PanelBodyProps {
-// Props for the asset conversion interface
-export interface AssetConversionPanelProps {
+### Usage
+
+```tsx
+import { Panel, PanelBody } from '@cfxdevkit/ui/panel';
+
+<Panel title="Settings" icon={<SettingsIcon />}>
+  <PanelBody>
+    <SettingsForm />
+  </PanelBody>
+</Panel>
 ```
 
 ---
 
 ## `./form`
 
-### Usage
-
 ```ts
-import { TokenSelect } from '@cfxdevkit/ui/form';
+// Props for generic labeled field wrapper.
+export interface FieldProps {
+  children: React.ReactNode;
+  className?: string;
+  contentClassName?: string;
+  hint?: string;
+  label?: string;
+  labelClassName?: string;
+  required?: boolean;
+}
 
-const Form = () => (
-  <TokenSelect options={[{ label: 'ETH', value: 'eth' }]} />
-);
+// Props for token amount input with balance display.
+export interface TokenAmountFieldProps<TToken extends TokenSelectOption = TokenSelectOption> {
+  amount: string;
+  amountClassName?: string;
+  balance?: string;
+  className?: string;
+  label?: string;
+  onAmountChange: (value: string) => void;
+  onTokenChange: (token: TToken) => void;
+  tokens: TToken[];
+  tokenValue?: TToken;
+}
+
+// Props for token pair selector with swap affordance.
+export interface TokenPairSelectorProps<TToken extends TokenSelectOption = TokenSelectOption> {
+  className?: string;
+  inputOptions: TToken[];
+  onSwap?: () => void;
+  onTokenInChange: (token: TToken) => void;
+  onTokenOutChange: (token: TToken) => void;
+  outputOptions: TToken[];
+  tokenInValue?: TToken;
+  tokenOutValue?: TToken;
+}
+
+// Token option shape used across token selection components.
+export interface TokenSelectOption {
+  symbol: string;
+  name: string;
+  address?: string;
+  decimals?: number;
+  icon?: string;
+}
+
+// Props for token dropdown selector.
+export interface TokenSelectProps<TToken extends TokenSelectOption = TokenSelectOption> {
+  className?: string;
+  disabled?: boolean;
+  getOptionLabel?: (option: TToken) => string;
+  onChange: (token: TToken) => void;
+  options: TToken[];
+  selectClassName?: string;
+  value?: TToken;
+}
+
+// Renders a labeled field with optional hint and required indicator.
+export declare function Field({ children, className, contentClassName, hint, label, labelClassName, required, }: FieldProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a token amount input with balance and token selector.
+export declare function TokenAmountField<TToken extends TokenSelectOption = TokenSelectOption>({ amount, amountClassName, balance, className, label, onAmountChange, onTokenChange, tokens, tokenValue, }: TokenAmountFieldProps<TToken>): import("react/jsx-runtime").JSX.Element;
+
+// Renders a token pair selector with swap affordance.
+export declare function TokenPairSelector<TToken extends TokenSelectOption = TokenSelectOption>({ className, inputOptions, onSwap, onTokenInChange, onTokenOutChange, outputOptions, tokenInValue, tokenOutValue, }: TokenPairSelectorProps<TToken>): import("react/jsx-runtime").JSX.Element;
+
+// Renders a token selection dropdown.
+export declare function TokenSelect<TToken extends TokenSelectOption = TokenSelectOption>({ className, disabled, getOptionLabel, onChange, options, selectClassName, value, }: TokenSelectProps<TToken>): import("react/jsx-runtime").JSX.Element;
 ```
 
-```ts
-// Props for form field wrappers
-export interface FieldProps {
-// Props for token amount input fields
-export interface TokenAmountFieldProps<TToken extends TokenSelectOption = TokenSelectOption> {
-// Props for the token pair selection component
-export interface TokenPairSelectorProps<TToken extends TokenSelectOption = TokenSelectOption> {
-// A dropdown component for selecting tokens
-export interface TokenSelect<TToken extends TokenSelectOption = TokenSelectOption> {
+### Usage
+
+```tsx
+import { Field, TokenAmountField } from '@cfxdevkit/ui/form';
+
+<Field label="Amount" required>
+  <TokenAmountField
+    amount={amount}
+    tokens={tokens}
+    balance={balance}
+    onAmountChange={setAmount}
+    onTokenChange={setToken}
+  />
+</Field>
 ```
 
 ---
 
 ## `./data-display`
 
-### Usage
-
 ```ts
-import { Metric } from '@cfxdevkit/ui/data-display';
+// Props for metric display with optional delta.
+export interface MetricProps {
+  className?: string;
+  delta?: string;
+  deltaClassName?: string;
+  label: string;
+  labelClassName?: string;
+  value: string | number;
+  valueClassName?: string;
+}
 
-const Stats = () => <Metric label="Price" value="$1.00" delta="+5%" />;
+// Option type for segmented control.
+export interface SegmentedControlOption<TValue extends string = string> {
+  label: string;
+  value: TValue;
+}
+
+// Props for segmented control.
+export interface SegmentedControlProps<TValue extends string = string> {
+  activeOptionClassName?: string;
+  className?: string;
+  inactiveOptionClassName?: string;
+  onChange: (value: TValue) => void;
+  optionClassName?: string;
+  options: SegmentedControlOption<TValue>[];
+  value: TValue;
+}
+
+// Props for status grid layout.
+export interface StatusGridProps {
+  children: React.ReactNode;
+  className?: string;
+  columns?: number;
+}
+
+// Renders a metric with optional delta indicator.
+export declare function Metric({ className, delta, deltaClassName, label, labelClassName, value, valueClassName, }: MetricProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a segmented control for mutually exclusive selection.
+export declare function SegmentedControl<TValue extends string = string>({ activeOptionClassName, className, inactiveOptionClassName, onChange, optionClassName, options, value, }: SegmentedControlProps<TValue>): import("react/jsx-runtime").JSX.Element;
+
+// Renders a responsive grid of status indicators.
+export declare function StatusGrid({ children, className, columns }: StatusGridProps): import("react/jsx-runtime").JSX.Element;
 ```
 
-```ts
-// Props for the status grid layout
-export interface StatusGridProps {
-// Props for displaying metric values and changes
-export interface MetricProps {
-// Definition of an option within a segmented control
-export interface SegmentedControlOption<TValue extends string = string> {
-// Props for the segmented control component
-export interface SegmentedControlProps<TValue extends string = string> {
+### Usage
+
+```tsx
+import { Metric, SegmentedControl } from '@cfxdevkit/ui/data-display';
+
+<Metric label="Total Volume" value="$1.2M" delta="+12%" />
+<SegmentedControl
+  options={[
+    { label: 'Overview', value: 'overview' },
+    { label: 'Analytics', value: 'analytics' }
+  ]}
+  value={view}
+  onChange={setView}
+/>
 ```
 
 ---
 
 ## `./feedback`
 
-### Usage
-
 ```ts
-import { Notice } from '@cfxdevkit/ui/feedback';
+// Props for network switch notice.
+export interface NetworkSwitchNoticeProps {
+  addChainParams?: {
+    chainId: string;
+    chainName: string;
+    nativeCurrency: { name: string; symbol: string; decimals: number };
+    rpcUrls: string[];
+    blockExplorerUrls?: string[];
+  };
+  buttonClassName?: string;
+  chainName: string;
+  className?: string;
+  expectedChainId: string;
+  message?: string;
+  preview?: boolean;
+}
 
-const Alert = () => <Notice tone="error">Something went wrong</Notice>;
+// Props for generic notice component.
+export interface NoticeProps {
+  children: React.ReactNode;
+  className?: string;
+  tone: NoticeTone;
+}
+
+// Renders a network switch notice prompting wallet action.
+export declare function NetworkSwitchNotice({ addChainParams, buttonClassName, chainName, className, expectedChainId, message, preview, }: NetworkSwitchNoticeProps): import("react/jsx-runtime").JSX.Element | null;
+
+// Renders a tone-styled notice component.
+export declare function Notice({ children, className, tone }: NoticeProps): import("react/jsx-runtime").JSX.Element;
+
+// Tone options for notice components.
+export type NoticeTone = 'neutral' | 'info' | 'ok' | 'success' | 'warning' | 'error';
 ```
 
-```ts
-// Available visual tones for notice components
-export type NoticeTone = 'neutral' | 'info' | 'ok' | 'success' | 'warning' | 'error';
-// Props for the notice component
-export interface NoticeProps {
-// Props for the network switch notice component
-export interface NetworkSwitchNoticeProps {
+### Usage
+
+```tsx
+import { Notice, NetworkSwitchNotice } from '@cfxdevkit/ui/feedback';
+
+<Notice tone="warning">This action cannot be undone.</Notice>
+<NetworkSwitchNotice
+  chainName="Conflux Mainnet"
+  expectedChainId="1030"
+  message="Switch to Conflux Mainnet to continue."
+/>
 ```
 
 ---
 
 ## `./wallet`
 
+```ts
+// Props for icon-only buttons (extends ButtonHTMLAttributes with accessibility).
+export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'className' | 'type'> & {
+  title: string;
+};
+
+// Status values for wallet provider cards.
+export type WalletProviderCardStatus = 'active' | 'connecting' | 'detecting' | 'in-activating' | 'in-detecting' | 'not-active' | 'not-installed' | (string & {});
+
+// State values for wallet status chips.
+export type WalletStatusChipState = 'connected' | 'connecting' | 'disconnected';
+
+// Renders an accessible icon-only button with title tooltip.
+export declare function IconButton({ title, children, ...props }: IconButtonProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a wallet connection button with dynamic state.
+export declare function WalletButton({ className, connectLabel, connectedClassName, disconnectedClassName, disconnectLabel, }: WalletButtonProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a wallet picker modal.
+export declare function WalletPickerModal({ open, onClose, section }: WalletPickerModalProps): import("react/jsx-runtime").JSX.Element | null;
+
+// Renders a wallet provider card with status and actions.
+export declare function WalletProviderCard({ account, actions, chainLabel, className, connectLabel, connectPending, error, onConnect, onDisconnect, providerDescription, providerPresent, space, status, title, }: WalletProviderCardProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a wallet status chip (address + status).
+export declare function WalletStatusChip({ address, className, status, }: WalletStatusChipProps): import("react/jsx-runtime").JSX.Element | null;
+```
+
 ### Usage
 
-```ts
-import { WalletButton } from '@cfxdevkit/ui/wallet';
+```tsx
+import { WalletButton, WalletStatusChip, WalletProviderCard } from '@cfxdevkit/ui/wallet';
 
-const Connect = () => <WalletButton connectLabel="Connect Wallet" />;
+<WalletButton connectLabel="Connect Wallet" disconnectLabel="Disconnect" />
+
+<WalletStatusChip address="0x1234..." status="connected" />
+
+<WalletProviderCard
+  title="MetaMask"
+  status="active"
+  account="0x1234..."
+  chainLabel="Conflux Mainnet"
+  onDisconnect={() => {}}
+/>
 ```
 
-```ts
-// Props for the wallet connection button
-export interface WalletButtonProps {
-// Props for the wallet selection modal
-export interface WalletPickerModalProps {
-// Props for individual wallet provider cards
-export interface WalletProviderCardProps {
-// Props for the wallet connection status chip
-export interface WalletStatusChipProps {
-```
-
----
-
-## Usage
-
-```ts
-// Example usage of AppShell component
-import React from 'react';
-import { AppShell } from '@cfxdevkit/ui';
-
-const App = () => {
-  return (
-    <AppShell>
-      <Topbar brand="Conflux" actions={<Button>Connect</Button>} />
-      <MainGrid sidebar={<Sidebar />} children={<Content />} />
-    </AppShell>
-  );
-};
-
-const Sidebar = () => {
-  return (
-    <div>
-      <h2>Sidebar</h2>
-      <p>Some sidebar content</p>
-    </div>
-  );
-};
-
-const Content = () => {
-  return (
-    <div>
-      <h2>Main Content</h2>
-      <p>Some main content</p>
-    </div>
-  );
-};
-
-export default App;
-```
-
-{/* readme-hash: f29ce30a781f62c8600363decc0c890ffeb33353d125a191da1ac6b41f715c33 */}
+{/* readme-hash: 43a31d0a0588a942aeb0b413a5aac958bd9c099bd215a6af875aa669e9d9a46c */}

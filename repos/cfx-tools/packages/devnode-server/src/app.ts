@@ -1,4 +1,21 @@
 import { join, resolve } from 'node:path';
+import type {
+  DevnodeMineInput,
+  DevnodeRestartInput,
+  DevnodeStartInput,
+  DevnodeWipeInput,
+} from '@cfxdevkit/devnode-core';
+import {
+  type AccountsRoutesOptions,
+  ContractRegistry,
+  createAccountsRoutes,
+  createCompilerRoutes,
+  createMiningRoutes,
+  createNetworkRoutes,
+  DevnodeServerController,
+  type DevnodeServerControllerOptions,
+  NetworkState,
+} from '@cfxdevkit/devnode-core';
 import {
   createKeystoreRoutes,
   type KeystoreResetGuidance,
@@ -6,28 +23,16 @@ import {
 } from '@cfxdevkit/keystore-server';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { ContractRegistry } from './contracts.js';
-import { DevnodeServerController } from './controller.js';
-import { NetworkState } from './network.js';
 import { NodeProfileService } from './profiles.js';
-import { createAccountsRoutes } from './routes/accounts.js';
 import { createBootstrapRoutes } from './routes/bootstrap.js';
-import { createCompilerRoutes } from './routes/compiler.js';
 import { createContractsRoutes } from './routes/contracts.js';
 import { createDeployRoutes } from './routes/deploy.js';
-import { createMiningRoutes } from './routes/mining.js';
-import { createNetworkRoutes } from './routes/network.js';
 import { createNodeProfileRoutes } from './routes/node-profile.js';
 import { createSessionKeyRoutes } from './routes/session-key.js';
-import type {
-  DevnodeMineInput,
-  DevnodeRestartInput,
-  DevnodeServerControllerOptions,
-  DevnodeStartInput,
-  DevnodeWipeInput,
-} from './types.js';
 
-export interface DevnodeServerAppOptions extends DevnodeServerControllerOptions {
+export interface DevnodeServerAppOptions
+  extends DevnodeServerControllerOptions,
+    AccountsRoutesOptions {
   controller?: DevnodeServerController;
   contracts?: ContractRegistry;
   extendApp?: (app: Hono, context: DevnodeServerExtensionContext) => void;
@@ -155,7 +160,13 @@ export function createDevnodeServerApp(options: DevnodeServerAppOptions = {}): H
 
   app.route('/node/profile', createNodeProfileRoutes(profiles));
   app.route('/keystore', createKeystoreRoutes(keystore, { reset, network }));
-  app.route('/accounts', createAccountsRoutes(controller));
+  app.route(
+    '/accounts',
+    createAccountsRoutes(controller, {
+      ...(options.sendCoreFunds ? { sendCoreFunds: options.sendCoreFunds } : {}),
+      ...(options.sendEspaceFunds ? { sendEspaceFunds: options.sendEspaceFunds } : {}),
+    }),
+  );
   app.route('/compiler', createCompilerRoutes());
   app.route('/contracts', createContractsRoutes(contracts, controller, keystore, network));
   app.route('/deploy', createDeployRoutes(controller, keystore, contracts, network));

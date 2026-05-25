@@ -6,205 +6,428 @@ import { Mermaid } from '../../components/Mermaid';
 
 # Docs Pipeline
 
-# Docs Pipeline Module
+# Docs Pipeline
 
-The **Docs Pipeline** module is a command-line tool that automates the generation, synchronization, and validation of documentation content for the `@cfxdevkit` monorepo. It provides a set of commands to manage documentation artifacts, including package pages, wiki content, architecture diagrams, and test coverage reports.
+The **Docs Pipeline** module automates documentation generation, synchronization, and validation across the `@cfxdevkit` monorepo. It transforms package metadata, READMEs, API docs, and wiki content into a consistent Nextra-based documentation site while maintaining integrity through content hashing and validation.
 
-## Purpose
+## Overview
 
-The Docs Pipeline automates documentation maintenance by:
-- Generating MDX pages for packages based on their `package.json`, `README.md`, and `API.md`
-- Syncing wiki content from `.gitnexus/wiki` into the docs site
-- Validating generated documentation for correctness and syntax
-- Managing architecture and coverage documentation pages
+This module provides:
 
-## Key Commands
+- **Package documentation sync**: Generates MDX pages from `package.json`, `README.md`, and `API.md` files
+- **Wiki synchronization**: Converts wiki markdown files to MDX with Mermaid diagram support
+- **Architecture documentation**: Auto-generates layered architecture diagrams and package maps
+- **Coverage reporting**: Aggregates test coverage data into a summary page
+- **Content validation**: Validates MDX syntax and Mermaid diagram correctness
 
-### `sync`
-Synchronizes generated documentation content.
-
-```bash
-pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync [all|packages|wiki|architecture|coverage]
-```
-
-- `sync:all` — Run all sync targets
-- `sync:packages` — Generate package documentation pages
-- `sync:wiki` — Sync wiki content
-- `sync:architecture` — Generate architecture documentation
-- `sync:coverage` — Generate test coverage documentation
-
-### `validate`
-Validates generated documentation content.
+## CLI Usage
 
 ```bash
-pnpm --filter @cfxdevkit/docs-pipeline run docs -- validate [content|wiki|wiki-fix]
+pnpm --filter @cfxdevkit/docs-pipeline run docs -- <command> [target]
 ```
 
-- `validate:content` — Validate all MDX files for syntax correctness
-- `validate:wiki` — Validate wiki diagrams for Mermaid syntax
-- `validate:wiki-fix` — Validate and fix wiki diagrams
+### Commands
+
+| Command | Target | Description |
+|---------|--------|-------------|
+| `sync` | `all` | Sync all documentation sources |
+| `sync` | `packages` | Sync package documentation pages |
+| `sync` | `wiki` | Sync wiki content from `.gitnexus/wiki` |
+| `sync` | `architecture` | Generate architecture documentation |
+| `sync` | `coverage` | Generate coverage summary page |
+| `validate` | `content` | Validate all generated MDX files |
+| `validate` | `wiki` | Validate wiki Mermaid diagrams |
+| `validate` | `wiki-fix` | Validate and sanitize broken diagrams |
+
+### Examples
+
+```bash
+# Sync all documentation
+pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all
+
+# Sync only package pages
+pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync packages
+
+# Validate wiki diagrams and fix broken ones
+pnpm --filter @cfxdevkit/docs-pipeline run docs -- validate wiki-fix
+```
+
+## Architecture
+
+<Mermaid chart={`flowchart TD
+    subgraph CLI ["CLI Entry Point"]
+        bin[bin.ts]
+        run[run.ts]
+        cmds[commands.ts]
+    end
+    subgraph Discovery ["Package Discovery"]
+        discover[discover-packages.ts]
+        workspace[workspace.ts]
+    end
+    subgraph Generation ["Content Generation"]
+        pkgContent[package-content.ts]
+        pkgPages[package-pages.ts]
+        wiki[wiki-sync.ts]
+        arch[sync-architecture.ts]
+        coverage[sync-coverage.ts]
+    end
+    subgraph Validation ["Validation"]
+        validate[validate-content.ts]
+        wikiValidate[wiki-validate.ts]
+    end
+    bin --> run
+    run --> cmds
+    cmds --> scripts[scripts.ts]
+    scripts --> pkgPages
+    scripts --> wiki
+    scripts --> arch
+    scripts --> coverage
+    scripts --> validate
+    scripts --> wikiValidate
+    discover --> pkgContent
+    pkgContent --> pkgPages
+    workspace --> discover
+    workspace --> pkgPages
+    workspace --> wiki
+    workspace --> arch
+    workspace --> coverage
+    %% (simplified — original had 37 lines)`} />
 
 ## Core Components
 
-### Command Interface (`commands.ts`)
+### Package Discovery
 
-Defines CLI command structure and resolution logic.
+**`discover-packages.ts`** scans the monorepo structure to identify public packages eligible for documentation.
 
-```ts
-export interface DocsCliCommandDefinition {
-  readonly name: string;
-  readonly description: string;
-  readonly usage?: string;
+```typescript
+// Key exports
+discoverDocsPackages(repoRoot: string): Promise<DocsPackageRecord[]>
+discoverDocsPagePackages(options: { repoRoot?: string; packageName?: string }): Promise<DocsPackagePageRecord[]>
+```
+
+**Package Discovery Flow**:
+1. Scans `repos/*/packages` and `repos/*/infra` directories
+2. Reads `package.json` to identify public packages
+3. Filters out skipped packages (config packages, private packages)
+4. Collects README.md and API.md content
+
+**Skip List**: Config packages like `@cfxdevkit/biome-config`, `@cfxdevkit/tsconfig` are excluded from documentation.
+
+### Content Generation
+
+**`package-content.ts`** handles MDX skeleton generation and content hashing.
+
+#### Content Hashing
+
+Each package page includes an embedded hash that tracks content changes:
+
+```typescript
+// Hash embedded in generated MDX
+{/* readme-hash: <sha256> */}
+```
+
+**Functions**:
+- `computeSkeletonHash()`: Generates SHA256 hash from package metadata
+- `embedHash()`: Inserts hash into content
+- `readEmbeddedHash()`: Extracts hash from existing content
+- `stripEmbeddedHash()`: Removes hash for comparison
+
+#### MDX Skeleton Generation
+
+```typescript
+generateMdxSkeleton({
+  name,
+  description,
+  exports,
+  readme,
+  api,
+}): string
+```
+
+The generated skeleton includes:
+- Frontmatter with title and description
+- Installation tabs (pnpm/npm/yarn)
+- README body (stripped of install sections)
+- API reference section
+- Sub-paths table from `package.json` exports
+
+**Content Processing**:
+1. Strips H1 headers and blockquotes from README
+2. Removes "Install" sections from README
+3. Removes "Sub-paths" sections from API docs
+4. Converts JSDoc links to backtick-wrapped text
+5. Replaces HexAddress with `HexAddress`
+
+### Package Page Synchronization
+
+**`package-pages.ts`** syncs package documentation to the docs site.
+
+```typescript
+// Key exports
+syncPackages(): Promise<SyncPackagesResult>
+```
+
+**Sync Logic**:
+1. Discovers all public packages
+2. For each package:
+   - Generates MDX skeleton
+   - Computes content hash
+   - Compares with existing file
+   - Updates if hash changed or MDX invalid
+3. Updates `_meta.js` with package list
+4. Fixes `index.mdx` card links
+
+**Update Triggers**:
+- Content hash mismatch (package metadata changed)
+- Invalid MDX syntax detected
+- Stale content markers (`<!--` or `{@link`)
+
+### Wiki Synchronization
+
+**`wiki-sync.ts`** converts wiki markdown files from `.gitnexus/wiki` to MDX.
+
+```typescript
+// Key exports
+syncWiki(): Promise<number>
+fixMermaidLabels(diagram: string): string
+simplifyMermaidDiagram(diagram: string): string
+```
+
+**Mermaid Processing**:
+1. **Label Quoting**: Fixes unquoted node labels with special characters
+   - `[@cfxdevkit/cdk]` → `["@cfxdevkit/cdk"]`
+   - `[src/index.ts]` → `["src/index.ts"]`
+2. **Diagram Simplification**: Reduces diagrams over 30 lines to top-level connections
+3. **Content Conversion**: Wraps Mermaid blocks in `<Mermaid>` component
+
+**Stale File Cleanup**: Removes `.mdx` files whose source `.md` no longer exists.
+
+### Architecture Documentation
+
+**`sync-architecture.ts`** generates layered architecture documentation.
+
+```typescript
+// Key exports
+syncArchitecturePage(): Promise<number>
+```
+
+**Tier Model**:
+- **Tier 0**: Framework packages (cfx-core, cfx-keys, cfx-ui, cfx-solidity)
+- **Tier 1**: Developer Platform (cfx-tools)
+- **Tier 2**: Domain Logic (cfx-domain)
+- **Tier 3**: Projects & Apps (not included in scan)
+
+**Output**:
+- ASCII diagram showing tier relationships
+- Package map table with tier and repo slice
+- Dependency rules documentation
+
+### Coverage Reporting
+
+**`sync-coverage.ts`** aggregates test coverage data from `coverage-summary.json`.
+
+```typescript
+// Key exports
+syncCoveragePage(): Promise<{ withCoverage: number; total: number }>
+```
+
+**Data Sources**:
+1. `coverage/coverage-summary.json` (Vitest output)
+2. `coverage-summary.json` (alternative location)
+
+**Output**:
+- Summary table with statement/branch/function/line coverage
+- List of packages without coverage data
+- Last updated timestamp
+
+### Validation
+
+#### MDX Validation
+
+**`validate-content.ts`** validates all generated MDX files compile correctly.
+
+```typescript
+// Key exports
+validateGeneratedContent(): Promise<ValidationResult>
+```
+
+Uses `@mdx-js/mdx` with `remark-gfm` and `remark-frontmatter` to verify syntax.
+
+#### Mermaid Validation
+
+**`wiki-validate.ts`** validates Mermaid diagrams in wiki content.
+
+```typescript
+// Key exports
+validateWikiMermaid(options: { fix?: boolean }): Promise<{
+  totalBlocks: number
+  brokenBlocks: number
+  fixedBlocks: number
+}>
+```
+
+**Validation Methods**:
+1. **Heuristic Check**: Validates diagram type, direction, bracket balance, unclosed subgraphs
+2. **Mermaid Parser**: Attempts to parse with `mermaid.parse()` (browser-dependent)
+3. **Sanitization**: Downgrades broken diagrams to plain text fences
+
+**Fix Mode**: When `fix: true`, broken diagrams are replaced with warning messages.
+
+## Workspace Integration
+
+**`workspace.ts`** provides workspace root detection and path resolution.
+
+```typescript
+// Key exports
+findRepoRoot(startDir?: string): string
+getDocsSitePaths(repoRoot?: string): {
+  repoRoot: string
+  docsSiteDir: string
+  contentDir: string
+  packagesContentDir: string
+  wikiContentDir: string
+  metaFile: string
+  indexFile: string
 }
-
-export const docsCommands: readonly DocsCliCommandDefinition[];
 ```
 
-### Package Discovery (`discover-packages.ts`)
-
-Discovers packages across the monorepo and prepares metadata for documentation generation.
-
-```ts
-export type DocsPackageRecord = {
-  name: string;
-  description: string;
-  exports: Record<string, unknown>;
-  readme: string | null;
-  api: string | null;
-  rel: string;
-};
-
-export async function discoverDocsPackages(repoRoot: string): Promise<DocsPackageRecord[]>;
-export async function discoverDocsPagePackages(options: { repoRoot?: string; packageName?: string }): Promise<DocsPackagePageRecord[]>;
+**Path Resolution**:
+```
+repoRoot/
+├── repos/cfx-tools/packages/docs-site/
+│   └── content/
+│       ├── packages/          # Package MDX pages
+│       ├── wiki/              # Wiki MDX pages
+│       ├── architecture.mdx
+│       ├── coverage.mdx
+│       ├── index.mdx
+│       └── packages/_meta.js
 ```
 
-### Package Page Generation (`package-content.ts`)
+## Pipeline Process Utilities
 
-Generates MDX skeletons for package documentation pages.
+**`pipeline/process.ts`** provides workspace command execution.
 
-```ts
-export function generateMdxSkeleton(input: PackagePageInput): string;
-export function computeSkeletonHash(...): string;
-export function extractDescription(readme: string | null, pkgDescription: string): string;
+```typescript
+// Key exports
+runWorkspacePnpm(args: readonly string[], options?: WorkspacePnpmOptions): Promise<void>
+captureWorkspacePnpm(args: readonly string[], options?: WorkspacePnpmOptions): Promise<string>
 ```
 
-### Package Page Sync (`package-pages.ts`)
+- `runWorkspacePnpm`: Spawns pnpm with inherited stdio (for interactive commands)
+- `captureWorkspacePnpm`: Captures stdout/stderr (for command output)
 
-Manages synchronization of package documentation pages to the docs site.
+## API Targets
 
-```ts
-export async function syncPackages(): Promise<SyncPackagesResult>;
+**`pipeline/api.ts`** manages API documentation targets.
+
+```typescript
+// Key exports
+discoverApiTargets(options: { repoRoot?: string; packageName?: string }): Promise<DocsApiTarget[]>
+refreshApiSkeletons(options: { repoRoot?: string }): Promise<void>
+refreshDocsAlignmentArtifacts(options: { repoRoot?: string }): Promise<string>
 ```
 
-### Wiki Sync (`wiki-sync.ts`)
+**Usage**:
+- `discoverApiTargets()`: Finds packages with `API.md` files
+- `refreshApiSkeletons()`: Runs `pnpm run gen:api` across workspace
+- `refreshDocsAlignmentArtifacts()`: Runs `pnpm run check:docs`
 
-Syncs wiki content from `.gitnexus/wiki` into the docs site, with Mermaid label sanitization.
+## Package Page Pipeline API
 
-```ts
-export async function syncWiki(): Promise<number>;
-export function fixMermaidLabels(diagram: string): string;
+**`pipeline/package-pages.ts`** exposes package page operations for external use.
+
+```typescript
+// Key exports
+discoverPackagePageTargets(options: { repoRoot?: string; packageName?: string }): Promise<PackagePageTarget[]>
+getPackagePagePath(target: Pick<PackagePageTarget, 'slug'>, repoRoot?: string): string
+readPackagePageHash(content: string): string | null
+writePackagePageHash(content: string, hash: string): string
+stripPackagePageHash(content: string): string
+syncPackagePageSkeletons(): Promise<SyncPackagesResult>
 ```
 
-### Wiki Validation (`wiki-validate.ts`)
+## Review Context
 
-Validates Mermaid diagrams in wiki content and optionally fixes them.
+**`pipeline/context.ts`** provides the list of files relevant for Docs Pipeline reviews.
 
-```ts
-export async function validateWikiMermaid(options: { fix?: boolean }): Promise<{
-  totalBlocks: number;
-  brokenBlocks: number;
-  fixedBlocks: number;
-}>;
+```typescript
+// Key exports
+getDocsPipelineReviewContext(): string[]
 ```
 
-### Architecture Sync (`sync-architecture.ts`)
+Returns a static list of files used in CI/CD review contexts, including:
+- Pipeline package.json files
+- LLM integration files
+- GitHub Actions workflows
+- Ansible deployment roles
+- Generated artifacts
 
-Generates architecture documentation based on package tiering.
+## Command Execution Flow
 
-```ts
-export async function syncArchitecturePage(): Promise<number>;
+```typescript
+// scripts.ts orchestrates command execution
+runCommand(command: DocsCommandName): Promise<void>
 ```
 
-### Coverage Sync (`sync-coverage.ts`)
+**Command Map**:
+- `sync:all` → sync:wiki + sync:packages + sync:architecture + sync:coverage
+- `sync:packages` → syncPackages()
+- `sync:wiki` → syncWiki()
+- `sync:architecture` → syncArchitecturePage()
+- `sync:coverage` → syncCoveragePage()
+- `validate:content` → validateGeneratedContent()
+- `validate:wiki` → validateWikiMermaid()
+- `validate:wiki-fix` → validateWikiMermaid({ fix: true })
 
-Generates test coverage documentation from coverage reports.
+## Contributing
 
-```ts
-export async function syncCoveragePage(): Promise<{ withCoverage: number; total: number }>;
-```
+### Adding New Package Types
 
-### Content Validation (`validate-content.ts`)
+1. Update `REPO_DIRS` in `discover-packages.ts` if new repository directories are added
+2. Add to `SKIP_PACKAGES` if certain packages should not be documented
+3. Ensure packages have `package.json` with `name` and `exports` fields
 
-Validates all generated MDX content for syntax correctness.
+### Modifying MDX Generation
 
-```ts
-export async function validateGeneratedContent(): Promise<ValidationResult>;
-```
+1. Edit `generateMdxSkeleton()` in `package-content.ts`
+2. Update `SYNC_VERSION` constant when hash format changes
+3. Test with `pnpm sync:packages`
+4. Validate with `pnpm validate:content`
 
-### Execution Flow (`scripts.ts`)
+### Fixing Mermaid Diagrams
 
-Routes CLI commands to their respective handlers.
+1. Add new special characters to `NEEDS_QUOTE` in `wiki-sync.ts`
+2. Adjust `MERMAID_MAX_LINES` threshold in `wiki-sync.ts`
+3. Add diagram types to `VALID_TYPES` in `wiki-validate.ts`
+4. Test with `pnpm validate:wiki-fix`
 
-```ts
-export type DocsCommandName =
-  | 'sync:wiki'
-  | 'sync:all'
-  | 'sync:packages'
-  | 'sync:architecture'
-  | 'sync:coverage'
-  | 'validate:content'
-  | 'validate:wiki'
-  | 'validate:wiki-fix';
+## Error Handling
 
-export async function runCommand(command: DocsCommandName): Promise<void>;
-```
+### Common Errors
 
-## Module Structure
+| Error | Cause | Resolution |
+|-------|-------|------------|
+| `Unknown docs-pipeline command` | Invalid command name | Check command list in `commands.ts` |
+| `Invalid target` | Invalid sync/validate target | Use valid targets from usage |
+| `Cannot find workspace root` | Missing `pnpm-workspace.yaml` | Run from monorepo root |
+| `mermaid.parse() unavailable` | DOMPurify requires browser | Use heuristic validation only |
 
-<Mermaid chart={`graph TD
-  A[CLI Entry] --> B[runCli]
-  B --> C[resolveDocsInvocation]
-  C --> D[runCommand]
-  D --> E{Command Type}
-  E -->|sync:packages| F[syncPackages]
-  E -->|sync:wiki| G[syncWiki]
-  E -->|sync:architecture| H[syncArchitecturePage]
-  E -->|sync:coverage| I[syncCoveragePage]
-  E -->|validate:content| J[validateGeneratedContent]
-  E -->|validate:wiki| K[validateWikiMermaid]
-  F --> L[discoverDocsPackages]
-  L --> M[generateMdxSkeleton]
-  M --> N[computeSkeletonHash]
-  G --> O[fixMermaidLabels]
-  K --> P[heuristicCheck]
-  P --> Q[mermaidParse]
-`} />
+### Debugging
 
-## Integration Points
+Enable verbose logging by running commands from the package directory:
 
-- **Workspace Utilities**: Uses `findWorkspaceRoot` to locate the monorepo root
-- **Docs Site**: Writes generated content to `repos/cfx-tools/packages/docs-site/content/`
-- **Wiki Source**: Reads from `.gitnexus/wiki` for wiki content
-- **PNPM Workspaces**: Executes workspace commands via `runWorkspacePnpm`
-
-## Usage Examples
-
-### Generate Package Pages
 ```bash
-pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync packages
+cd repos/cfx-tools/packages/docs-pipeline
+pnpm run docs -- sync packages
 ```
 
-### Validate Wiki Diagrams
-```bash
-pnpm --filter @cfxdevkit/docs-pipeline run docs -- validate wiki
-```
+## Dependencies
 
-### Sync All Content
-```bash
-pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all
-```
-
-### Fix Wiki Diagrams
-```bash
-pnpm --filter @cfxdevkit/docs-pipeline run docs -- validate wiki-fix
-```
+| Package | Purpose |
+|---------|---------|
+| `@mdx-js/mdx` | MDX compilation and validation |
+| `remark-gfm` | GitHub Flavored Markdown support |
+| `remark-frontmatter` | YAML frontmatter parsing |
+| `mermaid` | Mermaid diagram parsing and validation |
+| `@cfxdevkit/workspace-utils` | Workspace root detection |

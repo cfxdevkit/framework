@@ -71,7 +71,9 @@ async function withTemporaryPiEndpoint(
 ): Promise<void> {
   // Read base config lazily to avoid circular dep with withLlmClient at import time
   const { withLlmClient } = await import('./agent-runtime.js');
-  const baseConfig = (await withLlmClient((client) => client.readConfig())) as AgentConfig;
+  const baseConfig = (await withLlmClient((client) =>
+    client.readConfig(),
+  )) as unknown as AgentConfig;
 
   const tempDir = await mkdtemp(join(tmpdir(), 'cfxdevkit-pi-'));
   const tempConfigPath = join(tempDir, `providers-${endpoint}.json`);
@@ -186,7 +188,7 @@ export async function resolveGithubAuth(required: boolean): Promise<PiEndpointAu
 
 export async function printAgentEndpoints(scope?: string): Promise<void> {
   const { withLlmClient } = await import('./agent-runtime.js');
-  const config = (await withLlmClient((client) => client.readConfig())) as AgentConfig;
+  const config = (await withLlmClient((client) => client.readConfig())) as unknown as AgentConfig;
   const githubAuth = await resolveGithubAuth(false);
   const localNote =
     config.provider === 'lemonade'

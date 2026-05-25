@@ -119,6 +119,29 @@ content is produced. Always ensure `max_tokens` is large enough (see Token Budge
 
 ---
 
+### Cloud — GitHub Copilot (on-demand for wiki generation)
+
+#### `claude-sonnet-4.6` via GitHub Copilot
+
+| Property | Value |
+|----------|---------|
+| Endpoint | `https://api.githubcopilot.com` |
+| Auth | `GITHUB_TOKEN` env (OAuth, auto-refreshed by pi agent) |
+| Provider type | `openai-compat` |
+| Profile name | `github-cloud` |
+| Assigned actions | `wiki-generate` |
+
+**Role:** Wiki generation via `gitnexus wiki`. The local 122B model was too heavy and
+had reasoning-content incompatibilities with gitnexus. Claude Sonnet 4.6 handles the
+full codebase context and structured page output reliably. Other GPT-5.x models are also
+available at this endpoint if needed (`gpt-5.4`, `gpt-5.5`, etc.).
+
+**How routing works:** `wiki.ts` reads `actionPolicies['wiki-generate']` → `profile: 'github-cloud'`
+→ resolves `baseUrl` + `provider` from `providerProfiles['github-cloud']`. For `openai-compat`
+providers it skips the local `/api/v1` path suffix and uses `GITHUB_TOKEN` as the API key.
+
+---
+
 ### Available but unassigned
 
 | Model | Size | Labels | Notes |

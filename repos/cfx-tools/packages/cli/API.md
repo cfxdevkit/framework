@@ -6,65 +6,112 @@
 
 | Sub-path | Exports |
 |----------|---------|
-| `.` | 9 symbols |
+| `.` | 15 symbols |
 
 ---
 
 ## `.`
 
-### Usage
-
-```typescript
-// Example usage of the CLI
-import { run } from '@cfxdevkit/cli';
-
-// Run the CLI with default options
-run();
-
-// Run the CLI with custom options
-run({
-  network: 'mainnet',
-  hdPath: 'm/44/0/0/0',
-  password: 'mysecretpassword'
-});
-```
-
 ```ts
-// Type representing the parsed command-line arguments.
-// Contains structured values derived from raw CLI input (e.g., flags, positional args).
+// Represents the parsed command-line arguments structure.
 export { ParsedArgs }
 
-// Parses command-line arguments into a structured object.
-// Validates and transforms raw CLI input (e.g., `--network mainnet`) into a strongly-typed `ParsedArgs`.
+// Parses raw command-line arguments into a structured format.
 export { parseArgs }
 
-// Type representing the results of HD key derivation.
-// Includes derived private/public keys, address, and metadata (e.g., path, chain ID).
+// Report type returned after successfully extracting smart contract artifacts.
+export { ContractsExtractReport }
+
+// Options for configuring the smart contract extraction process.
+export { RunContractsExtractOptions }
+
+// Runs the smart contract extraction process, returning a report.
+export { runContractsExtract }
+
+// Report type returned after successfully deriving an HD wallet key.
 export { DeriveReport }
 
-// Performs HD key derivation based on provided parameters.
-// Derives keys using the specified BIP44 path and optional password.
+// Options for configuring HD key derivation.
+export { RunDeriveOptions }
+
+// Runs HD key derivation, returning a report.
 export { runDerive }
 
-// Type representing the structure of a generated report.
-// Typically includes summary info like network, timestamp, and derived keys.
+// Report type returned after successfully generating a new keypair.
 export { GenerateReport }
 
-// Generates a report based on the current state or provided data.
-// Can be used to output human-readable or machine-processable status summaries.
+// Options for configuring key generation.
+export { RunGenerateOptions }
+
+// Generates a new keypair, returning a report.
 export { runGenerate }
 
-// Checks and returns the current network status.
-// Queries the Conflux network (e.g., mainnet/testnet) and returns connection/chain info.
+// Options for querying network status.
+export { RunStatusOptions }
+
+// Queries the current network status and returns a report.
 export { runStatus }
 
-// Type representing the network status information.
-// Includes fields like chain ID, network ID, latest epoch, and node health.
+// Report type returned after successfully retrieving network status.
 export { StatusReport }
 
-// The main entry point to execute the CLI application.
-// Orchestrates argument parsing, command routing, and execution of CLI actions.
+// Main entry point for CLI execution, dispatching to appropriate subcommands.
 export { run }
 ```
 
-<!-- api-hash: d2095171cb7f3691a8ba54fc0cb33585b7919b5360c5966f397fd2b0fcc35b3a -->
+### Usage
+
+```ts
+import { run } from '@cfxdevkit/cli';
+
+// Run the CLI with process.argv
+await run(process.argv.slice(2));
+```
+
+### Subcommand Usage Examples
+
+#### Smart Contract Extraction
+
+```ts
+import { runContractsExtract, RunContractsExtractOptions } from '@cfxdevkit/cli';
+
+const options: RunContractsExtractOptions = {
+  // configuration for extraction
+};
+const report = await runContractsExtract(options);
+```
+
+#### HD Key Derivation
+
+```ts
+import { runDerive, RunDeriveOptions } from '@cfxdevkit/cli';
+
+const options: RunDeriveOptions = {
+  // derivation path and other settings
+};
+const report = await runDerive(options);
+```
+
+#### Key Generation
+
+```ts
+import { runGenerate, RunGenerateOptions } from '@cfxdevkit/cli';
+
+const options: RunGenerateOptions = {
+  // optional seed or entropy source
+};
+const report = await runGenerate(options);
+```
+
+#### Network Status Query
+
+```ts
+import { runStatus, RunStatusOptions } from '@cfxdevkit/cli';
+
+const options: RunStatusOptions = {
+  // network endpoint or timeout config
+};
+const report = await runStatus(options);
+```
+
+<!-- api-hash: 5cabbe044d958765608ccfdf6351ecac5c1c514e1fe95238a9acbb25ee058d43 -->

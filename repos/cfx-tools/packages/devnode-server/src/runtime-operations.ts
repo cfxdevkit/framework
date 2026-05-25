@@ -10,8 +10,7 @@ import {
   type Signer,
   signerFromPrivateKey,
 } from '@cfxdevkit/cdk';
-import type { KeystoreService } from '@cfxdevkit/keystore-server';
-import type { DevnodeServerController } from './controller.js';
+import type { DevnodeServerController } from '@cfxdevkit/devnode-core';
 import {
   defaultNetworkChainIds,
   defaultNetworkConfig,
@@ -20,7 +19,8 @@ import {
   type NetworkConfig,
   type NetworkMode,
   type NetworkState,
-} from './network.js';
+} from '@cfxdevkit/devnode-core';
+import type { KeystoreService } from '@cfxdevkit/keystore-server';
 
 export type RuntimeSpace = 'core' | 'espace';
 

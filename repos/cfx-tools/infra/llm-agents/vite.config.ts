@@ -26,6 +26,7 @@ export default defineConfig({
       outDir: 'dist',
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.test.ts'],
+      bundleTypes: true,
     }),
   ],
 });

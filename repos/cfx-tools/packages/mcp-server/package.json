@@ -49,7 +49,6 @@
     "@cfxdevkit/compiler": "workspace:^",
     "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/create": "workspace:^",
-    "@cfxdevkit/devnode-server": "workspace:^",
     "viem": "^2.0.0"
   },
   "sideEffects": false

@@ -1,13 +1,12 @@
 /**
  * Wiki generation via llm-agents provider routing.
  *
- * Replaces the old wiki-update.ts which read hardcoded config paths.
- * Resolves the LLM provider config through the standard llm-agents config loader
- * and passes the resolved baseUrl + model to `gitnexus wiki`.
+ * Uses resolveActionConfig() as the single source of truth for action → provider routing.
  */
 import { spawn } from 'node:child_process';
 import { syncWikiContent } from '@cfxdevkit/docs-pipeline';
 import { readConfig } from '../completion/config.ts';
+import { resolveActionConfig } from '../completion/resolve-action.ts';
 import { root } from '../shared/index.ts';
 import { logInfo, logStep } from '../shared/logging.ts';
 import { parseDocFlags } from './flags.ts';
@@ -19,28 +18,34 @@ export async function runWikiGenerate(args: string[]): Promise<void> {
 
   logStep(1, total, 'Resolving LLM provider config');
   const config = await readConfig();
-  const rawBase = config.baseUrl ?? 'http://host.containers.internal:13305/';
-  // Use action-specific model if configured, fall back to defaultModel
-  // wiki-generate uses Qwen3-Coder-30B by default — Qwen3.5-122B forces thinking mode
-  // which gitnexus cannot read (it only reads .content, not .reasoning_content)
-  const model = config.actions?.['wiki-generate'] ?? config.defaultModel ?? 'Qwen3-Coder-Next-GGUF';
+  const resolved = resolveActionConfig('wiki-generate', config);
 
   // gitnexus builds the chat URL as: baseUrl.trimEnd('/') + '/chat/completions'
-  // Lemonade listens at /api/v1/chat/completions, so we must include the /api/v1 path.
-  // If the configured baseUrl doesn't already include a non-root path, append /api/v1.
-  const parsedBase = new URL(rawBase.endsWith('/') ? rawBase : `${rawBase}/`);
-  const hasPathPrefix = parsedBase.pathname !== '/';
-  const gitnexusBase = hasPathPrefix ? rawBase : `${rawBase.replace(/\/+$/, '')}/api/v1`;
+  // Lemonade listens at /api/v1/chat/completions — append /api/v1 when no path prefix.
+  // Cloud providers (GitHub Copilot, OpenAI-compat) use the root endpoint directly.
+  let gitnexusBase: string;
+  if (resolved.isCloud) {
+    gitnexusBase = resolved.baseUrl.replace(/\/+$/, '');
+  } else {
+    const parsedBase = new URL(
+      resolved.baseUrl.endsWith('/') ? resolved.baseUrl : `${resolved.baseUrl}/`,
+    );
+    const hasPathPrefix = parsedBase.pathname !== '/';
+    gitnexusBase = hasPathPrefix
+      ? resolved.baseUrl
+      : `${resolved.baseUrl.replace(/\/+$/, '')}/api/v1`;
+  }
 
+  logInfo(
+    `  provider: ${resolved.provider}${resolved.profileName ? ` (profile: ${resolved.profileName})` : ''}`,
+  );
   logInfo(`  baseUrl : ${gitnexusBase}`);
-  logInfo(`  model   : ${model}`);
+  logInfo(`  model   : ${resolved.model}`);
 
   await new Promise<void>((resolve, reject) => {
     // Models that put output in reasoning_content require --reasoning-model flag
-    // so gitnexus uses max_completion_tokens (no temperature) and reads content correctly.
-    // Qwen3.5-122B in Lemonade always runs in thinking mode.
     const REASONING_MODEL_PATTERNS = ['122B', '32B-thinking', 'o1', 'o3', 'o4'];
-    const isReasoningModel = REASONING_MODEL_PATTERNS.some((p) => model.includes(p));
+    const isReasoningModel = REASONING_MODEL_PATTERNS.some((p) => resolved.model.includes(p));
 
     const gitnexusArgs = [
       'exec',
@@ -49,16 +54,16 @@ export async function runWikiGenerate(args: string[]): Promise<void> {
       '--base-url',
       gitnexusBase,
       '--model',
-      model,
+      resolved.model,
       '--api-key',
-      'local',
+      resolved.apiKey,
       '--force',
       '--concurrency',
       '1',
     ];
     if (isReasoningModel) gitnexusArgs.push('--reasoning-model');
     if (flags.quick) gitnexusArgs.push('--quick');
-    // pass any unknown extra args through
+
     const child = spawn('pnpm', gitnexusArgs, {
       cwd: root,
       stdio: 'inherit',

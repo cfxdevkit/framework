@@ -10,9 +10,11 @@
  */
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { detectProjectContext } from '../context/loader.js';
+import { assertControlPlaneReachable } from '../control-plane.js';
 import { createMcpServer } from '../server.js';
 
 async function main(): Promise<void> {
+  await assertControlPlaneReachable();
   const context = detectProjectContext(process.cwd());
   const server = createMcpServer(context);
   const transport = new StdioServerTransport();

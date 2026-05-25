@@ -40,7 +40,7 @@ await runCommit({ provider, cwd: process.cwd() });
 
 | Sub-path | Exports |
 |----------|---------|
-| `.` | `runAll`, `runReviewAgent`, `configure`, `listActions`, `listModels`, `runAction`, `parseCommitFlags`, `runCommit`, `runPrecommit`, `runDocsApi`, `runDocsUpkeep`, `runTestUpkeep`, `runDocsApiProbe`, `runDocsPackagePages`, `runDocsReadme`, `runStructureUpkeep`, `validateModels` |
+| `.` | `runAll`, `runReviewAgent`, `configure`, `listActions`, `listModels`, `runAction`, `parseCommitFlags`, `runCommit`, `runPrecommit`, `runDocsUpkeep`, `runTestUpkeep`, `runDocsApi`, `runDocsApiProbe`, `runDocsPackagePages`, `runDocsReadme`, `runStructureUpkeep`, `validateModels`, `runAgentCheck`, `runAgentSmoke`, `RepoActionExecutionResult`, `CommitWorkflowOptions`, `CommitWorkflowResult`, `PrecommitWorkflowResult`, `executeAction`, `getActionDefinitions`, `runCommitWorkflow`, `runPrecommitWorkflow` |
 
 ## Usage
 
@@ -65,4 +65,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 1 — platform** — May import Tier 0 framework packages.
 
-<!-- readme-hash: 584a088e5fd3fbb12aebc9d8ce909f3b17062110569265017b2442e08738e07a -->
+<!-- readme-hash: e4a5374c508b9bb7862a664ca07c0121e13778b2bb5d440aa78a7a9617247052 -->
