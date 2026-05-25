@@ -19,11 +19,20 @@ export async function runWikiGenerate(args: string[]): Promise<void> {
 
   logStep(1, total, 'Resolving LLM provider config');
   const config = await readConfig();
-  const baseUrl = config.baseUrl ?? 'http://host.containers.internal:13305/';
-  const model = config.defaultModel ?? 'Qwen3-Coder-Next-GGUF';
-  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const rawBase = config.baseUrl ?? 'http://host.containers.internal:13305/';
+  // Use action-specific model if configured, fall back to defaultModel
+  // wiki-generate uses Qwen3-Coder-30B by default — Qwen3.5-122B forces thinking mode
+  // which gitnexus cannot read (it only reads .content, not .reasoning_content)
+  const model = config.actions?.['wiki-generate'] ?? config.defaultModel ?? 'Qwen3-Coder-Next-GGUF';
 
-  logInfo(`  baseUrl : ${normalizedBase}`);
+  // gitnexus builds the chat URL as: baseUrl.trimEnd('/') + '/chat/completions'
+  // Lemonade listens at /api/v1/chat/completions, so we must include the /api/v1 path.
+  // If the configured baseUrl doesn't already include a non-root path, append /api/v1.
+  const parsedBase = new URL(rawBase.endsWith('/') ? rawBase : `${rawBase}/`);
+  const hasPathPrefix = parsedBase.pathname !== '/';
+  const gitnexusBase = hasPathPrefix ? rawBase : `${rawBase.replace(/\/+$/, '')}/api/v1`;
+
+  logInfo(`  baseUrl : ${gitnexusBase}`);
   logInfo(`  model   : ${model}`);
 
   await new Promise<void>((resolve, reject) => {
@@ -32,7 +41,7 @@ export async function runWikiGenerate(args: string[]): Promise<void> {
       'gitnexus',
       'wiki',
       '--base-url',
-      normalizedBase,
+      gitnexusBase,
       '--model',
       model,
       '--api-key',

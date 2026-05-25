@@ -1,0 +1,260 @@
+---
+title: "LLM Agent Workflows"
+---
+
+import { Mermaid } from '../../components/Mermaid';
+
+# LLM Agent Workflows
+
+# LLM Agent Workflows
+
+The **LLM Agent Workflows** module orchestrates automated agent-based workflows for repository management, code review, validation, and commit preparation using large language models (LLMs). It provides a set of CLI commands and underlying functions that enable developers to automate tasks like code review, repo health checks, changeset generation, and commit message creation.
+
+## Purpose
+
+This module enables:
+- Automated code review and validation
+- Repo health checks and remediation planning
+- Commit message generation with LLM assistance
+- Changeset creation for publishable packages
+- Smoke testing of LLM providers and models
+- Integration with Git and CI/CD pipelines
+
+## Key Components
+
+### 1. Agent Runners
+
+#### `runAll()`
+Executes all available agents in sequence:
+- Runs the `review` agent to analyze changed files
+- Generates reports in JSON and Markdown formats
+- Prints a summary of findings
+
+#### `runReviewAgent()`
+Performs a static analysis of changed files:
+- Identifies generated or artifact paths
+- Flags security-sensitive changes
+- Detects code hotspots exceeding size limits
+- Suggests validation commands
+
+#### `runAgentCheck()`
+Analyzes repository health using `cdk repo check`:
+- Executes repo validation commands
+- Builds a plan for remediation changes
+- Generates OpenSpec artifacts for changes
+- Creates Git branches and draft PRs (optional)
+
+### 2. Commit Workflow
+
+#### `runCommitWorkflow()`
+Manages the full commit workflow:
+- Runs quality gates (lint, typecheck, tests, etc.)
+- Analyzes gate failures with LLM assistance
+- Generates commit messages using LLMs
+- Handles changeset creation for publishable packages
+- Stages files and executes the commit
+
+#### `runPrecommitWorkflow()`
+Pre-commit validation workflow:
+- Runs quality gates and repository policy checks
+- Analyzes failures with LLM assistance
+- Blocks commits if validation fails
+
+### 3. Smoke Testing
+
+#### `runAgentSmoke()`
+Tests LLM provider responsiveness:
+- Probes cold, hot, and task execution paths
+- Validates JSON output correctness
+- Reports model viability and performance metrics
+
+### 4. Utility Functions
+
+#### `resolveExecutionContext()`
+Determines the execution context for LLM usage:
+- Resolves provider configuration
+- Sets up model and token budget
+- Handles fallbacks for unavailable LLMs
+
+#### `writeJsonReport()` / `writeMarkdownReport()`
+Writes structured reports to disk:
+- JSON reports for programmatic consumption
+- Markdown reports for human-readable summaries
+
+#### `renderReview()` / `renderAgentRun()` / `renderAgentCheckReport()`
+Formats agent output into human-readable reports.
+
+## Execution Flows
+
+### Agent Run Sequence
+
+<Mermaid chart={`graph TD
+  A[runAll] --> B[resolveExecutionContext]
+  B --> C[runReviewAgent]
+  C --> D[writeJsonReport]
+  C --> E[writeMarkdownReport]
+  C --> F[printSummary]
+`} />
+
+### Commit Workflow
+
+<Mermaid chart={`graph TD
+  A[runCommitWorkflow] --> B[runQualityGates]
+  B --> C[analyzeGateFailures]
+  C --> D[generateCommitMessage]
+  D --> E[writeChangesetFile]
+  E --> F[executeCommit]
+`} />
+
+### Agent Check Workflow
+
+<Mermaid chart={`graph TD
+  A[runAgentCheck] --> B[runRepoCheckCommand]
+  B --> C[readValidationArtifact]
+  C --> D[collectActionableValidationSteps]
+  D --> E[buildAgentCheckPlan]
+  E --> F[materializeOpenSpecChanges]
+  F --> G[writeJsonReport]
+  G --> H[writeMarkdownReport]
+`} />
+
+## CLI Commands
+
+### `llm:all`
+Runs all agents in sequence:
+```bash
+pnpm run llm:all
+```
+
+### `llm:review`
+Performs code review:
+```bash
+pnpm run llm:review
+```
+
+### `llm:check`
+Analyzes repo health and generates remediation plan:
+```bash
+pnpm run llm:check
+```
+
+### `llm:commit`
+Prepares and executes a commit with LLM assistance:
+```bash
+pnpm run llm:commit
+```
+
+### `llm:precommit`
+Validates changes before committing:
+```bash
+pnpm run llm:precommit
+```
+
+### `llm:smoke`
+Tests LLM provider responsiveness:
+```bash
+pnpm run llm:smoke
+```
+
+## Configuration
+
+The module relies on:
+- `.pi/providers.json` for LLM provider configuration
+- `tokenBudget` settings for token usage limits
+- `actions` mapping for model assignment to tasks
+
+## Integration Points
+
+### With Git
+- Uses `git diff` and `git status` to detect changed files
+- Manages Git branches and PR creation
+- Integrates with GitNexus for analysis
+
+### With CDK
+- Calls `pnpm cdk repo check` for validation
+- Uses `pnpm cdk repo` commands for repo operations
+
+### With Moon
+- Integrates with Moon workspace validation
+- Uses Moon's task execution for quality gates
+
+### With Changesets
+- Detects publishable packages
+- Generates changeset files for releases
+- Integrates with `.changeset/config.json` for ignored packages
+
+## Reports and Artifacts
+
+All agents write reports to `artifacts/llm/reports/`:
+- `agent-run.json` / `.md` - Summary of all agent runs
+- `review.json` / `.md` - Code review findings
+- `agent-check.json` / `.md` - Repo health check plan and artifacts
+- `llm-commit.json` / `.md` - Commit workflow summary
+
+## Error Handling
+
+The module implements:
+- Fallback mechanisms for LLM failures
+- Retry logic for invalid JSON responses
+- Graceful degradation when LLMs are unavailable
+- Detailed error reporting for debugging
+
+## Dependencies
+
+- `@cfxdevkit/cdk-repo-check` for repo validation
+- `node:fs/promises` for file I/O
+- `node:child_process` for command execution
+- `node:path` for path manipulation
+- `@cfxdevkit/llm-completion` for LLM interactions
+
+## Key Types
+
+### `AgentCheckFlags`
+```ts
+{
+  quick: boolean;
+  dryRun: boolean;
+  createBranch: boolean;
+  draftPr: boolean;
+}
+```
+
+### `CommitWorkflowOptions`
+```ts
+{
+  approvalMode?: 'defer' | 'prompt';
+  modelPolicies?: {
+    messageGenerationModel?: string;
+    failureAnalysisModel?: string;
+  };
+}
+```
+
+### `ExecutionContextSummary`
+```ts
+{
+  unit?: { name?: string; rootDir?: string };
+  llm?: {
+    status?: string;
+    configPath?: string;
+    provider?: string;
+    model?: string | null;
+    baseUrl?: string | null;
+    error?: string;
+  };
+}
+```
+
+## Performance Considerations
+
+- Uses token budgeting to control LLM usage
+- Implements caching for repeated operations
+- Supports quick mode for faster execution
+- Limits output to prevent excessive token consumption
+
+## Security
+
+- Filters out generated and sensitive paths
+- Validates file references in documentation
+- Sanitizes LLM inputs and outputs
+- Prevents escaping repository boundaries in file paths

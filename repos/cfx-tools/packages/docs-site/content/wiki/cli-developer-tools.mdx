@@ -8,187 +8,179 @@ import { Mermaid } from '../../components/Mermaid';
 
 # CLI & Developer Tools
 
-This module provides the command-line interface (CLI), project scaffolding utilities, and Visual Studio Code extension for the Conflux DevKit. It serves as the primary interaction layer for developers to manage wallets, derive accounts, check network status, scaffold projects, and interact with smart contracts.
+The `@cfxdevkit/cli` package provides a command-line interface (CLI) for interacting with Conflux developer tools. It supports commands for checking chain status, deriving wallet accounts, generating mnemonics, and extracting contract artifacts.
 
-The module is split into three distinct packages:
-1.  **`packages/cli`**: The core command-line tool (`cfx`).
-2.  **`packages/scaffold-cli`**: Project generation and template management.
-3.  **`packages/vscode-extension`**: The IDE integration for wallet and contract management.
+## Purpose
 
-## Architecture Overview
+This module serves as the primary developer-facing CLI for the Conflux DevKit ecosystem. It offers a minimal, dependency-free parser for command-line arguments and exposes a set of developer utilities through a simple command structure.
 
-The CLI uses a minimal, dependency-free argument parser to keep the install footprint low. The VSCode extension relies on a runtime class (`ExtensionRuntime`) to manage state, node lifecycle, and command registration.
+## Key Components
 
-<Mermaid chart={`graph TD
-    subgraph CLI ["packages/cli"]
-        A[run] --> B[parseArgs]
-        B --> C{Command Switch}
-        C -->|status| D[statusFromFlags]
-        C -->|derive| E[deriveFromFlags]
-        C -->|generate| F[generateFromFlags]
-        C -->|contracts| G[contractsExtractFromFlags]
-        D --> H[runStatus]
-        E --> I[runDerive]
-        F --> J[runGenerate]
-    end
+### CLI Entry Point
 
-    subgraph Scaffold ["packages/scaffold-cli"]
-        K[scaffoldProject] --> L[getTemplate]
-        L --> M[renderFile]
-        M --> N[spawnSync npm install]
-    end
+The CLI is executed via `cfx` command, which parses arguments and routes to appropriate handlers.
 
-    subgraph VSCode ["packages/vscode-extension"]
-        O[activate] --> P[ExtensionRuntime]
-        P --> Q[registerCommands]
-        P --> R[refreshAll]
-        P --> S[startNode]
-    end
+```ts
+// src/bin.ts
+import { run } from './run.js';
 
-    CLI -->|@cfxdevkit/cdk| CDK[Core DevKit]
-    Scaffold -->|@cfxdevkit/cdk| CDK
-    VSCode -->|@cfxdevkit/cdk| CDK
-`} />
-
-## CLI Module (`packages/cli`)
-
-The CLI entry point is `run` in `src/run.ts`. It parses arguments, routes to specific command handlers, and manages output streams.
+const argv = process.argv.slice(2);
+run(argv).then(
+  (code) => {
+    process.exit(code);
+  },
+  (err) => {
+    process.stderr.write(`cfx: ${err instanceof Error ? err.message : String(err)}\n`);
+    process.exit(1);
+  },
+);
+```
 
 ### Argument Parsing
 
-The module uses a custom parser in `src/args.ts` to avoid heavy dependencies like `commander` or `yargs`.
+A minimal argument parser handles flags, positional arguments, and command routing.
 
-*   **`parseArgs(argv: readonly string[])`**: Parses `argv` into `command`, `positionals`, and `flags`.
-    *   Supports `--flag` (boolean), `--key value`, and `--key=value`.
-    *   The first non-flag positional argument is treated as the `command`.
-*   **`getString(flags, key)`**: Retrieves a string value from flags.
-*   **`getNumber(flags, key)`**: Retrieves and validates a numeric value.
-*   **`getBool(flags, key)`**: Checks if a flag is `true` or `'true'`.
+```ts
+// src/args.ts
+export interface ParsedArgs {
+  command: string | undefined;
+  positionals: string[];
+  flags: Record<string, string | boolean>;
+}
+
+export function parseArgs(argv: readonly string[]): ParsedArgs {
+  // ...
+}
+```
 
 ### Commands
 
-Commands are implemented as modules in `src/commands/`. Each command exports a `*FromFlags` function that accepts parsed flags and an output stream.
+#### `status`
+
+Pings one or all known chains and reports their status.
+
+```ts
+// src/commands/status.ts
+export async function runStatus(opts: RunStatusOptions): Promise<StatusReport[]>;
+export async function statusFromFlags(flags: Record<string, string | boolean>, out: NodeJS.WritableStream): Promise<number>;
+```
 
 #### `derive`
-Derives Conflux accounts from a mnemonic or generates a new one.
-*   **`runDerive(opts: RunDeriveOptions)`**: Core logic. Validates mnemonic, derives accounts using `@cfxdevkit/cdk`.
-*   **`deriveFromFlags(flags, out)`**: CLI entry point. Handles JSON output (`--json`) and private key exposure (`--show-private-keys`).
-*   **Key Options**:
-    *   `--mnemonic <phrase>`: Input mnemonic.
-    *   `--generate`: Generate a new mnemonic (default strength 128).
-    *   `--count <N>`: Number of accounts to derive.
-    *   `--type <standard|mining>`: Account type.
-    *   `--core-network-id <id>`: Network ID (e.g., 1029 for mainnet).
+
+Derives dual-space accounts (EVM and Core) from a mnemonic or generates a new one.
+
+```ts
+// src/commands/derive.ts
+export function runDerive(opts: RunDeriveOptions): DeriveReport;
+export function deriveFromFlags(flags: Record<string, string | boolean>, out: NodeJS.WritableStream): number;
+```
 
 #### `generate`
-Generates a fresh BIP-39 mnemonic.
-*   **`runGenerate(opts: RunGenerateOptions)`**: Generates mnemonic and validates it.
-*   **`generateFromFlags(flags, out)`**: Outputs to stdout or JSON.
-*   **Key Options**:
-    *   `--strength <128|256>`: Entropy strength.
 
-#### `status`
-Pings Conflux chains to verify connectivity and retrieve head block/epoch numbers.
-*   **`runStatus(opts: RunStatusOptions)`**: Iterates over chains (or a specific `--chain`) and pings RPC endpoints.
-*   **`statusFromFlags(flags, out)`**: Formats output. Returns exit code `0` if all chains are OK, `1` otherwise.
-*   **Key Options**:
-    *   `--chain <id|name>`: Target specific chain.
-    *   `--rpc <url>`: Override RPC endpoint.
-    *   `--timeout-ms <ms>`: Request timeout.
+Generates a new BIP-39 mnemonic.
 
-#### `contracts`
-*   **`contracts extract`**: Extracts ABI and bytecode from Hardhat artifacts.
-*   **`contractsExtractFromFlags(flags, opts)`**: Handles artifact directory input and output path configuration.
+```ts
+// src/commands/generate.ts
+export function runGenerate(opts: RunGenerateOptions = {}): GenerateReport;
+export function generateFromFlags(flags: Record<string, string | boolean>, out: NodeJS.WritableStream): number;
+```
 
-### Entry Point
+#### `contracts extract`
 
-*   **`run(argv, opts)`**: The main function exported from `src/run.ts`.
-    *   Handles `--help` and unknown commands.
-    *   Wraps command execution in a `try/catch` block to report errors to `stderr`.
-    *   Returns exit codes: `0` (success), `1` (error), `2` (usage error).
+Extracts ABI and bytecode from Hardhat artifacts.
 
-## Scaffold Module (`packages/scaffold-cli`)
+```ts
+// src/commands/contracts.ts
+export async function runContractsExtract(opts: RunContractsExtractOptions = {}): Promise<ContractsExtractReport>;
+export async function contractsExtractFromFlags(flags: Record<string, string | boolean>, opts: RunOptions): Promise<number>;
+```
 
-This package handles project initialization using predefined templates.
+### Execution Flow
 
-### Project Scaffolding
+<Mermaid chart={`graph TD
+  A[run] --> B{command}
+  B -->|status| C[statusFromFlags]
+  B -->|derive| D[deriveFromFlags]
+  B -->|generate| E[generateFromFlags]
+  B -->|contracts| F[contractsExtractFromFlags]
+  C --> G[runStatus]
+  G --> H[listChains]
+  D --> I[runDerive]
+  I --> J[deriveDualAccounts]
+  E --> K[runGenerate]
+  K --> L[generateMnemonic]
+  F --> M[runContractsExtract]
+  M --> N[writeContractModules]
+`} />
 
-*   **`scaffoldProject(projectDir, templateName, options)`**:
-    1.  Retrieves the template definition via `getTemplate`.
-    2.  Validates the target directory (checks `force` flag if exists).
-    3.  Renders files using `renderFile` (replaces `{{variable}}` placeholders).
-    4.  Executes `npm install` via `spawnSync` unless `skipInstall` is true.
+## Usage Examples
+
+```sh
+# Check status of all chains
+cfx status
+
+# Check status of a specific chain
+cfx status --chain core-testnet
+
+# Generate a new mnemonic
+cfx generate
+
+# Derive accounts from a mnemonic
+cfx derive --mnemonic "test test test test test test test test test test test junk"
+
+# Derive 3 accounts starting at index 5
+cfx derive --generate --count 3 --start 5
+
+# Extract contract artifacts
+cfx contracts extract --artifacts ./artifacts --out ./src/generated/contracts
+```
+
+## Scaffold CLI
+
+The `@cfxdevkit/create` package provides project scaffolding capabilities.
 
 ### Templates
 
-Templates are defined in `src/templates.ts`.
-*   **`listTemplates()`**: Returns available template definitions.
-*   **`getTemplate(name)`**: Retrieves a specific template by name (e.g., `minimal-dapp`, `wallet-probe`, `project-example`).
-*   **`renderFile(content, values)`**: Simple string replacement for template variables.
-*   **`getTemplateFiles(template, target)`**: Resolves base files plus target-specific files (e.g., `default` vs `react`).
+- `minimal-dapp`: Vite + React + @cfxdevkit/react frontend
+- `wallet-probe`: Wallet detection and signing demo
+- `project-example`: Full-stack project with frontend, backend, and contracts
 
-### Validation
+### Usage
 
-*   **`validateName(name)`**: Ensures project names follow npm conventions (no spaces, valid characters, no leading numbers). Returns `{ valid, error }`.
+```sh
+# Create a new project
+npx @cfxdevkit/create my-project
 
-## VSCode Extension (`packages/vscode-extension`)
+# Use a specific template
+npx @cfxdevkit/create my-project --template minimal-dapp
 
-The extension integrates Conflux development tools directly into the IDE. It manages a local node runtime, wallet state, and contract interactions.
+# Skip installation
+npx @cfxdevkit/create my-project --skip-install
+```
 
-### Lifecycle
+## API Reference
 
-*   **`activate(context)`**: Instantiates `ExtensionRuntime`, registers commands, and triggers `refreshAll`. If `autoStartNode` is enabled and network is `local`, it starts the node.
-*   **`deactivate()`**: Awaits `stopNodeForDeactivation` to ensure ports are released before the extension host restarts.
-*   **`ExtensionRuntime`**: The central state manager.
-    *   Manages `node` (local runtime), `unlockedPassphrase`, `fileProvider`, and `cachedSigner`.
-    *   Wraps helper functions (e.g., `workspaceRoot`, `config`, `selectedNetwork`) as class methods for context access.
+### CLI Module
 
-### Runtime Management
+```ts
+export { type ParsedArgs, parseArgs } from './args.js';
+export {
+  type ContractsExtractReport,
+  type RunContractsExtractOptions,
+  runContractsExtract,
+} from './commands/contracts.js';
+export { type DeriveReport, type RunDeriveOptions, runDerive } from './commands/derive.js';
+export { type GenerateReport, type RunGenerateOptions, runGenerate } from './commands/generate.js';
+export { type RunStatusOptions, runStatus, type StatusReport } from './commands/status.js';
+export { run } from './run.js';
+```
 
-The extension can manage a local Conflux node:
-*   **`startNode()` / `stopNode()`**: Controls the local node process.
-*   **`restartNode()` / `wipeNode()`**: Resets the node state.
-*   **`mineBlocks()` / `startMining()`**: Development tools for block generation.
+### Scaffold Module
 
-### Command Registration
-
-Commands are registered via `registerCommands` (imported from helpers). Common commands include:
-*   **Wallet**: `addWallet`, `selectWallet`, `unlockKeystore`, `lockKeystore`.
-*   **Network**: `selectNetwork`, `pickChainTarget`.
-*   **Contracts**: `deployContractCommand`, `importContractCommand`, `abiCallRead`, `abiCallWrite`.
-*   **View**: `showAccountsQuickPick`, `showContractsQuickPick`.
-
-### Helper Pattern
-
-Most logic is delegated to helper functions imported from `./helpers/index.js`. The `ExtensionRuntime` class acts as a bridge, binding these helpers to the extension context (`vscode.ExtensionContext`).
-
-*   **State Helpers**: `selectedNetwork`, `selectedSpace`, `selectedBackend`.
-*   **Wallet Helpers**: `ensureUnlockedWallet`, `walletSignerFor`, `deriveRunningNodeAccounts`.
-*   **Contract Helpers**: `readDeployments`, `writeDeployments`, `pickWorkspaceArtifact`.
-
-## Integration & Dependencies
-
-*   **`@cfxdevkit/cdk`**: The core dependency for cryptographic operations (mnemonic generation, derivation), chain configuration, and RPC clients.
-    *   Used heavily in `cli/commands/derive.ts` and `cli/commands/status.ts`.
-    *   Used in VSCode for `createClient`, `getChain`, and `listChains`.
-*   **Hardware Wallets**: The extension integrates with hardware wallets (e.g., Satochip) via helper calls (e.g., `selectedNetwork` -> `hardware/satochip/index.ts`).
-*   **File System**: `scaffold-cli` uses `node:fs` for template writing; VSCode uses `vscode.workspace` for file operations.
-
-## Contributing
-
-### Adding a CLI Command
-1.  Create a new file in `packages/cli/src/commands/`.
-2.  Export `run*` (logic) and `*FromFlags` (CLI handler).
-3.  Import the handler in `packages/cli/src/run.ts`.
-4.  Add the case to the `switch (parsed.command)` block in `run`.
-5.  Update the `HELP` constant in `run.ts` with usage examples.
-
-### Adding a Scaffold Template
-1.  Define the template structure in `packages/scaffold-cli/src/templates/`.
-2.  Register the template in `packages/scaffold-cli/src/templates.ts`.
-3.  Ensure `renderFile` placeholders (e.g., `{{name}}`) match the `ScaffoldOptions` keys.
-
-### Adding VSCode Commands
-1.  Implement the command logic in `packages/vscode-extension/src/helpers/`.
-2.  Register the command in `packages/vscode-extension/src/extension-command-registration.ts`.
-3.  Ensure the command is added to `package.json` `contributes.commands` (not shown in source but required for VSCode).
+```ts
+export { parseArgs } from './args.js';
+export { scaffoldProject } from './scaffold.js';
+export type { TemplateDefinition, TemplateFile, TemplateTarget } from './templates.js';
+export { getTemplate, getTemplateFiles, listTemplates, renderFile } from './templates.js';
+export { validateName } from './validate.js';
+```

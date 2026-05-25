@@ -1,0 +1,224 @@
+---
+title: "LLM Completion Engine"
+---
+
+import { Mermaid } from '../../components/Mermaid';
+
+# LLM Completion Engine
+
+# LLM Completion Engine
+
+The **LLM Completion Engine** module provides core functionality for interacting with Large Language Models (LLMs) to generate text completions in the Conflux DevKit monorepo. It supports multiple LLM providers, handles configuration management, context building, and structured agent workflows.
+
+## Purpose
+
+This module enables developers to:
+- Query LLMs for code and documentation assistance
+- Integrate with various LLM providers (Lemonade, LiteLLM, OpenAI-compatible, GitHub Models)
+- Manage LLM configuration and model selection
+- Build contextual prompts from repository state
+- Execute structured agent workflows for tasks like code review, documentation generation, and commit preparation
+
+## Key Components
+
+### 1. Core Completion Functions
+
+#### `complete()`
+Main entry point for generating completions using a repository action.
+
+```ts
+async function complete({
+  action,
+  modelOverride,
+  userPrompt,
+  context,
+  quick = false
+}): Promise<CompletionReport>
+```
+
+- Resolves provider and model based on configuration
+- Builds system and user messages
+- Invokes provider's `complete()` method
+- Returns structured completion report
+
+#### `completeDirect()`
+For direct agent requests with full control over system/user prompts.
+
+```ts
+async function completeDirect({
+  action,
+  flags,
+  systemPrompt,
+  userPrompt,
+  maxTokens,
+  onProgress,
+}): Promise<CompletionReport>
+```
+
+### 2. Provider Resolution
+
+#### `resolveProvider()`
+Selects the appropriate LLM provider based on:
+- Configuration (`provider`, `baseUrl`)
+- Environment variables
+- Local fallback discovery
+
+Supported providers:
+- `lemonade`: Local Lemonade LLM server
+- `litellm`: LiteLLM gateway
+- `openai-compat`: OpenAI-compatible API
+- `github-models`: GitHub Models API
+
+### 3. Configuration Management
+
+#### `readConfig()`
+Reads and normalizes LLM configuration from:
+- Primary config file (`/.pi/providers.json`)
+- Legacy config files
+- Environment variables
+
+#### `normalizeConfig()`
+Merges base and scoped configurations with default values.
+
+#### `resolveRequestTimeoutMs()`
+Determines timeout based on config or environment variables.
+
+### 4. Context Building
+
+#### `buildActionContext()`
+Constructs context for repository actions by:
+- Reading specified files
+- Including changed files (`git diff`)
+- Including commit preflight checks
+- Adding base repository context
+
+#### `buildBaseContext()`
+Includes core repository documentation files.
+
+### 5. Model Resolution
+
+#### `resolveProviderModel()`
+Discovers available models and selects the best match:
+- Uses provider's discovery API
+- Falls back to configured default model
+- Applies model selection heuristics
+
+### 6. Streaming & Progress Reporting
+
+#### `postChatCompletion()`
+Handles HTTP requests to LLM endpoints with:
+- Streaming support
+- Progress event emission
+- Retry logic for loading models
+
+#### `createLlmProgressReporter()`
+Provides logging for LLM completion phases.
+
+## Architecture Overview
+
+<Mermaid chart={`graph TD
+  A["complete()"] --> B[resolveProvider]
+  A --> C[resolveProviderModel]
+  A --> D[buildActionContext]
+  B --> E["Provider.complete()"]
+  E --> F[postChatCompletion]
+  F --> G[fetch + stream]
+  A --> H[CompletionReport]
+  D --> I[readContextFile]
+  I --> J[git diff, status, etc.]
+`} />
+
+## Configuration Structure
+
+The LLM configuration supports multiple layers:
+1. **Default values** - Built-in conservative defaults
+2. **Base config** - Primary `/.pi/providers.json`
+3. **Scoped config** - Unit-specific overrides
+
+Key configuration fields:
+- `provider`: Selected LLM provider type
+- `baseUrl`: Provider endpoint URL
+- `defaultModel`: Default model identifier
+- `tokenBudget`: Controls max_tokens computation
+- `actions`: Action-to-model mapping
+- `harness`: Execution mode configuration
+
+## Usage Examples
+
+### Basic Completion
+```ts
+import { complete } from './completion/index.ts';
+
+const result = await complete({
+  action: 'review',
+  userPrompt: 'Review this change for security issues',
+  context: 'package.json'
+});
+```
+
+### Direct Agent Request
+```ts
+import { completeStructuredAgent } from './completion/index.ts';
+
+const result = await completeStructuredAgent({
+  action: 'docs-api',
+  systemPrompt: 'Generate API documentation',
+  userPrompt: 'Document the fetchUser function',
+  flags: { model: 'gpt-4o' }
+});
+```
+
+### Context Building
+```ts
+import { buildActionContext } from './completion/context.ts';
+
+const context = await buildActionContext({
+  context: ['README.md', 'package.json'],
+  includeChangedFiles: true,
+  includeGitDiff: true
+});
+```
+
+## Integration Points
+
+### With Repository Actions
+The engine integrates with repository actions defined in `repo-actions.ts`:
+- `review`: Code review
+- `docs-api`: API documentation
+- `commit`: Commit preparation
+- `test-audit`: Test coverage assessment
+
+### With Execution Context
+The engine uses `resolveExecutionContext()` to determine:
+- Which monorepo unit is active
+- LLM provider and model configuration
+- Whether LLM is used for the current operation
+
+### With Shared Utilities
+- `shared/logging.ts`: Progress reporting and logging
+- `shared/execution-context.ts`: Context resolution
+- `shared/repo-actions.ts`: Action definitions and metadata
+
+## Error Handling
+
+The engine handles various failure modes:
+- Provider unavailability
+- Model loading delays
+- Network timeouts
+- Invalid JSON responses
+- Configuration errors
+
+All errors are normalized and reported through structured attempts in `CompletionReport.attempts`.
+
+## Token Budget Management
+
+The engine automatically computes `max_tokens` based on:
+- Model context window (when available)
+- Configuration `tokenBudget` settings
+- Quick mode (`--quick` flag) vs. full context
+
+Configuration options:
+- `contextFraction`: Fraction of context window to use
+- `cap`: Hard limit on computed budget
+- `quick`: Budget for quick mode
+- `cloudFallback`: Default for cloud models without context info

@@ -1,0 +1,254 @@
+---
+title: "UI Components & Hooks"
+---
+
+import { Mermaid } from '../../components/Mermaid';
+
+# UI Components & Hooks
+
+# UI Components & Hooks Module
+
+This module provides React hooks and UI components for interacting with Conflux blockchain features, including account management, balance fetching, contract interactions, transaction handling, and wallet connectivity.
+
+## Purpose
+
+The UI Components & Hooks module serves as the primary interface between React applications and the Conflux blockchain. It abstracts low-level interactions with the blockchain and wallet providers into reusable, composable hooks and components.
+
+## Key Components
+
+### Account Management
+
+#### `useAccount()`
+Returns the current signer's address and connection status.
+
+```typescript
+interface UseAccountReturn {
+  address: Address | null;
+  isConnected: boolean;
+}
+```
+
+### Balance Fetching
+
+#### `useNativeBalance()`
+Fetches the native CFX balance for an address.
+
+```typescript
+interface UseNativeBalanceInput {
+  address: Address | null | undefined;
+  enabled?: boolean;
+  staleTimeMs?: number;
+}
+
+interface UseNativeBalanceReturn {
+  data: Wei | undefined;
+  error: Error | null;
+  isLoading: boolean;
+  refetch: () => void;
+}
+```
+
+#### `useTokenBalance()`
+Fetches ERC-20 token balances.
+
+```typescript
+interface UseTokenBalanceInput {
+  token: Address;
+  owner: Address | null | undefined;
+  enabled?: boolean;
+  staleTimeMs?: number;
+}
+
+interface UseTokenBalanceReturn {
+  data: Wei | undefined;
+  error: Error | null;
+  isLoading: boolean;
+  refetch: () => void;
+}
+```
+
+#### `useTokenMetadata()`
+Fetches token metadata (name, symbol, decimals).
+
+```typescript
+interface UseTokenMetadataInput {
+  token: Address | null | undefined;
+  enabled?: boolean;
+}
+
+interface UseTokenMetadataReturn {
+  data: TokenMetadata | undefined;
+  error: Error | null;
+  isLoading: boolean;
+}
+```
+
+### Contract Interactions
+
+#### `useReadContract()`
+Reads contract state via `eth_call`.
+
+```typescript
+interface UseReadContractInput {
+  address: Address;
+  abi: Abi;
+  functionName: string;
+  args?: readonly unknown[];
+  blockTag?: BlockTag;
+  enabled?: boolean;
+  staleTimeMs?: number;
+}
+
+interface UseReadContractReturn<T> {
+  data: T | undefined;
+  error: ContractError | null;
+  isLoading: boolean;
+  refetch: () => void;
+}
+```
+
+#### `useReadContracts()`
+Reads multiple contract functions in parallel.
+
+#### `useSimulateContract()`
+Simulates contract execution without submitting a transaction.
+
+#### `useWriteContract()`
+Submits signed transactions to the network.
+
+### Transaction Handling
+
+#### `useSendTransaction()`
+Submits raw transactions via the connected signer.
+
+#### `useWaitForTransaction()`
+Polls for transaction receipt.
+
+### Wallet Connectivity
+
+#### Core Wallet Integration
+- `useCoreWallet()` - Detects and manages Fluent Core wallet state
+- `switchConfluxChain()` - Switches Core chain via wallet provider
+
+#### eSpace Wallet Integration
+- `useEspaceConnectors()` - Provides Wagmi connectors for eSpace wallets
+- `switchEspaceChain()` - Switches eSpace chain via wallet provider
+
+### Keystore Integration
+
+#### Keystore Provider
+Provides access to keystore state and operations through React context.
+
+#### Key Hooks
+- `useKeystoreLifecycle()` - Manages keystore phase and state
+- `useKeystoreWallets()` - Manages wallet roots
+- `useKeystoreAccounts()` - Manages accounts within active wallet
+- `useKeystoreIdentity()` - Provides current dual-chain identity
+
+### DeFi Features
+
+#### Portfolio Management
+- `usePortfolio()` - Fetches and formats balances for multiple tokens
+- `PortfolioTable` - UI component for displaying portfolio data
+
+#### Swap Functionality
+- `useSwap()` - Fetches quotes and handles swaps via DEX adapters
+- `SwapWidget` - UI component for swapping tokens
+- `createSwappiAdapter()` - Creates Swappi V2 DEX adapter
+
+#### Pool Data
+- `usePoolTokens()` - Fetches pool token info and reserves
+- `usePools()` - Fetches data for multiple pools
+- `useTokenPrice()` - Fetches token price against quote token
+
+## Architecture Overview
+
+<Mermaid chart={`graph TD
+  A[React Components] --> B[Hooks Layer]
+  B --> C[Context Providers]
+  B --> D[Core Services]
+  D --> E[Blockchain Client]
+  D --> F[Wallet Providers]
+  C --> G[Keystore Context]
+  C --> H[Client Context]
+  C --> I[Signer Context]
+  G --> J[Keystore Service]
+  J --> K[Keystore API]
+  E --> L[Conflux RPC]
+  F --> M[Wallet Connectors]
+  F --> N[Core Wallet]
+`} />
+
+## Integration Points
+
+### Context Providers
+- `CfxProvider` - Provides client and signer context
+- `KeystoreProvider` - Provides keystore state and operations
+
+### External Dependencies
+- `@tanstack/react-query` - For caching and background data fetching
+- `viem` - Ethereum-compatible client library
+- `wagmi` - Wallet connection library
+- `@cfxdevkit/cdk` - Core Conflux development kit
+
+### Data Flow
+1. React components call hooks from this module
+2. Hooks use context providers to access client/signer/keystore state
+3. Data is fetched via `@tanstack/react-query` with automatic caching
+4. Blockchain interactions use `viem` for RPC calls
+5. Wallet operations are delegated to wallet providers (Fluent, MetaMask, etc.)
+
+## Usage Examples
+
+### Basic Account Access
+```tsx
+const { address, isConnected } = useAccount();
+if (!isConnected) {
+  return <ConnectWalletButton />;
+}
+return <div>Connected: {address}</div>;
+```
+
+### Fetching Balances
+```tsx
+const { data: balance, isLoading } = useNativeBalance({ address });
+const { data: tokenBalance } = useTokenBalance({ 
+  token: tokenAddress, 
+  owner: address 
+});
+```
+
+### Contract Interaction
+```tsx
+const { data, isLoading } = useReadContract({
+  address: contractAddress,
+  abi: MyAbi,
+  functionName: 'balanceOf',
+  args: [address],
+});
+```
+
+### Wallet Connection
+```tsx
+const { connectors, connect } = useEspaceConnectors();
+const { status, connect: connectCore } = useCoreWallet();
+```
+
+### Portfolio Display
+```tsx
+const { rows, isLoading } = usePortfolio({
+  address,
+  tokens: tokenList,
+});
+<PortfolioTable rows={rows} isLoading={isLoading} />;
+```
+
+### Token Swapping
+```tsx
+const { quote, swapAsync } = useSwap({
+  adapter: swappiAdapter,
+  tokenIn: tokenA,
+  tokenOut: tokenB,
+  amountIn: amount,
+});
+```

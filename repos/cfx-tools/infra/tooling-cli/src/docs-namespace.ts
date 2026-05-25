@@ -48,6 +48,11 @@ const docsEnrichmentCommands: readonly ToolingCommandDefinition[] = [
     usage: 'probe api [args]',
   },
   {
+    name: 'wiki',
+    description: 'GitNexus wiki: generate (LLM), sync MDX, or validate mermaid',
+    usage: 'wiki [generate|sync|validate] [args]',
+  },
+  {
     name: 'review',
     description: 'Review docs build, wiki sync, image, and deploy flow via the local LLM',
     usage: 'review [args]',

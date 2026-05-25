@@ -1,0 +1,211 @@
+---
+title: "Architecture Check & Repo Validation"
+---
+
+import { Mermaid } from '../../components/Mermaid';
+
+# Architecture Check & Repo Validation
+
+# Architecture Check & Repo Validation Module
+
+## Overview
+
+The **Architecture Check & Repo Validation** module provides a comprehensive suite of tools for enforcing architectural, documentation, and code quality standards across a monorepo. It includes utilities for API surface validation, documentation alignment, code hotspots detection, and monorepo unit configuration management.
+
+## Key Components
+
+### 1. API Surface Management
+
+#### `extract.ts`
+Extracts public export names and their kinds from compiled `.d.ts` files, handling re-exports with depth-limited resolution.
+
+```ts
+type ExportKind = 'type' | 'interface' | 'class' | 'function' | 'const' | 'enum' | 'other';
+type ExtractedExport = {
+  name: string;
+  kind: ExportKind;
+  signature: string;
+};
+```
+
+#### `filter.ts`
+Discovers public packages by scanning for `dist/` directories and package.json exports.
+
+```ts
+type PublicPackageInfo = {
+  rel: string;
+  name: string;
+  description: string;
+  subpaths: Record<string, string>;
+  distDir: string;
+  apiMdPath: string;
+  structureMdPath: string;
+};
+```
+
+#### `hash.ts`
+Provides SHA-256 hashing utilities for API.md staleness detection.
+
+#### `render.ts`
+Generates deterministic API.md markdown skeletons from extracted exports.
+
+### 2. Documentation Validation
+
+#### `readme.ts`
+Generates README.md skeletons and validates required sections.
+
+#### `structure.ts`
+Creates deterministic STRUCTURE.md files with directory tree and export mapping.
+
+### 3. Architecture Enforcement
+
+#### `arch.ts`
+Enforces architectural rules including:
+- Tier-based dependency constraints
+- CLI framework policy compliance
+- File size limits
+- No upward imports
+- No internal reach
+
+### 4. Code Quality Checks
+
+#### `hotspots.ts`
+Detects code hotspots based on line count and commit churn.
+
+#### `kebab-groups.ts`
+Identifies kebab-case filename groups that should be siblings.
+
+#### `source-files.ts`
+Provides utilities for collecting and filtering source files.
+
+### 5. Monorepo Unit Configuration
+
+#### `monorepo-units.ts`
+Defines monorepo units (delivery, implementation, operations) and their configurations.
+
+#### `unit-configs.ts`
+Validates and manages unit configuration files.
+
+### 6. Security & Compliance
+
+#### `secrets.ts`
+Scans for hardcoded secrets in source files.
+
+### 7. Corpus & Reporting
+
+#### `corpus.ts`
+Collects and indexes repository files for LLM training.
+
+#### `report.ts`
+Generates comprehensive status reports combining all checks.
+
+## Command-Line Tools
+
+### `generate-api.ts`
+Deterministic API.md generator for public packages.
+
+### `generate-readme.ts`
+Scaffolds README.md sections for public packages.
+
+### `generate-structure.ts`
+Generates STRUCTURE.md files for public packages.
+
+### `check-arch.ts`
+Enforces architectural rules.
+
+### `check-ci.ts`
+Validates CI/CD readiness.
+
+### `check-corpus.ts`
+Collects repository corpus for LLM training.
+
+### `check-docs.ts`
+Validates documentation contracts and alignment.
+
+### `check-eval.ts`
+Evaluates check results for LLM agent readiness.
+
+### `check-hotspots.ts`
+Detects code hotspots.
+
+### `check-kebab-groups.ts`
+Identifies kebab-case filename groups.
+
+### `check-report.ts`
+Generates full status report.
+
+### `check-secrets.ts`
+Scans for hardcoded secrets.
+
+### `check-unit-configs.ts`
+Validates monorepo unit configurations.
+
+## Execution Flow
+
+<Mermaid chart={`graph TD
+    A[runFullReport] --> B[runArchCheck]
+    A --> C[runSecretsCheck]
+    A --> D[runHotspotsCheck]
+    A --> E[runKebabGroupsCheck]
+    A --> F[runUnitConfigsCheck]
+    A --> G[runDocsCheck]
+    A --> H[runCiCheck]
+    A --> I[runCorpusCheck]
+    
+    B --> J[getRulesFor]
+    B --> K[checkDependencies]
+    B --> L[checkInternalReach]
+    B --> M[checkSourceFiles]
+    
+    D --> N[readRecentChurn]
+    D --> O[buildHotspotReport]
+    
+    F --> P[validateUnitConfig]
+    F --> Q[mergeUnitConfig]
+    
+    G --> R[checkPackageDocumentContracts]
+    G --> S[checkWorkspaceDocumentContracts]
+    G --> T[checkRootToolingScripts]
+    G --> U[checkApiDocs]
+    
+    H --> V[checkContains]
+    
+    I --> W[collectCorpusFiles]
+    I --> X[extractDocIndex]
+    
+    J --> Y[getTierFor]
+    J --> Z[getLifecycle]
+`} />
+
+## Usage Examples
+
+### Generate API Documentation
+```bash
+pnpm exec tsx src/bin/generate-api.ts --write
+```
+
+### Run Full Architecture Check
+```bash
+pnpm run check:report
+```
+
+### Detect Code Hotspots
+```bash
+pnpm run check:hotspots --soft-limit 200 --hard-limit 250
+```
+
+### Validate Unit Configurations
+```bash
+pnpm run check:unit-configs --write
+```
+
+## Integration Points
+
+This module integrates with:
+- `@cfxdevkit/arch-rules` for architectural policy enforcement
+- `@cfxdevkit/workspace-utils` for monorepo root detection
+- LLM agents for documentation alignment and corpus generation
+- Git-based change tracking for hotspots detection
+- SQLite database for caching and metadata storage
+
+The module is designed to be run as part of CI/CD pipelines and local development workflows to maintain architectural consistency and code quality across the repository.

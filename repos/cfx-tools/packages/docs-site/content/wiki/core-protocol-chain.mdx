@@ -8,116 +8,201 @@ import { Mermaid } from '../../components/Mermaid';
 
 # Core Protocol & Chain Module
 
-## Overview
+The `@cfxdevkit/cdk` module provides foundational utilities for interacting with Conflux networks, including address encoding, chain configuration, client creation, and protocol-level helpers.
 
-The **Core Protocol & Chain** module constitutes the foundational layer of the `cfx-core` package. It provides the essential abstractions for interacting with the Conflux network, managing cryptographic operations, and handling network-specific configurations. This module encapsulates the logic for RPC communication, wallet management, address derivation, and type safety across both Conflux Core Space and eSpace (EVM-compatible) environments.
+## Purpose
 
-## Architecture
+This module serves as the core protocol and chain abstraction layer for Conflux-based applications. It provides:
+- Address encoding/decoding between base32 (Conflux native) and hex (EVM-compatible) formats
+- Static chain configuration catalog with lookup utilities
+- Client creation factories for both Core Space and eSpace
+- Protocol-level helpers for transaction receipt handling, gas estimation, and log collection
+- Wallet utilities for account derivation and signing
 
-The module is organized into distinct functional layers: **Client**, **Wallet**, **Network**, and **Infrastructure**. The `client` layer handles external communication, while the `wallet` layer manages local cryptographic state. Shared utilities reside in `types`, `errors`, and `units`.
+## Key Components
 
-<Mermaid chart={`graph TD
-    subgraph "Core Module"
-        Client[Client Layer]
-        Wallet[Wallet Layer]
-        Network[Network & Address]
-        Infra[Infrastructure]
-    end
+### Address Codec (`@cfxdevkit/cdk/address`)
 
-    subgraph "Client Layer"
-        Core[core.ts]
-        Espace[espace.ts]
-        Transport[transport.ts]
-    end
+Provides base32 address encoding for Conflux Core Space, compatible with network IDs:
+- Mainnet: `cfx:`
+- Testnet: `cfxtest:`
+- Custom networks: `net<id>:`
 
-    subgraph "Wallet Layer"
-        Signing[signing.ts]
-        Derivation[derivation.ts]
-    end
+```ts
+import { hexToBase32, base32ToHex, isBase32Address, getCoreAddress } from '@cfxdevkit/cdk/address';
 
-    subgraph "Infrastructure"
-        Types[types/index.ts]
-        Errors[errors/index.ts]
-        Units[units/index.ts]
-    end
+// Convert hex to base32
+const base32 = hexToBase32('0x1234567890123456789012345678901234567890', 1029);
+// Result: "cfx:ac12345678901234567890123456789012345678"
 
-    Client --> Network
-    Client --> Infra
-    Wallet --> Infra
-    Network --> Infra
-`} />
+// Convert base32 to hex
+const hex = base32ToHex('cfx:ac12345678901234567890123456789012345678');
+// Result: "0x1234567890123456789012345678901234567890"
+```
 
-## Component Breakdown
+### Chain Configuration (`@cfxdevkit/cdk/chains`)
 
-### Client Layer (`src/client/`)
+Static catalog of Conflux chain configurations with:
+- Network tier identification (mainnet, testnet, devnet, local)
+- Chain family discrimination (core, espace)
+- RPC endpoints and explorer URLs
+- Native token information
 
-Responsible for establishing connections and executing RPC calls against Conflux nodes.
+```ts
+import { getChain, listChains } from '@cfxdevkit/cdk/chains';
 
-*   **`core.ts`**: Implements the base client logic for the Conflux Core Space. Handles standard RPC methods and state queries specific to the native Conflux protocol.
-*   **`espace.ts`**: Implements the client logic for the eSpace (EVM-compatible) environment. Bridges Core Space functionality with Ethereum-compatible RPC standards.
-*   **`transport.ts`**: Manages the underlying communication channel (HTTP, WebSocket, etc.). Abstracts network latency, retries, and connection management.
-*   **`index.ts`**: Exports the primary client classes and factory functions for initializing connections.
+// Get chain by ID or name
+const mainnet = getChain(1029); // Core mainnet
+const testnet = getChain('espace-testnet'); // eSpace testnet
 
-### Wallet Layer (`src/wallet/`)
+// List chains by filter
+const coreChains = listChains({ family: 'core' });
+```
 
-Handles private key management, transaction signing, and hierarchical deterministic (HD) wallet derivation.
+### Client Creation (`@cfxdevkit/cdk/client`)
 
-*   **`signing.ts`**: Contains cryptographic primitives for signing transactions and messages. Ensures secure handling of private keys during the signing process.
-*   **`derivation.ts`**: Implements BIP32/BIP44 derivation paths specific to Conflux. Converts seed phrases or master keys into usable account addresses.
-*   **`index.ts`**: Exports wallet classes and helper functions for account generation and management.
+Factory functions for creating typed clients for Core Space and eSpace:
+- `createClient()` - Factory that returns either `CoreSpaceClient` or `EspaceClient`
+- Transport layer abstraction with HTTP/WebSocket support
 
-### Network & Address (`src/address/`, `src/chains/`)
+```ts
+import { createClient, http } from '@cfxdevkit/cdk/client';
+import { coreSpaceMainnet } from '@cfxdevkit/cdk/chains';
 
-Defines network parameters and address formatting rules.
-
-*   **`chains/index.ts`**: Configures chain IDs, network names, and RPC endpoints for supported Conflux networks (Mainnet, Testnet, Devnet).
-*   **`address/index.ts`**: Provides utilities for address validation, checksumming, and conversion between different address formats (e.g., hex vs. cfx address).
-
-### Infrastructure (`src/types/`, `src/errors/`, `src/units/`)
-
-Shared definitions and utilities used across the module.
-
-*   **`types/index.ts`**: Defines TypeScript interfaces for RPC responses, transaction objects, and configuration options. Ensures type safety across the SDK.
-*   **`errors/index.ts`**: Centralized error handling. Defines custom error classes for network failures, validation errors, and cryptographic failures.
-*   **`units/index.ts`**: Handles unit conversions for native tokens (e.g., Drip to CFX). Provides constants for gas limits and pricing calculations.
-
-## Usage Patterns
-
-### Initializing a Client
-
-Clients are instantiated via the `client` module exports. Configuration typically involves specifying the network type (Core or eSpace) and the transport endpoint.
-
-```typescript
-// Conceptual usage pattern
-import { Client } from '@cfx/core/client';
-
-const client = new Client({
-  url: 'https://mainnet.confluxrpc.com',
-  network: 'core'
+const client = createClient({
+  chain: coreSpaceMainnet,
+  transport: http({ url: 'https://main.confluxrpc.com' }),
 });
 ```
 
-### Wallet Operations
+### Protocol Helpers (`@cfxdevkit/protocol`)
 
-Wallet operations require importing from the `wallet` module. Signing is decoupled from broadcasting to allow for offline signing workflows.
+Protocol-level utilities for common operations:
+- `waitForTransactionReceipt()` - Waits for transaction confirmation
+- `estimateTransaction()` - Estimates gas and storage requirements
+- `collectLogs()` - Collects Core Space logs with filtering
 
-```typescript
-// Conceptual usage pattern
-import { Wallet } from '@cfx/core/wallet';
+```ts
+import { waitForTransactionReceipt, estimateTransaction } from '@cfxdevkit/protocol';
 
-const wallet = new Wallet(privateKey);
-const signedTx = await wallet.signTransaction(txData);
+// Wait for receipt
+const receipt = await waitForTransactionReceipt(client, txHash);
+
+// Estimate gas
+const estimate = await estimateTransaction(client, txRequest);
 ```
 
-## Integration Guidelines
+### Wallet Utilities (`@cfxdevkit/cdk/wallet`)
 
-1.  **Type Safety**: Always import types from `src/types/index.ts` when constructing transaction objects or handling RPC responses to ensure compatibility with the current protocol version.
-2.  **Error Handling**: Catch errors using the classes defined in `src/errors/index.ts`. Do not rely on generic `Error` instances for network-specific failures.
-3.  **Network Configuration**: Use `src/chains/index.ts` to retrieve valid chain IDs and RPC endpoints rather than hardcoding values.
-4.  **Unit Conversion**: Utilize `src/units/index.ts` for all monetary calculations to prevent precision errors associated with floating-point arithmetic.
+Account derivation and signing utilities:
+- BIP-39 mnemonic generation and validation
+- HD path derivation for Core and eSpace accounts
+- Private key to address conversion
+- Transaction signing for both chain families
 
-## Development Notes
+```ts
+import { deriveAccount, signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
 
-*   **Extensibility**: To add support for a new network, extend the configuration in `src/chains/index.ts` and ensure the `client` layer supports the specific RPC methods required.
-*   **Security**: The `wallet` module handles sensitive key material. Ensure that any extensions to `signing.ts` or `derivation.ts` adhere to secure coding practices regarding memory management and key exposure.
-*   **Testing**: Unit tests should cover the `transport` layer for network resilience and the `wallet` layer for cryptographic correctness.
+// Derive account from mnemonic
+const account = deriveAccount({
+  mnemonic: 'test test test test test test test test test test test junk',
+  path: "m/44'/503'/0'/0/0"
+});
+
+// Create signer
+const signer = signerFromPrivateKey(account.privateKey);
+```
+
+## Architecture Overview
+
+<Mermaid chart={`graph TD
+    A[Client Creation] --> B[CoreSpaceClient|EspaceClient]
+    A --> C[Transport Layer]
+    B --> D[RPC Methods]
+    C --> E["HTTP/WebSocket"]
+    D --> F["cive/viem"]
+    F --> G[Conflux Node]
+    H[Protocol Helpers] --> B
+    I[Wallet Utilities] --> B
+    J[Chain Config] --> A
+    K[Address Codec] --> B
+`} />
+
+## Integration Points
+
+### Client Usage
+
+The client system provides a unified interface for both Core Space and eSpace operations:
+
+```ts
+// Core Space operations
+const balance = await client.getBalance('cfx:ac12345678901234567890123456789012345678');
+const logs = await client.getLogs({ fromEpoch: 1000n, toEpoch: 2000n });
+
+// eSpace operations
+const blockNumber = await client.getBlockNumber();
+const gas = await client.estimateGas({ to: '0x...', data: '0x...' });
+```
+
+### Chain Configuration
+
+Chain configurations are used to initialize clients and provide metadata:
+
+```ts
+const chain = getChain('core-mainnet');
+const client = createClient({
+  chain,
+  transport: http({ url: chain.rpc.http[0] })
+});
+```
+
+### Transport Layer
+
+The transport layer abstracts network communication:
+
+```ts
+import { http, ws, fallback } from '@cfxdevkit/cdk/client';
+
+// HTTP transport
+const transport = http({ url: 'https://main.confluxrpc.com' });
+
+// WebSocket transport
+const wsTransport = ws({ url: 'wss://main.confluxrpc.com/ws' });
+
+// Fallback transport
+const fallbackTransport = fallback([http(), ws()]);
+```
+
+## Error Handling
+
+All framework errors extend `CfxError` with stable error codes:
+
+```ts
+import { CfxError, isCfxError } from '@cfxdevkit/cdk/errors';
+
+try {
+  const client = createClient({ chain, transport });
+} catch (error) {
+  if (isCfxError(error)) {
+    console.error(`Error code: ${error.code}`);
+    console.error(`Message: ${error.message}`);
+  }
+}
+```
+
+## Key Features
+
+### 1. Multi-chain Support
+Support for both Core Space (Conflux native) and eSpace (EVM-compatible) chains with unified client interfaces.
+
+### 2. Type Safety
+Strong typing throughout the system using TypeScript interfaces and type guards.
+
+### 3. Extensible Architecture
+Modular design allows for easy extension and customization of chain configurations, transports, and client behavior.
+
+### 4. Error Handling
+Consistent error handling with structured error codes and metadata for debugging.
+
+### 5. Protocol Abstraction
+High-level protocol helpers simplify common operations like transaction waiting and gas estimation.

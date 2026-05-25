@@ -1,0 +1,125 @@
+---
+title: "root — Wiki"
+---
+
+import { Mermaid } from '../../components/Mermaid';
+
+# root — Wiki
+
+# Conflux DevKit — Framework Map
+
+Welcome to the **Conflux DevKit** monorepo (`@cfxdevkit/framework`), a comprehensive toolkit for building decentralized applications on the [Conflux Network](https://confluxnetwork.org/). This repository is structured as a **strict 5-tier dependency hierarchy** and includes shared libraries, developer tools, LLM automation, and example projects.
+
+---
+
+## 🧩 What This Repo Does
+
+This monorepo provides everything needed to build, test, and deploy applications on Conflux:
+
+- **Core Protocol & Chain Abstractions** via [`@cfxdevkit/cdk`](./modules/cdk.md)
+- **Developer Tooling** including a local devnode, CLI, and VS Code extension
+- **Wallet & Keystore Management** through [`@cfxdevkit/keystore`](./modules/keystore.md) and [`@cfxdevkit/wallet`](./modules/wallet.md)
+- **Smart Contract Interaction** with [`@cfxdevkit/contracts`](./modules/contracts.md)
+- **LLM-powered Automation** for code review, documentation, and commit generation via [`@cfxdevkit/llm`](./modules/llm.md)
+- **UI Components** for React apps in [`@cfxdevkit/ui`](./modules/ui.md)
+- **Documentation Pipeline** and architecture validation via [`@cfxdevkit/docs-pipeline`](./modules/docs-pipeline.md)
+
+---
+
+## 🏗️ 5-Tier Architecture
+
+The monorepo enforces a strict 5-tier architecture to maintain clean separation of concerns:
+
+```
+Tier -1  cross-cutting   repos/cfx-meta, repos/cfx-config        (devDep only)
+Tier  0  framework       @cfxdevkit/cdk, @cfxdevkit/cli, @cfxdevkit/devnode
+Tier  1  core services   @cfxdevkit/keystore, @cfxdevkit/wallet
+Tier  2  domain logic    @cfxdevkit/contracts, @cfxdevkit/ui
+Tier  3  tooling         @cfxdevkit/llm, @cfxdevkit/docs-pipeline
+Tier  4  apps & showcases @cfxdevkit/showcase-local, @cfxdevkit/showcase-public
+```
+
+---
+
+## 🧠 High-Level Architecture Diagram
+
+<Mermaid chart={`graph TD
+    A["Core Protocol & Chain"] --> B["Keystore & Wallet Services"]
+    A --> C["DevNode & Runtime"]
+    A --> D["CLI & Developer Tools"]
+    A --> E["Wallet Abstraction & Hardware"]
+    B --> E
+    E --> F["UI Components & Hooks"]
+    D --> C
+    D --> A
+    F --> A
+    G[LLM Completion Engine] --> H[LLM Agent Workflows]
+    H --> I["Architecture Check & Repo Validation"]
+    G --> J[Docs Pipeline]
+    J --> K[VS Code Extension]
+    H --> K
+    K --> A
+    K --> B
+    K --> E
+    K --> D
+    K --> C
+    K --> F
+`} />
+
+---
+
+## 🔄 Key End-to-End Flows
+
+### 1. **Local Devnode Setup**
+A developer uses [`@cfxdevkit/devnode`](./modules/devnode.md) to spawn a local Conflux node for testing. This module wraps the native `@xcfx/node` binary and provides deterministic ports and pre-funded accounts.
+
+### 2. **Wallet Interaction**
+Using [`@cfxdevkit/wallet`](./modules/wallet.md) and [`@cfxdevkit/keystore`](./modules/keystore.md), developers can manage accounts, sign transactions, and interact with hardware wallets or session keys.
+
+### 3. **Smart Contract Deployment**
+With [`@cfxdevkit/contracts`](./modules/contracts.md), developers can deploy and interact with smart contracts on both Core Space and eSpace using typed interfaces and low-level RPC helpers from [`@cfxdevkit/cdk`](./modules/cdk.md).
+
+### 4. **LLM-Powered Code Review & Docs**
+The [`@cfxdevkit/llm`](./modules/llm.md) module powers automated workflows for code review, commit message generation, and documentation upkeep. It integrates with tools like [`@cfxdevkit/docs-pipeline`](./modules/docs-pipeline.md) to generate and validate API and package documentation.
+
+### 5. **VS Code Extension Integration**
+The [`@cfxdevkit/vscode`](./modules/vscode.md) extension provides a seamless IDE experience, allowing developers to manage local nodes, deploy contracts, and interact with wallets directly from VS Code.
+
+---
+
+## 🛠️ Setup Instructions
+
+To get started with this monorepo:
+
+1. **Install dependencies**:
+   ```bash
+   pnpm install
+   ```
+
+2. **Build all packages**:
+   ```bash
+   pnpm build
+   ```
+
+3. **Run tests**:
+   ```bash
+   pnpm test
+   ```
+
+4. **Start a local devnode**:
+   ```bash
+   pnpm --filter @cfxdevkit/devnode run devnode
+   ```
+
+5. **Use the CLI**:
+   ```bash
+   pnpm --filter @cfxdevkit/cli run cli --help
+   ```
+
+---
+
+## 📚 Further Reading
+
+- [Architecture Rationale](ARCHITECTURE.md)
+- [Contribution Guidelines](CONTRIBUTING.md)
+- [Module Documentation](./modules/README.md)

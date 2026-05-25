@@ -1,0 +1,202 @@
+---
+title: "PI Agent & Provider Integration"
+---
+
+import { Mermaid } from '../../components/Mermaid';
+
+# PI Agent & Provider Integration
+
+# PI Agent & Provider Integration
+
+The **PI Agent & Provider Integration** module provides the core infrastructure for integrating Conflux developer tools with the PI (Programming Interface) agent system. It enables developers to interact with Conflux infrastructure and tools through chat-based commands and structured workflows, leveraging deterministic CDK commands and LLM-powered repository actions.
+
+## Purpose
+
+This module bridges the gap between:
+- **Conflux developer tooling** (`@cfxdevkit/cli`) via CDK commands
+- **PI agent workflows** via LLM-powered repository actions and commit workflows
+- **Provider configuration and model resolution** for LLM interactions
+
+It allows developers to:
+- Execute deterministic CDK commands directly from chat
+- Run repository validation and change planning workflows
+- Perform interactive repository commits with LLM assistance
+- Access shared repository actions and workflows
+
+## Key Components
+
+### 1. CDK Command Integration (`commands-cdk.ts`)
+
+Provides chat-based access to Conflux developer CLI commands through `/cdk` slash commands.
+
+#### Subcommands:
+- **`status`**: Check chain connectivity and status
+- **`derive`**: Generate wallet addresses from mnemonic or generate new ones
+- **`generate`**: Create new mnemonics
+- **`contracts extract`**: Extract contract artifacts
+
+#### Example Usage:
+```bash
+/cdk status --chain mainnet
+/cdk derive --generate --count 5 --show-private-keys
+/cdk contracts extract --artifacts ./build --out ./contracts
+```
+
+### 2. Repository Agent Commands (`commands.ts`)
+
+Enables repository-level operations through chat commands.
+
+#### Commands:
+- **`repo-status`**: Show current agent scope, provider, and model context
+- **`repo-actions`**: List available shared repo workflows
+- **`repo-run`**: Execute a shared repo action
+- **`repo-check`**: Run full validation → OpenSpec change planning pipeline
+- **`repo-commit`**: Run non-exiting repository commit workflow
+
+#### Example Usage:
+```bash
+/repo-status
+/repo-actions exploratory
+/repo-run test --quick
+/repo-check --dry-run --create-branch
+/repo-commit --model gpt-4
+```
+
+### 3. Provider Integration (`providers.ts`, `provider-bridge.ts`)
+
+Manages LLM provider configuration and model resolution.
+
+#### Features:
+- Automatic provider discovery from environment or config
+- Model catalog fetching and resolution
+- Provider strategy selection (auto, gateway, direct)
+- Configuration layering for scoped environments
+
+### 4. Configuration Management (`config.ts`)
+
+Handles PI agent configuration with support for:
+- Base configuration (`providers.json`)
+- Scoped configurations (per project/scope)
+- Provider profiles and action policies
+- Configuration merging and normalization
+
+### 5. Runtime Execution (`runtime.ts`)
+
+Provides execution interfaces for different PI modes:
+- **Interactive**: Full TUI session
+- **Print**: Output-only mode
+- **RPC**: Remote procedure call mode
+- **Commit**: Specialized commit workflow
+
+### 6. Tool Integration (`tools.ts`, `tools-cdk.ts`)
+
+Defines tools that can be called by the LLM agent:
+- `repo_agent_check`: Run validation pipeline
+- `repo_action_catalog`: List available actions
+- `repo_run_action`: Execute a specific action
+- `repo_commit_workflow`: Run commit workflow
+
+## Architecture Overview
+
+<Mermaid chart={`graph TD
+    A[PI Agent] --> B[CDK Commands]
+    A --> C[Repo Agent Commands]
+    A --> D[LLM Tools]
+    A --> E[Provider Bridge]
+    A --> F[Configuration Manager]
+
+    B --> G["@cfxdevkit/cli"]
+    C --> H[LLM Agents Runtime]
+    D --> I[LLM Agents Tools]
+    E --> J[Provider Discovery]
+    F --> K[Config Normalization]
+    F --> L[Config Storage]
+
+    G --> M[CDK Tool Executors]
+    H --> N[Agent Workflows]
+    I --> O[Agent Actions]
+    J --> P[Model Resolution]
+    K --> Q[Config Merging]
+    L --> R[JSON Config Files]
+`} />
+
+## Integration Points
+
+### With `@cfxdevkit/cli`
+- CDK commands are thin wrappers over `@cfxdevkit/cli` pure functions
+- Ensures deterministic execution without LLM or agent recursion
+
+### With LLM Agents Runtime
+- Repository actions and workflows are executed through `@cfxdevkit/llm-agents`
+- Tools interface provides structured execution context and responses
+
+### With Provider System
+- Provider configuration is resolved through `resolveProviderState`
+- Model resolution uses `resolveProviderModel` to select appropriate models
+
+### With Configuration System
+- Configuration is read from `.pi/providers.json` or scoped files
+- Merging logic supports layered configuration (base + scoped)
+
+## Usage Patterns
+
+### 1. Command Execution Flow
+1. User types `/cdk status`
+2. `registerPiCdkCommands` registers handler
+3. Handler parses arguments and calls `executeCdkStatus`
+4. `executeCdkStatus` calls `@cfxdevkit/cli` function
+5. Result is formatted and rendered via UI state
+
+### 2. Repository Workflow Execution
+1. User types `/repo-check --dry-run`
+2. Handler calls `executePiAgentCheck`
+3. LLM agents runtime executes validation pipeline
+4. Result is formatted and displayed via UI state
+
+### 3. Provider Resolution
+1. `createPiProviderBridge` is called
+2. Configuration is read and normalized
+3. Provider state is resolved from config or environment
+4. Models are fetched and resolved for use
+
+## Configuration Structure
+
+The module supports layered configuration:
+1. **Base config**: `.pi/providers.json`
+2. **Scoped config**: `artifacts/llm/config/units/<scope>.json`
+3. **Environment override**: `CFXDEVKIT_LLM_CONFIG_PATH`
+
+Configuration includes:
+- Provider type and base URL
+- Default and GitHub models
+- Action policies and provider profiles
+- Harness settings for deterministic/exploratory modes
+
+## Error Handling
+
+- All command handlers wrap execution in try/catch blocks
+- Errors are reported via `ctx.ui.notify` when UI is available
+- Configuration errors are handled gracefully with defaults
+- Provider resolution failures are caught and reported
+
+## Key Functions
+
+### CDK Command Helpers
+- `tokenize`: Parse command arguments
+- `str`, `num`, `bool`: Extract typed flag values
+
+### Configuration
+- `readPiConfig`: Read and merge configuration layers
+- `normalizePiConfig`: Normalize configuration values
+- `resolveEffectiveActionPolicy`: Resolve effective action policies
+
+### Provider Management
+- `createPiProviderBridge`: Create provider bridge from scope
+- `resolveProviderState`: Discover and resolve provider configuration
+
+### UI State Management
+- `createPiRuntimeUiState`: Format runtime context display
+- `createPiAgentCheckUiState`: Format validation results
+- `createPiCommitWorkflowUiState`: Format commit workflow status
+
+This module forms the core integration layer between Conflux developer tools and the PI agent system, enabling seamless interaction between deterministic tooling and LLM-powered workflows.

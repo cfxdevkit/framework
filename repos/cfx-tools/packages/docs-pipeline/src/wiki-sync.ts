@@ -3,13 +3,7 @@ import path from 'node:path';
 
 import { findRepoRoot, getDocsSitePaths } from './workspace.js';
 
-const SKIP_FILES = new Set([
-  'overview.md',
-  'other.md',
-  'meta.json',
-  'module_tree.json',
-  'index.html',
-]);
+const SKIP_FILES = new Set(['other.md', 'meta.json', 'module_tree.json', 'index.html']);
 
 /** Returns true for wiki files that should be excluded from the docs-site sync. */
 function shouldSkipWikiFile(filename: string): boolean {
@@ -40,7 +34,7 @@ export function fixMermaidLabels(diagram: string): string {
   const quoteNodeLabels = (input: string, open: string, close: string): string => {
     // Match: identifier + open-bracket + unquoted content with special chars + close-bracket
     // Negative lookbehind on `"` prevents double-quoting
-    const esc = (c: string) => c.replace(/[-[\]/{}()*+?.\^$|]/g, '\\$&');
+    const esc = (c: string) => c.replace(/[-[\]/{}()*+?.^$|]/g, '\\$&');
     const re = new RegExp(
       `(?<=[A-Za-z0-9_\\-])${esc(open)}(?!")([^${esc(close)}"\\n]+)${esc(close)}`,
       'g',
@@ -85,6 +79,21 @@ export async function syncWiki(): Promise<number> {
   const files = await fs.readdir(wikiSourceDir);
   const mdFiles = files.filter((file) => file.endsWith('.md') && !shouldSkipWikiFile(file));
   await fs.mkdir(wikiContentDir, { recursive: true });
+
+  // Remove stale .mdx files whose source .md no longer exists in the wiki output
+  const incomingSlugs = new Set(mdFiles.map((f) => f.replace(/\.md$/, '')));
+  try {
+    const existingMdx = (await fs.readdir(wikiContentDir)).filter((f) => f.endsWith('.mdx'));
+    for (const mdx of existingMdx) {
+      const slug = mdx.replace(/\.mdx$/, '');
+      if (!incomingSlugs.has(slug)) {
+        await fs.unlink(path.join(wikiContentDir, mdx));
+        console.log(`  removed stale ${mdx}`);
+      }
+    }
+  } catch {
+    // wikiContentDir may not exist yet — that's fine
+  }
 
   for (const file of mdFiles) {
     const sourcePath = path.join(wikiSourceDir, file);

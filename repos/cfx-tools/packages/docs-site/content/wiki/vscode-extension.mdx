@@ -1,0 +1,189 @@
+---
+title: "VS Code Extension"
+---
+
+import { Mermaid } from '../../components/Mermaid';
+
+# VS Code Extension
+
+# VS Code Extension Module Documentation
+
+## Overview
+
+The **VS Code Extension** module provides a comprehensive development environment for interacting with Conflux networks, including local node management, wallet handling, contract deployment, and ABI interaction. It integrates with the Conflux DevKit ecosystem to offer a seamless developer experience within VS Code.
+
+## Purpose
+
+This module serves as the primary interface between the Conflux DevKit and VS Code, enabling developers to:
+- Manage local Conflux nodes
+- Interact with wallets and accounts
+- Deploy and interact with smart contracts
+- View and manage deployed contracts
+- Execute ABI functions on deployed contracts
+
+## Key Components
+
+### Extension Runtime (`ExtensionRuntime`)
+
+The core class that manages the extension's lifecycle and state. It handles:
+- Node lifecycle management
+- Wallet and keystore operations
+- Contract deployment and interaction
+- View updates and tree rendering
+- Command registration and execution
+
+### Command System
+
+Commands are registered through `registerCommands()` and provide the following functionality:
+- Network selection (`cfxdevkit.selectNetwork`)
+- Wallet management (`cfxdevkit.addWallet`, `cfxdevkit.selectWallet`, etc.)
+- Node control (`cfxdevkit.nodeStart`, `cfxdevkit.nodeStop`, etc.)
+- Contract deployment and interaction (`cfxdevkit.deployContract`, `cfxdevkit.abiCallRead`, etc.)
+
+### View System
+
+The extension uses a tree-based view system to display:
+- Network status and controls
+- Wallets and accounts
+- Deployed contracts
+- Contract ABIs with read/write functions
+
+### State Management
+
+State is managed through:
+- VS Code workspace state
+- In-memory runtime state
+- File-based keystore and deployments
+
+## Architecture
+
+<Mermaid chart={`graph TD
+    A[Extension Runtime] --> B[Node Management]
+    A --> C[Wallet Management]
+    A --> D[Contract Deployment]
+    A --> E[ABI Interaction]
+    A --> F[View System]
+    B --> G[Local Node]
+    C --> H[Keystore]
+    D --> I[Compiler]
+    D --> J[Deployer]
+    E --> K[Contract Reader]
+    E --> L[Contract Writer]
+    F --> M[Tree Provider]
+    F --> N[View Components]
+`} />
+
+## Core Functionality
+
+### Node Management
+
+The extension supports local node management through:
+- `startNode()` - Starts a local Conflux node
+- `stopNode()` - Stops the local node
+- `restartNode()` - Restarts the local node
+- `wipeNode()` - Wipes node data
+- `mineBlocks()` - Mines specified number of blocks
+- `startMining()` - Starts continuous mining
+
+### Wallet Management
+
+Wallet operations include:
+- `initializeWallet()` - Initializes the keystore
+- `addWallet()` - Adds a new mnemonic wallet
+- `selectWallet()` - Selects an active wallet
+- `removeWallet()` - Removes a wallet
+- `unlockKeystore()` - Unlocks the keystore
+- `lockKeystore()` - Locks the keystore
+- `rotateKeystorePassphrase()` - Changes keystore password
+
+### Contract Deployment
+
+Contract deployment functionality:
+- `deployContractCommand()` - Deploys a contract from template or workspace file
+- `importContractCommand()` - Imports an existing contract
+- `readDeployments()` - Reads deployment records
+- `writeDeployments()` - Writes deployment records
+
+### ABI Interaction
+
+ABI interaction capabilities:
+- `abiCallRead()` - Calls read-only contract functions
+- `abiCallWrite()` - Sends write transactions to contracts
+- `promptAbiArgs()` - Prompts for ABI function arguments
+- `promptPayableValue()` - Prompts for payable values
+
+## Integration Points
+
+### External Dependencies
+
+The extension integrates with:
+- `@cfxdevkit/client` - Core client for Conflux RPC interactions
+- `@cfxdevkit/devnode-server` - Local node management
+- `@cfxdevkit/compiler` - Solidity compilation
+- `@cfxdevkit/contracts` - Contract deployment and interaction
+- `@cfxdevkit/services` - Keystore and audit logging
+- `@cfxdevkit/wallet` - Wallet and signing operations
+
+### VS Code APIs
+
+The extension uses VS Code's:
+- `vscode.window` - UI components and notifications
+- `vscode.workspace` - Workspace configuration and file operations
+- `vscode.commands` - Command registration and execution
+- `vscode.window.createTreeView` - Tree view rendering
+- `vscode.workspace.getConfiguration` - Configuration management
+
+## Data Flow
+
+1. **Activation**: Extension initializes and registers commands
+2. **State Loading**: Loads workspace state and refreshes views
+3. **User Interaction**: Commands are executed through VS Code UI
+4. **Backend Processing**: Operations are delegated to helper modules
+5. **View Updates**: UI is refreshed with new data
+
+## Configuration
+
+The extension supports configuration through VS Code settings:
+- `cfxdevkit.keystorePath` - Path to keystore file
+- `cfxdevkit.deploymentsPath` - Path to deployments file
+- `cfxdevkit.nodeDataDir` - Directory for node data
+- `cfxdevkit.nodeAccounts` - Number of accounts for local node
+- `cfxdevkit.nodeLogging` - Enable node logging
+
+## Error Handling
+
+The extension implements comprehensive error handling:
+- Network errors are caught and displayed to users
+- Wallet operations handle unlock failures
+- Contract interactions provide clear error messages
+- Node operations handle startup/shutdown gracefully
+
+## Security Considerations
+
+- Keystore passwords are handled securely
+- Mnemonic phrases are stored encrypted
+- All sensitive operations require user confirmation
+- Audit logging tracks keystore access and modifications
+
+## Lifecycle Management
+
+### Activation (`activate`)
+- Initializes the extension runtime
+- Registers all commands
+- Refreshes all views
+- Auto-starts local node if configured
+
+### Deactivation (`deactivate`)
+- Stops the local node gracefully
+- Disposes all resources
+- Ensures clean shutdown
+
+## View Structure
+
+The extension presents information through a tree-based UI:
+1. **Network Status** - Shows current network and node state
+2. **Wallets** - Displays available wallets and accounts
+3. **Contracts** - Shows deployed contracts by network and chain
+4. **Actions** - Provides quick access to common operations
+
+Each view component is built using VS Code's TreeDataProvider API and follows a consistent pattern of data transformation and UI rendering.
