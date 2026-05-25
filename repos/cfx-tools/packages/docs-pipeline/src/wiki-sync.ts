@@ -29,6 +29,12 @@ function shouldSkipWikiFile(filename: string): boolean {
  */
 export function fixMermaidLabels(diagram: string): string {
   // Special chars that break unquoted mermaid node labels
+  // Normalize pipe chars inside node labels BEFORE quoting:
+  // B[Client|Server] → B[Client / Server] (| is CSS class syntax in mermaid, not display)
+  diagram = diagram.replace(/(?<=[A-Za-z0-9_-])\[(?!")([^\]"\n]*)\]/g, (match, label: string) =>
+    label.includes('|') ? `[${label.replace(/\|/g, ' / ')}]` : match,
+  );
+
   const NEEDS_QUOTE = /[@/&<>(){}#]/;
 
   const quoteNodeLabels = (input: string, open: string, close: string): string => {
@@ -51,6 +57,61 @@ export function fixMermaidLabels(diagram: string): string {
   return fixed;
 }
 
+/**
+ * Maximum lines in a mermaid diagram before we simplify it.
+ * Diagrams over this size render too small and are hard to read even with zoom.
+ */
+const MERMAID_MAX_LINES = 30;
+
+/**
+ * Simplify an oversized mermaid diagram by keeping only the top-level connections
+ * (entries with depth 1 from the root node). Returns the simplified diagram or
+ * the original if it already fits within MERMAID_MAX_LINES.
+ */
+export function simplifyMermaidDiagram(diagram: string): string {
+  const lines = diagram.trim().split('\n');
+  const contentLines = lines.filter((l) => l.trim() && !l.trim().startsWith('%%'));
+  if (contentLines.length <= MERMAID_MAX_LINES) return diagram;
+
+  // Keep header line (graph TD / flowchart LR / etc.) + subgraph declarations + top-level edges only
+  const header = lines[0]?.trim() ?? 'graph TD';
+  const topEdges: string[] = [];
+  const seen = new Set<string>();
+  for (const line of lines.slice(1)) {
+    const t = line.trim();
+    if (!t || t.startsWith('%%') || t.startsWith('style') || t.startsWith('classDef')) continue;
+    if (t.startsWith('subgraph') || t === 'end') {
+      topEdges.push(line);
+      continue;
+    }
+    // Only keep lines where the source node appears in the first 3 top-level edges
+    // (heuristic: prune deep sub-trees)
+    const match = t.match(/^([A-Za-z0-9_]+)\s*[-=]/);
+    if (match?.[1]) {
+      const src = match[1];
+      if (!seen.has(src)) {
+        seen.add(src);
+        topEdges.push(line);
+      } else if (seen.size <= MERMAID_MAX_LINES / 2) {
+        topEdges.push(line);
+      }
+    } else {
+      topEdges.push(line);
+    }
+    if (
+      topEdges.filter((l) => l.trim() && !l.trim().startsWith('subgraph') && l.trim() !== 'end')
+        .length >=
+      MERMAID_MAX_LINES - 1
+    )
+      break;
+  }
+  return [
+    header,
+    ...topEdges,
+    `    %% (simplified — original had ${contentLines.length} lines)`,
+  ].join('\n');
+}
+
 function toMdxSafeContent(content: string): string {
   return content
     .replace(/<!--[\s\S]*?-->/g, '')
@@ -58,7 +119,8 @@ function toMdxSafeContent(content: string): string {
     .replace(/`0x\$\{string\}`/g, 'HexAddress')
     .replace(/0x\$\{string\}/g, 'HexAddress')
     .replace(/```mermaid\n([\s\S]*?)```/g, (_match, diagram: string) => {
-      const fixed = fixMermaidLabels(diagram);
+      const simplified = simplifyMermaidDiagram(diagram);
+      const fixed = fixMermaidLabels(simplified);
       const escaped = fixed.replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
       return `<Mermaid chart={\`${escaped}\`} />`;
     });

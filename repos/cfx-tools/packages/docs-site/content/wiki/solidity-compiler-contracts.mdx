@@ -204,7 +204,7 @@ These are used in unit tests to isolate contract logic.
 ## Mermaid Diagram: Contract Write Flow
 
 <Mermaid chart={`graph TD
-  A[sendWrite] --> B[sendEspaceWrite|sendCoreWrite]
+  A[sendWrite] --> B["sendEspaceWrite / sendCoreWrite"]
   B --> C[encodeFunctionData]
   B --> D[estimateGas]
   B --> E[signTransaction]

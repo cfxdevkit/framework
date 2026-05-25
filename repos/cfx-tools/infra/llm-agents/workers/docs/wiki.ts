@@ -36,6 +36,12 @@ export async function runWikiGenerate(args: string[]): Promise<void> {
   logInfo(`  model   : ${model}`);
 
   await new Promise<void>((resolve, reject) => {
+    // Models that put output in reasoning_content require --reasoning-model flag
+    // so gitnexus uses max_completion_tokens (no temperature) and reads content correctly.
+    // Qwen3.5-122B in Lemonade always runs in thinking mode.
+    const REASONING_MODEL_PATTERNS = ['122B', '32B-thinking', 'o1', 'o3', 'o4'];
+    const isReasoningModel = REASONING_MODEL_PATTERNS.some((p) => model.includes(p));
+
     const gitnexusArgs = [
       'exec',
       'gitnexus',
@@ -50,6 +56,7 @@ export async function runWikiGenerate(args: string[]): Promise<void> {
       '--concurrency',
       '1',
     ];
+    if (isReasoningModel) gitnexusArgs.push('--reasoning-model');
     if (flags.quick) gitnexusArgs.push('--quick');
     // pass any unknown extra args through
     const child = spawn('pnpm', gitnexusArgs, {

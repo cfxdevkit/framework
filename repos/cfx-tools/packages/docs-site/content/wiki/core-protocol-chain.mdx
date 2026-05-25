@@ -116,7 +116,7 @@ const signer = signerFromPrivateKey(account.privateKey);
 ## Architecture Overview
 
 <Mermaid chart={`graph TD
-    A[Client Creation] --> B[CoreSpaceClient|EspaceClient]
+    A[Client Creation] --> B["CoreSpaceClient / EspaceClient"]
     A --> C[Transport Layer]
     B --> D[RPC Methods]
     C --> E["HTTP/WebSocket"]

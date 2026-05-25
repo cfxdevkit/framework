@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fixMermaidLabels } from './wiki-sync.js';
+import { fixMermaidLabels, simplifyMermaidDiagram } from './wiki-sync.js';
 
 describe('fixMermaidLabels', () => {
   it('quotes @ package names in rectangular labels', () => {
@@ -73,5 +73,40 @@ describe('fixMermaidLabels', () => {
     expect(result).toContain('Theme["@cfxdevkit/theme"]');
     expect(result).toContain('React["@cfxdevkit/react"]');
     expect(result).toContain('DeFi["@cfxdevkit/defi-react"]');
+  });
+});
+
+describe('fixMermaidLabels — pipe normalization', () => {
+  it('replaces | in node label with " / "', () => {
+    const input = '    B --> C[CoreSpaceClient|EspaceClient]';
+    expect(fixMermaidLabels(input)).toContain('["CoreSpaceClient / EspaceClient"]');
+  });
+
+  it('replaces | then quotes because result has /', () => {
+    const input = '    A[sendWrite] --> B[sendEspaceWrite|sendCoreWrite]';
+    const result = fixMermaidLabels(input);
+    expect(result).toContain('["sendEspaceWrite / sendCoreWrite"]');
+  });
+
+  it('leaves edge label |text| untouched', () => {
+    const input = '    A -->|calls| B';
+    expect(fixMermaidLabels(input)).toBe('    A -->|calls| B');
+  });
+});
+
+describe('simplifyMermaidDiagram', () => {
+  it('returns diagram unchanged when under MERMAID_MAX_LINES', () => {
+    const small = 'graph TD\n    A --> B\n    B --> C';
+    expect(simplifyMermaidDiagram(small)).toBe(small);
+  });
+
+  it('simplifies diagram with more than 30 content lines', () => {
+    const lines = ['graph TD'];
+    for (let i = 0; i < 35; i++) lines.push(`    N${i} --> N${i + 1}`);
+    const big = lines.join('\n');
+    const result = simplifyMermaidDiagram(big);
+    const resultLines = result.split('\n').filter((l) => l.trim());
+    expect(resultLines.length).toBeLessThanOrEqual(31); // 30 + header
+    expect(result).toContain('simplified');
   });
 });
