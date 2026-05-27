@@ -28,7 +28,7 @@
     "react": "19.2.5",
     "react-dom": "19.2.5",
     "viem": "^2.21.0",
-    "wagmi": "^3.6.9"
+    "wagmi": "^3.6.16"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
