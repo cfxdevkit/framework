@@ -14,6 +14,12 @@ const turbopackSingletons: Record<string, string> = {
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: [
+    'local.dev.cfxdevkit.org',
+    'local.dev.cfxdevkit.org:8443',
+    'showcase.dev.cfxdevkit.org:8443',
+    'localhost:8443',
+  ],
   serverExternalPackages: ['@cfxdevkit/devnode-server', '@cfxdevkit/devnode', '@xcfx/node'],
   turbopack: {
     resolveAlias: turbopackSingletons,

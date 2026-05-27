@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
+import { useWalletSessions } from './wallet-session-context';
 
 const NAV = [
   { label: 'Core', href: '/core' },
@@ -54,6 +55,14 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const core = useCoreWallet();
+  const { activeSession, removeSession } = useWalletSessions();
+
+  const signerEspaceAddress = activeSession?.addresses.eSpace;
+  const signerCoreAddress = activeSession?.addresses.core;
+
+  function disconnectActiveSigner() {
+    if (activeSession) removeSession(activeSession.id);
+  }
 
   return (
     <div
@@ -159,6 +168,15 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             >
               <WalletStatusChip address={address} className="pointer-events-none" />
             </button>
+          ) : signerEspaceAddress ? (
+            <button
+              type="button"
+              onClick={disconnectActiveSigner}
+              title={`Click to disconnect ${activeSession?.label ?? 'hardware signer'}`}
+              style={BTN_CONNECTED}
+            >
+              <WalletStatusChip address={signerEspaceAddress} className="pointer-events-none" />
+            </button>
           ) : (
             <button type="button" onClick={() => setEspaceOpen(true)} style={BTN_CONNECT}>
               eSpace
@@ -174,6 +192,15 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               style={BTN_CONNECTED}
             >
               <WalletStatusChip address={core.address} className="pointer-events-none" />
+            </button>
+          ) : signerCoreAddress ? (
+            <button
+              type="button"
+              onClick={disconnectActiveSigner}
+              title={`Click to disconnect ${activeSession?.label ?? 'hardware signer'}`}
+              style={BTN_CONNECTED}
+            >
+              <WalletStatusChip address={signerCoreAddress} className="pointer-events-none" />
             </button>
           ) : core.status === 'not-installed' ? null : core.status === 'detecting' ? null : (
             <button

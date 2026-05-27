@@ -47,7 +47,8 @@ RUN curl -fsSL \
 
 # udev rule for OneKey Classic S1 (VID 1209 / PID 53c1).
 # Allows non-root access when /dev/bus/usb is passed through (devcontainer.json).
-RUN echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c1", MODE="0666", GROUP="plugdev"' \
+RUN mkdir -p /etc/udev/rules.d \
+  && echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c1", MODE="0666", GROUP="plugdev"' \
   > /etc/udev/rules.d/70-onekey.rules
 
 RUN mkdir -p /usr/local/share/nvm/.cache \
@@ -77,7 +78,9 @@ USER node
 RUN curl -fsSL https://moonrepo.dev/install/moon.sh | bash
 
 # Install openspec CLI globally so it is available on PATH after container rebuild
+USER root
 RUN npm install -g openspec@latest
+USER node
 
 ENV PATH=/home/node/.moon:${PATH}
 

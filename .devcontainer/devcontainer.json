@@ -10,6 +10,8 @@
   "runArgs": [
     "--network",
     "pasta:--map-gw",
+    "-p",
+    "8443:443",
     "--add-host=host.containers.internal:169.254.1.2",
     "--cap-add=NET_BIND_SERVICE",
     "--device=/dev/bus/usb"
@@ -31,7 +33,7 @@
     "LEMONADE_URL": "http://host.containers.internal:13305/",
     "LEMONADE_BASE_URL": "http://host.containers.internal:13305/"
   },
-  "forwardPorts": [443, 8545, 8546, 12536, 12537, 3000, 4173, 5173, 7748, 8787],
+  "forwardPorts": [8545, 8546, 12536, 12537, 3000, 4173, 5173, 7748, 8787],
   "otherPortsAttributes": {
     "onAutoForward": "ignore"
   },

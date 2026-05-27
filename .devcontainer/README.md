@@ -64,6 +64,7 @@ those settings even though pnpm handles them correctly.
 
 | Port | Purpose |
 |------|---------|
+| `8443` | Local HTTPS reverse proxy (host port -> container `443`) |
 | `12537` | Conflux Core RPC |
 | `12536` | Conflux Core WebSocket |
 | `8545` | Conflux eSpace RPC |
@@ -120,6 +121,7 @@ and depends on GitNexus licensing/policy being acceptable for the environment.
 
 ## Notes
 
+- On rootless Podman, the devcontainer publishes the local Caddy proxy on host port `8443` instead of `443`, because `pasta` cannot bind privileged host ports without extra host-level configuration. Use URLs like `https://showcase.dev.cfxdevkit.org:8443`.
 - The devcontainer mounts the host Docker socket. Do not use it with an
   untrusted workspace.
 - The older `devkit-workspace` backend and DEX processes are intentionally not

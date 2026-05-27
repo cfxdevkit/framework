@@ -13,6 +13,8 @@ set -euo pipefail
 DOMAIN="dev.cfxdevkit.org"
 CERT_DIR="$HOME/.local/share/mkcert"
 CADDY_PID_FILE="/tmp/caddy.pid"
+WORKSPACE_DIR="${containerWorkspaceFolder:-/workspaces/root}"
+CADDY_CONFIG="$WORKSPACE_DIR/infrastructure/local/Caddyfile"
 
 echo "=== Local HTTPS setup for *.${DOMAIN} ==="
 
@@ -33,17 +35,32 @@ echo "✓ Certificates generated at $CERT_DIR"
 if [ -f "$CADDY_PID_FILE" ] && kill -0 "$(cat "$CADDY_PID_FILE")" 2>/dev/null; then
   echo "  Caddy already running (PID $(cat "$CADDY_PID_FILE"))"
 else
+  if [ ! -f "$CADDY_CONFIG" ]; then
+    echo "  ✗ Caddy config not found: $CADDY_CONFIG"
+    exit 1
+  fi
+
+  echo "  Validating Caddy config: $CADDY_CONFIG"
+  CAROOT="$CAROOT" caddy validate --config "$CADDY_CONFIG" --adapter caddyfile
+
   CAROOT="$CAROOT" caddy start \
-    --config /workspaces/root/infrastructure/local/Caddyfile \
+    --config "$CADDY_CONFIG" \
     --pidfile "$CADDY_PID_FILE" \
-    --adapter caddyfile 2>&1 | head -5 || echo "  ⚠ Caddy start failed — run manually: caddy start --config infrastructure/local/Caddyfile"
-  echo "✓ Caddy started"
+    --adapter caddyfile
+
+  if [ -f "$CADDY_PID_FILE" ] && kill -0 "$(cat "$CADDY_PID_FILE")" 2>/dev/null; then
+    echo "✓ Caddy started (PID $(cat "$CADDY_PID_FILE"))"
+  else
+    echo "  ✗ Caddy failed to start. Run: caddy run --config infrastructure/local/Caddyfile --adapter caddyfile"
+    exit 1
+  fi
 fi
 
 echo ""
 echo "=== Next step (one-time on your HOST machine) ==="
 echo "Run: pnpm run setup:trust-local-ca"
 echo "This installs the mkcert root CA so your browser trusts *.${DOMAIN}."
+echo "Open local HTTPS routes on rootless Podman at: https://showcase.${DOMAIN}:8443"
 echo ""
 echo "DNS (one-time in Cloudflare):"
 echo "  A  *.dev   127.0.0.1   DNS only (orange cloud OFF)"

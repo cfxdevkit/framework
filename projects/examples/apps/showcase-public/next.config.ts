@@ -10,6 +10,13 @@ const webpackSingletons: Record<string, string> = {
   '@tanstack/react-query': path.dirname(req.resolve('@tanstack/react-query/package.json')),
 };
 
+const webpackDisabledModules: Record<string, false> = {
+  '@base-org/account': false,
+  '@metamask/connect-evm': false,
+  memcpy: false,
+  'pino-pretty': false,
+};
+
 const turbopackSingletons: Record<string, string> = {
   wagmi: './node_modules/wagmi',
   viem: './node_modules/viem',
@@ -34,13 +41,27 @@ function nobleHashesAliases(): Record<string, string> {
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: [
+    'showcase.dev.cfxdevkit.org',
+    'showcase.dev.cfxdevkit.org:8443',
+    'localhost:8443',
+  ],
   turbopack: {
     resolveAlias: turbopackSingletons,
   },
   webpack(config, { isServer }) {
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings ?? []),
+      {
+        module: /ox[\\/]_esm[\\/]tempo[\\/]internal[\\/]virtualMasterPool\.js/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
+
     config.resolve.alias = {
       ...config.resolve.alias,
       ...webpackSingletons,
+      ...webpackDisabledModules,
       ...nobleHashesAliases(),
     };
 
@@ -56,6 +77,7 @@ const nextConfig: NextConfig = {
         stream: false,
         buffer: false,
         util: false,
+        memcpy: false,
         usb: false,
         'node-hid': false,
         'node-usb': false,
@@ -67,5 +89,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-// biome-ignore lint/style/noDefaultExport: Next.js requires default export
 export default nextConfig;

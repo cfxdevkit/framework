@@ -3,7 +3,7 @@
  * Path: `m/44'/503'/0'/0/0` (BIP-44 coin 503)
  */
 import type { Account, SignableTx, Signer, SignOptions, TypedData } from '@cfxdevkit/cdk';
-import { hexToBase32 } from '@cfxdevkit/cdk/address';
+import { base32ToHex, getCoreAddress, hexToBase32, isBase32Address } from '@cfxdevkit/cdk/address';
 import type { Hex } from 'viem';
 import { HardwareWalletError } from '../../errors/index.js';
 import { toCanonicalHex } from '../types.js';
@@ -60,8 +60,15 @@ export async function signerFromOneKeyCore(input: SignerFromOneKeyCoreInput): Pr
   });
   if (!addrRes.success) throw oneKeyError('wallet/hardware/onekey/device-error', addrRes.payload);
 
-  const hexAddress = toCanonicalHex(addrRes.payload.address) as `0x${string}`;
-  const coreAddress = hexToBase32(hexAddress, networkId);
+  const rawAddress = addrRes.payload.address;
+  const hexAddress = (
+    isBase32Address(rawAddress)
+      ? base32ToHex(rawAddress, { strict: false })
+      : toCanonicalHex(rawAddress)
+  ) as `0x${string}`;
+  const coreAddress = isBase32Address(rawAddress)
+    ? getCoreAddress(rawAddress)
+    : hexToBase32(hexAddress, networkId);
 
   if (expectedAddress) {
     const norm = (s: string) => s.toLowerCase().replace(/^cfx(test)?:/i, '');

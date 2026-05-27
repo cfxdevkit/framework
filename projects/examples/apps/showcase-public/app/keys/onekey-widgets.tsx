@@ -38,7 +38,7 @@ export function OneKeySigningDemo({
     { key: 'eSpaceMsg', label: 'eSpace signMessage' },
     { key: 'eSpaceTyped', label: '✅ eSpace EIP-712' },
     { key: 'coreMsg', label: 'Core signMessage' },
-    { key: 'coreTyped', label: '✅ Core CIP-23' },
+    { key: 'coreTyped', label: '✅ Core CIP-23 · hash-sign' },
   ] as const;
 
   return (
@@ -71,6 +71,10 @@ export function OneKeySigningDemo({
           </button>
         ))}
       </div>
+      <p style={MUTED_STYLE}>
+        Core CIP-23 currently uses hash-based signing in OneKey SDK. Device firmware may show an
+        "unable to decode data" warning while still producing a valid signature.
+      </p>
       {sigs.eSpaceMsg && <CodeSnippet code={sigs.eSpaceMsg} label="eSpace message signature" />}
       {sigs.eSpaceTyped && (
         <CodeSnippet code={sigs.eSpaceTyped} label="eSpace EIP-712 signature (exclusive)" />

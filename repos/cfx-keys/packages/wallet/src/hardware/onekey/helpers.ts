@@ -64,6 +64,95 @@ export function normaliseSignature(sig: string): Hex {
   return canonical;
 }
 
+type NormalisedTypedData = {
+  domain: TypedDataDomain;
+  types: Record<string, { name: string; type: string }[]>;
+  primaryType: string;
+  message: Record<string, unknown>;
+};
+
+function inferDomainType(value: unknown): 'string' | 'uint256' | 'address' | 'bytes32' {
+  if (typeof value === 'number' || typeof value === 'bigint') return 'uint256';
+  if (typeof value === 'string') {
+    if (/^0x[0-9a-fA-F]{40}$/.test(value)) return 'address';
+    if (/^0x[0-9a-fA-F]{64}$/.test(value)) return 'bytes32';
+  }
+  return 'string';
+}
+
+/**
+ * Ensure typed-data has a valid EIP712Domain type map. Some SDK paths crash
+ * when `types.EIP712Domain` is absent even if `domain` is present.
+ */
+export function normaliseTypedData(typedData: unknown): NormalisedTypedData {
+  const td = typedData as unknown as {
+    domain?: TypedDataDomain;
+    types?: Record<string, { name: string; type: string }[]>;
+    primaryType?: string;
+    message?: Record<string, unknown>;
+  };
+
+  if (!td.types || typeof td.types !== 'object') {
+    throw new HardwareWalletError({
+      code: 'wallet/hardware/onekey/bad-response',
+      message: 'typedData.types is required',
+    });
+  }
+  if (!td.primaryType || typeof td.primaryType !== 'string') {
+    throw new HardwareWalletError({
+      code: 'wallet/hardware/onekey/bad-response',
+      message: 'typedData.primaryType is required',
+    });
+  }
+  if (!td.message || typeof td.message !== 'object') {
+    throw new HardwareWalletError({
+      code: 'wallet/hardware/onekey/bad-response',
+      message: 'typedData.message is required',
+    });
+  }
+
+  const existingEip712Domain = td.types.EIP712Domain;
+  const existingCip23Domain = td.types.CIP23Domain;
+  if (
+    existingEip712Domain &&
+    Array.isArray(existingEip712Domain) &&
+    existingEip712Domain.length > 0 &&
+    existingCip23Domain &&
+    Array.isArray(existingCip23Domain)
+  ) {
+    return {
+      domain: td.domain ?? {},
+      types: td.types,
+      primaryType: td.primaryType,
+      message: td.message,
+    };
+  }
+
+  const domain = (td.domain ?? {}) as Record<string, unknown>;
+  const domainType: { name: string; type: string }[] = (
+    existingEip712Domain && Array.isArray(existingEip712Domain) && existingEip712Domain.length > 0
+      ? existingEip712Domain
+      : Object.entries(domain).map(([name, value]) => ({ name, type: inferDomainType(value) }))
+  ) as {
+    name: string;
+    type: string;
+  }[];
+
+  return {
+    domain: td.domain ?? {},
+    types: {
+      ...td.types,
+      EIP712Domain: domainType,
+      CIP23Domain:
+        existingCip23Domain && Array.isArray(existingCip23Domain)
+          ? existingCip23Domain
+          : domainType,
+    },
+    primaryType: td.primaryType,
+    message: td.message,
+  };
+}
+
 /**
  * Compute the CIP-23 component hashes from a typed-data object.
  * CIP-23 is structurally identical to EIP-712 — the device expects the two
@@ -73,12 +162,7 @@ export function computeCip23Hashes(typedData: TypedData): {
   domainHash: string;
   messageHash: string;
 } {
-  const td = typedData as unknown as {
-    domain: TypedDataDomain;
-    types: Record<string, { name: string; type: string }[]>;
-    primaryType: string;
-    message: Record<string, unknown>;
-  };
+  const td = normaliseTypedData(typedData);
 
   const domainHash = (hashDomain as (p: { domain: unknown; types: unknown }) => Hex)({
     domain: td.domain,

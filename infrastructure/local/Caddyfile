@@ -29,7 +29,11 @@
 # showcase-public (Next.js)  →  showcase.cfxdevkit.org on VPS
 showcase.dev.cfxdevkit.org {
 	import tls_local
-	reverse_proxy localhost:3010
+	reverse_proxy localhost:3010 {
+		transport http {
+			versions h1
+		}
+	}
 }
 
 # docs-site  →  docs.cfxdevkit.org on VPS
@@ -66,7 +70,11 @@ mcp.dev.cfxdevkit.org {
 # showcase-local (full devnode-backed showcase)
 local.dev.cfxdevkit.org {
 	import tls_local
-	reverse_proxy localhost:3011
+	reverse_proxy localhost:3011 {
+		transport http {
+			versions h1
+		}
+	}
 }
 
 # devnode-server — Hono control-plane for the local Conflux node

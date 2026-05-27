@@ -6,6 +6,7 @@ import { ThemeProvider } from '@cfxdevkit/theme/react';
 import { ConfluxWagmiProviders } from '@cfxdevkit/wallet-connect';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
+import { WalletSessionProvider } from './wallet-session-context';
 
 // Default read-only client pointing at eSpace mainnet so shared demos resolve
 // live balances and token metadata against the production network.
@@ -20,13 +21,15 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <ThemeProvider defaultTheme="dark">
-      {/* multiInjectedProviderDiscovery enables EIP-6963 so MetaMask is reliably
-          discovered even when Fluent is the primary window.ethereum provider. */}
-      <ConfluxWagmiProviders configOptions={{ multiInjectedProviderDiscovery: true }}>
-        {/* CfxProvider gives @cfxdevkit/react hooks (useNativeBalance, useContract…)
-            a read-only eSpace testnet client without requiring a wallet. */}
-        <CfxProvider client={cfxClient}>{mounted ? children : null}</CfxProvider>
-      </ConfluxWagmiProviders>
+      <WalletSessionProvider>
+        {/* multiInjectedProviderDiscovery enables EIP-6963 so MetaMask is reliably
+            discovered even when Fluent is the primary window.ethereum provider. */}
+        <ConfluxWagmiProviders configOptions={{ multiInjectedProviderDiscovery: true }}>
+          {/* CfxProvider gives @cfxdevkit/react hooks (useNativeBalance, useContract…)
+              a read-only eSpace testnet client without requiring a wallet. */}
+          <CfxProvider client={cfxClient}>{mounted ? children : null}</CfxProvider>
+        </ConfluxWagmiProviders>
+      </WalletSessionProvider>
     </ThemeProvider>
   );
 }

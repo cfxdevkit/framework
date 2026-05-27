@@ -25,11 +25,13 @@
  * - Core: `confluxGetAddress`, `confluxSignMessage`, `confluxSignMessageCIP23`, `confluxSignTransaction`
  */
 import type { Account, SignableTx, Signer, SignOptions, TypedData } from '@cfxdevkit/cdk';
+import { base32ToHex, isBase32Address } from '@cfxdevkit/cdk/address';
 import type { Hex, TransactionSerializableEIP1559 } from 'viem';
 import { HardwareWalletError } from '../../errors/index.js';
 import { EVM_DEFAULT_PATH, finaliseEip1559Tx, toCanonicalHex } from '../types.js';
 import {
   normaliseSignature,
+  normaliseTypedData,
   oneKeyError,
   parseV,
   throwIfAborted,
@@ -175,7 +177,12 @@ export async function signerFromOneKey(input: SignerFromOneKeyInput): Promise<Si
   if (!addrRes.success) {
     throw oneKeyError('wallet/hardware/onekey/device-error', addrRes.payload);
   }
-  const address = toCanonicalHex(addrRes.payload.address) as `0x${string}`;
+  const rawAddress = addrRes.payload.address;
+  const address = (
+    isBase32Address(rawAddress)
+      ? base32ToHex(rawAddress, { strict: false })
+      : toCanonicalHex(rawAddress)
+  ) as `0x${string}`;
   const publicKey = (
     addrRes.payload.publicKey ? toCanonicalHex(addrRes.payload.publicKey) : ('0x' as Hex)
   ) as `0x${string}`;
@@ -249,9 +256,10 @@ export async function signerFromOneKey(input: SignerFromOneKeyInput): Promise<Si
 
     async signTypedData(typedData: TypedData, opts?: SignOptions): Promise<Hex> {
       throwIfAborted(opts?.signal);
+      const normalisedTypedData = normaliseTypedData(typedData);
       const res = await sdk.evmSignTypedData(connectId, deviceId, {
         path,
-        data: typedData,
+        data: normalisedTypedData,
         metamaskV4Compat: true,
         ...(chainId !== undefined ? { chainId } : {}),
       });

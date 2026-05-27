@@ -86,7 +86,7 @@ The capability is documented here as justification for the devcontainer.json ent
 1. Open the devcontainer — setup-local.sh runs automatically (mkcert certs + Caddy start)
 2. Run once on host: `pnpm run setup:trust-local-ca`
 3. Restart browser
-4. Access `https://showcase.dev.cfxdevkit.org`
+4. Access `https://showcase.dev.cfxdevkit.org:8443` on rootless Podman hosts, or `https://showcase.dev.cfxdevkit.org` when the container runtime can publish host port `443`
 
 Cloudflare DNS record is a one-time setup for the whole team.
 New developers clone the repo — steps 1-3 are all they need.

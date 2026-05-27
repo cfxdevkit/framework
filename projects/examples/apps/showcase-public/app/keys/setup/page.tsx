@@ -46,6 +46,7 @@ export default function SignerSetupPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [chosen, setChosen] = useState<SignerKind | null>(null);
   const [saved, setSaved] = useState<DemoSigner | null>(null);
+  const selectedOption = chosen ? (OPTIONS.find((o) => o.kind === chosen) ?? null) : null;
 
   useEffect(() => {
     try {
@@ -62,9 +63,8 @@ export default function SignerSetupPage() {
   }
 
   function confirm() {
-    if (!chosen) return;
-    const opt = OPTIONS.find((o) => o.kind === chosen)!;
-    const entry: DemoSigner = { kind: chosen, label: opt.title };
+    if (!chosen || !selectedOption) return;
+    const entry: DemoSigner = { kind: chosen, label: selectedOption.title };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
     setSaved(entry);
     setStep(3);
@@ -104,49 +104,44 @@ export default function SignerSetupPage() {
           </div>
         )}
 
-        {step === 2 &&
-          chosen &&
-          (() => {
-            const opt = OPTIONS.find((o) => o.kind === chosen)!;
-            return (
-              <div style={{ display: 'grid', gap: 'var(--cfx-space-4)' }}>
-                <p style={{ fontWeight: 600, fontSize: 'var(--cfx-text-sm)', margin: 0 }}>
-                  Step 2 — Confirm:
-                </p>
-                <div style={PANEL_ACTIVE_STYLE}>
-                  <p style={{ fontWeight: 700, margin: '0 0 4px' }}>{opt.title}</p>
-                  <p style={{ ...MUTED, margin: 0 }}>{opt.subtitle}</p>
-                </div>
-                {chosen === 'memory' && (
-                  <p
-                    style={{
-                      ...MUTED,
-                      background: 'color-mix(in srgb, orange 10%, transparent)',
-                      padding: 'var(--cfx-space-3)',
-                      borderRadius: 'var(--cfx-radius-md)',
-                    }}
-                  >
-                    ⚠ A fresh private key is generated each time you open the memory demo. It is
-                    never stored anywhere. Do not use for real assets.
-                  </p>
-                )}
-                {(chosen === 'ledger' || chosen === 'onekey') && (
-                  <p style={MUTED}>
-                    Connect your device before opening the demo page. The panel will guide you
-                    through connection.
-                  </p>
-                )}
-                <div style={{ display: 'flex', gap: 'var(--cfx-space-3)' }}>
-                  <button type="button" onClick={() => setStep(1)} style={BTN_SECONDARY}>
-                    ← Back
-                  </button>
-                  <button type="button" onClick={confirm} style={BTN_PRIMARY}>
-                    Save &amp; go to demos
-                  </button>
-                </div>
-              </div>
-            );
-          })()}
+        {step === 2 && chosen && selectedOption && (
+          <div style={{ display: 'grid', gap: 'var(--cfx-space-4)' }}>
+            <p style={{ fontWeight: 600, fontSize: 'var(--cfx-text-sm)', margin: 0 }}>
+              Step 2 — Confirm:
+            </p>
+            <div style={PANEL_ACTIVE_STYLE}>
+              <p style={{ fontWeight: 700, margin: '0 0 4px' }}>{selectedOption.title}</p>
+              <p style={{ ...MUTED, margin: 0 }}>{selectedOption.subtitle}</p>
+            </div>
+            {chosen === 'memory' && (
+              <p
+                style={{
+                  ...MUTED,
+                  background: 'color-mix(in srgb, orange 10%, transparent)',
+                  padding: 'var(--cfx-space-3)',
+                  borderRadius: 'var(--cfx-radius-md)',
+                }}
+              >
+                ⚠ A fresh private key is generated each time you open the memory demo. It is never
+                stored anywhere. Do not use for real assets.
+              </p>
+            )}
+            {(chosen === 'ledger' || chosen === 'onekey') && (
+              <p style={MUTED}>
+                Connect your device before opening the demo page. The panel will guide you through
+                connection.
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: 'var(--cfx-space-3)' }}>
+              <button type="button" onClick={() => setStep(1)} style={BTN_SECONDARY}>
+                ← Back
+              </button>
+              <button type="button" onClick={confirm} style={BTN_PRIMARY}>
+                Save &amp; go to demos
+              </button>
+            </div>
+          </div>
+        )}
 
         {step === 3 && saved && (
           <div style={{ display: 'grid', gap: 'var(--cfx-space-4)' }}>
