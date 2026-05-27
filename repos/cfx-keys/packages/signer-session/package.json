@@ -1,0 +1,48 @@
+{
+  "name": "@cfxdevkit/signer-session",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Headless signer session factory \u2014 create a ready Signer pair (eSpace + Core) from any backend without browser UI.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cfxdevkit/cdk": "workspace:^",
+    "@cfxdevkit/services": "workspace:^",
+    "@cfxdevkit/wallet": "workspace:^",
+    "@cfxdevkit/workspace-utils": "workspace:^"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/tsconfig": "workspace:*",
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.12",
+    "vite-plugin-dts": "^5.0.0",
+    "vitest": "^4.1.6"
+  },
+  "sideEffects": false,
+  "optionalDependencies": {
+    "@onekeyfe/hd-common-connect-sdk": "^1.1.26"
+  }
+}

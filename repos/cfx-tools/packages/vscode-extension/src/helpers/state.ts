@@ -22,10 +22,41 @@ export function selectedSpace(this: ExtensionRuntime): ChainTarget {
 }
 
 export function selectedBackend(this: ExtensionRuntime): KeystoreBackend {
-  return 'file';
+  // Read the active signer kind from .cfxdevkit/signer.json if it exists.
+  // Falls back to 'file' for backward compatibility when the config file is absent.
+  try {
+    const { readFileSync } = require('node:fs');
+    const signerJsonPath = join(this.workspaceRoot(), '.cfxdevkit', 'signer.json');
+    const config = JSON.parse(readFileSync(signerJsonPath, 'utf8'));
+    const defaultName = config?.defaultSigner;
+    const entry = config?.signers?.[defaultName];
+    if (entry?.kind === 'onekey') return 'onekey';
+    if (entry?.kind === 'ledger') return 'file'; // Ledger uses file-keystore backend in extension
+    if (entry?.kind === 'file-keystore') return 'file';
+    // 'memory' kind falls back to 'file' for extension use
+    return 'file';
+  } catch {
+    return 'file';
+  }
 }
 
 export function selectedFileRef(this: ExtensionRuntime): SecretRef {
+  // Check signer.json for file-keystore service/account, then fall back to workspace state.
+  try {
+    const { readFileSync } = require('node:fs');
+    const signerJsonPath = join(this.workspaceRoot(), '.cfxdevkit', 'signer.json');
+    const config = JSON.parse(readFileSync(signerJsonPath, 'utf8'));
+    const defaultName = config?.defaultSigner;
+    const entry = config?.signers?.[defaultName];
+    if (entry?.kind === 'file-keystore') {
+      return {
+        service: entry.service ?? KEYSTORE_SERVICE,
+        account: entry.account ?? 'mnemonic-default',
+      };
+    }
+  } catch {
+    /* ignore — fall through to workspace state */
+  }
   return (
     this.context.workspaceState.get<SecretRef>(STATE_ACTIVE_FILE_REF) ?? {
       service: KEYSTORE_SERVICE,

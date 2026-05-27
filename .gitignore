@@ -61,3 +61,4 @@ artifacts/llm/
 
 # GitNexus index (local cache, regeneratable)
 .gitnexus/
+.cfxdevkit/signer.json

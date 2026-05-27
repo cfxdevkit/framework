@@ -1,3 +1,4 @@
+/** @on-hold — See satochip/index.ts. Python bridge required; not suitable for browser showcase. */
 import type { Hex } from 'viem';
 import { HardwareWalletError } from '../../errors/index.js';
 import { rawSignatureToHex, toCanonicalHex } from '../types.js';

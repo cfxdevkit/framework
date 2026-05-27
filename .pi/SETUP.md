@@ -259,3 +259,33 @@ while keeping the cheaper message generation on tier 2:
   }
 }
 ```
+
+---
+
+## Signer Configuration
+
+The framework uses `.cfxdevkit/signer.json` for signing identity (parallel to `.pi/providers.json` for LLM config).
+
+**First-time setup:**
+```bash
+cdk signer setup    # interactive wizard
+cdk signer status   # verify
+cdk sign message "Hello Conflux"   # test
+```
+
+**Signer kinds:**
+
+| Kind | Use case | Auth |
+|---|---|---|
+| `memory` | Quick testing (⚠ ephemeral) | None |
+| `file-keystore` | Dev work | `CFX_PASSPHRASE` env var |
+| `onekey` | Production-like, hardware | Device via WebUSB |
+| `ledger` | Production-like, hardware | Device via WebHID/HID |
+
+**Env vars:**
+
+| Variable | Purpose |
+|---|---|
+| `CFX_SIGNER_NAME` | Override the active signer |
+| `CFX_PASSPHRASE` | File keystore passphrase |
+| `CFX_KEYSTORE_PATH` | Override keystore path |

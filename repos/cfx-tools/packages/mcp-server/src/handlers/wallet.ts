@@ -60,7 +60,46 @@ export async function handleWalletTool(
 
       const session = getKeystoreSession();
       if (!session?.passphrase) {
-        return errText('Keystore is locked. Run cfxdevkit_keystore_unlock first.');
+        // Offline fallback: if CFX_PASSPHRASE + CFX_KEYSTORE_PATH are set, sign directly
+        const hasCreds = process.env.CFX_PASSPHRASE && process.env.CFX_KEYSTORE_PATH;
+        if (hasCreds) {
+          try {
+            const { createSignerSession, createSignerSessionFromConfig } = await import(
+              '@cfxdevkit/signer-session'
+            );
+            const signerSession = process.env.CFX_KEYSTORE_PATH
+              ? await createSignerSession({ kind: 'file-keystore' })
+              : await createSignerSessionFromConfig();
+            try {
+              const space = String(args.space ?? 'espace');
+              const signer = space === 'core' ? signerSession.core : signerSession.eSpace;
+              if (!signer) return errText('Core Space signer not available for this keystore.');
+              const signature = await signer.signMessage(message);
+              return text(
+                JSON.stringify(
+                  {
+                    message,
+                    space,
+                    signer: signer.account.address,
+                    signature,
+                    note: 'signed offline via file keystore (devnode-server unavailable)',
+                  },
+                  null,
+                  2,
+                ),
+              );
+            } finally {
+              await signerSession.dispose();
+            }
+          } catch (err) {
+            return errText(
+              `Offline sign failed: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        }
+        return errText(
+          'Keystore is locked. Run cfxdevkit_keystore_unlock first, or set CFX_PASSPHRASE and CFX_KEYSTORE_PATH for offline signing.',
+        );
       }
 
       try {

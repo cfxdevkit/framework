@@ -6,6 +6,7 @@ export type McpToolGroup =
   | 'compiler'
   | 'keystore'
   | 'wallet-utils'
+  | 'signer'
   | 'scaffold';
 
 export type McpToolMutability = 'read' | 'write' | 'admin';

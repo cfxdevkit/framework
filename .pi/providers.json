@@ -11,7 +11,7 @@
     "structure-upkeep": "Qwen3-Coder-Next-GGUF",
     "docs-upkeep": "Qwen3-Coder-Next-GGUF",
     "review": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
-    "commit": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
+    "commit": "Qwen3-Coder-Next-GGUF",
     "test-audit": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
     "repo-health": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
     "changeset": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",

@@ -11,7 +11,7 @@ import { useAccount, useDisconnect } from 'wagmi';
 const NAV = [
   { label: 'Core', href: '/core' },
   { label: 'Wallet', href: '/wallet' },
-  { label: 'Keys', href: '/keys' },
+  { label: 'Keys & Signers', href: '/keys' },
   { label: 'SIWE', href: '/siwe' },
   { label: 'DeFi', href: '/defi' },
   { label: 'UI Kit', href: '/ui-kit' },

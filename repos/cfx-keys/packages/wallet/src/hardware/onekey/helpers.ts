@@ -1,4 +1,5 @@
-import type { Hex } from 'viem';
+import type { Hex, TypedData, TypedDataDomain } from 'viem';
+import { hashDomain, hashStruct } from 'viem';
 import { HardwareWalletError } from '../../errors/index.js';
 import { rawSignatureToHex, toCanonicalHex } from '../types.js';
 
@@ -61,4 +62,51 @@ export function normaliseSignature(sig: string): Hex {
     });
   }
   return canonical;
+}
+
+/**
+ * Compute the CIP-23 component hashes from a typed-data object.
+ * CIP-23 is structurally identical to EIP-712 — the device expects the two
+ * component hashes (domain separator + message hash) rather than the combined digest.
+ */
+export function computeCip23Hashes(typedData: TypedData): {
+  domainHash: string;
+  messageHash: string;
+} {
+  const td = typedData as unknown as {
+    domain: TypedDataDomain;
+    types: Record<string, { name: string; type: string }[]>;
+    primaryType: string;
+    message: Record<string, unknown>;
+  };
+
+  const domainHash = (hashDomain as (p: { domain: unknown; types: unknown }) => Hex)({
+    domain: td.domain,
+    types: td.types,
+  });
+  const messageHash = (
+    hashStruct as (p: { data: unknown; primaryType: unknown; types: unknown }) => Hex
+  )({
+    data: td.message,
+    primaryType: td.primaryType,
+    types: td.types,
+  });
+
+  return {
+    domainHash: domainHash.startsWith('0x') ? domainHash.slice(2) : domainHash,
+    messageHash: messageHash.startsWith('0x') ? messageHash.slice(2) : messageHash,
+  };
+}
+
+/**
+ * Serialise the `(v, r, s)` tuple from `confluxSignTransaction` into a
+ * 65-byte `0x`-prefixed raw signature (same format as personal_sign).
+ */
+export function serialiseCoreSignature(r: string, s: string, v: string | number): Hex {
+  const vNum = parseV(v);
+  return rawSignatureToHex({
+    r: toCanonicalHex(r) as Hex,
+    s: toCanonicalHex(s) as Hex,
+    v: vNum,
+  });
 }

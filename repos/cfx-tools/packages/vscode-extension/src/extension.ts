@@ -2,7 +2,7 @@
 // biome-ignore-all lint/correctness/noUnusedPrivateClassMembers: runtime state is accessed through extracted helper functions.
 // biome-ignore-all format: compact bridge imports and wrappers stay below hotspot limits.
 // biome-ignore-all assist/source/organizeImports: bridge imports are intentionally grouped by helper module.
-import { abiArgsPlaceholder, abiCallRead, abiCallWrite, parseArgValue, placeholderForSolidityType, promptAbiArgs, promptPayableValue, pickTemplateArtifact, pickWorkspaceArtifact, promptConstructorArgs, readDeployments, writeDeployments, chainsFor, currentChains, currentChain, selectedNetworkLabel, pickChainTarget, createClientFor, withCoreAddress, deriveRunningNodeAccounts, walletSignerFor, ensureUnlockedWallet, registerCommands, showAccountsQuickPick, showContractsQuickPick, copyAddress, deployContractCommand, importContractCommand, createAppendOnlyAuditLogger, type createSharedNodeRuntime, type DeploymentRecord, type CachedSigner, type WalletCommandTarget, StaticTreeProvider, vscode, startRuntime, getOrCreateNodeMnemonic, startNode, stopNode, restartNode, wipeNode, wipeNodeAndRestart, mineBlocks, startMining, stopMining, stopDevnodeServer, selectNetwork, workspaceRoot, config, selectedNetwork, selectedSpace, selectedBackend, selectedFileRef, selectedAccountIndex, derivationPath, setSelectedNetwork, setSelectedSpace, setSelectedBackend, keystorePath, keystorePathLabel, deploymentsPath, nodeDataDir, ensureWorkspaceDir, auditLogPath, log, keystoreExists, fileKeystore, refKey, walletTarget, promptKeystorePassphrase, promptNewKeystorePassphrase, listFileWallets, ensureFileBackend, ensureFileKeystoreUnlocked, currentCapability, refreshAll, buildSnapshot, populateAccountBalances, initializeWallet, addWallet, selectWallet, removeWallet, lockKeystore, rotateKeystorePassphrase, sanitizeAccountName, unlockKeystore } from './helpers/index.js';
+import { abiArgsPlaceholder, abiCallRead, abiCallWrite, parseArgValue, placeholderForSolidityType, promptAbiArgs, promptPayableValue, pickTemplateArtifact, pickWorkspaceArtifact, promptConstructorArgs, readDeployments, writeDeployments, chainsFor, currentChains, currentChain, selectedNetworkLabel, pickChainTarget, createClientFor, withCoreAddress, deriveRunningNodeAccounts, walletSignerFor, ensureUnlockedWallet, registerCommands, showAccountsQuickPick, showContractsQuickPick, copyAddress, deployContractCommand, importContractCommand, createAppendOnlyAuditLogger, type createSharedNodeRuntime, type DeploymentRecord, type CachedSigner, type WalletCommandTarget, StaticTreeProvider, vscode, startRuntime, getOrCreateNodeMnemonic, startNode, stopNode, restartNode, wipeNode, wipeNodeAndRestart, mineBlocks, startMining, stopMining, stopDevnodeServer, selectSignerCommand, selectNetwork, workspaceRoot, config, selectedNetwork, selectedSpace, selectedBackend, selectedFileRef, selectedAccountIndex, derivationPath, setSelectedNetwork, setSelectedSpace, setSelectedBackend, keystorePath, keystorePathLabel, deploymentsPath, nodeDataDir, ensureWorkspaceDir, auditLogPath, log, keystoreExists, fileKeystore, refKey, walletTarget, promptKeystorePassphrase, promptNewKeystorePassphrase, listFileWallets, ensureFileBackend, ensureFileKeystoreUnlocked, currentCapability, refreshAll, buildSnapshot, populateAccountBalances, initializeWallet, addWallet, selectWallet, removeWallet, lockKeystore, rotateKeystorePassphrase, sanitizeAccountName, unlockKeystore } from './helpers/index.js';
 class ExtensionRuntime implements vscode.Disposable {
   private node: ReturnType<typeof createSharedNodeRuntime> | null = null;
   private unlockedPassphrase: string | null = null;
@@ -132,6 +132,7 @@ class ExtensionRuntime implements vscode.Disposable {
   private placeholderForSolidityType(type: string): string { return placeholderForSolidityType.call(this, type); }
   private async promptPayableValue(): Promise<bigint | undefined | null> { return promptPayableValue.call(this); }
   private parseArgValue(value: string, solidityType: string): unknown { return parseArgValue.call(this, value, solidityType); }
+  async selectSignerCommand(): Promise<void> { return selectSignerCommand.call(this); }
 }
 
 let runtime: ExtensionRuntime | null = null;
@@ -139,6 +140,36 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   runtime = new ExtensionRuntime(context);
   context.subscriptions.push(runtime);
   await runtime.activate();
+
+  // Signer status bar item — shows active signer name, opens selector on click
+  const signerBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 10);
+  signerBar.command = 'cfxdevkit.selectSigner';
+  signerBar.tooltip = 'Click to switch active signing identity';
+  const updateSignerBar = () => {
+    try {
+      const { readFileSync } = require('node:fs');
+      const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      if (!root) { signerBar.hide(); return; }
+      const cfg = JSON.parse(readFileSync(`${root}/.cfxdevkit/signer.json`, 'utf8'));
+      const name = cfg?.defaultSigner ?? 'quick';
+      const kind = cfg?.signers?.[name]?.kind ?? 'memory';
+      signerBar.text = `$(key) Signer: ${name} (${kind})`;
+      signerBar.show();
+    } catch {
+      signerBar.text = '$(key) Signer: not configured';
+      signerBar.show();
+    }
+  };
+  updateSignerBar();
+  context.subscriptions.push(signerBar);
+  // Refresh bar when workspace files change
+  const watcher = vscode.workspace.createFileSystemWatcher('**/.cfxdevkit/signer.json');
+  context.subscriptions.push(
+    watcher.onDidChange(updateSignerBar),
+    watcher.onDidCreate(updateSignerBar),
+    watcher.onDidDelete(updateSignerBar),
+    watcher,
+  );
 }
 
 export async function deactivate(): Promise<void> {

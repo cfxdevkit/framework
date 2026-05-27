@@ -240,3 +240,37 @@ export async function removeWallet(
   await this.refreshAll();
   void vscode.window.showInformationMessage(`Removed ${pick.label}.`);
 }
+
+export async function selectSignerCommand(this: ExtensionRuntime): Promise<void> {
+  const { readFileSync, writeFileSync } = require('node:fs');
+  const signerJsonPath = join(this.workspaceRoot(), '.cfxdevkit', 'signer.json');
+  let config: Record<string, unknown>;
+  try {
+    config = JSON.parse(readFileSync(signerJsonPath, 'utf8'));
+  } catch {
+    await vscode.window.showWarningMessage(
+      'No signer configuration found. Run `cdk signer setup` in the terminal to configure.',
+    );
+    return;
+  }
+  const signers = config?.signers as Record<string, { kind: string }> | undefined;
+  if (!signers || Object.keys(signers).length === 0) {
+    await vscode.window.showWarningMessage('No signers configured in .cfxdevkit/signer.json.');
+    return;
+  }
+  const current = config.defaultSigner as string;
+  const items = Object.entries(signers).map(([name, entry]) => ({
+    label: name === current ? `$(check) ${name}` : name,
+    description: entry.kind,
+    name,
+  }));
+  const pick = await vscode.window.showQuickPick(items, {
+    title: 'Select Active Signer',
+    placeHolder: `Current: ${current}`,
+  });
+  if (!pick) return;
+  config.defaultSigner = pick.name;
+  writeFileSync(signerJsonPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+  await this.refreshAll();
+  void vscode.window.showInformationMessage(`Active signer: ${pick.name} (${pick.description})`);
+}

@@ -1,0 +1,36 @@
+# infrastructure/vps/Caddyfile
+#
+# Production reverse proxy.
+# Same hostname structure as infrastructure/local/Caddyfile — only upstreams differ.
+#
+# TLS: Caddy auto-HTTPS via Let's Encrypt (or Cloudflare DNS-01 for wildcard).
+# Services reference Docker Compose service names as upstreams.
+
+{
+	email devops@cfxdevkit.org
+}
+
+# ── Services ─────────────────────────────────────────────────────────────────
+
+showcase.cfxdevkit.org {
+	reverse_proxy showcase:3010
+}
+
+# docs.cfxdevkit.org {
+# 	reverse_proxy docs:3012
+# }
+
+mcp.cfxdevkit.org {
+	reverse_proxy mcp:3020
+}
+
+# cas.cfxdevkit.org {
+# 	reverse_proxy cas:3030
+# }
+
+# api.cfxdevkit.org {
+# 	reverse_proxy api:3001
+# }
+
+# ── Local-only services are NOT present here ─────────────────────────────────
+# devnode, devmcp, local — never exposed on VPS.

@@ -1,27 +1,28 @@
 /**
  * `@cfxdevkit/wallet/hardware/onekey` — OneKey hardware-wallet adapter.
  *
- * The `@onekeyfe/hd-common-sdk` package (and its `hd-web-sdk` /
- * `hd-ble-sdk` siblings) is **injected** rather than imported so this
- * package does not pull a heavy peer that the consumer may already have
+ * The `@onekeyfe/hd-common-connect-sdk` package is **injected** rather than imported
+ * so this package does not pull a heavy peer that the consumer may already have
  * configured for their own runtime (Node, web, React Native, …).
  *
- * Typical wiring:
+ * Two signer factories are available:
  *
+ * **eSpace (EVM-compatible):**
  * ```ts
- * import HardwareSDK from '@onekeyfe/hd-common-sdk';
- * await HardwareSDK.init({ debug: false });
- * const signer = await signerFromOneKey({
- *   sdk: HardwareSDK,
- *   connectId: 'XXXX',
- *   deviceId: 'XXXX',
- *   chainId: 1030,
- * });
+ * import HardwareSDK from '@onekeyfe/hd-common-connect-sdk';
+ * await HardwareSDK.init({ env: 'webusb', debug: false });
+ * const signer = await signerFromOneKey({ sdk: HardwareSDK, connectId, deviceId, chainId: 1030 });
  * ```
  *
- * Conforms to the OneKey EVM API surface (see
- * https://developer.onekey.so → chain-evm): `evmGetAddress`,
- * `evmSignMessage`, `evmSignTransaction`, `evmSignTypedData`.
+ * **Core Space (Conflux-native):**
+ * ```ts
+ * const coreSigner = await signerFromOneKeyCore({ sdk: HardwareSDK, connectId, deviceId, networkId: 1029 });
+ * // signer.account.coreAddress → 'cfx:…'
+ * ```
+ *
+ * Both conforms to the OneKey SDK API surface at https://developer.onekey.so:
+ * - EVM: `evmGetAddress`, `evmSignMessage`, `evmSignTransaction`, `evmSignTypedData`
+ * - Core: `confluxGetAddress`, `confluxSignMessage`, `confluxSignMessageCIP23`, `confluxSignTransaction`
  */
 import type { Account, SignableTx, Signer, SignOptions, TypedData } from '@cfxdevkit/cdk';
 import type { Hex, TransactionSerializableEIP1559 } from 'viem';
@@ -38,6 +39,7 @@ import {
 
 /** Subset of the OneKey SDK we depend on. */
 export interface OneKeySdkLike {
+  // ── eSpace (EVM) ──────────────────────────────────────────────────────────
   evmGetAddress(
     connectId: string,
     deviceId: string,
@@ -66,6 +68,38 @@ export interface OneKeySdkLike {
       chainId?: number;
     },
   ): Promise<OneKeyResponse<{ signature: string; address?: string }>>;
+
+  // ── Core Space (Conflux-native, BIP44 coin 503) ───────────────────────────
+  /** Get Conflux Core Space address at the given BIP-44 path (default `m/44'/503'/0'/0/0`). */
+  confluxGetAddress(
+    connectId: string,
+    deviceId: string,
+    params: { path: string; showOnOneKey?: boolean; chainId?: number },
+  ): Promise<OneKeyResponse<{ address: string; path: string }>>;
+
+  /** Sign a raw hex message using the Conflux Core personal_sign convention. */
+  confluxSignMessage(
+    connectId: string,
+    deviceId: string,
+    params: { path: string; messageHex: string },
+  ): Promise<OneKeyResponse<{ signature: string; address: string }>>;
+
+  /**
+   * Sign a CIP-23 structured typed-data message (Conflux Core equivalent of EIP-712).
+   * @see https://github.com/Conflux-Chain/CIPs/blob/master/CIPs/cip-23.md
+   */
+  confluxSignMessageCIP23(
+    connectId: string,
+    deviceId: string,
+    params: { path: string; messageHash: string; domainHash: string },
+  ): Promise<OneKeyResponse<{ signature: string; address: string }>>;
+
+  /** Sign a Conflux Core Space transaction (legacy gas, epochHeight, storageLimit). */
+  confluxSignTransaction(
+    connectId: string,
+    deviceId: string,
+    params: { path: string; transaction: OneKeyCoreTxParams },
+  ): Promise<OneKeyResponse<{ v: string; r: string; s: string }>>;
 }
 
 /** OneKey responses are tagged unions: success → payload, failure → error. */
@@ -86,6 +120,21 @@ export interface OneKeyTxParams {
   // EIP-1559
   maxFeePerGas?: string;
   maxPriorityFeePerGas?: string;
+}
+
+/** Tx fields for Conflux Core Space — legacy gas + Conflux-specific fields. */
+export interface OneKeyCoreTxParams {
+  to: string;
+  value: string;
+  data?: string;
+  chainId: number;
+  nonce: string;
+  gasLimit: string;
+  gasPrice: string;
+  /** Conflux-specific: epoch height for transaction expiry. Defaults to '0x0'. */
+  epochHeight: string;
+  /** Conflux-specific: storage collateral limit in drips. Defaults to '0x5208'. */
+  storageLimit: string;
 }
 
 export interface SignerFromOneKeyInput {
@@ -211,3 +260,6 @@ export async function signerFromOneKey(input: SignerFromOneKeyInput): Promise<Si
     },
   };
 }
+
+export type { SignerFromOneKeyCoreInput } from './core.js';
+export { CORE_DEFAULT_PATH, signerFromOneKeyCore } from './core.js';

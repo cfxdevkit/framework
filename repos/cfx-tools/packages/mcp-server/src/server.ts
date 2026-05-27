@@ -8,6 +8,7 @@ import { handleCompilerTool } from './handlers/compiler.js';
 import { handleKeystoreTool } from './handlers/keystore.js';
 import { handleNodeTool } from './handlers/node.js';
 import { handleScaffoldTool } from './handlers/scaffold.js';
+import { handleSignerTool } from './handlers/signer.js';
 import { handleWalletTool } from './handlers/wallet.js';
 import { registerAllResources } from './resources/registry.js';
 import { MCP_TOOL_DEFINITIONS } from './tools/registry.js';
@@ -59,6 +60,9 @@ export function createMcpServer(context: ProjectContext): Server {
       }
       if (name.startsWith('cfxdevkit_wallet_')) {
         return await handleWalletTool(name, args as Record<string, unknown>);
+      }
+      if (name.startsWith('cfxdevkit_signer_')) {
+        return await handleSignerTool(name, args as Record<string, unknown>);
       }
       if (name.startsWith('cfxdevkit_scaffold_')) {
         return await handleScaffoldTool(name, args as Record<string, unknown>);

@@ -7,7 +7,13 @@
   "remoteUser": "node",
   "containerUser": "node",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  "runArgs": ["--network", "pasta:--map-gw", "--add-host=host.containers.internal:169.254.1.2"],
+  "runArgs": [
+    "--network",
+    "pasta:--map-gw",
+    "--add-host=host.containers.internal:169.254.1.2",
+    "--cap-add=NET_BIND_SERVICE",
+    "--device=/dev/bus/usb"
+  ],
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
@@ -25,9 +31,10 @@
     "LEMONADE_URL": "http://host.containers.internal:13305/",
     "LEMONADE_BASE_URL": "http://host.containers.internal:13305/"
   },
-
-  "forwardPorts": [8545, 8546, 12536, 12537, 3000, 4173, 5173, 7748, 8787],
-  "otherPortsAttributes": { "onAutoForward": "ignore" },
+  "forwardPorts": [443, 8545, 8546, 12536, 12537, 3000, 4173, 5173, 7748, 8787],
+  "otherPortsAttributes": {
+    "onAutoForward": "ignore"
+  },
   "portsAttributes": {
     "8545": {
       "label": "Conflux eSpace RPC"
@@ -58,7 +65,7 @@
     }
   },
   "initializeCommand": ".devcontainer/scripts/detect-docker-socket.sh",
-  "postCreateCommand": ".devcontainer/scripts/post-create.sh",
+  "postCreateCommand": "bash .devcontainer/scripts/setup-local.sh",
   "postStartCommand": ".devcontainer/scripts/post-start.sh",
   "customizations": {
     "vscode": {
@@ -78,7 +85,9 @@
         "remote.autoForwardPortsFallback": 0,
         "remote.autoForwardPortsSource": "process",
         "remote.restoreForwardedPorts": false,
-        "remote.otherPortsAttributes": { "onAutoForward": "ignore" },
+        "remote.otherPortsAttributes": {
+          "onAutoForward": "ignore"
+        },
         "dev.containers.autoForwardPorts": false,
         "dev.containers.autoForwardPortsFallback": 0
       }

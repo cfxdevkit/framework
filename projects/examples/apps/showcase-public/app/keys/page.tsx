@@ -2,9 +2,44 @@
 
 import { deriveDualAccount, generateMnemonic, validateMnemonic } from '@cfxdevkit/cdk';
 import { CodeSnippet, DemoCard, StatusBadge } from '@cfxdevkit/example-showcase-ui';
-import { useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { SiteLayout } from '../site-layout';
-import { HardwareWalletSection } from './hardware-wallet-section';
+import { CapabilityMatrix } from './capability-matrix';
+import { DeviceLinkCard } from './device-link-card';
+
+/** Small chip showing the currently selected demo signer from localStorage. */
+function DemoSignerChip() {
+  const [label, setLabel] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('cfxdevkit.demoSigner');
+      if (raw) setLabel(JSON.parse(raw).label ?? null);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  if (!label)
+    return (
+      <span style={{ fontSize: 'var(--cfx-text-xs)', color: 'var(--cfx-color-fg-muted)' }}>
+        No demo signer configured
+      </span>
+    );
+  return (
+    <span
+      style={{
+        fontSize: 'var(--cfx-text-xs)',
+        color: 'var(--cfx-color-fg-subtle)',
+        padding: '2px 8px',
+        background: 'var(--cfx-color-bg-emphasis)',
+        borderRadius: 'var(--cfx-radius-sm)',
+        border: '1px solid var(--cfx-color-border-default)',
+      }}
+    >
+      Demo signer: {label}
+    </span>
+  );
+}
 
 const BUTTON_STYLE: React.CSSProperties = {
   padding: 'var(--cfx-space-2) var(--cfx-space-4)',
@@ -176,7 +211,78 @@ export default function KeysPage() {
         )}
       </DemoCard>
 
-      <HardwareWalletSection />
+      <DemoCard
+        title="Hardware Wallets & Signers"
+        description="Compare signing capabilities across in-browser memory, Ledger hardware, and OneKey hardware. OneKey is the only hardware wallet with EIP-712 and CIP-23 typed-data support on both Conflux spaces."
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 'var(--cfx-space-3)',
+          }}
+        >
+          <DemoSignerChip />
+          <Link
+            href="/keys/setup"
+            style={{
+              fontSize: 'var(--cfx-text-sm)',
+              color: 'var(--cfx-color-brand-primary)',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
+          >
+            Configure signer →
+          </Link>
+        </div>
+        <CapabilityMatrix />
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: 'var(--cfx-space-4)',
+            marginTop: 'var(--cfx-space-2)',
+          }}
+        >
+          <DeviceLinkCard
+            href="/keys/memory"
+            title="Memory Wallet"
+            subtitle="In-browser keygen · no hardware required"
+            features={[
+              { label: 'eSpace address', supported: true },
+              { label: 'Core Space address', supported: true },
+              { label: 'signMessage', supported: true },
+              { label: 'signTypedData EIP-712', supported: true },
+              { label: 'signTypedData CIP-23', supported: true },
+            ]}
+          />
+          <DeviceLinkCard
+            href="/keys/ledger"
+            title="Ledger"
+            subtitle="WebHID · Nano S/X/Plus"
+            features={[
+              { label: 'eSpace address', supported: true },
+              { label: 'Core Space address', supported: true },
+              { label: 'signMessage', supported: true },
+              { label: 'signTypedData EIP-712', supported: false },
+              { label: 'signTypedData CIP-23', supported: false },
+            ]}
+          />
+          <DeviceLinkCard
+            href="/keys/onekey"
+            title="OneKey Classic S1 ★"
+            subtitle="WebUSB · EAL 6+ · 30 000+ coins"
+            features={[
+              { label: 'eSpace address', supported: true },
+              { label: 'Core Space address', supported: true },
+              { label: 'signMessage', supported: true },
+              { label: 'signTypedData EIP-712', supported: true, exclusive: true },
+              { label: 'signTypedData CIP-23', supported: true, exclusive: true },
+            ]}
+          />
+        </div>
+      </DemoCard>
     </SiteLayout>
   );
 }

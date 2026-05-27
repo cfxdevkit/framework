@@ -1,4 +1,11 @@
 /**
+ * @on-hold — Satochip adapter is currently on hold and excluded from the showcase.
+ *
+ * Reason: The implementation requires a Python bridge sidecar (`http://127.0.0.1:8397`)
+ * for PC/SC communication with the JavaCard. This is not suitable for the current
+ * browser-based showcase surface. The code is preserved for future Node/Electron
+ * integration or server-side signing workflows.
+ *
  * `@cfxdevkit/wallet/hardware/satochip` — Satochip JavaCard adapter.
  *
  * Talks to the Python bridge service shipped alongside the firmware

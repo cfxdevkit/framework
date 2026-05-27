@@ -1,6 +1,6 @@
 import { verifySiweMessage } from '@cfxdevkit/wallet-connect/siwe';
 import { type NextRequest, NextResponse } from 'next/server';
-import { nonces } from '../nonce/route';
+import { nonces } from '../nonce-store';
 
 export async function POST(request: NextRequest) {
   let body: { message?: string; signature?: string };

@@ -111,5 +111,8 @@ export function registerCommands(this: ExtensionRuntime): void {
       'cfxdevkit.abiCallWrite',
       (fn: AbiFunctionTreeRecord, contract: ContractTreeRecord) => this.abiCallWrite(fn, contract),
     ),
+    vscode.commands.registerCommand('cfxdevkit.selectSigner', () =>
+      guard('selectSigner', () => this.selectSignerCommand()),
+    ),
   );
 }

@@ -312,7 +312,8 @@
     "@cfxdevkit/contracts": "workspace:^",
     "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
-    "@cfxdevkit/wallet": "workspace:^"
+    "@cfxdevkit/wallet": "workspace:^",
+    "@cfxdevkit/signer-session": "workspace:^"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",

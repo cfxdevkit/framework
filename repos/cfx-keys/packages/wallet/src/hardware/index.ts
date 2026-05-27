@@ -8,6 +8,9 @@
  *
  * All adapters return the same `Signer` shape from `@cfxdevkit/cdk`, so they
  * are drop-in replacements for keystore-backed signers.
+ *
+ * Satochip adapter (`@cfxdevkit/wallet/hardware/satochip`) is **on-hold** —
+ * requires a Python bridge sidecar; not suitable for browser showcase.
  */
 export type { HardwareWalletAdapter, HardwareWalletKind, RawEvmSignature } from './types.js';
 export {

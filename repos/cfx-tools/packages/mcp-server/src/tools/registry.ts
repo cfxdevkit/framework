@@ -4,6 +4,7 @@ import { compilerTools } from './compiler.js';
 import { keystoreTools } from './keystore.js';
 import { nodeTools } from './node.js';
 import { scaffoldTools } from './scaffold.js';
+import { SIGNER_TOOL_DEFINITIONS } from './signer.js';
 import type { McpToolDefinition, McpToolGroup } from './types.js';
 import { walletTools } from './wallet.js';
 
@@ -16,6 +17,7 @@ export const MCP_TOOL_DEFINITIONS = [
   ...keystoreTools,
   ...walletTools,
   ...scaffoldTools,
+  ...SIGNER_TOOL_DEFINITIONS,
 ] satisfies readonly McpToolDefinition[];
 
 export type McpToolName = (typeof MCP_TOOL_DEFINITIONS)[number]['name'];

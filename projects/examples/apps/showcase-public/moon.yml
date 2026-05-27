@@ -5,7 +5,7 @@ language: 'typescript'
 
 tasks:
   build:
-    command: 'pnpm exec next build'
+    command: 'pnpm exec next build --webpack'
     deps:
       - 'showcase-local:build'
     inputs:

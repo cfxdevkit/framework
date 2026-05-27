@@ -1,18 +1,7 @@
 import { generateSiweNonce } from '@cfxdevkit/wallet-connect/siwe';
 import { type NextRequest, NextResponse } from 'next/server';
 
-// In-memory nonce store with 5-minute TTL
-const nonces = new Map<string, { nonce: string; expiresAt: number }>();
-
-// Clean up expired nonces on each request
-function pruneExpired() {
-  const now = Date.now();
-  for (const [addr, entry] of nonces) {
-    if (entry.expiresAt < now) {
-      nonces.delete(addr);
-    }
-  }
-}
+import { nonces, pruneExpired } from '../nonce-store';
 
 export function GET(request: NextRequest) {
   pruneExpired();
@@ -28,5 +17,3 @@ export function GET(request: NextRequest) {
 
   return NextResponse.json({ nonce });
 }
-
-export { nonces };

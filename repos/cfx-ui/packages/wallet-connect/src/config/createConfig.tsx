@@ -48,8 +48,11 @@ export function isFluentProvider(provider: unknown): boolean {
   if (typeof window === 'undefined' || typeof provider !== 'object' || provider === null) {
     return false;
   }
-  const candidate = window as Window & { fluent?: unknown };
-  return provider === candidate.fluent || Boolean((provider as { isFluent?: boolean }).isFluent);
+  const w = window as Window & { fluent?: unknown };
+  const p = provider as { isFluent?: boolean; isOneKey?: boolean };
+  // Reject the literal window.fluent object, or any provider that sets isFluent
+  // but is NOT OneKey (OneKey sets isFluent for ConfluxPortal/Fluent compatibility).
+  return provider === w.fluent || (Boolean(p.isFluent) && !p.isOneKey);
 }
 
 export function createConfluxWagmiConfig(options: CreateConfluxWagmiConfigOptions = {}) {
@@ -61,7 +64,7 @@ export function createConfluxWagmiConfig(options: CreateConfluxWagmiConfigOption
 
   return createConfig({
     chains,
-    multiInjectedProviderDiscovery: options.multiInjectedProviderDiscovery ?? false,
+    multiInjectedProviderDiscovery: options.multiInjectedProviderDiscovery ?? true,
     connectors: [
       injected({
         shimDisconnect: options.shimDisconnect ?? true,

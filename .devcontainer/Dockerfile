@@ -18,6 +18,8 @@ RUN apt-get update \
     jq \
     less \
     libssl-dev \
+    libusb-1.0-0 \
+    libusb-dev \
     lsof \
     make \
     openssh-client \
@@ -28,6 +30,25 @@ RUN apt-get update \
     unzip \
   && ln -sf /usr/bin/fdfind /usr/local/bin/fd \
   && rm -rf /var/lib/apt/lists/*
+
+# mkcert — local trusted TLS cert generation for *.dev.cfxdevkit.org
+# See docs/adr/0005-local-https-reverse-proxy.md for rationale.
+RUN curl -fsSL \
+  "https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64" \
+  -o /usr/local/bin/mkcert \
+  && chmod +x /usr/local/bin/mkcert
+
+# Caddy — local reverse proxy, same config structure as VPS.
+# CAP_NET_BIND_SERVICE (devcontainer.json) allows binding port 443 without root.
+RUN curl -fsSL \
+  "https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_linux_amd64.tar.gz" \
+  | tar -xz -C /usr/local/bin caddy \
+  && chmod +x /usr/local/bin/caddy
+
+# udev rule for OneKey Classic S1 (VID 1209 / PID 53c1).
+# Allows non-root access when /dev/bus/usb is passed through (devcontainer.json).
+RUN echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c1", MODE="0666", GROUP="plugdev"' \
+  > /etc/udev/rules.d/70-onekey.rules
 
 RUN mkdir -p /usr/local/share/nvm/.cache \
   && chmod 2775 /usr/local/share/nvm/.cache \
