@@ -15,7 +15,10 @@ export async function complete({ action, modelOverride, userPrompt, context, qui
         provider: actionConfig.provider as typeof config.provider,
       }
     : config;
-  const provider = await resolveProvider(effectiveConfig);
+  const provider = await resolveProvider(
+    effectiveConfig,
+    actionConfig.isCloud ? { apiKey: actionConfig.apiKey } : undefined,
+  );
   const modelId = await resolveProviderModel(provider, modelOverride ?? actionConfig.model);
   const requestTimeoutMs = resolveRequestTimeoutMs(config);
 
@@ -75,7 +78,10 @@ async function completeDirect({
         provider: actionConfig.provider as typeof config.provider,
       }
     : config;
-  const provider = await resolveProvider(effectiveConfig);
+  const provider = await resolveProvider(
+    effectiveConfig,
+    actionConfig.isCloud ? { apiKey: actionConfig.apiKey } : undefined,
+  );
   const modelId = await resolveProviderModel(provider, flags.model ?? actionConfig.model);
   const requestTimeoutMs = resolveRequestTimeoutMs(config);
   const messages: readonly ChatMessage[] = [

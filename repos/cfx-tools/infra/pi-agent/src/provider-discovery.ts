@@ -1,3 +1,4 @@
+import { hasOpenRouterKey, OPENROUTER_BASE_URL, openRouterModel } from './cloud-credentials.js';
 import type { PiLlmConfig, PiLlmProviderType } from './config.js';
 import type { PiLlmModel, PiResolvedProviderState } from './provider-types.js';
 
@@ -75,6 +76,16 @@ export async function resolveProviderState(config: PiLlmConfig): Promise<PiResol
       baseUrl: process.env.OPENAI_BASE_URL,
       defaultModel: config.defaultModel,
       models: await discoverProviderModels('openai-compat', process.env.OPENAI_BASE_URL),
+    };
+  }
+
+  // Prefer OpenRouter over GitHub Copilot when its key is present.
+  if (hasOpenRouterKey()) {
+    return {
+      type: 'openai-compat',
+      baseUrl: OPENROUTER_BASE_URL,
+      defaultModel: config.defaultModel ?? openRouterModel(),
+      models: await discoverProviderModels('openai-compat', OPENROUTER_BASE_URL),
     };
   }
 

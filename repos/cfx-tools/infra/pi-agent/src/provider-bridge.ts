@@ -1,4 +1,5 @@
 import type { ExtensionAPI, ProviderModelConfig } from '@earendil-works/pi-coding-agent';
+import { isOpenRouterBaseUrl, openRouterApiKey } from './cloud-credentials.js';
 import type { PiLlmProviderType } from './config.js';
 import { readPiConfig, resolvePiConfigPath } from './config.js';
 import type { PiScopeName } from './extension.js';
@@ -60,7 +61,11 @@ function resolvePiCliInvocation(
   }
 
   if (providerBaseUrl) {
-    env.OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? 'cfxdevkit-local-placeholder';
+    // OpenRouter authenticates with its own key; other openai-compat endpoints
+    // (incl. local lemonade) use OPENAI_API_KEY or a harmless placeholder.
+    env.OPENAI_API_KEY = isOpenRouterBaseUrl(providerBaseUrl)
+      ? (openRouterApiKey() ?? '')
+      : (process.env.OPENAI_API_KEY ?? 'cfxdevkit-local-placeholder');
   }
 
   return {

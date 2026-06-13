@@ -119,9 +119,29 @@ content is produced. Always ensure `max_tokens` is large enough (see Token Budge
 
 ---
 
-### Cloud — GitHub Copilot (on-demand for wiki generation)
+### Cloud — OpenRouter (preferred) → GitHub Copilot (fallback)
 
-#### `claude-sonnet-4.6` via GitHub Copilot
+Cloud calls (interactive `cdk agent chat --github` and cloud-routed actions such as
+`wiki-generate`) prefer **OpenRouter** whenever an OpenRouter key is present, and fall
+back to GitHub Copilot otherwise. No config edits are required — detection is automatic.
+
+| Variable | Purpose |
+|----------|---------|
+| `OPENROUTER_API_KEY` | When set, all cloud calls route through OpenRouter. |
+| `OPENROUTER_MODEL` | Optional model override (default `deepseek-v4-pro`). |
+
+When `OPENROUTER_API_KEY` is set:
+
+| Property | Value |
+|----------|---------|
+| Endpoint | `https://openrouter.ai/api/v1` |
+| Auth | `OPENROUTER_API_KEY` env (Bearer) |
+| Provider type | `openai-compat` |
+| Default model | `OPENROUTER_MODEL` env, else `deepseek-v4-pro` |
+
+#### Fallback — `claude-sonnet-4.6` via GitHub Copilot
+
+Used only when **no** `OPENROUTER_API_KEY` is found.
 
 | Property | Value |
 |----------|---------|
@@ -137,8 +157,10 @@ full codebase context and structured page output reliably. Other GPT-5.x models 
 available at this endpoint if needed (`gpt-5.4`, `gpt-5.5`, etc.).
 
 **How routing works:** `wiki.ts` reads `actionPolicies['wiki-generate']` → `profile: 'github-cloud'`
-→ resolves `baseUrl` + `provider` from `providerProfiles['github-cloud']`. For `openai-compat`
-providers it skips the local `/api/v1` path suffix and uses `GITHUB_TOKEN` as the API key.
+→ resolves `baseUrl` + `provider` from `providerProfiles['github-cloud']`. The cloud-credential
+resolver then overrides the endpoint/key/model with OpenRouter when `OPENROUTER_API_KEY` is set.
+For `openai-compat` providers it skips the local `/api/v1` path suffix and uses the resolved
+bearer token as the API key.
 
 ---
 

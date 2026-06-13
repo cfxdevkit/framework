@@ -1,3 +1,4 @@
+import { resolveCloudCredentials } from './cloud-credentials.ts';
 import type { LlmConfig, LlmProviderType } from './types.ts';
 
 const LEMONADE_DEFAULT_URL = 'http://host.containers.internal:13305/';
@@ -7,7 +8,7 @@ export interface ActionConfig {
   readonly model: string;
   readonly baseUrl: string;
   readonly provider: LlmProviderType;
-  /** API key for the provider. 'local' for Lemonade; GITHUB_TOKEN for cloud providers. */
+  /** API key for the provider. 'local' for Lemonade; OpenRouter key or GITHUB_TOKEN for cloud providers. */
   readonly apiKey: string;
   /** True when the provider is openai-compat or github-models (cloud endpoint). */
   readonly isCloud: boolean;
@@ -27,7 +28,11 @@ export interface ActionConfig {
  *
  *   baseUrl:  providerProfiles[profile].baseUrl → config.baseUrl → lemonade default
  *   provider: providerProfiles[profile].provider → config.provider → 'lemonade'
- *   apiKey:   GITHUB_TOKEN for cloud providers, 'local' for Lemonade/LiteLLM
+ *   apiKey:   OpenRouter key when OPENROUTER_API_KEY is set, else GITHUB_TOKEN
+ *             for cloud providers, 'local' for Lemonade/LiteLLM
+ *
+ *   Cloud actions prefer OpenRouter (when OPENROUTER_API_KEY is present) and
+ *   fall back to the configured Copilot/GitHub endpoint otherwise.
  */
 export function resolveActionConfig(action: string, config: LlmConfig): ActionConfig {
   const actionPolicy = config.actionPolicies?.[action];
@@ -46,9 +51,23 @@ export function resolveActionConfig(action: string, config: LlmConfig): ActionCo
   const provider = normalizeProvider(profile?.provider ?? config.provider ?? 'lemonade');
 
   const isCloud = provider === 'openai-compat' || provider === 'github-models';
-  const apiKey = isCloud ? (process.env.GITHUB_TOKEN ?? 'local') : 'local';
+  if (!isCloud) {
+    return { action, model, baseUrl: rawBaseUrl, provider, apiKey: 'local', isCloud, profileName };
+  }
 
-  return { action, model, baseUrl: rawBaseUrl, provider, apiKey, isCloud, profileName };
+  const cloud = resolveCloudCredentials({ baseUrl: rawBaseUrl, model });
+  // OpenRouter is OpenAI-compatible; force openai-compat semantics when active.
+  const cloudProvider: LlmProviderType = cloud.source === 'openrouter' ? 'openai-compat' : provider;
+
+  return {
+    action,
+    model: cloud.model,
+    baseUrl: cloud.baseUrl,
+    provider: cloudProvider,
+    apiKey: cloud.apiKey,
+    isCloud,
+    profileName,
+  };
 }
 
 function normalizeProvider(raw: string | null | undefined): LlmProviderType {

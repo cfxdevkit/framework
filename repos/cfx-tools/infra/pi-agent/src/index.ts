@@ -1,3 +1,13 @@
+export {
+  hasOpenRouterKey,
+  isOpenRouterBaseUrl,
+  OPENROUTER_API_KEY_ENV,
+  OPENROUTER_BASE_URL,
+  OPENROUTER_DEFAULT_MODEL,
+  OPENROUTER_MODEL_ENV,
+  openRouterApiKey,
+  openRouterModel,
+} from './cloud-credentials.js';
 export { registerPiRepoCommands } from './commands.js';
 export { registerPiCdkCommands } from './commands-cdk.js';
 export type {

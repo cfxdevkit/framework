@@ -9,13 +9,17 @@ import {
 import { getProviderDefaultModel, resolveProviderModel } from './provider-meta.ts';
 import type { LlmConfig, LlmProvider, LlmProviderType } from './types.ts';
 
-export async function resolveProvider(config?: LlmConfig): Promise<LlmProvider> {
+export async function resolveProvider(
+  config?: LlmConfig,
+  overrides?: { readonly apiKey?: string },
+): Promise<LlmProvider> {
   const resolvedConfig = config ?? (await readConfig());
   const providerType = configuredProvider(resolvedConfig);
 
   if (providerType === 'github-models') {
     return new GitHubModelsProvider({
       defaultModel: resolvedConfig.githubModel ?? resolvedConfig.defaultModel,
+      ...(overrides?.apiKey ? { token: overrides.apiKey } : {}),
     });
   }
 
@@ -24,12 +28,14 @@ export async function resolveProvider(config?: LlmConfig): Promise<LlmProvider> 
       return new LiteLLMProvider({
         baseUrl: resolvedConfig.baseUrl,
         defaultModel: resolvedConfig.defaultModel,
+        ...(overrides?.apiKey ? { apiKey: overrides.apiKey } : {}),
       });
     }
     if (providerType === 'openai-compat') {
       return new OpenAICompatProvider({
         baseUrl: resolvedConfig.baseUrl,
         defaultModel: resolvedConfig.defaultModel,
+        ...(overrides?.apiKey ? { apiKey: overrides.apiKey } : {}),
       });
     }
     return new LemonadeProvider({

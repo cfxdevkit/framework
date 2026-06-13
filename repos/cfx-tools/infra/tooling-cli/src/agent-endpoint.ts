@@ -3,6 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { hasOpenRouterKey, OPENROUTER_BASE_URL, openRouterModel } from '@cfxdevkit/pi-agent';
 import { withPiAgent, withPiAgentSource } from './agent-runtime.js';
 
 const execFileAsync = promisify(execFile);
@@ -98,7 +99,7 @@ async function withTemporaryPiEndpoint(
   process.env.CFXDEVKIT_LLM_AGENT_CONFIG_PATH = realAgentConfigPath;
 
   try {
-    if (endpoint === 'github') {
+    if (endpoint === 'github' && !hasOpenRouterKey()) {
       const auth = await resolveGithubAuth(true);
       process.env.GITHUB_TOKEN = auth.token ?? '';
     }
@@ -119,6 +120,18 @@ function buildPiEndpointConfig(
   endpoint: Exclude<PiEndpoint, 'default'>,
 ): AgentConfig {
   if (endpoint === 'github') {
+    // Prefer OpenRouter when its key is present; otherwise fall back to the
+    // existing GitHub Copilot / GitHub Models configuration.
+    if (hasOpenRouterKey()) {
+      return {
+        ...config,
+        provider: 'openai-compat',
+        baseUrl: OPENROUTER_BASE_URL,
+        defaultModel: openRouterModel(),
+        githubModel: openRouterModel(),
+        harness: { ...config.harness, providerStrategy: 'direct' },
+      };
+    }
     return {
       ...config,
       provider: 'github-models',
@@ -196,6 +209,22 @@ export async function printAgentEndpoints(scope?: string): Promise<void> {
       : `provider override: lemonade (base config uses ${config.provider})`;
   const prefix = scope ? `--scope ${scope} ` : '';
 
+  const cloudActive = hasOpenRouterKey() ? 'OpenRouter' : 'GitHub Copilot/Models';
+  const cloudBlock = hasOpenRouterKey()
+    ? `Cloud endpoint (OpenRouter — OPENROUTER_API_KEY detected):
+  - provider override: openai-compat
+  - baseUrl: ${OPENROUTER_BASE_URL}
+  - auth: OPENROUTER_API_KEY (preferred over GitHub Copilot)
+  - default model: ${openRouterModel()}
+  - command: cdk agent ${prefix}chat --github [prompt]`
+    : `Cloud endpoint (GitHub Models — no OpenRouter key found):
+  - provider override: github-models
+  - baseUrl: ${githubModelsEndpoint}
+  - auth: ${githubAuth.note}
+  - default model: ${config.githubModel ?? defaultGithubModel}
+  - set OPENROUTER_API_KEY to route cloud calls through OpenRouter instead
+  - command: cdk agent ${prefix}chat --github [prompt]`;
+
   console.log(`cdk agent endpoints
 
 Local endpoint (lemonade):
@@ -203,14 +232,9 @@ Local endpoint (lemonade):
   - default model: ${config.provider === 'github-models' ? 'auto' : (config.defaultModel ?? 'auto')}
   - command: cdk agent ${prefix}chat --local [prompt]
 
-GitHub endpoint (GitHub Models):
-  - provider override: github-models
-  - baseUrl: ${githubModelsEndpoint}
-  - auth: ${githubAuth.note}
-  - default model: ${config.githubModel ?? defaultGithubModel}
-  - command: cdk agent ${prefix}chat --github [prompt]
+${cloudBlock}
 
 Next:
   - local planning: cdk agent check --quick
-  - cloud review / implementation: cdk agent chat --github`);
+  - cloud review / implementation (${cloudActive}): cdk agent chat --github`);
 }
