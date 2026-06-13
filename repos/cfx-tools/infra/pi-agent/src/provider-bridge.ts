@@ -5,11 +5,18 @@ import type { PiScopeName } from './extension.js';
 import { resolvePiModel, resolveProviderState } from './provider-discovery.js';
 import type { PiCliInvocation, PiLlmModel, PiProviderBridge } from './provider-types.js';
 
+/**
+ * Name of the environment variable the PI OpenAI provider reads the API key
+ * from. The PI SDK's `apiKey` field expects the variable name, not the secret
+ * itself — the actual value is injected via `env.OPENAI_API_KEY`.
+ */
+const OPENAI_API_KEY_ENV = 'OPENAI_API_KEY';
+
 export function registerPiProviderBridge(pi: ExtensionAPI, bridge: PiProviderBridge): void {
   pi.registerProvider('openai', {
     name: 'CFX DevKit OpenAI-Compatible',
     baseUrl: bridge.providerBaseUrl ?? undefined,
-    apiKey: 'OPENAI_API_KEY',
+    apiKey: OPENAI_API_KEY_ENV,
     api: 'openai-completions',
     models: createPiProviderModels(bridge.models, bridge.defaultModel, bridge.providerBaseUrl),
   });

@@ -16,6 +16,15 @@ const githubModelsEndpoint = 'https://models.inference.ai.azure.com';
 export async function resolveProviderState(config: PiLlmConfig): Promise<PiResolvedProviderState> {
   if (config.baseUrl) {
     const providerType = configuredProvider(config);
+    if (providerType === 'lemonade') {
+      const { models, apiBaseUrl } = await discoverLemonadeCatalog(config.baseUrl);
+      return {
+        type: providerType,
+        baseUrl: apiBaseUrl,
+        defaultModel: config.defaultModel,
+        models,
+      };
+    }
     return {
       type: providerType,
       baseUrl: config.baseUrl,
@@ -39,20 +48,21 @@ export async function resolveProviderState(config: PiLlmConfig): Promise<PiResol
 
   const lemonadeUrl = process.env.LEMONADE_URL ?? process.env.LEMONADE_BASE_URL;
   if (lemonadeUrl) {
+    const { models, apiBaseUrl } = await discoverLemonadeCatalog(lemonadeUrl);
     return {
       type: 'lemonade',
-      baseUrl: lemonadeUrl,
+      baseUrl: apiBaseUrl,
       defaultModel: config.defaultModel,
-      models: await discoverProviderModels('lemonade', lemonadeUrl),
+      models,
     };
   }
 
   for (const baseUrl of defaultBaseUrls) {
-    const models = await discoverProviderModels('lemonade', baseUrl);
+    const { models, apiBaseUrl } = await discoverLemonadeCatalog(baseUrl);
     if (models.length > 0) {
       return {
         type: 'lemonade',
-        baseUrl,
+        baseUrl: apiBaseUrl,
         defaultModel: config.defaultModel,
         models,
       };
@@ -111,11 +121,8 @@ async function discoverProviderModels(
   baseUrl: string,
 ): Promise<readonly PiLlmModel[]> {
   if (providerType === 'lemonade') {
-    for (const path of modelPaths) {
-      const models = await fetchModelCatalog(baseUrl, path);
-      if (models.length > 0) return models;
-    }
-    return [];
+    const { models } = await discoverLemonadeCatalog(baseUrl);
+    return models;
   }
 
   if (providerType === 'github-models') {
@@ -134,6 +141,40 @@ async function discoverProviderModels(
     'models',
     authorization ? { authorization: `Bearer ${authorization}` } : undefined,
   );
+}
+
+/**
+ * Probe a Lemonade-style server for its model catalog and, from the model path
+ * that responds, derive the API base URL the server actually serves under
+ * (e.g. `/api/v1/`). The PI SDK appends `chat/completions` to this base URL, so
+ * returning the bare host would produce a 404 against Lemonade's `/api/v1`
+ * surface. Mirrors the chat-path probing done by the LLM completion engine.
+ */
+async function discoverLemonadeCatalog(
+  baseUrl: string,
+): Promise<{ models: readonly PiLlmModel[]; apiBaseUrl: string }> {
+  for (const path of modelPaths) {
+    const models = await fetchModelCatalog(baseUrl, path);
+    if (models.length > 0) {
+      return { models, apiBaseUrl: deriveApiBaseUrl(baseUrl, path) };
+    }
+  }
+  return { models: [], apiBaseUrl: normalizeBaseUrl(baseUrl) };
+}
+
+/**
+ * Strip the trailing `models` segment from a working model-discovery path to
+ * recover the server's API prefix, then resolve it against the base URL so
+ * chat-completion clients target the same surface (`/api/v1/chat/completions`).
+ */
+function deriveApiBaseUrl(baseUrl: string, modelsPath: string): string {
+  const prefix = modelsPath.replace(/models\/?$/, '').replace(/^\/+/, '');
+  const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
+  return prefix ? new URL(prefix, normalizedBaseUrl).toString() : normalizedBaseUrl;
+}
+
+function normalizeBaseUrl(baseUrl: string): string {
+  return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 }
 
 async function fetchModelCatalog(
