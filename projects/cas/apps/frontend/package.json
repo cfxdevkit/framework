@@ -28,7 +28,7 @@
     "react-dom": "19.2.6",
     "tailwindcss": "^4.3.0",
     "viem": "^2.21.0",
-    "wagmi": "^3.6.9"
+    "wagmi": "^3.6.16"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
