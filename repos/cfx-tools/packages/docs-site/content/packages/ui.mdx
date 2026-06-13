@@ -649,15 +649,15 @@ export declare function TokenSelect<TToken extends TokenSelectOption = TokenSele
 ### Usage
 
 ```tsx
-import { Field, TokenAmountField } from '@cfxdevkit/ui/form';
+import { Field, TokenAmountField, TokenSelect } from '@cfxdevkit/ui/form';
 
 <Field label="Amount" required>
   <TokenAmountField
-    amount={amount}
-    tokens={tokens}
-    balance={balance}
-    onAmountChange={setAmount}
-    onTokenChange={setToken}
+    amount="1.5"
+    balance="10.0"
+    tokens={[tokenA, tokenB]}
+    onAmountChange={(val) => setAmount(val)}
+    onTokenChange={(token) => setToken(token)}
   />
 </Field>
 ```
@@ -667,7 +667,7 @@ import { Field, TokenAmountField } from '@cfxdevkit/ui/form';
 ## `./data-display`
 
 ```ts
-// Props for metric display with optional delta.
+// Compact metric display showing value and optional delta.
 export interface MetricProps {
   className?: string;
   delta?: string;
@@ -678,13 +678,14 @@ export interface MetricProps {
   valueClassName?: string;
 }
 
-// Option type for segmented control.
-export interface SegmentedControlOption<TValue extends string = string> {
-  label: string;
-  value: TValue;
+// Grid layout for status indicators.
+export interface StatusGridProps {
+  children: React.ReactNode;
+  className?: string;
+  columns?: number;
 }
 
-// Props for segmented control.
+// Segmented control for mutually exclusive selection.
 export interface SegmentedControlProps<TValue extends string = string> {
   activeOptionClassName?: string;
   className?: string;
@@ -695,36 +696,41 @@ export interface SegmentedControlProps<TValue extends string = string> {
   value: TValue;
 }
 
-// Props for status grid layout.
-export interface StatusGridProps {
-  children: React.ReactNode;
-  className?: string;
-  columns?: number;
+// Option type for segmented control.
+export interface SegmentedControlOption<TValue extends string = string> {
+  label: string;
+  value: TValue;
 }
 
 // Renders a metric with optional delta indicator.
 export declare function Metric({ className, delta, deltaClassName, label, labelClassName, value, valueClassName, }: MetricProps): import("react/jsx-runtime").JSX.Element;
 
-// Renders a segmented control for mutually exclusive selection.
-export declare function SegmentedControl<TValue extends string = string>({ activeOptionClassName, className, inactiveOptionClassName, onChange, optionClassName, options, value, }: SegmentedControlProps<TValue>): import("react/jsx-runtime").JSX.Element;
-
 // Renders a responsive grid of status indicators.
 export declare function StatusGrid({ children, className, columns }: StatusGridProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a segmented control for mutually exclusive selection.
+export declare function SegmentedControl<TValue extends string = string>({ activeOptionClassName, className, inactiveOptionClassName, onChange, optionClassName, options, value, }: SegmentedControlProps<TValue>): import("react/jsx-runtime").JSX.Element;
 ```
 
 ### Usage
 
 ```tsx
-import { Metric, SegmentedControl } from '@cfxdevkit/ui/data-display';
+import { Metric, StatusGrid, SegmentedControl } from '@cfxdevkit/ui/data-display';
 
 <Metric label="Total Volume" value="$1.2M" delta="+12%" />
+<StatusGrid columns={3}>
+  <StatusItem icon={<CheckIcon />} label="Verified" />
+  <StatusItem icon={<LockIcon />} label="Secure" />
+  <StatusItem icon={<ClockIcon />} label="Pending" />
+</StatusGrid>
 <SegmentedControl
+  value="swap"
   options={[
-    { label: 'Overview', value: 'overview' },
-    { label: 'Analytics', value: 'analytics' }
+    { label: 'Swap', value: 'swap' },
+    { label: 'Wrap', value: 'wrap' },
+    { label: 'Unwrap', value: 'unwrap' },
   ]}
-  value={view}
-  onChange={setView}
+  onChange={(v) => setMode(v as 'swap' | 'wrap' | 'unwrap')}
 />
 ```
 
@@ -733,7 +739,7 @@ import { Metric, SegmentedControl } from '@cfxdevkit/ui/data-display';
 ## `./feedback`
 
 ```ts
-// Props for network switch notice.
+// Notice prompting user to switch networks in their wallet.
 export interface NetworkSwitchNoticeProps {
   addChainParams?: {
     chainId: string;
@@ -750,7 +756,7 @@ export interface NetworkSwitchNoticeProps {
   preview?: boolean;
 }
 
-// Props for generic notice component.
+// Generic dismissible notice component with tone-based styling.
 export interface NoticeProps {
   children: React.ReactNode;
   className?: string;
@@ -774,9 +780,9 @@ import { Notice, NetworkSwitchNotice } from '@cfxdevkit/ui/feedback';
 
 <Notice tone="warning">This action cannot be undone.</Notice>
 <NetworkSwitchNotice
-  chainName="Conflux Mainnet"
-  expectedChainId="1030"
-  message="Switch to Conflux Mainnet to continue."
+  expectedChainId="0x1"
+  chainName="Ethereum Mainnet"
+  message="Please switch to Ethereum to continue."
 />
 ```
 
@@ -785,19 +791,46 @@ import { Notice, NetworkSwitchNotice } from '@cfxdevkit/ui/feedback';
 ## `./wallet`
 
 ```ts
-// Props for icon-only buttons (extends ButtonHTMLAttributes with accessibility).
-export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'className' | 'type'> & {
+// Wallet connection button with dynamic state labels.
+export interface WalletButtonProps {
+  className?: string;
+  connectLabel?: string;
+  connectedClassName?: string;
+  disconnectedClassName?: string;
+  disconnectLabel?: string;
+}
+
+// Modal for selecting a wallet provider.
+export interface WalletPickerModalProps {
+  open: boolean;
+  onClose: () => void;
+  section?: 'all' | 'popular' | 'other';
+}
+
+// Card displaying wallet provider status and actions.
+export interface WalletProviderCardProps {
+  account?: string;
+  actions?: React.ReactNode;
+  chainLabel?: string;
+  className?: string;
+  connectLabel?: string;
+  connectPending?: boolean;
+  error?: string;
+  onConnect?: () => void;
+  onDisconnect?: () => void;
+  providerDescription?: string;
+  providerPresent?: boolean;
+  space?: string;
+  status: WalletProviderCardStatus;
   title: string;
-};
+}
 
-// Status values for wallet provider cards.
-export type WalletProviderCardStatus = 'active' | 'connecting' | 'detecting' | 'in-activating' | 'in-detecting' | 'not-active' | 'not-installed' | (string & {});
-
-// State values for wallet status chips.
-export type WalletStatusChipState = 'connected' | 'connecting' | 'disconnected';
-
-// Renders an accessible icon-only button with title tooltip.
-export declare function IconButton({ title, children, ...props }: IconButtonProps): import("react/jsx-runtime").JSX.Element;
+// Small badge showing wallet connection status and address.
+export interface WalletStatusChipProps {
+  address?: string;
+  className?: string;
+  status: WalletStatusChipState;
+}
 
 // Renders a wallet connection button with dynamic state.
 export declare function WalletButton({ className, connectLabel, connectedClassName, disconnectedClassName, disconnectLabel, }: WalletButtonProps): import("react/jsx-runtime").JSX.Element;
@@ -810,6 +843,12 @@ export declare function WalletProviderCard({ account, actions, chainLabel, class
 
 // Renders a wallet status chip (address + status).
 export declare function WalletStatusChip({ address, className, status, }: WalletStatusChipProps): import("react/jsx-runtime").JSX.Element | null;
+
+// Status values for wallet provider cards.
+export type WalletProviderCardStatus = 'active' | 'connecting' | 'detecting' | 'in-activating' | 'in-detecting' | 'not-active' | 'not-installed' | (string & {});
+
+// State values for wallet status chips.
+export type WalletStatusChipState = 'connected' | 'connecting' | 'disconnected';
 ```
 
 ### Usage
@@ -818,16 +857,14 @@ export declare function WalletStatusChip({ address, className, status, }: Wallet
 import { WalletButton, WalletStatusChip, WalletProviderCard } from '@cfxdevkit/ui/wallet';
 
 <WalletButton connectLabel="Connect Wallet" disconnectLabel="Disconnect" />
-
-<WalletStatusChip address="0x1234..." status="connected" />
-
+<WalletStatusChip status="connected" address="0x1234..." />
 <WalletProviderCard
   title="MetaMask"
   status="active"
   account="0x1234..."
-  chainLabel="Conflux Mainnet"
-  onDisconnect={() => {}}
+  chainLabel="Ethereum Mainnet"
+  onDisconnect={() => disconnect()}
 />
 ```
 
-{/* readme-hash: 43a31d0a0588a942aeb0b413a5aac958bd9c099bd215a6af875aa669e9d9a46c */}
+{/* readme-hash: c74b1b69ad862e250992c049b8bd374f49998899461b615658d7e6dd18433415 */}

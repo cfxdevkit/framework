@@ -277,58 +277,17 @@ export declare const __packageName: "@cfxdevkit/react";
 
 // Represents the current account state (address, chain ID, status, etc.)
 export interface UseAccountReturn {
-export interface UseNativeBalanceInput {
-export interface UseNativeBalanceReturn {
-export interface UseTokenBalanceInput {
-export interface UseTokenBalanceReturn {
-export interface TokenMetadata {
-export interface UseTokenMetadataInput {
-export interface UseTokenMetadataReturn {
-export interface Signer {
-export interface CfxProviderProps {
-export interface ContractError extends Error {
-export interface ReadCall {
-export interface WriteInput {
-export interface UseReadContractInput {
-export interface UseReadContractReturn<T> {
-export interface UseReadContractsInput {
-export interface UseReadContractsReturn {
-export interface UseSimulateContractInput {
-export interface UseSimulateContractReturn<T> {
-export interface UseWriteContractReturn {
-export interface WatchEventLog {
-export interface UseWatchEventInput {
-export interface SendTransactionInput {
-export interface SendTransactionResult {
-export interface UseSendTransactionReturn {
-export interface UseWaitForTransactionInput {
-export interface UseWaitForTransactionReturn {
-```
+// Hook to get the current wallet account state
+export declare function useAccount(): UseAccountReturn;
 
-### Usage
+// Hook to fetch native CFX balance of an address
+export declare function useNativeBalance(input: UseNativeBalanceInput): UseNativeBalanceReturn;
 
-```tsx
-import { useAccount, useNativeBalance, CfxProvider } from '@cfxdevkit/react';
+// Hook to fetch balance of a specific token
+export declare function useTokenBalance(input: UseTokenBalanceInput): UseTokenBalanceReturn;
 
-function App() {
-  const account = useAccount();
-  const balance = useNativeBalance({ address: account.address });
-  return <CfxProvider>{/* ... */}</CfxProvider>;
-}
-```
-
-```ts
-// Main React provider for context and configuration
-export declare function CfxProvider({ client, signer, queryClient, children }: CfxProviderProps): import("react/jsx-runtime").JSX.Element;
-
-// Hook to access the configured CFX client instance
-export declare function useClient(): Client;
-
-// Hook to get the current chain configuration
-export declare function useChain(): ChainConfig;
-
-// Hook to get the active signer (e.g., MetaMask wallet)
-export declare function useSigner(): Signer | null;
+// Hook to fetch token metadata (e.g., decimals, symbol)
+export declare function useTokenMetadata(input: UseTokenMetadataInput): UseTokenMetadataReturn;
 
 // Hook to perform a single read-only contract call
 export declare function useReadContract<T = unknown>(input: UseReadContractInput): UseReadContractReturn<T>;
@@ -350,21 +309,19 @@ export declare function useSendTransaction(): UseSendTransactionReturn;
 
 // Hook to wait for a transaction to be confirmed
 export declare function useWaitForTransaction(input: UseWaitForTransactionInput): UseWaitForTransactionReturn;
-```
 
-### Usage
+// Main React provider for context and configuration
+export declare function CfxProvider({ client, signer, queryClient, children }: CfxProviderProps): import("react/jsx-runtime").JSX.Element;
 
-```tsx
-import { useReadContract, useWriteContract } from '@cfxdevkit/react';
+// Hook to access the configured CFX client instance
+export declare function useClient(): Client;
 
-function MyComponent() {
-  const { data: balance } = useReadContract({ /* ... */ });
-  const { writeContract } = useWriteContract();
-  // ...
-}
-```
+// Hook to get the current chain configuration
+export declare function useChain(): ChainConfig;
 
-```ts
+// Hook to get the active signer (e.g., MetaMask wallet)
+export declare function useSigner(): Signer | null;
+
 // Keystore-related types and utilities (exported from root for convenience)
 export { KeystoreContextValue }
 export { KeystoreProviderProps }
@@ -402,6 +359,28 @@ export { KeystoreShell }
 export { KeystoreWalletSwitcher }
 ```
 
+### Usage
+
+```tsx
+import { useAccount, useNativeBalance, CfxProvider } from '@cfxdevkit/react';
+
+function App() {
+  const account = useAccount();
+  const balance = useNativeBalance({ address: account.address });
+  return <CfxProvider>{/* ... */}</CfxProvider>;
+}
+```
+
+```tsx
+import { useReadContract, useWriteContract } from '@cfxdevkit/react';
+
+function MyComponent() {
+  const { data: balance } = useReadContract({ /* ... */ });
+  const { writeContract } = useWriteContract();
+  // ...
+}
+```
+
 ---
 
 ## `./account`
@@ -409,6 +388,8 @@ export { KeystoreWalletSwitcher }
 ```ts
 // Return type for the useAccount hook
 export interface UseAccountReturn {
+// Hook to get the current wallet account state
+export declare function useAccount(): UseAccountReturn;
 ```
 
 ### Usage
@@ -419,30 +400,25 @@ import { useAccount } from '@cfxdevkit/react';
 const { address, isConnected } = useAccount();
 ```
 
-```ts
-// Hook to get the current wallet account state
-export declare function useAccount(): UseAccountReturn;
-```
-
 ---
 
 ## `./balance`
 
 ```ts
 // Input for fetching native (CFX) balance
-export interface UseNativeBalanceInput {
+export interface UseNativeBalanceInput;
 // Return type for native balance hook
-export interface UseNativeBalanceReturn {
+export interface UseNativeBalanceReturn;
 // Input for fetching token balance
-export interface UseTokenBalanceInput {
+export interface UseTokenBalanceInput;
 // Return type for token balance hook
-export interface UseTokenBalanceReturn {
+export interface UseTokenBalanceReturn;
 // Metadata for an ERC20-like token (name, symbol, decimals, etc.)
-export interface TokenMetadata {
+export interface TokenMetadata;
 // Input for fetching token metadata
-export interface UseTokenMetadataInput {
+export interface UseTokenMetadataInput;
 // Return type for token metadata hook
-export interface UseTokenMetadataReturn {
+export interface UseTokenMetadataReturn;
 ```
 
 ### Usage
@@ -472,9 +448,9 @@ export declare function useTokenMetadata(input: UseTokenMetadataInput): UseToken
 
 ```ts
 // Interface representing a wallet signer (e.g., MetaMask, Ledger)
-export interface Signer {
+export interface Signer;
 // Props for the CfxProvider component
-export interface CfxProviderProps {
+export interface CfxProviderProps;
 ```
 
 ### Usage
@@ -703,4 +679,4 @@ const identity = useKeystoreIdentity();
 return <KeystoreShell>{/* ... */}</KeystoreShell>;
 ```
 
-{/* readme-hash: 506d757d538b322b86a0d59eb45d856fe0739ea4bc0f6048a814e29ccb042155 */}
+{/* readme-hash: 85f360017d48cb60c95ff834cd5c034ece87516c41fcff3dbd1c3f05c20b9df9 */}

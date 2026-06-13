@@ -7,9 +7,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { parseEther, toHex } from 'viem';
 import { useAccount, useBalance, useChainId, useSwitchChain, useWalletClient } from 'wagmi';
 import { SiteLayout } from '../site-layout';
+import { buildCip23Payload, buildEip712Payload, CORE_TESTNET_ID } from './wallet/data';
 import { WalletAccountCards } from './wallet-account-cards';
 import { WalletActionCards } from './wallet-action-cards';
-import { buildCip23Payload, buildEip712Payload, CORE_TESTNET_ID } from './wallet-data';
 
 function errorText(error: unknown): string {
   if (error instanceof Error) return error.message;

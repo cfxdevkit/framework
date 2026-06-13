@@ -1,5 +1,5 @@
 import { CodeSnippet, DemoCard, StatusBadge } from '@cfxdevkit/example-showcase-ui';
-import { WALLET_ACTIONS_SNIPPET } from './wallet-data';
+import { WALLET_ACTIONS_SNIPPET } from './wallet/data';
 import {
   actionBtn,
   FORM_GRID,
@@ -7,7 +7,7 @@ import {
   LABEL_STYLE,
   MUTED_TEXT,
   TWO_COL_GRID,
-} from './wallet-styles';
+} from './wallet/styles';
 
 interface WalletActionCardsProps {
   core: { isConnected: boolean };

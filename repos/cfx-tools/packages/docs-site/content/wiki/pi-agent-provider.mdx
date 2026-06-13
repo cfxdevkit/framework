@@ -2,405 +2,275 @@
 title: "PI Agent & Provider Integration"
 ---
 
-import { Mermaid } from '../../components/Mermaid';
+import { Mermaid } from '../../../components/Mermaid';
 
 # PI Agent & Provider Integration
 
-# PI Agent & Provider Integration Module
+# PI Agent & Provider Integration
 
 ## Overview
 
-The PI Agent & Provider Integration module provides the core infrastructure for the Conflux development CLI (`cfxdevkit`) to interact with LLM-powered agent workflows. It bridges the chat interface with repository operations, LLM provider selection, and deterministic/LLM-executed tooling.
+The `pi-agent` module is the bridge between the `cfx-tools` developer toolchain and the PI coding agent shell (`@earendil-works/pi-coding-agent`). It registers chat commands, exposes LLM-backed repo tools, manages provider configuration, and launches PI subprocesses. The module has two distinct surfaces:
 
-**Key responsibilities:**
-- Register slash commands (`/cdk`, `/repo-*`) for developer workflows
-- Manage LLM provider configuration and discovery
-- Execute agent workflows (validation, commit, actions)
-- Provide deterministic CDK utilities (status, derive, generate, contracts)
-- Render UI state in the PI chat interface
+- **Repo commands** (`/repo-*`) — LLM-driven workflows for validation, action execution, and commits
+- **CDK commands** (`/cdk`) — Purely deterministic wrappers over `@cfxdevkit/cli` functions, no LLM involved
 
-## Architecture
-
-<Mermaid chart={`graph TB
-    A[Extension Entry Point] --> B[registerPiAgentProjectExtension]
-    B --> C[Provider Bridge]
-    B --> D[Commands]
-    B --> E[Tools]
-    C --> F[Provider Discovery]
-    C --> G[Config Loading]
-    D --> H[CDK Commands]
-    D --> I[Repo Commands]
-    E --> J[Agent Tools]
-    E --> K[CDK Tools]
-    F --> L[Model Resolution]
-    G --> M[Config Normalization]
-    H --> N[tools-cdk.ts]
-    I --> O[llm-agents-runtime.ts]
-    J --> O
-    K --> N
-    O --> P[External LLM Agents]
-    N --> Q["@cfxdevkit/cli"]
+<Mermaid chart={`graph TD
+    PI["PI Shell (ExtensionAPI)"] --> EXT["registerPiAgentProjectExtension"]
+    EXT --> RC["registerPiRepoCommands"]
+    EXT --> CDK["registerPiCdkCommands"]
+    EXT --> TOOLS["registerPiRepoTools"]
+    EXT --> BRIDGE["createPiProviderBridge"]
+    BRIDGE --> CFG["readPiConfig"]
+    BRIDGE --> DISC["resolveProviderState"]
+    RC --> LLM["llm-agents-runtime"]
+    TOOLS --> LLM
+    CDK --> CDKTOOLS["tools-cdk (deterministic)"]
 `} />
 
-## Key Components
+---
 
-### Commands (`commands.ts`, `commands-cdk.ts`)
+## Entry Points
 
-Slash command handlers that map user input to tool execution.
+### `registerPiAgentProjectExtension(pi: ExtensionAPI)`
 
-#### Repository Commands
+The top-level registration function called by the PI extension loader. It wires everything together:
 
-| Command | Handler | Description |
-|---------|---------|-------------|
-| `/repo-status` | `registerPiRepoCommands` | Show current scope, provider, and model context |
-| `/repo-actions` | `registerPiRepoCommands` | List available shared repo workflows |
-| `/repo-run` | `registerPiRepoCommands` | Run a shared repo action with prompt/model options |
-| `/repo-check` | `registerPiRepoCommands` | Run validation → OpenSpec change planning pipeline |
-| `/repo-commit` | `registerPiRepoCommands` | Run interactive repository commit workflow |
+1. Resolves the provider bridge from config/environment and registers it with PI
+2. Registers all `/repo-*` commands and `/cdk` commands
+3. Registers the four LLM-backed tools (`repo_agent_check`, `repo_action_catalog`, `repo_run_action`, `repo_commit_workflow`)
+4. Attaches `session_start` and `session_tree` event handlers that refresh the status bar UI
+5. Attaches a `session_shutdown` handler that clears all widgets
 
-#### CDK Commands
+The scope (monorepo unit) is read from `CFXDEVKIT_PI_SCOPE` via `resolvePiScopeFromEnv()` and propagated to all config and provider resolution calls.
 
-| Command | Handler | Description |
-|---------|---------|-------------|
-| `/cdk status` | `handleCdkStatus` | Query chain status with optional `--chain` and `--rpc` |
-| `/cdk derive` | `handleCdkDerive` | Derive addresses from mnemonic with optional `--mnemonic` or `--generate` |
-| `/cdk generate` | `handleCdkGenerate` | Generate new mnemonic with `--strength` option |
-| `/cdk contracts extract` | `handleCdkContracts` | Extract contract artifacts with `--artifacts` and `--out` |
+### `registerPiAgentProjectExtension` vs. direct function exports
 
-**Flag parsing** is handled by `tokenize()` from `commands-cdk-flags.ts`, which supports quoted strings and space-separated tokens. Type conversion helpers (`str`, `num`, `bool`) extract typed values from parsed flags.
+When integrating programmatically (e.g. from `tooling-cli`), you can import individual pieces:
 
-### Configuration (`config*.ts`)
-
-Configuration management for LLM providers and action policies.
-
-#### Core Functions
-
-```typescript
-// Load and normalize configuration
-readPiConfig(configPath?) → Promise<PiLlmConfig>
-writePiConfig(config: PiLlmConfig, configPath?) → Promise<void>
-
-// Configuration resolution
-resolvePiConfigPath(scope?) → string
-resolveEffectiveActionPolicy(config, {action?, phase?}) → PiEffectiveActionPolicy
-resolveNamedProviderProfile(config, profileName?) → PiEffectiveActionPolicy['profile']
-
-// Layer merging
-mergePiConfigLayers(baseConfig, scopedConfig) → PiLlmConfig
-normalizePiConfig(value) → PiLlmConfig
+```ts
+import { runPiInteractive, runPiRpc, runPiCommit } from '@cfxdevkit/pi-agent';
+import { resolveRuntimeBridgeState } from '@cfxdevkit/pi-agent';
 ```
 
-#### Configuration Priority
+---
 
-1. **Base config**: `.pi/providers.json` in workspace root
-2. **Scoped config**: `artifacts/llm/config/units/<scope>.json`
-3. **Environment overrides**: `CFXDEVKIT_LLM_CONFIG_PATH`, `CFXDEVKIT_LLM_AGENT_CONFIG_PATH`
+## Command Registration
 
-The `CFXDEVKIT_LLM_AGENT_CONFIG_PATH` environment variable takes precedence for agent-pinned sessions (e.g., `--github` or `--local` PI sessions), ensuring provider configuration survives session overrides.
+### Repo Commands (`commands.ts`)
 
-### Provider Bridge (`providers.ts`, `provider-*.ts`)
+Registered by `registerPiRepoCommands`. All handlers are async and catch errors, routing them to `ctx.ui.notify`.
 
-Manages LLM provider discovery, connection, and model resolution.
+| Command | Description |
+|---|---|
+| `/repo-status` | Shows current provider, model, scope, and action count |
+| `/repo-actions [deterministic\|exploratory]` | Lists available actions from the llm-agents registry |
+| `/repo-run <action> [--quick] [--model <id>] [prompt]` | Executes a named action via `executePiRepoAction` |
+| `/repo-check [--dry-run] [--create-branch] [--quick]` | Runs the full validation → OpenSpec planning pipeline |
+| `/repo-commit [--quick] [--model <id>] [prompt]` | Runs the interactive commit workflow without leaving the PI session |
 
-#### Provider Discovery Flow
+All results are emitted as `repo-agent-summary` custom messages with a tone of `info`, `success`, `warning`, or `error`. The registered renderer renders these as a styled `Box` containing a title and up to 4 lines (expandable).
 
-```typescript
-createPiProviderBridge(scope?) → Promise<PiProviderBridge>
-  └─> resolveProviderState(config)
-        ├─> Check config.baseUrl
-        ├─> Check LITELLM_BASE_URL env
-        ├─> Check LEMONADE_URL env
-        ├─> Scan defaultBaseUrls (localhost:13305, etc.)
-        ├─> Check OPENAI_BASE_URL + OPENAI_API_KEY
-        └─> Check GITHUB_TOKEN
-```
+### CDK Commands (`commands-cdk.ts`)
 
-#### Provider Types
+Registered by `registerPiCdkCommands`. These handlers are **purely deterministic** — no LLM calls, no agent loop.
 
-| Type | Environment Variables | Default Base URL |
-|------|----------------------|------------------|
-| `lemonade` | `LEMONADE_URL`, `LEMONADE_BASE_URL` | `http://localhost:13305/` |
-| `litellm` | `LITELLM_BASE_URL` | `http://localhost:13305/` |
-| `openai-compat` | `OPENAI_BASE_URL`, `OPENAI_API_KEY` | N/A |
-| `github-models` | `GITHUB_TOKEN` | `https://models.inference.ai.azure.com` |
+| Command | Underlying function |
+|---|---|
+| `/cdk status [--chain <id\|name>] [--rpc <url>]` | `executeCdkStatus` → `runStatus` |
+| `/cdk derive --mnemonic "<phrase>" \| --generate [options]` | `executeCdkDerive` → `runDerive` |
+| `/cdk generate [--strength 128\|256]` | `executeCdkGenerate` → `runGenerate` |
+| `/cdk contracts extract [--artifacts <dir>] [--out <dir>]` | `executeCdkContractsExtract` → `runContractsExtract` |
 
-#### Model Resolution
+Argument parsing uses `parseArgs` from `@cfxdevkit/cli`, with helpers from `commands-cdk-flags.ts`:
 
-```typescript
-resolvePiModel(defaultModel, models) → string | null
-```
+- `tokenize(raw)` — splits respecting quoted strings
+- `str(flags, key)` — extracts a string flag or `undefined`
+- `num(flags, key)` — extracts and validates a numeric flag
+- `bool(flags, key)` — extracts a boolean flag
 
-Selects the model by priority:
-1. Explicit `defaultModel` from config
-2. First available model from provider catalog
-3. `null` if no models found
+Results are emitted as `cdk-result` custom messages with their own renderer.
 
-### Runtime (`runtime.ts`)
+---
 
-Session execution and PI CLI spawning.
+## Provider Configuration
 
-#### Execution Functions
+### Config Layers
 
-```typescript
-runPiInteractive(options?) → Promise<void>
-runPiPrint(options) → Promise<void>
-runPiRpc(options?) → Promise<void>
-runPiCommit(options?) → Promise<void>
-```
+Configuration is stored in JSON files and loaded with a two-layer merge strategy:
 
-All functions call `runPiCli()` which:
-1. Resolves workspace root via `findWorkspaceRoot()`
-2. Locates PI binary (`pi` or `pi.cmd`)
-3. Spawns `pnpm exec` with appropriate environment variables
-4. Manages terminal phases (`beforeStart`, `afterExit`)
+1. **Base config** — `.pi/providers.json` (or `CFXDEVKIT_LLM_CONFIG_PATH`)
+2. **Scoped config** — `artifacts/llm/config/units/<scope>.json` (when a scope is active)
 
-#### Environment Variables Set
+`readPiConfig()` always reads the base first, then merges the scoped config on top using `mergePiConfigLayers`. The agent-pinned env var `CFXDEVKIT_LLM_AGENT_CONFIG_PATH` takes priority over `CFXDEVKIT_LLM_CONFIG_PATH` to prevent session overrides (e.g. temporary commit policy files) from affecting the main provider resolution.
 
-| Variable | Purpose |
-|----------|---------|
-| `CFXDEVKIT_LLM_CONFIG_PATH` | Provider configuration path |
-| `CFXDEVKIT_PI_SCOPE` | Agent scope name |
-| `OPENAI_API_KEY` | Provider authentication |
+### `PiLlmConfig` Structure
 
-### Tools (`tools.ts`, `tools-cdk.ts`, `tools-commit.ts`)
+Key fields in `config-types.ts`:
 
-Tool definitions and executors for the PI agent framework.
-
-#### Repository Tools
-
-| Tool | Description |
-|------|-------------|
-| `repo_agent_check` | Run validation → OpenSpec change planning |
-| `repo_action_catalog` | List available repo workflows |
-| `repo_run_action` | Execute a specific repo workflow |
-| `repo_commit_workflow` | Run interactive commit workflow |
-
-#### CDK Tools
-
-| Tool | Description |
-|------|-------------|
-| `executeCdkStatus` | Query chain status |
-| `executeCdkDerive` | Derive addresses from mnemonic |
-| `executeCdkGenerate` | Generate new mnemonic |
-| `executeCdkContractsExtract` | Extract contract artifacts |
-
-**CDK tools are PURELY DETERMINISTIC** — they never call LLM agents. They wrap `@cfxdevkit/cli` functions directly.
-
-#### Commit Session Policy Override
-
-`executePiCommitSession()` supports scoped configuration overrides via temporary files:
-
-```typescript
-resolveCommitRuntimePolicy(explicitModel?) → { modelPolicies, profileOverride }
-  └─> withScopedCommitPolicy(profileOverride, work)
-        ├─> Create temp config file
-        ├─> Set CFXDEVKIT_LLM_CONFIG_PATH
-        ├─> Execute work
-        └─> Cleanup temp file
-```
-
-### UI (`ui.ts`, `ui-cdk.ts`)
-
-UI state management for the PI chat interface.
-
-#### State Objects
-
-```typescript
-interface PiOperatorUiState {
-  statusText: string;
-  widgetKey: string;
-  widgetLines: readonly string[];
+```ts
+interface PiLlmConfig {
+  provider: 'lemonade' | 'litellm' | 'openai-compat' | 'github-models' | null;
+  baseUrl: string | null;
+  defaultModel: string | null;
+  githubModel: string | null;
+  requestTimeoutMs: number;            // default: 600000
+  actions: Record<string, string>;     // legacy: action → model
+  providerProfiles: Record<string, ProviderProfile>;
+  actionPolicies: Record<string, ActionPolicy>;
+  harness: {
+    defaultMode: 'deterministic' | 'exploratory';
+    providerStrategy: 'auto' | 'gateway' | 'direct';
+    deterministic: { preserveDeterministicArtifacts, preserveDeterministicSections };
+    exploratory: { allowCodeChanges, allowWideChanges };
+  };
 }
 ```
 
-#### UI Functions
+Provider profiles and action policies allow per-action model/provider overrides, including per-phase granularity (e.g. `commit.message-generation` can use a different model than `commit.failure-analysis`).
 
-```typescript
-createPiRuntimeUiState(options) → PiOperatorUiState
-createPiAgentCheckUiState(result) → PiOperatorUiState
-createPiRepoActionUiState(result) → PiOperatorUiState
-createPiCommitWorkflowUiState(result) → PiOperatorUiState
-createCdkStatusUiState(reports) → PiOperatorUiState
-createCdkDeriveUiState(report, options) → PiOperatorUiState
-createCdkGenerateUiState(report) → PiOperatorUiState
-createCdkContractsUiState(report) → PiOperatorUiState
+### Policy Resolution (`config-policy.ts`)
 
-applyPiOperatorUiState(ctx, state) → void
-clearPiOperatorWidgets(ctx) → void
-setPiWorkflowProgress(ctx, phase) → void
-clearPiWorkflowProgress(ctx) → void
+`resolveEffectiveActionPolicy(config, { action?, phase? })` implements a three-level lookup:
+
+1. **Phase policy** — `actionPolicies[action].phases[phase]`
+2. **Action policy** — `actionPolicies[action]` or legacy `actions[action]`
+3. **Default** — top-level `defaultModel`
+
+It returns a `PiEffectiveActionPolicy` containing the resolved model, profile, provider, baseUrl, and the `source` field indicating which level matched.
+
+### Provider Discovery (`provider-discovery.ts`)
+
+`resolveProviderState(config)` determines the active provider in this order:
+
+1. Explicit `config.baseUrl` with `config.provider`
+2. `LITELLM_BASE_URL` environment variable
+3. `LEMONADE_URL` or `LEMONADE_BASE_URL` environment variable
+4. Probe default Lemonade URLs: `localhost:13305`, `127.0.0.1:13305`, Docker/container variants, `127.0.0.1:8000`
+5. `OPENAI_BASE_URL` + `OPENAI_API_KEY`
+6. `GITHUB_TOKEN` → GitHub Models endpoint
+
+Model discovery (`discoverProviderModels`) attempts `/api/v1/models`, `/v1/models`, and `/models` paths with a 3-second timeout. The `PiLlmModel` type carries `id`, `checkpoint`, `recipe`, `labels`, `suggested`, and `size` fields.
+
+### Provider Bridge (`provider-bridge.ts`)
+
+`createPiProviderBridge(scope?)` is the main assembly point. It returns a `PiProviderBridge` combining:
+- The full resolved config
+- Discovered models and default model
+- A `PiCliInvocation` with the correct provider, model, and environment variables for spawning PI subprocesses
+- The `providerStrategy` from harness config
+
+`registerPiProviderBridge(pi, bridge)` calls `pi.registerProvider('openai', ...)` to inject the provider into the PI shell. All local/lemonade/litellm providers are presented as OpenAI-compatible.
+
+---
+
+## LLM Tools
+
+### Registered Tools (`tools.ts`)
+
+`registerPiRepoTools` installs four tools into the PI session:
+
+**`repo_agent_check`** — Runs validation and OpenSpec change planning. Returns structured result including validation status, change names, and plan summary. Parameters: `dryRun`, `createBranch`, `quick`.
+
+**`repo_action_catalog`** — Lists available actions from the llm-agents registry. Optional `mode` filter (`deterministic`/`exploratory`).
+
+**`repo_run_action`** — Executes a named action. Parameters: `action` (required), `prompt`, `quick`, `model`. Validates the action name against the registry before calling.
+
+**`repo_commit_workflow`** — Runs `executePiCommitSession` and surfaces gate results, approval state, and commit preview.
+
+### LLM Agents Runtime (`llm-agents-runtime.ts`)
+
+This module provides lazy dynamic imports of `@cfxdevkit/llm-agents`. At startup it checks whether the compiled `dist/index.js` exists; if not, it falls back to the source `src/index.js`. This enables both installed and development usage.
+
+The three primary functions:
+
+- `executePiAction(args)` → `executeAction` in llm-agents
+- `executePiAgentCheck(options)` → `runAgentCheck` in llm-agents  
+- `executePiCommitWorkflow(args, options)` → `runCommitWorkflow` with `approvalMode: 'defer'`
+
+`getPiActionDefinitions()` returns the static action registry used by both the catalog command and the action name validator in `executePiRepoAction`.
+
+### Commit Session (`tools-commit.ts`)
+
+`executePiCommitSession` handles the per-invocation policy resolution for commit workflows:
+
+1. Reads config and resolves policies for `commit`, `commit.message-generation`, and `commit.failure-analysis` phases independently
+2. If a commit profile specifies a different provider/baseUrl, writes a temporary JSON config file to `$TMPDIR` and sets `CFXDEVKIT_LLM_CONFIG_PATH` for the duration of the call (`withScopedCommitPolicy`)
+3. Suppresses console output during execution via `withCapturedConsole`
+4. Always cleans up the temp file and restores the environment variable
+
+---
+
+## Runtime: Spawning PI Subprocesses (`runtime.ts`)
+
+`runPiInteractive`, `runPiPrint`, and `runPiRpc` launch the PI CLI binary as a subprocess with full stdio inheritance. The binary is resolved relative to the package's own `node_modules/.bin/pi`.
+
+Key environment variables injected into the subprocess:
+- `CFXDEVKIT_LLM_CONFIG_PATH` — scoped config path
+- `CFXDEVKIT_PI_SCOPE` — active scope name
+- `OPENAI_API_KEY` — provider credential
+- `PATH` — prepended with `~/.pi/agent/bin` and the PI binary directory
+
+`runPiCommit` is a convenience wrapper that calls `runPiInteractive` with a structured prompt asking the agent to start a commit session and run `/repo-commit`.
+
+Terminal phase hooks (`PiTerminalPhaseHooks`) allow callers to run setup/teardown around the subprocess without interleaving with PI's TUI:
+
+```ts
+await runPiInteractive({
+  terminalPhases: {
+    beforeStart: async () => { /* Inquirer prompts, etc. */ },
+    afterExit: async () => { /* post-session cleanup */ },
+  }
+});
 ```
 
-#### Message Rendering
+---
 
-Custom message types are registered via `pi.registerMessageRenderer()`:
-- `cdk-result` (`commands-cdk.ts`) — CDK command output
-- `repo-agent-summary` (`commands.ts`) — Repository command output
+## UI Utilities (`ui.ts`, `ui-cdk.ts`)
 
-Both render boxed messages with tone-based coloring (`success`, `warning`, `error`, `info`).
+All UI state is represented as `PiOperatorUiState`:
 
-### Extension (`extension.ts`)
-
-Extension lifecycle and registration.
-
-```typescript
-registerPiAgentProjectExtension(pi: ExtensionAPI) → Promise<void>
-  ├─> registerPiProviderBridge(pi, bridge)
-  ├─> registerPiRepoCommands(pi)
-  ├─> registerPiCdkCommands(pi)
-  ├─> registerPiRepoTools(pi)
-  └─> Session event handlers
-        ├─> session_start → refreshPiRuntimeUi
-        ├─> session_tree → refreshPiRuntimeUi
-        └─> session_shutdown → clear UI state
+```ts
+interface PiOperatorUiState {
+  statusText: string;    // shown in the status bar
+  widgetKey: string;     // identifies the widget slot
+  widgetLines: string[]; // content lines
+}
 ```
 
-## Execution Flows
+Factory functions:
 
-### Command Execution Flow
+| Function | Produces |
+|---|---|
+| `createPiRuntimeUiState` | Provider, model, scope, action count, active OpenSpec changes |
+| `createPiAgentCheckUiState` | Validation status, step counts, planned change names |
+| `createPiRepoActionUiState` | Action name, mode, model, response preview |
+| `createPiCommitWorkflowUiState` | Status, phase, gate summaries, commit preview, sha |
+| `createPiGateUiState` | Gate pass/fail with per-result breakdown |
+| `createCdkStatusUiState` | Chain connectivity results |
+| `createCdkDeriveUiState` | Derived addresses (optional private keys/mnemonic) |
+| `createCdkGenerateUiState` | Generated mnemonic and word count |
+| `createCdkContractsUiState` | Extraction directory paths and count |
 
-<Mermaid chart={`sequenceDiagram
-    User->>PI: /repo-check --dry-run
-    PI->>registerPiRepoCommands: handler
-    registerPiRepoCommands->>parseRepoCheckArgs: tokenize
-    registerPiRepoCommands->>setPiWorkflowProgress: status
-    registerPiRepoCommands->>executePiAgentCheck: options
-    executePiAgentCheck->>loadLlmAgentsModule: import
-    loadLlmAgentsModule->>runAgentCheck: execute
-    runAgentCheck-->>executePiAgentCheck: PiAgentCheckResult
-    executePiAgentCheck->>createPiAgentCheckUiState: result
-    createPiAgentCheckUiState-->>registerPiRepoCommands: state
-    registerPiRepoCommands->>emitPiOperatorMessage: state
-    emitPiOperatorMessage->>clearPiOperatorWidgets: cleanup
-    emitPiOperatorMessage->>pi.sendMessage: message
-    emitPiOperatorMessage->>clearPiWorkflowProgress: cleanup
-`} />
+`clearPiOperatorWidgets` clears all five known widget slots. `setPiWorkflowProgress` / `clearPiWorkflowProgress` control the working indicator shown during long-running operations.
 
-### Provider Discovery Flow
+---
 
-```typescript
-createPiProviderBridge(scope?)
-  ↓
-resolvePiConfigPath(scope)
-  ├─> Check CFXDEVKIT_LLM_AGENT_CONFIG_PATH (agent-pinned)
-  ├─> Check CFXDEVKIT_LLM_CONFIG_PATH (scoped)
-  └─> Default: .pi/providers.json
-  ↓
-readPiConfig(configPath)
-  ├─> Load base config
-  ├─> Load scoped config (if different)
-  └─> mergePiConfigLayers(base, scoped)
-  ↓
-resolveProviderState(config)
-  ├─> Check config.baseUrl
-  ├─> Check env vars (LITELLM, LEMONADE, OPENAI, GITHUB)
-  ├─> Scan default URLs
-  └─> discoverProviderModels(providerType, baseUrl)
-  ↓
-resolvePiModel(defaultModel, models)
-  └─> Return model identifier
-```
+## Tooling Runtime Facade (`tooling-runtime.ts`)
 
-### Tool Execution Flow (Repository Actions)
+Provides a stable API for external consumers (e.g. `tooling-cli`) that need provider information without directly importing the internals:
 
-```typescript
-executePiRepoAction({action, prompt, quick, model})
-  ↓
-executePiAction([action, --quick, --model, ...prompt])
-  ↓
-loadLlmAgentsModule()
-  ├─> Check dist entry exists
-  └─> Import from source module
-  ↓
-executeAction(args)
-  ↓
-Return PiRepoActionExecutionResult
-```
+- `resolveRuntimeBridgeState(scope?, { action?, phase? })` — returns provider type, URL, model list, strategy, and effective policy in one call
+- `resolveProvider()` — returns a `PiToolingProvider` with `discoverModels()` and `chooseModel()` methods
+- `resolveProviderModel(provider, preferred?)` — picks the best model: exact match → suggested → first available → fallback
+- `readConfig()` / `writeConfig(config)` / `defaultConfig()` — thin wrappers over config storage
 
-## Integration Points
+---
 
-### External Dependencies
+## Adding a New Command
 
-| Package | Purpose |
-|---------|---------|
-| `@cfxdevkit/cli` | CDK command implementations |
-| `@cfxdevkit/llm-agents` | Agent workflow execution |
-| `@earendil-works/pi-coding-agent` | Extension API, tool definitions |
-| `@earendil-works/pi-tui` | UI rendering (Box, Text) |
-| `@cfxdevkit/workspace-utils` | Workspace root detection |
+**Deterministic command** (no LLM): add a case in `registerPiCdkCommands`, implement the handler calling a `tools-cdk.ts` executor, add a UI state factory in `ui-cdk.ts`.
 
-### Session Lifecycle
+**LLM-backed command**: add a handler in `registerPiRepoCommands`, call `executePiRepoAction` or a new `llm-agents-runtime` function, build UI state in `ui.ts`, emit with `emitPiOperatorMessage`.
 
-```typescript
-pi.on('session_start', async (_event, ctx) => refreshPiRuntimeUi(ctx))
-pi.on('session_tree', async (_event, ctx) => refreshPiRuntimeUi(ctx))
-pi.on('session_shutdown', async (_event, ctx) => clear UI state)
-```
-
-### Configuration Override Pattern
-
-For commit sessions that need scoped provider configuration:
-
-```typescript
-withScopedCommitPolicy(profileOverride, work)
-  ├─> Create temp directory
-  ├─> Write profileOverride to temp file
-  ├─> Set CFXDEVKIT_LLM_CONFIG_PATH
-  ├─> Execute work
-  └─> Cleanup temp directory + restore env
-```
-
-## Development Guidelines
-
-### Adding New Commands
-
-1. Define handler in `commands.ts` or `commands-cdk.ts`
-2. Parse args using `tokenizeArgs()` and flag helpers
-3. Call appropriate tool executor
-4. Create UI state with `create*UiState()` functions
-5. Emit message via `emit*Message()`
-6. Add error handling with `ctx.hasUI` checks
-
-### Adding New Tools
-
-1. Define tool schema in `tools.ts` using `defineTool()`
-2. Implement `execute` function that calls tool executor
-3. Register with `pi.registerTool()`
-4. Add UI state creation in `ui.ts`
-
-### Configuration Changes
-
-1. Update `PiLlmConfig` interface in `config-types.ts`
-2. Add normalization logic in `config-normalize.ts`
-3. Update `defaultPiConfig()` for new defaults
-4. Test with `mergePiConfigLayers()` for override scenarios
-
-### Provider Support
-
-1. Add provider type to `PiLlmProviderType` union
-2. Add discovery logic in `resolveProviderState()`
-3. Add model catalog endpoint in `discoverProviderModels()`
-4. Update `resolvePiCliInvocation()` for environment setup
-
-## Testing
-
-### Unit Tests
-
-- `commands.test.ts` — Command registration and parsing
-- `config.test.ts` — Configuration loading and normalization
-- `tools.test.ts` — Tool execution
-- `ui.test.ts` — UI state creation
-
-### Integration Tests
-
-- `runtime.test.ts` — Session spawning and environment
-- `extension.test.ts` — Extension lifecycle
-- `tools-commit.test.ts` — Commit workflow execution
-
-### Key Test Scenarios
-
-1. Provider discovery with missing environment variables
-2. Configuration layer merging (base + scoped)
-3. Command argument parsing with quoted strings
-4. Tool execution with model overrides
-5. UI state rendering with expanded/collapsed views
+**New tool** (callable by the agent): define with `defineTool` from `@earendil-works/pi-coding-agent`, register in `registerPiRepoTools`. Keep tool execution focused — update the UI state bar, then return structured `details` alongside the text `content`.

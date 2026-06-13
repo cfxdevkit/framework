@@ -18,7 +18,7 @@ import type {
   KeystoreService,
   KeystoreWallet,
 } from './types.js';
-import { useKeystoreMutations } from './use-keystore-mutations.js';
+import { useKeystoreMutations } from './use-keystore/mutations.js';
 
 // ── Context value ─────────────────────────────────────────────────────────────
 

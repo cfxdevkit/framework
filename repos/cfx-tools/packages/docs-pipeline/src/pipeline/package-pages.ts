@@ -1,8 +1,8 @@
 import { join } from 'node:path';
 
-import { type DocsPackagePageRecord, discoverDocsPagePackages } from '../discover-packages.js';
-import { embedHash, readEmbeddedHash, stripEmbeddedHash } from '../package-content.js';
-import { type SyncPackagesResult, syncPackages } from '../package-pages.js';
+import { type DocsPackagePageRecord, discoverDocsPagePackages } from '../discover/packages.js';
+import { embedHash, readEmbeddedHash, stripEmbeddedHash } from '../package/content.js';
+import { type SyncPackagesResult, syncPackages } from '../package/pages.js';
 import { getDocsSitePaths } from '../workspace.js';
 
 export type PackagePageTarget = DocsPackagePageRecord;

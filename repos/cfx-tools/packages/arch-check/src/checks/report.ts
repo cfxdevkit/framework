@@ -4,9 +4,9 @@ import { runCiCheck } from './ci.js';
 import { runCorpusCheck } from './corpus.js';
 import { runDocsCheck } from './docs.js';
 import { type HotspotRecord, runHotspotsCheck } from './hotspots.js';
-import { type KebabGroupRecord, runKebabGroupsCheck } from './kebab-groups.js';
+import { type KebabGroupRecord, runKebabGroupsCheck } from './kebab/groups.js';
 import { runSecretsCheck, type SecretScanResult } from './secrets.js';
-import { runUnitConfigsCheck, type UnitConfigRecord } from './unit-configs.js';
+import { runUnitConfigsCheck, type UnitConfigRecord } from './unit/configs.js';
 
 // ---------------------------------------------------------------------------
 // Types

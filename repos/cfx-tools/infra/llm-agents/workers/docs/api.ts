@@ -8,9 +8,9 @@
  */
 import { discoverApiTargets, refreshApiSkeletons } from '@cfxdevkit/docs-pipeline';
 import { logInfo, logStep } from '../shared/logging.ts';
-import { enrichApiMd } from './api-enrichment.ts';
+import { enrichApiMd } from './api/enrichment';
+import { precheckDocsApi } from './api/probe';
 import { parseDocFlags } from './flags.ts';
-import { precheckDocsApi } from './api-probe.ts';
 
 export async function runDocsApi(args: string[]): Promise<void> {
   if (args[0] === '--') args.shift();

@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.0.0] - 2026-05-20
+## [2.0.0] - 2026-06-13
 
 First tagged release of the cfxdevkit framework monorepo.
 

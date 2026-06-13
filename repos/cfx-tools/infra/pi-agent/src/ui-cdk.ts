@@ -3,7 +3,7 @@ import type {
   DeriveReport,
   GenerateReport,
   StatusReport,
-} from './tools-cdk.js';
+} from './tools/cdk.js';
 import type { PiOperatorUiState } from './ui.js';
 
 // ─── Status ──────────────────────────────────────────────────────────────────

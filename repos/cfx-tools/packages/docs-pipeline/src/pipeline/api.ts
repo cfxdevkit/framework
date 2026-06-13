@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { discoverDocsPackages } from '../discover-packages.js';
+import { discoverDocsPackages } from '../discover/packages.js';
 import { findRepoRoot } from '../workspace.js';
 import { captureWorkspacePnpm, runWorkspacePnpm } from './process.js';
 

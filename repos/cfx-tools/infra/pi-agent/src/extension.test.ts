@@ -31,7 +31,7 @@ vi.mock('./commands.js', () => ({
   registerPiRepoCommands: commandMocks.registerPiRepoCommands,
 }));
 
-vi.mock('./commands-cdk.js', () => ({
+vi.mock('./commands/cdk.js', () => ({
   registerPiCdkCommands: commandMocks.registerPiCdkCommands,
 }));
 

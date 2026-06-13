@@ -5,8 +5,8 @@ import type {
 } from '@cfxdevkit/devnode-core';
 import type { KeystoreService } from '@cfxdevkit/keystore-server';
 import { Hono } from 'hono';
-import { attachContractActionRoutes } from './contracts-actions.js';
-import { normalizeChainId, normalizeNetwork, normalizeSpace } from './contracts-helpers.js';
+import { attachContractActionRoutes } from './contracts/actions.js';
+import { normalizeChainId, normalizeNetwork, normalizeSpace } from './contracts/helpers.js';
 
 export function createContractsRoutes(
   registry: ContractRegistry,

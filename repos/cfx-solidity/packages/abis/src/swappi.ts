@@ -14,9 +14,9 @@
  *     71 — Conflux eSpace testnet
  */
 
-export { SWAPPI_FACTORY_ABI } from './swappi-factory.js';
-export { SWAPPI_PAIR_ABI } from './swappi-pair.js';
-export { SWAPPI_ROUTER_ABI } from './swappi-router.js';
+export { SWAPPI_FACTORY_ABI } from './swappi/factory.js';
+export { SWAPPI_PAIR_ABI } from './swappi/pair.js';
+export { SWAPPI_ROUTER_ABI } from './swappi/router.js';
 
 /** Swappi V2 Factory deployed addresses keyed by eSpace chain ID. */
 export const SWAPPI_FACTORY_ADDRESS = {

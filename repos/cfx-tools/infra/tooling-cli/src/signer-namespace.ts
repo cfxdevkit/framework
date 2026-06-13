@@ -6,7 +6,7 @@ import {
   writeSignerConfig,
 } from '@cfxdevkit/signer-session';
 import { input, select } from '@inquirer/prompts';
-import { isHelpToken } from './agent-runtime.js';
+import { isHelpToken } from './agent/runtime.js';
 import type { ToolingNamespaceDefinition } from './contracts.js';
 
 export const signerToolingNamespace: ToolingNamespaceDefinition = {

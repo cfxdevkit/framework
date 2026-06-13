@@ -18,7 +18,7 @@ export async function runCommand(command: DocsCommandName, _extraArgs: readonly 
   }
 
   if (command === 'sync:packages') {
-    const { syncPackages } = await import('./package-pages.js');
+    const { syncPackages } = await import('./package/pages.js');
     await syncPackages();
     return;
   }
@@ -31,31 +31,31 @@ export async function runCommand(command: DocsCommandName, _extraArgs: readonly 
   }
 
   if (command === 'sync:wiki') {
-    const { syncWiki } = await import('./wiki-sync.js');
+    const { syncWiki } = await import('./wiki/sync.js');
     await syncWiki();
     return;
   }
 
   if (command === 'sync:architecture') {
-    const { syncArchitecturePage } = await import('./sync-architecture.js');
+    const { syncArchitecturePage } = await import('./sync/architecture.js');
     await syncArchitecturePage();
     return;
   }
 
   if (command === 'sync:coverage') {
-    const { syncCoveragePage } = await import('./sync-coverage.js');
+    const { syncCoveragePage } = await import('./sync/coverage.js');
     await syncCoveragePage();
     return;
   }
 
   if (command === 'validate:wiki') {
-    const { validateWikiMermaid } = await import('./wiki-validate.js');
+    const { validateWikiMermaid } = await import('./wiki/validate.js');
     await validateWikiMermaid();
     return;
   }
 
   if (command === 'validate:wiki-fix') {
-    const { validateWikiMermaid } = await import('./wiki-validate.js');
+    const { validateWikiMermaid } = await import('./wiki/validate.js');
     await validateWikiMermaid({ fix: true });
     return;
   }

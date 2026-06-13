@@ -1,5 +1,5 @@
-import type { ValidationProbeResult } from '../validate-models-probe.ts';
-import { validateJsonProbe } from '../validate-models-report.ts';
+import type { ValidationProbeResult } from '../validate-models/probe';
+import { validateJsonProbe } from '../validate-models/report';
 import type { SmokeModelResult, TierProbe } from './smoke.ts';
 
 // Re-exported so smoke.ts can import from one place

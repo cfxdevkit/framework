@@ -20,9 +20,9 @@ import {
   type StrategyStepStatus,
   tokenDecimals,
 } from '../lib/strategy';
-import type { WriteContractFn } from '../lib/strategy-chain';
-import { createOnChainStrategy } from '../lib/strategy-chain';
-import { parseStrategyError, wrapOrUnwrapCfx } from '../lib/strategy-wrap';
+import type { WriteContractFn } from '../lib/strategy/chain';
+import { createOnChainStrategy } from '../lib/strategy/chain';
+import { parseStrategyError, wrapOrUnwrapCfx } from '../lib/strategy/wrap';
 
 // ── Hook return type ──────────────────────────────────────────────────────────
 

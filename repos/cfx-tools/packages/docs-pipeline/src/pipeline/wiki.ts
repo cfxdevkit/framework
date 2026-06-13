@@ -1,5 +1,5 @@
-import { syncWiki } from '../wiki-sync.js';
-import { validateWikiMermaid } from '../wiki-validate.js';
+import { syncWiki } from '../wiki/sync.js';
+import { validateWikiMermaid } from '../wiki/validate.js';
 
 export async function syncWikiContent(): Promise<number> {
   return syncWiki();

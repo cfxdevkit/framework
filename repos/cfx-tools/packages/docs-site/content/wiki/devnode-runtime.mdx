@@ -2,210 +2,215 @@
 title: "DevNode & Runtime"
 ---
 
-import { Mermaid } from '../../components/Mermaid';
+import { Mermaid } from '../../../components/Mermaid';
 
 # DevNode & Runtime
 
-# @cfxdevkit/devnode & Runtime
-
-This module provides a local development environment for Conflux, wrapping the native `@xcfx/node` binary to spawn dual-space (Core + eSpace) nodes with pre-funded accounts. It includes the `@cfxdevkit/executor` utility library for managing asynchronous tasks, retries, and polling within the runtime ecosystem.
+# `@cfxdevkit/devnode` — Local Conflux Node & `@cfxdevkit/executor` Runtime Utilities
 
 ## Overview
 
-The **DevNode** component is designed for development and testing only. It boots a local Conflux node on deterministic ports matching `@cfxdevkit/cdk/chains` defaults (`core-local` / `espace-local`), allowing immediate interaction via standard HTTP/WebSocket transports.
+`@cfxdevkit/devnode` wraps the native `@xcfx/node` binary to spin up a dual-space (Core + eSpace) Conflux chain locally. A single `createDevNode().start()` call gives you deterministic ports, pre-funded genesis accounts, and an auto-miner — matching the default chain configs in `@cfxdevkit/cdk/chains` so clients work with zero extra configuration.
 
-The **Executor** component provides generic asynchronous execution primitives (retry, concurrency, locking, polling) used by the broader runtime infrastructure (e.g., `automation`, `devnode-server`) to manage long-running tasks and state transitions safely.
+`@cfxdevkit/executor` is a companion runtime utility package providing retried task execution, batch concurrency, polling, and keyed mutual exclusion. It has no dependency on `devnode` but is used throughout the wider ecosystem wherever durable async work is needed.
 
-## CLI Usage
+Both packages are **Node.js only**. Never import them from a browser or production bundle.
 
-The `cfxdevkit-devnode` binary is the primary entry point for interactive development. It parses arguments, initializes a `DevNode`, and handles process signals for graceful shutdown.
+---
 
-```bash
-# Start with defaults (ports 12537/8545, 10 accounts)
-cfxdevkit-devnode
+## `@cfxdevkit/devnode`
 
-# Customize configuration
-cfxdevkit-devnode --accounts 4 --balance 1000 --logging
-
-# Disable auto-mining
-cfxdevkit-devnode --no-mining
-```
-
-### CLI Options
-
-| Flag | Description | Default |
-| :--- | :--- | :--- |
-| `--core-port` | Core JSON-RPC HTTP port | `12537` |
-| `--espace-port` | eSpace JSON-RPC HTTP port | `8545` |
-| `--core-ws-port` | Core WebSocket port | `12536` |
-| `--espace-ws-port` | eSpace WebSocket port | `8546` |
-| `--chain-id` | Core chain ID | `2029` |
-| `--evm-chain-id` | eSpace chain ID | `2030` |
-| `--accounts` | Pre-funded genesis accounts | `10` |
-| `--balance` | Initial balance per account (CFX) | `1000000` |
-| `--mining-interval` | Auto-miner tick (ms) | `2000` |
-| `--no-mining` | Disable auto-miner | `false` |
-| `--mnemonic` | Override BIP-39 mnemonic | Random |
-| `--data-dir` | Override data directory | `~/.cfxdevkit/devnode/` |
-| `--logging` | Forward node logs to stdout | `false` |
-
-## Programmatic API
-
-### DevNode Lifecycle
-
-Use `createDevNode` to instantiate a node handle. The lifecycle is managed via `start()` and `stop()`.
-
-```typescript
-import { createDevNode } from '@cfxdevkit/devnode';
-
-const node = createDevNode({ 
-  accounts: 5, 
-  miningIntervalMs: 1000 
-});
-
-await node.start();
-console.log(node.urls.core); // http://127.0.0.1:12537
-
-// Manual mining
-await node.packMine(); 
-
-await node.stop();
-```
-
-#### Key Methods
-
-*   `createDevNode(config?: DevNodeConfig)`: Constructs a new instance.
-*   `start()`: Spawns the `@xcfx/node` server. Throws `devnode/already-running` if called while `running` or `starting`.
-*   `stop()`: Halts the auto-miner and shuts down the server.
-*   `restart()`: Convenience wrapper for `stop()` followed by `start()`.
-*   `getStatus()`: Returns current lifecycle state (`stopped`, `starting`, `running`, `stopping`, `error`).
-*   `getMiningStatus()`: Returns current auto-miner state (`enabled`, `intervalMs`, `ticks`).
-
-#### Mining Control
-
-*   `mine(blocks = 1)`: Mines empty Core blocks.
-*   `packMine()`: Packs pending Core and eSpace transactions into the next block.
-*   `startMining(intervalMs?)`: Enables the auto-miner loop. Prevents concurrent ticks via `autoMineInFlight` flag.
-*   `stopMining()`: Disables the auto-miner.
-
-### Executor Utilities
-
-The `@cfxdevkit/executor` module provides primitives for robust task management. These are often used in conjunction with DevNode operations in higher-level services (e.g., `devnode-server`, `automation`).
-
-#### Task Execution
-
-```typescript
-import { execute, withLock, createPoller } from '@cfxdevkit/executor';
-
-// Execute with retry logic
-const result = await execute(async (ctx) => {
-  // ctx.attempt, ctx.signal, ctx.metadata
-  return await performAsyncTask();
-}, {
-  attempts: 3,
-  timeoutMs: 5000,
-  shouldRetry: (err, attempt) => attempt < 3
-});
-
-if (result.ok) {
-  console.log(result.value);
-}
-```
-
-#### Concurrency & Locking
-
-*   `executeBatch(tasks, options)`: Runs multiple tasks with controlled concurrency.
-*   `withLock(key, task)`: Ensures mutual exclusion for tasks sharing the same `key`. Uses an in-memory `keyedLocks` map.
-*   `createPoller(task, intervalMs)`: Creates a repeating task loop that respects an `AbortSignal`.
-
-## Architecture & Flow
-
-The DevNode lifecycle relies on dynamic imports of `@xcfx/node` and `cive` to avoid bundling native binaries. The Executor module handles the orchestration of these async operations.
+### Architecture
 
 <Mermaid chart={`flowchart TD
-    subgraph CLI
-    CLI[cli.ts main] -->|parseArgs| Parse[parseArgs]
-    Parse -->|createDevNode| Node[DevNode]
-    end
+    CLI[cfxdevkit-devnode CLI] --> createDevNode
+    TestFixture["testing/createDevNodeFixture"] --> createDevNode
+    ServerController["devnode-server/controller"] --> DevNode
 
-    subgraph DevNode Core
-    Node -->|start| Start[start]
-    Start -->|createXcfxServer| Server[server.ts]
-    Server -->|import| Xcfx["@xcfx/node"]
-    Start -->|startMining| Mining[startMining]
-    Mining -->|requireTestClient| Client[createMiningClient]
-    Client -->|import| Cive[cive]
-    end
-
-    subgraph Executor Runtime
-    Node -.->|execute| Exec[executor: execute]
-    Node -.->|withLock| Lock[executor: withLock]
-    end
-
-    subgraph Signals
-    Signal("SIGINT/SIGTERM") -->|shutdown| CLI
-    end
+    createDevNode --> DevNode
+    DevNode --> resolveConfig
+    DevNode --> createAccounts
+    DevNode --> createXcfxServer["createXcfxServer (@xcfx/node)"]
+    DevNode --> createMiningClient["createMiningClient (cive)"]
+    createMiningClient --> autoMiner[Auto-miner setInterval]
 `} />
 
-### Execution Flow Details
+### `DevNodeConfig` and Defaults
 
-1.  **Initialization**: `main()` in `cli.ts` parses arguments and calls `createDevNode()`.
-2.  **Configuration**: `resolveConfig()` in `internals.ts` merges user input with `DEFAULTS`, generates a mnemonic if missing, and validates it via `@cfxdevkit/cdk`.
-3.  **Startup**: `DevNode.start()` creates the data directory, instantiates `XcfxServer` (via `server.ts`), and starts the native process.
-4.  **Mining**: If `miningIntervalMs > 0`, `startMining()` launches a `setInterval` loop. It checks `autoMineInFlight` to prevent `cive` RPC lockups from concurrent `mine({ numTxs: 1 })` calls.
-5.  **Shutdown**: `shutdown()` in `cli.ts` listens for `SIGINT`/`SIGTERM`, calls `node.stop()`, and waits for cleanup before exiting.
-6.  **External Integration**: External controllers (e.g., `devnode-server/src/controller.ts`) interact with `DevNode` methods directly. They often wrap these calls in `execute()` or `withLock()` to handle retries or ensure exclusive access during state changes.
+All fields are optional. The resolved defaults match the `coreSpaceLocal` / `espaceLocal` chain definitions in `@cfxdevkit/cdk/chains`:
 
-## Configuration
+| Field | Default | Notes |
+|---|---|---|
+| `chainId` | `2029` | Core Space |
+| `evmChainId` | `2030` | eSpace |
+| `coreRpcPort` | `12537` | HTTP |
+| `evmRpcPort` | `8545` | HTTP |
+| `coreWsPort` | `12536` | WebSocket |
+| `evmWsPort` | `8546` | WebSocket |
+| `accounts` | `10` | Genesis accounts |
+| `balanceCfx` | `'10000'` | Display only — xcfx hardcodes 10,000 CFX per genesis secret |
+| `miningIntervalMs` | `500` | `0` disables auto-miner |
+| `logging` | `false` | Forward xcfx logs to stdout |
+| `mnemonic` | random BIP-39 | Deterministic if provided |
+| `dataDir` | `~/.cfxdevkit/devnode/<random>` | |
 
-The `DevNodeConfig` interface defines all tunable parameters.
+`resolveConfig` in `internals.ts` validates the mnemonic via `validateMnemonic` from `@cfxdevkit/cdk` and throws `DevNodeError({ code: 'devnode/invalid-config' })` on failure.
 
-```typescript
-interface DevNodeConfig {
-  chainId?: number;
-  evmChainId?: number;
-  coreRpcPort?: number;
-  evmRpcPort?: number;
-  dataDir?: string;
-  mnemonic?: string;
-  accounts?: number;
-  balanceCfx?: string;
-  miningIntervalMs?: number; // 0 disables auto-miner
-  logging?: boolean;
+### Account Derivation
+
+`createAccounts` derives two sets of accounts from the BIP-39 mnemonic using `deriveDualAccount` from `@cfxdevkit/cdk`:
+
+- **`accounts[]`** — `n` standard accounts (index 0…n-1), each with an eSpace address, Core address, public key, private key, and derivation paths.
+- **`faucet`** — A dedicated mining account at index 0 with `accountType: 'mining'`. This is set as `miningAuthor` in the xcfx server config and receives block rewards.
+
+Both sets are passed as `genesisSecrets` and `genesisEvmSecrets` to `@xcfx/node`, funding them at startup.
+
+### `DevNode` Class
+
+Construct via `createDevNode(config?)` — do not use `new DevNode()` directly in most cases.
+
+#### Lifecycle
+
+```
+stopped → starting → running → stopping → stopped
+                   ↘ error ↗
+```
+
+`start()` creates the data directory, calls `createXcfxServer`, awaits `server.start()`, then calls `startMining` if `miningIntervalMs > 0`. On failure it cleans up the partially-started server and transitions to `'error'`.
+
+`stop()` stops the auto-miner (best-effort), calls `server.stop()`, nulls the test client, and transitions to `'stopped'`. Calling `stop()` on an already-stopped node is a no-op.
+
+`restart()` is a convenience wrapper: `stop()` then `start()`.
+
+#### RPC URLs
+
+`node.urls` returns the four endpoints after construction (before `start()` is called — the ports are deterministic from config):
+
+```ts
+{
+  core:     'http://127.0.0.1:12537',
+  espace:   'http://127.0.0.1:8545',
+  coreWs:   'ws://127.0.0.1:12536',
+  espaceWs: 'ws://127.0.0.1:8546',
 }
 ```
 
-**Note on Funding**: `balanceCfx` is primarily for display. The actual genesis funding is hardcoded in `@xcfx/node` based on the number of `genesisSecrets` provided.
+#### Mining
 
-## Error Handling
+The auto-miner calls `cive.createTestClient().mine({ numTxs: 1 })` on the Core RPC at the configured interval. Two guard flags prevent concurrent calls:
 
-The module throws `DevNodeError` for lifecycle and configuration issues.
+- `autoMineInFlight` — set while the timer callback's mine call is pending.
+- `packing` — set while a manual `packMine()` call is executing.
 
-| Code | Description |
-| :--- | :--- |
-| `devnode/already-running` | `start()` called on a running node. |
-| `devnode/not-running` | Operation (e.g., `mine`) called on a stopped node. |
-| `devnode/start-failed` | Underlying `@xcfx/node` process failed to launch. |
-| `devnode/stop-failed` | Server shutdown encountered an error. |
-| `devnode/mining-already-running` | `startMining()` called while active. |
-| `devnode/mining-not-running` | `stopMining()` called while inactive. |
-| `devnode/invalid-config` | Mnemonic validation failed or interval < 100ms. |
+The `setInterval` callback skips its tick if either flag is true.
 
-```typescript
-import { DevNodeError } from '@cfxdevkit/devnode';
+**Manual mining methods:**
 
-try {
-  await node.start();
-} catch (e) {
-  if (e instanceof DevNodeError) {
-    console.error(e.code); // 'devnode/start-failed'
-    console.error(e.meta); // Additional context
-  }
+| Method | Behaviour |
+|---|---|
+| `mine(blocks?)` | Mine `n` empty Core blocks, no tx packing |
+| `packMine()` | `mine({ numTxs: 1 })` — packs pending txs, increments tick counter |
+| `startMining(intervalMs?)` | Start the auto-miner; throws `devnode/mining-already-running` if already running at a different interval |
+| `stopMining()` | Clear the interval; throws `devnode/mining-not-running` if not running |
+| `getMiningStatus()` | Returns a `MiningStatus` snapshot (enabled, intervalMs, ticks, startedAt) |
+
+The test client (`CiveTestClient`) is created lazily on first call to `requireTestClient()` and cached.
+
+### `DevNodeError`
+
+Extends `CfxError` from `@cfxdevkit/cdk`. Every error thrown by this package uses this type with one of the following codes:
+
+| Code | When |
+|---|---|
+| `devnode/already-running` | `start()` called while running or starting |
+| `devnode/not-running` | Mining or mine methods called before `start()` |
+| `devnode/start-failed` | `@xcfx/node` throws during startup |
+| `devnode/stop-failed` | `@xcfx/node` throws during shutdown |
+| `devnode/mining-already-running` | `startMining` called with a different interval |
+| `devnode/mining-not-running` | `stopMining` called when not running |
+| `devnode/invalid-config` | Invalid mnemonic or `miningIntervalMs < 100` |
+
+### CLI (`cfxdevkit-devnode`)
+
+The binary parses `process.argv` via `parseArgs`, constructs a `DevNode`, starts it, prints endpoints and account addresses, then waits. `SIGINT` / `SIGTERM` trigger a graceful `node.stop()`.
+
+```
+cfxdevkit-devnode
+cfxdevkit-devnode --accounts 4 --balance 1000 --logging
+cfxdevkit-devnode --no-mining
+cfxdevkit-devnode --core-port 13000 --espace-port 9000
+```
+
+`--no-mining` is a shortcut that sets `miningIntervalMs: 0` in the resolved config.
+
+### Integration Points
+
+- **`testing/createDevNodeFixture`** — calls `start()` / `stop()` around test suites.
+- **`devnode-server/controller`** — proxies all `DevNode` methods over HTTP for the dev server API.
+- **`helpers/contract/commands.deployContractCommand`** and **`src/helpers/abi.abiCallWrite`** — call `packMine()` after submitting transactions to force inclusion.
+- **Integration tests** in `compiler` and `protocol` packages — call `createDevNode()` directly.
+
+---
+
+## `@cfxdevkit/executor`
+
+A collection of async execution primitives with no external dependencies beyond the standard runtime.
+
+### `execute<T>(task, options?)`
+
+Runs a single task with optional retry, timeout, and abort signal. Returns `ExecutionResult<T>` — a discriminated union that never throws:
+
+```ts
+type ExecutionResult<T> =
+  | { ok: true;  value: T;      attempts: number; durationMs: number }
+  | { ok: false; error: unknown; attempts: number; durationMs: number }
+```
+
+Key options:
+
+| Option | Description |
+|---|---|
+| `attempts` | Total tries (default 1 — no retry) |
+| `delayMs` | Fixed ms or `(attempt, error) => ms` between retries |
+| `shouldRetry` | Predicate; defaults to always retry |
+| `timeoutMs` | Per-attempt timeout; throws after N ms |
+| `signal` | `AbortSignal` to cancel mid-execution |
+| `metadata` | Passed through to `ExecutionContext` |
+
+`runWithTimeout` races the task against a `setTimeout`-driven abort. The outer `AbortSignal` is also raced, so cancellation is immediate.
+
+### `executeBatch<T>(tasks, options?)`
+
+Runs an array of tasks with bounded concurrency (`options.concurrency`, default 1). Internally maintains a shared index and a pool of `worker()` coroutines. Each worker calls `execute()` so per-task retry and timeout apply. Set `stopOnError: true` to halt remaining tasks after the first failure.
+
+### `createTaskQueue(options?)`
+
+A thin wrapper around `executeBatch`. Tasks are accumulated with `.add(task)` and drained with `.run()`, which calls `executeBatch` on the queued tasks and fires `onResult` callbacks.
+
+### `createPoller(task, intervalMs)`
+
+Creates a `Poller` that calls `task` in a loop with `intervalMs` delay between iterations. Uses `AbortController` internally; `stop()` aborts the controller and awaits the loop promise.
+
+```ts
+interface Poller {
+  start(): void;
+  stop(): Promise<void>;
+  isRunning(): boolean;
 }
 ```
 
-## Integration Notes
+Errors from `task` propagate out of the loop promise only if the signal is not yet aborted — transient errors during a graceful stop are suppressed.
 
-*   **Cross-Module Calls**: The `executor` module is frequently invoked by `automation/src/keeper.ts` (via `createPoller`) and `devnode-server` (via `execute`/`withLock`) to manage DevNode interactions safely.
-*   **Transaction Packing**: Functions like `abiCallWrite` (in `src/helpers/abi.ts`) often invoke `node.packMine()` to ensure transaction inclusion before returning results. This flow is protected by `assertRunning()` checks which throw `DevNodeError` if the node is down.
-*   **Port Conflicts**: Ensure ports (12537, 8545, etc.) are free before starting. The module does not automatically retry on port binding errors.
+### `withLock<T>(key, task)`
+
+Serialises async tasks sharing the same string `key` using a promise chain. Tasks with different keys run concurrently. The lock entry is removed from the internal `Map` once the chain is no longer needed, preventing unbounded growth.
+
+```ts
+// These two calls will execute sequentially:
+await Promise.all([
+  withLock('my-resource', () => doWork()),
+  withLock('my-resource', () => doMoreWork()),
+]);
+```
+
+`automation/src/keeper.ts` uses both `withLock` and `executeBatch` (via `runAllTicks`) to serialise keeper ticks while processing them in bounded-concurrency batches.

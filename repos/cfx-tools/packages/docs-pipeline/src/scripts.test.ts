@@ -10,15 +10,15 @@ const mocks = vi.hoisted(() => ({
   updateWiki: vi.fn(),
 }));
 
-vi.mock('./package-pages.js', () => ({ syncPackages: mocks.syncPackages }));
-vi.mock('./wiki-sync.js', () => ({ syncWiki: mocks.syncWiki }));
-vi.mock('./sync-architecture.js', () => ({ syncArchitecturePage: mocks.syncArchitecturePage }));
-vi.mock('./sync-coverage.js', () => ({ syncCoveragePage: mocks.syncCoveragePage }));
+vi.mock('./package/pages.js', () => ({ syncPackages: mocks.syncPackages }));
+vi.mock('./wiki/sync.js', () => ({ syncWiki: mocks.syncWiki }));
+vi.mock('./sync/architecture.js', () => ({ syncArchitecturePage: mocks.syncArchitecturePage }));
+vi.mock('./sync/coverage.js', () => ({ syncCoveragePage: mocks.syncCoveragePage }));
 vi.mock('./validate-content.js', () => ({
   validateGeneratedContent: mocks.validateGeneratedContent,
 }));
-vi.mock('./wiki-validate.js', () => ({ validateWikiMermaid: mocks.validateWikiMermaid }));
-vi.mock('./wiki-update.js', () => ({ updateWiki: mocks.updateWiki }));
+vi.mock('./wiki/validate.js', () => ({ validateWikiMermaid: mocks.validateWikiMermaid }));
+vi.mock('./wiki/update.js', () => ({ updateWiki: mocks.updateWiki }));
 
 import { runCommand } from './scripts.js';
 

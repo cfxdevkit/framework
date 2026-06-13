@@ -4,7 +4,7 @@ export {
   type DocsPackageRecord,
   discoverDocsPackages,
   discoverDocsPagePackages,
-} from './discover-packages.js';
+} from './discover/packages.js';
 export { docsToolingNamespace } from './namespace.js';
 export {
   computeSkeletonHash,
@@ -13,8 +13,8 @@ export {
   readEmbeddedHash,
   stripEmbeddedHash,
   toSlug,
-} from './package-content.js';
-export { syncPackages } from './package-pages.js';
+} from './package/content.js';
+export { syncPackages } from './package/pages.js';
 export {
   type DocsApiTarget,
   discoverApiTargets,
@@ -35,6 +35,6 @@ export { syncWikiContent, validateWikiContent } from './pipeline/wiki.js';
 export { runCli } from './run.js';
 export { type DocsCommandName, runCommand } from './scripts.js';
 export { validateGeneratedContent } from './validate-content.js';
-export { syncWiki } from './wiki-sync.js';
-export { validateWikiMermaid } from './wiki-validate.js';
+export { syncWiki } from './wiki/sync.js';
+export { validateWikiMermaid } from './wiki/validate.js';
 export { findRepoRoot, getDocsSitePaths } from './workspace.js';

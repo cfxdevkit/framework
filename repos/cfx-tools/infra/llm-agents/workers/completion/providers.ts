@@ -5,8 +5,8 @@ import {
   LemonadeProvider,
   LiteLLMProvider,
   OpenAICompatProvider,
-} from './provider-classes.ts';
-import { getProviderDefaultModel, resolveProviderModel } from './provider-meta.ts';
+} from './provider/classes';
+import { getProviderDefaultModel, resolveProviderModel } from './provider/meta';
 import type { LlmConfig, LlmProvider, LlmProviderType } from './types.ts';
 
 export async function resolveProvider(

@@ -3,7 +3,7 @@
  * Extracted here to keep provider-stream.ts under the line-count limit.
  */
 import { isRecord } from './guards.ts';
-import { extractTextNode } from './provider-meta.ts';
+import { extractTextNode } from './provider/meta';
 import type { CompletionOptions, CompletionProgressEvent } from './types.ts';
 
 export type ChunkTimings = {

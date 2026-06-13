@@ -5,10 +5,10 @@ import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { KeystoreProvider } from './context.js';
 import type { KeystoreService } from './types.js';
-import { useKeystoreAccounts } from './use-keystore-accounts.js';
-import { useKeystoreIdentity } from './use-keystore-identity.js';
-import { useKeystoreLifecycle } from './use-keystore-lifecycle.js';
-import { useKeystoreWallets } from './use-keystore-wallets.js';
+import { useKeystoreAccounts } from './use-keystore/accounts.js';
+import { useKeystoreIdentity } from './use-keystore/identity.js';
+import { useKeystoreLifecycle } from './use-keystore/lifecycle.js';
+import { useKeystoreWallets } from './use-keystore/wallets.js';
 
 afterEach(() => cleanup());
 

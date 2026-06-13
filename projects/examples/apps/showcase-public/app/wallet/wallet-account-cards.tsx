@@ -8,8 +8,8 @@ import {
   ESPACE_MAINNET_ID,
   ESPACE_SNIPPET,
   ESPACE_TESTNET_ID,
-} from './wallet-data';
-import { chainBtn, ROW, TD_LABEL, TD_VALUE, TWO_COL_GRID } from './wallet-styles';
+} from './wallet/data';
+import { chainBtn, ROW, TD_LABEL, TD_VALUE, TWO_COL_GRID } from './wallet/styles';
 
 interface WalletAccountCardsProps {
   address: string | undefined;

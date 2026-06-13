@@ -85,8 +85,8 @@ vi.mock('@inquirer/prompts', () => ({
   select: harness.prompts.select,
 }));
 
-vi.mock('./agent-runtime.js', async () => {
-  const actual = await vi.importActual<typeof import('./agent-runtime.js')>('./agent-runtime.js');
+vi.mock('./agent/runtime.js', async () => {
+  const actual = await vi.importActual<typeof import('./agent/runtime.js')>('./agent/runtime.js');
   return {
     ...actual,
     withLlmClient: async (run: (client: typeof harness.llmClient) => Promise<unknown> | unknown) =>
@@ -121,7 +121,7 @@ vi.mock('./agent-runtime.js', async () => {
 
 const { llmClient } = harness;
 
-import { agentToolingNamespace } from './agent-namespace.js';
+import { agentToolingNamespace } from './agent/namespace.js';
 
 describe('agentToolingNamespace profile and policy config', () => {
   afterEach(() => {

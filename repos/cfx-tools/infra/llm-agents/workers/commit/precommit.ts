@@ -1,12 +1,12 @@
 import {
-  toExecutionContextRuntimePayload,
   resolveExecutionContext,
+  toExecutionContextRuntimePayload,
 } from '../shared/execution-context.ts';
 import { parseCommitFlags } from './flags.ts';
 import { runQualityGates, runRepositoryPolicyGates } from './gates.ts';
 import { summarizeWorkingSet } from './hud.ts';
 import { detectChangedScopes } from './scope.ts';
-import { createWorkflowTerminalUi, summarizeGateFailures } from './terminal-ui.ts';
+import { createWorkflowTerminalUi, summarizeGateFailures } from './terminal/ui';
 import type { PrecommitWorkflowResult } from './types.ts';
 
 export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResult> {

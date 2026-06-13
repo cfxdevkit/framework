@@ -74,7 +74,7 @@ vi.mock('./hud.ts', () => ({
   summarizeWorkingSet: mocks.summarizeWorkingSet,
 }));
 
-vi.mock('./terminal-ui.ts', () => ({
+vi.mock('./terminal/ui.ts', () => ({
   createWorkflowTerminalUi: mocks.createWorkflowTerminalUi,
   summarizeCommitPreview: vi.fn((subject: string, body: string) => [
     `commit: ${subject}`,

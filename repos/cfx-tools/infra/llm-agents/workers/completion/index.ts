@@ -23,7 +23,7 @@ export {
   getProviderBaseUrl,
   getProviderDefaultModel,
   resolveProviderModel,
-} from './provider-meta.ts';
+} from './provider/meta';
 export { resolveProvider } from './providers.ts';
 export { commandBlock, git, renderCommandBlock } from './runner.ts';
 export type {

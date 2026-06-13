@@ -7,7 +7,7 @@
 import { discoverPackagePageTargets, syncPackagePageSkeletons } from '@cfxdevkit/docs-pipeline';
 import { logInfo, logStep } from '../shared/logging.ts';
 import { parseDocFlags } from './flags.ts';
-import { enrichPackagePage } from './package-page-enrichment.ts';
+import { enrichPackagePage } from './package-page/enrichment';
 
 export async function runDocsPackagePages(args: string[]): Promise<void> {
   const flags = parseDocFlags(args);

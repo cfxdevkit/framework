@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDeterministicHints, extractSignalLines } from './gate-output.ts';
+import { buildDeterministicHints, extractSignalLines } from './gate/output';
 import { formatOperationHud, summarizeWorkingSet } from './hud.ts';
 
 describe('commit gate signal extraction', () => {

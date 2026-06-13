@@ -1,8 +1,8 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
+import { registerPiCdkCommands } from './commands/cdk.js';
 import { registerPiRepoCommands } from './commands.js';
-import { registerPiCdkCommands } from './commands-cdk.js';
 import { getPiActionDefinitions } from './llm-agents-runtime.js';
 import { createPiProviderBridge, registerPiProviderBridge } from './providers.js';
 import { registerPiRepoTools } from './tools.js';

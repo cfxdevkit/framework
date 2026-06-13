@@ -1,5 +1,5 @@
 import { readConfig, resolveRequestTimeoutMs } from './config.ts';
-import { getProviderBaseUrl, resolveProviderModel } from './provider-meta.ts';
+import { getProviderBaseUrl, resolveProviderModel } from './provider/meta';
 import { resolveProvider } from './providers.ts';
 import { resolveActionConfig } from './resolve-action.ts';
 import type { ChatMessage, CompleteAgentRequest, CompletionReport } from './types.ts';

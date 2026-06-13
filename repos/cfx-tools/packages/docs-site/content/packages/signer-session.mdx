@@ -1,0 +1,169 @@
+---
+title: "@cfxdevkit/signer-session"
+description: "Headless signer session factory — create a ready Signer pair (eSpace + Core) from any backend without browser UI."
+---
+
+import { Callout, Tabs } from 'nextra/components'
+
+# @cfxdevkit/signer-session
+
+> Headless signer session factory — create a ready Signer pair (eSpace + Core) from any backend without browser UI.
+
+## Install
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+  <Tabs.Tab>
+  ```bash
+  pnpm add @cfxdevkit/signer-session
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  npm install @cfxdevkit/signer-session
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```bash
+  yarn add @cfxdevkit/signer-session
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+Headless signer session factory. Create a ready `{ eSpace, core? }` Signer pair from any backend — **no browser UI, no devnode-server required**.
+
+## Backends
+
+### Memory (dev / test)
+
+```ts
+import { createSignerSession } from '@cfxdevkit/signer-session';
+
+const s = await createSignerSession({
+  kind: 'memory',
+  privateKey: '0x…',
+});
+const sig = await s.eSpace.signMessage('Hello Conflux');
+const coreSig = await s.core!.signMessage('Hello Core');
+await s.dispose(); // no-op for memory
+```
+
+### File keystore (CI / scripts)
+
+```ts
+const s = await createSignerSession({
+  kind: 'file-keystore',
+  path: '~/.cfxdevkit/keystore.json', // or set CFX_KEYSTORE_PATH
+  passphrase: process.env.MY_PASS,    // or set CFX_PASSPHRASE
+  ref: { service: 'cfxdevkit', account: 'deployer' },
+  accountIndex: 0,
+});
+const sig = await s.eSpace.signMessage('Hello');
+await s.dispose();
+```
+
+**Environment variables (all optional when passed explicitly):**
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `CFX_KEYSTORE_PATH` | Keystore file path | (required if not passed) |
+| `CFX_PASSPHRASE` | Decryption passphrase | (required if not passed) |
+| `CFX_KEYSTORE_SERVICE` | `ref.service` | `"cfxdevkit"` |
+| `CFX_KEYSTORE_ACCOUNT` | `ref.account` | `"default"` |
+
+### OneKey hardware (Node.js / Electron)
+
+```ts
+import HardwareSDK from '@onekeyfe/hd-common-connect-sdk';
+await HardwareSDK.init({ debug: false });
+const devicesRes = await HardwareSDK.searchDevices();
+const { connectId } = devicesRes.payload[0];
+const { deviceId } = (await HardwareSDK.getFeatures(connectId)).payload;
+
+const s = await createSignerSession({
+  kind: 'onekey',
+  sdk: HardwareSDK,
+  connectId,
+  deviceId,
+});
+```
+
+### Ledger hardware (Node.js HID)
+
+```ts
+import { createNodeHidLedgerTransport } from '@cfxdevkit/wallet/hardware/ledger';
+const transport = await createNodeHidLedgerTransport();
+
+const s = await createSignerSession({
+  kind: 'ledger',
+  transport,
+});
+await s.eSpace.signMessage('Hello');
+await s.dispose(); // closes HID transport
+```
+
+## CLI — `cdk sign`
+
+```bash
+# Sign a message from env-var keystore
+CFX_KEYSTORE_PATH=~/.cfxdevkit/keystore.json CFX_PASSPHRASE=secret \
+  cdk sign message "Hello Conflux"
+
+# Core Space
+cdk sign message "Hello Core" --space core
+
+# Typed data
+cdk sign typed-data ./payload.json --space espace --json
+
+# With explicit keystore flags
+cdk sign message "Hello" --keystore ./my.json --account deployer
+```
+
+## MCP offline mode
+
+When `devnode-server` is not running, `cfxdevkit_wallet_sign_message` automatically falls
+back to `createSignerSession({ kind: 'file-keystore' })` if `CFX_PASSPHRASE` and
+`CFX_KEYSTORE_PATH` are set. The response includes a `"note"` field indicating offline mode.
+
+## Signer Configuration File (`.cfxdevkit/signer.json`)
+
+For projects using the full developer toolchain, configure a persistent signer:
+
+```bash
+# Interactive setup wizard
+cdk signer setup
+
+# Check current config
+cdk signer status
+
+# List all configured signers
+cdk signer list
+
+# Switch the active signer
+cdk signer use hardware
+```
+
+**`.cfxdevkit/signer.json` format:**
+```json
+{
+  "defaultSigner": "dev-wallet",
+  "signers": {
+    "dev-wallet": {
+      "kind": "file-keystore",
+      "path": ".cfxdevkit/keystore.json",
+      "service": "cfxdevkit",
+      "account": "deployer",
+      "accountIndex": 0
+    },
+    "quick": { "kind": "memory" },
+    "hardware": { "kind": "onekey" }
+  }
+}
+```
+
+The file is automatically gitignored by the setup wizard.
+
+**`CFX_SIGNER_NAME`** — override the active signer name without editing the file.
+
+**`cdk sign`** reads signer config automatically when `CFX_KEYSTORE_PATH` is not set.
+
+{/* readme-hash: baf5360f34c6d4ce98e56946fad906fbeb85032e5f0c2eaac4ebe2cbe1bd3715 */}

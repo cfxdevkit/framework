@@ -1,7 +1,7 @@
 import { getProviderBaseUrl, readConfig, resolveProvider } from '../completion/index.ts';
-import type { ValidationProbeResult } from '../validate-models-probe.ts';
-import { runValidationProbe } from '../validate-models-probe.ts';
-import { summarizeValidationResult } from '../validate-models-report.ts';
+import type { ValidationProbeResult } from '../validate-models/probe';
+import { runValidationProbe } from '../validate-models/probe';
+import { summarizeValidationResult } from '../validate-models/report';
 import { assignTierProbe, renderSmokeTable, validateTaskKey } from './smoke-render.ts';
 
 // ─── Tier probe definitions ───────────────────────────────────────────────────

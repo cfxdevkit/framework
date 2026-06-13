@@ -6,8 +6,8 @@ import {
   getPiActionDefinitions,
   type PiRepoActionExecutionResult,
 } from './llm-agents-runtime.js';
-import { executePiCommitSession } from './tools-commit.js';
-import { withCapturedConsole } from './tools-utils.js';
+import { executePiCommitSession } from './tools/commit.js';
+import { withCapturedConsole } from './tools/utils.js';
 import {
   clearPiOperatorWidgets,
   createPiAgentCheckUiState,
@@ -16,7 +16,7 @@ import {
   renderPiActionCatalogLines,
 } from './ui.js';
 
-export { executePiCommitSession } from './tools-commit.js';
+export { executePiCommitSession } from './tools/commit.js';
 
 const repoAgentCheckTool = defineTool({
   name: 'repo_agent_check',
@@ -195,7 +195,7 @@ export function registerPiRepoTools(pi: ExtensionAPI): void {
 }
 
 export { executePiAgentCheck } from './llm-agents-runtime.js';
-export { withCapturedConsole } from './tools-utils.js';
+export { withCapturedConsole } from './tools/utils.js';
 
 export async function executePiRepoAction(options: {
   action: string;

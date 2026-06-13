@@ -8,13 +8,13 @@ export {
   openRouterApiKey,
   openRouterModel,
 } from './cloud-credentials.js';
+export { registerPiCdkCommands } from './commands/cdk.js';
 export { registerPiRepoCommands } from './commands.js';
-export { registerPiCdkCommands } from './commands-cdk.js';
 export type {
   PiLlmConfig as LlmConfig,
   PiLlmProviderType,
   PiProviderStrategy,
-} from './config-types.js';
+} from './config/types.js';
 export {
   createPiAgentExtension,
   piScopeEnvVar,
@@ -44,13 +44,13 @@ export {
   resolveRuntimeBridgeState,
   writeConfig,
 } from './tooling-runtime.js';
-export { executePiRepoAction, registerPiRepoTools } from './tools.js';
 export {
   executeCdkContractsExtract,
   executeCdkDerive,
   executeCdkGenerate,
   executeCdkStatus,
-} from './tools-cdk.js';
+} from './tools/cdk.js';
+export { executePiRepoAction, registerPiRepoTools } from './tools.js';
 export {
   applyPiOperatorUiState,
   clearPiWorkflowProgress,

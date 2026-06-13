@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/framework",
-  "version": "0.0.0",
+  "version": "2.0.0",
   "private": true,
   "description": "Conflux DevKit monorepo \u2014 framework, platform, domains, projects.",
   "packageManager": "pnpm@10.33.2",

@@ -3,7 +3,7 @@ import {
   parseKebabGroupFlags,
   renderKebabGroupConsoleReport,
   runKebabGroupsCheck,
-} from '../checks/kebab-groups.js';
+} from '../checks/kebab/groups.js';
 
 const flags = parseKebabGroupFlags(process.argv.slice(2));
 const report = await runKebabGroupsCheck(flags);

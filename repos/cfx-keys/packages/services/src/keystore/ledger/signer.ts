@@ -13,7 +13,7 @@ import {
   getCoreLedgerInfo,
   signCoreLedgerMessage,
   signCoreLedgerTransaction,
-} from './core-apdu.js';
+} from './core/apdu.js';
 import {
   canonicalHex,
   finaliseEip1559Tx,

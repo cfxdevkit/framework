@@ -1,5 +1,5 @@
 import { createSignerSession, createSignerSessionFromConfig } from '@cfxdevkit/signer-session';
-import { isHelpToken } from './agent-runtime.js';
+import { isHelpToken } from './agent/runtime.js';
 import type { ToolingNamespaceDefinition } from './contracts.js';
 
 const SIGN_COMMANDS = [

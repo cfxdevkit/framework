@@ -8,8 +8,8 @@ import {
   repoRootDocumentRequirements,
   structureChecks,
   workspaceRootDocumentRequirements,
-} from './workspace-data.js';
-import { rootToolingScriptRequirements } from './workspace-scripts.js';
+} from './workspace/data.js';
+import { rootToolingScriptRequirements } from './workspace/scripts.js';
 
 export type DocumentShapeCheck = {
   readonly id: string;

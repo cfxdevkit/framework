@@ -19,8 +19,8 @@ import {
   checkPackageDocumentContracts,
   checkRootToolingScripts,
   checkWorkspaceDocumentContracts,
-} from './docs-contracts.js';
-import { findBrokenPathRefs, findCurrentPlannedDrift } from './docs-paths.js';
+} from './docs/contracts.js';
+import { findBrokenPathRefs, findCurrentPlannedDrift } from './docs/paths.js';
 
 export async function runDocsCheck(opts: { silent?: boolean } = {}): Promise<AgentSummary> {
   const publicPackages = await discoverPublicPackages();

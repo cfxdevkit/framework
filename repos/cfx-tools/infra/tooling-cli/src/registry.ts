@@ -1,13 +1,13 @@
-import { agentToolingNamespace } from './agent-namespace.js';
+import { agentToolingNamespace } from './agent/namespace.js';
 import type {
   ToolingCatalog,
   ToolingCommandDefinition,
   ToolingNamespaceDefinition,
 } from './contracts.js';
 import { devnodeToolingNamespace } from './devnode-namespace.js';
-import { rootDocsToolingNamespace } from './docs-namespace.js';
-import { llmToolingNamespace } from './llm-namespace.js';
-import { repoToolingNamespace } from './repo-namespace.js';
+import { rootDocsToolingNamespace } from './docs/namespace.js';
+import { llmToolingNamespace } from './llm/namespace.js';
+import { repoToolingNamespace } from './repo/namespace.js';
 import { signToolingNamespace } from './sign-namespace.js';
 import { signerToolingNamespace } from './signer-namespace.js';
 

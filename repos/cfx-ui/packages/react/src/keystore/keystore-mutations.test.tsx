@@ -5,7 +5,7 @@ import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { KeystoreProvider } from './context.js';
 import type { KeystoreService } from './types.js';
-import { useKeystoreWallets } from './use-keystore-wallets.js';
+import { useKeystoreWallets } from './use-keystore/wallets.js';
 
 afterEach(() => cleanup());
 

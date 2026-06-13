@@ -1,4 +1,4 @@
-import type { RepoMergeCandidateResult, RepoMergeResult } from './repo-merge.js';
+import type { RepoMergeCandidateResult, RepoMergeResult } from './repo/merge.js';
 
 const outcomeIcon: Record<RepoMergeCandidateResult['outcome'], string> = {
   merged: '✓',

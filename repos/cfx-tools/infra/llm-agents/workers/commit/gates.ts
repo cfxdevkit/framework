@@ -1,12 +1,12 @@
 import {
   defaultRenderer,
+  type RepoCommandTarget,
   runRepoCheck,
   runRepoCommand,
-  type RepoCommandTarget,
 } from '@cfxdevkit/cdk-repo-check';
 import { QUALITY_GATE_SPECS } from '../shared/index.ts';
-import { collectOutput } from './gate-output.ts';
-import { createGateResult } from './gate-results.ts';
+import { collectOutput } from './gate/output';
+import { createGateResult } from './gate/results';
 
 type RepositoryPolicyStatus = 'ok' | 'warning' | 'error';
 export type GateStatus = RepositoryPolicyStatus | 'skipped';

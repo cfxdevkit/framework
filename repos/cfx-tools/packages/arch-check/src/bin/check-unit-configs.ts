@@ -3,7 +3,7 @@ import {
   parseUnitConfigFlags,
   renderUnitConfigConsoleReport,
   runUnitConfigsCheck,
-} from '../checks/unit-configs.js';
+} from '../checks/unit/configs.js';
 
 const flags = parseUnitConfigFlags(process.argv.slice(2));
 const report = await runUnitConfigsCheck(flags);

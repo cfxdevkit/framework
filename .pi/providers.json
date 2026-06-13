@@ -2,6 +2,7 @@
   "provider": "lemonade",
   "baseUrl": "http://host.containers.internal:13305/",
   "defaultModel": "Qwen3-Coder-Next-GGUF",
+  "githubModel": null,
   "requestTimeoutMs": 600000,
   "actions": {
     "validation": "Gemma-4-26B-A4B-it-GGUF",
@@ -25,12 +26,33 @@
       "provider": "openai-compat",
       "baseUrl": "https://api.githubcopilot.com",
       "defaultModel": "claude-sonnet-4.6"
+    },
+    "local-fast": {
+      "provider": "litellm"
     }
   },
   "actionPolicies": {
     "wiki-generate": {
+      "phases": {},
       "profile": "github-cloud",
       "model": "claude-sonnet-4.6"
+    },
+    "review": {
+      "phases": {},
+      "profile": "local-fast"
+    }
+  },
+  "harness": {
+    "version": 1,
+    "defaultMode": "deterministic",
+    "providerStrategy": "auto",
+    "deterministic": {
+      "preserveDeterministicArtifacts": true,
+      "preserveDeterministicSections": true
+    },
+    "exploratory": {
+      "allowCodeChanges": true,
+      "allowWideChanges": true
     }
   },
   "tokenBudget": {
@@ -79,7 +101,6 @@
         "docs-pipeline"
       ],
       "contextWindow": 262144,
-      "contextWindow": 262144,
       "labels": ["custom"]
     },
     {
@@ -112,18 +133,5 @@
       "sizeGb": 9.1,
       "labels": ["audio", "vision", "reasoning", "tool-calling", "chat-transcription"]
     }
-  ],
-  "harness": {
-    "version": 1,
-    "defaultMode": "deterministic",
-    "providerStrategy": "auto",
-    "deterministic": {
-      "preserveDeterministicArtifacts": true,
-      "preserveDeterministicSections": true
-    },
-    "exploratory": {
-      "allowCodeChanges": true,
-      "allowWideChanges": true
-    }
-  }
+  ]
 }

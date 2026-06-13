@@ -2,449 +2,261 @@
 title: "LLM Completion Engine"
 ---
 
-import { Mermaid } from '../../components/Mermaid';
+import { Mermaid } from '../../../components/Mermaid';
 
 # LLM Completion Engine
 
 # LLM Completion Engine
 
-The LLM Completion Engine provides a unified interface for generating LLM completions across multiple provider backends. It is designed to support repository upkeep tasks in the Conflux DevKit monorepo, including code review, documentation generation, commit preparation, and validation workflows.
+The completion engine is the core runtime layer for all LLM interactions in the Conflux DevKit monorepo. It handles provider selection and routing, configuration loading and normalization, context assembly, HTTP communication with LLM endpoints (including streaming), and structured output parsing. Everything exposed from `workers/completion/index.ts` feeds the higher-level agent commands (`executeAction`, `runCommitWorkflow`, etc.) without those callers needing to know which provider is active.
+
+---
 
 ## Architecture Overview
 
 <Mermaid chart={`flowchart TD
-    A[Agent Workflow] --> B["complete() / completeDirect()"]
-    B --> C[readConfig]
-    C --> D[resolveProvider]
-    D --> E[Provider Instance]
-    E --> F[discoverModels]
-    E --> G[complete]
-    G --> H[postChatCompletion]
-    H --> I[readStreamedChatCompletion]
-    I --> J[applyChatCompletionChunk]
-    J --> K[CompletionReport]
-    
-    L[buildActionContext] --> B
-    M[commitPreflightBlock] --> L
-    N[commandBlock] --> M
-    N --> O["git / pnpm / tsx"]
+    A["complete / completeDirect"] --> B["readConfig"]
+    A --> C["resolveProvider"]
+    A --> D["resolveProviderModel"]
+    C --> E["LemonadeProvider\nLiteLLMProvider\nOpenAICompatProvider\nGitHubModelsProvider"]
+    E --> F["postChatCompletion"]
+    F --> G["readStreamedChatCompletion\n(streaming)"]
+    F --> H["extractAssistantText\n(non-streaming)"]
+    B --> I["normalizeConfig\n/ mergeConfigLayers"]
 `} />
 
-## Core Functions
+---
 
-### `complete()`
+## Entry Points
 
-Primary entry point for standard completions. Constructs a system prompt for repository upkeep tasks and combines user prompt with repository context.
+### `complete(options)` — `complete.ts`
 
-```typescript
-export async function complete({
-  action,
-  modelOverride,
-  userPrompt,
-  context,
-  quick = false
-})
+The general-purpose completion function used by `executeAction` and similar callers. It applies a fixed system prompt establishing the assistant's role as a repository upkeep helper for the Conflux DevKit monorepo, then appends the supplied `context` and `userPrompt` as the user turn.
+
+```ts
+const report = await complete({
+  action: 'review',
+  userPrompt: 'Find regressions in the changed files.',
+  context: await buildActionContext(spec),
+  quick: false,           // if true, truncates context and uses a smaller token budget
+  modelOverride: null,    // overrides config.actions[action] and config.defaultModel
+});
 ```
 
-**Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `action` | `string` | Action identifier for config lookup |
-| `modelOverride` | `string \| undefined` | Override default model selection |
-| `userPrompt` | `string` | User's task description |
-| `context` | `string` | Repository context to include |
-| `quick` | `boolean` | Use reduced token budget |
+Model resolution order: `modelOverride` → `config.actions[action]` → `config.defaultModel`.
 
-**Returns:** `CompletionReport` with generated content, model info, and attempt history.
+Temperature is fixed at `0.2` for `complete`.
 
-### `completeCommitAgent()` / `completeStructuredAgent()`
+### `completeDirect(request)` — `complete.ts`
 
-Specialized wrappers for commit-related and structured agent requests. Both delegate to `completeDirect()` with different prompt patterns.
+Used internally by `completeCommitAgent` and `completeStructuredAgent`. The caller supplies a fully formed `systemPrompt` instead of relying on the built-in system message. Temperature is `0.1`. The `flags.noThinking` option disables chain-of-thought reasoning on providers that support it (Lemonade/Qwen3).
 
-```typescript
-export async function completeCommitAgent(request: CompleteAgentRequest)
-export async function completeStructuredAgent(request: CompleteAgentRequest)
+Both `completeCommitAgent` and `completeStructuredAgent` are thin wrappers around `completeDirect` and exist as named exports so callers can communicate intent.
+
+All three entry points return a `CompletionReport`:
+
+```ts
+interface CompletionReport {
+  generatedAt: string;   // ISO timestamp
+  action: string;
+  baseUrl: string;
+  model: string;
+  content: string;
+  attempts: readonly CompletionAttempt[];
+}
 ```
 
-### `completeDirect()`
-
-Internal function for agent-specific completions with custom system prompts and progress callbacks.
-
-**Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `action` | `string` | Action identifier |
-| `flags` | `{ model?: string, noThinking?: boolean }` | Request flags |
-| `systemPrompt` | `string` | Custom system prompt |
-| `userPrompt` | `string` | User prompt |
-| `maxTokens` | `number \| undefined` | Token limit override |
-| `onProgress` | `(event) => void` | Progress callback |
+---
 
 ## Configuration
 
-### Reading Configuration
+### Loading — `config.ts`
 
-```typescript
-export async function readConfig(configFile?: string): Promise<LlmConfig>
-export async function writeConfig(config: LlmConfig, configFile?: string): Promise<void>
+`readConfig(configFile?)` implements a two-layer merge strategy:
+
+1. **Base config** — searched in order: `.pi/providers.json` → `artifacts/llm/config/llm.json` → `artifacts/llm/config/lemonade.json`. The first file found wins.
+2. **Scoped config** — if the resolved config path contains `/artifacts/llm/config/units/`, it is treated as a *scoped overlay* and merged on top of the base via `mergeConfigLayers`. Otherwise it is loaded standalone with `normalizeConfig`.
+
+The active config path is resolved from environment variables in priority order:
+
+```
+CFXDEVKIT_LLM_AGENT_CONFIG_PATH  (agent commands, not overridden by session temp configs)
+CFXDEVKIT_LLM_CONFIG_PATH        (general override)
+.pi/providers.json               (default)
 ```
 
-**Configuration Resolution Order:**
-1. Environment variable `CFXDEVKIT_LLM_AGENT_CONFIG_PATH` (agent-pinned, not overridden by sessions)
-2. Environment variable `CFXDEVKIT_LLM_CONFIG_PATH`
-3. `.pi/providers.json` (default)
-4. `artifacts/llm/config/llm.json` (legacy)
-5. `artifacts/llm/config/lemonade.json` (legacy compat)
+`writeConfig` always normalizes before writing, so the file on disk is always in canonical form.
 
-**Scoped Config Merging:**
-Config files under `/artifacts/llm/config/units/` are treated as scoped overlays and merged with base config via `mergeConfigLayers()`.
+`resolveRequestTimeoutMs` reads from `config.requestTimeoutMs`, then `LLM_REQUEST_TIMEOUT_MS`, then `LEMONADE_REQUEST_TIMEOUT_MS`, defaulting to 600,000 ms (10 minutes).
 
-### Default Configuration
+### Normalization — `config-normalize.ts`
 
-```typescript
-export function defaultConfig(): LlmConfig
-```
+`normalizeConfig(value)` coerces arbitrary JSON into a typed `LlmConfig`, filling gaps from `defaultConfig()`. Key defaults:
 
-**Key defaults:**
-- `provider`: `'lemonade'`
-- `defaultModel`: `'Qwen3-Coder-Next-GGUF'`
-- `requestTimeoutMs`: `600000` (10 minutes)
-- `tokenBudget`: `{ contextFraction: 0.75, cap: 32768, quick: 512, cloudFallback: 4096 }`
-- `harness.defaultMode`: `'deterministic'`
+| Field | Default |
+|---|---|
+| `provider` | `'lemonade'` |
+| `baseUrl` | `http://host.containers.internal:13305/` |
+| `defaultModel` | `Qwen3-Coder-Next-GGUF` |
+| `requestTimeoutMs` | 600,000 ms |
+| `tokenBudget.contextFraction` | 0.75 |
+| `tokenBudget.cap` | 32,768 |
+| `tokenBudget.quick` | 512 |
+| `tokenBudget.cloudFallback` | 4,096 |
+
+`mergeConfigLayers(base, scoped)` deep-merges `actions`, `providerProfiles`, `actionPolicies`, `tokenBudget`, and `harness` sub-objects so scoped unit configs can override individual fields without replacing the entire base.
+
+### Token Budget
+
+`resolveMaxTokens` in `provider-stream.ts` applies this resolution order at request time:
+
+1. `opts.maxTokens` if explicitly provided.
+2. `floor(contextWindow × contextFraction)`, capped by `tokenBudget.cap` (or uncapped if `cap === null`).
+3. `tokenBudget.quick` (default 512) for quick-mode calls without a context window.
+4. `tokenBudget.cloudFallback` (default 4096) when the model reports no context window.
+
+For local hardware with large unified memory (e.g. Strix Halo), set `cap: null` and `contextFraction: 0.95` or similar in `providers.json`. Cloud/gateway providers default to the conservative 4096-token fallback.
+
+---
 
 ## Provider System
 
-### Supported Providers
+### Resolution — `providers.ts`
 
-| Provider Type | Class | Environment Variables |
-|---------------|-------|----------------------|
-| `lemonade` | `LemonadeProvider` | `LEMONADE_URL`, `LEMONADE_BASE_URL` |
-| `litellm` | `LiteLLMProvider` | `LITELLM_BASE_URL`, `LITELLM_API_KEY`, `LITELLM_MODEL` |
-| `openai-compat` | `OpenAICompatProvider` | `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_MODEL` |
-| `github-models` | `GitHubModelsProvider` | `GITHUB_TOKEN`, `GITHUB_MODEL` |
+`resolveProvider(config?)` selects an `LlmProvider` implementation using this waterfall:
 
-### Provider Resolution
+1. `config.provider === 'github-models'` → `GitHubModelsProvider`
+2. `config.baseUrl` present:
+   - `litellm` → `LiteLLMProvider`
+   - `openai-compat` → `OpenAICompatProvider`
+   - otherwise → `LemonadeProvider`
+3. `LITELLM_BASE_URL` env → `LiteLLMProvider`
+4. `LEMONADE_URL` / `LEMONADE_BASE_URL` env → `LemonadeProvider`
+5. Default Lemonade URLs probed — if any model is discovered, use it.
+6. `OPENAI_BASE_URL` + `OPENAI_API_KEY` → `OpenAICompatProvider`
+7. `GITHUB_TOKEN` → `GitHubModelsProvider`
+8. Throws if nothing resolves.
 
-```typescript
-export async function resolveProvider(config?: LlmConfig): Promise<LlmProvider>
-```
+### Provider Classes — `provider-classes.ts`
 
-**Resolution Priority:**
-1. Config `provider` field
-2. Config `baseUrl` with provider type
-3. Environment variables (LiteLLM, Lemonade, OpenAI, GitHub)
-4. Local discovery (tries default Lemonade URLs)
+All four providers implement `LlmProvider`:
 
-### Model Discovery
-
-Each provider implements `discoverModels()` to fetch available models from the backend. Model selection follows this priority:
-
-1. Exact match on preferred model ID or checkpoint
-2. First model marked as `suggested`
-3. First available model
-
-## Context Building
-
-### `buildActionContext()`
-
-Constructs the full context payload for a completion request by combining:
-
-```typescript
-export async function buildActionContext(spec, opts: { quick?: boolean } = {})
-```
-
-**Context Sources:**
-| Source | Description |
-|--------|-------------|
-| `spec.context` | Explicit file paths from action spec |
-| `includeChangedFiles` | Git diff --name-only, staged, untracked |
-| `includeGitDiff` | Full diff with stat (excludes pnpm-lock.yaml) |
-| `includeCommitPreflight` | Pre-commit validation checks |
-| `buildBaseContext()` | Core repo files (README, ARCHITECTURE, etc.) |
-
-**Token Limits:**
-- Quick mode: 12,000 characters total
-- Normal mode: 60,000 characters total
-
-### `commitPreflightBlock()`
-
-Runs pre-commit validation commands and formats output for LLM consumption:
-
-- `gitnexus ensure`
-- `git status --short --branch`
-- `git diff --stat` / `--cached --stat`
-- `arch-check` hotspots and kebab groups
-- `repo:review`
-- `gitnexus detect-changes`
-- `moon query changed-files`
-
-## Streaming & Progress
-
-### Progress Events
-
-```typescript
-export interface CompletionProgressEvent {
-  readonly phase: 'request' | 'headers' | 'reasoning' | 'content' | 'heartbeat' | 'complete';
-  readonly url: string;
-  readonly attempt: number;
-  readonly elapsedMs: number;
-  readonly status?: number;
-  readonly contentChars?: number;
-  readonly reasoningChars?: number;
-  readonly finishReason?: string;
-  readonly promptTokens?: number;
-  readonly completionTokens?: number;
-  readonly tps?: number;
-  readonly pp?: number;
+```ts
+interface LlmProvider {
+  readonly type: LlmProviderType;
+  complete(messages: readonly ChatMessage[], opts?: CompletionOptions): Promise<string>;
+  discoverModels(): Promise<readonly LlmModel[]>;
+  chooseModel(models: readonly LlmModel[], preferred?: string | null): LlmModel | undefined;
 }
 ```
 
-**Progress Phases:**
-1. `request` - Request sent
-2. `headers` - Response headers received
-3. `reasoning` - Reasoning content streaming
-4. `content` - Answer content streaming
-5. `heartbeat` - Periodic keepalive (every 15s)
-6. `complete` - Stream finished with token metrics
+**`LemonadeProvider`** — targets the Lemonade local inference server. Tries multiple chat paths (`/api/v1/chat/completions`, `/v1/chat/completions`, `/chat/completions`) and up to two retries per path. Detects the "model loading" condition (200 OK + empty body) and waits 5 seconds before retrying. Supports multiple `baseUrls` for container/host network discovery.
 
-### Streaming Implementation
+**`LiteLLMProvider`** / **`OpenAICompatProvider`** — standard OpenAI-compatible chat completions with bearer auth. Both discover models from `/models` and fall back to `LITELLM_*` / `OPENAI_*` environment variables.
 
-```typescript
-export async function postChatCompletion(params): Promise<string | undefined>
+**`GitHubModelsProvider`** — targets `https://models.inference.ai.azure.com` with `GITHUB_TOKEN` auth.
+
+Model selection in all providers delegates to `chooseBestModel(models, preferred)`, which tries exact `id`/`checkpoint` match, then the first model flagged `suggested`, then `models[0]`.
+
+### Model Resolution — `provider-meta.ts`
+
+`resolveProviderModel(provider, preferred?)` calls `provider.discoverModels()` and returns the identifier of the best match. `modelIdentifier(model, fallback)` prefers `model.id` over `model.checkpoint` over the fallback string.
+
+`parseModels(text, baseUrl)` parses both array-root and `{ data: [] }` response shapes, mapping the Lemonade-extended fields (`checkpoint`, `labels`, `recipe`, `suggested`, `max_context_window`) into `LlmModel`.
+
+---
+
+## HTTP Layer — `provider-stream.ts` / `provider-stream-parse.ts`
+
+`postChatCompletion` sends a single chat completion request. It:
+
+- Sets `stream: true` only when `opts.onProgress` is provided.
+- Uses `AbortSignal.timeout` for the configured deadline.
+- Emits `CompletionProgressEvent` at the `request` and `headers` phases unconditionally.
+- For non-streaming responses, calls `extractAssistantText` to handle both standard OpenAI shapes and Lemonade error envelopes.
+- For streaming responses, delegates to `readStreamedChatCompletion`.
+
+`readStreamedChatCompletion` processes the SSE byte stream chunk by chunk:
+
+- Splits on `\r\n\r\n` event boundaries.
+- Calls `applyChatCompletionChunk` for each event block, which parses `data:` lines and accumulates `content` and `reasoning_content` deltas.
+- Detects phase transitions (`reasoning` → `content`) and emits progress events.
+- Emits a `heartbeat` event every 15 seconds for long-running completions.
+- Emits a `complete` event with `finishReason` and server timing metrics (`tps`, `pp`, token counts) at the end.
+- Detects Lemonade's "no model loaded" error envelope (200 + JSON body with `error` key) and returns an empty string to trigger a retry.
+
+`emitProgress` wraps `opts.onProgress` in a try/catch so progress reporting never breaks a completion.
+
+---
+
+## Context Assembly — `context.ts`
+
+`buildActionContext(spec, opts)` assembles the user-facing context string injected before the task prompt. It:
+
+1. Reads files listed in `spec.context` via `readContextFile` (repo-relative paths).
+2. Optionally appends `changedFilesBlock()` (unstaged + staged + untracked files).
+3. Optionally appends `gitDiffBlock()` (stat + diff excerpt, excluding `pnpm-lock.yaml`).
+4. Optionally appends `commitPreflightBlock()` — runs `gitnexus ensure`, `git status/diff`, hotspot scan, kebab group check, `repo:review`, `gitnexus detect-changes`, and `moon query changed-files` in parallel and concatenates their output.
+5. Appends `buildBaseContext()` (README, ARCHITECTURE, LLM automation docs, corpus manifest).
+
+Total context is hard-truncated to 60,000 characters (12,000 in quick mode). Individual files are truncated to 12,000 characters each.
+
+`writeLlmReport(action, response)` writes the completion output as a Markdown report to `artifacts/llm/reports/llm-{action}.md`.
+
+---
+
+## JSON Parsing — `json.ts`
+
+`parseJsonObject(content)` extracts a JSON object from LLM output that may include prose, markdown fences, or malformed JSON. It:
+
+1. Extracts fenced content if present.
+2. Falls back to finding the first `{` and locating its balanced closing `}` using a character-level parser that handles string escaping.
+3. Attempts `JSON.parse` on the candidate, then with raw newlines escaped in strings, then with trailing commas stripped. Throws only if all three attempts fail.
+
+---
+
+## Monorepo Units — `units.ts`
+
+`findMonorepoUnitByConfigPath(configFilePath)` maps a config file path back to one of the three defined monorepo units (`delivery`, `implementation`, `operations`). It resolves `configPath` to the unit config at `artifacts/llm/config/units/{name}.json`. This is used by `resolveExecutionContext` to surface which unit scope is active in CLI output.
+
+---
+
+## Execution Context — `shared/execution-context.ts`
+
+`resolveExecutionContext(options)` is called by all agent entry points (`executeAction`, `runCommitWorkflow`, `runAgentCheck`, etc.) before doing any LLM work. It:
+
+1. Identifies the active unit from the config path.
+2. If `useLlm: true`, probes the provider and resolves the model, reporting `ready` or `unavailable`.
+3. Returns an `ExecutionContextSummary` that callers use for logging and runtime payloads.
+
+`logExecutionContext` / `renderExecutionContextLines` format this summary for console output:
+```
+Execution context:
+  - unit: implementation (repos)
+  - config: .pi/providers.json
+  - llm: lemonade :: Qwen3-Coder-Next-GGUF @ http://localhost:13305/
 ```
 
-**Retry Logic:**
-- Up to 2 retries per chat path
-- 5-second delay when model not loaded (200 + empty body)
-- Tries multiple chat paths: `/api/v1/chat/completions`, `/v1/chat/completions`, `/chat/completions`
+---
 
-**Error Handling:**
-- Detects Lemonade error envelopes in 200 responses
-- Merges malformed JSON chunks
-- Escapes raw newlines in JSON strings
-- Strips trailing commas
+## Key Types
 
-## Token Budget Management
+| Type | Purpose |
+|---|---|
+| `LlmConfig` | Full normalized configuration object |
+| `LlmProvider` | Interface implemented by all four provider classes |
+| `CompletionOptions` | Per-request options: model, temperature, token budget, streaming callback |
+| `CompletionReport` | Returned by all `complete*` functions |
+| `CompletionProgressEvent` | Emitted during streaming: `request` → `headers` → `reasoning` → `content` → `heartbeat` → `complete` |
+| `LlmTokenBudget` | Token budget policy embedded in config |
+| `CompleteAgentRequest` | Input shape for `completeCommitAgent` and `completeStructuredAgent` |
+| `MonorepoUnit` | Resolved unit metadata including config and root paths |
 
-### `resolveMaxTokens()`
+---
 
-Computes `max_tokens` for requests based on context window and budget policy:
+## Adding a New Provider
 
-**Resolution Order:**
-1. `opts.maxTokens` if explicitly set
-2. `ctx * contextFraction` (capped by `tokenBudget.cap`)
-3. `tokenBudget.cloudFallback` (4096 default) when context unknown
-
-**Local Hardware Tuning:**
-```json
-{
-  "tokenBudget": {
-    "contextFraction": 1.0,
-    "cap": null
-  }
-}
-```
-
-## Monorepo Units
-
-### Unit Discovery
-
-```typescript
-export function findMonorepoUnitByConfigPath(configFilePath: string, startDir?: string): MonorepoUnit | undefined
-```
-
-**Supported Units:**
-| Unit | Root Dir | Default Mode | Focus |
-|------|----------|--------------|-------|
-| `delivery` | `openspec` | `deterministic` | Planning, docs, OpenSpec |
-| `implementation` | `repos` | `exploratory` | Packages, examples, code |
-| `operations` | `infrastructure` | `exploratory` | CI, release, automation |
-
-## Execution Context
-
-### Context Resolution
-
-```typescript
-export async function resolveExecutionContext(options): Promise<ExecutionContextSummary>
-```
-
-**Returns:**
-```typescript
-{
-  unit: { name, rootDir, configPath } | null,
-  llm: {
-    used: boolean,
-    status: 'not-used' | 'ready' | 'unavailable',
-    configPath: string,
-    provider?: string,
-    baseUrl?: string,
-    model?: string,
-    error?: string
-  }
-}
-```
-
-**Usage:**
-```typescript
-import { resolveExecutionContext, logExecutionContext } from './workers/shared/execution-context.ts';
-
-const context = await resolveExecutionContext({ useLlm: true, action: 'review' });
-logExecutionContext(context);
-```
-
-## JSON Parsing Utilities
-
-### `parseJsonObject()`
-
-Extracts and parses JSON from LLM responses with repair strategies:
-
-```typescript
-export function parseJsonObject(content: string)
-```
-
-**Repair Attempts:**
-1. Original text
-2. Escape raw newlines in JSON strings
-3. Strip trailing commas
-
-**Fallback:**
-- Detects fenced code blocks (```json ... ```)
-- Finds balanced JSON object boundaries
-- Handles string escaping correctly
-
-## Type Definitions
-
-### Completion Report
-
-```typescript
-export interface CompletionReport {
-  readonly generatedAt: string;
-  readonly action: string;
-  readonly baseUrl: string;
-  readonly model: string;
-  readonly content: string;
-  readonly attempts: readonly CompletionAttempt[];
-}
-```
-
-### Chat Message
-
-```typescript
-export interface ChatMessage {
-  readonly role: 'system' | 'user' | 'assistant';
-  readonly content: string;
-}
-```
-
-## Integration Points
-
-### Agent Workflows
-
-The completion engine is called by:
-- `runAgentCheck()` - Agent capability checks
-- `runReviewAgent()` - Code review tasks
-- `runAgentSmoke()` - Provider smoke tests
-- `runCommitWorkflow()` - Commit preparation
-- `runPrecommitWorkflow()` - Pre-commit validation
-
-### Repo Actions
-
-Actions defined in `workers/shared/repo-actions.ts` specify:
-- `context` files to include
-- `includeChangedFiles` / `includeGitDiff` flags
-- `includeCommitPreflight` for commit actions
-- `defaultPrompt` templates
-
-```typescript
-export const repoActions = {
-  'review': {
-    mode: 'exploratory',
-    context: ['artifacts/llm/reports/review.md', 'SECURITY.md'],
-    includeGitDiff: true
-  },
-  'commit': {
-    mode: 'exploratory',
-    includeCommitPreflight: true
-  }
-}
-```
-
-## Error Handling
-
-### Provider Errors
-
-- Missing provider: `Error('No LLM provider could be resolved...')`
-- Missing credentials: `Error('OPENAI_BASE_URL and OPENAI_API_KEY are required...')`
-- Model not loaded: Empty response triggers retry with 5s delay
-
-### Network Errors
-
-- Timeout via `AbortSignal.timeout()`
-- Retry logic with attempt tracking
-- Error messages include status codes and causes
-
-### JSON Parsing Errors
-
-- Malformed response: `Error('LLM did not return a JSON object: ...')`
-- Repair failures: Propagates last JSON parse error
-
-## Testing
-
-### Provider Smoke Test
-
-```typescript
-import { runAgentSmoke } from '../workers/agents/smoke.ts';
-
-await runAgentSmoke();
-```
-
-Validates:
-- Provider resolution
-- Model discovery
-- Basic completion capability
-
-## Configuration Examples
-
-### Local Development
-
-```json
-{
-  "provider": "lemonade",
-  "baseUrl": "http://localhost:13305/",
-  "defaultModel": "Qwen3-Coder-Next-GGUF",
-  "tokenBudget": {
-    "contextFraction": 1.0,
-    "cap": null
-  }
-}
-```
-
-### Cloud Fallback
-
-```json
-{
-  "provider": "openai-compat",
-  "baseUrl": "https://api.openai.com/v1",
-  "defaultModel": "gpt-4o-mini",
-  "tokenBudget": {
-    "contextFraction": 0.75,
-    "cap": 8192,
-    "cloudFallback": 4096
-  }
-}
-```
-
-### Unit-Specific Override
-
-`artifacts/llm/config/units/implementation.json`:
-```json
-{
-  "actions": {
-    "review": "Qwen3-Coder-Next-GGUF",
-    "test-audit": "Qwen3-Coder-Next-GGUF"
-  },
-  "tokenBudget": {
-    "contextFraction": 0.9
-  }
-}
-```
+1. Implement `LlmProvider` in `provider-classes.ts`. Delegate `complete` to `postChatCompletion` and model selection to `chooseBestModel`.
+2. Add the type string to `LlmProviderType` in `types.ts`.
+3. Handle the new type in `normalizeProviderType` (`config-normalize.ts`) and `configuredProvider` / `resolveProvider` (`providers.ts`).
+4. Export the class from `index.ts` if external callers need direct access.

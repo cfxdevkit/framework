@@ -24,7 +24,7 @@ import {
   summarizeCommitPreview,
   summarizeFailureAnalysis,
   summarizeGateFailures,
-} from './terminal-ui.ts';
+} from './terminal/ui';
 import type { CommitWorkflowOptions, CommitWorkflowResult } from './types.ts';
 
 export async function runCommitWorkflow(

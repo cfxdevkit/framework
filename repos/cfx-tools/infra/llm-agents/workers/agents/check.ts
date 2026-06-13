@@ -4,19 +4,19 @@ import {
   materializeOpenSpecChanges,
   readValidationArtifact,
   runRepoCheckCommand,
-} from './check-artifacts.ts';
-import { buildAgentCheckPlan, collectActionableValidationSteps } from './check-plan.ts';
-import { renderAgentCheckConsoleSummary, renderAgentCheckReport } from './check-render.ts';
-import type { AgentCheckFlags, AgentCheckFollowUp, AgentCheckPlan } from './check-types.ts';
-import { repoCheckCommand, validationArtifactPath } from './check-types.ts';
+} from './check/artifacts';
+import { buildAgentCheckPlan, collectActionableValidationSteps } from './check/plan';
+import { renderAgentCheckConsoleSummary, renderAgentCheckReport } from './check/render';
+import type { AgentCheckFlags, AgentCheckFollowUp, AgentCheckPlan } from './check/types';
+import { repoCheckCommand, validationArtifactPath } from './check/types';
 import { writeJsonReport, writeMarkdownReport } from './runtime/index.ts';
 
 export {
   normalizeAgentCheckPlan,
   renderAgentCheckConsoleSummary,
   renderAgentCheckReport,
-} from './check-render.ts';
-export type { AgentCheckFlags } from './check-types.ts';
+} from './check/render';
+export type { AgentCheckFlags } from './check/types';
 
 export async function runAgentCheck(rawArgs: readonly string[], opts: { silent?: boolean } = {}) {
   const flags = parseAgentCheckFlags(rawArgs);

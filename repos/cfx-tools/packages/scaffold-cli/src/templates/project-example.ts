@@ -1,6 +1,6 @@
-import { PROJECT_EXAMPLE_CONFIG_FILES } from './project-example-config.js';
-import { PROJECT_EXAMPLE_CORE_FILES } from './project-example-core.js';
-import { PROJECT_EXAMPLE_SCRIPT_FILES } from './project-example-scripts.js';
+import { PROJECT_EXAMPLE_CONFIG_FILES } from './project-example/config.js';
+import { PROJECT_EXAMPLE_CORE_FILES } from './project-example/core.js';
+import { PROJECT_EXAMPLE_SCRIPT_FILES } from './project-example/scripts.js';
 import type { TemplateDefinition } from './types.js';
 
 export const PROJECT_EXAMPLE: TemplateDefinition = {
