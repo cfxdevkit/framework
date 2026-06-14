@@ -43,6 +43,7 @@
   },
   "sideEffects": false,
   "optionalDependencies": {
+    "@noble/hashes": "^1.1.3",
     "@onekeyfe/hd-common-connect-sdk": "^1.1.26"
   }
 }

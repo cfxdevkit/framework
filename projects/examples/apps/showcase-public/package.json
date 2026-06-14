@@ -2,7 +2,7 @@
   "name": "@cfxdevkit/example-showcase-public",
   "version": "0.0.0",
   "private": true,
-  "description": "Conflux framework public showcase \u2014 deployable Next.js app targeting testnet.",
+  "description": "Conflux framework public showcase — deployable Next.js app targeting testnet.",
   "scripts": {
     "dev": "next dev --webpack --port 3010",
     "build": "pnpm exec next build --webpack",
@@ -24,9 +24,10 @@
     "@cfxdevkit/wallet-connect": "workspace:*",
     "@ledgerhq/hw-app-eth": "^7.8.1",
     "@ledgerhq/hw-transport-webhid": "^6.35.1",
+    "@onekeyfe/hd-common-connect-sdk": "^1.1.28",
     "@tanstack/react-query": "^5.100.13",
     "next": "^16.0.0",
-    "react": "19.2.5",
+    "react": "19.2.6",
     "react-dom": "19.2.6",
     "viem": "^2.21.0",
     "wagmi": "^3.6.16"

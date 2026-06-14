@@ -11,15 +11,15 @@
     "package-pages": "Qwen3-Coder-Next-GGUF",
     "structure-upkeep": "Qwen3-Coder-Next-GGUF",
     "docs-upkeep": "Qwen3-Coder-Next-GGUF",
-    "review": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
+    "review": "Qwen3.5-122B-A10B-MTP-GGUF",
     "commit": "Qwen3-Coder-Next-GGUF",
-    "test-audit": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
-    "repo-health": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
-    "changeset": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
-    "release-readiness": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
-    "ci-cd": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
-    "docs-pipeline": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
-    "wiki-generate": "claude-sonnet-4.6"
+    "test-audit": "Qwen3.5-122B-A10B-MTP-GGUF",
+    "repo-health": "Qwen3.5-122B-A10B-MTP-GGUF",
+    "changeset": "Qwen3.5-122B-A10B-MTP-GGUF",
+    "release-readiness": "Qwen3.5-122B-A10B-MTP-GGUF",
+    "ci-cd": "Qwen3.5-122B-A10B-MTP-GGUF",
+    "docs-pipeline": "Qwen3.5-122B-A10B-MTP-GGUF",
+    "wiki-generate": "Qwen3.5-122B-A10B-MTP-GGUF"
   },
   "providerProfiles": {
     "github-cloud": {
@@ -87,7 +87,7 @@
       "labels": ["coding", "tool-calling", "hot"]
     },
     {
-      "id": "Qwen3.5-122B-A10B-GGUF-Q4_K_M",
+      "id": "Qwen3.5-122B-A10B-MTP-GGUF",
       "tier": 3,
       "role": "High-reasoning model for code review, commit analysis, release sign-off, and CI risk assessment",
       "assignedActions": [
