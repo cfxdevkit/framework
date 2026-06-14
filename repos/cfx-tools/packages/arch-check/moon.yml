@@ -44,6 +44,8 @@ tasks:
 
   check-secrets:
     command: 'pnpm exec tsx src/checks/secrets.ts'
+    deps:
+      - 'workspace-utils:build'
     inputs:
       - '/repos/**/*'
       - '/projects/**/*'

@@ -17,6 +17,7 @@ projects:
   - 'repos/cfx-tools/packages/compiler'
   - 'repos/cfx-tools/packages/codegen-contracts'
   - 'repos/cfx-keys/packages/services'
+  - 'repos/cfx-keys/packages/signer-session'
   - 'repos/cfx-keys/packages/wallet'
   - 'repos/cfx-ui/packages/react'
   - 'repos/cfx-ui/packages/defi-react'

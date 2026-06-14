@@ -2,3 +2,12 @@ $schema: 'https://moonrepo.dev/schemas/project.json'
 
 layer: 'library'
 language: 'typescript'
+
+tasks:
+  build:
+    deps:
+      - 'cdk:build'
+
+  typecheck:
+    deps:
+      - 'cdk:build'
