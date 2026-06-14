@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/cas-backend",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "CAS backend for local SQLite-backed development.",
   "type": "module",

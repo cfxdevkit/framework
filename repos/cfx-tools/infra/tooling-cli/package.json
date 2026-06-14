@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/tooling-cli",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "Root maintenance CLI dispatcher for monorepo tooling workflows.",
   "type": "module",
