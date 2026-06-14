@@ -39,7 +39,7 @@ for (const group of sorted) {
     const newAbsBase = join(rootDir, newRel);
 
     const oldDirDepth = group.directory.split('/').length;
-    const newDirDepth = (group.directory + '/' + group.prefix).split('/').length;
+    const newDirDepth = `${group.directory}/${group.prefix}`.split('/').length;
     const shift = newDirDepth - oldDirDepth;
 
     moveMap.set(oldAbsBase, newAbsBase);
@@ -74,7 +74,7 @@ let totalChanges = 0;
 
 for (const filePath of walkFiles(rootDir)) {
   const content = readFileSync(filePath, 'utf8');
-  const modified = false;
+  const _modified = false;
   let changesInFile = 0;
   const fromDir = dirname(filePath);
 
@@ -84,21 +84,21 @@ for (const filePath of walkFiles(rootDir)) {
     // Try all extension/index candidates to find in moveMap
     const candidates = [
       resolvedBase,
-      resolvedBase + '.ts',
-      resolvedBase + '.tsx',
-      resolvedBase + '.js',
-      resolvedBase + '.jsx',
-      resolvedBase + '.mjs',
-      resolvedBase + '/index.ts',
-      resolvedBase + '/index.tsx',
-      resolvedBase + '/index.js',
+      `${resolvedBase}.ts`,
+      `${resolvedBase}.tsx`,
+      `${resolvedBase}.js`,
+      `${resolvedBase}.jsx`,
+      `${resolvedBase}.mjs`,
+      `${resolvedBase}/index.ts`,
+      `${resolvedBase}/index.tsx`,
+      `${resolvedBase}/index.js`,
     ];
 
     for (const candidate of candidates) {
       const newAbs = moveMap.get(candidate);
       if (newAbs) {
         let newRel = relative(fromDir, newAbs);
-        if (!newRel.startsWith('.')) newRel = './' + newRel;
+        if (!newRel.startsWith('.')) newRel = `./${newRel}`;
         newRel = newRel.replace(/\/index$/, '');
         changesInFile++;
         return `from ${quote}${newRel}${quote}`;

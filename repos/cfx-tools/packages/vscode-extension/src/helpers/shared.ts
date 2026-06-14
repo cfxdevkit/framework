@@ -1,6 +1,5 @@
 // @ts-nocheck
 
-import { join as joinPath } from 'node:path';
 import { createConfluxDevkitClient } from '@cfxdevkit/client';
 
 export { promises as fs } from 'node:fs';

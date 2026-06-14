@@ -65,7 +65,7 @@ let devnodeServerProcess: ReturnType<typeof spawn> | null = null;
 /** Spawn the devnode-server control plane if it is not already running externally. */
 async function ensureDevnodeServerRunning(
   keystorePath: string,
-  nodeProfileDataRoot: string,
+  _nodeProfileDataRoot: string,
 ): Promise<void> {
   if (process.env.CFXDEVKIT_DEVNODE_SERVER_URL) return; // external server — skip spawn
   if (devnodeServerProcess) return; // already spawned
@@ -79,7 +79,7 @@ async function ensureDevnodeServerRunning(
     { stdio: 'pipe', env: { ...process.env } },
   );
 
-  devnodeServerProcess.stderr?.on('data', (chunk: Buffer) => {
+  devnodeServerProcess.stderr?.on('data', (_chunk: Buffer) => {
     // swallow server logs unless debugging
   });
 
