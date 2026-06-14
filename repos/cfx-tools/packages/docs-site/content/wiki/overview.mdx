@@ -6,105 +6,96 @@ import { Mermaid } from '../../../components/Mermaid';
 
 # root — Wiki
 
-# Conflux DevKit — Framework Overview
+# Conflux DevKit Framework (`@cfxdevkit/framework`)
 
-Welcome to the **`@cfxdevkit/framework`** monorepo. This is the canonical starting point for understanding how the codebase is organized, how the pieces relate, and where to go next.
+Welcome to the **Conflux DevKit** monorepo. This is the canonical reference for building on the [Conflux Network](https://confluxnetwork.org/). Whether you are integrating blockchain primitives, automating workflows with LLMs, or developing dApps, this repository provides the shared infrastructure, tooling, and SDKs required to build securely and efficiently.
 
----
+This monorepo is structured as a **pnpm workspace** with a strict 5-tier dependency hierarchy. All architectural rules are enforced at commit time by the [`@cfxdevkit/arch-rules`](architecture-check-repo-validation.md) system.
 
-## What This Is
+## Architecture Overview
 
-Conflux DevKit is a pnpm monorepo for building applications on the [Conflux Network](https://confluxnetwork.org/). It covers the full developer journey: on-chain interaction, key management, smart contract tooling, local devnet, React UI primitives, a VS Code extension, a scaffold CLI, and an LLM-assisted automation pipeline for code quality and documentation.
+The system is designed around a central **Core Protocol** layer that abstracts the dual-chain nature of Conflux (Core Space and eSpace). Higher-level modules build on this foundation to provide wallets, smart contract interactions, local development environments, and automated agent workflows.
 
-Everything is TypeScript-first and governed by a **strict 5-tier dependency hierarchy** enforced at commit time by [`@cfxdevkit/arch-check`](architecture-check-and-repo-validation.md).
-
----
-
-## Architecture at a Glance
-
-<Mermaid chart={`graph TD
-    VSCode["VS Code Extension"]
-    UI["UI / React Hooks"]
-    Wallet["Wallet Abstraction"]
-    Services["Keystore & Wallet Services"]
-    Contracts["Solidity Contracts"]
-    CDK["Core Protocol & Chain\n@cfxdevkit/cdk + protocol"]
-    DevNode["DevNode & Runtime"]
-    CLI["CLI & Scaffold"]
-    LLM["LLM Agent & Completion"]
-
+<Mermaid chart={`flowchart TD
+    subgraph "Developer Interface"
+        CLI["CLI & Tools"]
+        VSCode[VS Code Extension]
+        UI[UI Components]
+    end
+    subgraph "Automation & Logic"
+        Agents[LLM Agents]
+        Engine[LLM Engine]
+        Contracts[Solidity Contracts]
+    end
+    subgraph "Core Infrastructure"
+        Core["Core Protocol & Chain"]
+        Wallet["Wallet & Keystore"]
+        DevNode["DevNode & Runtime"]
+    end
+    subgraph "Validation"
+        ArchCheck[Arch Check]
+    end
+    CLI --> Core
+    VSCode --> Core
     VSCode --> Wallet
-    VSCode --> Contracts
-    VSCode --> DevNode
-    UI --> Wallet
-    Wallet --> Services
-    Services --> CDK
-    Contracts --> CDK
-    CLI --> CDK
-    LLM --> CDK
-`} />
+    UI --> Core
+    Agents --> Engine
+    Contracts --> Core
+    Wallet --> Core
+    DevNode --> Core
+    ArchCheck -.-> CLI
+    ArchCheck -.-> Core
+    ArchCheck -.-> Agents
+    ArchCheck -.-> Contracts
+    %% (simplified — original had 31 lines)`} />
 
----
+## Key Modules
 
-## The Foundation
+### Blockchain Primitives
+At the heart of the SDK is the [`Core Protocol & Chain`](core-protocol-chain.md) module. It provides a unified TypeScript client for both **Core Space** (native Conflux) and **eSpace** (EVM-compatible), handling address encoding, chain registry, and RPC abstraction.
 
-Everything builds on [Core Protocol & Chain](core-protocol-and-chain.md) (`@cfxdevkit/cdk` and `@cfxdevkit/protocol`). These packages provide chain configuration, RPC clients, address encoding, unit math, wallet primitives, and contract ABIs. If a package does anything on-chain, it imports from here.
+Building on this, the [`Solidity Compiler & Contracts`](solidity-compiler-contracts.md) package manages ABI encoding and transaction construction across both chains, while the [`Wallet Abstraction & Hardware`](wallet-abstraction-hardware.md) and [`Keystore & Wallet Services`](keystore-wallet-services.md) modules handle secure key management, signing policies, and hardware wallet integration. Note that all wallet operations flow through the core protocol, ensuring consistent error handling (e.g., `CryptoError` propagation during keystore operations).
 
-[DevNode & Runtime](devnode-and-runtime.md) wraps the native Conflux binary to spin up a local dual-space chain (Core + eSpace) with pre-funded accounts and auto-mining — wired directly to the chain configs in `@cfxdevkit/cdk` so everything works with zero extra setup.
+### Local Development & Tooling
+For local testing, the [`DevNode & Runtime`](devnode-runtime.md) module allows you to spawn deterministic Conflux nodes with pre-funded accounts and auto-mining enabled. This is essential for CI pipelines and local integration testing.
 
----
+Developer productivity is supported by the [`CLI & Developer Tools`](cli-developer-tools.md) for scaffolding new projects, and the [`VS Code Extension`](vs-code-extension.md) which integrates node management and contract deployment directly into your editor.
 
-## Key Management
+### Automation & Intelligence
+The DevKit includes a robust automation layer powered by the [`LLM Completion Engine`](llm-completion-engine.md). This engine standardizes provider connectivity and prompt execution, serving as the backbone for the [`LLM Agent Workflows`](llm-agent-workflows.md). These agents handle repository analysis, commit quality gates, and documentation enrichment.
 
-The cryptographic stack is split across two layers. [Keystore & Wallet Services](keystore-and-wallet-services.md) (`@cfxdevkit/services`) handles crypto primitives, pluggable keystore backends, and session authentication. Private key material never escapes the keystore boundary — callers receive `Signer` objects, not raw keys.
+When running agent checks (e.g., `RunAgentCheck`), the system resolves execution contexts and validates configuration paths before proceeding, ensuring that automation steps are deterministic and reproducible.
 
-[Wallet Abstraction & Hardware](wallet-abstraction-and-hardware.md) (`@cfxdevkit/wallet`) sits on top and adds hardware device signing (Ledger), session key delegation, and transaction batching. The VS Code extension's keystore panel drives this entire stack through 53 direct call edges into the wallet layer.
-
----
-
-## Contract & Application Layer
-
-[Solidity Compiler & Contracts](solidity-compiler-and-contracts.md) (`@cfxdevkit/contracts`) provides a unified API for reading, writing, and deploying contracts that transparently routes to the correct RPC methods depending on whether you are targeting eSpace (EVM) or Core Space.
-
-The [UI Components & Hooks](ui-components-and-hooks.md) packages (`@cfxdevkit/react`, `@cfxdevkit/defi-react`, `@cfxdevkit/wallet-connect`) layer React hooks for accounts, balances, events, DeFi primitives, and wallet connection on top of all of the above.
-
----
-
-## Developer Tooling
-
-The [CLI & Developer Tools](cli-and-developer-tools.md) packages (`@cfxdevkit/cli` and `@cfxdevkit/create`) give you a `cfx` command for chain health checks, HD wallet derivation, and contract artifact extraction, plus `npm create @cfxdevkit` scaffolding. Both expose their logic as plain TypeScript functions so they can be called programmatically.
-
-The [VS Code Extension](vs-code-extension.md) brings the full stack into the editor: a sidebar tree view manages a local devnode, an encrypted keystore, contract deployments, and live ABI interaction across local, testnet, and mainnet.
-
-The [PI Agent & Provider Integration](pi-agent-and-provider-integration.md) module bridges the toolchain to the PI coding agent shell, exposing LLM-backed repo commands (`/repo-*`) alongside deterministic CDK wrappers (`/cdk`).
-
----
-
-## LLM Automation Pipeline
-
-The repo includes a first-class LLM layer used for commit quality gates, documentation generation, and code review. The [LLM Completion Engine](llm-completion-engine.md) handles provider routing, context assembly, and structured output parsing. The [LLM Agent Workflows](llm-agent-workflows.md) module builds on it to run validation pipelines, generate reports, and drive commit workflows. The [Docs Pipeline](docs-pipeline.md) (`@cfxdevkit/docs-pipeline`) uses this machinery to keep MDX content, wiki pages, and API docs in sync with the source.
-
-Architecture enforcement, secret scanning, hotspot analysis, and documentation completeness checks all live in [Architecture Check & Repo Validation](architecture-check-and-repo-validation.md) (`@cfxdevkit/arch-check`) and run on every commit.
-
----
+### Quality & Validation
+All code contributions are validated by the [`Architecture Check & Repo Validation`](architecture-check-repo-validation.md) suite. This includes architecture rule enforcement, secret scanning, and documentation alignment checks. The [`Docs Pipeline`](docs-pipeline.md) module orchestrates the generation of API references and READMEs, ensuring documentation stays in sync with the codebase.
 
 ## Getting Started
 
-```bash
-# Install dependencies
-pnpm install
+1.  **Install Dependencies:**
+    Ensure you have `pnpm` installed, then run:
+    ```bash
+    pnpm install
+    ```
 
-# Build all packages
-pnpm build
+2.  **Local Development:**
+    Start a local Conflux node using the DevNode CLI:
+    ```bash
+    pnpm devnode
+    ```
+    This will spin up Core and eSpace endpoints on `127.0.0.1:12537` and `127.0.0.1:8545` respectively.
 
-# Run the full check suite (arch, secrets, docs, CI)
-pnpm check
+3.  **Validation:**
+    Before committing, run the full validation suite to ensure architectural compliance:
+    ```bash
+    pnpm repo:check
+    ```
 
-# Start the local devnode
-pnpm devnode
+4.  **Documentation:**
+    To sync and enrich documentation across the monorepo:
+    ```bash
+    pnpm docs:sync
+    ```
 
-# Run tests with coverage
-pnpm test:cover
-```
+## Contributing
 
-For design rationale behind the tier hierarchy see [ARCHITECTURE.md](../ARCHITECTURE.md). For branch, commit, and PR conventions see [CONTRIBUTING.md](../CONTRIBUTING.md).
+Please review the [CONTRIBUTING.md](CONTRIBUTING.md) for workflow conventions. For design rationale, see [ARCHITECTURE.md](ARCHITECTURE.md). When implementing new features, ensure dependencies flow strictly from higher tiers (UI/Agents) down to lower tiers (Core/Keystore), as enforced by the [`arch-check`](architecture-check-repo-validation.md) tooling.

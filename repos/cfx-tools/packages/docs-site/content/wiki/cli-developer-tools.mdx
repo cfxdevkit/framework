@@ -8,220 +8,216 @@ import { Mermaid } from '../../../components/Mermaid';
 
 # CLI & Developer Tools
 
-Two packages make up the CLI & Developer Tools module:
+This module provides the command-line interface and project scaffolding utilities for the Conflux Developer Kit ecosystem. It consists of two primary packages:
 
-- **`@cfxdevkit/cli`** (`packages/cli`) — the `cfx` command-line tool for everyday development tasks: chain health checks, HD wallet derivation, mnemonic generation, and contract artifact extraction.
-- **`@cfxdevkit/create`** (`packages/scaffold-cli`) — project scaffolding used by `npm create @cfxdevkit` and the MCP server to generate new projects from templates.
+- **`@cfxdevkit/cli`**: A minimal CLI for interacting with Conflux chains, deriving accounts, and managing contract artifacts.
+- **`@cfxdevkit/create`** (`scaffold-cli`): A project scaffolding tool for generating new dApp templates.
 
-Both packages expose their core logic as plain TypeScript functions, making them usable programmatically (e.g., by the `pi-agent` tools) in addition to their CLI surfaces.
+Both packages rely on `@cfxdevkit/cdk` for core blockchain functionality but maintain zero external CLI dependencies (e.g., no `commander` or `yargs`) to keep the install footprint low.
 
----
+## Architecture
 
-## `@cfxdevkit/cli` — the `cfx` command
+The CLI module is structured around a minimal argument parser and a command router. The scaffold module focuses on template rendering and project initialization.
 
-### Entry point and dispatch
+### CLI Execution Flow
 
-`bin.ts` slices `process.argv` and passes it to `run()`, exiting with the returned code. The `run()` function in `run.ts` is the single dispatcher:
+The CLI entry point (`bin.ts`) invokes the `run` function, which parses arguments and dispatches to specific command handlers.
 
+<Mermaid chart={`flowchart TD
+    A[bin.ts] -->|process.argv| B_run["B(run)"]
+    B -->|argv| C[parseArgs]
+    C -->|ParsedArgs| D{Command Router}
+    D -->|'status'| E[statusFromFlags]
+    D -->|'derive'| F[deriveFromFlags]
+    D -->|'generate'| G[generateFromFlags]
+    D -->|'contracts extract'| H[contractsExtractFromFlags]
+    E -->|@cfxdevkit/cdk| I[Chain RPC]
+    F -->|@cfxdevkit/cdk| J[Account Derivation]
+    G -->|@cfxdevkit/cdk| K[Mnemonic Gen]
+    H -->|@cfxdevkit/codegen-contracts| L[Artifact Extraction]
+`} />
+
+### Scaffolding Flow
+
+Project scaffolding resolves a template, renders file contents with variables, and writes them to disk.
+
+<Mermaid chart={`flowchart TD
+    A[scaffoldProject] -->|templateName| B_getTemplate["B(getTemplate)"]
+    B -->|TemplateDefinition| C_getTemplateFiles["C(getTemplateFiles)"]
+    C -->|TemplateFile| D[renderFile]
+    D -->|values| E[writeFileSync]
+    E -->|npm install| F[spawnSync]
+`} />
+
+## Package: `@cfxdevkit/cli`
+
+The CLI package exposes the `cfx` command. It is designed for developer tooling such as chain health checks, account management, and build automation.
+
+### Entry Point
+
+The CLI is bootstrapped via `src/bin.ts`, which calls `run` from `src/run.ts`.
+
+```typescript
+// src/bin.ts
+import { run } from './run.js';
+const argv = process.argv.slice(2);
+run(argv).then((code) => process.exit(code));
 ```
-parseArgs(argv)
-  → command === 'status'    → statusFromFlags
-  → command === 'derive'    → deriveFromFlags
-  → command === 'generate'  → generateFromFlags
-  → command === 'contracts' + positional 'extract' → contractsExtractFromFlags
-  → --help / no command     → print HELP string
+
+### Argument Parsing
+
+`src/args.ts` implements a lightweight parser to avoid heavy dependencies. It supports boolean flags, key-value pairs, and positional arguments.
+
+**Key Functions:**
+- `parseArgs(argv: readonly string[])`: Parses `process.argv` into `ParsedArgs`.
+- `getString(flags, key)`: Retrieves string flag values.
+- `getNumber(flags, key)`: Retrieves numeric flag values.
+- `getBool(flags, key)`: Retrieves boolean flag values.
+
+```typescript
+// Example: src/args.ts
+export function parseArgs(argv: readonly string[]): ParsedArgs {
+  // ... implementation
+}
 ```
-
-`run()` accepts an optional `RunOptions` object with `stdout` and `stderr` streams, which lets tests inject in-memory streams instead of touching `process.stdout`.
-
-### Argument parser (`args.ts`)
-
-A zero-dependency parser; no `commander` or `yargs`. It handles:
-
-| Syntax | Result |
-|---|---|
-| `--flag` | `flags.flag === true` |
-| `--key value` | `flags.key === 'value'` |
-| `--key=value` | `flags.key === 'value'` |
-| First bare word | `command` |
-| Subsequent bare words | `positionals[]` |
-
-Three typed accessors sit on top of the raw `flags` record:
-
-- `getString(flags, key)` — returns `string | undefined`, ignores boolean flags
-- `getNumber(flags, key)` — parses and validates with `Number.isFinite`
-- `getBool(flags, key)` — returns `true` only for `=== true` or `=== 'true'`
 
 ### Commands
 
-Each command follows the same two-layer pattern: a pure **`run*`** function that takes a typed options object and returns a typed report, and a **`*FromFlags`** adapter that reads the raw flags map and writes to an output stream. The separation means the core logic is testable and reusable from other contexts (the `pi-agent` calls `runDerive`, `runStatus`, `runGenerate`, and `runContractsExtract` directly).
+The `run` function in `src/run.ts` routes commands to specific handlers.
 
-#### `status`
+#### 1. `status`
+Pings Conflux chains to verify connectivity and retrieve block/epoch numbers.
+- **Handler:** `statusFromFlags`
+- **Core Logic:** `runStatus` → `pingChain`
+- **Dependencies:** `@cfxdevkit/cdk` (`createClient`, `http`, `getChain`)
+- **Usage:**
+  ```bash
+  cfx status --chain core-testnet
+  cfx status --json
+  ```
 
-```typescript
-// Pure layer
-runStatus(opts: RunStatusOptions): Promise<StatusReport[]>
+#### 2. `derive`
+Derives dual-space accounts (EVM + Core) from a mnemonic.
+- **Handler:** `deriveFromFlags`
+- **Core Logic:** `runDerive`
+- **Dependencies:** `@cfxdevkit/cdk` (`deriveDualAccounts`, `generateMnemonic`)
+- **Usage:**
+  ```bash
+  cfx derive --generate --count 3 --core-network-id 1
+  cfx derive --mnemonic "..." --show-private-keys
+  ```
 
-// Adapter
-statusFromFlags(flags, out): Promise<number>
-```
+#### 3. `generate`
+Generates a fresh BIP-39 mnemonic.
+- **Handler:** `generateFromFlags`
+- **Core Logic:** `runGenerate`
+- **Dependencies:** `@cfxdevkit/cdk` (`generateMnemonic`)
+- **Usage:**
+  ```bash
+  cfx generate --strength 256
+  ```
 
-`runStatus` calls `listChains()` (all known chains) or `resolveChain(idOrName)` for a single target, then pings each with `pingChain`. The ping creates a `@cfxdevkit/cdk` client and calls `getEpochNumber()` (Core Space) or `getBlockNumber()` (eSpace), recording latency. Returns exit code `1` if any chain fails.
-
-Flags: `--chain <id|name>`, `--rpc <url>`, `--timeout-ms <n>`, `--json`
-
-#### `derive`
-
-```typescript
-runDerive(opts: RunDeriveOptions): DeriveReport
-deriveFromFlags(flags, out): number
-```
-
-`runDerive` requires either `--mnemonic "<phrase>"` or `--generate`. With `--generate` it calls `generateMnemonic(strength)` from `@cfxdevkit/cdk`. The mnemonic is always validated with `validateMnemonic` before derivation. Then `deriveDualAccounts` produces an array of `DualAddressAccount` objects, each containing an EVM `0x…` address and a Core base32 `cfx…:…` address along with their derivation paths.
-
-Key flags: `--count N`, `--start I`, `--type standard|mining`, `--core-network-id <id>`, `--passphrase`, `--strength 128|160|192|224|256`, `--show-private-keys`, `--show-mnemonic`, `--json`
-
-Private keys are stripped from output by default; pass `--show-private-keys` to include them. The mnemonic is printed automatically when `--generate` is used, or on demand with `--show-mnemonic`.
-
-#### `generate`
-
-```typescript
-runGenerate(opts: RunGenerateOptions): GenerateReport
-generateFromFlags(flags, out): number
-```
-
-Thin wrapper around `generateMnemonic`. Returns `{ mnemonic, wordCount, valid }`. Without `--json` it prints only the mnemonic phrase — suitable for piping.
-
-Flags: `--strength 128|160|192|224|256` (default 128 = 12 words), `--json`
-
-#### `contracts extract`
-
-```typescript
-runContractsExtract(opts: RunContractsExtractOptions): Promise<ContractsExtractReport>
-contractsExtractFromFlags(flags, opts): Promise<number>
-```
-
-Delegates entirely to `writeContractModules` from `@cfxdevkit/codegen-contracts`. Reads compiled Hardhat artifacts and emits typed TypeScript modules.
-
-Flags: `--artifacts <dir>` (default `artifacts`), `--out <dir>` (default `src/generated/contracts`), `-a` / `-o` short forms
+#### 4. `contracts extract`
+Extracts ABI and bytecode from Hardhat artifacts into generated TypeScript modules.
+- **Handler:** `contractsExtractFromFlags`
+- **Core Logic:** `runContractsExtract`
+- **Dependencies:** `@cfxdevkit/codegen-contracts` (`writeContractModules`)
+- **Usage:**
+  ```bash
+  cfx contracts extract --artifacts ./artifacts --out ./src/generated
+  ```
 
 ### Programmatic API
 
-All `run*` functions are re-exported from `index.ts`, so the package can be used as a library:
+The package exports core functions for programmatic usage in other tools or scripts.
 
 ```typescript
-import { runStatus, runDerive, runGenerate, runContractsExtract } from '@cfxdevkit/cli';
-
-const reports = await runStatus({ chain: 'espace-testnet' });
-const { accounts } = runDerive({ generate: true, count: 5, coreNetworkId: 1 });
+// src/index.ts
+export { parseArgs } from './args.js';
+export { run } from './run.js';
+export { runStatus, type StatusReport } from './commands/status.js';
+export { runDerive, type DeriveReport } from './commands/derive.js';
+export { runGenerate, type GenerateReport } from './commands/generate.js';
+export { runContractsExtract, type ContractsExtractReport } from './commands/contracts.js';
 ```
 
----
+## Package: `@cfxdevkit/create` (Scaffold)
 
-## `@cfxdevkit/create` — project scaffolding
+This package provides the `create` command for bootstrapping new projects using predefined templates.
 
-### Overview
+### Scaffolding Logic
 
-`scaffoldProject` writes a full project tree to disk by rendering a named template against a values map, then optionally running `npm install`.
+The core logic resides in `src/scaffold.ts`. It validates the project name, resolves the template, renders files, and installs dependencies.
 
-<Mermaid chart={`graph TD
-    A[scaffoldProject] --> B[getTemplate]
-    A --> C[getTemplateFiles]
-    C --> D[base files + target extras]
-    A --> E[renderFile per file]
-    E --> F[writeFileSync]
-    A --> G[npm install]
-`} />
-
-### Templates
-
-Three first-class templates are registered:
-
-| Name | Description |
-|---|---|
-| `minimal-dapp` | Vite + React + `@cfxdevkit/react` single-package frontend |
-| `wallet-probe` | Wallet detection and signing demo with wagmi connectors |
-| `project-example` | Full-stack monorepo: Vite frontend + Hono backend + Solidity contracts |
-
-`basic`, `react`, and `solidity` are alias entries that map to `minimal-dapp` or `project-example` files for backward compatibility.
-
-#### Template targets
-
-Each `TemplateDefinition` has a `files` array (always written) and an optional `targets` map with extra files per deployment environment:
-
-- `default` — base files only
-- `devcontainer` — adds `.devcontainer/devcontainer.json`
-- `docker` — adds `Dockerfile` / `docker-compose.yml`
-
-`getTemplateFiles(template, target)` merges base and target-specific files:
+**Key Functions:**
+- `scaffoldProject(projectDir, templateName, options)`: Orchestrates the project creation.
+- `validateName(name)`: Validates project name conventions in `src/validate.ts`.
 
 ```typescript
-const files = getTemplateFiles(getTemplate('project-example')!, 'docker');
-// returns PROJECT_EXAMPLE.files + docker Dockerfile + docker-compose.yml
-```
-
-#### Placeholder rendering
-
-`renderFile(content, values)` replaces `{{key}}` tokens using a simple regex. Standard keys are `name`, `version`, and `description`; any extra string fields in `ScaffoldOptions` are passed through automatically. Unmatched tokens are left as-is.
-
-### `scaffoldProject`
-
-```typescript
-async function scaffoldProject(
+// src/scaffold.ts
+export async function scaffoldProject(
   projectDir: string,
   templateName: string,
   options: ScaffoldOptions,
-): Promise<void>
+): Promise<void> {
+  const template = getTemplate(templateName);
+  // ... validation and directory creation
+  const files = getTemplateFiles(template, options.target ?? 'default');
+  // ... file writing and npm install
+}
 ```
 
-Behavior:
-1. Resolves the template by name — throws if not found.
-2. Refuses to overwrite an existing directory unless `options.force === true`.
-3. Creates `projectDir` with `mkdirSync({ recursive: true })`.
-4. Calls `getTemplateFiles` with `options.target ?? 'default'`.
-5. Renders each file and writes it, creating intermediate directories as needed.
-6. Runs `npm install` synchronously via `spawnSync` unless `options.skipInstall === true`.
+### Template System
 
-### Name validation (`validate.ts`)
+Templates are defined in `src/templates.ts` and specific template files (e.g., `minimal-dapp.ts`).
 
-`validateName(name)` enforces npm package name rules and returns `{ valid, error }`:
+**Template Structure:**
+- **`TemplateDefinition`**: Defines `name`, `description`, `files`, and optional `targets`.
+- **`TemplateTarget`**: Supports `default`, `devcontainer`, and `docker` configurations.
+- **`renderFile`**: Replaces `{{variable}}` placeholders in file content.
 
-- No spaces or characters outside `[a-zA-Z0-9_@/-]`
-- No consecutive hyphens (`--`)
-- Unscoped name must not start with a digit or end with a hyphen
-- Scoped names (`@scope/name`) are supported
+**Available Templates:**
+1.  **`minimal-dapp`**: Vite + React + `@cfxdevkit/react`.
+2.  **`wallet-probe`**: Wallet detection and signing demo.
+3.  **`project-example`**: Full-stack (Vite frontend + Hono backend + Solidity).
 
-### Argument parser (`args.ts`)
+**Adding a Template:**
+1.  Create a file in `src/templates/` exporting a `TemplateDefinition`.
+2.  Register it in the `templates` array in `src/templates.ts`.
+3.  Ensure `getTemplate` can find it by name.
 
-The scaffold CLI has its own minimal parser (separate from `@cfxdevkit/cli`'s parser) that handles:
+```typescript
+// src/templates.ts
+export function getTemplate(name: string): TemplateDefinition | undefined {
+  const template = templates.find((item) => item.name === name);
+  return template ? { ...template, files: [...template.files] } : undefined;
+}
+```
 
-- `-t` / `--template <name>`
-- `--target <default|devcontainer|docker>`
-- `--force`
-- `--skip-install` / `--skipInstall`
-- Bare positional arguments (collected as `positional[]`)
+### Argument Parsing
 
-### `project-example` template structure
+The scaffold CLI uses a custom parser in `src/args.ts` distinct from the main CLI package.
 
-The full-stack template is assembled from three file sets:
+- **`parseArgs(args: string[])`**: Returns `ParsedArgs` containing `template`, `target`, `force`, `skipInstall`, and `positional` arguments.
+- **Flags:**
+  - `-t` / `--template`: Select template.
+  - `--target`: Select deployment target (e.g., `devcontainer`).
+  - `--force`: Overwrite existing directory.
+  - `--skip-install`: Skip `npm install`.
 
-- **`PROJECT_EXAMPLE_CORE_FILES`** — `package.json` (workspace root), frontend (`Vite + React + @cfxdevkit/defi-react`), backend (`Hono`), and a `Counter.sol` contract
-- **`PROJECT_EXAMPLE_CONFIG_FILES`** — `biome.json`, `pnpm-workspace.yaml`, `.vscode/extensions.json`, `.mcp.json`, `AGENTS.md`, `CLAUDE.md`, CI workflow, `vercel.json`, `deployments/contracts.json`
-- **`PROJECT_EXAMPLE_SCRIPT_FILES`** — `scripts/deploy-contract.mjs`, `scripts/sync-project-network.mjs`, `scripts/doctor.mjs`, `scripts/list-contracts.mjs`, wagmi config, and reusable frontend components
+## Contributing
 
-The `doctor.mjs` script checks Node.js version, pnpm availability, and whether deployment/env files exist — useful as a post-scaffold sanity check.
+### Adding a CLI Command
+1.  Create a new file in `packages/cli/src/commands/`.
+2.  Implement `run<CommandName>` (core logic) and `<CommandName>FromFlags` (CLI interface).
+3.  Register the command in the `switch` statement within `packages/cli/src/run.ts`.
+4.  Update `HELP` text in `run.ts`.
 
----
+### Adding a Scaffold Template
+1.  Define the template in `packages/scaffold-cli/src/templates/`.
+2.  Import and add the definition to the `templates` array in `packages/scaffold-cli/src/templates.ts`.
+3.  Ensure `package.json` dependencies match the target environment (e.g., Vite, React, Wagmi).
 
-## Cross-package usage
-
-The `run*` functions from `@cfxdevkit/cli` are called directly by the `pi-agent` MCP tools:
-
-| Agent tool | CLI function |
-|---|---|
-| `executeCdkStatus` | `runStatus` |
-| `executeCdkDerive` | `runDerive` |
-| `executeCdkGenerate` | `runGenerate` |
-| `executeCdkContractsExtract` | `runContractsExtract` |
-
-`scaffoldProject` and `getTemplateFiles` are called by `handleScaffoldTool` in the MCP server handler, enabling AI-assisted project generation without spawning a subprocess.
+### Testing
+- **CLI:** Tests exist in `index.test.ts`, `args.test.ts`. Focus on `parseArgs` and command output.
+- **Scaffold:** Tests exist in `scaffold.test.ts`, `templates.test.ts`. Focus on `scaffoldProject` and `renderFile`.

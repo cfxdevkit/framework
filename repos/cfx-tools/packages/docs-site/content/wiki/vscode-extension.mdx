@@ -6,258 +6,534 @@ import { Mermaid } from '../../../components/Mermaid';
 
 # VS Code Extension
 
-# Conflux DevKit VS Code Extension
+# VS Code Extension Module
 
 ## Overview
 
-The Conflux DevKit extension (`cfxdevkit`) provides an integrated development environment for building and deploying smart contracts on the Conflux blockchain directly from VS Code. It manages a local Conflux dev node, an encrypted file-based keystore, contract deployments, and direct ABI interaction — all surfaced through a sidebar tree view and command palette.
+The Conflux DevKit VS Code Extension provides an integrated development environment for Conflux blockchain development directly within Visual Studio Code. It enables developers to manage wallets, interact with local and remote networks, deploy and import contracts, and execute contract functions through a tree-based UI.
 
-The extension supports all three Conflux environments (local devnet, testnet, mainnet) and both Conflux execution spaces: eSpace (EVM-compatible, `0x` addresses) and Core Space (Conflux-native base32 addresses).
-
----
+The extension runs as a self-contained runtime that manages a local Conflux dev node, encrypted keystore for mnemonic wallets, and workspace state for network/chain selection.
 
 ## Architecture
 
-<Mermaid chart={`graph TD
-    A["activate / deactivate"] --> B[ExtensionRuntime]
-    B --> C["helpers/*"]
-    B --> D[StaticTreeProvider]
-    C --> E[createSharedNodeRuntime]
-    C --> F[KeystoreProvider]
-    C --> G["deployContract / sendWrite / readContract"]
-    D --> H["views/*"]
-    H --> I[ViewSnapshot]
-    C --> I
+<Mermaid chart={`graph TB
+    subgraph "Extension Entry"
+        A[extension.ts] -->|creates| B[ExtensionRuntime]
+        A -->|registers| C[Commands]
+        A -->|creates| D[TreeView]
+        A -->|creates| E[StatusBar]
+    end
+    
+    subgraph "Helper Modules"
+        B -->|uses| F[abi.ts]
+        B -->|uses| G[artifact.ts]
+        B -->|uses| H[chain.ts]
+        B -->|uses| I[node.ts]
+        B -->|uses| J["wallet/*.ts"]
+        B -->|uses| K[view.ts]
+        B -->|uses| L[state.ts]
+    end
+    
+    subgraph "View Layer"
+        D -->|renders| M[makeMainItems]
+        M --> N[accounts.ts]
+        M --> O[contracts.ts]
+        M --> P["network/node.ts"]
+    end
+    
+    subgraph "External"
+        B -->|calls| Q[devnode-server]
+        B -->|calls| R[Conflux RPC]
+        B -->|uses| S[Workspace State]
+        B -->|uses| T[".cfxdevkit/ files"]
+    end
 `} />
 
-`ExtensionRuntime` is the single stateful object for the lifetime of the extension. All logic is implemented as standalone helper functions that accept `this: ExtensionRuntime` and are called via `.call(this)` from the class, keeping the class itself thin while maintaining access to all shared runtime state.
+## Extension Lifecycle
 
----
+### Activation
 
-## Entry Points
+The `activate()` function initializes the extension:
 
-### `activate(context)`
-
-Called by VS Code when the extension activates. Creates the `ExtensionRuntime`, registers it for disposal, then calls `runtime.activate()` which:
-
-1. Registers all VS Code commands via `registerCommands()`
-2. Calls `refreshAll()` to build and populate the sidebar tree
-3. Auto-starts the local node if `cfxdevkit.autoStartNode` is `true` and `local` is the selected network
-
-### `deactivate()`
-
-Gracefully awaits `stopNodeForDeactivation()` before disposing the runtime. This ensures the local node releases its ports before VS Code restarts the extension host (e.g., on reload). The stop is explicitly awaited here rather than in `dispose()` because `dispose()` is synchronous.
-
----
-
-## ExtensionRuntime State
-
-The class holds all mutable runtime state:
-
-| Field | Type | Purpose |
-|---|---|---|
-| `node` | `SharedNodeRuntime \| null` | Handle to the running local Conflux node |
-| `unlockedPassphrase` | `string \| null` | Cached keystore passphrase; cleared on lock |
-| `fileProvider` | `KeystoreProvider \| null` | Open keystore provider instance |
-| `cachedSigner` | `CachedSigner \| null` | Last-resolved signer, invalidated on wallet/network changes |
-| `localNodeMnemonic` | `string \| null` | Mnemonic used to seed the running local node |
-| `auditLogger` | — | Append-only audit log for keystore operations |
-| `output` | `OutputChannel` | "Conflux DevKit" VS Code output channel |
-| `mainProvider` | `StaticTreeProvider` | Data provider for the `cfxdevkit.mainView` tree |
-
-Workspace-scoped selections (active network, space, wallet ref, account index) are persisted in `context.workspaceState` using the following keys:
-
-```
-cfxdevkit.selectedNetwork       — 'local' | 'testnet' | 'mainnet'
-cfxdevkit.selectedSpace         — 'espace' | 'core'
-cfxdevkit.activeMnemonicRootRef — SecretRef
-cfxdevkit.activeMnemonicAccountIndex — number
-```
-
----
-
-## Helper Modules
-
-All logic is decomposed into helper files under `src/helpers/`. Each helper is a standalone function with `this: ExtensionRuntime` and is re-exported through `src/helpers/index.ts`.
-
-### `state.ts`
-Reads and writes all persisted and derived configuration state:
-- Path helpers: `keystorePath`, `deploymentsPath`, `nodeDataDir`, `auditLogPath`
-- Selection accessors: `selectedNetwork`, `selectedSpace`, `selectedFileRef`, `selectedAccountIndex`
-- Keystore helpers: `keystoreExists`, `fileKeystore`, `ensureFileKeystoreUnlocked`, `listFileWallets`
-- `derivationPath(index)` — returns a BIP-44 path at `m/44'/60'/0'/0/{index}`
-- `setSelectedNetwork` — also stops the local node when switching away from `'local'`
-
-### `chain.ts`
-Manages chain configuration and RPC clients:
-- `chainsFor(network)` — returns `{ espace, core }` `ChainConfig` objects for the given network
-- `currentChain(target)` — resolves the active chain config for the selected or specified target
-- `createClientFor(target)` — builds a typed RPC client; for `local`, uses the running node's URL; for other networks, uses the chain's public RPC
-- `walletSignerFor(target)` — resolves the active signer, checks that the local node was started from the same wallet, and attaches a base32 Core address when `target === 'core'`
-- `ensureUnlockedWallet()` — unlocks the keystore if needed, selects the appropriate wallet ref, and returns a `{ provider, signer, ref, path }` result
-
-### `node.ts`
-Controls the embedded local Conflux dev node:
-- `startNode()` — retrieves or creates a node mnemonic, creates `createSharedNodeRuntime(...)`, starts it, and refreshes the tree
-- `stopNode()`, `restartNode()`, `wipeNode()`, `wipeNodeAndRestart()` — lifecycle management
-- `mineBlocks()`, `startMining(intervalMs)`, `stopMining()` — block production control
-- `getOrCreateNodeMnemonic()` — returns `localNodeMnemonic` if valid, otherwise attempts to unlock the wallet to populate it; prompts to add a wallet if none exists
-
-The node runtime is created via `createSharedNodeRuntime` in `shared.ts`, which wraps the `@cfxdevkit/client` API. When `CFXDEVKIT_DEVNODE_SERVER_URL` is set, the client connects to an external devnode server; otherwise it embeds a local `@cfxdevkit/devnode-server` instance.
-
-### `abi.ts`
-Handles ABI function calls:
-- `abiCallRead(fn, contract)` — prompts for arguments, calls `readContract`, and prints the result to the output channel
-- `abiCallWrite(fn, contract)` — prompts for arguments and optional payable value, submits the transaction via `sendWrite`, then confirms: on local networks it uses `packMine()` + polling; on testnet/mainnet it polls via `waitForReceipt`
-- `promptAbiArgs(fn)` — shows a single JSON-array input box with type hints from the ABI inputs
-- `promptPayableValue()` — prompts for a wei/drip value for payable functions
-- `parseArgValue(value, solidityType)` — converts a raw string to the appropriate JS type (`BigInt` for integers, parsed JSON for arrays, boolean coercion for `bool`)
-
-### `artifact.ts`
-Contract source selection and compilation:
-- `pickTemplateArtifact()` — presents built-in templates from `listTemplates()`, compiles the selected one with `@cfxdevkit/compiler`
-- `pickWorkspaceArtifact()` — finds all `.sol` files in the workspace (excluding `node_modules`, `dist`, `coverage`), prompts for a file and solc version, compiles, and lets the user pick among multiple artifacts
-- `promptConstructorArgs(artifact, defaults?)` — iterates over constructor ABI inputs and prompts for each argument individually
-
-### `contract/commands.ts`
-High-level contract deployment and browsing:
-- `deployContractCommand()` — orchestrates the full deploy flow: source selection → artifact compilation → chain target selection → constructor args → `deployContract` → receipt confirmation → write to `deployments.json` → tree refresh
-- `showAccountsQuickPick()` / `showContractsQuickPick()` — quick-pick wrappers that copy addresses to the clipboard
-- `copyAddress(address)` — writes to clipboard and shows a notification
-
-### `contract/import.ts`
-- `importContractCommand()` — collects address (manual or from environment variable), chain target, network, name, optional ABI, and optional tx hash, then appends a `DeploymentRecord` to `deployments.json`
-
-### `wallet/index.ts`
-- `initializeWallet()` — entry point that branches to `addWallet`, `selectWallet`, or `unlockKeystore` based on keystore state
-- `addWallet()` — creates the keystore if absent (prompting for a new passphrase), then stores a new or imported mnemonic under a user-chosen ref with configurable account count
-- `selectWallet(target?)` — updates `STATE_ACTIVE_FILE_REF` and `STATE_ACTIVE_ACCOUNT_INDEX`; if no target is provided, shows a quick-pick of all derived accounts
-- `removeWallet(target?)` — removes a mnemonic entry from the keystore with confirmation
-
-### `wallet/lock.ts`
-- `lockKeystore()` — clears `unlockedPassphrase`, `fileProvider`, `cachedSigner`, and `localNodeMnemonic`
-- `rotateKeystorePassphrase()` — prompts for old and new passphrases, delegates to `rotateLocalPassphrase`, and updates in-memory state
-- `unlockKeystore(target?)` — calls `ensureUnlockedWallet` and shows the resolved address
-
-### `selection.ts`
-- `selectNetwork(network?)` — presents a quick-pick of the three networks if no argument is given, then calls `setSelectedNetwork`
-
-### `view.ts`
-- `refreshAll()` — builds a `ViewSnapshot`, renders it immediately (without balances), then fetches balances in the background and re-renders
-- `buildSnapshot()` — aggregates all current state (deployments, wallet roots, accounts, node status) into a `ViewSnapshot`
-- `populateAccountBalances(accounts)` — fires parallel `getBalance` requests against both eSpace and Core clients, mutates the account records in place
-
-### `commands.ts`
-- `registerCommands()` — registers every `cfxdevkit.*` VS Code command. All commands that can trigger async work are wrapped by the `guard(id, fn)` helper, which drops re-entrant calls and surfaces errors via `showErrorMessage`.
-
----
-
-## Command Reference
-
-| Command ID | Function | Guard |
-|---|---|---|
-| `cfxdevkit.selectNetwork` | `selectNetwork` | ✓ |
-| `cfxdevkit.initializeSetup` | `initializeWallet` | ✓ |
-| `cfxdevkit.addWallet` | `addWallet` | ✓ |
-| `cfxdevkit.selectWallet` / `cfxdevkit.selectAccount` | `selectWallet` | ✓ |
-| `cfxdevkit.removeWallet` | `removeWallet` | ✓ |
-| `cfxdevkit.unlockKeystore` | `unlockKeystore` | ✓ |
-| `cfxdevkit.lockKeystore` | `lockKeystore` | ✓ |
-| `cfxdevkit.rotateKeystorePassphrase` | `rotateKeystorePassphrase` | ✓ |
-| `cfxdevkit.nodeStart` / `Stop` / `Restart` / `Wipe` / `WipeRestart` | node lifecycle | ✓ |
-| `cfxdevkit.mineBlocks` | `mineBlocks` | ✓ |
-| `cfxdevkit.mining.start` / `stop` | `startMining` / `stopMining` | ✓ |
-| `cfxdevkit.deployContract` | `deployContractCommand` | ✓ |
-| `cfxdevkit.importContract` | `importContractCommand` | ✓ |
-| `cfxdevkit.abiCallRead` | `abiCallRead` | ✗ |
-| `cfxdevkit.abiCallWrite` | `abiCallWrite` | ✗ |
-| `cfxdevkit.copyAddress` / `cfxdevkit.copyContractAddress` | `copyAddress` | ✗ |
-| `cfxdevkit.refreshAccounts` / `refreshContracts` | `refreshAll` | ✗ |
-
-ABI call commands are not guarded because they can legitimately run concurrently against different functions.
-
----
-
-## Tree View
-
-The sidebar view (`cfxdevkit.mainView`) is powered by `StaticTreeProvider<vscode.TreeItem>`, a simple `TreeDataProvider` implementation that holds a flat list of top-level items with optional `children` arrays for nested sections. Items are replaced atomically by `setItems()`, which fires `onDidChangeTreeData`.
-
-`makeMainItems(snapshot)` in `src/views/index.ts` composes three sections:
-
-1. **Network row** (`makeNetworkNodeRow`) — a single item showing the active network and node status with context-value variants (`cfxLocalNodeRunning`, `cfxLocalNodeStopped`, `cfxLocalNodeLocked`, `cfxNonLocalNetwork`) that control which inline toolbar buttons appear in `package.json`
-2. **Wallets + Accounts** (`makeAccountItems`) — wallet roots with lock/ready state, then derived accounts with collapsible eSpace/Core address children showing balances
-3. **Contracts** (`makeContractItems`) — deploy and import action items, then contracts grouped by network → space (eSpace / Core Space) → contract → address + READ/WRITE ABI function groups
-
-Contract ABI items carry `arguments: [fn, contract]` on their `command` so that `cfxdevkit.abiCallRead` / `abiCallWrite` receive the full `AbiFunctionTreeRecord` and `ContractTreeRecord` context.
-
----
-
-## Deployment Records
-
-Deployments are persisted as a JSON array in `.cfxdevkit/deployments.json` (configurable via `cfxdevkit.deploymentsPath`). Each `DeploymentRecord` contains:
-
-```ts
-interface DeploymentRecord {
-  id: string;          // timestamp-name composite
-  name: string;        // contract name
-  address: string;     // deployed address (0x or base32)
-  target: 'espace' | 'core';
-  network: 'local' | 'testnet' | 'mainnet';
-  chainId: number;
-  txHash: string;
-  deployedAt: string;  // ISO timestamp
-  abi?: unknown[];     // stored for in-tree ABI interaction
+```typescript
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+  runtime = new ExtensionRuntime(context);
+  context.subscriptions.push(runtime);
+  await runtime.activate();
+  
+  // Set up status bar for signer selection
+  // Set up file watcher for signer.json changes
 }
 ```
 
-New deployments are prepended (most recent first). The file is created lazily on first deploy.
+**Key initialization steps:**
+1. Creates `ExtensionRuntime` instance
+2. Registers all commands via `registerCommands()`
+3. Refreshes the tree view via `refreshAll()`
+4. Auto-starts local node if configured and network is 'local'
+5. Sets up status bar item showing active signer
+6. Watches `.cfxdevkit/signer.json` for changes
 
----
+### Deactivation
 
-## Local Node
+The `deactivate()` function cleans up resources:
 
-The embedded node is wrapped by `createSharedNodeRuntime` in `shared.ts`. This factory creates a `@cfxdevkit/devnode-server` app (or uses a remote server via `CFXDEVKIT_DEVNODE_SERVER_URL`) and wraps it with a `@cfxdevkit/client` HTTP client. The returned object exposes:
+```typescript
+export async function deactivate(): Promise<void> {
+  await runtime?.stopNodeForDeactivation();
+  await stopDevnodeServer();
+  runtime?.dispose();
+  runtime = null;
+}
+```
 
-- `start(config)`, `stop()`, `restart()`, `wipe(restart?)` — lifecycle
-- `mine(blocks)`, `packMine()` — manual block production
-- `startMining(intervalMs)`, `stopMining()` — automatic mining
-- `isRunning()`, `.accounts`, `.urls` — runtime state from the last API response snapshot
+## Core Components
 
-The `packMine()` + polling pattern used in `deployContractCommand` and `abiCallWrite` is required because Conflux deferred execution means a transaction must be both packed into a block *and* have several epochs advance before the receipt becomes available.
+### ExtensionRuntime Class
 
----
+The main class that encapsulates all extension functionality:
+
+```typescript
+class ExtensionRuntime implements vscode.Disposable {
+  private node: ReturnType<typeof createSharedNodeRuntime> | null = null;
+  private unlockedPassphrase: string | null = null;
+  private fileProvider: KeystoreProvider | null = null;
+  private cachedSigner: CachedSigner | null = null;
+  private localNodeMnemonic: string | null = null;
+  private readonly auditLogger = createAppendOnlyAuditLogger(...);
+  private readonly output = vscode.window.createOutputChannel('Conflux DevKit');
+  private readonly mainProvider = new StaticTreeProvider<vscode.TreeItem>();
+  private readonly disposables: vscode.Disposable[] = [];
+}
+```
+
+**Key responsibilities:**
+- Manages local node lifecycle
+- Handles keystore unlock/lock state
+- Provides access to workspace configuration and state
+- Wraps all helper functions as methods
+
+### Helper Function Pattern
+
+All helper functions are defined in separate modules and called using `.call(this)` to access the runtime context:
+
+```typescript
+// In extension.ts
+private async startNode(): Promise<void> { return startNode.call(this); }
+
+// In node.ts
+export async function startNode(this: ExtensionRuntime): Promise<void> {
+  // Accesses this.node, this.config(), this.log(), etc.
+}
+```
+
+This pattern allows:
+- Clean separation of concerns across files
+- Runtime context access without circular dependencies
+- Easy testing of individual functions
+
+## Command System
+
+### Registration
+
+Commands are registered in `helpers/commands.ts` with a guard pattern to prevent re-entrant execution:
+
+```typescript
+const inFlight = new Set<string>();
+
+function guard(id: string, fn: () => Promise<void> | void): void {
+  if (inFlight.has(id)) return;
+  inFlight.add(id);
+  // ... execute fn, remove from set on completion
+}
+
+export function registerCommands(this: ExtensionRuntime): void {
+  this.context.subscriptions.push(
+    vscode.commands.registerCommand('cfxdevkit.selectNetwork', (network?) =>
+      guard('selectNetwork', () => this.selectNetwork(network)),
+    ),
+    // ... more commands
+  );
+}
+```
+
+### Available Commands
+
+| Command | Purpose |
+|---------|---------|
+| `cfxdevkit.selectNetwork` | Switch between local/testnet/mainnet |
+| `cfxdevkit.initializeSetup` | Initialize wallet setup |
+| `cfxdevkit.addWallet` | Add mnemonic wallet to keystore |
+| `cfxdevkit.selectWallet` | Select active wallet/account |
+| `cfxdevkit.removeWallet` | Remove wallet from keystore |
+| `cfxdevkit.lockKeystore` | Lock the keystore (clear passphrase) |
+| `cfxdevkit.unlockKeystore` | Unlock keystore with passphrase |
+| `cfxdevkit.rotateKeystorePassphrase` | Change keystore password |
+| `cfxdevkit.nodeStart` | Start local dev node |
+| `cfxdevkit.nodeStop` | Stop local dev node |
+| `cfxdevkit.nodeRestart` | Restart local dev node |
+| `cfxdevkit.nodeWipe` | Wipe node data |
+| `cfxdevkit.nodeWipeRestart` | Wipe and restart node |
+| `cfxdevkit.mineBlocks` | Mine specified number of blocks |
+| `cfxdevkit.mining.start` | Start continuous mining |
+| `cfxdevkit.mining.stop` | Stop continuous mining |
+| `cfxdevkit.deployContract` | Deploy contract from template or workspace |
+| `cfxdevkit.importContract` | Import existing deployed contract |
+| `cfxdevkit.viewAccounts` | Show accounts in quick pick |
+| `cfxdevkit.listContracts` | Show deployed contracts in quick pick |
+| `cfxdevkit.copyAddress` | Copy address to clipboard |
+| `cfxdevkit.abiCallRead` | Call read-only contract function |
+| `cfxdevkit.abiCallWrite` | Call write contract function |
+| `cfxdevkit.selectSigner` | Switch active signer from .cfxdevkit/signer.json |
+
+## State Management
+
+### Workspace State
+
+Extension state is persisted in VS Code's `workspaceState`:
+
+```typescript
+export const STATE_NETWORK = 'cfxdevkit.selectedNetwork';
+export const STATE_SPACE = 'cfxdevkit.selectedSpace';
+export const STATE_KEYSTORE_BACKEND = 'cfxdevkit.selectedKeystoreBackend';
+export const STATE_ACTIVE_FILE_REF = 'cfxdevkit.activeMnemonicRootRef';
+export const STATE_ACTIVE_ACCOUNT_INDEX = 'cfxdevkit.activeMnemonicAccountIndex';
+```
+
+### Workspace Files
+
+The extension creates and manages files in `.cfxdevkit/`:
+
+| File | Purpose |
+|------|---------|
+| `keystore.json` | Encrypted keystore for mnemonic wallets |
+| `deployments.json` | Record of deployed contracts |
+| `signer.json` | Signer configuration (external to extension) |
+| `audit.log` | Append-only audit log for keystore operations |
+| `devnode/` | Local node data directory |
+
+## Tree View Architecture
+
+The extension uses a `StaticTreeProvider` to render a tree view in the VS Code sidebar:
+
+```typescript
+class StaticTreeProvider<T extends vscode.TreeItem> implements vscode.TreeDataProvider<T> {
+  private readonly emitter = new vscode.EventEmitter<T | undefined | null>();
+  readonly onDidChangeTreeData = this.emitter.event;
+  
+  setItems(items: readonly T[]): void {
+    this.items = items;
+    this.emitter.fire(undefined);
+  }
+}
+```
+
+### View Snapshot Pattern
+
+The `buildSnapshot()` function creates a complete view state:
+
+```typescript
+export async function buildSnapshot(this: ExtensionRuntime): Promise<ViewSnapshot> {
+  const deployments = await this.readDeployments();
+  const accounts: AccountTreeRecord[] = [];
+  const walletRoots: WalletRootRecord[] = [];
+  // ... build complete snapshot
+  return {
+    selectedNetwork,
+    selectedNetworkLabel,
+    selectedSpaceLabel,
+    keystoreLocked,
+    nodeRunning,
+    walletRoots,
+    networkOptions,
+    nodeStatusLabel,
+    nodeActions,
+    accounts,
+    contracts,
+  };
+}
+```
+
+This snapshot is then rendered by view-specific functions:
+- `makeMainItems()` - Top-level tree structure
+- `makeAccountItems()` - Wallets and accounts
+- `makeContractItems()` - Deployed contracts with ABI functions
+- `makeNetworkNodeRow()` - Network selection and node status
+
+## Local Node Management
+
+### Node Runtime
+
+The extension manages a local Conflux dev node through `createSharedNodeRuntime()`:
+
+```typescript
+export function createSharedNodeRuntime(config: {
+  accounts?: number;
+  dataDir: string;
+  logging?: boolean;
+  mnemonic: string;
+}) {
+  const baseUrl = process.env.CFXDEVKIT_DEVNODE_SERVER_URL ?? `http://127.0.0.1:52000`;
+  const client = createConfluxDevkitClient({ baseUrl });
+  // ... returns node control interface
+}
+```
+
+### Node Lifecycle
+
+```typescript
+export async function startNode(this: ExtensionRuntime): Promise<void> {
+  const mnemonic = await this.getOrCreateNodeMnemonic();
+  await this.ensureUnlockedWallet();
+  await ensureDevnodeServerRunning(keystorePath, nodeProfileDataRoot);
+  const node = createSharedNodeRuntime({ mnemonic, dataDir, accounts, logging });
+  await node.start();
+  this.node = node;
+}
+```
+
+**Node operations:**
+- `start()` - Start the node from mnemonic
+- `stop()` - Stop the node
+- `restart()` - Restart the node
+- `wipe()` - Delete node data
+- `mine(n)` - Mine n blocks
+- `packMine()` - Pack pending transactions and mine
+- `startMining(intervalMs)` - Start continuous mining
+- `stopMining()` - Stop continuous mining
+
+## Contract Interaction
+
+### Deployment Flow
+
+```typescript
+export async function deployContractCommand(this: ExtensionRuntime): Promise<void> {
+  // 1. Select source (template or workspace file)
+  const artifact = await this.pickTemplateArtifact() || await this.pickWorkspaceArtifact();
+  
+  // 2. Select chain target (eSpace or Core)
+  const target = await this.pickChainTarget(`Deploy ${artifact.contractName}`);
+  
+  // 3. Prompt constructor arguments
+  const args = await this.promptConstructorArgs(artifact);
+  
+  // 4. Deploy transaction
+  const submitted = await deployContract({ client, signer, abi, bytecode, args });
+  
+  // 5. Wait for receipt (pack-mine on local, poll on remote)
+  const receipt = await waitForReceipt(client, submitted.hash);
+  
+  // 6. Save to deployments.json
+  deployments.unshift({ id, name, address, target, network, chainId, txHash, deployedAt, abi });
+  await this.writeDeployments(deployments);
+}
+```
+
+### ABI Function Execution
+
+**Read functions** call `abiCallRead()`:
+```typescript
+export async function abiCallRead(
+  this: ExtensionRuntime,
+  fn: AbiFunctionTreeRecord,
+  contract: ContractTreeRecord,
+): Promise<void> {
+  const args = await this.promptAbiArgs(fn);
+  const client = await this.createClientFor(contract.target);
+  const result = await readContract({ client, address: contract.address, abi, functionName: fn.name, args });
+}
+```
+
+**Write functions** call `abiCallWrite()`:
+```typescript
+export async function abiCallWrite(
+  this: ExtensionRuntime,
+  fn: AbiFunctionTreeRecord,
+  contract: ContractTreeRecord,
+): Promise<void> {
+  const args = await this.promptAbiArgs(fn);
+  const value = fn.stateMutability === 'payable' ? await this.promptPayableValue() : undefined;
+  const signer = await this.walletSignerFor(contract.target);
+  const submitted = await sendWrite({ client, signer, address, abi, functionName: fn.name, args, value });
+  // Wait for receipt with pack-mine on local
+}
+```
+
+## Wallet Management
+
+### Keystore Operations
+
+The extension supports file-based encrypted keystore with mnemonic wallets:
+
+```typescript
+export async function addWallet(this: ExtensionRuntime): Promise<void> {
+  // 1. Create keystore if not exists (prompt for passphrase)
+  // 2. Generate or import mnemonic
+  // 3. Store encrypted mnemonic in keystore
+  // 4. Update workspace state with active ref
+  // 5. Refresh view
+}
+```
+
+### Account Derivation
+
+Accounts are derived using BIP-44 path with Conflux-specific derivation:
+
+```typescript
+export const DERIVATION_BASE = "m/44'/60'/0'/0";
+
+export function derivationPath(
+  this: ExtensionRuntime,
+  index = this.selectedAccountIndex(),
+): string {
+  return `${DERIVATION_BASE}/${index}`;
+}
+```
+
+### Signer Selection
+
+The extension supports multiple signer backends configured via `.cfxdevkit/signer.json`:
+
+```typescript
+export function selectedBackend(this: ExtensionRuntime): KeystoreBackend {
+  try {
+    const config = JSON.parse(readFileSync(signerJsonPath, 'utf8'));
+    const entry = config?.signers?.[config?.defaultSigner];
+    if (entry?.kind === 'onekey') return 'onekey';
+    if (entry?.kind === 'file-keystore') return 'file';
+    return 'file';
+  } catch {
+    return 'file';
+  }
+}
+```
+
+## Network Configuration
+
+### Supported Networks
+
+```typescript
+export const NETWORKS: readonly NetworkOption[] = [
+  { network: 'local', label: 'Local (dev)', coreChainId: 2029, espaceChainId: 2030 },
+  { network: 'testnet', label: 'Testnet', coreChainId: 1, espaceChainId: 71 },
+  { network: 'mainnet', label: 'Mainnet', coreChainId: 1029, espaceChainId: 1030 },
+];
+```
+
+### Chain Spaces
+
+Each network supports two chain spaces:
+- **eSpace**: EVM-compatible with 0x addresses
+- **Core Space**: Conflux-native with base32 addresses
+
+```typescript
+export function currentChain(
+  this: ExtensionRuntime,
+  target: ChainTarget = this.selectedSpace(),
+): ChainConfig {
+  const chains = this.currentChains();
+  return target === 'core' ? chains.core : chains.espace;
+}
+```
 
 ## Configuration
 
-All settings live under the `cfxdevkit` namespace:
+Extension settings are accessed via:
 
-| Setting | Default | Purpose |
-|---|---|---|
-| `keystorePath` | `.cfxdevkit/keystore.json` | Encrypted keystore location (absolute or workspace-relative) |
-| `deploymentsPath` | `.cfxdevkit/deployments.json` | Deployment registry |
-| `nodeDataDir` | `.cfxdevkit/devnode` | Local node data directory |
-| `nodeAccounts` | `10` | Number of pre-funded accounts to generate |
-| `nodeLogging` | `false` | Enable verbose node logs |
-| `autoStartNode` | `false` | Start local node on extension activation |
-
----
-
-## Contributing
-
-All helper functions follow the same pattern: they are plain exported functions with `this: ExtensionRuntime` as a typed `this` parameter, imported from `helpers/index.ts` and delegated from the class:
-
-```ts
-// In helpers/myfeature.ts
-export async function myFeature(this: ExtensionRuntime): Promise<void> {
-  this.log('doing something');
-  const client = await this.createClientFor('espace');
-  // ...
-}
-
-// In extension.ts
-private async myFeature(): Promise<void> {
-  return myFeature.call(this);
+```typescript
+export function config(this: ExtensionRuntime): vscode.WorkspaceConfiguration {
+  return vscode.workspace.getConfiguration('cfxdevkit');
 }
 ```
 
-This pattern keeps the class declaration as a routing surface while allowing helpers to be developed and tested in isolation. When adding a new command, also add a `guard(id, fn)` wrapper in `registerCommands()` unless the command is intentionally re-entrant.
+### Available Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `keystorePath` | `.cfxdevkit/keystore.json` | Path to encrypted keystore |
+| `deploymentsPath` | `.cfxdevkit/deployments.json` | Path to deployment records |
+| `nodeDataDir` | `.cfxdevkit/devnode` | Local node data directory |
+| `nodeAccounts` | `10` | Number of funded accounts in local node |
+| `nodeLogging` | `false` | Enable node logging |
+| `autoStartNode` | `false` | Auto-start node on activate when on local network |
+
+## Error Handling
+
+Commands use the `guard()` function to prevent concurrent execution and provide consistent error feedback:
+
+```typescript
+guard('commandId', async () => {
+  // Operation that may fail
+}).catch((err) => {
+  void vscode.window.showErrorMessage(`Conflux: ${err.message}`);
+});
+```
+
+## Extension Points
+
+### Adding New Commands
+
+1. Register in `helpers/commands.ts`:
+```typescript
+vscode.commands.registerCommand('cfxdevkit.myCommand', () =>
+  guard('myCommand', () => this.myCommand()),
+),
+```
+
+2. Implement in a helper module:
+```typescript
+export async function myCommand(this: ExtensionRuntime): Promise<void> {
+  // Access this.config(), this.log(), etc.
+}
+```
+
+3. Add to view if needed (e.g., `makeContractItems`, `makeAccountItems`)
+
+### Adding New View Items
+
+Extend `ViewSnapshot` in `views/model.ts` and update `buildSnapshot()` in `helpers/view.ts`:
+
+```typescript
+export interface ViewSnapshot {
+  // ... existing fields
+  customData?: CustomData[];
+}
+```
+
+## Dependencies
+
+### Internal Packages
+- `@cfxdevkit/client` - Conflux RPC client
+- `@cfxdevkit/cdk` - Chain configuration, wallet utilities
+- `@cfxdevkit/compiler` - Solidity compilation
+- `@cfxdevkit/contracts` - Contract deployment and interaction
+- `@cfxdevkit/services` - Keystore and audit services
+- `@cfxdevkit/devnode-server` - Local node control plane
+
+### External
+- `vscode` - VS Code extension API
+- `node:fs`, `node:child_process` - File system and process management
+
+## Development Guidelines
+
+### Adding Features
+
+1. **Keep helpers focused** - Each helper module should have a single responsibility
+2. **Use the call pattern** - All helpers should accept `this: ExtensionRuntime`
+3. **Prefer async/await** - Most operations are asynchronous
+4. **Handle errors gracefully** - Use `guard()` for commands
+5. **Update the tree** - Call `refreshAll()` after state changes
+
+### Testing Considerations
+
+- Mock `vscode.window` and `vscode.workspace` for UI tests
+- Test helper functions in isolation with mock runtime context
+- Verify state persistence in workspaceState and files
+- Test node lifecycle operations (start/stop/restart)
+
+### Performance Notes
+
+- Balance fetching is done in background to avoid blocking tree rendering
+- Commands prevent re-entrant execution via `guard()`
+- Node operations use `withProgress()` for user feedback
+- View updates fire `onDidChangeTreeData` only when necessary

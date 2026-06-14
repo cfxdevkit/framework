@@ -6,427 +6,294 @@ import { Mermaid } from '../../../components/Mermaid';
 
 # UI Components & Hooks
 
-# UI Components & Hooks
+# UI Components & Hooks Module
 
-This documentation covers three packages that together form the React layer of the cfxdevkit UI stack:
+This module provides the React integration layer for Conflux dApps. It is split into four primary packages that handle blockchain interaction, DeFi primitives, wallet connectivity, and design theming.
 
-- **`@cfxdevkit/react`** — Core blockchain hooks (account, balances, contracts, transactions, events)
-- **`@cfxdevkit/defi-react`** — DeFi-specific hooks and widgets (swaps, pools, portfolios)
-- **`@cfxdevkit/wallet-connect`** — Wallet connection for both Conflux Core Space (Fluent) and eSpace (EVM wallets)
+- **`@cfxdevkit/react`**: Core hooks for accounts, balances, contracts, and transactions.
+- **`@cfxdevkit/defi-react`**: DeFi-specific hooks for swaps, portfolios, and liquidity pools.
+- **`@cfxdevkit/wallet-connect`**: Wallet connection management (Fluent Core, Wagmi eSpace) and SIWE authentication.
+- **`@cfxdevkit/theme`**: Design system tokens and CSS variables.
 
----
+## Architecture
 
-## Architecture Overview
+The module relies on `@cfxdevkit/cdk` for low-level RPC and type definitions. React hooks consume a `Client` and `Signer` provided by the `CfxProvider` context.
 
 <Mermaid chart={`graph TD
-    App["Application"]
-    WC["@cfxdevkit/wallet-connect"]
-    React["@cfxdevkit/react"]
-    Defi["@cfxdevkit/defi-react"]
-    CDK["@cfxdevkit/cdk (client)"]
-    RQ["@tanstack/react-query"]
-
-    App --> WC
-    App --> React
-    App --> Defi
-    Defi --> React
-    React --> CDK
-    React --> RQ
-    Defi --> RQ
-    WC --> CDK
+    App[React Application] --> Providers[CfxProvider]
+    Providers --> Context["useClient / useSigner"]
+    
+    subgraph Core Hooks
+    Context --> Account[useAccount]
+    Context --> Balance["useNativeBalance / useTokenBalance"]
+    Context --> Contract["useReadContract / useWriteContract"]
+    Context --> TX["useSendTransaction / useWaitForTransaction"]
+    end
+    
+    subgraph DeFi Layer
+    Balance --> Portfolio[usePortfolio]
+    Contract --> Swap[useSwap]
+    Swap --> Adapter["SwapService / DexAdapter"]
+    end
+    
+    subgraph Wallet Layer
+    Providers --> WalletConnect["useCoreWallet / useEspaceConnectors"]
+    WalletConnect --> SIWE[verifySiweMessage]
+    end
+    
+    Theme[Theme Tokens] -.-> UI[Components]
 `} />
 
-All data-fetching hooks sit on top of TanStack Query. The `@cfxdevkit/react` hooks consume a `CfxProvider` context that supplies a read-only `client` and an optional `signer`. DeFi hooks import from `@cfxdevkit/react` rather than directly from the CDK.
+## Core React Hooks (`@cfxdevkit/react`)
 
----
+These hooks manage state and side effects for blockchain data. They require the `CfxProvider` to be mounted in the app tree.
 
-## `@cfxdevkit/react`
+### Account & Balance
 
-### Context
+```typescript
+import { useAccount, useNativeBalance, useTokenBalance } from '@cfxdevkit/react';
 
-All hooks require a `CfxProvider` wrapping your component tree. It exposes two context values consumed internally:
-
-- `useClient()` — returns the eSpace read client (`EspaceClient`)
-- `useSigner()` — returns the signer if one is present, otherwise `null`
-
-Never call `useClient` or `useSigner` directly in application code; use the exported hooks instead.
-
----
-
-### `useAccount`
-
-```ts
+// Check connection status
 const { address, isConnected } = useAccount();
-```
 
-Returns the signer's address and connection status. When no signer is provided to `CfxProvider`, `address` is `null` and `isConnected` is `false`. This is the primary way application code checks whether a wallet is connected.
+// Fetch native CFX balance
+const { data: balance, isLoading } = useNativeBalance({ address });
 
----
-
-### Balance Hooks
-
-#### `useNativeBalance`
-
-```ts
-const { data, error, isLoading, refetch } = useNativeBalance({
-  address,
-  enabled?: boolean,
-  staleTimeMs?: number,
+// Fetch ERC-20 balance
+const { data: tokenBalance } = useTokenBalance({
+  token: '0xTokenAddress',
+  owner: address,
 });
 ```
 
-Fetches the native CFX balance via `client.getBalance`. Query key: `['cfx', 'nativeBalance', chainId, address]`. The query is disabled when `address` is nullish.
+### Contract Interaction
 
-#### `useTokenBalance`
+Read operations use `useQuery` internally, caching results automatically. Write operations use `useMutation`.
 
-```ts
-const { data, error, isLoading, refetch } = useTokenBalance({
-  token,  // ERC-20 contract address
-  owner,
-  enabled?: boolean,
-  staleTimeMs?: number,
+```typescript
+import { useReadContract, useWriteContract } from '@cfxdevkit/react';
+
+// Read
+const { data } = useReadContract({
+  address: '0xContract',
+  abi: MyABI,
+  functionName: 'balance',
+  args: [userAddress],
+});
+
+// Write
+const { writeAsync, isPending } = useWriteContract();
+await writeAsync({
+  address: '0xContract',
+  abi: MyABI,
+  functionName: 'transfer',
+  args: [recipient, amount],
 });
 ```
 
-Calls `balanceOf(owner)` on the ERC-20 contract via `eth_call`. Returns `Wei`.
+### Transaction Lifecycle
 
-#### `useTokenMetadata`
+For raw transactions, use `useSendTransaction` combined with `useWaitForTransaction` to monitor receipt.
 
-```ts
-const { data, error, isLoading } = useTokenMetadata({ token, enabled? });
-// data: { name, symbol, decimals }
+```typescript
+import { useSendTransaction, useWaitForTransaction } from '@cfxdevkit/react';
+
+const { sendAsync } = useSendTransaction();
+const { data: receipt } = useWaitForTransaction({ hash });
+
+const hash = await sendAsync({ to: '0x...', value: 100n });
 ```
 
-Fetches `name`, `symbol`, and `decimals` in parallel. Results are cached with `staleTime: Infinity` — token metadata does not change.
+### Event Watching
 
----
+`useWatchEvent` polls `eth_getLogs` on an interval to detect contract events.
 
-### Contract Hooks
+```typescript
+import { useWatchEvent } from '@cfxdevkit/react';
 
-#### `useReadContract<T>`
-
-Single `eth_call` against any ABI. Accepts `address`, `abi`, `functionName`, `args`, `blockTag`, and optional `staleTimeMs`.
-
-```ts
-const { data, error, isLoading, refetch } = useReadContract<bigint>({
-  address: '0x...',
-  abi: MY_ABI,
-  functionName: 'totalSupply',
-});
-```
-
-#### `useReadContracts`
-
-Parallel multi-call variant. Takes a `calls: ReadCall[]` array and returns `Array<{ status: 'success' | 'failure'; result: unknown }>`. Individual call failures do not abort the batch — each result carries its own status.
-
-#### `useSimulateContract<T>`
-
-Simulates a write by running `eth_call` with the signer's address as `from`. Returns `{ result, request }` where `request` is a ready-to-use `WriteInput` for `useWriteContract`.
-
-#### `useWriteContract`
-
-```ts
-const { writeAsync, isPending, error, reset } = useWriteContract();
-const { hash } = await writeAsync({ address, abi, functionName, args, value? });
-```
-
-Handles the full write flow: estimates gas, fetches nonce and gas price, signs via the signer, and broadcasts with `eth_sendRawTransaction`. Throws if no signer is available.
-
----
-
-### Transaction Hooks
-
-#### `useSendTransaction`
-
-Lower-level counterpart to `useWriteContract` for raw transactions without ABI encoding:
-
-```ts
-const { sendAsync, isPending, error, reset } = useSendTransaction();
-const { hash } = await sendAsync({ to, data?, value?, gas? });
-```
-
-Gas is estimated automatically if `gas` is omitted.
-
-#### `useWaitForTransaction`
-
-```ts
-const { data: receipt, isLoading } = useWaitForTransaction({
-  hash,
-  pollIntervalMs?: number, // default 2000
-  enabled?: boolean,
-});
-```
-
-Polls `eth_getTransactionReceipt` until a receipt is returned. The query retries indefinitely on `'pending'` errors and up to 3 times on other errors.
-
----
-
-### Event Hook
-
-#### `useWatchEvent`
-
-```ts
 useWatchEvent({
-  address,
-  abi,
-  eventName,
-  args?,           // topic filters
-  pollIntervalMs?, // default 4000
-  enabled?,
-  onLogs: (logs: WatchEventLog[]) => void,
-  onError?: (error: unknown) => void,
+  address: '0xContract',
+  abi: EventABI,
+  eventName: 'Transfer',
+  onLogs: (logs) => console.log('New event', logs),
+  pollIntervalMs: 4000,
 });
 ```
 
-Polls `eth_getLogs` on a timer, tracking `fromBlock` to avoid reprocessing. The effect restarts when `address`, `abi`, `eventName`, `args`, `pollIntervalMs`, or `enabled` change. `onLogs` and `onError` are held in refs so updating them does not restart the polling loop — pass stable references where possible, but it is not required for correctness.
+## DeFi Integration (`@cfxdevkit/defi-react`)
 
----
+This package builds on core hooks to provide higher-level financial primitives using the `SwapService` adapter pattern.
 
-### Keystore Hooks
+### Portfolio Management
 
-The keystore subsystem manages HD wallets on a server-side keystore service. It is client-component only (`'use client'`).
+`usePortfolio` aggregates native and token balances for a user.
 
-#### `KeystoreProvider`
+```typescript
+import { usePortfolio } from '@cfxdevkit/defi-react';
 
-Wrap the relevant subtree. Requires a `KeystoreService` implementation (mirrors `@cfxdevkit/client`'s keystore namespace — no compile-time dependency).
-
-#### Lifecycle — `useKeystoreLifecycle`
-
-```ts
-const { phase, isLocked, isBusy, error, setup, unlock, lock, refresh, clearError, resetGuidance } =
-  useKeystoreLifecycle();
+const { rows, isLoading } = usePortfolio({
+  address: userAddress,
+  tokens: [/* TokenInfo[] */],
+});
+// rows contains { token, balance, formatted } sorted by value
 ```
 
-`phase` is one of: `'blank'` | `'locked'` | `'unlocked'` | `'active-wallet'`.
+### Token Swapping
 
-Convenience boolean selectors are also exported:
+`useSwap` handles the full swap lifecycle: fetching a quote, checking/approving allowances, and executing the transaction.
 
-| Hook | Returns `true` when |
-|---|---|
-| `useIsKeystoreBlank()` | `phase === 'blank'` |
-| `useIsKeystoredLocked()` | `phase === 'blank'` or `'locked'` |
-| `useIsKeystoreReady()` | `phase === 'unlocked'` or `'active-wallet'` |
-| `useIsKeystoreActive()` | `phase === 'active-wallet'` |
+```typescript
+import { useSwap, createSwappiAdapter } from '@cfxdevkit/defi-react';
 
-#### Wallets — `useKeystoreWallets`
-
-Returns `wallets`, `walletCount`, `activeWalletId`, and the mutation actions `activateWallet`, `addWallet`, `deleteWallet`, `renameWallet`. `deleteWallet` and `renameWallet` apply optimistic updates immediately and roll back on error.
-
-#### Accounts — `useKeystoreAccounts`
-
-Returns `accounts` for the active wallet root, `activeWallet`, `activeAccountIndex`, and `activateAccount`. Account switching is intentionally separate from wallet-root switching.
-
-#### Identity — `useKeystoreIdentity`
-
-```ts
-const { identity, hasIdentity } = useKeystoreIdentity();
-// identity: { espaceAddress, coreAddress, espaceDerivationPath, coreDerivationPath, ... } | null
-```
-
-Always returns both eSpace and Core addresses paired together. Never use this hook expecting a single-chain abstraction.
-
----
-
-## `@cfxdevkit/defi-react`
-
-### `SwapService` and `DexAdapter`
-
-`SwapService` implements the `DexAdapter` interface against Swappi V2. Instantiate it with `createSwapService` or the convenience wrapper `createSwappiAdapter`:
-
-```ts
-const adapter = createSwappiAdapter({ chainId: 71, client: espaceClient });
-```
-
-Key methods:
-
-- `getQuote({ tokenIn, tokenOut, amountIn, slippageBps?, deadlineMs? })` — looks up the pair, builds a single or WCFX-hop route, calls `getAmountsOut`, applies slippage.
-- `buildCalldata(quote, { recipient })` — selects the correct router function (`swapExactETHForTokens`, `swapExactTokensForETH`, or `swapExactTokensForTokens`) and encodes calldata.
-- `getSpenderAddress()` — returns the router address for ERC-20 approval.
-- `getPoolTokens(pairAddress)` — returns `{ token0, token1, reserve0, reserve1 }`.
-- `getTokenPrice(tokenAddress, quoteToken)` — price for 1e18 units of the input token.
-
-Native CFX is identified by `CFX_NATIVE_ADDRESS` and is transparently resolved to WCFX on-chain.
-
----
-
-### `useSwap`
-
-```ts
+const adapter = createSwappiAdapter({ chainId: 71, client });
 const {
-  quote, isQuoting, quoteError,
-  needsApproval, approveAsync, isApproving, approvalError,
-  swapAsync, isSwapping, swapError,
-  reset,
-} = useSwap({ adapter, tokenIn, tokenOut, amountIn, slippageBps?, deadlineMs?, enabled? });
+  quote,
+  swapAsync,
+  needsApproval,
+  approveAsync,
+  isSwapping,
+} = useSwap({
+  adapter,
+  tokenIn: '0xTokenA',
+  tokenOut: '0xTokenB',
+  amountIn: 1000000000000000000n, // 1 token (18 decimals)
+});
+
+// Execution flow
+if (needsApproval) {
+  await approveAsync();
+}
+await swapAsync();
 ```
 
-This hook owns the complete swap lifecycle:
+**Swap Flow:**
+1.  **Quote:** Calls `adapter.getQuote` via `SwapService`.
+2.  **Allowance:** Calls `useReadContract` to check `allowance(token, spender)`.
+3.  **Approval:** Calls `useWriteContract` to `approve(spender, MAX_UINT256)`.
+4.  **Swap:** Calls `adapter.buildCalldata` then `useSendTransaction`.
 
-1. **Quote** — TanStack Query fetches a fresh quote every 15 seconds.
-2. **Allowance check** — `useReadContract` reads `allowance(address, spender)` for ERC-20 inputs. Native CFX skips this.
-3. **Approval** — `approveAsync()` calls `approve(spender, MAX_UINT256)` via `useWriteContract`, then uses `useWaitForTransaction` to wait for confirmation before re-fetching allowance.
-4. **Swap** — `swapAsync()` calls `adapter.buildCalldata(quote, { recipient })` and submits via `useSendTransaction`.
+### Liquidity Pools
 
-`needsApproval` is `true` when allowance is below `amountIn`. Guard the swap button behind this flag.
+```typescript
+import { usePools, usePoolTokens } from '@cfxdevkit/defi-react';
 
----
+// Single pair
+const { pool } = usePoolTokens({ service, pairAddress: '0xPair' });
 
-### `usePortfolio`
-
-```ts
-const { rows, isLoading, error } = usePortfolio({ address, tokens, refreshMs? });
-// rows: Array<{ token: TokenInfo, balance: Wei, formatted: string }>
+// Multiple pairs
+const { pools } = usePools({ service, pairAddresses: ['0xPair1', '0xPair2'] });
 ```
 
-Fetches native CFX balance via `useNativeBalance` and ERC-20 balances in parallel via `useQueries`. WCFX balances are merged into the native CFX row using `resolveDisplayTokenAddress`. Rows are sorted by balance descending.
+## Wallet Connection (`@cfxdevkit/wallet-connect`)
 
----
+Handles connection state for both Conflux Core (Fluent) and eSpace (Wagmi).
 
-### Pool Hooks
+### Core Wallet (Fluent)
 
-#### `usePoolTokens`
+`useCoreWallet` manages the Fluent provider state specifically for Conflux Core space.
 
-```ts
-const { pool, isLoading, error, refetch } = usePoolTokens({ service, pairAddress, refreshMs? });
-// pool: { token0, token1, reserve0, reserve1 }
-```
+```typescript
+import { useCoreWallet } from '@cfxdevkit/wallet-connect';
 
-#### `usePools`
-
-Bulk variant over multiple pair addresses. Returns `pools: Map<Address, PoolData>`.
-
-#### `useTokenPrice`
-
-```ts
-const { price } = useTokenPrice({ service, tokenAddress, quoteToken, refreshMs? });
-```
-
-`price` is the raw output bigint for 1e18 units of input. Divide by `10 ** quoteTokenDecimals` for a human-readable value.
-
----
-
-### Token Registry
-
-```ts
-const registry = createTokenRegistry(tokenList);
-registry.search('usdt', chainId);
-registry.list(chainId);
-registry.getByAddress(address, chainId);
-```
-
-Creates a searchable in-memory registry from a static `TokenInfo[]`. Useful for populating token pickers.
-
----
-
-## `@cfxdevkit/wallet-connect`
-
-### eSpace Wallets
-
-#### Chain Configuration
-
-```ts
-import { espaceMainnet, espaceTestnet, espaceLocal } from '@cfxdevkit/wallet-connect';
-// or
-const chains = createSupportedEspaceChains({ localRpcUrl?: string });
-```
-
-These are viem `Chain` objects suitable for use with wagmi's `createConfig`.
-
-#### `useEspaceConnectors`
-
-```ts
-const { connectors, connect, isPending, error } = useEspaceConnectors();
-```
-
-Wraps wagmi's `useConnectors` and deduplicates by `${id}:${name}` to prevent the same injected wallet appearing multiple times.
-
-#### `switchEspaceChain` / `switchEspaceChainFromConfig`
-
-Utility functions for programmatic chain switching via any EIP-1193 provider. `switchEspaceChain` takes a viem `Chain`; `switchEspaceChainFromConfig` takes a CDK `ChainConfig` directly. Both fall back to `wallet_addEthereumChain` if the chain is not yet registered (error code 4902).
-
----
-
-### Core Space Wallet (Fluent)
-
-#### `useCoreWallet`
-
-```ts
 const {
-  status, address, chainId,
-  isConnected, isConnecting, isDetecting, isInstalled,
-  isSwitching, isRefreshing, error,
-  connect, disconnect, switchChain, refresh,
+  status, // 'detecting' | 'active' | 'not-installed'
+  address,
+  connect,
+  switchChain,
 } = useCoreWallet();
 ```
 
-Manages the full Fluent Core Space wallet lifecycle:
+### eSpace Connectors (Wagmi)
 
-- On mount, polls `window.conflux` with exponential backoff (via `detectFluentCore`) for up to 3 seconds waiting for the extension to inject its provider.
-- Subscribes to `accountsChanged` and `chainChanged` events.
-- `switchChain(CoreChainConfig)` calls `wallet_switchConfluxChain` and falls back to `wallet_addConfluxChain` if needed, then waits for confirmation by polling `cfx_chainId`.
-- `status` values: `'detecting'` | `'not-installed'` | `'not-active'` | `'connecting'` | `'active'`.
+`useEspaceConnectors` wraps Wagmi connectors for eSpace compatibility.
 
-#### Utility Functions
+```typescript
+import { useEspaceConnectors } from '@cfxdevkit/wallet-connect';
 
-| Function | Purpose |
-|---|---|
-| `detectFluentCore(maxMs?)` | Polls for `window.conflux` with exponential backoff |
-| `normalizeCoreChainId(raw)` | Converts raw chain IDs to lowercase hex |
-| `buildAddChainParams(target, rpcUrl?)` | Builds `wallet_addConfluxChain` params |
-| `getCoreChainConfig(chainIdHex)` | Looks up a `CoreChainConfig` by hex chain ID |
-| `deriveCoreState(status, chainId, targetHex)` | Pure function — derives UI pill state |
-| `deriveESpaceState(isConnected, chainId, targetChainId)` | Pure function — derives eSpace UI state |
-| `errMsg(error)` | Extracts a readable message from any thrown value, including plain objects from wallet providers |
-
----
-
-### SIWE (Sign-In With Ethereum)
-
-A complete, dependency-light SIWE implementation.
-
-#### Building and Parsing Messages
-
-```ts
-import { createSiweMessage, parseSiweMessage, generateSiweNonce } from '@cfxdevkit/wallet-connect';
-
-const nonce = generateSiweNonce(); // cryptographically random, ≥17 chars
-const message = createSiweMessage({ domain, address, uri, chainId, nonce, statement? });
-const parsed = parseSiweMessage(messageString);
+const { connectors, connect } = useEspaceConnectors();
+connectors.forEach(c => console.log(c.name));
 ```
 
-`createSiweMessage` validates all required fields before formatting. `parseSiweMessage` is strict — it throws on any structural deviation.
+### Chain Switching
 
-#### Verification
+Use `switchEspaceChain` to ensure the wallet is on the correct network.
 
-```ts
+```typescript
+import { switchEspaceChain } from '@cfxdevkit/wallet-connect';
+import { espaceMainnet } from '@cfxdevkit/wallet-connect/config';
+
+await switchEspaceChain(provider, espaceMainnet);
+```
+
+### SIWE Authentication
+
+Utilities for Sign-In with Ethereum.
+
+```typescript
+import { createSiweMessage, verifySiweMessage, generateSiweNonce } from '@cfxdevkit/wallet-connect';
+
+// 1. Generate Nonce
+const nonce = generateSiweNonce({ length: 17 });
+
+// 2. Create Message
+const message = createSiweMessage({
+  domain: 'dapp.example.com',
+  address: userAddress,
+  uri: 'https://dapp.example.com',
+  chainId: 1030,
+  nonce,
+});
+
+// 3. Verify Signature (on backend or client)
 const result = await verifySiweMessage({
   message,
-  signature,
-  expectedDomain?,
-  expectedNonce?,
-  expectedAddress?,
-  expectedChainId?,
-  now?,
+  signature: signedSig,
+  expectedAddress: userAddress,
 });
-// result: { ok: boolean, address?, message?, error? }
 ```
 
-Recovers the signer address with `recoverMessageAddress` (viem) and checks it against the address in the message. Also validates expiration, `notBefore`, domain, nonce, and chain ID if expected values are provided. Always returns a result object rather than throwing.
+## Keystore Management (`@cfxdevkit/keystore`)
 
----
+Provides hooks for managing local wallet keystore state (locked/unlocked, wallet lists).
 
-## Design Tokens (`@cfxdevkit/theme`)
+```typescript
+import { KeystoreProvider, useKeystoreWallets, useIsKeystoreActive } from '@cfxdevkit/keystore';
 
-Token constants are exported from `@cfxdevkit/theme` as JS objects referencing CSS custom properties:
+// Wrap app
+<KeystoreProvider service={myKeystoreService}>
+  <App />
+</KeystoreProvider>
 
-```ts
-import { colors, spacing, radius, typography, shadow, motion } from '@cfxdevkit/theme';
-
-// Usage in inline styles or CSS-in-JS
-background: colors.bg.default        // 'var(--cfx-color-bg-default)'
-padding: spacing[4]                   // 'var(--cfx-space-4)'
-borderRadius: radius.md               // 'var(--cfx-radius-md)'
-transition: `opacity ${motion.baseMs}ms ${motion.ease}`
+// Consume
+const wallets = useKeystoreWallets();
+const isActive = useIsKeystoreActive();
 ```
 
-Import the CSS side-effect separately to register the custom properties. The `SwapWidget` inline styles in `SwapWidget.styles.ts` demonstrate the intended usage pattern.
+## Design System (`@cfxdevkit/theme`)
+
+Exports CSS variable references and JS constants for styling components consistently.
+
+```typescript
+import { colors, spacing, typography } from '@cfxdevkit/theme';
+
+const buttonStyle = {
+  background: colors.brand.primary,
+  padding: spacing[4],
+  fontSize: typography.sizes.base,
+};
+```
+
+## Error Handling
+
+The module defines specific error types for better debugging:
+
+- **`ContractError`**: Wraps contract call failures (includes `cause`).
+- **`DexError`**: Wraps DEX adapter failures (e.g., `NO_ROUTE`, `SAME_TOKEN`).
+- **`DexError`**: Used within `SwapService` and `useSwap` to signal protocol-specific issues.
+
+## Dependencies
+
+- **`viem`**: ABI encoding/decoding and chain definitions.
+- **`@tanstack/react-query`**: Data fetching and caching.
+- **`@cfxdevkit/cdk`**: Core types and RPC clients.
+- **`wagmi`**: Wallet connector management (eSpace).

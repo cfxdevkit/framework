@@ -164,7 +164,7 @@ function normalizeProviderProfiles(value: unknown): NonNullable<PiLlmConfig['pro
   return Object.fromEntries(
     Object.entries(value)
       .filter(([, profile]) => isRecord(profile))
-      .map(([name, profile]) => {
+      .map(([name, profile]: [string, Record<string, unknown>]) => {
         const normalizedProfile: Record<string, unknown> = {};
         if (Object.hasOwn(profile, 'provider')) {
           normalizedProfile.provider = normalizeProviderType(profile.provider);
@@ -245,7 +245,7 @@ function normalizeActionPolicies(value: unknown): NonNullable<PiLlmConfig['actio
   );
 }
 
-function isRecord(value: unknown): value is Record<string, any> {
+function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 

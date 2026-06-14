@@ -8,196 +8,605 @@ import { Mermaid } from '../../../components/Mermaid';
 
 # LLM Agent Workflows
 
-This module implements the autonomous agent layer for the cfx-tools monorepo. Agents run validation pipelines, generate structured reports, and drive LLM-assisted workflows including commit message generation, OpenSpec planning, and model smoke-testing. Everything writes output to `artifacts/llm/`.
+## Overview
 
----
+The LLM Agent Workflows module orchestrates automated repository operations using language models. It provides three primary workflow families:
 
-## Agents
+- **Agent Workflows** (`workers/agents/`) - Repository analysis, validation planning, and smoke testing
+- **Commit Workflows** (`workers/commit/`) - Full commit lifecycle with quality gates, LLM message generation, and changeset management
+- **Documentation Workflows** (`workers/docs/`) - API docs, README, and package page enrichment
 
-### `runReviewAgent` (`agents/review.ts`)
+All workflows share a common runtime layer (`workers/agents/runtime/`) for corpus collection, report generation, and path utilities.
 
-A lightweight, LLM-free scan of the working tree. It runs without an LLM (`useLlm: false`) and produces a structured report covering:
+## Architecture
 
-- **Generated/artifact paths** that appear in `git diff` or untracked files
-- **Security-sensitive surfaces** (keystore, wallet, workflow, audit paths)
-- **Code hotspot violations** from `check-hotspots.ts` — hard violations (files over the line limit) become `error` severity; soft warnings stay `warning`
-- **Suggested validation commands** derived deterministically from which file types changed
-
-Output: `artifacts/llm/reports/review.json` and `reports/review.md`.
-
-`runAll` (`agents/all.ts`) runs `runReviewAgent` in silent mode and wraps the result in a combined `agent-run.json`/`agent-run.md` report.
-
----
-
-### `runAgentCheck` (`agents/check.ts`)
-
-The repo-check planning agent. Given `--quick`, `--dry-run`, `--create-branch`, and `--draft-pr` flags parsed by `parseAgentCheckFlags`, it executes this pipeline:
-
-<Mermaid chart={`flowchart TD
-    A[runRepoCheckCommand] --> B[readValidationArtifact]
-    B --> C{actionable steps?}
-    C -- yes --> D[buildAgentCheckPlan]
-    C -- no --> E[skip plan]
-    D --> F[materializeOpenSpecChanges]
-    F --> G[maybeCreateBranchAndDraftPr]
-    G --> H["writeJsonReport / writeMarkdownReport"]
+<Mermaid chart={`graph TD
+    A[Entry Point] --> B{Workflow Type}
+    B -->|Agents| C["runAll / runReview / runCheck"]
+    B -->|Commit| D[runCommitWorkflow]
+    B -->|Docs| E["runDocsApi / runDocsReadme"]
+    B -->|Smoke| F[runAgentSmoke]
+    
+    C --> G[Runtime Layer]
+    D --> G
+    E --> G
+    F --> G
+    
+    G --> H[Execution Context]
+    G --> I[Report Generation]
+    G --> J[Corpus Collection]
+    G --> K[Path Utilities]
+    
+    D --> L[Quality Gates]
+    D --> M[Changeset Generation]
+    D --> N[LLM Message Generation]
 `} />
 
-**Planning phase** (`check-plan.ts`):
+## Agent Workflows
 
-`buildAgentCheckPlan` formats the raw `pnpm cdk repo check` output and the `validation.json` artifact into a structured prompt via `summarizeValidationForPrompt`, which extracts actionable steps (status `warning` or `error`) and their hotspot/kebab-group details. The LLM returns a JSON plan matching this schema:
+### `runAll()` - Full Agent Suite
 
-```ts
-{
+Runs the complete agent suite and generates consolidated reports.
+
+```typescript
+import { runAll } from './agents/all.ts';
+
+const report = await runAll();
+// report: { generatedAt, mode, fineTuning, executionContext, results }
+```
+
+**Flow:**
+1. Resolves execution context without LLM (`useLlm: false`)
+2. Runs `runReviewAgent()` with silent mode
+3. Writes JSON report to `reports/agent-run.json`
+4. Writes Markdown report to `reports/agent-run.md`
+5. Prints summary to console
+
+### `runReviewAgent()` - Repository Review
+
+Analyzes changed files for common issues and generates validation recommendations.
+
+```typescript
+import { runReviewAgent } from './agents/review.ts';
+
+const result = await runReviewAgent({ silent: true });
+// result: { agent: 'review', status, changedFiles, findings, executionContext }
+```
+
+**Key Checks:**
+- **Generated paths** - Warns if artifacts are committed
+- **Security-sensitive files** - Flags changes to keystore, wallet, release, workflow paths
+- **Code hotspots** - Checks file size budgets (soft: 250 lines, hard: 300 lines)
+- **Validation commands** - Suggests appropriate `pnpm run` commands based on changed files
+
+**Calling Pattern:**
+```typescript
+runReviewAgent()
+  → isGeneratedPath() / isSecuritySensitive() (runtime/paths.ts)
+  → codeHotspotReport() (runtime/models.ts)
+  → suggestValidationCommands() (runtime/checks.ts)
+  → writeJsonReport() / writeMarkdownReport() (runtime/reports.ts)
+```
+
+### `runAgentCheck()` - Validation Artifact Analysis
+
+Processes validation artifacts and creates actionable plans for fixing issues.
+
+```typescript
+import { runAgentCheck, parseAgentCheckFlags } from './agents/check.ts';
+
+const report = await runAgentCheck(['--dry-run', '--create-branch']);
+```
+
+**Flags:**
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Skip artifact materialization and follow-up actions |
+| `--create-branch` | Create or switch to the target branch |
+| `--draft-pr` | Create draft PR after branch switch |
+| `--quick` | Use reduced token budgets |
+
+**Flow:**
+1. Parse flags and resolve execution context with LLM (`useLlm: true`)
+2. Run repository check command and read validation artifact
+3. Collect actionable validation steps
+4. Build agent check plan (if actionable steps exist)
+5. Materialize OpenSpec changes (unless dry-run)
+6. Create branch and draft PR (if requested)
+7. Write JSON and Markdown reports
+
+**Calling Pattern:**
+```typescript
+runAgentCheck()
+  → parseAgentCheckFlags()
+  → resolveExecutionContext(useLlm: true)
+  → runRepoCheckCommand()
+  → readValidationArtifact()
+  → collectActionableValidationSteps()
+  → buildAgentCheckPlan()
+  → materializeOpenSpecChanges()
+  → maybeCreateBranchAndDraftPr()
+  → writeJsonReport() / writeMarkdownReport()
+```
+
+### `runAgentSmoke()` - LLM Provider Smoke Tests
+
+Tests configured LLM providers and models for viability.
+
+```typescript
+import { runAgentSmoke } from './agents/smoke.ts';
+
+await runAgentSmoke(['--quick', '--no-thinking']);
+```
+
+**Probe Sequence:**
+1. **Cold probe** - Simple echo, measures initial model load time
+2. **Hot probe** - Same prompt, model should already be warm
+3. **Task+Thinking** - Tier-appropriate JSON task with thinking enabled
+4. **Task-No-Think** - Same task with thinking disabled
+
+**Tier Probes:**
+| Tier | Label | Representative Actions |
+|------|-------|----------------------|
+| 1 | Lightweight / structured output | `validation` |
+| 2 | Documentation generation | `docs-api`, `readme-upkeep`, `structure-upkeep` |
+| 3 | Reasoning / code review | `review`, `commit`, `changeset`, `ci-cd` |
+
+**Output:** Console table showing model viability, timing, and JSON shape validation.
+
+## Commit Workflows
+
+### `runCommitWorkflow()` - Full Commit Pipeline
+
+Orchestrates the complete commit lifecycle with quality gates, LLM message generation, and changeset management.
+
+```typescript
+import { runCommitWorkflow } from './commit/commit.ts';
+
+const result = await runCommitWorkflow(args, {
+  approvalMode: 'prompt', // 'defer' | 'prompt' | 'auto-approve'
+  modelPolicies: {
+    messageGenerationModel: 'gemma-4-26b',
+    failureAnalysisModel: 'gemma-4-26b'
+  }
+});
+```
+
+**Workflow Steps:**
+1. **Incremental validation sequence** - Run quality gates (lint, typecheck, tests, hotspots, etc.)
+2. **Preflight checks** - Ensure gitnexus registration, collect git status/diff signals
+3. **Detect changed scopes** - Group files by repository scope
+4. **Check release intent** - Generate changeset plan if publishable packages changed
+5. **Generate commit message** - LLM generates conventional commit JSON
+6. **Approval** - Prompt for confirmation (unless `--yes` or `--dry-run`)
+7. **Write changeset** - Create changeset files if needed
+8. **Post-checks** - Run quality gates after changeset generation
+9. **Commit** - Stage files and create git commit
+
+**Status Values:**
+- `blocked` - Failed quality or policy gates
+- `approval-required` - Waiting for user confirmation
+- `aborted` - User declined confirmation
+- `dry-run` - Preview only, no changes made
+- `committed` - Successfully created commit
+
+**Calling Pattern:**
+```typescript
+runCommitWorkflow()
+  → parseCommitFlags()
+  → resolveExecutionContext(useLlm: true)
+  → detectChangedScopes()
+  → runQualityGates() / runRepositoryPolicyGates()
+  → analyzeGateFailures() (if gates fail)
+  → generateChangesetPlan()
+  → generateCommitMessage()
+  → writeCommitReport()
+  → writeChangesetFile()
+  → runQualityGates() (post-checks)
+  → executeCommit()
+```
+
+### `runPrecommitWorkflow()` - Validation-Only Commit
+
+Runs quality gates without generating commit messages or making changes.
+
+```typescript
+import { runPrecommitWorkflow } from './commit/precommit.ts';
+
+const result = await runPrecommitWorkflow(args);
+// result.status: 'passed' | 'forced' | 'blocked'
+```
+
+**Key Differences from `runCommitWorkflow()`:**
+- Uses `useLlm: false` (no LLM for failure analysis)
+- Skips changeset generation
+- Skips commit message generation
+- Returns early after quality gates pass/fail
+
+### Quality Gates
+
+Two gate types are supported:
+
+**Quality Gates** (`runQualityGates()`):
+- `gitnexus analyze`
+- `format`
+- `lint`
+- `typecheck`
+- `test`
+- `build`
+- `hotspots`
+- `kebab-groups`
+- `check`
+
+**Repository Policy Gates** (`runRepositoryPolicyGates()`):
+- `hotspots` - Code file size budget violations
+- `kebab-groups` - Kebab file group analysis
+- `check` - Repository check command
+
+**Gate Result Structure:**
+```typescript
+type GateResult = {
+  kind: 'repository-policy' | 'quality';
+  id: string;
+  label: string;
+  command: string;
+  required: boolean;
+  status: 'ok' | 'warning' | 'error' | 'skipped';
+  elapsedMs: number;
   summary: string;
-  changes: Array<{ name: string; title: string; rationale: string; issues: string[] }>;
-  branch: { name: string; title: string; bodyLines: string[] };
-  handoff: { cloudPromptLines: string[]; notes: string[] };
+  output: string;
+  signalLines: string[];
+  hints: string[];
+};
+```
+
+### Changeset Management
+
+**`generateChangesetPlan()`** - Analyzes changed packages and generates changeset suggestions.
+
+```typescript
+import { generateChangesetPlan, writeChangesetFile } from './commit/changeset.ts';
+
+const plan = await generateChangesetPlan(scopes, flags);
+// plan: { ok, releaseRelevant, summary, packages, changesets, changedChangesets, risks }
+
+const writtenPaths = await writeChangesetFile(plan);
+```
+
+**Changeset Flow:**
+1. Collect publishable packages (non-private, not ignored)
+2. Detect which packages have changed
+3. Check for existing changeset files
+4. Generate LLM-based changeset suggestion (with diff excerpts)
+5. Fallback to deterministic changeset if LLM returns invalid JSON
+
+**LLM Prompt Schema:**
+```json
+{
+  "summary": "one sentence",
+  "changesets": [
+    { "packageName": "@scope/name", "bump": "patch|minor|major", "summary": "release note" }
+  ],
+  "risks": ["risk or empty"]
 }
 ```
 
-If the response is unparseable, `normalizeAgentCheckPlan` (`check-render.ts`) attempts JSON repair: raw newline escaping, trailing comma stripping, and brace extraction before throwing.
+### Commit Message Generation
 
-**Artifact materialization phase** (`check-artifacts.ts`):
+**`generateCommitMessage()`** - Uses LLM to generate conventional commit metadata.
 
-For each planned change, `materializeOpenSpecChanges`:
-1. Calls `ensureOpenSpecChange` — runs `openspec new change <name>` if `.openspec.yaml` doesn't exist
-2. Fetches live OpenSpec instructions for all four artifact types (`proposal`, `design`, `specs`, `tasks`) via parallel `openspec instructions` CLI calls
-3. Calls `generateOpenSpecArtifactMarkdown` for each artifact — a `completeStructuredAgent` call with retry logic that strips markdown fences from responses
-4. Writes the resulting markdown files under `openspec/changes/<name>/`
+```typescript
+import { generateCommitMessage, validateCommitJson } from './commit/message.ts';
 
-The `quick` flag halves `maxTokens` budgets throughout (2 200 vs 4 200 for artifacts, 3 600 vs 7 200 for the plan).
-
-**Follow-up phase**:
-
-`maybeCreateBranchAndDraftPr` creates or switches to the planned branch via `git switch -c` and optionally opens a draft PR via `gh pr create --draft`. All outcomes are captured in the `AgentCheckFollowUp` shape and surfaced in the report.
-
----
-
-### `runAgentSmoke` (`agents/smoke.ts`)
-
-Probes all configured models to verify they are loaded, warm, and capable of producing valid structured output. For each model in the config's `actions` map, it runs four sequential probes:
-
-| Probe | Thinking | Purpose |
-|---|---|---|
-| `cold` | off | Measures load time, confirms the model responds |
-| `hot` | off | Confirms warmth after load |
-| `task` (tier-matched) | on | Validates JSON shape for the model's assigned tier |
-| `taskNoThink` | off | Same prompt, no thinking tokens |
-
-**Tier assignment** (`smoke-render.ts: assignTierProbe`): maps action names to one of three `TierProbe` entries. Tier 1 (validation) asks for shell commands; Tier 2 (docs) asks for a JSDoc sentence; Tier 3 (reasoning/review) asks about merge risk. A model with no assigned actions gets `'default'` tier.
-
-**Viability criteria**: `cold.ok && hot.ok && (task.jsonShapeOk || taskNoThink.jsonShapeOk)`. A model that passes cold/hot but fails both task probes needs prompt or thinking-mode tuning — the smoke output says so explicitly.
-
-Token budgets are computed from the model's discovered context window: `min(floor(ctx * fraction), cap)`. The `--quick` flag uses `max(quickBudget, floor(full / 4))`.
-
-Results are printed as a formatted table via `renderSmokeTable`.
-
----
-
-## Commit Workflow
-
-`runCommitWorkflow` (`commit/commit.ts`) is the primary commit orchestrator. It runs as eight named steps with a terminal UI (`createWorkflowTerminalUi`) keeping the developer informed.
-
-<Mermaid chart={`flowchart TD
-    A[Quality gates] --> B{passed?}
-    B -- no, force --> C[Repository policy gates]
-    B -- yes --> C
-    C --> D[Preflight: gitnexus + git signals]
-    D --> E[Detect changed scopes]
-    E --> F[Changeset plan]
-    F --> G[Generate commit message]
-    G --> H{Approval mode}
-    H -- dry-run / defer --> I[Return preview]
-    H -- prompt / yes --> J[Write changeset]
-    J --> K[Post-checks]
-    K --> L[Stage + commit]
-`} />
-
-**Gate system** (`commit/gates.ts`):
-
-Two gate groups run in sequence:
-
-- `runQualityGates` — runs `QUALITY_GATE_SPECS` (format, lint, typecheck, test, build) via `runRepoCommand`. Individual gates can be skipped with `--skip-tests`, `--skip-build`, or `--skip-checks`.
-- `runRepositoryPolicyGates` — runs hotspot check (`--fail-on-hard`), kebab-group check, and full repo check. Required gates cause blocking; non-required gates produce warnings.
-
-Both groups use `GateRunHooks` to stream real-time start/finish events to the terminal UI.
-
-When gates fail, `analyzeGateFailures` (`commit/failure-analysis.ts`) sends the structured `GateResult` output to the LLM (`action: 'validation'`, tier 1 model) for a human-readable diagnosis. If the LLM is unavailable, `buildDeterministicHints` in `gate-output.ts` provides static hints keyed to gate IDs.
-
-**Changeset plan** (`commit/changeset.ts`):
-
-`generateChangesetPlan` detects which publishable packages are touched, skips if changesets already exist or if `--no-changeset` is set, and otherwise calls the LLM to produce per-package bump/summary pairs. `writeChangesetFile` renders the `.changeset/<slug>.md` format and handles filename collision with `nextAvailablePath`.
-
-**Commit message generation** (`commit/message.ts`):
-
-`generateCommitMessage` assembles a context string from the preflight block, changeset guidance, and `CONTRIBUTING.md`, then requests a JSON commit object:
-
-```ts
-{ subject: string; bodyLines: string[]; filesToStage?: string[]; risks?: string[] }
+const { response, commit } = await generateCommitMessage(preflightCtx, changesetPlan, flags);
+// commit: { subject, body, filesToStage, risks }
 ```
 
-`validateCommitJson` parses and validates the response. On failure, a retry prompt includes the invalid excerpt. `fallbackCommitMessage` provides a safe default if both attempts fail.
+**Commit JSON Schema:**
+```json
+{
+  "subject": "feat(scope): description under 72 chars",
+  "bodyLines": ["body line 1", "body line 2"],
+  "filesToStage": ["optional", "paths"],
+  "risks": ["risk or empty"]
+}
+```
 
-**Approval modes**:
+**Fallback Strategy:**
+1. First attempt: LLM with full context (60k tokens)
+2. Retry: LLM with error context (30k tokens, no thinking)
+3. Fallback: Deterministic message based on changeset plan
 
-| `approvalMode` | `--yes` | Behaviour |
-|---|---|---|
-| `defer` | false | Returns `approval-required` without committing — caller (e.g. pi-agent) handles prompting |
-| `prompt` | false | Pauses and calls `confirmPrompt` interactively |
-| any | true | Proceeds without prompting |
+## Documentation Workflows
 
-**Pre-commit workflow** (`commit/precommit.ts`) runs a subset of the same gates without message generation and is wired to the git pre-commit hook via `runPrecommit`.
+### `runDocsApi()` - API Documentation Pipeline
 
----
+Generates API.md files with LLM enrichment.
 
-## Runtime Utilities (`agents/runtime/`)
+```typescript
+import { runDocsApi } from './docs/api.ts';
 
-The `runtime/` barrel (`index.ts`) exports utilities consumed by all agents:
+await runDocsApi(['--package', '@scope/name', '--precheck']);
+```
 
-| File | Key exports |
-|---|---|
-| `reports.ts` | `writeJsonReport`, `writeMarkdownReport`, `writeArtifact`, `renderReview`, `renderAgentRun`, `printSummary` |
-| `checks.ts` | `gitChangedFiles`, `suggestValidationCommands`, `checkMoonRegistration`, `checkPackageExports` |
-| `corpus.ts` | `collectCorpusFiles`, `chunkFile`, `extractDocIndex` |
-| `docs.ts` | `findBrokenPathRefs`, `looksLikeLocalPath`, `resolveDocRefCandidates` |
-| `models.ts` | `codeHotspotReport`, `extractModelInventory` |
-| `paths.ts` | `isGeneratedPath`, `isSecuritySensitive`, `tierForPath`, `languageForPath`, `toRel` |
-| `constants.ts` | `root`, `artifactsRoot`, `generatedDirs`, `textExtensions`, `sourceExtensions` |
+**Steps:**
+1. Refresh deterministic API.md skeletons via `docs-pipeline`
+2. Discover API targets (packages)
+3. Optional: LLM precheck on first package
+4. LLM enrichment per package
 
-All artifact writes go through `writeArtifact`, which resolves paths relative to `artifactsRoot` (`<cwd>/artifacts/llm/`) and creates parent directories automatically.
+### `runDocsReadme()` - README Upkeep
 
-`suggestValidationCommands` returns a deterministic set of `pnpm` commands based on which file categories changed — TypeScript files trigger lint/typecheck/test, `.md`/`.yml` files trigger `check:docs`, changeset files trigger `changeset status`, security-sensitive files trigger `security:check`.
+Enriches README.md files while preserving deterministic skeletons.
 
----
+```typescript
+import { runDocsReadme } from './docs/readme.ts';
 
-## Entry Points and CLI Wiring
+await runDocsReadme(['--package', '@scope/name']);
+```
 
-| Function | Called from |
-|---|---|
-| `runCommit(args)` | `tooling-cli` `runRepoCli`, `runExploratoryCli`; `pi-agent` `executePiCommitWorkflow` |
-| `runPrecommit(args)` | `tooling-cli` `runRepoCli`, `runDeterministicCli`; git pre-commit hook |
-| `runAgentCheck(args)` | `pi-agent` `executePiAgentCheck` |
-| `runAgentSmoke(args)` | `tooling-cli` `runAgentCli` |
-| `runAll()` | `tooling-cli` batch agent run |
+**Skeleton Hash Check:**
+- `` footer encodes skeleton hash
+- If hash matches current package skeleton, skip LLM call
+- Preserves hash footer after enrichment
 
-`runCommit` and `runPrecommit` set `process.exitCode = 1` on `blocked` or `aborted` results so the shell sees a non-zero exit without throwing.
+### `runDocsPackagePages()` - Package Page Enrichment
 
----
+Enriches docs-site package pages (MDX).
 
-## Key Types
+```typescript
+import { runDocsPackagePages } from './docs/packages.ts';
 
-```ts
-// agents/check-types.ts
-type AgentCheckFlags = { quick: boolean; dryRun: boolean; createBranch: boolean; draftPr: boolean };
-type AgentCheckPlan = { summary; changes; branch; handoff };
-type AgentCheckArtifact = { name; proposalPath; designPath; specPaths; tasksPath };
-type AgentCheckFollowUp = { branch: { status: 'skipped'|'created'|'switched'|'active'|'error' }; draftPr };
+await runDocsPackagePages(['--package', '@scope/name']);
+```
 
-// commit/gates.ts
-type GateResult = { kind; id; label; command; required; status; elapsedMs; summary; output; signalLines; hints };
-type GateReport = { kind; label; passed; skipped; results: GateResult[] };
+**Steps:**
+1. Sync package MDX stubs via `docs-pipeline`
+2. Discover public packages
+3. LLM enrich each `content/packages/<slug>.mdx`
 
-// commit/types.ts
-type CommitWorkflowResult = { command; status; phase; executionContext; scopes; qualityGates; repositoryPolicies; changesetPlan?; commitPreview?; approval; failureAnalysis; ... };
+## Runtime Utilities
+
+### Execution Context
+
+**`resolveExecutionContext()`** - Resolves LLM provider and model configuration.
+
+```typescript
+import { resolveExecutionContext } from '../shared/execution-context.ts';
+
+const ctx = await resolveExecutionContext({
+  useLlm: true,
+  action: 'commit',
+  modelOverride: 'gemma-4-26b'
+});
+```
+
+**Context Structure:**
+```typescript
+{
+  unit: { name, rootDir } | null,
+  llm: {
+    status: 'not-used' | 'ready' | 'unavailable',
+    provider, model, baseUrl, configPath, error?,
+    tokenBudget: { quick?, contextFraction?, cap? }
+  }
+}
+```
+
+### Corpus Collection
+
+**`collectCorpusFiles()`** - Gathers text files for LLM context.
+
+```typescript
+import { collectCorpusFiles, chunkFile } from './agents/runtime/corpus.ts';
+
+const files = await collectCorpusFiles();
+const chunks = chunkFile(path, content);
+```
+
+**File Selection Rules:**
+- Only text extensions (`.ts`, `.md`, `.json`, etc.)
+- Exclude generated directories (`.git`, `node_modules`, `dist`, etc.)
+- Exclude secret-sounding paths (`.env`, `secret`, `private-key`, etc.)
+- Max file size: 512 KB
+- Chunk size: 80 lines for source files, 60 for docs
+
+### Report Generation
+
+**`writeJsonReport()` / `writeMarkdownReport()`** - Write reports to `artifacts/llm/`.
+
+```typescript
+import { writeJsonReport, writeMarkdownReport, renderReview } from './agents/runtime/reports.ts';
+
+await writeJsonReport('reports/agent-run.json', report);
+await writeMarkdownReport('reports/agent-run.md', renderAgentRun(report));
+```
+
+**Report Types:**
+| Report | Path | Renderer |
+|--------|------|----------|
+| Review | `reports/review.json` / `.md` | `renderReview()` |
+| Agent Check | `reports/agent-check.json` / `.md` | `renderAgentCheckReport()` |
+| Commit | `reports/llm-commit.md` | `writeCommitReport()` |
+| Agent Run | `reports/agent-run.json` / `.md` | `renderAgentRun()` |
+
+### Path Utilities
+
+**`isSecuritySensitive()`** - Identifies security-sensitive file paths.
+
+```typescript
+import { isSecuritySensitive, isGeneratedPath, tierForPath } from './agents/runtime/paths.ts';
+
+isSecuritySensitive('repos/cfx-core/keystore.ts'); // true
+isGeneratedPath('artifacts/llm/report.json'); // true
+tierForPath('repos/cfx-core/packages/core'); // 'core'
+```
+
+### Validation Checks
+
+**`checkMoonRegistration()`** - Validates moon workspace registration.
+
+```typescript
+import { checkMoonRegistration, checkPackageExports } from './agents/runtime/checks.ts';
+
+const findings = await checkMoonRegistration();
+const exportWarnings = await checkPackageExports();
+```
+
+**`gitChangedFiles()`** - Gets all changed files (modified, staged, untracked).
+
+```typescript
+import { gitChangedFiles } from './agents/runtime/checks.ts';
+
+const changed = await gitChangedFiles();
+// ['file1.ts', 'file2.md', ...]
+```
+
+## Error Handling & Recovery
+
+### LLM Failure Analysis
+
+**`analyzeGateFailures()`** - Uses LLM to diagnose validation gate failures.
+
+```typescript
+import { analyzeGateFailures } from './commit/failure-analysis.ts';
+
+const analysis = await analyzeGateFailures({
+  command: 'commit',
+  executionContext,
+  reports: [qualityReport, policyReport],
+  modelOverride: 'gemma-4-26b'
+});
+// analysis: { attempted, usedLlm, status, content, error? }
+```
+
+**Output Sections:**
+- Summary
+- Root causes
+- Minimal fixes
+- Next commands
+
+### JSON Validation & Recovery
+
+All LLM responses expect strict JSON. Recovery strategy:
+
+1. Parse JSON directly
+2. If invalid, strip markdown fences and retry
+3. If still invalid, use fallback deterministic output
+
+**Validation Functions:**
+- `validateCommitJson()` - Validates commit metadata JSON
+- `validateChangelogJson()` - Validates changelog JSON
+- `validateTaskKey()` - Validates task-specific JSON shape
+- `parseJsonObject()` - Safe JSON parsing with error recovery
+
+## Integration Points
+
+### Entry Points
+
+```typescript
+// Main CLI exports
+import { runCommit, runPrecommit } from './commit/index.ts';
+import { runDocsApi, runDocsReadme, runDocsPackagePages } from './docs/index.ts';
+import { runAll, runReviewAgent, runAgentCheck } from './agents/index.ts';
+import { runAgentSmoke } from './agents/smoke.ts';
+```
+
+### Test Integration
+
+```typescript
+// Test support functions
+import { resetWorkflowMocks, applyWorkflowMockDefaults } from './tests/support.ts';
+import { fallbackCommitMessage } from './commit/message.ts';
+import { summarizeWorkingSet } from './commit/hud.ts';
+```
+
+### External Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `@cfxdevkit/cdk-repo-check` | Repository validation, hotspots, kebab groups |
+| `@cfxdevkit/docs-pipeline` | API/README skeleton generation |
+| `@cfxdevkit/completion` | LLM provider resolution, model discovery |
+| `moon` | Workspace project registration |
+
+## Configuration
+
+### Token Budget
+
+Configure in `.pi/providers.json`:
+
+```json
+{
+  "tokenBudget": {
+    "quick": 512,
+    "contextFraction": 0.75,
+    "cap": 32768,
+    "cloudFallback": 4096
+  }
+}
+```
+
+### Model Assignment
+
+Configure action-to-model mapping:
+
+```json
+{
+  "actions": {
+    "commit": "gemma-4-26b",
+    "changeset": "gemma-4-26b",
+    "readme-upkeep": "gemma-4-26b",
+    "validation": "gemma-4-26b"
+  },
+  "defaultModel": "gemma-4-26b"
+}
+```
+
+## Common Patterns
+
+### Workflow Pattern
+
+```typescript
+export async function runWorkflow(args: string[], flags: Flags) {
+  // 1. Parse flags
+  const flags = parseFlags(args);
+  
+  // 2. Resolve execution context
+  const ctx = await resolveExecutionContext({ useLlm: true, action: '...' });
+  
+  // 3. Run validation gates
+  const qualityReport = await runQualityGates(flags);
+  
+  // 4. Analyze failures if needed
+  if (!qualityReport.passed && !flags.force) {
+    const analysis = await analyzeGateFailures({ ... });
+    return { status: 'blocked', analysis };
+  }
+  
+  // 5. Generate content with LLM
+  const content = await completeStructuredAgent({ ... });
+  
+  // 6. Write reports
+  await writeJsonReport('reports/workflow.json', report);
+  
+  // 7. Return result
+  return result;
+}
+```
+
+### Report Rendering Pattern
+
+```typescript
+export function renderReport(report: Report): string {
+  return [
+    '# Title',
+    '',
+    `Generated: ${report.generatedAt}`,
+    '',
+    ...renderFindings(report.findings),
+    '',
+    ...report.suggestedValidation.map(c => `- ${c}`)
+  ].join('\n');
+}
 ```

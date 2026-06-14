@@ -22,7 +22,7 @@ describe('createSignerSession — memory backend', () => {
 
   it('core signer can sign a message', async () => {
     const session = await createSignerSession({ kind: 'memory', privateKey: TEST_PRIVATE_KEY });
-    const sig = await session.core!.signMessage('Hello Core');
+    const sig = await session.core?.signMessage('Hello Core');
     expect(sig).toMatch(/^0x[0-9a-fA-F]{130}$/);
   });
 

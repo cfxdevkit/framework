@@ -238,6 +238,6 @@ function parseModels(text: string, baseUrl?: string): readonly PiLlmModel[] {
   }
 }
 
-function isRecord(value: unknown): value is Record<string, any> {
+function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }

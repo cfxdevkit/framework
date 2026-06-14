@@ -6,195 +6,436 @@ import { Mermaid } from '../../../components/Mermaid';
 
 # Architecture Check & Repo Validation
 
-# `@cfxdevkit/arch-check` — Architecture Check & Repo Validation
+# Architecture Check & Repo Validation
 
 ## Overview
 
-`arch-check` is the monorepo's quality gate and documentation enforcement toolchain. It performs static analysis of package structure, import topology, secret hygiene, code size, and documentation completeness. It also generates deterministic documentation artifacts (`API.md`, `README.md`, `STRUCTURE.md`) for every public package, and produces LLM-ready corpus data and reports.
+The `arch-check` package provides a comprehensive suite of repository validation tools for the CFXDevKit monorepo. It enforces architectural rules, validates documentation contracts, detects code hotspots, scans for secrets, and generates structured reports for CI/CD pipelines and LLM agents.
 
-The module is structured around two concerns:
+The companion `cdk-repo-check` package wraps these checks with structured JSON output suitable for automated tooling and LLM integration.
 
-- **Checks** — validators that inspect the repo and produce `Finding[]` lists with `error` or `warning` severity
-- **Generators** — tools that produce or update documentation files based on compiled package output
+## Architecture
 
----
-
-## Check Suite
-
-Each check is an independently runnable `async` function that returns a status and findings. They are all composed in `checks/report.ts` via `runFullReport()`.
-
-<Mermaid chart={`graph TD
-    report[runFullReport]
-    report --> arch[runArchCheck]
-    report --> secrets[runSecretsCheck]
-    report --> hotspots[runHotspotsCheck]
-    report --> kebab[runKebabGroupsCheck]
-    report --> docs[runDocsCheck]
-    report --> ci[runCiCheck]
-    report --> corpus[runCorpusCheck]
-    report --> unitconfigs[runUnitConfigsCheck]
+<Mermaid chart={`flowchart TD
+    A[CLI Entry Point] --> B[arch-check]
+    B --> C{Check Type}
+    C -->|arch| D[Architecture Rules]
+    C -->|docs| E[Documentation Alignment]
+    C -->|hotspots| F[Code Hotspots]
+    C -->|secrets| G[Secret Scanning]
+    C -->|ci| H["CI/CD Readiness"]
+    C -->|corpus| I[Corpus Indexing]
+    C -->|report| J[Full Report]
+    D --> K[Package Discovery]
+    E --> K
+    F --> K
+    G --> K
+    H --> K
+    I --> K
+    J --> K
+    K --> L[runtime.ts Utilities]
+    L --> M[Workspace Root Detection]
+    L --> N[File System Helpers]
+    L --> O[Artifact Writing]
 `} />
+
+## Core Components
+
+### API Extraction (`api/extract.ts`)
+
+Extracts public exports from compiled `.d.ts` files for API documentation generation.
+
+```typescript
+export type ExtractedExport = {
+  name: string;
+  kind: ExportKind; // 'type' | 'interface' | 'class' | 'function' | 'const' | 'enum' | 'other'
+  signature: string;
+};
+
+export async function extractSubpathExports(
+  distDir: string,
+  subpathDtsPath: string,
+): Promise<ExtractedExport[]>;
+```
+
+**Key Features:**
+- Resolves `export * from` re-exports (depth-limited to 2)
+- Handles multiple `.d.ts` resolution strategies
+- Filters duplicate exports
+
+### Package Discovery (`api/filter.ts`)
+
+Identifies public packages that require API documentation.
+
+```typescript
+export async function discoverPublicPackages(): Promise<PublicPackageInfo[]>;
+```
+
+**Excluded packages:**
+- Private packages (`"private": true`)
+- Config-only packages (`@cfxdevkit/biome-config`, `@cfxdevkit/tsconfig`, etc.)
+- Packages without `dist/` directory
+- Application packages without exports
+
+### Documentation Generation
+
+#### README Skeleton (`api/readme.ts`)
+
+```typescript
+export function renderReadmeSkeleton(
+  pkg: Pick<PublicPackageInfo, 'name' | 'description' | 'rel' | 'subpaths'>,
+): string;
+
+export function backfillReadmeSections(
+  existing: string,
+  pkg: Pick<PublicPackageInfo, 'name' | 'description' | 'rel' | 'subpaths'>,
+): string;
+```
+
+**Hash Tracking:** Embeds `` to detect skeleton changes and skip LLM enrichment when stable.
+
+#### API.md Rendering (`api/render.ts`)
+
+```typescript
+export function renderApiMd(
+  packageName: string,
+  description: string,
+  sections: SubpathSection[],
+): string;
+```
+
+Groups exports by kind and generates TypeScript code blocks for each subpath.
+
+#### Structure.md Rendering (`api/structure.ts`)
+
+```typescript
+export async function walkStructureTree(
+  dir: string,
+  prefix = '',
+  depth = 0,
+  maxDepth = 3,
+): Promise<string[]>;
+
+export function renderStructureSkeleton(
+  pkg: StructurePackageInfo,
+  treeLines: readonly string[],
+): string;
+```
+
+**Hash Tracking:** Uses `structure-hash` and `structure-status` markers to track deterministic vs. enriched documents.
+
+## Check Types
 
 ### Architecture Check (`checks/arch.ts`)
 
-`runArchCheck()` enforces the tier-based import topology defined by `@cfxdevkit/arch-rules`. It:
+Validates package tier relationships and source file rules.
 
-1. Walks `repos/` and `projects/` to collect all packages with a `package.json` and a recognised tier
-2. For each package, retrieves applicable rules via `getRulesFor(tierId)` (filtered further in release lifecycle mode by `getLifecycle()`)
-3. Runs the enabled rules:
+```typescript
+export async function runArchCheck(): Promise<ArchCheckResult>;
+```
 
-| Rule | What it checks |
-|------|----------------|
-| `no-upward-imports` | `dependencies`/`peerDependencies` don't reference higher-tier or cross-cutting packages |
-| `no-internal-reach` | Source files don't import from `dep/src/` paths of other packages |
-| `requires-moon-yml` | Package has a `moon.yml` |
-| `requires-src-index` | Package has `src/index.ts` |
-| `no-js-mjs-source-files` | Source is TypeScript, not JavaScript |
-| `no-ts-nocheck` | No `// @ts-nocheck` in source (with exemptions) |
-| `file-size-hard-limit` | Files stay under 300 lines |
-| `cli-framework-standard` | `tooling-cli` uses Clipanion, not Commander |
+**Validations:**
+- **Tier Policy:** Enforces no upward imports across tier boundaries
+- **CLI Framework:** Requires `clipanion` + `@inquirer/prompts` for tooling CLI
+- **Required Files:** `moon.yml`, `src/index.ts`
+- **Source Rules:** No `@ts-nocheck`, no JS source files, file size limits (300 lines)
 
-The special `checkCliFrameworkPolicy()` function is exported for unit testing and enforces that the root CLI package depends on `clipanion` and `@inquirer/prompts` at runtime.
+```typescript
+export type ArchCheckResult = {
+  status: 'ok' | 'error';
+  lifecycle: string;
+  packageCount: number;
+  findings: Finding[];
+};
+```
 
 ### Documentation Check (`checks/docs.ts`)
 
-`runDocsCheck()` aggregates several sub-checks:
+```typescript
+export async function runDocsCheck(opts: { silent?: boolean }): Promise<AgentSummary>;
+```
 
-- **Broken path references** — `findBrokenPathRefs()` scans markdown link and inline code patterns for references that don't resolve on disk, escaping the repo root is an error
-- **Planned/current drift** — `findCurrentPlannedDrift()` warns when STRUCTURE.md describes future state without a present-state marker
-- **Workspace contract** — `checkWorkspaceDocumentContracts()` validates required docs at workspace root, `docs/`, every repo root, and every project root
-- **Package contract** — `checkPackageDocumentContracts()` validates README.md, API.md, and STRUCTURE.md exist and contain required sections for each public package; also checks STRUCTURE.md identity tokens and legacy tier aliases
-- **Moon registration** — ensures every package with a `moon.yml` is listed in `.moon/workspace.yml`
-- **Package exports** — warns when `package.json` exports don't appear to match `vite.config.ts` lib entries
-- **API.md freshness** — `checkApiDocs()` recomputes the SHA-256 hash of all subpath `.d.ts` files and compares it to the embedded `` footer
+**Validations:**
+- **API.md Staleness:** Compares embedded hash with current `.d.ts` contents
+- **Package Exports:** Verifies `package.json` exports match `vite.config.ts` entries
+- **Moon Registration:** Ensures packages with `moon.yml` are registered in workspace
+- **Path References:** Detects broken markdown links
+- **Document Contracts:** Validates README/STRUCTURE.md sections
 
 ### Secrets Check (`checks/secrets.ts`)
 
-`runSecretsCheck()` walks `repos/`, `projects/`, and `scripts/` and applies regex rules to each TypeScript/JavaScript source file. Test files are excluded. Checks include hardcoded private keys (0x-prefixed 64-char hex), JWT literals, hardcoded API keys, and patterns that write mnemonic/secret material to VS Code output channels or `console.*`.
+```typescript
+export async function runSecretsCheck(): Promise<SecretScanResult>;
+```
+
+**Scanned Patterns:**
+- VS Code workspace state persistence with secrets
+- Console/output channel secret exposure
+- Hardcoded API keys, private keys, JWTs
+- Recovery mnemonic labels
+
+**Exclusions:** Test files (`.test.`, `.spec.`, `__tests__/`)
 
 ### Hotspots Check (`checks/hotspots.ts`)
 
-`runHotspotsCheck()` combines static line counts with git churn data:
+Identifies high-churn, high-line-count files.
 
-1. Collects all repo source files via `collectRepoSourceFiles()`
-2. Runs `git log --numstat` for the configured window (default 90 days) to compute per-file added/deleted/commit counts
-3. Computes a composite score: `lines + (added + deleted) * 2 + commits * 25`
-4. Files over the hard limit (300 lines) are violations; files over the soft limit (250) are warnings
+```typescript
+export async function runHotspotsCheck(options: HotspotOptions): Promise<HotspotReport>;
 
-Reports are written to `artifacts/llm/reports/code-hotspots.{json,md}` including Mermaid bar charts for the top 10 files.
+export type HotspotOptions = {
+  softLimit: number;      // Default: 250
+  hardLimit: number;      // Default: 300
+  since: string;          // Default: '90 days ago'
+  failOnHard: boolean;
+  json: boolean;
+};
+```
 
-### Kebab Groups Check (`checks/kebab-groups.ts`)
+**Hotspot Score Formula:**
+```
+score = lines + (addedLines + deletedLines) * 2 + commits * 25
+```
 
-`findKebabGroupRecords()` detects sibling files that share a kebab-case prefix in the same directory (e.g. `auth-client.ts`, `auth-server.ts`). This is a signal that a file should be broken into a subdirectory. Groups with ≥2 members (configurable via `--min-group-size`) are reported.
+**Output:**
+- JSON report at `artifacts/llm/reports/code-hotspots.json`
+- Markdown report with Mermaid charts at `artifacts/llm/reports/code-hotspots.md`
 
-### Unit Configs Check (`checks/unit-configs.ts`)
+### CI/CD Check (`checks/ci.ts`)
 
-Validates that each monorepo unit (delivery, implementation, operations — defined in `checks/monorepo-units.ts`) has a valid JSON config at `artifacts/llm/config/units/<name>.json`. The config is validated against the canonical registry values for `unit.name`, `unit.aliases`, `unit.rootDir`, `unit.description`, `unit.focus`, `unit.sessionEffect`, and `harness.defaultMode`/`providerStrategy`. The `--write` flag regenerates missing or drifted configs via `mergeUnitConfig()`, which preserves any extra fields in the existing config.
+```typescript
+export async function runCiCheck(opts: { silent?: boolean }): Promise<AgentSummary>;
+```
 
-### CI Check (`checks/ci.ts`)
-
-`runCiCheck()` validates presence of required CI/CD and infrastructure files and checks them for expected content substrings (e.g. `ghcr.io/`, `docker compose up -d`, Changesets action version, OIDC publish helper invocation).
+**Validations:**
+- Required workflow files (build, deploy, release, changeset)
+- Docker image publishing to GHCR
+- VPS deployment configuration
+- Ansible infrastructure files
 
 ### Corpus Check (`checks/corpus.ts`)
 
-`runCorpusCheck()` produces LLM-ready JSONL artifacts:
+Indexes documentation for LLM context.
 
-- `corpus/files.jsonl` — per-file metadata (path, package, tier, language, bytes, SHA-256)
-- `corpus/chunks.jsonl` — file content split into chunks
-- `corpus/docs-index.jsonl` — heading-level index of all markdown files
+```typescript
+export async function runCorpusCheck(opts: { silent?: boolean }): Promise<AgentSummary>;
+```
 
----
+**Output:**
+- `corpus/files.jsonl` - File metadata with SHA-256
+- `corpus/chunks.jsonl` - Chunked source files
+- `corpus/docs-index.jsonl` - Heading structure
+- `corpus/manifest.json` - Summary statistics
 
-## Document Generators
+### Unit Configs Check (`checks/unit-configs.ts`)
 
-### `generate-api` — API.md
+Validates monorepo unit configuration alignment.
 
-The flow for each public package:
+```typescript
+export async function runUnitConfigsCheck(
+  opts: { json?: boolean; write?: boolean; failOnDrift?: boolean }
+): Promise<UnitConfigReport>;
+```
 
-1. `discoverPublicPackages()` finds all non-private packages under `repos/*/packages/`, `repos/*/infra/`, and `projects/examples/packages/` that have a `dist/` directory
-2. The SHA-256 of all subpath `.d.ts` file contents is computed via `computeApiHash()`
-3. If the embedded hash in the existing `API.md` matches, the package is skipped
-4. Otherwise (missing or stale), `extractSubpathExports()` parses each `.d.ts` with the TypeScript compiler API, resolving `export * from '...'` re-exports up to depth 2
-5. `renderApiMd()` produces grouped markdown with a sub-paths summary table and a `\`\`\`ts` block per sub-path
-6. `embedHash()` appends `` as the last line
+**Monorepo Units:** `delivery`, `implementation`, `operations`
 
-Run with `--check` (default) to report stale/missing without writing. Run with `--write` to update files.
+### Full Report (`checks/report.ts`)
 
-### `generate-readme` — README.md
+Aggregates all checks into a single status report.
 
-`renderReadmeSkeleton()` produces a deterministic README with Install, Sub-paths (when multiple exports exist), Usage, API Reference, and Tier sections. The tier label and constraint are derived from the package's workspace path prefix (e.g. `repos/cfx-core` → Tier 0 — framework).
+```typescript
+export async function runFullReport(): Promise<FullReport>;
+```
 
-For existing READMEs, `checkReadmeSections()` identifies which of the four required sections are missing, and `backfillReadmeSections()` appends only the missing sections from the skeleton without touching existing content.
+**Includes:** Architecture, secrets, hotspots, kebab-groups, unit-configs, docs, CI, corpus
 
-A `` footer records the skeleton hash so LLM enrichment pipelines can skip packages whose skeleton hasn't changed.
+## Runtime Utilities (`runtime.ts`)
 
-### `generate-structure` — STRUCTURE.md
+Shared infrastructure for all checks.
 
-`walkStructureTree()` recursively lists the package directory (excluding `dist/`, `node_modules/`, `coverage/`, etc.) up to depth 3. `computeStructureTreeHash()` hashes the sorted entry list. `renderStructureSkeleton()` produces a STRUCTURE.md with a directory tree block and a public entry points section derived from the package's exports map.
+```typescript
+export const root: string;                    // Workspace root detection
+export const artifactsRoot: string;           // Report output directory
+export const generatedDirs: Set<string>;      // Directories to skip
 
-`embedStructureMetadata()` appends both a `structure-status: deterministic` marker (indicating LLM enrichment is needed) and a `structure-hash:` footer. On re-generation, if the embedded hash matches the current tree, the file is left untouched — even if it has been LLM-enriched, the enrichment is preserved.
+export async function findFiles(dir: string, name: string): Promise<string[]>;
+export async function writeJsonReport(path: string, value: unknown): Promise<void>;
+export async function writeMarkdownReport(path: string, content: string): Promise<void>;
+export async function writeJsonl(path: string, records: readonly unknown[]): Promise<void>;
 
----
+export function toRel(path: string): string;  // Convert to workspace-relative path
+export function sha256(value: string): string;
+export function tierForPath(path: string): string;
+export function packageOwner(path: string): string;
+```
 
-## Public Package Discovery (`api/filter.ts`)
+## Workspace Contracts (`contracts/workspace.ts`)
 
-`discoverPublicPackages()` is the shared entry point for all generators and the docs check. It returns `PublicPackageInfo[]` with:
+Defines document and script requirements for different workspace levels.
 
-- `rel` — workspace-relative path
-- `subpaths` — map of export key → dist-relative `.d.ts` path (e.g. `{ '.': 'index.d.ts', './client': 'client/index.d.ts' }`)
-- `distDir`, `apiMdPath`, `structureMdPath` — absolute paths
+```typescript
+export function getWorkspaceRootDocumentRequirements(): readonly DocumentRequirement[];
+export function getDocsRootDocumentRequirements(): readonly DocumentRequirement[];
+export function getRepoRootDocumentRequirements(): readonly DocumentRequirement[];
+export function getProjectRootDocumentRequirements(projectRel: string): readonly DocumentRequirement[];
+export function getPublicPackageDocumentRequirements(_rel: string): readonly DocumentRequirement[];
+```
 
-Excluded packages: private packages, config-only packages (`@cfxdevkit/biome-config`, `@cfxdevkit/tsconfig`, etc.), packages without a `dist/` directory, and paths matching `SKIP_PACKAGE_PATTERNS` (docs-site, `.next/`).
+**Required Documents:**
+- Workspace root: `README.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md`, etc.
+- Packages: `README.md`, `STRUCTURE.md`, `API.md`
 
----
+## CLI Entry Points
 
-## CLI Entrypoints
+### Main Architecture Check
 
-All checks and generators are exposed as standalone Node.js scripts under `src/bin/`:
+```bash
+pnpm run arch-check
+```
 
-| Script | npm/pnpm task | Purpose |
-|--------|--------------|---------|
-| `arch-check.ts` | `check:arch` | Architecture topology check |
-| `check-secrets.ts` | `check:secrets` | Secret leak scan |
-| `check-hotspots.ts` | `check:hotspots` | Code size + churn hotspots |
-| `check-kebab-groups.ts` | `check:kebab-groups` | Kebab sibling file groups |
-| `check-unit-configs.ts` | `check:unit-configs` | Monorepo unit config validation |
-| `check-docs.ts` | `check:docs` | Documentation alignment |
-| `check-ci.ts` | `check:ci` | CI/CD readiness |
-| `check-corpus.ts` | `check:corpus` | LLM corpus generation |
-| `check-eval.ts` | `check:eval` | Cross-check prior report outputs |
-| `check-report.ts` | `check:report` | Full aggregated report |
-| `generate-api.ts` | `gen:api` | Generate API.md |
-| `generate-readme.ts` | `gen:readme` | Scaffold/backfill README.md |
-| `generate-structure.ts` | `gen:structure` | Generate STRUCTURE.md |
-| `generate-unit-configs.ts` | `gen:unit-configs` | Write unit config JSON files |
+Runs `runArchCheck()` and exits with code 1 if errors found.
 
-All check scripts exit with code 1 on `status === 'error'`. Generators support `--check` (default, exit 1 on missing/stale) and `--write` (update files). All generators and most checks support `--package <name>` to scope to a single package and `--silent` to suppress console output.
+### Individual Checks
 
----
+```bash
+pnpm run check:docs      # Documentation alignment
+pnpm run check:ci        # CI/CD readiness
+pnpm run check:hotspots  # Code hotspots
+pnpm run check:secrets   # Secret scanning
+pnpm run check:corpus    # Corpus indexing
+pnpm run check:eval      # LLM eval agent check
+```
+
+### Generation Commands
+
+```bash
+pnpm run gen:api         # Generate API.md files
+pnpm run gen:readme      # Generate README.md skeletons
+pnpm run gen:structure   # Generate STRUCTURE.md files
+```
+
+### Full Report
+
+```bash
+pnpm run check:report    # Full report with all checks
+```
+
+## cdk-repo-check Integration
+
+The `cdk-repo-check` package wraps `arch-check` with structured JSON output for LLM agents.
+
+```typescript
+export { runRepoCheck, runRepoCommand } from './repo-check.js';
+```
+
+**Structured Output:**
+- `RepoCheckHotspotsResult` - Hotspot data with file/directory nodes
+- `RepoCommandResult` - Command execution with GitNexus context
+- `RepoValidationStepResult` - Validation step results
+
+**GitNexus Integration:**
+```typescript
+export async function getGitNexusSnapshot(workspaceRoot: string): Promise<GitNexusSnapshot | null>;
+```
+
+Captures repository state (commit, index status, file/symbol/edge counts) for reproducible analysis.
+
+## Usage Examples
+
+### Running a Specific Check
+
+```typescript
+import { runDocsCheck } from '@cfxdevkit/arch-check';
+
+const result = await runDocsCheck({ silent: false });
+console.log(`Docs check: ${result.status} (${result.findings} findings)`);
+```
+
+### Generating API Documentation
+
+```typescript
+import { discoverPublicPackages } from '@cfxdevkit/arch-check/api/filter';
+import { extractSubpathExports } from '@cfxdevkit/arch-check/api/extract';
+import { renderApiMd } from '@cfxdevkit/arch-check/api/render';
+import { computeApiHash, embedHash } from '@cfxdevkit/arch-check/api/hash';
+
+const packages = await discoverPublicPackages();
+for (const pkg of packages) {
+  const allExports: ExtractedExport[] = [];
+  for (const [, dtsRelative] of Object.entries(pkg.subpaths)) {
+    const exports = await extractSubpathExports(pkg.distDir, dtsRelative);
+    allExports.push(...exports);
+  }
+  
+  const md = renderApiMd(pkg.name, pkg.description, /* sections */);
+  const hash = computeApiHash(allExports.map(e => e.signature));
+  const final = embedHash(md, hash);
+  
+  await writeFile(pkg.apiMdPath, final, 'utf8');
+}
+```
+
+### Custom Hotspot Analysis
+
+```typescript
+import { runHotspotsCheck } from '@cfxdevkit/arch-check';
+
+const report = await runHotspotsCheck({
+  softLimit: 200,
+  hardLimit: 250,
+  since: '30 days ago',
+  failOnHard: true,
+  json: false,
+});
+
+console.log(`Scanned ${report.totals.scannedFiles} files`);
+console.log(`Hard violations: ${report.totals.hardViolations}`);
+console.log(`Soft warnings: ${report.totals.softWarnings}`);
+```
 
 ## Report Artifacts
 
-All check outputs land under `artifacts/llm/reports/`:
+All reports are written to `artifacts/llm/reports/`:
 
-| File | Produced by |
+| File | Description |
 |------|-------------|
-| `arch-check-report.{json,md}` | `runFullReport()` |
-| `docs-alignment.{json,md}` | `runDocsCheck()` |
-| `ci-cd.{json,md}` | `runCiCheck()` |
-| `code-hotspots.{json,md}` | `runHotspotsCheck()` |
-| `kebab-groups.{json,md}` | `runKebabGroupsCheck()` |
-| `unit-configs.{json,md}` | `runUnitConfigsCheck()` |
-| `eval.{json,md}` | `runEvalCheck()` |
-| `corpus/files.jsonl` etc. | `runCorpusCheck()` |
+| `arch-check-report.json` | Full report JSON |
+| `arch-check-report.md` | Full report Markdown |
+| `docs-alignment.json` | Documentation check results |
+| `docs-alignment.md` | Documentation check report |
+| `ci-cd.json` | CI/CD readiness results |
+| `ci-cd.md` | CI/CD readiness report |
+| `code-hotspots.json` | Hotspot analysis JSON |
+| `code-hotspots.md` | Hotspot analysis with charts |
+| `secrets.json` | Secret scan results |
+| `secrets.md` | Secret scan report |
+| `eval.json` | LLM eval agent status |
+| `eval.md` | LLM eval agent report |
+| `serve-check.json` | LLM provider availability |
+| `serve-check.md` | LLM provider report |
 
-The `runEvalCheck()` check reads previously written JSON reports and aggregates their `status` fields — it is designed to be the final gate that fails if any upstream check was not run or produced errors.
+## Contribution Guidelines
 
----
+### Adding New Checks
 
-## Integration Points
+1. Create `src/checks/<name>.ts` with a `run<Name>Check()` function
+2. Return `AgentSummary` or specific result type
+3. Add to `runFullReport()` in `checks/report.ts`
+4. Update `src/index.ts` exports
+5. Add CLI entry in `src/bin/check-<name>.ts`
 
-- **`@cfxdevkit/arch-rules`** — provides `getRulesFor()`, `getTierFor()`, `getLifecycle()` used by the architecture check
-- **`@cfxdevkit/workspace-utils`** — `findWorkspaceRoot()` used by monorepo unit config discovery
-- **`tooling-cli`** — calls `runRepoCommand()` / `runRepoCheck()` to surface check results in the interactive CLI; commit gate workers (`workers/commit/gates.ts`) call `runRepositoryPolicyGate()` which delegates here
-- **TypeScript compiler API** — used directly in `api/extract.ts` via `ts.createSourceFile` and the printer for `.d.ts` parsing; no `tsc` subprocess involved
+### Adding New API Utilities
+
+1. Create module in `src/api/<name>.ts`
+2. Export types and functions from `src/index.ts`
+3. Add tests in `<name>.test.ts`
+4. Document usage in this documentation
+
+### Hash Stability
+
+All generated documents use embedded SHA-256 hashes:
+- `api-hash` for API.md
+- `readme-hash` for README.md
+- `structure-hash` + `structure-status` for STRUCTURE.md
+
+This enables LLM agents to skip regeneration when skeletons are stable.
