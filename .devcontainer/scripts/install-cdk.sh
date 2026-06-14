@@ -4,7 +4,9 @@
 # Safe to run multiple times (idempotent).
 set -euo pipefail
 
-WORKSPACE="${containerWorkspaceFolder:-/workspaces/root}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_WORKSPACE="$(cd "$SCRIPT_DIR/../.." && pwd)"
+WORKSPACE="${containerWorkspaceFolder:-$DEFAULT_WORKSPACE}"
 CDK_PACKAGE="$WORKSPACE/repos/cfx-tools/infra/tooling-cli"
 CDK_DIST="$CDK_PACKAGE/dist/bin.js"
 CDK_SRC="$CDK_PACKAGE/src"

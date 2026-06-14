@@ -46,7 +46,7 @@ projects:
 
 vcs:
   client: 'git'
-  defaultBranch: 'dev'
+  defaultBranch: 'origin/dev'
 
 pipeline:
   inheritColorsForPipedTasks: true
