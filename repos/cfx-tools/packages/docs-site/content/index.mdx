@@ -1,56 +1,7 @@
 ---
-title: cfxdevkit — Conflux Developer Monorepo
-description: Production-grade TypeScript SDK and developer tooling for the Conflux network.
+title: Home
 ---
 
-import { Cards } from 'nextra/components'
+# Home
 
-# cfxdevkit
-
-**A modular, production-grade monorepo for building on the Conflux network.**
-
-cfxdevkit provides a full stack — from low-level chain clients and wallet primitives, through smart contract tooling, to React components and VS Code extensions — as a single, cohesive workspace.
-
-```bash
-pnpm add @cfxdevkit/cdk
-```
-
----
-
-## What's included
-
-<Cards>
-  <Cards.Card title="@cfxdevkit/cdk" href="/packages/cdk" description="Chain clients, HD wallet, contract read/write, address utilities" />
-  <Cards.Card title="@cfxdevkit/executor" href="/packages/executor" description="Safe multi-step transaction sequencer" />
-  <Cards.Card title="@cfxdevkit/protocol" href="/packages/protocol" description="Cross-space bridge, automation, permit transfers" />
-  <Cards.Card title="@cfxdevkit/wallet" href="/packages/wallet" description="Session keys, capability-scoped signers, batching" />
-  <Cards.Card title="@cfxdevkit/services" href="/packages/services" description="Keystore encryption, token swap (Swappi DEX)" />
-  <Cards.Card title="@cfxdevkit/compiler" href="/packages/compiler" description="Solidity compilation and ABI extraction" />
-  <Cards.Card title="@cfxdevkit/contracts" href="/packages/contracts" description="ABIs, bytecodes, and deployment addresses" />
-  <Cards.Card title="@cfxdevkit/devnode" href="/packages/devnode" description="Programmatic local Conflux node for testing" />
-  <Cards.Card title="@cfxdevkit/react" href="/packages/react" description="React hooks for balances and tokens" />
-  <Cards.Card title="@cfxdevkit/defi-react" href="/packages/defi-react" description="React hooks for DeFi data — swaps, prices" />
-  <Cards.Card title="@cfxdevkit/wallet-connect" href="/packages/wallet-connect" description="ConnectKit wagmi integration for React dApps" />
-  <Cards.Card title="@cfxdevkit/theme" href="/packages/theme" description="Shared design tokens and component theme" />
-</Cards>
-
----
-
-## Quick example
-
-```typescript
-import { createClient, http } from '@cfxdevkit/cdk/client'
-import { espaceTestnet } from '@cfxdevkit/cdk/chains'
-
-const client = createClient({
-  chain: espaceTestnet,
-  transport: http(),
-})
-
-const block = await client.getBlockNumber()
-console.log('Testnet block:', block)
-```
-
-→ [Full Quick Start](/quickstart)
-→ [Architecture overview](/architecture)
-→ [Code wiki](/wiki)
+Welcome to the documentation site.

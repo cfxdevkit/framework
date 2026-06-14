@@ -164,11 +164,8 @@ export async function syncWiki(): Promise<number> {
     const content = toMdxSafeContent(await fs.readFile(sourcePath, 'utf8'));
     const titleMatch = content.match(/^#\s+(.+)$/m);
     const title = titleMatch?.[1]?.trim() || slug;
-    const needsMermaid = content.includes('<Mermaid');
-    const mermaidImport = needsMermaid
-      ? "import { Mermaid } from '../../../components/Mermaid';\n\n"
-      : '';
-    const mdx = `---\ntitle: "${title.replace(/"/g, '\\"')}"\n---\n\n${mermaidImport}${content}\n`;
+    // Mermaid is registered globally in mdx-components.tsx, no import needed
+    const mdx = `---\ntitle: "${title.replace(/"/g, '\\"')}"\n---\n\n${content}\n`;
     await fs.writeFile(destPath, mdx, 'utf8');
     console.log(`  synced ${file} → content/wiki/${slug}.mdx`);
   }
