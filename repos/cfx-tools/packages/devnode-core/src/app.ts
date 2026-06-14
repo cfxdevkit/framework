@@ -65,13 +65,14 @@ export function createDevnodeCoreApp(options: DevnodeCoreAppOptions = {}): Hono 
   app.get('/health', (context) => context.json({ ok: true }));
   app.get('/node/status', (context) => context.json({ ok: true, node: controller.status() }));
 
-  app.route(
-    '/accounts',
-    createAccountsRoutes(controller, {
-      sendCoreFunds: options.sendCoreFunds,
-      sendEspaceFunds: options.sendEspaceFunds,
-    }),
-  );
+  const accountsRoutesOptions: AccountsRoutesOptions = {};
+  if (options.sendCoreFunds !== undefined) {
+    accountsRoutesOptions.sendCoreFunds = options.sendCoreFunds;
+  }
+  if (options.sendEspaceFunds !== undefined) {
+    accountsRoutesOptions.sendEspaceFunds = options.sendEspaceFunds;
+  }
+  app.route('/accounts', createAccountsRoutes(controller, accountsRoutesOptions));
   app.route('/compiler', createCompilerRoutes());
   app.route('/mining', createMiningRoutes(controller));
   app.route(
