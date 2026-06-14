@@ -4,11 +4,9 @@
  * and updating all import references across the repository.
  */
 import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { existsSync, globSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { globSync } from 'node:fs';
-import { readdirSync } from 'node:fs';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dryRun = process.argv.includes('--dry-run');
@@ -94,7 +92,7 @@ function* walkFiles(dir) {
 
 console.log('\nUpdating import references...\n');
 let updatedFiles = 0;
-let totalReplaces = 0;
+const totalReplaces = 0;
 
 for (const absPath of walkFiles(rootDir)) {
   let content = readFileSync(absPath, 'utf8');

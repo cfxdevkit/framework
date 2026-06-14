@@ -1,9 +1,9 @@
-import { deployContract } from '@cfxdevkit/contracts/deploy';
 import type { Hex } from '@cfxdevkit/cdk';
 import type { ChainConfig } from '@cfxdevkit/cdk/chains';
 import { espaceLocal, espaceMainnet, espaceTestnet } from '@cfxdevkit/cdk/chains';
 import { createClient, http } from '@cfxdevkit/cdk/client';
 import { signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
+import { deployContract } from '@cfxdevkit/contracts/deploy';
 import {
   automationManagerAbi,
   automationManagerBytecode,

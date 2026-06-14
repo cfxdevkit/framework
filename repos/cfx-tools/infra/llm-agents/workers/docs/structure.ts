@@ -6,9 +6,9 @@
  */
 import { commandBlock } from '../completion/index.ts';
 import { logInfo, logStep } from '../shared/logging.ts';
+import { parseDocFlags } from './flags.ts';
 import { discoverPublicPackages } from './readme.ts';
 import { enrichStructureMd } from './structure-enrichment.ts';
-import { parseDocFlags } from './flags.ts';
 
 export async function runStructureUpkeep(args: string[]): Promise<void> {
   const flags = parseDocFlags(args);

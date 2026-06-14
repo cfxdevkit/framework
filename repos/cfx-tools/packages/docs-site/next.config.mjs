@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
-import nextra from 'nextra';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import nextra from 'nextra';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

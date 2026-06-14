@@ -6,7 +6,7 @@
  *
  * Usage: node scripts/check-deps.mjs
  */
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -32,7 +32,7 @@ for (const dir of packageDirs) {
 }
 
 const allNames = new Set(Object.keys(packages));
-let errors = 0;
+const errors = 0;
 
 console.log(`Packages (${allNames.size}): ${[...allNames].join(', ')}\n`);
 console.log('Cross-package runtime dependency graph (dependencies only):');

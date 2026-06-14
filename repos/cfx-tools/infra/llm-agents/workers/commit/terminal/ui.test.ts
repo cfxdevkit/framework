@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createWorkflowTerminalUi } from './ui.ts';
 import { summarizeFailureAnalysis, summarizeGateFailures } from '../terminal-ui-summary.ts';
+import { createWorkflowTerminalUi } from './ui.ts';
 
 const readline = vi.hoisted(() => ({
   moveCursor: vi.fn(),

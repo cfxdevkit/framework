@@ -53,6 +53,7 @@
     "@biomejs/biome": "^2.4.15",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
+    "@wagmi/core": "3.5.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.15",
     "typescript": "^6.0.3",
@@ -62,6 +63,7 @@
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.100.9",
+    "@wagmi/core": "3.5.0",
     "@cfxdevkit/wallet": "workspace:^",
     "react": "^19.2.5",
     "wagmi": "^3.6.9"

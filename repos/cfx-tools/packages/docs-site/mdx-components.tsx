@@ -1,5 +1,5 @@
-import type React from 'react';
 import { useMDXComponents as getThemeComponents } from 'nextra-theme-docs';
+import type React from 'react';
 import { Mermaid } from './components/Mermaid';
 
 export function useMDXComponents(

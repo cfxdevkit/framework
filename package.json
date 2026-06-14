@@ -120,6 +120,7 @@
   },
   "pnpm": {
     "overrides": {
+      "@onekeyfe/hd-transport>protobufjs": "^7.5.8",
       "axios": "^1.15.0",
       "@types/react": "^19.2.14",
       "esbuild": ">=0.25.0",

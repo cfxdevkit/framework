@@ -1,4 +1,5 @@
 import { QueryClient, type QueryClientConfig, QueryClientProvider } from '@tanstack/react-query';
+import { injected } from '@wagmi/core';
 import { type ReactNode, useEffect, useState } from 'react';
 import type { EIP1193Provider } from 'viem';
 import {
@@ -10,7 +11,6 @@ import {
   useDisconnect,
   WagmiProvider,
 } from 'wagmi';
-import { injected } from 'wagmi/connectors';
 import { type CreateSupportedEspaceChainsOptions, createSupportedEspaceChains } from './chains.js';
 
 export interface CreateConfluxWagmiConfigOptions extends CreateSupportedEspaceChainsOptions {

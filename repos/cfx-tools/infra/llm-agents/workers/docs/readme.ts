@@ -6,11 +6,11 @@
  *  2. Discover public packages (via @cfxdevkit/docs-pipeline)
  *  3. LLM enrich each README (fill placeholders, add usage)
  */
-import { discoverDocsPagePackages, type DocsPackagePageRecord } from '@cfxdevkit/docs-pipeline';
+import { type DocsPackagePageRecord, discoverDocsPagePackages } from '@cfxdevkit/docs-pipeline';
 import { commandBlock } from '../completion/index.ts';
 import { logInfo, logStep } from '../shared/logging.ts';
-import { enrichReadmeMd } from './readme-enrichment.ts';
 import { parseDocFlags } from './flags.ts';
+import { enrichReadmeMd } from './readme-enrichment.ts';
 
 export type PkgEntry = Pick<DocsPackagePageRecord, 'rel' | 'name' | 'skeletonHash'>;
 

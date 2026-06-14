@@ -1,5 +1,5 @@
-import { applyWorkflowMockDefaults, resetWorkflowMocks } from '../tests/support.ts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { applyWorkflowMockDefaults, resetWorkflowMocks } from '../tests/support.ts';
 
 const mocks = vi.hoisted(() => ({
   commandBlock: vi.fn(),

@@ -1,8 +1,8 @@
-import { sendWrite } from '@cfxdevkit/contracts/write';
 import type { Hex } from '@cfxdevkit/cdk';
 import { espaceLocal, espaceMainnet, espaceTestnet } from '@cfxdevkit/cdk/chains';
 import { createClient, http } from '@cfxdevkit/cdk/client';
 import { signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
+import { sendWrite } from '@cfxdevkit/contracts/write';
 import { automationManagerAbi } from '@cfxdevkit/protocol';
 import { confirm, password } from '@inquirer/prompts';
 import { getBalance, isKeeper } from '../chain/read.js';

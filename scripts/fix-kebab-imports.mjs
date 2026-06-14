@@ -5,8 +5,8 @@
  *  1. Files importing moved files (update to new paths)
  *  2. Moved files with imports that now need ../ adjustment (depth shift)
  */
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
-import { dirname, extname, join, relative, resolve, normalize } from 'node:path';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, extname, join, normalize, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -73,8 +73,8 @@ let totalFiles = 0;
 let totalChanges = 0;
 
 for (const filePath of walkFiles(rootDir)) {
-  let content = readFileSync(filePath, 'utf8');
-  let modified = false;
+  const content = readFileSync(filePath, 'utf8');
+  const modified = false;
   let changesInFile = 0;
   const fromDir = dirname(filePath);
 

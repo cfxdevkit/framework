@@ -5,7 +5,7 @@
  *
  * Usage: node scripts/validate-workspace.mjs
  */
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
