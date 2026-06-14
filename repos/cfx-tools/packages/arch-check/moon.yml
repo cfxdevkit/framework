@@ -43,7 +43,7 @@ tasks:
       runFromWorkspaceRoot: false
 
   check-secrets:
-    command: 'pnpm exec tsx src/bin/check-secrets.ts'
+    command: 'pnpm exec tsx src/checks/secrets.ts'
     inputs:
       - '/repos/**/*'
       - '/projects/**/*'
