@@ -1,5 +1,11 @@
 # @cfxdevkit/devnode-server
 
+## 3.1.1
+
+### Patch Changes
+
+- 1bf81c8: Updated internal build dependencies to ensure correct resolution
+
 ## 3.1.0
 
 ### Minor Changes
