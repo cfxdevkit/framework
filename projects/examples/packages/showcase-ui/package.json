@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/example-showcase-ui",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "Shared UI primitives for Conflux showcase examples. Built on @cfxdevkit/wallet-connect.",
   "type": "module",

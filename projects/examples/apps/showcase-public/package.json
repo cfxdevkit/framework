@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/example-showcase-public",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "description": "Conflux framework public showcase — deployable Next.js app targeting testnet.",
   "scripts": {

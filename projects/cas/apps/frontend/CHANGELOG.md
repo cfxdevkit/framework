@@ -1,23 +1,14 @@
-# @cfxdevkit/cas-backend
-
-## 0.0.2
-
-### Patch Changes
-
-- Updated dependencies [d78071e]
-- Updated dependencies [e9cf877]
-- Updated dependencies [e44000a]
-  - @cfxdevkit/wallet-connect@3.0.0
-  - @cfxdevkit/cdk@2.0.1
-  - @cfxdevkit/protocol@2.0.1
-  - @cfxdevkit/services@3.0.1
-  - @cfxdevkit/cas-shared@0.0.1
-  - @cfxdevkit/automation@2.0.0
+# @cfxdevkit/cas-frontend
 
 ## 0.0.1
 
 ### Patch Changes
 
-- Updated dependencies [f0cb9a2]
-- Updated dependencies [c03977e]
-  - @cfxdevkit/services@3.0.0
+- Updated dependencies [d78071e]
+- Updated dependencies [e9cf877]
+  - @cfxdevkit/wallet-connect@3.0.0
+  - @cfxdevkit/cdk@2.0.1
+  - @cfxdevkit/protocol@2.0.1
+  - @cfxdevkit/ui@2.1.0
+  - @cfxdevkit/cas-shared@0.0.1
+  - @cfxdevkit/automation@2.0.0

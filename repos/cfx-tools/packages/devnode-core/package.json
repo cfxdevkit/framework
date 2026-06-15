@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/devnode-core",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": false,
   "description": "Lightweight Hono control plane for Conflux devnode — node control, compilation, and mining. No keystore or wallet deps.",
   "type": "module",
