@@ -1,0 +1,419 @@
+---
+title: "repos — cfx-ui"
+---
+
+# repos — cfx-ui
+
+# @cfxdevkit/defi-react
+
+Opinionated DeFi widgets for Conflux eSpace applications. Provides reusable React components for common DeFi operations including token swapping, liquidity provision, portfolio tracking, and transaction status display.
+
+## Overview
+
+The `defi-react` package is a Tier 0c React UI surface (per ADR-0003) that delivers:
+- DeFi-specific widgets (swap, liquidity, token picker)
+- Headless UI primitives built on CSS custom properties
+- Hooks for blockchain data fetching (balances, pool info, prices)
+- Integration with Conflux CDK and viem for wallet interactions
+- Swappi V2 DEX adapter for quote generation and transaction building
+
+All components use CSS variables from `@cfxdevkit/theme/css` and require no additional styling dependencies.
+
+## Installation
+
+```bash
+pnpm add @cfxdevkit/defi-react
+```
+
+### Peer Dependencies
+Ensure these are installed in your project:
+```json
+{
+  "peerDependencies": {
+    "@cfxdevkit/theme": "workspace:^",
+    "@tanstack/react-query": "^5.100.9",
+    "react": "^19.2.5",
+    "viem": "^2.21.0"
+  }
+}
+```
+
+### Required Setup
+Import the theme CSS in your application entry point:
+```typescript
+import '@cfxdevkit/theme/css';
+```
+
+## Core Concepts
+
+### CSS Custom Properties
+All components rely on CSS variables defined in `@cfxdevkit/theme/css` for theming. Key variable categories:
+- Colors: `--cfx-color-*`
+- Spacing: `--cfx-space-*`
+- Typography: `--cfx-text-*`, `--cfx-font-*`
+- Radius: `--cfx-radius-*`
+- Shadows: `--cfx-shadow-*`
+
+### Hooks Architecture
+Data-fetching hooks follow React Query patterns:
+- Automatic caching and refetching
+- Configurable refresh intervals
+- Loading/error states
+- Chain-aware querying via `@cfxdevkit/react/context`
+
+### DEX Abstraction
+Swap functionality uses a `DexAdapter` interface, enabling:
+- Protocol-agnostic swap hooks
+- Easy integration with different DEXes
+- Current implementation: Swappi V2 adapter
+
+## Key Components
+
+### Balance
+Displays token holdings and values.
+
+**PortfolioTable** (`src/balance/PortfolioTable.tsx`)
+```tsx
+<PortfolioTable
+  tokens={[
+    { address: '0x...', symbol: 'USDT', name: 'Tether', decimals: 6, logoURI: '...' }
+  ]}
+  address="0xUserAddress"
+/>
+```
+- Shows formatted balances for ERC-20 tokens plus native CFX
+- Handles wrapped native token aggregation (WCFX → CFX)
+- Requires address connection state
+- Custom row rendering via `renderRow` prop
+
+**usePortfolio** (`src/balance/usePortfolio.ts`)
+```tsx
+const { rows, isLoading, error } = usePortfolio({
+  tokens: tokenList,
+  address: userAddress,
+  refreshMs: 15000
+});
+```
+- Fetches balances for token list + native CFX
+- Returns sorted rows by balance (descending)
+- Handles token address normalization for wrapped natives
+- Parallel queries for ERC-20 balances
+
+### Pool
+Provides Swappi V2 pair data and pricing.
+
+**usePoolTokens** (`src/pool/usePoolTokens.ts`)
+```tsx
+const { pool, isLoading, error } = usePoolTokens({
+  service: swapService,
+  pairAddress: '0xPairAddress'
+});
+```
+- Fetches token0/token1 and reserves from pair contract
+- Returns structured pool data
+- Configurable refetch interval
+
+**useTokenPrice** (`src/pool/useTokenPrice.ts`)
+```tsx
+const { price } = useTokenPrice({
+  service: swapService,
+  tokenAddress: '0xToken',
+  quoteToken: WCFX_ADDRESS
+});
+```
+- Gets price of token in quote token units
+- Returns raw bigint (1e18 input token basis)
+- Requires manual decimal adjustment for display
+
+### Primitives
+Headless UI building blocks in `@cfxdevkit/defi-react/primitives`.
+
+**Core Components**
+- `Button`: Primary/secondary/ghost/danger variants with loading states
+- `Card`: Container with elevation and padding options
+- `Input`: Styled text input with validation states
+- `SelectMenu`: Accessible native select dropdown
+- `SegmentedControl`: Toggle group for mutually exclusive options
+- `Badge`: Status indicators with color variants
+- `NetworkBadge`: Network identification (testnet/mainnet)
+
+**Layout Components**
+- `SectionHeader`: Title with subtitle and action slot
+- `MetricCard`: KPI display with value and delta
+- `StatusBanner`: Full-width alert strip
+- `AppShell`: Full-page layout with nav bar
+- `MainGrid`: Two-column layout with optional sidebar
+- `Panel`: Container with header (title/icon/actions)
+
+**Feedback Components**
+- `AppToaster`: Fixed-position toast container
+- `SelectableListItem`: Highlightable list item for pickers
+- `CopyButton`: Clipboard copy button with state
+
+**Specialized Components**
+- `TradeTokenField`: Swap input with token display
+- `TradeActionBar`: Swap/provide toggle + slippage input
+- `TradeSummaryGrid`: Trade confirmation details
+- `FaucetWidget`: Devnet funding interface
+- `DevkitStatus`: Node/keystore health dashboard
+- `NavWalletActions`: Wallet connect/sign-in buttons
+
+### Service
+Swappi V2 DEX integration.
+
+**SwapService** (`src/service/SwapService.ts`)
+```ts
+const service = new SwapService({
+  chainId: 1030, // or 71 for testnet
+  client: espaceClient
+});
+```
+- Implements `DexAdapter` interface for swap operations
+- Provides:
+  - `getQuote()`: Calculate swap output with slippage
+  - `buildCalldata()`: Encode transaction data
+  - `getPoolTokens()`: Fetch pair reserves
+  - `getTokenPrice()`: Get token price in quote token
+  - `getPair()`: Find pair address for two tokens
+- Handles WCFX wrapping/unwrapping logic
+- Multi-hop routing via WCFX when direct pair missing
+
+### Swap
+Token exchange interface.
+
+**SwapWidget** (`src/swap/SwapWidget.tsx`)
+```tsx
+<SwapWidget
+  adapter={createSwappiAdapter({ chainId, client })}
+  tokens={tokenList}
+  defaultTokenIn="0xCFX"
+  defaultTokenOut="0xUSDT"
+  onSwapSubmitted={handleSwapTx}
+/>
+```
+- Headless swap interface requiring token selection
+- Shows input/output amounts with balance display
+- Handles approval workflow for ERC-20 tokens
+- Displays quote, price impact, and transaction states
+- Token picker modal for selection
+- Automatic token inversion when swapping directions
+
+**useSwap** (`src/swap/useSwap.ts`)
+```tsx
+const {
+  quote,
+  isQuoting,
+  approveAsync,
+  needsApproval,
+  swapAsync,
+  isSwapping
+} = useSwap({
+  adapter: swapService,
+  tokenIn: inputToken,
+  tokenOut: outputToken,
+  amountIn: parsedAmount
+});
+```
+- Manages swap quote fetching
+- Handles token approval requirements
+- Provides async functions for approval and swap
+- Tracks approval and swap transaction states
+- Resettable state for reuse
+
+### Token Picker
+Token search and selection interface.
+
+**TokenPicker** (`src/token-picker/TokenPicker.tsx`)
+```tsx
+<TokenPicker
+  registry={createTokenRegistry(tokenList)}
+  chainId={1030}
+  selected={currentToken}
+  onSelect={handleTokenSelect}
+/>
+```
+- Pure client-side token search
+- Registry-based for efficient filtering
+- Visual selection indicators
+- Logo display with error fallback
+- Keyboard accessible
+
+### Transaction Status
+Live transaction tracking.
+
+**TxStatusList** (`src/tx-status/TxStatusList.tsx`)
+```tsx
+<TxStatusList recent={3} onConfirm={handleConfirmation} />
+```
+- Displays recent transactions with status indicators
+- Requires `TxListProvider` higher in tree
+- Tracks transactions via `useTxList().track(hash)`
+- Automatic polling for confirmation status
+- Configurable display limit
+
+**TxStatusToast** (`src/tx-status/TxStatusToast.tsx`)
+```tsx
+<TxStatusToast hash={txHash} onConfirm={handleConfirmation} />
+```
+- Individual transaction status display
+- Pending (warning dot) → Success/Failure (color-coded)
+- Transaction hash display with mono font
+- Automatic confirmation handling via callback
+
+### Liquidity Provision
+Swappi V2 liquidity management.
+
+**AddLiquidityWidget** (`src/lp/AddLiquidityWidget.tsx`)
+```tsx
+<AddLiquidityWidget
+  service={swapService}
+  tokenA="0xTokenA"
+  tokenB="0xWCFX"
+  poolData={poolData} // optional from usePoolTokens
+  onAddLiquidity={handleAddLiquidity}
+/>
+```
+- Two-token input for liquidity provision
+- Displays price ratio and estimated pool share
+- Auto-fills second amount based on reserves
+- Share percentage badge shown when amountA > 0
+- Form validation and submission handling
+
+**PoolShareBadge** (`src/lp/AddLiquidityWidget.tsx`)
+```tsx
+<PoolShareBadge sharePercent={12.5} />
+```
+- Displays liquidity provider share percentage
+- Formats small shares as "&lt;0.01%"
+- Subtle styling for inline display
+
+## Usage Examples
+
+### Basic Swap Interface
+```tsx
+import { SwapWidget, createSwappiAdapter } from '@cfxdevkit/defi-react/swap';
+import { useAccount, useClient } from '@cfxdevkit/react';
+
+function SwapInterface() {
+  const { address } = useAccount();
+  const client = useClient();
+  const adapter = createSwappiAdapter({ chainId: 1030, client });
+
+  if (!address) return <p>Connect wallet</p>;
+
+  return (
+    <SwapWidget
+      adapter={adapter}
+      tokens=[/* token list */]
+      defaultTokenIn="0xCFX"
+      defaultTokenOut="0xUSDT"
+      onSwapSubmitted={({ hash }) => console.log('Swap tx:', hash)}
+    />
+  );
+}
+```
+
+### Portfolio Display
+```tsx
+import { PortfolioTable } from '@cfxdevkit/defi-react/balance';
+import { useAccount } from '@cfxdevkit/react';
+
+function Portfolio() {
+  const { address } = useAccount();
+  const tokens = [/* token metadata */];
+
+  return (
+    <div>
+      <h2>My Portfolio</h2>
+      {address ? (
+        <PortfolioTable tokens={tokens} address={address} />
+      ) : (
+        <p>Connect wallet to view portfolio</p>
+      )}
+    </div>
+  );
+}
+```
+
+### Liquidity Position Add
+```tsx
+import { AddLiquidityWidget, usePoolTokens } from '@cfxdevkit/defi-react';
+import { useClient } from '@cfxdevkit/react/context';
+import { createSwapService } from '@cfxdevkit/defi-react/service';
+
+function AddLiquidity({ pairAddress }) {
+  const client = useClient();
+  const service = createSwapService({ chainId: 1030, client });
+  const { pool } = usePoolTokens({ service, pairAddress });
+
+  return (
+    <AddLiquidityWidget
+      service={service}
+      tokenA="0xTokenA"
+      tokenB="0xTokenB"
+      poolData={pool}
+      onAddLiquidity={({ amountA, amountB }) => {
+        // submit liquidity transaction
+      }}
+    />
+  );
+}
+```
+
+## Integration with Codebase
+
+### Dependencies
+- `@cfxdevkit/abis`: Contract ABIs for Swappi V2 and ERC-20
+- `@cfxdevkit/cdk`: Conflux Development Kit (client, types, utilities)
+- `@cfxdevkit/react`: React hooks for blockchain interactions (account, balance, contract, tx)
+- `@cfxdevkit/ui-core`: Shared utilities (token normalization, address resolution)
+- `@cfxdevkit/theme`: Design tokens and CSS variables
+
+### Consumers
+This package is intended for use in:
+- dApp frontend applications built with React
+- Conflux eSpace-focused DeFi interfaces
+- Internal tooling and dashboard components
+- Showcase applications demonstrating Conflux capabilities
+
+### Extension Points
+1. **DEX Adapters**: Implement `DexAdapter` interface for other protocols
+2. **Token Registries**: Pass custom token lists to widgets via props
+3. **Primitives**: Compose basic components for custom DeFi interfaces
+4. **Hooks**: Combine data hooks for complex views (e.g., portfolio + price)
+
+## Important Notes
+
+### Browser Support
+- Requires modern browsers with CSS custom property support
+- Tested in latest Chrome, Firefox, Safari, Edge
+
+### Performance
+- Hooks use React Query for efficient data fetching
+- Components minimize re-renders via memoization where beneficial
+- Large token lists should be memoized before passing to pickers
+
+### Error Handling
+- All hooks return error objects for UI display
+- Network errors propagate as standard JavaScript Errors
+- Transaction errors include viem error details
+- Validation errors shown inline in form components
+
+### Testing
+- Unit tests with Vitest
+- Mock blockchain clients for deterministic tests
+- Component testing via React Testing Library (not shown in source)
+
+### Internationalization
+- Components use English strings internally
+- Consumer applications should wrap text for translation
+- No built-in i18n support in this package
+
+### Accessibility
+- Semantic HTML where possible
+- ARIA labels on interactive elements
+- Focus management in modal dialogs
+- Color contrast adheres to WCAG AA standards
+- Keyboard navigation supported in all interactive components
+
+This documentation covers the core functionality of the `@cfxdevkit/defi-react` package. For detailed API reference, consult the source code and TypeScript definitions. Additional usage patterns can be found in the package's test files and example applications.

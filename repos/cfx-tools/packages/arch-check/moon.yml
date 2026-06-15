@@ -9,7 +9,7 @@ dependsOn:
 
 tasks:
   generate-api:
-    command: 'pnpm exec tsx src/bin/generate-api.ts --write'
+    command: 'pnpm exec tsx src/bin/generate/api.ts --write'
     inputs:
       - '/repos/**/dist/*.d.ts'
       - '/repos/**/dist/**/*.d.ts'
@@ -21,7 +21,7 @@ tasks:
       runFromWorkspaceRoot: false
 
   generate-readme:
-    command: 'pnpm exec tsx src/bin/generate-readme.ts --write'
+    command: 'pnpm exec tsx src/bin/generate/readme.ts --write'
     inputs:
       - '/repos/**/package.json'
       - '/projects/**/package.json'
@@ -31,7 +31,7 @@ tasks:
       runFromWorkspaceRoot: false
 
   generate-structure:
-    command: 'pnpm exec tsx src/bin/generate-structure.ts --write'
+    command: 'pnpm exec tsx src/bin/generate/structure.ts --write'
     inputs:
       - '/repos/**/package.json'
       - '/projects/**/package.json'

@@ -1,0 +1,404 @@
+---
+title: "repos — cfx-keys"
+---
+
+# repos — cfx-keys
+
+# @cfxdevkit/services
+
+Pluggable backends for keystore management, cryptographic operations, and wallet functionality in the Conflux ecosystem. This module provides audit-grade trust boundaries for key handling while maintaining framework agnosticism.
+
+## Overview
+
+The `@cfxdevkit/services` package implements Tier 0b trust boundaries per ADR-0003, separating cryptographic key material from application logic through pluggable providers. It consists of four layered subsystems:
+
+1. **Keystore Providers** - Abstract interfaces for secret storage with concrete implementations (memory, file, Ledger)
+2. **Embedded Wallet Manager** - High-level wallet lifecycle management using keystore providers
+3. **Cryptographic Primitives** - Low-level operations (AES-GCM, KDFs, encoding) with typed keys
+4. **Authentication Helpers** - Nonce management and session token utilities
+
+All components enforce strict boundaries: private keys never leave provider implementations, and signers are the only interface for cryptographic operations.
+
+## Keystore Providers
+
+The core abstraction is `KeystoreProvider`, defining a contract for secret storage that all backends implement. Providers advertise capabilities via `KeystoreCapabilities` (write/list/rotate) and return framework `Signer` objects for operations—never exposing raw key material.
+
+### Provider Interface
+
+```typescript
+interface KeystoreProvider {
+  readonly id: string; // e.g., "memory", "file", "ledger"
+  readonly capabilities: { write: boolean; list: boolean; rotate: boolean };
+  
+  list(opts?: KeystoreListOptions): Promise<StoredSecret[]>;
+  has(ref: SecretRef, opts?: KeystoreCallOptions): Promise<boolean>;
+  getSigner(ref: SecretRef, capability?: Capability, opts?: KeystoreCallOptions): Promise<Signer>;
+  put?(input: KeystorePutInput, opts?: KeystoreCallOptions): Promise<void>; // Optional
+  // ... other optional methods
+}
+```
+
+### Concrete Implementations
+
+#### Memory Keystore (`@cfxdevkit/services/keystore-memory`)
+- In-store implementation for testing
+- Seeds with initial secrets via constructor
+- Supports all operations (put/list/has/remove/getSigner)
+- Example usage:
+  ```typescript
+  import { createMemoryKeystore } from '@cfxdevkit/services/keystore-memory';
+  
+  const keystore = createMemoryKeystore({
+    seed: [{
+      ref: { service: 'app', account: 'deployer' },
+      privateKey: '0x...', // 32-byte hex
+      meta: { label: 'primary' }
+    }]
+  });
+  
+  const signer = await keystore.getSigner({ service: 'app', account: 'deployer' });
+  ```
+
+#### File Keystore (`@cfxdevkit/services/keystore-file`)
+- Encrypted JSON file at rest using AES-256-GCM
+- Key encryption key derived via Argon2id from passphrase
+- Each secret encrypted with unique AAD binding to service/account
+- Requires unlock callback providing passphrase
+- Example usage:
+  ```typescript
+  import { createFileKeystore } from '@cfxdevkit/services/keystore-file';
+  
+  const keystore = createFileKeystore({
+    path: './keystore.json',
+    unlock: async () => ({ passphrase: process.env.KEYSTORE_PASS })
+  });
+  ```
+
+#### Ledger Keystore (`@cfxdevkit/services/keystore-ledger`)
+- Exposes configured Ledger derivation paths as opaque secrets
+- Supports both eSpace (via Ethereum app) and Core Space (via Conflux Core app)
+- Returns framework `Signer` that delegates to Ledger device
+- Example usage:
+  ```typescript
+  import { createLedgerEthApp, createNodeHidLedgerTransport } from '@cfxdevkit/services/keystore-ledger';
+  
+  const transport = await createNodeHidLedgerTransport();
+  const ethApp = await createLedgerEthApp(transport);
+  
+  const keystore = createLedgerKeystore({
+    eth: ethApp,
+    accounts: [{
+      ref: { service: 'wallet', account: 'ledger-0' },
+      path: "m/44'/60'/0'/0/0"
+    }]
+  });
+  ```
+
+### Secret Metadata
+Providers return `StoredSecret` objects containing only public metadata:
+```typescript
+interface StoredSecret {
+  ref: { service: string; account: string };
+  kind: 'private-key' | 'mnemonic' | 'opaque';
+  createdAt: number;
+  meta?: Record<string, string>; // Never contains key material
+}
+```
+
+## Embedded Wallet Manager
+
+High-level wallet management built on top of keystore providers. Handles wallet creation, loading, and signing without exposing key material.
+
+### Workflow
+1. **Creation**: Generates new key pair, stores encrypted private key in keystore
+2. **Loading**: Retrieves wallet metadata from keystore (addresses, creation time)
+3. **Signing**: Obtains `Signer` from keystore for cryptographic operations
+
+### Interface
+```typescript
+interface EmbeddedWalletManager {
+  createWallet(userId: string, password?: string): Promise<EmbeddedWallet>;
+  hasWallet(userId: string): Promise<boolean>;
+  getWallet(userId: string): Promise<EmbeddedWallet>;
+  signerFor(userId: string, password?: string): Promise<Signer>;
+  deleteWallet(userId: string, password?: string): Promise<void>;
+}
+```
+
+### Usage
+```typescript
+import { createEmbeddedWalletManager } from '@cfxdevkit/services/embedded-wallet';
+import { createMemoryKeystore } from '@cfxdevkit/services/keystore-memory';
+
+const manager = createEmbeddedWalletManager({
+  provider: createMemoryKeystore()
+});
+
+const wallet = await manager.createWallet('alice');
+const signer = await manager.signerFor('alice');
+const signature = await signer.signMessage('hello');
+```
+
+Wallet metadata (`EmbeddedWallet`) includes:
+- `espaceAddress`: Ethereum-format address (0x...)
+- `coreAddress`: Conflux Core format (cfx:...)
+- `userId`: Identifier passed to manager
+- `ref`: Internal keystore reference
+- `createdAt`: Timestamp
+
+## Cryptographic Primitives
+
+Low-level operations in `@cfxdevkit/services/crypto` with strict typing and error handling.
+
+### Symmetric Encryption (AES-GCM)
+```typescript
+import { 
+  encryptAesGcm, 
+  decryptAesGcm, 
+  generateAesGcmKey,
+  type AesGcmKey 
+} from '@cfxdevkit/services/crypto';
+
+const key = generateAesGcmKey(); // 32-byte branded key
+const { ciphertext, iv, tag } = await encryptAesGcm({
+  key,
+  plaintext: new TextEncoder().encode('secret data'),
+  aad: new TextEncoder().encode('context') // Optional
+});
+
+const plaintext = await decryptAesGcm({
+  key,
+  ciphertext,
+  iv,
+  tag,
+  aad: new TextEncoder().encode('context')
+});
+```
+
+### Key Derivation
+#### Argon2id
+```typescript
+import { deriveKeyArgon2id } from '@cfxdevkit/services/crypto';
+
+const key = await deriveKeyArgon2id({
+  passphrase: 'strong passphrase',
+  salt: new Uint8Array(16), // ≥8 bytes
+  memKiB: 64 * 1024, // 64 MiB
+  iterations: 3
+}); // Returns branded AesGcmKey
+```
+
+#### HKDF
+```typescript
+import { deriveKeyHkdf } from '@cfxdevkit/services/crypto';
+
+const key = await deriveKeyHkdf({
+  ikm: new Uint8Array(32), // Input key material
+  info: new TextEncoder().append('app-specific'),
+  length: 32
+}); // Returns Uint8Array (not branded)
+```
+
+### Encoding Utilities
+```typescript
+import { toHex, fromHex, toBase64Url, fromBase64Url } from '@cfxdevkit/services/crypto';
+
+const hex = toHex(new Uint8Array([0xde, 0xad, 0xbe, 0xef])); // '0xdeadbeef'
+const bytes = fromHex('0xdeadbeef'); // Uint8Array([0xde, 0xad, 0xbe, 0xef])
+
+const b64 = toBase64Url(new Uint8Array([0xff, 0xfe])); // '_/'
+const bytes2 = fromBase64Url('_/'); // Uint8Array([0xff, 0xfe])
+```
+
+### Random Bytes
+```typescript
+import { randomBytes } from '@cfxdevkit/services/crypto';
+
+const entropy = randomBytes(32); // CSPRNG Uint8Array
+```
+
+## Authentication Helpers
+
+### Nonce Management (`@cfxdevkit/services/auth`)
+Prevents replay attacks in authentication flows with time-bound, single-use nonces.
+
+```typescript
+import { createMemoryNonceStore } from '@cfxdevkit/services/auth';
+
+const store = createMemoryNonceStore({
+  ttlMs: 5 * 60 * 1000, // 5 minutes
+  nonceFactory: () => Math.random().toString(36).substr(2)
+});
+
+const nonce = store.issue('0xuserAddress');
+// ... send nonce to user for signing
+const valid = store.consume(nonce, '0xuserAddress'); // true
+const reused = store.consume(nonce, '0xuserAddress'); // false (already used)
+```
+
+### Session Tokens
+Stateless signed tokens for authenticated sessions.
+
+```typescript
+import { 
+  signSessionToken, 
+  verifySessionToken,
+  readBearerToken
+} from '@cfxdevkit/services/auth';
+
+const token = signSessionToken('0xuser', {
+  secret: 'shared-secret',
+  ttlMs: 24 * 60 * 60 * 1000, // 24 hours
+  claims: { role: 'admin' }
+});
+
+const payload = verifySessionToken(token, {
+  secret: 'shared-secret'
+});
+// payload: { address, issuedAt, expiresAt, claims }
+
+const bearer = readBearerToken(`Bearer ${token}`); // returns token string
+```
+
+Tokens use HMAC-SHA256 with timing-safe verification and Base64Url encoding.
+
+## Capability Enforcement
+
+Fine-grained transaction policies via `@cfxdevkit/services/keystore-memory/capability`. Wrappers that restrict signer capabilities without modifying underlying provider.
+
+### Policy Definition
+```typescript
+interface Capability {
+  chains?: number[];        // Allowed chain IDs
+  contracts?: string[];     // Allowed contract addresses (0x-prefixed)
+  selectors?: string[];     // Allowed function selectors (0x-prefixed, 4-byte)
+  maxValuePerTx?: bigint;   // Maximum transaction value
+  notAfter?: number;        // Expiry timestamp (ms since epoch)
+}
+```
+
+### Usage
+```typescript
+import { applyCapability } from '@cfxdevkit/services/keystore-memory/capability';
+
+const baseSigner = await keystore.getSigner({ service: 'wallet', account: 'user' });
+const restrictedSigner = applyCapability(baseSigner, {
+  chains: [1030], // Only Conflux eSpace
+  contracts: ['0x000000000000000000000000000000000000dead'], // Only specific contract
+  maxValuePerTx: 1_000_000n, // Max 1 million CFX
+  notAfter: Date.now() + 24 * 60 * 60 * 1000 // Expires in 24 hours
+});
+
+// This will throw if attempted:
+await restrictedSigner.signTransaction({
+  chainId: 1, // Wrong chain
+  to: '0x...',
+  value: 2_000_000n // Exceeds limit
+});
+```
+
+Note: Capabilities only constrain `signTransaction`; `signMessage` and `signTypedData` pass through unchanged.
+
+## Audit Logging
+
+Append-only, hash-chained audit trail for keystore operations via `@cfxdevkit/services/keystore/audit`. Prevents tampering and provides operation sequencing.
+
+### Implementation
+```typescript
+import { createAppendOnlyAuditLogger } from '@cfxdevkit/services/keystore/audit';
+
+const logger = createAppendOnlyAuditLogger({
+  path: './audit.log',
+  onError: (err) => console.error('Audit failure:', err)
+});
+
+// Automatically called by keystore providers
+logger.record({
+  at: Date.now(),
+  provider: 'file',
+  action: 'put',
+  ref: { service: 'app', account: 'key' },
+  ok: true
+});
+```
+
+Each log entry contains:
+- `sequence`: Monotonically increasing integer
+- `previousHash`: Hash of prior entry (genesis uses 64 zeros)
+- `entryHash`: SHA-256 of the unsigned entry
+- Original entry fields (`at`, `provider`, `action`, etc.)
+
+Verification requires checking hash chains to detect tampering.
+
+## Error Handling
+
+All modules use typed errors extending `@cfxdevkit/cdk.CfxError`:
+- `CryptoError`: Cryptographic operation failures
+- `KeystoreError`: Provider-specific issues (bad passphrase, not found, etc.)
+- Errors include machine-readable codes and contextual metadata
+
+Example error handling:
+```typescript
+import { KeystoreError } from '@cfxdevkit/cdk';
+
+try {
+  await keystore.getSigner(ref);
+} catch (err) {
+  if (err instanceof KeystoreError) {
+    switch (err.code) {
+      case 'services/keystore/not-found':
+        // Handle missing secret
+        break;
+      case 'services/keystore/bad-passphrase':
+        // Prompt for passphrase again
+        break;
+      // ...
+    }
+  }
+  throw err;
+}
+```
+
+## Integration with Conflux CDK
+
+The module integrates with `@cfxdevkit/cdk` for core types:
+- `Address`, `Hex`, `Signer` - Standardized across ecosystem
+- Wallet utilities (`deriveAccount`, `signerFromPrivateKey`) used internally
+- Chain IDs conform to Conflux specifications (eSpace: 1030, Core: 1029)
+
+Providers never expose raw keys but return CDK-compatible `Signer` objects that work with:
+- `viem` transaction serialization
+- Conflux-specific address formats
+- Standard message signing algorithms (EIP-191, EIP-712)
+
+## Thread Safety & Concurrency
+
+- Providers are designed for concurrent use
+- File keystore uses file locking implicitly via atomic writes
+- Memory keystore uses JavaScript Map (single-threaded safe)
+- Ledger provider queues operations to the hardware device
+- Audit logger sequences operations via promise chaining
+- Nonce store uses internal Map with sweep-on-access pattern
+
+## Best Practices
+
+1. **Provider Selection**
+   - Use memory keystore only for testing/ephemeral secrets
+   - File keystore for persistent local storage with strong passphrases
+   - Ledger keystore for highest-security operations requiring hardware confirmation
+
+2. **Key Management**
+   - Never persist raw private keys outside provider encryption
+   - Use embedded wallet manager for standard wallet workflows
+   - Rotate passphrases periodically using `changeFilePassphrase`
+
+3. **Operations**
+   - Always validate operator capabilities before signing transactions
+   - Check audit logs regularly for integrity verification
+   - Set appropriate TTLs on nonces and session tokens
+
+4. **Error Handling**
+   - Distinguish between operational errors (wrong passphrase) and system errors (backend unavailable)
+   - Never log or expose key material in error messages
+
+This documentation covers the public API surface as implemented in the source. For detailed implementation specifics, refer to the individual module source files.

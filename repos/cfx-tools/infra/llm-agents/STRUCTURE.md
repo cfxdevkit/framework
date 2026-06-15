@@ -17,112 +17,136 @@ moon.yml
 openspec
   changes
     archive
-      2026-05-20-ui-subpath-exports — archived spec change
-    cfx-llm-merge — spec change for LLM merge workflow
-    keystore-server-split — spec change for keystore server split
-    solidity-tools-move — spec change for Solidity tools move
+      2026-05-20-ui-subpath-exports
+    cfx-llm-merge
+      .openspec.yaml
+    keystore-server-split
+      .openspec.yaml
+    solidity-tools-move
+      .openspec.yaml
 package.json
 repos
   cfx-tools
     packages
-      keystore-server — external package reference (monorepo sibling)
+      keystore-server
 src
-  index.ts — public entry point (re-exports workers)
+  index.ts
 tsconfig.json
 vite.config.ts
 workers
   agents
-    all.ts — aggregate agent runner
-    check-artifacts.ts — artifact validation agent
-    check-plan.ts — plan validation agent
-    check-render.ts — render validation agent
-    check-types.ts — type-checking agent
-    check.test.ts — unit tests for check agents
-    check.ts — core check agent
-    review.ts — code review agent
+    all.ts
+    check
+      artifacts.ts
+      plan.ts
+      render.ts
+      types.ts
+    check.test.ts
+    check.ts
+    review.ts
     runtime
-      checks.ts — runtime check utilities
-      constants.ts — shared constants
-      corpus.ts — documentation corpus loader
-      docs.ts — doc generation helpers
-      index.ts — runtime module entry
-      models.ts — LLM model definitions
-      paths.ts — path resolution helpers
-      reports.ts — report generation utilities
-    smoke-render.ts — smoke test for rendering
-    smoke.ts — smoke test runner
-  commands.ts — CLI command definitions
+      checks.ts
+      constants.ts
+      corpus.ts
+      docs.ts
+      index.ts
+      models.ts
+      paths.ts
+      reports.ts
+    smoke-render.ts
+    smoke.ts
+  commands.ts
   commit
-    changeset.ts — changeset generation logic
-    commit.ts — commit message generation
-    failure-analysis.ts — failure diagnosis helper
-    flags.ts — CLI flag parsing
-    gate-output.ts — gate result output formatting
-    gate-results.ts — gate result aggregation
-    gates.test.ts — gate tests
-    gates.ts — gate execution engine
-    hud.ts — terminal HUD rendering
-    index.test.ts — integration tests
-    index.ts — commit workflow entry
-    message.ts — commit message formatting
-    precommit.ts — precommit checks
-    scope.ts — commit scope resolution
-    terminal-ui-summary.ts — terminal summary UI
-    terminal-ui.test.ts — terminal UI tests
-    terminal-ui.ts — terminal UI helpers
-    types.ts — commit workflow types
-    validate.ts — commit validation
-    workflow.test.ts — workflow tests
+    changeset.ts
+    commit.ts
+    failure-analysis.ts
+    flags.ts
+    gate
+      output.ts
+      results.ts
+    gates.test.ts
+    gates.ts
+    hud.ts
+    index.test.ts
+    index.ts
+    message.ts
+    precommit.ts
+    scope.ts
+    terminal
+      ui.test.ts
+      ui.ts
+    terminal-ui-summary.ts
+    types.ts
+    validate.ts
+    workflow.test.ts
   completion
-    complete.ts — CLI completion helper
-    config-normalize.ts — config normalization
-    config.ts — completion config
-    context.ts — context provider
-    guards.ts — type guards for completion
-    index.ts — completion entry
-    json.ts — JSON completion helpers
-    provider-classes.ts — provider class registry
-    provider-meta.ts — provider metadata
-    provider-stream-parse.ts — stream parsing
-    provider-stream.ts — streaming helpers
-    providers.ts — provider registry
-    runner.ts — completion runner
-    types.ts — completion types
-    units.ts — completion units
+    cloud-credentials.ts
+    complete.ts
+    config-normalize.ts
+    config.ts
+    context.ts
+    guards.ts
+    index.ts
+    json.ts
+    provider
+      classes.ts
+      meta.ts
+      stream.ts
+    provider-stream-parse.ts
+    providers.ts
+    resolve-action.ts
+    runner.ts
+    types.ts
+    units.ts
   docs
-    api-enrichment.test.ts — API enrichment tests
-    api-enrichment.ts — API doc enrichment
-    api-probe.test.ts — API probe tests
-    api-probe.ts — API discovery probe
-    api.ts — API doc generation
-    flags.ts — docs CLI flags
-    index.ts — docs workflow entry
-    package-page-enrichment.test.ts — package page tests
-    package-page-enrichment.ts — package page enrichment
-    packages.ts — package metadata loader
-    readme-enrichment.ts — README enrichment
-    readme.ts — README generation
-    structure-enrichment.ts — structure enrichment
-    structure.ts — structure doc generation
-    wiki.ts — wiki doc generation
-  help.ts — CLI help system
-  llm-agents.ts — main entry (re-exports workers)
+    api
+      enrichment.test.ts
+      enrichment.ts
+      probe.test.ts
+      probe.ts
+    api.ts
+    flags.ts
+    index.ts
+    package-page
+      enrichment.test.ts
+      enrichment.ts
+    packages.ts
+    readme-enrichment.ts
+    readme.ts
+    structure-enrichment.ts
+    structure.ts
+    wiki.ts
+  help.ts
+  llm-agents.ts
   shared
-    execution-context.ts — execution context utils
-    index.ts — shared module entry
-    logging.ts — logging helpers
-    repo-actions.ts — repo operation helpers
+    execution-context.ts
+    index.ts
+    logging.ts
+    repo-actions.ts
   tests
-    baseline.ts — test baseline generation
-    discover.ts — test discovery
-    generate.ts — test generation
-    index.ts — tests workflow entry
-    support.ts — test support utilities
-    write.ts — test file writing
-  validate-models-probe.ts — model validation probe
-  validate-models-report.ts — model validation report
-  validate-models.ts — model validation runner
+    baseline.ts
+    discover.ts
+    generate.ts
+    index.ts
+    support.ts
+    write.ts
+  validate-models
+    probe.ts
+    report.ts
+  validate-models.ts
 ```
 
-<!-- structure-status: enriched -->
-<!-- structure-hash: d24dd74d05ea0dc3a17147fc144774b95548f06c6530cf546b9a7ede3f4034f2 -->
+## Public Entry Points
+
+- `@cfxdevkit/llm-agents` → `index.d.ts`
+
+## Documentation Contract
+
+- README.md
+- API.md
+- STRUCTURE.md
+
+> Regenerated by `pnpm gen:structure`. Optional prose enrichment may be applied afterwards.
+
+<!-- structure-status: deterministic -->
+<!-- structure-hash: bd7f8021c05915e8972a8049dc7f84e692bbca309041b8a9c1ad2ae6d15f9bb2 -->

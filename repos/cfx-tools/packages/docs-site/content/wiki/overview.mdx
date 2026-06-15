@@ -4,96 +4,88 @@ title: "root — Wiki"
 
 # root — Wiki
 
-# Conflux DevKit Framework (`@cfxdevkit/framework`)
+# @cfxdevkit/framework
 
-Welcome to the **Conflux DevKit** monorepo. This is the canonical reference for building on the [Conflux Network](https://confluxnetwork.org/). Whether you are integrating blockchain primitives, automating workflows with LLMs, or developing dApps, this repository provides the shared infrastructure, tooling, and SDKs required to build securely and efficiently.
+Conflux DevKit (`@cfxdevkit/framework`) is a pnpm monorepo that equips developers with everything needed to build, test, and run applications on the Conflux Network. It bundles low‑chain primitives, domain‑specific automation libraries, wallet and UI utilities, a backend service (CAS), an example frontend, and a suite of tooling scripts—including an LLM‑driven automation pipeline for code quality, documentation, and release tasks.
 
-This monorepo is structured as a **pnpm workspace** with a strict 5-tier dependency hierarchy. All architectural rules are enforced at commit time by the [`@cfxdevkit/arch-rules`](architecture-check-repo-validation.md) system.
+## What this repo does
 
-## Architecture Overview
+- **Framework packages** (`repos/*`) provide chain‑level primitives (address codecs, unit conversion, RPC clients), vertical domains (automation strategies, game‑engine kit), trust‑bound services (key management, signing), and helper utilities.
+- **Projects** contain two complementary applications:
+  - The **CAS backend** (`projects‑cas`) – a Node.js/Express service handling authentication, strategy execution, admin controls, pool aggregation, health monitoring, and real‑time SSE updates.
+  - The **Example frontend** (`projects‑examples`) – a Next.js showcase that interacts with CAS, manages keystores, controls a local devnode, and demonstrates end‑to‑end flows.
+- **Tooling & scripts** (`scripts`) automate common chores: building, linting, type‑checking, versioning, generating documentation, validating configurations, and running the LLM pipeline.
+- **LLM automation pipeline** – a set of LL‑M‑powered steps (commit quality gates, doc generation, model validation, etc.) that run as part of the CI/CD flow and can be invoked locally via `pnpm run llm:*` commands.
 
-The system is designed around a central **Core Protocol** layer that abstracts the dual-chain nature of Conflux (Core Space and eSpace). Higher-level modules build on this foundation to provide wallets, smart contract interactions, local development environments, and automated agent workflows.
+Everything is organized under a strict **5‑tier dependency hierarchy** enforced by `@cfxdevkit/arch-rules` and validated on every commit, ensuring clean layering and preventing inadvertent shortcuts.
 
-<Mermaid chart={`flowchart TD
-    subgraph "Developer Interface"
-        CLI["CLI & Tools"]
-        VSCode[VS Code Extension]
-        UI[UI Components]
-    end
-    subgraph "Automation & Logic"
-        Agents[LLM Agents]
-        Engine[LLM Engine]
-        Contracts[Solidity Contracts]
-    end
-    subgraph "Core Infrastructure"
-        Core["Core Protocol & Chain"]
-        Wallet["Wallet & Keystore"]
-        DevNode["DevNode & Runtime"]
-    end
-    subgraph "Validation"
-        ArchCheck[Arch Check]
-    end
-    CLI --> Core
-    VSCode --> Core
-    VSCode --> Wallet
-    UI --> Core
-    Agents --> Engine
-    Contracts --> Core
-    Wallet --> Core
-    DevNode --> Core
-    ArchCheck -.-> CLI
-    ArchCheck -.-> Core
-    ArchCheck -.-> Agents
-    ArchCheck -.-> Contracts
-    %% (simplified — original had 31 lines)`} />
+## 5‑tier architecture (summary)
 
-## Key Modules
+| Tier | Responsibility | Example Packages |
+|------|----------------|------------------|
+| -1   | Cross‑cutting config & metadata | `repos/cfx-meta`, `repos/cfx-config` |
+| 0    | Core framework – chain primitives, domains, keys, tools | `repos/cfx-core`, `repos/cfx-domain`, `repos/cfx-keys`, `repos/cfx-tools`, `repos/cfx-solidity` |
+| 1    | Platform – MCP server, VS Code extension, scaffold CLI, devnode | (located in `repos/*` and referenced by tooling) |
+| 2    | Projects – CAS backend & Example frontend | `projects‑cas`, `projects‑examples` |
+| 3    | Tooling & automation – scripts, LLM pipeline, local devnode | `scripts`, LL M‑related scripts |
 
-### Blockchain Primitives
-At the heart of the SDK is the [`Core Protocol & Chain`](core-protocol-chain.md) module. It provides a unified TypeScript client for both **Core Space** (native Conflux) and **eSpace** (EVM-compatible), handling address encoding, chain registry, and RPC abstraction.
+The hierarchy guarantees that, for instance, a domain package never depends on a project‑specific UI component, and tooling only consumes from lower tiers.
 
-Building on this, the [`Solidity Compiler & Contracts`](solidity-compiler-contracts.md) package manages ABI encoding and transaction construction across both chains, while the [`Wallet Abstraction & Hardware`](wallet-abstraction-hardware.md) and [`Keystore & Wallet Services`](keystore-wallet-services.md) modules handle secure key management, signing policies, and hardware wallet integration. Note that all wallet operations flow through the core protocol, ensuring consistent error handling (e.g., `CryptoError` propagation during keystore operations).
+## Key end‑to‑end flows
 
-### Local Development & Tooling
-For local testing, the [`DevNode & Runtime`](devnode-runtime.md) module allows you to spawn deterministic Conflux nodes with pre-funded accounts and auto-mining enabled. This is essential for CI pipelines and local integration testing.
+1. **Local development loop** – A developer runs `pnpm run devnode` to spin up a local Conflux node, then `pnpm run dev` (or the appropriate package script) to start the CAS backend and the Example frontend. The frontend calls into `@cfxdevkit/automation` (domain tier) and `@cfxdevkit/services` (keys tier) to submit transactions, which are routed via the RPC clients in `cfx-core`.
 
-Developer productivity is supported by the [`CLI & Developer Tools`](cli-developer-tools.md) for scaffolding new projects, and the [`VS Code Extension`](vs-code-extension.md) which integrates node management and contract deployment directly into your editor.
+2. **Commit quality gate** – On `git commit`, the `repo:precommit` script triggers the LLM pipeline (`llm:validate-models`, `llm:test-upkeep`, `llm:docs-api`, etc.) followed by linting, type‑checking, and the architecture‑rule check. Any failure aborts the commit, guaranteeing that only conforming code enters the repo.
 
-### Automation & Intelligence
-The DevKit includes a robust automation layer powered by the [`LLM Completion Engine`](llm-completion-engine.md). This engine standardizes provider connectivity and prompt execution, serving as the backbone for the [`LLM Agent Workflows`](llm-agent-workflows.md). These agents handle repository analysis, commit quality gates, and documentation enrichment.
+3. **Documentation regeneration** – Running `pnpm run docs:wiki` (or the richer `docs:enrich:all`) pulls docstrings from source, runs LLM‑based enrichment, and updates the wiki pages. The generated files are then validated by `docs:validate-wiki`.
 
-When running agent checks (e.g., `RunAgentCheck`), the system resolves execution contexts and validates configuration paths before proceeding, ensuring that automation steps are deterministic and reproducible.
+4. **Release automation** – The `repo:release` script bumps versions according to conventional commits, builds all packages (`pnpm run build`), publishes to the registry, and updates the changelog, all while invoking the LLM pipeline for release‑notes generation.
 
-### Quality & Validation
-All code contributions are validated by the [`Architecture Check & Repo Validation`](architecture-check-repo-validation.md) suite. This includes architecture rule enforcement, secret scanning, and documentation alignment checks. The [`Docs Pipeline`](docs-pipeline.md) module orchestrates the generation of API references and READMEs, ensuring documentation stays in sync with the codebase.
+## Getting started
 
-## Getting Started
+1. **Clone the repo**  
+   ```bash
+   git clone https://github.com/conflux-devkit/framework.git
+   cd framework
+   ```
 
-1.  **Install Dependencies:**
-    Ensure you have `pnpm` installed, then run:
-    ```bash
-    pnpm install
-    ```
+2. **Install dependencies** (uses pnpm)  
+   ```bash
+   pnpm install
+   ```
 
-2.  **Local Development:**
-    Start a local Conflux node using the DevNode CLI:
-    ```bash
-    pnpm devnode
-    ```
-    This will spin up Core and eSpace endpoints on `127.0.0.1:12537` and `127.0.0.1:8545` respectively.
+3. **Build the workspace**  
+   ```bash
+   pnpm run build
+   ```
 
-3.  **Validation:**
-    Before committing, run the full validation suite to ensure architectural compliance:
-    ```bash
-    pnpm repo:check
-    ```
+4. **Spin up a local devnode** (optional but useful for testing)  
+   ```bash
+   pnpm run devnode
+   ```
 
-4.  **Documentation:**
-    To sync and enrich documentation across the monorepo:
-    ```bash
-    pnpm docs:sync
-    ```
+5. **Explore the modules** – Each major part of the repo has its own wiki page; follow the natural links in the text:
+   - [Root](root.md) – monorepo‑wide configuration  
+   - [Repos](repos.md) – framework packages split by tier  
+   - [Projects – CAS](projects-cas.md) – backend service details  
+   - [Projects – Examples](projects-examples.md) – frontend showcase  
+   - [Scripts](scripts.md) – utility and automation scripts  
 
-## Contributing
+From there you can dive into any sub‑package (e.g. `cfx-core`, `cfx-domain`, `cfx-keys`) by navigating from the respective module page.
 
-Please review the [CONTRIBUTING.md](CONTRIBUTING.md) for workflow conventions. For design rationale, see [ARCHITECTURE.md](ARCHITECTURE.md). When implementing new features, ensure dependencies flow strictly from higher tiers (UI/Agents) down to lower tiers (Core/Keystore), as enforced by the [`arch-check`](architecture-check-repo-validation.md) tooling.
+---
+
+### High‑level architecture diagram
+
+<Mermaid chart={`graph TD
+    Root[Root] --> Repos[Repos]
+    Root --> Projects[Projects]
+    Root --> Tooling[Tooling]
+    Repos --> Projects
+    Repos --> Tooling
+    Projects --> Tooling
+`} />
+
+*Root* holds workspace configuration. *Repos* supplies the low‑level framework libraries used by both *Projects* (CAS & Example) and *Tooling* (scripts, LLM pipeline, devnode). *Projects* consume the framework to deliver backend and frontend functionality, while *Tooling* orchestrates builds, checks, and automation across the entire monorepo.  
+
+This view gives a new developer an instant sense of where each piece lives and how they interact—everything else lives inside these four blocks. Happy hacking!

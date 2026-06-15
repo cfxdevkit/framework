@@ -1,0 +1,219 @@
+---
+title: "projects — examples"
+---
+
+# projects — examples
+
+# Showcase Local Module Documentation
+
+## Overview
+
+The `showcase-local` module is a Next.js application that provides a user interface for interacting with the Conflux Devkit backend. It serves as a demonstration and development tool for:
+- Managing cryptographic keys and accounts via a backend keystore
+- Controlling a local Conflux devnode for testing
+- Compiling and deploying Solidity smart contracts
+- Creating and verifying session keys (delegated capabilities)
+- Performing custom backend operations (like reading block numbers)
+
+The application follows a single-page architecture with a persistent sidebar for navigation and dynamic panels that display different functional sections based on user selection.
+
+## Key Components
+
+### API Routes (`app/api/`)
+
+All API routes act as proxies to the backend devnode-server or provide specific functionality. They follow a consistent pattern:
+- Use `requestRuntime` from `lib/local-runtime` to communicate with the devnode-server
+- Apply `noStoreHeaders()` to prevent caching
+- Parse JSON responses with `readRuntimeJson`
+- Handle errors by returning appropriate status codes
+
+Key route groups:
+- **Accounts**: `/api/accounts/[...path]` - Proxy for account management (list, create, etc.)
+- **Contracts**: `/api/contracts` - Contract registry operations (list, get, delete)
+- **Keystore**: `/api/keystore/[...path]` - Keystore operations (wallet management, locking/unlocking)
+- **Devnode**: `/api/devnode/*` - Local devnode control (start, stop, mine, status)
+- **Compiler**: `/api/compile/[...path]` - Solidity compilation
+- **Deploy**: `/api/deploy/[...path]` - Contract deployment
+- **Session Key**: `/api/session-key/[...path]` - Session key creation and management
+- **Custom Operation**: `/api/custom/block-number` - Example custom backend call
+
+### Client-Side Architecture
+
+#### Root Components
+- `app/layout.tsx`: Sets up global styles, theme providers, and layout structure
+- `app/page.tsx`: Entry point that redirects to `ShowcaseWorkspace`
+- `app/showcase-workspace.tsx`: Main application component managing state and UI rendering
+
+#### State Management
+State is centralized in `ShowcaseWorkspace` and distributed to child components via props:
+- **Wallet/Account State**: Active wallet, derived accounts, faucet info
+- **Devnode State**: Node status, profiles, mining capabilities
+- **Contract State**: Compiled artifact, deployment results, contract registry
+- **Session State**: Session key parameters, issued session, verification status
+- **UI State**: Active panel, open dialogs, busy flags, error messages
+
+### Panels (`app/panels/`)
+
+Each panel represents a collapsible section in the main interface. Panels are conditionally rendered based on `activeSection` state:
+
+| Panel ID | Group | Purpose |
+|----------|-------|---------|
+| `setup` | backend | Network configuration, chain IDs, help links |
+| `keystore` | keys | Wallet management, unlocking, passphrase handling |
+| `accounts` | keys | Derived account activation, local faucet (local network only) |
+| `devnode` | backend | Local devnode control (start/stop/mine), profile selection (local only) |
+| `session-key` | auth | Session key creation and verification |
+| `compiler` | onchain | Solidity compilation interface |
+| `deploy` | onchain | Contract deployment and registry |
+| `contract-context` | onchain | Details of currently selected contract |
+| `custom-operation` | inspect | Custom backend operations (e.g., block number) |
+| `reveal` | keys | Mnemonic/private key revelation with timeout |
+
+Each panel follows a consistent structure:
+- Header with title and description
+- Stats grid showing key metrics (using `DevnodeStat` components)
+- Main content area with forms, buttons, and data displays
+- Action buttons that open dialogs or trigger backend operations
+
+### Dialogs (`app/dialogs/`)
+
+Modals for secondary actions that don't belong in the main pane:
+- **Compiler Dialog**: Edit source, set solc version, compile contracts
+- **Deploy Dialog**: Configure deployment parameters, broadcast transaction
+- **Session Key Dialog**: Define scope (contracts/selectors), set TTL and value limits
+- **Custom Operation Dialog**: Execute custom backend calls (e.g., read block number)
+
+Dialogs are controlled by `activeDialog` state and include:
+- Escape key handling to close
+- Disabled states based on operation validity
+- Loading indicators during async operations
+- Result display areas (JSON previews for successful operations)
+
+### Shared Utilities
+
+#### Types (`app/lib/`)
+- `contracts-types.ts`: Contract registry and artifact definitions
+- `devnode-types.ts`: Devnode status, profile, and account structures
+- `keystore-types.ts`: Keystore wallet, account, and operation types
+- `showcase-guide.ts`: Code snippets for collapsible examples in UI
+
+#### Helpers (`app/workspace/shared.ts`)
+- `chainIdFor`: Converts network/space to chain ID
+- `displayNetwork`: Formats network names for display
+- `formatSpace`: Converts space ID to human-readable label
+- `splitValues`: Parses comma-separated values with validation
+- `normalizedTtl`: Converts TTL minutes to seconds with bounds
+- `preStyle`: Consistent styling for code blocks
+
+### Runtime Clients
+
+#### Devkit Client (`app/runtime/devkit-client.ts`)
+Provides typed access to devnode-server functionality:
+- `accounts`: List accounts, get faucet info
+- `node`: Control devnode (start/stop/mine/status), manage profiles
+- Used in `devnode-client.ts` and `keystore/client.ts` for direct backend calls
+
+#### Keystore Client (`app/keystore/client.ts`)
+Specialized helpers for keystore operations:
+- `fetchDevnodeAccounts`: Gets accounts with faucet info
+- `revealSecret`: Two-step secret revelation (request then consume)
+
+## How It Works
+
+### Data Flow
+
+1. **User Interaction**:
+   - User clicks button in panel/dialog
+   - Triggers state update in `ShowcaseWorkspace` (e.g., setting form values, opening dialog)
+
+2. **State Propagation**:
+   - Updated state passed down as props to panels/dialogs
+   - Panels/dialogs re-render with new state
+
+3. **Backend Communication**:
+   - Panels/dialogs call methods from props (e.g., `onRunCompile`, `onLocalFund`)
+   - These methods typically:
+     - Set busy state to show loading indicators
+     - Call API routes or devkit client methods
+     - Update state with results/errors
+     - Clear busy state
+
+4. **API Route Execution**:
+   - API route handlers:
+     - Extract path/method/request body
+     - Call `requestRuntime` to forward to devnode-server
+     - Parse JSON response
+     - Return proxied response to client
+
+5. **Devnode-Server Response**:
+   - Backend processes request (accounts, keystore, compilation, etc.)
+   - Returns JSON response to API route
+   - API route relays response to client
+   - Client updates UI with results
+
+### Example Flow: Contract Deployment
+
+1. User fills deploy dialog parameters and clicks "Deploy contract"
+2. `DeployDialogBody` calls `compose.runDeploy()` prop
+3. `ShowcaseWorkspace`:
+   - Sets `deployBusy` state
+   - Calls `compose.runDeploy()` (from workspace/compose)
+4. `Compose`:
+   - Validates ready state
+   - Calls `workspace.compose.runDeploy()`
+   - Sends POST to `/api/deploy/[...path]` with contract data
+5. API Route:
+   - Forwards to devnode-server's `/deploy/compile-and-deploy` endpoint
+   - Returns deployment result
+6. Workspace:
+   - Updates `deployResult` state with transaction hash
+   - Clears `deployBusy` state
+7. `DeployPanel`:
+   - Displays transaction result in JSON preview
+   - Optionally refreshes contract registry
+
+## Connection to Backend
+
+The showcase application communicates with a separate devnode-server backend (not part of this module) through:
+- **API Route Proxies**: Most communication goes through Next.js API routes that forward requests to the devnode-server
+- **Direct Devkit Calls**: Some operations (devnode control, keystore accounts) use the `@cfxdevkit/devkit` client directly
+
+The devnode-server provides:
+- Account management (BIP-32 hierarchical deterministic wallets)
+- Keystore operations (encrypted mnemonic storage)
+- Solidity compilation (via solc-js)
+- Contract deployment and interaction
+- Local blockchain simulation (for development)
+- Session key issuance and verification
+
+## Mermaid Diagram
+
+The following diagram illustrates the main architectural layers and data flow:
+
+<Mermaid chart={`graph LR
+    A[ShowcaseWorkspace] --> B["UI Components<br/>(Panels & Dialogs)"]
+    A --> C[State Management]
+    B --> D[API Routes]
+    B --> E[Devkit Client]
+    D --> F[Devnode-Server]
+    E --> F
+`} />
+
+*Explanation:*
+- The root `ShowcaseWorkspace` manages application state and renders UI components
+- UI components (panels/dialogs) trigger actions based on user interaction
+- Actions either go through API routes (proxies) or direct devkit client calls
+- Both paths communicate with the devnode-server backend
+- State flows from backend responses back to the UI via React state updates
+
+## Conclusion
+
+The `showcase-local` module provides a comprehensive interface for Conflux backend development by:
+1. Abstracting backend complexity through consistent API route patterns
+2. Separating concerns between state management, UI presentation, and backend communication
+3. Offering specialized panels for different workflows (keys, accounts, contracts, etc.)
+4. Using dialogs for focused secondary actions without cluttering the main interface
+5. Leveraging TypeScript for type safety across the client-backend boundary
+6. Following Next.js conventions for routing, styling, and component organization
+
+This architecture allows developers to focus on their core workflows while the application handles the intricacies of backend communication, state synchronization, and UI responsiveness.

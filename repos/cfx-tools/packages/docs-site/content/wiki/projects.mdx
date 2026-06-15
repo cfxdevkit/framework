@@ -1,0 +1,68 @@
+---
+title: "projects"
+---
+
+# projects
+
+# projects
+
+The **projects** module groups two complementary sub‑modules that together form a full‑stack development environment for Conflux eSpace:
+
+* **[projects — cas](projects-cas.md)** – the backend service (CAS) that runs on Node.js/Express and supplies authentication, strategy job management, admin controls, pool aggregation, health monitoring, and real‑time SSE updates.
+* **[projects — examples](projects-examples.md)** – a Next.js showcase application (showcase‑local) that provides a UI for interacting with the CAS backend, managing keystores, controlling a local devnode, compiling/deploying contracts, and exercising delegated capabilities.
+
+## How the sub‑modules fit together
+
+The CAS backend exposes a set of REST and SSE endpoints that the showcase‑local frontend consumes:
+
+| Backend component (CAS) | Frontend usage (showcase‑local) |
+|--------------------------|---------------------------------|
+| **Auth router** (`src/routes/auth.ts`) – SIWE login/logout | `login` action in `src/app/auth-context.tsx` → redirects to SiwePage |
+| **Jobs router** (`src/routes/jobs.ts`) – create, list, cancel limit‑order/DCA/TWAP/swap jobs | `createJobsRouter` → `parseCreateJobInput` → job forms in UI; SSE listener `startPoller` → `publishJobUpdate` updates job cards |
+| **Pools router** (`src/routes/pools.ts`) – fetch & cache pool data from CoinGecko | UI pools page calls `fetchPoolsFromGecko`; cache invalidated via `resetPoolsCache` |
+| **Session router** (`src/routes/session.ts`) – admin middleware `requireAdmin` → `requireSession` | Admin‑only UI actions guard via `isAdminAddress` check |
+| **SSE events** (`src/sse/events.ts`) – push job/status updates | Frontend opens EventSource to receive real‑time updates for job status and pool changes |
+| **Database helpers** (`src/db/sqlite.ts`) – `get`, `set`, `getSlippageBps` | Used by backend routes; tested via `client.test.ts` shared with frontend utilities |
+| **Config resolution** (`backend/src/config.ts`) – `resolveCasBackendConfig` → `espaceChainId` | Frontend reads chainId via `readTargetEspaceChain` in `src/lib/ethereum.ts` to match backend network |
+
+Cross‑module workflows illustrated below show the typical request/response flows and shared utilities.
+
+### Mermaid diagram: CAS ↔ Showcase‑local interaction
+
+<Mermaid chart={`sequenceDiagram
+    participant UI as Showcase‑local (Next.js)
+    participant API as CAS Backend (Express)
+    participant DB as SQLite
+    participant SSE as SSE Events
+    participant Ext as External APIs (CoinGecko, Conflux Node)
+
+    UI->>API: POST /auth/login (SIWE)
+    API-->>UI: JWT / session cookie
+    UI->>API: GET /pools (with auth)
+    API->>Ext: fetch pool data
+    Ext-->>API: pool JSON
+    API->>DB: cache pools (set)
+    API-->>UI: pooled data
+    UI->>API: POST /jobs (create job)
+    API->>DB: insert job record
+    API-->>UI: job id
+    loop SSE updates
+        API->>SSE: publishJobUpdate(jobId, status)
+        SSE-->>UI: push job status
+    end
+    UI->>API: GET /jobs (list)
+    API->>DB: select jobs
+    API-->>UI: job list
+`} />
+
+*Solid lines* denote HTTP request/response; *dashed line* denotes the Server‑Sent Events channel.
+
+## Key cross‑module workflows
+
+1. **User authentication & session management** – SIWE login handled by CAS auth router; the resulting session token is stored in the showcase‑local auth context and sent with every subsequent API request.
+2. **Job lifecycle** – UI collects job parameters → validates via `parseCreateJobInput` → POST to `/jobs` → CAS persists job in SQLite → SSE stream pushes status updates → UI refreshes job cards in real time.
+3. **Pool data synchronization** – Background poller in CAS (`fetchPoolsFromGecko`) updates SQLite cache; UI pools page reads the cached data via `/pools` endpoint; cache can be manually reset (`resetPoolsCache`) from admin UI.
+4. **Administrative actions** – Admin‑only routes guard with `requireAdmin` → `requireSession`; showcase‑local admin panel calls these endpoints after verifying `isAdminAddress`.
+5. **Configuration sharing** – Both sides derive the target eSpace chain ID from the same source (`espaceChainId` in CAS config, `readTargetEspaceChain` in frontend utilities), ensuring they operate on the same network.
+
+For detailed specifications of each sub‑module, see their respective pages linked above. The grouping exists to provide a cohesive, locally runnable stack where the backend supplies core DeFi automation logic and the frontend offers an interactive development and demonstration environment.

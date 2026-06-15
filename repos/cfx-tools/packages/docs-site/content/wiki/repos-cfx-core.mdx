@@ -1,0 +1,322 @@
+---
+title: "repos — cfx-core"
+---
+
+# repos — cfx-core
+
+# @cfxdevkit/cdk
+
+Conflux Development Kit — Tier 0a chain primitives for Conflux Core Space and eSpace. Provides address codecs, chain configuration, RPC clients, error handling, types, unit conversions, and wallet utilities.
+
+## Overview
+
+The CDK is a foundational library for interacting with Conflux networks. It separates concerns into pure data (chains, types), encoding utilities (address, units), client abstractions (Core Space and eSpace RPC), and wallet functionality. All components are framework-stable and designed for composition.
+
+Key characteristics:
+- **Pure data**: Chain configurations are static objects with no I/O.
+- **Transport agnostic**: Clients accept abstract transports (HTTP, WebSocket, fallback) defined in `client/transport`.
+- **Error typed**: All errors extend `CfxError` with stable codes and optional meta.
+- **BigInt only**: Unit math uses `bigint` exclusively; no `Number` arithmetic.
+- **Dual-space aware**: Wallet and client utilities handle both Core Space (CFX-native) and eSpace (EVM-compatible) addresses and transactions.
+
+## Key Components
+
+### Address (`cfxdevkit/cdk/address`)
+
+Encodes and decodes Conflux base32 addresses (e.g., `cfx:aarc9...`) to/from hex (EIP-55 format). Re-exports verified helpers from `cive` under stable names.
+
+Key functions:
+- `hexToBase32(hexAddress, networkId, opts?)`: Converts hex to base32 with network ID prefix (1029=mainnet, 1=testnet).
+- `base32ToHex(base32Address, opts?)`: Converts base32 to hex.
+- `isBase32Address(address)`: Validates base32 address format.
+- `getCoreAddress(address)`: Normalizes base32 address (canonical prefix and casing).
+
+Example from tests:
+```typescript
+import { hexToBase32, base32ToHex } from '@cfxdevkit/cdk/address';
+
+hexToBase32('0x1a2f80341409639ea6a35bbcab8299066109aa55', 1029);
+// Returns 'cfx:aarc9abycue0hhzgyrr53m6cxedgccrmmyybjgh4xg'
+```
+
+### Chains (`cfxdevkit/cdk/chains`)
+
+Static catalog of Conflux chain configurations. Provides chain lookup and validation without runtime dependencies.
+
+Exports:
+- Named chains: `espaceMainnet`, `espaceTestnet`, `espaceLocal`, `coreSpaceMainnet`, `coreSpaceTestnet`, `coreSpaceLocal`.
+- `getChain(idOrName)`: Looks up chain by numeric ID or kebab-case slug (throws `CfxError` on miss).
+- `listChains(filter?)`: Returns all chains, optionally filtered by family (`'core'`|`'espace'`) and network (`'mainnet'`|`'testnet'`|`'devnet'`|`'local'`).
+- `defineChain(input)`: Validates and returns user-supplied chain config (enforces positive integer ID and non-empty RPC endpoints).
+
+Chain config shape:
+```typescript
+interface ChainConfig {
+  id: ChainId; // EIP-155 chain ID
+  name: string; // kebab-case slug
+  displayName: string;
+  network: Network; // 'mainnet' | 'testnet' | 'devnet' | 'local'
+  family: ChainFamily; // 'core' | 'espace'
+  nativeToken: { symbol: string; decimals: number };
+  rpc: { http: string[]; ws?: string[] };
+  explorer?: { name: string; url: string };
+}
+```
+
+### Client (`cfxdevkit/cdk/client`)
+
+Factory for creating RPC clients tailored to Core Space or eSpace chains. Abstracts transport layer and provides uniform error wrapping.
+
+Exports:
+- `createClient({ chain, transport })`: Returns `EspaceClient` or `CoreSpaceClient` based on `chain.family`.
+- Transport builders: `http(opts?)`, `ws(opts?)`, `fallback(transports)`.
+- Type interfaces:
+  - `EspaceClient`: eSpace-compatible methods (`getBlockNumber`, `getBalance`, `estimateGas`, etc.).
+  - `CoreSpaceClient`: Core Space-specific methods (`getEpochNumber`, `getStatus`, `getLogs`, etc.).
+  - `Client`: Union of both client types.
+
+Transport options:
+- `http(opts)`: Configures HTTP transport (url, headers, timeoutMs, retries).
+- `ws(opts)`: Configures WebSocket transport (url, reconnect, timeoutMs).
+- `fallback(transports)`: Creates transport that tries each in sequence until success.
+
+Example:
+```typescript
+import { createClient, http } from '@cfxdevkit/cdk/client';
+import { coreSpaceTestnet } from '@cfxdevkit/cdk/chains';
+
+const client = createClient({
+  chain: coreSpaceTestnet,
+  transport: http({ url: 'https://test.confluxrpc.com' })
+});
+
+const epoch = await client.getEpochNumber(); // Core Space method
+```
+
+### Errors (`cfxdevkit/cdk/errors`)
+
+Typed error hierarchy for framework operations. All errors extend `CfxError` and include:
+- `code`: Stable, namespaced identifier (e.g., `'core/chains/unknown'`).
+- `message`: Human-readable description.
+- `cause`: Optional underlying error.
+- `meta`: Optional structured context (avoid secrets).
+
+Classes:
+- `CfxError`: Base framework error.
+- `RpcError`: Transport/network failures (timeouts, 5xx).
+- `ContractError`: Smart contract reverts, decode issues.
+- `WalletError`: Signing/derivation failures.
+- `KeystoreError`: Vault/backend issues (in other packages).
+
+Utilities:
+- `isCfxError(value)`: Type guard for error discrimination.
+- `wrapRpc(promise, code, meta?)`: Wraps promises to convert rejections to `RpcError`.
+- `nullWhenNotFound(promise, notFoundName)`: Converts specific errors to `null` (used for transaction receipt lookups).
+
+Example:
+```typescript
+import { wrapRpc } from '@cfxdevkit/cdk/client/errors';
+import { CfxError } from '@cfxdevkit/cdk/errors';
+
+const safePromise = wrapRpc(
+  fetchData(),
+  'myapp/data/fetch',
+  { endpoint: '/api/data' }
+);
+
+// Rejects become RpcError with code 'myapp/data/fetch'
+```
+
+### Types (`cfxdevkit/cdk/types`)
+
+Shared primitive types and interfaces, primarily re-exports from `viem` with Conflux-specific additions.
+
+Key types:
+- `Address`: Hex-encoded 20-byte address (EIP-55 checksum recommended).
+- `Hash`: Hex-encoded 32-byte transaction/block hash.
+- `Hex`: Generic 0x-prefixed hex byte string.
+- `Wei`: `bigint` for smallest token unit (wei for 18-decimal tokens).
+- `ChainId`: Numeric EIP-155 chain identifier.
+- `BlockTag`: Block selector (string tag or `bigint` block number).
+- `EpochTag`: Conflux Core Space epoch selector (`'latest_state'`, `'latest_finalized'`, etc.).
+- `NodeStatus`: Response from `cfx_getStatus` (includes epoch numbers, best hash).
+- `CoreLogFilter`: Filter for `cfx_getLogs` (address, topics, epoch/block ranges).
+- `CoreLog`: Decoded log entry from Core Space.
+- `SponsorInfo`: Snapshot from `cfx_getSponsorInfo`.
+
+### Units (`cfxdevkit/cdk/units`
+
+Token unit math and formatting helpers. Uses `bigint` only; delegates to `viem` for decimal conversions.
+
+Conflux units:
+- **CFX**: Base token (1 CFX = 10^18 drip).
+- **Drip**: Smallest indivisible unit (alias for wei in CFX context).
+- **Gdrip**: Gas price unit (1 Gdrip = 10^9 drip).
+
+Helpers:
+- `parseUnits(value, decimals)` / `formatUnits(value, decimals)`: General decimal conversion.
+- `parseCFX(value)` / `formatCFX(value)`: 18-decimal CFX helpers.
+- `parseDrip(value)` / `formatDrip(value)`: Alias for CFX (semantic clarity).
+- `parseGDrip(value)` / `formatGDrip(value)`: 9-decimal Gdrip helpers.
+- `formatToken(value, { decimals, symbol })`: Formats as `"<amount> <symbol>"`.
+- `stringifyBigInt(value, space?)`: `JSON.stringify` that serializes `bigint` as decimal strings.
+- Constants: `MAX_UINT256`, `MAX_UINT128`, `ZERO_ADDRESS`.
+
+Example:
+```typescript
+import { parseCFX, formatCFX, formatToken } from '@cfxdevkit/cdk/units';
+
+parseCFX('1.5'); // 1500000000000000000n
+formatCFX(1500000000000000000n); // '1.5'
+formatToken(2000000000000000000n, { decimals: 6, symbol: 'USDC' }); // '2000000 USDC'
+```
+
+### Wallet (`cfxdevkit/cdk/wallet`
+
+HD wallet utilities for key derivation and transaction signing across both Conflux spaces.
+
+Features:
+- BIP-39 mnemonic generation and validation.
+- Hierarchical deterministic derivation (BIP-44) for:
+  - eSpace: `m/44'/60'/...` (coin type 60)
+  - Core Space: `m/44'/503'/...` (coin type 503)
+- Dual-address accounts (same derivation path yields both eSpace and Core Space addresses).
+- Signers for:
+  - eSpace transactions (via `viem`)
+  - Core Space transactions (via `cive`)
+  - Messages and typed data (EIP-712)
+
+Key exports:
+- `generateMnemonic(strength?)`: Creates BIP-39 mnemonic.
+- `validateMnemonic(mnemonic)`: Checks mnemonic validity.
+- `deriveAccount({ mnemonic, path, passphrase })`: Derives single account.
+- `deriveAccounts({ mnemonic, basePath, count, passphrase })`: Derives multiple accounts.
+- `deriveDualAccount({ mnemonic, index, accountType, coreNetworkId, passphrase })`: Derives paired eSpace/Core Space account.
+- `signerFromPrivateKey(privateKey, coreNetworkId?)`: Creates signer capable of:
+  - `signTransaction(tx)`: Handles both eSpace and Core Space txs (via `family` field).
+  - `signMessage(message)`: Signs arbitrary message.
+  - `signTypedData(typedData)`: Signs EIP-712 payload.
+
+Transaction shapes:
+- `SignableTx`: Common transaction fields with optional `family` (`'espace'`|`'core'`).
+  - Core Space requires: `chainId`, `nonce`, `gas`, `storageLimit`, `epochHeight`.
+  - Core Space types: `legacy`, `cip2930` (default), `cip1559` (requires `maxFeePerGas`/`maxPriorityFeePerGas`).
+  - eSpace: Standard EIP-1559 transaction (via `viem`).
+
+Example:
+```typescript
+import { generateMnemonic, deriveDualAccount, signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
+import { coreSpaceTestnet } from '@cfxdevkit/cdk/chains';
+
+const mnemonic = generateMnemonic();
+const dual = deriveDualAccount({
+  mnemonic,
+  index: 0,
+  coreNetworkId: coreSpaceTestnet.id // 1 for testnet
+});
+
+const signer = signerFromPrivateKey(dual.privateKey, coreSpaceTestnet.id);
+
+// Sign eSpace transaction
+const espaceTx = await signer.signTransaction({
+  chainId: coreSpaceTestnet.id,
+  to: '0x0000000000000000000000000000000000000001',
+  value: 1n,
+  nonce: 0,
+  gas: 21000n,
+  maxFeePerGas: 1000000000n,
+  maxPriorityFeePerGas: 1000000000n
+});
+
+// Sign Core Space transaction (note: family: 'core')
+const coreTx = await signer.signTransaction({
+  family: 'core',
+  chainId: coreSpaceTestnet.id,
+  to: dual.coreAddress, // e.g., 'cfxtest:aaaa...'
+  value: 0n,
+  nonce: 0,
+  gas: 21000n,
+  storageLimit: 0n,
+  epochHeight: 0n,
+  gasPrice: 1000000000n,
+  coreType: 'legacy'
+});
+```
+
+## Usage Examples
+
+### Creating a Client for Local Development
+```typescript
+import { createClient, http } from '@cfxdevkit/cdk/client';
+import { coreSpaceLocal, espaceLocal } from '@cfxdevkit/cdk/chains';
+
+// Core Space local client
+const coreClient = createClient({
+  chain: coreSpaceLocal,
+  transport: http()
+});
+
+// eSpace local client
+const espaceClient = createClient({
+  chain: espaceLocal,
+  transport: http()
+});
+```
+
+### Converting Between Address Formats
+```typescript
+import { hexToBase32, base32ToHex, isBase32Address } from '@cfxdevkit/cdk/address';
+
+const hex = '0x1a2f80341409639ea6a35bbcab8299066109aa55';
+const base32 = hexToBase32(hex, 1029); // mainnet
+// base32 === 'cfx:aarc9abycue0hhzgyrr53m6cxedgccrmmyybjgh4xg'
+
+base32ToHex(base32) === hex.toLowerCase(); // true
+isBase32Address(base32); // true
+```
+
+### Funding Accounts with a Dev Node
+```typescript
+import { createDevNode } from '@cfxdevkit/devnode'; // Note: devnode is a separate package
+
+const node = await createDevNode({
+  accounts: 4,
+  balanceCfx: '1000',
+  logging: true
+});
+
+console.log(`Core RPC: ${node.urls.core}`);   // http://127.0.0.1:12537
+console.log(`eSpace RPC: ${node.urls.espace}`); // http://127.0.0.1:8545
+console.log(`Faucet: ${node.faucet.coreAddress}`);
+
+// node.accounts contains 4 pre-funded dual-address accounts
+```
+
+## Architecture
+
+The CDK follows a layered architecture where each concern is isolated:
+
+```
+graph TD
+    A[Application] --> B[Wallet/Signer]
+    A --> C[Client (RPC)]
+    A --> D[Units/Address]
+    C --> E[Chain Config]
+    C --> F[Transport (HTTP/WS/Fallback)]
+    B --> G[Key Derivation]
+    B --> H[Transaction Signing]
+    D --> I[Base32/Hex Codec]
+    E --> J[Static Chain Data]
+```
+
+- **Application layer**: Uses high-level abstractions (wallet, client) to interact with Conflux.
+- **Client layer**: Abstracts RPC calls and transport; chooses implementation based on chain family.
+- **Wallet layer**: Handles cryptographic operations (derivation, signing) for both address formats.
+- **Utility layer**: Provides low-level helpers (address encoding, unit math) with no dependencies on chain state.
+- **Data layer**: Chain configurations are immutable objects; no runtime data fetching.
+
+This separation allows:
+- Swapping transports without changing client code.
+- Using wallet utilities independently of RPC clients.
+- Testing utilities in isolation (e.g., address converters, unit math).
+- Reusing chain configuration across clients, wallets, and scripts.

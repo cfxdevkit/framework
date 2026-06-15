@@ -69,7 +69,7 @@ jobs:
             # Wait for healthcheck to pass (up to 60s)
             for i in $(seq 1 12); do
               STATUS=$(docker inspect --format='{{.State.Health.Status}}' cfxdevkit-docs-site 2>/dev/null || echo "none")
-              if [ "$STATUS" = "healthy" ] || [ "$STATUS" = "none" ]; then
+              if [ "$STATUS" = "healthy" ]; then
                 break
               fi
               if [ "$STATUS" = "unhealthy" ]; then
@@ -81,6 +81,7 @@ jobs:
                 fi
                 exit 1
               fi
+              # Continue loop for "none" (container starting) or other statuses
               sleep 5
             done
 

@@ -45,7 +45,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Sync wiki content
-        run: pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync wiki
+        run: pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all
+
+      - name: Re-index GitNexus
+        run: node .gitnexus/run.cjs analyze
 
       - name: Derive image tags
         id: meta

@@ -10,6 +10,9 @@ COPY . .
 
 RUN pnpm install --frozen-lockfile --filter @cfxdevkit/docs-site...
 
+# Copy node_modules to package directory for next build
+RUN mkdir -p /app/repos/cfx-tools/packages/docs-site && cp -r /app/node_modules /app/repos/cfx-tools/packages/docs-site/
+
 # Run docs-pipeline content prep explicitly before building the docs renderer.
 RUN pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all
 
@@ -30,7 +33,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/repos/cfx-tools/packages/docs-site/node_modules ./node_modules
 COPY --from=builder /app/repos/cfx-tools/packages/docs-site ./repos/cfx-tools/packages/docs-site
 
 WORKDIR /app/repos/cfx-tools/packages/docs-site

@@ -1,0 +1,52 @@
+---
+title: "repos"
+---
+
+# repos
+
+# repos
+
+The **repos** module groups the Conflux Development Kit into logical layers that can be composed together to build, test, and maintain Conflux‑based applications.
+
+## Purpose  
+
+- **cfx‑core** – Tier 0a chain primitives: address codecs, unit conversion, chain configs, RPC clients for Core Space and eSpace, and wallet utilities.  
+- **cfx‑domain** – Tier 0b/0c vertical packages: automation strategies (`@cfxdevkit/automation`) for limit orders, DCA, TWAP, swaps, and a placeholder game‑engine kit.  
+- **cfx‑keys** – Tier 0b trust‑boundary services (`@cfxdevkit/services`) providing pluggable keystore providers, embedded wallet manager, and cryptographic primitives.  
+- **cfx‑meta** – Architecture governance (`arch‑rules.yaml`, `@cfxdevkit/arch‑rules`, validation scripts) that enforces monorepo constraints as a dev‑only dependency.  
+- **cfx‑solidity** – Solidity pipeline: standard ABIs (`@cfxdevkit/abis`) and typed contract helpers (`@cfxdevkit/contracts`) for eSpace and Core Space.  
+- **cfx‑tools** – LLM‑agent framework (`@cfxdevkit/llm‑agents`) for automated repository maintenance (review, check, smoke‑test workflows).  
+- **cfx‑ui** – Opinionated DeFi widgets (`@cfxdevkit/defi‑react`) built on CSS variables, hooks, and viem integration for token swaps, liquidity, portfolio tracking, and tx status.
+
+## How the sub‑modules fit together  
+
+1. **Wallet → RPC → Contracts**  
+   A dApp typically starts with a wallet created via `cfx‑keys` (Keystore Provider → Embedded Wallet Manager). The wallet signs transactions, which are sent through the `cfx‑core` RPC client (Core Space or eSpace). Contract interactions use the typed helpers from `cfx‑solidity` (`@cfxdevkit/contracts`) together with ABI definitions from `@cfxdevkit/abis`.
+
+2. **DeFi UI layer**  
+   The `cfx‑ui` Defi‑React components consume wallet connections (via viem adapters) and blockchain data hooks that call the `cfx‑core` RPC clients. They render swap, liquidity, and portfolio widgets that ultimately invoke contract methods from `cfx‑solidity`.
+
+3. **Automation jobs**  
+   `cfx‑domain`’s `@cfxdevkit/automation` package defines jobs (limit order, DCA, TWAP, swaps). At runtime, the job keeper reads wallet state from `cfx‑keys`, queries prices via oracles, and executes transactions through the `cfx‑core` RPC client, using contract bindings from `cfx‑solidity`.
+
+4. **Repository maintenance**  
+   `cfx‑tools` provides LLM‑driven agents that lint, test, and refactor code across all sub‑modules. Agents can trigger validation scripts in `cfx‑meta` to ensure architectural rules are not violated when changes touch `cfx‑core`, `cfx‑keys`, or `cfx‑solidity`.
+
+5. **Architecture enforcement**  
+   `cfx‑meta` supplies the single source of truth for dependency and layering rules. CI pipelines run its validation scripts, which inspect imports across `cfx‑core`, `cfx‑domain`, `cfx‑keys`, `cfx‑solidity`, `cfx‑tools`, and `cfx‑ui` to prevent illegal coupling (e.g., UI depending directly on keystore internals).
+
+## Representative cross‑module workflows  
+
+- **Swap execution** – UI (`cfx‑ui`) → wallet (`cfx‑keys`) → RPC (`cfx‑core`) → contract call (`cfx‑solidity`).  
+- **Limit‑order automation** – Automation job (`cfx‑domain`) → price oracle → wallet (`cfx‑keys`) → transaction (`cfx‑core`) → contract (`cfx‑solidity`).  
+- **Repo health check** – LLM agent (`cfx‑tools`) → runs tests → invokes `cfx‑meta` validation → reports architectural drift.  
+
+For detailed API and usage of each layer, see the respective sub‑module pages:
+
+- [cfx‑core](cfx-core.md)  
+- [cfx‑domain](cfx-domain.md)  
+- [cfx‑keys](cfx-keys.md)  
+- [cfx‑meta](cfx-meta.md)  
+- [cfx‑solidity](cfx-solidity.md)  
+- [cfx‑tools](cfx-tools.md)  
+- [cfx‑ui](cfx-ui.md)

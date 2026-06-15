@@ -1,0 +1,192 @@
+---
+title: "repos — cfx-meta"
+---
+
+# repos — cfx-meta
+
+# repos/cfx-meta Module
+
+Cross-cutting architecture rules and meta tooling for the monorepo. This module defines and enforces architectural constraints, provides runtime access to rule definitions, and includes scripts for workspace validation.
+
+## Overview
+
+The `cfx-meta` module serves as the single source of truth for monorepo architecture governance. It contains:
+- `arch-rules.yaml`: Declarative architecture rule definition
+- `@cfxdevkit/arch-rules` package: TypeScript API for accessing and enforcing rules
+- Validation scripts: Workspace structure and dependency consistency checks
+
+As a cross-cutting package, it must only appear as a `devDependency` and carries no runtime logic consumed by other packages.
+
+## Architecture Rules Source
+
+The [`arch-rules.yaml`](arch-rules.yaml) file defines the monorepo's architectural constraints using this structure:
+
+```yaml
+version: 1
+lifecycle: pre-release  # or 'release'
+cross-cutting:
+  id: cross-cutting
+  level: -1
+  crossCutting: true
+  usageConstraint: dev-only  # Must be 'dev-only'
+  paths: [...]  # Glob patterns for cross-cutting packages
+tiers:
+  - id: framework    # Level 0
+    level: 0
+    versioningPolicy: semver
+    allowedFromTiers: [platform, domains, projects]  # Tiers allowed to import this tier
+    description: "..."
+  # ... platform, domains, projects tiers
+rules:
+  - id: no-upward-imports
+    enforce: always
+    severity: error
+    scope: all
+    description: "Packages must not import from higher-numbered tiers"
+  # ... other rules
+```
+
+Key concepts:
+- **Tiers**: Hierarchical layers (framework → platform → domains → projects) with strict import directionality
+- **Cross-cutting**: Special tier (level -1) for dev-only tooling that must never be a runtime dependency
+- **Rules**: Enforceable constraints with severity levels and scopes
+- **Versioning policy**: Governs how packages in each tier manage dependencies (`semver`, `workspace`, or `internal`)
+
+## @cfxdevkit/arch-rules Package
+
+The [`packages/arch-rules`](packages/arch-rules) package provides programmatic access to the architecture rules. It parses and validates `arch-rules.yaml` at build time, exporting a typesafe API.
+
+### Installation
+```bash
+pnpm add -D @cfxdevkit/arch-rules
+```
+
+### Key Exports
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `archRules` | `ArchRulesSchema` | Complete parsed rule set |
+| `tiers` | `readonly TierDef[]` | Array of tier definitions |
+| `rules` | `readonly ArchRule[]` | Array of rule definitions |
+| `getLifecycle` | `() => Lifecycle` | Current lifecycle (`'pre-release'` \| `'release'`) |
+| `getTierFor` | `(path: string) => ResolvedTier \| null` | Resolves tier for a file path |
+| `getRulesFor` | `(tierId: string) => readonly ArchRule[]` | Rules applicable to a tier |
+| `isImportAllowed` | `(fromTierId: string, toTierId: string) => boolean` | Validates tier import direction |
+| `getVersioningPolicy` | `(tierId: string) => VersioningPolicy \| null` | Versioning policy for a tier |
+
+### Function Details
+
+#### `getTierFor(path)`
+Determines which architectural tier a file belongs to by matching against tier path patterns.
+
+Returns:
+- For framework/platform/domains/projects: `{ id: string, level: number }`
+- For cross-cutting: `{ id: 'cross-cutting', level: -1, crossCutting: true }`
+- `null` for unmatched paths
+
+Example:
+```ts
+import { getTierFor } from '@cfxdevkit/arch-rules';
+
+getTierFor('repos/cfx-core/packages/util/src/index.ts');
+// { id: 'framework', level: 0 }
+
+getTierFor('repos/cfx-meta/packages/arch-rules/src/index.ts');
+// { id: 'cross-cutting', level: -1, crossCutting: true }
+
+getTierFor('docs/guide.md');
+// null
+```
+
+#### `getRulesFor(tierId)`
+Filters rules by scope to return those applicable to a given tier.
+
+Rules with `scope: 'all'` apply to all tiers. Rules with `scope: ['framework', 'domains']` only apply to those tiers.
+
+#### `isImportAllowed(fromTierId, toTierId)`
+Checks if a runtime import from `fromTierId` to `toTierId` is permitted per tier hierarchy.
+
+Important constraints:
+- Returns `false` if `toTierId === 'cross-cutting'` (cross-cutting packages must be dev-only only)
+- Otherwise checks if `fromTierId` is in `toTier`'s `allowedFromTiers` array
+- Follows the direction: `projects → domains → platform → framework`
+
+Example:
+```ts
+import { isImportAllowed } from '@cfxdevkit/arch-rules';
+
+isImportAllowed('projects', 'framework'); // true
+isImportAllowed('framework', 'projects'); // false
+isImportAllowed('anything', 'cross-cutting'); // false (must be dev-only)
+```
+
+#### `getVersioningPolicy(tierId)`
+Returns the versioning policy for a tier:
+- `'semver'`: Requires explicit semver versions (no `workspace:*` in published deps)
+- `'workspace'`: Allows `workspace:*` for intra-monorepo dependencies
+- `'internal'`: Never published; workspace-only
+- `null` for cross-cutting or invalid tier IDs
+
+## Validation Scripts
+
+Two Node.js scripts provide workspace integrity checks:
+
+### `scripts/validate-workspace.mjs`
+Verifies that `pnpm-workspace.template.yaml` matches the actual package directory structure.
+
+**Usage:**
+```bash
+node scripts/validate-workspace.mjs
+```
+
+**Checks:**
+- Each glob pattern in the template (e.g., `packages/*`) maps to an existing directory
+- Each subdirectory contains a `package.json`
+- Reports warnings for non-package directories and missing package.json files
+
+### `scripts/check-deps.mjs`
+Validates workspace dependency consistency and detects cross-repository dependencies.
+
+**Usage:**
+```bash
+node scripts/check-deps.mjs
+```
+
+**Outputs:**
+- Dependency graph showing `workspace:*` runtime dependencies
+- Warnings for:
+  - Missing workspace dependencies (expected in standalone mode)
+  - External dev dependencies using `workspace:*` (shared tooling)
+- Exits with code 1 if validation fails
+
+## Usage and Integration
+
+### In Linting/CI
+Packages typically consume `@cfxdevkit/arch-rules` through custom lint rules or test suites to enforce architecture constraints during development.
+
+Example test verifying tier imports:
+```ts
+import { getTierFor, isImportAllowed } from '@cfxdevkit/arch-rules';
+
+describe('architecture', () => {
+  it('prevents upward imports', () => {
+    const from = getTierFor('repos/cfx-tools/packages/cli/src/index.ts')?.id;
+    const to = getTierFor('repos/cfx-domain/packages/payments/src/index.ts')?.id;
+    
+    expect(from).toBe('platform');
+    expect(to).toBe('domains');
+    expect(isImportAllowed(from, to)).toBe(false); // platform ← domains not allowed
+  });
+});
+```
+
+### In Release Processes
+The `framework-requires-semver` and `requires-changelog` rules are typically checked in release workflows using the exported rule definitions.
+
+### Consumption Boundaries
+As a cross-cutting package:
+- ✅ Valid: `devDependency` in any package
+- ❌ Invalid: `dependency` or `peerDependency` in any package
+- ❌ Invalid: Runtime import in framework/platform/packages code
+
+This enforcement is implemented via the `no-cross-cutting-runtime-dep` rule in `arch-rules.yaml`.
