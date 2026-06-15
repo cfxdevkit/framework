@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-workspace="${containerWorkspaceFolder:-/workspaces/root}"
+workspace="${containerWorkspaceFolder:-${GITHUB_WORKSPACE:-/workspaces/root}}"
 cd "$workspace"
 
 if ! command -v pnpm >/dev/null 2>&1; then
