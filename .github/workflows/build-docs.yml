@@ -43,6 +43,8 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Build workspace-utils
+        run: pnpm --filter @cfxdevkit/workspace-utils run build
 
       - name: Sync wiki content
         run: pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all
