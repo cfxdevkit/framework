@@ -131,6 +131,7 @@
       "uuid": "^14.0.0",
       "viem": "^2.21.0",
       "wagmi": "^3.6.9",
+      "ws": ">=8.21.0",
       "zod": "4.3.4"
     },
     "onlyBuiltDependencies": [
