@@ -42,14 +42,14 @@ npm install @cfxdevkit/wallet-connect
 ## Core Hooks
 
 ### `useAccount()`
-Returns the currently connected account.
+Returns the currently connected account state.
 
 ```ts
 const { address, chainId, status } = useAccount();
 ```
 
 ### `useNativeBalance(input)`
-Reads the native token balance of an account.
+Reads the native token (CFX) balance of an account.
 
 ```ts
 const { data: balance, isLoading, error } = useNativeBalance({ chainId, account });
@@ -238,4 +238,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 0 — framework** — Must not runtime-import from any higher tier.
 
-<!-- readme-hash: 177b3bfd56a7408f17c82d2e33688f71c4b09afd4126916280d6fb25dd616378 -->
+<!-- readme-hash: 54887cb060982fb73dfe4d1779e3c3bfecb476cdd46689240eac6b5ffd6223db -->

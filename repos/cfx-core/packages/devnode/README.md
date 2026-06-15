@@ -115,6 +115,10 @@ export { MiningStatus }
 
 ```ts
 export interface ParsedArgs {
+  command?: string;
+  config?: string;
+  verbose?: boolean;
+  help?: boolean;
   accounts?: number;
   balance?: number;
   port?: number;
@@ -151,4 +155,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 0 — framework** — Must not runtime-import from any higher tier.
 
-<!-- readme-hash: f24fa3126976d1c77623fb5fb91e44c904ebce2d033819596ef81ef055bdec72 -->
+<!-- readme-hash: 77ac4d73da7119981d8d51e3724e12cfb9f3f459dcd14e3f62e2bbada7655b58 -->

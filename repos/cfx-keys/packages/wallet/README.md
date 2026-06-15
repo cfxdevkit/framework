@@ -63,10 +63,10 @@ export { RawEvmSignature, finaliseEip1559Tx, rawSignatureToHex, toCanonicalHex }
 
 // Errors
 export declare class SessionKeyError extends CfxError {
-  constructor(message: string, code?: string);
+  constructor(message: string, cause?: Error);
 }
 export declare class HardwareWalletError extends CfxError {
-  constructor(message: string, code?: string);
+  constructor(message: string, cause?: Error);
 }
 
 // Local wallet management
@@ -309,4 +309,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 0 — framework** — Must not runtime-import from any higher tier.
 
-<!-- readme-hash: 5b435c754ee1d942114cc1e3972b6f764d0c9d4273cd7586ddecc42ebe529955 -->
+<!-- readme-hash: ed76431e67bced0a3a3aad6072e5bb3c26c57245802e8ccb18dbf2bca29a40ef -->

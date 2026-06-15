@@ -18,63 +18,248 @@
 ## `.`
 
 ```ts
+// Package name identifier for runtime introspection.
 export declare const __packageName: "@cfxdevkit/wallet-connect";
+
+// Standard Conflux eSpace chains: mainnet, testnet, and local development.
 export declare const espaceMainnet: Chain, espaceTestnet: Chain, espaceLocal: Chain;
+
+// List of supported eSpace chains (readonly array).
 export declare const SUPPORTED_ESPACE_CHAINS: readonly [
+  // ...
+];
+
+// Chain configuration map keyed by chain ID.
 export declare const CORE_CHAIN_CONFIGS: Record<number, CoreChainConfig>;
+
+// Options for creating supported eSpace chains.
 export interface CreateSupportedEspaceChainsOptions {
+  // ...
+}
+
+// Extended options for Wagmi config creation, including chain options.
 export interface CreateConfluxWagmiConfigOptions extends CreateSupportedEspaceChainsOptions {
+  // ...
+}
+
+// Props for the Conflux Wagmi provider wrapper component.
 export interface ConfluxWagmiProvidersProps {
+  children: React.ReactNode;
+  config?: import('wagmi').Config;
+  configOptions?: CreateConfluxWagmiConfigOptions;
+  queryClient?: import('@tanstack/query-core').QueryClient;
+  queryClientConfig?: import('@tanstack/query-core').QueryClientConfig;
+}
+
+// Return type for the `useEspaceConnectors` hook.
 export interface UseEspaceConnectorsReturn {
+  // ...
+}
+
+// Fluent provider interface (Conflux wallet connector).
 export interface FluentProvider {
+  // ...
+}
+
+// Core chain configuration interface.
 export interface CoreChainConfig {
+  // ...
+}
+
+// Parameters for adding a new chain to a wallet (EIP-3085).
 export interface ConfluxAddChainParams {
+  // ...
+}
+
+// Minimal EIP-1193 provider interface.
 export interface Eip1193Provider {
+  // ...
+}
+
+// Options for switching chains.
 export interface SwitchChainOptions {
+  // ...
+}
+
+// State representation for the Core chain pill UI.
 export interface CorePillState {
+  // ...
+}
+
+// State representation for the eSpace chain pill UI.
 export interface ESpacePillState {
+  // ...
+}
+
+// Options for generating a SIWE nonce.
 export interface GenerateSiweNonceOptions {
+  // ...
+}
+
+// Input for constructing a SIWE message.
 export interface SiweMessageInput {
+  // ...
+}
+
+// Parsed SIWE message structure.
 export interface ParsedSiweMessage {
+  // ...
+}
+
+// Input for verifying a SIWE message.
 export interface VerifySiweMessageInput {
+  // ...
+}
+
+// Result of SIWE message verification.
 export interface VerifySiweMessageResult {
+  // ...
+}
+
+// Props for the ConnectButton component.
 export interface ConnectButtonProps {
+  connectLabel?: string;
+  onConnect?: () => void;
+  onDisconnect?: () => void;
+  style?: React.CSSProperties;
+  className?: string;
+}
+
+// Props for the WalletPickerModal component.
 export interface WalletPickerModalProps {
+  open: boolean;
+  onClose: () => void;
+  section?: 'core' | 'espace';
+}
+
+// Create an array of supported eSpace chains with optional overrides.
 export declare function createSupportedEspaceChains(options?: CreateSupportedEspaceChainsOptions): readonly [
+  // ...
+];
+
+// Returns a non-Fluent Ethereum target chain (e.g., for fallback).
 export declare function nonFluentEthereumTarget(): undefined | {
+  // ...
+};
+
+// Type guard to check if a provider is a Fluent provider.
 export declare function isFluentProvider(provider: unknown): boolean;
+
+// Create a Wagmi config for Conflux eSpace chains.
 export declare function createConfluxWagmiConfig(options?: CreateConfluxWagmiConfigOptions): import('wagmi').Config<readonly [
+  // ...
+]>;
+
+// Create a TanStack Query client for Conflux.
 export declare function createConfluxQueryClient(config?: QueryClientConfig): QueryClient;
+
+// React provider component wrapping Wagmi + QueryClient for Conflux.
 export declare function ConfluxWagmiProviders({ children, config, configOptions, queryClient, queryClientConfig, }: ConfluxWagmiProvidersProps): import("react").JSX.Element;
+
+// Hook to access the Core wallet status and provider.
 export declare function useCoreWallet(): {
+  status: CoreWalletStatus;
+  provider: FluentProvider | null;
+  // ...
+};
+
+// Hook to get connectors for eSpace chains.
 export declare function useEspaceConnectors(): UseEspaceConnectorsReturn;
+
+// Normalize a raw chain ID (e.g., hex string) to standard format.
 export declare function normalizeCoreChainId(raw: string): string;
+
+// Get the current Fluent Core provider (if active).
 export declare function getFluentCoreProvider(): FluentProvider | null;
+
+// Retrieve chain configuration by hex chain ID.
 export declare function getCoreChainConfig(chainIdHex: string): CoreChainConfig | null;
+
+// Build `eth_addChain` parameters for a given chain config.
 export declare function buildAddChainParams(target: CoreChainConfig, rpcUrl?: string): ConfluxAddChainParams;
+
+// Detect if Fluent Core is installed and available.
 export declare function detectFluentCore(maxMs?: number): Promise<FluentProvider | null>;
+
+// Get the current chain ID via RPC call on Fluent provider.
 export declare function rpcCoreChainId(provider: FluentProvider): Promise<string | null>;
+
+// Get accounts via RPC call on Fluent provider.
 export declare function rpcCoreAccounts(provider: FluentProvider): Promise<string[]>;
+
+// Alternative RPC call to get accounts (for compatibility).
 export declare function rpcRequestCoreAccounts(provider: FluentProvider): Promise<string[]>;
+
+// Switch chain on Fluent provider with fallback to addChain.
 export declare function switchConfluxChain(provider: FluentProvider, chainId: string, addParams: ConfluxAddChainParams): Promise<void>;
+
+// Wait until the provider is on the target chain.
 export declare function waitForCoreChain(provider: FluentProvider, targetHex: string, maxMs?: number, pollIntervalMs?: number): Promise<boolean>;
+
+// Format provider errors into user-friendly strings.
 export declare function formatProviderError(error: unknown): string;
+
+// Extract error message from unknown error objects.
 export declare function errMsg(error: unknown): string;
+
+// Switch to an eSpace chain using an EIP-1193 provider.
 export declare function switchEspaceChain(provider: Eip1193Provider, chain: Chain, options?: SwitchChainOptions): Promise<void>;
+
+// Switch to an eSpace chain using a pre-defined chain config.
 export declare function switchEspaceChainFromConfig(provider: Eip1193Provider, chainConfig: ChainConfig, options?: SwitchChainOptions): Promise<void>;
+
+// Derive Core chain pill state from wallet status and chain ID.
 export declare function deriveCoreState(status: string, chainId: string | undefined, targetHex: string): CorePillState;
+
+// Derive eSpace chain pill state from connection and chain info.
 export declare function deriveESpaceState(isConnected: boolean, chainId: number, targetChainId: number): ESpacePillState;
+
+// Determine if an eSpace chain switch is needed.
 export declare function needsESpaceSwitch(isConnected: boolean, connectedChainId: number, targetChainId: number): boolean;
+
+// Human-readable label for a Core chain ID.
 export declare function coreChainLabel(chainId: string | undefined): string;
+
+// Human-readable label for an eSpace chain ID.
 export declare function espaceChainLabel(chainId: number | undefined): string;
+
+// Generate a SIWE message from input data.
 export declare function createSiweMessage(input: SiweMessageInput): string;
+
+// Generate a random nonce for SIWE.
 export declare function generateSiweNonce(options?: GenerateSiweNonceOptions): string;
+
+// Parse a SIWE message into structured data.
 export declare function parseSiweMessage(message: string): ParsedSiweMessage;
+
+// Verify a SIWE message against Ethereum signature.
 export declare function verifySiweMessage(input: VerifySiweMessageInput): Promise<VerifySiweMessageResult>;
+
+// ConnectButton component for wallet connection UI.
 export declare function ConnectButton({ connectLabel, onConnect, onDisconnect, style, className, }: ConnectButtonProps): import("react").JSX.Element;
+
+// WalletPickerModal component for selecting wallet type.
 export declare function WalletPickerModal({ open, onClose, section }: WalletPickerModalProps): import("react").JSX.Element | null;
+
+// Wallet status enum for UI state.
 export type WalletStatus = 'detecting' | 'not-installed' | 'not-active' | 'connecting' | 'active';
+
+// Core wallet status enum with more granular states.
 export type CoreWalletStatus = 'not-installed' | 'in-detecting' | 'in-activating' | 'not-active' | 'chain-error' | 'active';
+```
+
+### Usage
+
+```tsx
+import { ConfluxWagmiProviders, espaceMainnet, ConnectButton } from '@cfxdevkit/wallet-connect';
+
+const config = createConfluxWagmiConfig({
+  chains: [espaceMainnet],
+});
+
+<ConfluxWagmiProviders config={config}>
+  <ConnectButton />
+</ConfluxWagmiProviders>
 ```
 
 ---
@@ -82,17 +267,67 @@ export type CoreWalletStatus = 'not-installed' | 'in-detecting' | 'in-activating
 ## `./config`
 
 ```ts
+// Options for creating supported eSpace chains.
 export interface CreateSupportedEspaceChainsOptions {
+  // ...
+}
+
+// Extended options for Wagmi config creation, including chain options.
 export interface CreateConfluxWagmiConfigOptions extends CreateSupportedEspaceChainsOptions {
+  // ...
+}
+
+// Props for the Conflux Wagmi provider wrapper component.
 export interface ConfluxWagmiProvidersProps {
+  children: React.ReactNode;
+  config?: import('wagmi').Config;
+  configOptions?: CreateConfluxWagmiConfigOptions;
+  queryClient?: import('@tanstack/query-core').QueryClient;
+  queryClientConfig?: import('@tanstack/query-core').QueryClientConfig;
+}
+
+// Create an array of supported eSpace chains with optional overrides.
 export declare function createSupportedEspaceChains(options?: CreateSupportedEspaceChainsOptions): readonly [
+  // ...
+];
+
+// Returns a non-Fluent Ethereum target chain (e.g., for fallback).
 export declare function nonFluentEthereumTarget(): undefined | {
+  // ...
+};
+
+// Type guard to check if a provider is a Fluent provider.
 export declare function isFluentProvider(provider: unknown): boolean;
+
+// Create a Wagmi config for Conflux eSpace chains.
 export declare function createConfluxWagmiConfig(options?: CreateConfluxWagmiConfigOptions): import('wagmi').Config<readonly [
+  // ...
+]>;
+
+// Create a TanStack Query client for Conflux.
 export declare function createConfluxQueryClient(config?: QueryClientConfig): QueryClient;
+
+// React provider component wrapping Wagmi + QueryClient for Conflux.
 export declare function ConfluxWagmiProviders({ children, config, configOptions, queryClient, queryClientConfig, }: ConfluxWagmiProvidersProps): import("react").JSX.Element;
+
+// Standard Conflux eSpace chains: mainnet, testnet, and local development.
 export declare const espaceMainnet: Chain, espaceTestnet: Chain, espaceLocal: Chain;
+
+// List of supported eSpace chains (readonly array).
 export declare const SUPPORTED_ESPACE_CHAINS: readonly [
+  // ...
+];
+```
+
+### Usage
+
+```ts
+import { createConfluxWagmiConfig, espaceTestnet } from '@cfxdevkit/wallet-connect/config';
+
+const config = createConfluxWagmiConfig({
+  chains: [espaceTestnet],
+  // ...
+});
 ```
 
 ---
@@ -100,9 +335,28 @@ export declare const SUPPORTED_ESPACE_CHAINS: readonly [
 ## `./hooks`
 
 ```ts
+// Hook to access the Core wallet status and provider.
 export declare function useCoreWallet(): {
+  status: CoreWalletStatus;
+  provider: FluentProvider | null;
+  // ...
+};
+
+// Hook to get connectors for eSpace chains.
 export declare function useEspaceConnectors(): UseEspaceConnectorsReturn;
+
+// Return type for the `useEspaceConnectors` hook.
 export interface UseEspaceConnectorsReturn {
+  // ...
+}
+```
+
+### Usage
+
+```tsx
+import { useCoreWallet } from '@cfxdevkit/wallet-connect/hooks';
+
+const { status, provider } = useCoreWallet();
 ```
 
 ---
@@ -110,15 +364,52 @@ export interface UseEspaceConnectorsReturn {
 ## `./siwe`
 
 ```ts
+// Generate a SIWE message from input data.
 export declare function createSiweMessage(input: SiweMessageInput): string;
+
+// Generate a random nonce for SIWE.
 export declare function generateSiweNonce(options?: GenerateSiweNonceOptions): string;
+
+// Parse a SIWE message into structured data.
 export declare function parseSiweMessage(message: string): ParsedSiweMessage;
+
+// Verify a SIWE message against Ethereum signature.
 export declare function verifySiweMessage(input: VerifySiweMessageInput): Promise<VerifySiweMessageResult>;
+
+// Options for generating a SIWE nonce.
 export interface GenerateSiweNonceOptions {
+  // ...
+}
+
+// Input for constructing a SIWE message.
 export interface SiweMessageInput {
+  // ...
+}
+
+// Parsed SIWE message structure.
 export interface ParsedSiweMessage {
+  // ...
+}
+
+// Input for verifying a SIWE message.
 export interface VerifySiweMessageInput {
+  // ...
+}
+
+// Result of SIWE message verification.
 export interface VerifySiweMessageResult {
+  // ...
+}
+```
+
+### Usage
+
+```ts
+import { createSiweMessage, generateSiweNonce, verifySiweMessage } from '@cfxdevkit/wallet-connect/siwe';
+
+const nonce = generateSiweNonce();
+const message = createSiweMessage({ domain: 'example.com', nonce });
+const result = await verifySiweMessage({ message, signature });
 ```
 
 ---
@@ -126,10 +417,36 @@ export interface VerifySiweMessageResult {
 ## `./ui`
 
 ```ts
+// Props for the ConnectButton component.
 export interface ConnectButtonProps {
+  connectLabel?: string;
+  onConnect?: () => void;
+  onDisconnect?: () => void;
+  style?: React.CSSProperties;
+  className?: string;
+}
+
+// Props for the WalletPickerModal component.
 export interface WalletPickerModalProps {
+  open: boolean;
+  onClose: () => void;
+  section?: 'core' | 'espace';
+}
+
+// ConnectButton component for wallet connection UI.
 export declare function ConnectButton({ connectLabel, onConnect, onDisconnect, style, className, }: ConnectButtonProps): import("react").JSX.Element;
+
+// WalletPickerModal component for selecting wallet type.
 export declare function WalletPickerModal({ open, onClose, section }: WalletPickerModalProps): import("react").JSX.Element | null;
+```
+
+### Usage
+
+```tsx
+import { ConnectButton, WalletPickerModal } from '@cfxdevkit/wallet-connect/ui';
+
+<ConnectButton onConnect={() => console.log('Connected')} />
+<WalletPickerModal open={true} onClose={() => setModalOpen(false)} />
 ```
 
 ---
@@ -137,11 +454,46 @@ export declare function WalletPickerModal({ open, onClose, section }: WalletPick
 ## `./auth`
 
 ```ts
+// Auth state interface.
 export interface AuthState {
+  isAuthenticated: boolean;
+  user?: {
+    address: string;
+    // ...
+  };
+}
+
+// Auth context value interface.
 export interface AuthContextValue extends AuthState {
+  login: (message: string, signature: string) => Promise<void>;
+  logout: () => void;
+}
+
+// Props for the AuthProvider component.
 export interface AuthProviderProps {
+  children: React.ReactNode;
+  domain: string;
+  uri: string;
+}
+
+// AuthProvider component wrapping SIWE-based authentication.
 export declare function AuthProvider({ children, domain, uri }: AuthProviderProps): import("react").JSX.Element;
+
+// Hook to access auth context.
 export declare function useAuth(): AuthContextValue;
+```
+
+### Usage
+
+```tsx
+import { AuthProvider, useAuth } from '@cfxdevkit/wallet-connect/auth';
+
+<AuthProvider domain="example.com" uri="https://example.com">
+  <App />
+</AuthProvider>
+
+// Inside app:
+const { isAuthenticated, login, logout } = useAuth();
 ```
 
 <!-- api-hash: 0ff0f7b27329dde2c47302ccbdf818ec9e578cfd72a3e16c022427133569b184 -->

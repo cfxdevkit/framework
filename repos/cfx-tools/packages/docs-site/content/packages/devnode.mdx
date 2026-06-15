@@ -137,6 +137,10 @@ export { MiningStatus }
 
 ```ts
 export interface ParsedArgs {
+  command?: string;
+  config?: string;
+  verbose?: boolean;
+  help?: boolean;
   accounts?: number;
   balance?: number;
   port?: number;
@@ -237,4 +241,4 @@ export declare function parseArgs(argv: string[]): ParsedArgs;
 export declare function printHelp(): void;
 ```
 
-{/* readme-hash: 77ac4d73da7119981d8d51e3724e12cfb9f3f459dcd14e3f62e2bbada7655b58 */}
+{/* readme-hash: ca593a838b6b5754b4f35b572fe3ba0c60afa631055a71c45b9758077a195643 */}

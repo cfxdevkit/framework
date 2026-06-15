@@ -51,7 +51,7 @@ npm install @cfxdevkit/defi-react
 | `./primitives` | 73 symbols |
 | `./service` | 4 symbols |
 | `./pool` | 10 symbols |
-| `./lp` | 0 symbols |
+| `./lp` | 4 symbols |
 
 ---
 
@@ -171,125 +171,316 @@ See [API.md](./API.md) for the full public surface.
 ## `.`
 
 ```ts
+// Package name identifier for runtime checks and tooling.
 export declare const __packageName: "@cfxdevkit/defi-react";
+
+// Props for rendering a portfolio table with token balances.
 export interface PortfolioTableProps {
 export interface UsePortfolioInput {
+// Input for the `usePortfolio` hook.
 export interface UsePortfolioReturn {
+// Return type for the `usePortfolio` hook.
 export interface UsePoolsInput {
+// Input for the `usePools` hook.
 export interface UsePoolsReturn {
+// Return type for the `usePools` hook.
 export interface UsePoolTokensInput {
+// Input for the `usePoolTokens` hook.
 export interface PoolData {
+// Data structure representing pool metadata and token composition.
 export interface UsePoolTokensReturn {
+// Return type for the `usePoolTokens` hook.
 export interface UseTokenPriceInput {
+// Input for the `useTokenPrice` hook.
 export interface UseTokenPriceReturn {
+// Return type for the `useTokenPrice` hook.
+
+// Reusable button component with variant and size support.
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+// Reusable card container with padding and elevation options.
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
+// Small badge component for status indicators.
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+// Tab item definition for use in `Tabs`.
 export interface TabItem<T extends string = string> {
+// Tab navigation component with controlled/active state.
 export interface TabsProps<T extends string = string> {
+// Badge showing network name and chain ID.
 export interface NetworkBadgeProps {
+// Result of a faucet funding operation.
 export interface FaucetResult {
+// Props for the faucet widget component.
 export interface FaucetWidgetProps {
+// Props for the DevKit status monitoring widget.
 export interface DevkitStatusProps {
+// Toast notification object.
 export interface Toast {
+// Props for the global toast manager component.
 export interface AppToasterProps {
+// Props for a selectable list item with optional icon and description.
 export interface SelectableListItemProps {
+// Accessible input field with label and error display.
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+// Button that copies text to clipboard with optional label.
 export interface CopyButtonProps {
+// Option item for `SelectMenu`.
 export interface SelectMenuOption<T extends string = string> {
+// Dropdown select menu component.
 export interface SelectMenuProps<T extends string = string> {
+// Option item for `SegmentedControl`.
 export interface SegmentedControlOption<T extends string = string> {
+// Segmented control (toggle) component.
 export interface SegmentedControlProps<T extends string = string> {
+// Section header with optional subtitle and action.
 export interface SectionHeaderProps {
+// Banner for status messages (info/success/warning/error).
 export interface StatusBannerProps {
+// Card displaying a metric with optional delta.
 export interface MetricCardProps {
+// Navigation link definition.
 export interface NavLink {
+// App-level navigation bar with brand, links, and wallet actions.
 export interface AppNavBarProps {
+// Branding component for the navigation bar.
 export interface NavBrandProps {
+// Wallet connection/sign-in/out and network switch UI.
 export interface NavWalletActionsProps {
+// Layout grid with sidebar and main content area.
 export interface MainGridProps {
+// Generic panel container with title and actions.
 export interface PanelProps {
+// Body wrapper for panel content.
 export interface TradeTokenFieldProps {
+// Token input field for swap UI with balance and token selection.
 export interface TradeActionBarProps {
+// Slippage and mode (swap/provide) controls for swap UI.
 export interface TradeSummaryRow {
+// Row in the trade summary grid.
 export interface TradeSummaryGridProps {
+// Grid layout for trade summary information.
 export interface NoticeProps {
+// Notice banner with tone-based styling (neutral/ok/error/warning).
 export interface SwapServiceConfig {
+// Configuration for the swap service.
 export interface PoolTokens {
+// Token list associated with a pool.
 export interface SwapWidgetProps {
+// Props for the main swap widget component.
 export interface UseSwapInput {
+// Input for the `useSwap` hook.
 export interface UseSwapReturn {
+// Return type for the `useSwap` hook.
 export interface TokenPickerProps {
+// Props for the token picker component.
 export interface TxStatusListProps {
+// Props for the transaction status list component.
 export interface TxStatusToastProps {
+// Props for the transaction status toast component.
 export interface TokenInfo {
+// Metadata for a token (address, symbol, decimals, etc.).
 export interface Quote {
+// Swap quote result (amounts, route, etc.).
 export interface SwapCalldata {
+// Encoded calldata for a swap transaction.
 export interface BuildSwapCalldataOptions {
+// Options for building swap calldata.
 export interface DexAdapter {
+// Interface for DEX integration adapters.
 export interface TokenRegistry {
+// Registry of known tokens for selection and lookup.
 export interface PortfolioRow {
+// Row data for portfolio table.
 export interface TrackedTx {
+// Transaction metadata for tracking status.
+
+// Renders a portfolio table given tokens and address.
 export declare function PortfolioTable({ tokens, address, renderRow }: PortfolioTableProps): import("react").JSX.Element;
+
+// Hook to fetch and format user portfolio data.
 export declare function usePortfolio(input: UsePortfolioInput): UsePortfolioReturn;
+
+// Hook to fetch pool data for a given address.
 export declare function usePools(input: UsePoolsInput): UsePoolsReturn;
+
+// Hook to fetch tokens associated with a pool.
 export declare function usePoolTokens(input: UsePoolTokensInput): UsePoolTokensReturn;
+
+// Hook to fetch token price from a DEX adapter.
 export declare function useTokenPrice(input: UseTokenPriceInput): UseTokenPriceReturn;
+
+// Reusable button component.
 export declare function Button({ variant, size, loading, disabled, children, style, ...rest }: ButtonProps): import("react").JSX.Element;
+
+// Reusable card container.
 export declare function Card({ padding, elevated, children, style, ...rest }: CardProps): import("react").JSX.Element;
+
+// Reusable badge component.
 export declare function Badge({ variant, children, style, ...rest }: BadgeProps): import("react").JSX.Element;
+
+// Tab navigation component.
 export declare function Tabs<T extends string = string>({ items, active, onChange, style }: TabsProps<T>): import("react").JSX.Element;
+
+// Network badge component.
 export declare function NetworkBadge({ chainId, name, style }: NetworkBadgeProps): import("react").JSX.Element;
+
+// Faucet widget for testnet funding.
 export declare function FaucetWidget({ onFund, defaultAddress, defaultAmountCfx, style, }: FaucetWidgetProps): import("react").JSX.Element;
+
+// DevKit status monitoring widget.
 export declare function DevkitStatus({ nodeStatus, keystoreStatus, walletCount, blockNumber, onStartNode, onStopNode, style, }: DevkitStatusProps): import("react").JSX.Element;
+
+// Global toast manager component.
 export declare function AppToaster({ toasts, onDismiss, position, style }: AppToasterProps): import("react").JSX.Element;
+
+// Selectable list item component.
 export declare function SelectableListItem({ label, description, selected, disabled, icon, onClick, style, }: SelectableListItemProps): import("react").JSX.Element;
+
+// Accessible input field component.
 export declare function Input({ label, error, id, style, ...rest }: InputProps): import("react").JSX.Element;
+
+// Copy-to-clipboard button component.
 export declare function CopyButton({ text, label, style }: CopyButtonProps): import("react").JSX.Element;
+
+// Dropdown select menu component.
 export declare function SelectMenu<T extends string = string>({ options, value, onChange, label, disabled, style, }: SelectMenuProps<T>): import("react").JSX.Element;
+
+// Segmented control (toggle) component.
 export declare function SegmentedControl<T extends string = string>({ options, active, onChange, style, }: SegmentedControlProps<T>): import("react").JSX.Element;
+
+// Section header component.
 export declare function SectionHeader({ title, subtitle, action, style }: SectionHeaderProps): import("react").JSX.Element;
+
+// Status banner component.
 export declare function StatusBanner({ variant, children, style }: StatusBannerProps): import("react").JSX.Element;
+
+// Metric card component.
 export declare function MetricCard({ label, value, delta, style }: MetricCardProps): import("react").JSX.Element;
+
+// App navigation bar component.
 export declare function AppNavBar({ brand, links, actions, onLinkClick, style }: AppNavBarProps): import("react").JSX.Element;
+
+// Navigation brand component.
 export declare function NavBrand({ icon, name, style }: NavBrandProps): import("react").JSX.Element;
+
+// Wallet actions component (connect, sign, switch network).
 export declare function NavWalletActions({ isConnected, address, isSignedIn, isSigning, wrongNetwork, isSwitchingNetwork, error, onConnect, onSignIn, onSignOut, onSwitchNetwork, style, }: NavWalletActionsProps): import("react").JSX.Element;
+
+// App shell layout wrapper.
 export declare function AppShell({ children, style, ...props }: {
+// Main grid layout with sidebar and content.
 export declare function MainGrid({ sidebar, children, style }: MainGridProps): import("react").JSX.Element;
+
+// Generic panel component.
 export declare function Panel({ title, icon, actions, children, style }: PanelProps): import("react").JSX.Element;
+
+// Panel body wrapper.
 export declare function PanelBody({ children, style }: {
+// Token field for swap UI.
 export declare function TradeTokenField({ label, value, onChange, tokenSymbol, tokenIcon, onTokenClick, balance, disabled, placeholder, style, }: TradeTokenFieldProps): import("react").JSX.Element;
+
+// Trade action bar (slippage, mode).
 export declare function TradeActionBar({ mode, onModeChange, slippage, onSlippageChange, style, }: TradeActionBarProps): import("react").JSX.Element;
+
+// Trade summary grid.
 export declare function TradeSummaryGrid({ rows, style }: TradeSummaryGridProps): import("react").JSX.Element | null;
+
+// Generic field wrapper with label.
 export declare function Field({ label, children, style, }: {
+// Notice banner component.
 export declare function Notice({ tone, children, style }: NoticeProps): import("react").JSX.Element;
+
+// Icon-only button component.
 export declare function IconButton({ title, children, style, ...props }: IconButtonProps): import("react").JSX.Element;
+
+// Status grid layout.
 export declare function StatusGrid({ children, columns, style, }: {
+// Metric display component.
 export declare function Metric({ label, value, style, }: {
+// Factory to create a swap service instance.
 export declare function createSwapService(config: SwapServiceConfig): SwapService;
+
+// Factory to create a Swappi DEX adapter.
 export declare function createSwappiAdapter(config: {
+// Main swap widget component.
 export declare function SwapWidget({ adapter, tokens, pairs, tokenSelectionOptions, defaultTokenIn, defaultTokenOut, onSwapSubmitted, }: SwapWidgetProps): import("react").JSX.Element;
+
+// Hook for swap logic (quote, execution, calldata).
 export declare function useSwap(input: UseSwapInput): UseSwapReturn;
+
+// Token picker component.
 export declare function TokenPicker({ registry, chainId, selected, onSelect, placeholder, }: TokenPickerProps): import("react").JSX.Element;
+
+// Context provider for transaction status tracking.
 export declare function TxListProvider({ children }: {
+// Hook to access transaction list context.
 export declare function useTxList(): TxListContextValue;
+
+// List of recent transaction statuses.
 export declare function TxStatusList({ recent, onConfirm }: TxStatusListProps): import("react").JSX.Element | null;
+
+// Toast for individual transaction status.
 export declare function TxStatusToast({ hash, label, onConfirm }: TxStatusToastProps): import("react").JSX.Element;
+
+// Factory to create a token registry.
 export declare function createTokenRegistry(tokens: readonly TokenInfo[]): TokenRegistry;
+
+// Button variant types.
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+
+// Button size types.
 export type ButtonSize = 'sm' | 'md' | 'lg';
+
+// Badge variant types.
 export type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'brand';
+
+// DevKit node status types.
 export type DevkitNodeStatus = 'running' | 'stopped' | 'unknown';
+
+// DevKit keystore status types.
 export type DevkitKeystoreStatus = 'locked' | 'unlocked' | 'not-setup' | 'unknown';
+
+// Toast variant types.
 export type ToastVariant = 'info' | 'success' | 'warning' | 'error';
+
+// Status banner variant types.
 export type StatusBannerVariant = 'info' | 'success' | 'warning' | 'error';
+
+// Trade mode types (swap or provide liquidity).
 export type TradeMode = 'swap' | 'provide';
+
+// Notice tone types.
 export type NoticeTone = 'neutral' | 'ok' | 'error' | 'warning';
+
+// Props for icon-only buttons.
 export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'type' | 'aria-label'> & {
+// Chain ID type alias.
 export type ChainId = number;
+
+// Transaction status type.
 export type TxStatus = 'pending' | 'success' | 'failed';
+
+// Swap service class implementing DexAdapter.
 export declare class SwapService implements DexAdapter {
+// Error class for DEX-related failures.
 export declare class DexError extends Error {
+```
+
+### Usage
+
+```tsx
+import { SwapWidget, createSwappiAdapter } from '@cfxdevkit/defi-react/swap';
+
+const adapter = createSwappiAdapter({ nodeUrl: 'https://main.confluxrpc.com' });
+
+<SwapWidget
+  adapter={adapter}
+  tokens={[]}
+  pairs={[]}
+  tokenSelectionOptions={{ showSearch: true }}
+  defaultTokenIn="CFX"
+  defaultTokenOut="USDC"
+  onSwapSubmitted={(tx) => console.log('Submitted:', tx)}
+/>
 ```
 
 ---
@@ -297,12 +488,33 @@ export declare class DexError extends Error {
 ## `./swap`
 
 ```ts
+// Factory to create a Swappi DEX adapter.
 export declare function createSwappiAdapter(config: {
+// Main swap widget component.
 export declare function SwapWidget({ adapter, tokens, pairs, tokenSelectionOptions, defaultTokenIn, defaultTokenOut, onSwapSubmitted, }: SwapWidgetProps): import("react").JSX.Element;
+
+// Hook for swap logic (quote, execution, calldata).
 export declare function useSwap(input: UseSwapInput): UseSwapReturn;
+
+// Props for the swap widget.
 export interface SwapWidgetProps {
+// Input for the `useSwap` hook.
 export interface UseSwapInput {
+// Return type for the `useSwap` hook.
 export interface UseSwapReturn {
+```
+
+### Usage
+
+```tsx
+import { useSwap } from '@cfxdevkit/defi-react/swap';
+
+const { quote, executeSwap, loading } = useSwap({
+  adapter,
+  tokenIn: 'CFX',
+  tokenOut: 'USDC',
+  amountIn: '1',
+});
 ```
 
 ---
@@ -310,11 +522,25 @@ export interface UseSwapReturn {
 ## `./balance`
 
 ```ts
+// Props for rendering a portfolio table with token balances.
 export interface PortfolioTableProps {
+// Input for the `usePortfolio` hook.
 export interface UsePortfolioInput {
+// Return type for the `usePortfolio` hook.
 export interface UsePortfolioReturn {
+// Renders a portfolio table given tokens and address.
 export declare function PortfolioTable({ tokens, address, renderRow }: PortfolioTableProps): import("react").JSX.Element;
+
+// Hook to fetch and format user portfolio data.
 export declare function usePortfolio(input: UsePortfolioInput): UsePortfolioReturn;
+```
+
+### Usage
+
+```tsx
+import { usePortfolio } from '@cfxdevkit/defi-react/balance';
+
+const { tokens, loading } = usePortfolio({ address: '0x...' });
 ```
 
 ---
@@ -322,8 +548,28 @@ export declare function usePortfolio(input: UsePortfolioInput): UsePortfolioRetu
 ## `./token-picker`
 
 ```ts
+// Props for the token picker component.
 export interface TokenPickerProps {
+// Token picker component for selecting tokens from a registry.
 export declare function TokenPicker({ registry, chainId, selected, onSelect, placeholder, }: TokenPickerProps): import("react").JSX.Element;
+```
+
+### Usage
+
+```tsx
+import { TokenPicker, createTokenRegistry } from '@cfxdevkit/defi-react';
+
+const registry = createTokenRegistry([
+  { address: '0x...', symbol: 'CFX', decimals: 18 },
+]);
+
+<TokenPicker
+  registry={registry}
+  chainId={1030}
+  selected="CFX"
+  onSelect={(token) => console.log(token)}
+  placeholder="Select token"
+/>
 ```
 
 ---
@@ -331,12 +577,33 @@ export declare function TokenPicker({ registry, chainId, selected, onSelect, pla
 ## `./tx-status`
 
 ```ts
+// Context provider for transaction status tracking.
 export declare function TxListProvider({ children }: {
+// Hook to access transaction list context.
 export declare function useTxList(): TxListContextValue;
+
+// List of recent transaction statuses.
 export declare function TxStatusList({ recent, onConfirm }: TxStatusListProps): import("react").JSX.Element | null;
+
+// Toast for individual transaction status.
 export declare function TxStatusToast({ hash, label, onConfirm }: TxStatusToastProps): import("react").JSX.Element;
+
+// Props for the transaction status list component.
 export interface TxStatusListProps {
+// Props for the transaction status toast component.
 export interface TxStatusToastProps {
+```
+
+### Usage
+
+```tsx
+import { TxStatusToast } from '@cfxdevkit/defi-react/tx-status';
+
+<TxStatusToast
+  hash="0x123..."
+  label="Swap CFX → USDC"
+  onConfirm={() => console.log('Confirmed')}
+/>
 ```
 
 ---
@@ -344,118 +611,201 @@ export interface TxStatusToastProps {
 ## `./primitives`
 
 ```ts
+// Button variant types.
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+
+// Button size types.
 export type ButtonSize = 'sm' | 'md' | 'lg';
+
+// Badge variant types.
 export type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'brand';
+
+// DevKit node status types.
 export type DevkitNodeStatus = 'running' | 'stopped' | 'unknown';
+
+// DevKit keystore status types.
 export type DevkitKeystoreStatus = 'locked' | 'unlocked' | 'not-setup' | 'unknown';
+
+// Toast variant types.
 export type ToastVariant = 'info' | 'success' | 'warning' | 'error';
+
+// Status banner variant types.
 export type StatusBannerVariant = 'info' | 'success' | 'warning' | 'error';
+
+// Trade mode types (swap or provide liquidity).
 export type TradeMode = 'swap' | 'provide';
+
+// Notice tone types.
 export type NoticeTone = 'neutral' | 'ok' | 'error' | 'warning';
+
+// Props for icon-only buttons.
 export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'type' | 'aria-label'> & {
+// Reusable button component with variant and size support.
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+// Reusable card container with padding and elevation options.
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
+// Small badge component for status indicators.
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+// Tab item definition for use in `Tabs`.
 export interface TabItem<T extends string = string> {
+// Tab navigation component with controlled/active state.
 export interface TabsProps<T extends string = string> {
+// Badge showing network name and chain ID.
 export interface NetworkBadgeProps {
+// Result of a faucet funding operation.
 export interface FaucetResult {
+// Props for the faucet widget component.
 export interface FaucetWidgetProps {
+// Props for the DevKit status monitoring widget.
 export interface DevkitStatusProps {
+// Toast notification object.
 export interface Toast {
+// Props for the global toast manager component.
 export interface AppToasterProps {
+// Props for a selectable list item with optional icon and description.
 export interface SelectableListItemProps {
+// Accessible input field with label and error display.
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+// Button that copies text to clipboard with optional label.
 export interface CopyButtonProps {
+// Option item for `SelectMenu`.
 export interface SelectMenuOption<T extends string = string> {
+// Dropdown select menu component.
 export interface SelectMenuProps<T extends string = string> {
+// Option item for `SegmentedControl`.
 export interface SegmentedControlOption<T extends string = string> {
+// Segmented control (toggle) component.
 export interface SegmentedControlProps<T extends string = string> {
+// Section header with optional subtitle and action.
 export interface SectionHeaderProps {
+// Banner for status messages (info/success/warning/error).
 export interface StatusBannerProps {
+// Card displaying a metric with optional delta.
 export interface MetricCardProps {
+// Navigation link definition.
 export interface NavLink {
+// App-level navigation bar with brand, links, and wallet actions.
 export interface AppNavBarProps {
+// Branding component for the navigation bar.
 export interface NavBrandProps {
+// Wallet connection/sign-in/out and network switch UI.
 export interface NavWalletActionsProps {
+// Layout grid with sidebar and main content area.
 export interface MainGridProps {
+// Generic panel container with title and actions.
 export interface PanelProps {
+// Token input field for swap UI with balance and token selection.
 export interface TradeTokenFieldProps {
+// Slippage and mode (swap/provide) controls for swap UI.
 export interface TradeActionBarProps {
+// Row in the trade summary grid.
 export interface TradeSummaryRow {
+// Grid layout for trade summary information.
 export interface TradeSummaryGridProps {
+// Notice banner with tone-based styling (neutral/ok/error/warning).
 export interface NoticeProps {
+// Reusable button component.
 export declare function Button({ variant, size, loading, disabled, children, style, ...rest }: ButtonProps): import("react").JSX.Element;
+
+// Reusable card container.
 export declare function Card({ padding, elevated, children, style, ...rest }: CardProps): import("react").JSX.Element;
+
+// Reusable badge component.
 export declare function Badge({ variant, children, style, ...rest }: BadgeProps): import("react").JSX.Element;
+
+// Tab navigation component.
 export declare function Tabs<T extends string = string>({ items, active, onChange, style }: TabsProps<T>): import("react").JSX.Element;
+
+// Network badge component.
 export declare function NetworkBadge({ chainId, name, style }: NetworkBadgeProps): import("react").JSX.Element;
+
+// Faucet widget for testnet funding.
 export declare function FaucetWidget({ onFund, defaultAddress, defaultAmountCfx, style, }: FaucetWidgetProps): import("react").JSX.Element;
+
+// DevKit status monitoring widget.
 export declare function DevkitStatus({ nodeStatus, keystoreStatus, walletCount, blockNumber, onStartNode, onStopNode, style, }: DevkitStatusProps): import("react").JSX.Element;
+
+// Global toast manager component.
 export declare function AppToaster({ toasts, onDismiss, position, style }: AppToasterProps): import("react").JSX.Element;
+
+// Selectable list item component.
 export declare function SelectableListItem({ label, description, selected, disabled, icon, onClick, style, }: SelectableListItemProps): import("react").JSX.Element;
+
+// Accessible input field component.
 export declare function Input({ label, error, id, style, ...rest }: InputProps): import("react").JSX.Element;
+
+// Copy-to-clipboard button component.
 export declare function CopyButton({ text, label, style }: CopyButtonProps): import("react").JSX.Element;
+
+// Dropdown select menu component.
 export declare function SelectMenu<T extends string = string>({ options, value, onChange, label, disabled, style, }: SelectMenuProps<T>): import("react").JSX.Element;
+
+// Segmented control (toggle) component.
 export declare function SegmentedControl<T extends string = string>({ options, active, onChange, style, }: SegmentedControlProps<T>): import("react").JSX.Element;
+
+// Section header component.
 export declare function SectionHeader({ title, subtitle, action, style }: SectionHeaderProps): import("react").JSX.Element;
+
+// Status banner component.
 export declare function StatusBanner({ variant, children, style }: StatusBannerProps): import("react").JSX.Element;
+
+// Metric card component.
 export declare function MetricCard({ label, value, delta, style }: MetricCardProps): import("react").JSX.Element;
+
+// App navigation bar component.
 export declare function AppNavBar({ brand, links, actions, onLinkClick, style }: AppNavBarProps): import("react").JSX.Element;
+
+// Navigation brand component.
 export declare function NavBrand({ icon, name, style }: NavBrandProps): import("react").JSX.Element;
+
+// Wallet actions component (connect, sign, switch network).
 export declare function NavWalletActions({ isConnected, address, isSignedIn, isSigning, wrongNetwork, isSwitchingNetwork, error, onConnect, onSignIn, onSignOut, onSwitchNetwork, style, }: NavWalletActionsProps): import("react").JSX.Element;
+
+// App shell layout wrapper.
 export declare function AppShell({ children, style, ...props }: {
+// Main grid layout with sidebar and content.
 export declare function MainGrid({ sidebar, children, style }: MainGridProps): import("react").JSX.Element;
+
+// Generic panel component.
 export declare function Panel({ title, icon, actions, children, style }: PanelProps): import("react").JSX.Element;
+
+// Panel body wrapper.
 export declare function PanelBody({ children, style }: {
+// Token field for swap UI.
 export declare function TradeTokenField({ label, value, onChange, tokenSymbol, tokenIcon, onTokenClick, balance, disabled, placeholder, style, }: TradeTokenFieldProps): import("react").JSX.Element;
+
+// Trade action bar (slippage, mode).
 export declare function TradeActionBar({ mode, onModeChange, slippage, onSlippageChange, style, }: TradeActionBarProps): import("react").JSX.Element;
+
+// Trade summary grid.
 export declare function TradeSummaryGrid({ rows, style }: TradeSummaryGridProps): import("react").JSX.Element | null;
+
+// Generic field wrapper with label.
 export declare function Field({ label, children, style, }: {
+// Notice banner component.
 export declare function Notice({ tone, children, style }: NoticeProps): import("react").JSX.Element;
+
+// Icon-only button component.
 export declare function IconButton({ title, children, style, ...props }: IconButtonProps): import("react").JSX.Element;
+
+// Status grid layout.
 export declare function StatusGrid({ children, columns, style, }: {
+// Metric display component.
 export declare function Metric({ label, value, style, }: {
 ```
 
----
+### Usage
 
-## `./service`
+```tsx
+import { Button, Card, Badge } from '@cfxdevkit/defi-react/primitives';
 
-```ts
-export interface SwapServiceConfig {
-export interface PoolTokens {
-export declare class SwapService implements DexAdapter {
-export declare function createSwapService(config: SwapServiceConfig): SwapService;
+<Button variant="primary" size="md" onClick={() => {}}>
+  Click me
+</Button>
+
+<Card padding="lg" elevated>
+  <Badge variant="success">Active</Badge>
+</Card>
 ```
 
----
-
-## `./pool`
-
-```ts
-export interface UsePoolsInput {
-export interface UsePoolsReturn {
-export interface UsePoolTokensInput {
-export interface PoolData {
-export interface UsePoolTokensReturn {
-export interface UseTokenPriceInput {
-export interface UseTokenPriceReturn {
-export declare function usePools(input: UsePoolsInput): UsePoolsReturn;
-export declare function usePoolTokens(input: UsePoolTokensInput): UsePoolTokensReturn;
-export declare function useTokenPrice(input: UseTokenPriceInput): UseTokenPriceReturn;
-```
-
----
-
-## `./lp`
-
-```ts
-export { AddLiquidityWidgetProps }
-export { PoolShareBadgeProps }
-export { AddLiquidityWidget }
-export { PoolShareBadge }
-```
-
-{/* readme-hash: 41f4df1bafbdebb4eba24cf7207635ff6a21fff970ace9ea0b419d0b7ba1ff43 */}
+{/* readme-hash: f883fa26b131fe4d2d5247e9db6b2470095a98c4b6a660cd380bafb89807de1a */}

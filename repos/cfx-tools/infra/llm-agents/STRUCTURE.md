@@ -30,123 +30,111 @@ repos
     packages
       keystore-server
 src
-  index.ts
+  index.ts — public entry point
 tsconfig.json
 vite.config.ts
 workers
   agents
-    all.ts
+    all.ts — agent registry
     check
-      artifacts.ts
-      plan.ts
-      render.ts
-      types.ts
-    check.test.ts
-    check.ts
-    review.ts
+      artifacts.ts — artifact validation logic
+      plan.ts — plan generation
+      render.ts — render checks
+      types.ts — check types
+    check.test.ts — unit tests for check logic
+    check.ts — main check orchestrator
+    review.ts — review agent
     runtime
-      checks.ts
-      constants.ts
-      corpus.ts
-      docs.ts
-      index.ts
-      models.ts
-      paths.ts
-      reports.ts
-    smoke-render.ts
-    smoke.ts
-  commands.ts
+      checks.ts — runtime check helpers
+      constants.ts — shared constants
+      corpus.ts — documentation corpus loader
+      docs.ts — docs utility helpers
+      index.ts — runtime entry
+      models.ts — LLM model config
+      paths.ts — path resolution helpers
+      reports.ts — report generation
+    smoke-render.ts — smoke test for rendering
+    smoke.ts — smoke test runner
+  commands.ts — CLI command definitions
   commit
-    changeset.ts
-    commit.ts
-    failure-analysis.ts
-    flags.ts
+    changeset.ts — changeset handling
+    commit.ts — commit message generation
+    failure-analysis.ts — failure diagnostics
+    flags.ts — CLI flags
     gate
-      output.ts
-      results.ts
-    gates.test.ts
-    gates.ts
-    hud.ts
-    index.test.ts
-    index.ts
-    message.ts
-    precommit.ts
-    scope.ts
+      output.ts — gate output formatting
+      results.ts — gate result types
+    gates.test.ts — gate tests
+    gates.ts — gate execution logic
+    hud.ts — HUD UI helper
+    index.test.ts — integration tests
+    index.ts — commit workflow entry
+    message.ts — commit message formatting
+    precommit.ts — precommit checks
+    scope.ts — scope resolution
     terminal
-      ui.test.ts
-      ui.ts
-    terminal-ui-summary.ts
-    types.ts
-    validate.ts
-    workflow.test.ts
+      ui.test.ts — terminal UI tests
+      ui.ts — terminal UI helpers
+    terminal-ui-summary.ts — terminal summary renderer
+    types.ts — commit workflow types
+    validate.ts — commit validation
+    workflow.test.ts — workflow tests
   completion
-    cloud-credentials.ts
-    complete.ts
-    config-normalize.ts
-    config.ts
-    context.ts
-    guards.ts
-    index.ts
-    json.ts
+    cloud-credentials.ts — cloud credential helpers
+    complete.ts — completion entry
+    config-normalize.ts — config normalization
+    config.ts — completion config
+    context.ts — completion context
+    guards.ts — type guards
+    index.ts — completion entry
+    json.ts — JSON helpers
     provider
-      classes.ts
-      meta.ts
-      stream.ts
-    provider-stream-parse.ts
-    providers.ts
-    resolve-action.ts
-    runner.ts
-    types.ts
-    units.ts
+      classes.ts — provider implementations
+      meta.ts — provider metadata
+      stream.ts — streaming helpers
+    provider-stream-parse.ts — stream parser
+    providers.ts — provider registry
+    resolve-action.ts — action resolution
+    runner.ts — completion runner
+    types.ts — completion types
+    units.ts — completion units
   docs
     api
-      enrichment.test.ts
-      enrichment.ts
-      probe.test.ts
-      probe.ts
-    api.ts
-    flags.ts
-    index.ts
+      enrichment.test.ts — API enrichment tests
+      enrichment.ts — API enrichment logic
+      probe.test.ts — API probe tests
+      probe.ts — API documentation probe
+    api.ts — API docs entry
+    flags.ts — docs flags
+    index.ts — docs entry
     package-page
-      enrichment.test.ts
-      enrichment.ts
-    packages.ts
-    readme-enrichment.ts
-    readme.ts
-    structure-enrichment.ts
-    structure.ts
-    wiki.ts
-  help.ts
-  llm-agents.ts
+      enrichment.test.ts — package page tests
+      enrichment.ts — package page enrichment
+    packages.ts — package metadata
+    readme-enrichment.ts — README enrichment
+    readme.ts — README generation
+    structure-enrichment.ts — structure enrichment
+    structure.ts — structure generation
+    wiki.ts — wiki helpers
+  help.ts — help system
+  llm-agents.ts — main entry
   shared
-    execution-context.ts
-    index.ts
-    logging.ts
-    repo-actions.ts
+    execution-context.ts — execution context
+    index.ts — shared exports
+    logging.ts — logging helpers
+    repo-actions.ts — repo action helpers
   tests
-    baseline.ts
-    discover.ts
-    generate.ts
-    index.ts
-    support.ts
-    write.ts
+    baseline.ts — baseline test helpers
+    discover.ts — test discovery
+    generate.ts — test generation
+    index.ts — test entry
+    support.ts — test support utilities
+    write.ts — test file writing
   validate-models
-    probe.ts
-    report.ts
-  validate-models.ts
+    probe.ts — model validation probe
+    report.ts — model validation report
+  validate-models.ts — model validation entry
 ```
 
-## Public Entry Points
-
-- `@cfxdevkit/llm-agents` → `index.d.ts`
-
-## Documentation Contract
-
-- README.md
-- API.md
-- STRUCTURE.md
-
-> Regenerated by `pnpm gen:structure`. Optional prose enrichment may be applied afterwards.
-
-<!-- structure-status: deterministic -->
+<!-- structure-status: enriched -->
 <!-- structure-hash: bd7f8021c05915e8972a8049dc7f84e692bbca309041b8a9c1ad2ae6d15f9bb2 -->

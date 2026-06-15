@@ -26,6 +26,9 @@ await client.createNodeNamespace().restart();
 // Wipe node state and restart
 await client.createNodeNamespace().wipe({ profile: 'devnet' });
 
+// Check node health
+const health = await client.createHealthNamespace().getHealth();
+
 // Start/stop mining
 await client.createMiningNamespace().mine({ start: true });
 
@@ -71,4 +74,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 1 — platform** — May import Tier 0 framework packages.
 
-<!-- readme-hash: a30d16a01b1a086de7ac44dc1a5274cde7e81315ff5e73f364443734fde1e138 -->
+<!-- readme-hash: a2a7fe10d2c18eeab29280bad560c69e9ae02297352c9755b49588aa908f9a2f -->

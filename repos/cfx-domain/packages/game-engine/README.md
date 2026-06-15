@@ -173,4 +173,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 2 — domains** — May import Tier 0 and Tier 1 packages.
 
-<!-- readme-hash: 67559c58ac240bab0139e9e5868cff99d1f4d4382891e6a5489f01461e541ff0 -->
+<!-- readme-hash: d7a6cd2fab96d599806653d0a2e50c24e811b83be6dcc170b75866e2ec46104d -->

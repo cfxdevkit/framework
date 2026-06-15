@@ -88,4 +88,4 @@ See [API.md](./API.md) for the full public surface.
 - `WalletSummaryResponse`, `ActiveWalletSummaryResponse`  
   Response types wrapping wallet summaries in keystore API responses.
 
-<!-- readme-hash: ee1e447f1147ad9f815676ba2966b42a92cca17ce8c44be7639c1bd95f5bf3c3 -->
+<!-- readme-hash: 344308f8a926b410fff623b8f9ff34976f17b587c36e9003dc41808126f73181 -->

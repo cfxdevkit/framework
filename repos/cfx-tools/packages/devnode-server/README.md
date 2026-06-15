@@ -61,4 +61,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 1 — platform** — May import Tier 0 framework packages.
 
-<!-- readme-hash: 05af22fdf24970ffba1453d07b90f7f85bb4b85b60f053ef942cb63000da509a -->
+<!-- readme-hash: a451dab22a27d5b8386b003d75f4abc46ea245d3adc167b0d72662f7009e03d2 -->

@@ -76,4 +76,4 @@ await scaffoldProject('basic', {
 
 See [API.md](./API.md) for the full public surface.
 
-<!-- readme-hash: 26629bb39787dd2541d629c2eddb0d77cd0e3852f804a5fea6224b879b05515f -->
+<!-- readme-hash: ca3040c41433e987af9d74020c2712736dd69da533b703ffd7d1b8b37179b724 -->

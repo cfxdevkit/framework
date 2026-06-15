@@ -655,9 +655,10 @@ import { Field, TokenAmountField, TokenSelect } from '@cfxdevkit/ui/form';
   <TokenAmountField
     amount="1.5"
     balance="10.0"
+    label="From"
     tokens={[tokenA, tokenB]}
     onAmountChange={(val) => setAmount(val)}
-    onTokenChange={(token) => setToken(token)}
+    onTokenChange={(token) => setFromToken(token)}
   />
 </Field>
 ```
@@ -685,6 +686,21 @@ export interface StatusGridProps {
   columns?: number;
 }
 
+// Renders a metric with optional delta indicator.
+export declare function Metric({ className, delta, deltaClassName, label, labelClassName, value, valueClassName, }: MetricProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a responsive grid of status indicators.
+export declare function StatusGrid({ children, className, columns }: StatusGridProps): import("react/jsx-runtime").JSX.Element;
+
+// Renders a segmented control for mutually exclusive selection.
+export declare function SegmentedControl<TValue extends string = string>({ activeOptionClassName, className, inactiveOptionClassName, onChange, optionClassName, options, value, }: SegmentedControlProps<TValue>): import("react/jsx-runtime").JSX.Element;
+
+// Option type for segmented control.
+export interface SegmentedControlOption<TValue extends string = string> {
+  label: string;
+  value: TValue;
+}
+
 // Segmented control for mutually exclusive selection.
 export interface SegmentedControlProps<TValue extends string = string> {
   activeOptionClassName?: string;
@@ -695,21 +711,6 @@ export interface SegmentedControlProps<TValue extends string = string> {
   options: SegmentedControlOption<TValue>[];
   value: TValue;
 }
-
-// Option type for segmented control.
-export interface SegmentedControlOption<TValue extends string = string> {
-  label: string;
-  value: TValue;
-}
-
-// Renders a metric with optional delta indicator.
-export declare function Metric({ className, delta, deltaClassName, label, labelClassName, value, valueClassName, }: MetricProps): import("react/jsx-runtime").JSX.Element;
-
-// Renders a responsive grid of status indicators.
-export declare function StatusGrid({ children, className, columns }: StatusGridProps): import("react/jsx-runtime").JSX.Element;
-
-// Renders a segmented control for mutually exclusive selection.
-export declare function SegmentedControl<TValue extends string = string>({ activeOptionClassName, className, inactiveOptionClassName, onChange, optionClassName, options, value, }: SegmentedControlProps<TValue>): import("react/jsx-runtime").JSX.Element;
 ```
 
 ### Usage
@@ -719,18 +720,17 @@ import { Metric, StatusGrid, SegmentedControl } from '@cfxdevkit/ui/data-display
 
 <Metric label="Total Volume" value="$1.2M" delta="+12%" />
 <StatusGrid columns={3}>
-  <StatusItem icon={<CheckIcon />} label="Verified" />
-  <StatusItem icon={<LockIcon />} label="Secure" />
+  <StatusItem icon={<CheckIcon />} label="Active" />
   <StatusItem icon={<ClockIcon />} label="Pending" />
+  <StatusItem icon={<AlertIcon />} label="Error" />
 </StatusGrid>
 <SegmentedControl
-  value="swap"
   options={[
     { label: 'Swap', value: 'swap' },
     { label: 'Wrap', value: 'wrap' },
-    { label: 'Unwrap', value: 'unwrap' },
   ]}
-  onChange={(v) => setMode(v as 'swap' | 'wrap' | 'unwrap')}
+  value={mode}
+  onChange={(val) => setMode(val)}
 />
 ```
 
@@ -778,11 +778,11 @@ export type NoticeTone = 'neutral' | 'info' | 'ok' | 'success' | 'warning' | 'er
 ```tsx
 import { Notice, NetworkSwitchNotice } from '@cfxdevkit/ui/feedback';
 
-<Notice tone="warning">This action cannot be undone.</Notice>
+<Notice tone="warning">Please confirm your transaction before proceeding.</Notice>
 <NetworkSwitchNotice
   expectedChainId="0x1"
   chainName="Ethereum Mainnet"
-  message="Please switch to Ethereum to continue."
+  message="Switch to Ethereum to continue"
 />
 ```
 
@@ -867,4 +867,4 @@ import { WalletButton, WalletStatusChip, WalletProviderCard } from '@cfxdevkit/u
 />
 ```
 
-{/* readme-hash: c74b1b69ad862e250992c049b8bd374f49998899461b615658d7e6dd18433415 */}
+{/* readme-hash: e86145f9b882fda118d8d4709526b437286928f7c1a42aaf5dda03f41877fb57 */}

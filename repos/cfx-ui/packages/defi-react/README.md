@@ -22,7 +22,7 @@ npm install @cfxdevkit/defi-react
 | `./primitives` | 73 symbols |
 | `./service` | 4 symbols |
 | `./pool` | 10 symbols |
-| `./lp` | 0 symbols |
+| `./lp` | 4 symbols |
 
 ---
 
@@ -137,4 +137,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 0 — framework** — Must not runtime-import from any higher tier.
 
-<!-- readme-hash: e6f751a6b30f9df5c7baf37d83fd1141722f49ef0ac401cfb8c1b32f56f5b55d -->
+<!-- readme-hash: a48164469262a26dd65d777bd0ddd49c3e7be8245c7de0ca0133e88ea2afd5d9 -->

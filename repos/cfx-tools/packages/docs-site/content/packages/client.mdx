@@ -47,6 +47,9 @@ await client.createNodeNamespace().restart();
 // Wipe node state and restart
 await client.createNodeNamespace().wipe({ profile: 'devnet' });
 
+// Check node health
+const health = await client.createHealthNamespace().getHealth();
+
 // Start/stop mining
 await client.createMiningNamespace().mine({ start: true });
 
@@ -466,4 +469,4 @@ export interface BootstrapTemplate extends BootstrapTemplateSummary {
 // Response containing the bootstrap catalog
 ```
 
-{/* readme-hash: a2a7fe10d2c18eeab29280bad560c69e9ae02297352c9755b49588aa908f9a2f */}
+{/* readme-hash: beeeb14097b9d0277244e3fd84ba73bc77da0c869b26303df42d3cddf9d28fba */}

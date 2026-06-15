@@ -136,3 +136,52 @@ The file is automatically gitignored by the setup wizard.
 **`CFX_SIGNER_NAME`** — override the active signer name without editing the file.
 
 **`cdk sign`** reads signer config automatically when `CFX_KEYSTORE_PATH` is not set.
+
+## Install
+
+```bash
+pnpm add @cfxdevkit/signer-session
+```
+
+## Usage
+
+```ts
+import { createSignerSession } from '@cfxdevkit/signer-session';
+
+// Memory signer (ephemeral)
+const mem = await createSignerSession({
+  kind: 'memory',
+  privateKey: '0x…',
+});
+
+// File keystore signer (CI / scripts)
+const file = await createSignerSession({
+  kind: 'file-keystore',
+  path: process.env.CFX_KEYSTORE_PATH!,
+  passphrase: process.env.CFX_PASSPHRASE!,
+  ref: { service: 'myapp', account: 'deployer' },
+  accountIndex: 0,
+});
+
+// Hardware signer (OneKey)
+const hw = await createSignerSession({
+  kind: 'onekey',
+  sdk: HardwareSDK,
+  connectId,
+  deviceId,
+});
+
+// Sign messages
+const sig = await mem.eSpace.signMessage('Hello');
+const coreSig = await mem.core!.signMessage('Hello Core');
+```
+
+## API Reference
+
+See [API.md](./API.md) for the full public surface.
+
+## Tier
+
+**Tier 0 — framework** — Must not runtime-import from any higher tier.
+
+<!-- readme-hash: 37126cff58fa76cd9a9f1f2072b86f71b269d5dfbc645960dfb1f4c1baebc1a1 -->

@@ -42,27 +42,30 @@ export interface ExecutionContext {
 }
 
 export interface RetryPolicy {
-  maxAttempts: number;
-  initialDelayMs: number;
-  maxDelayMs: number;
-  backoffMultiplier: number;
+  maxRetries: number;
+  baseDelayMs: number;
 }
 
 export interface ExecuteOptions extends RetryPolicy {
   idempotencyKey?: string;
   context?: Partial<ExecutionContext>;
+  timeoutMs?: number;
+  labels?: Record<string, string>;
 }
 
-export interface BatchOptions extends ExecuteOptions {}
-
-export interface TaskQueueOptions extends BatchOptions {
+export interface BatchOptions extends ExecuteOptions {
   concurrency?: number;
 }
 
+export interface TaskQueueOptions extends BatchOptions {
+  name?: string;
+  persistent?: boolean;
+  priorityFn?: (a: ExecutionTask<any>, b: ExecutionTask<any>) => number;
+}
+
 export interface PollerContext {
-  chainId: number;
-  blockNumber: number;
-  timestamp: number;
+  lastExecutionTime: number;
+  consecutiveFailures: number;
 }
 
 export type ExecutionTask<T> = (context: ExecutionContext) => Promise<T> | T;
@@ -114,6 +117,8 @@ export declare function withLock<T>(
   key: string,
   task: () => Promise<T> | T
 ): Promise<T>;
+
+export declare const __packageName: "@cfxdevkit/executor";
 ```
 
 ### Usage
@@ -129,10 +134,8 @@ const result = await execute(
     return 'success';
   },
   {
-    maxAttempts: 3,
-    initialDelayMs: 500,
-    maxDelayMs: 5000,
-    backoffMultiplier: 2,
+    maxRetries: 3,
+    baseDelayMs: 500,
     idempotencyKey: 'tx-0x123',
     context: { chainId: 1, blockNumber: 18000000 }
   }
@@ -149,7 +152,7 @@ const results = await executeBatch(
     async (ctx) => task1(ctx),
     async (ctx) => task2(ctx),
   ],
-  { maxAttempts: 2, context: { chainId: 1 } }
+  { maxRetries: 2, context: { chainId: 1 } }
 );
 ```
 
@@ -160,8 +163,9 @@ import { createTaskQueue } from '@cfxdevkit/executor';
 
 const queue = createTaskQueue({
   concurrency: 5,
-  maxAttempts: 3,
-  initialDelayMs: 250
+  maxRetries: 3,
+  baseDelayMs: 250,
+  name: 'automation-queue'
 });
 
 queue.start();
@@ -181,7 +185,7 @@ import { createPoller } from '@cfxdevkit/executor';
 
 const poller = createPoller(
   async (ctx) => {
-    // Check condition every 10s
+    // Check condition every 10s; ctx.lastExecutionTime and ctx.consecutiveFailures available
   },
   10_000
 );
@@ -208,4 +212,4 @@ See [API.md](./API.md) for the full public surface.
 
 **Tier 0 — framework** — Must not runtime-import from any higher tier.
 
-<!-- readme-hash: 9aa02bad92520ac79abe0083f7fcc7e655b19779bd6edf6b99a1826d75a3a2f8 -->
+<!-- readme-hash: 27ebe924ca011da9ce38f6dd9a596b88ac13d49e2c48732f614a7d0d5bd62dad -->
