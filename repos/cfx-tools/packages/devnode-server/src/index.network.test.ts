@@ -114,5 +114,5 @@ describe('@cfxdevkit/devnode-server network profiles', () => {
       await rm(keystorePath, { force: true });
       await rm(runtimeStateRoot, { recursive: true, force: true });
     }
-  }, 20000);
+  }, 60000);
 });

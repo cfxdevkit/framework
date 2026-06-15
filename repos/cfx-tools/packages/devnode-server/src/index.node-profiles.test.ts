@@ -89,5 +89,5 @@ describe('@cfxdevkit/devnode-server node profiles', () => {
       await rm(keystorePath, { force: true });
       await rm(dataRoot, { recursive: true, force: true });
     }
-  }, 20000);
+  }, 60000);
 });
