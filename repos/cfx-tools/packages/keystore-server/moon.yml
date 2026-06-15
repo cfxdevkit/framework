@@ -6,3 +6,9 @@ language: 'typescript'
 dependsOn:
   - 'cdk'
   - 'services'
+
+tasks:
+  typecheck:
+    deps:
+      - 'cdk:build'
+      - 'services:build'
