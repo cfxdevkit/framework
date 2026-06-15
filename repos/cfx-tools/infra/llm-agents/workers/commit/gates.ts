@@ -1,6 +1,7 @@
 import {
   defaultRenderer,
   type RepoCommandTarget,
+  type RepoStructuredResult,
   runRepoCheck,
   runRepoCommand,
 } from '@cfxdevkit/cdk-repo-check';
@@ -149,7 +150,7 @@ async function runRepositoryPolicyGate(
   });
 
   try {
-    let structuredResult: { status: string };
+    let structuredResult: RepoStructuredResult;
     let displayCommand: string;
     if (gate.id === 'hotspots') {
       structuredResult = await runRepoCheck('hotspots', ['--fail-on-hard']);
