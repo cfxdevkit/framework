@@ -3,6 +3,17 @@ $schema: 'https://moonrepo.dev/schemas/project.json'
 layer: 'application'
 language: 'typescript'
 
+dependsOn:
+  - 'wallet'
+  - 'cdk'
+  - 'defi-react'
+  - 'protocol'
+  - 'react'
+  - 'theme'
+  - 'ui-core'
+  - 'wallet-connect'
+  - 'showcase-ui'
+
 tasks:
   build:
     command: 'pnpm exec next build --webpack'

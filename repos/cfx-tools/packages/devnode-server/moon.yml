@@ -2,3 +2,13 @@ $schema: 'https://moonrepo.dev/schemas/project.json'
 
 layer: 'library'
 language: 'typescript'
+
+dependsOn:
+  - 'wallet'
+  - 'compiler'
+  - 'contracts'
+  - 'cdk'
+  - 'devnode'
+  - 'devnode-core'
+  - 'keystore-server'
+  - 'services'

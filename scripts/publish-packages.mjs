@@ -85,7 +85,7 @@ for (const packageDir of collectPackageDirs()) {
   try {
     const publishArgs = ['publish', tarballPath, '--access', 'public'];
     if (process.env.NPM_TOKEN) {
-        publishArgs.push('--auth-token', process.env.NPM_TOKEN);
+      publishArgs.push('--auth-token', process.env.NPM_TOKEN);
     }
     if (dryRun) publishArgs.push('--dry-run');
     run('npm', publishArgs);

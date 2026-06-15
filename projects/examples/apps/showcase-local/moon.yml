@@ -3,6 +3,15 @@ $schema: 'https://moonrepo.dev/schemas/project.json'
 layer: 'application'
 language: 'typescript'
 
+dependsOn:
+  - 'devnode-server'
+  - 'wallet'
+  - 'cdk'
+  - 'client'
+  - 'react'
+  - 'theme'
+  - 'showcase-ui'
+
 tasks:
   build:
     command: 'pnpm exec next build'
