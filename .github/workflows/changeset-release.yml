@@ -38,6 +38,10 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Set npm config
+        run: |
+          npm config set provenance=false
+          npm config set access=public
 
       - name: Validate
         run: pnpm run build && pnpm run check && pnpm run security:check
@@ -46,7 +50,7 @@ jobs:
         uses: changesets/action@v1
         with:
           version: pnpm exec changeset version
-          publish: node scripts/publish-packages.mjs
+          publish: true
           title: Version packages
           commit: Version packages
         env:
