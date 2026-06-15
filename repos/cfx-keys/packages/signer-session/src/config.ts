@@ -11,7 +11,7 @@
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { findWorkspaceRoot } from '@cfxdevkit/workspace-utils';
+import { findWorkspaceRoot } from './workspace-root.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

@@ -28,8 +28,7 @@
   "dependencies": {
     "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
-    "@cfxdevkit/wallet": "workspace:^",
-    "@cfxdevkit/workspace-utils": "workspace:^"
+    "@cfxdevkit/wallet": "workspace:^"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",

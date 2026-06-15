@@ -9,11 +9,9 @@ tasks:
       - 'cdk:build'
       - 'services:build'
       - 'wallet:build'
-      - 'workspace-utils:build'
 
   typecheck:
     deps:
       - 'cdk:build'
       - 'services:build'
       - 'wallet:build'
-      - 'workspace-utils:build'
