@@ -48,7 +48,7 @@ jobs:
         run: pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all
 
       - name: Re-index GitNexus
-        run: node .gitnexus/run.cjs analyze
+        run: pnpm run gitnexus:analyze
 
       - name: Derive image tags
         id: meta
