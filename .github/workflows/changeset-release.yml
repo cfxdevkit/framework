@@ -40,7 +40,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Set npm config
         run: |
-          npm config set provenance=false
+          npm config set provenance=true
           npm config set access=public
 
       - name: Validate
