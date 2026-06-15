@@ -149,7 +149,7 @@ async function runRepositoryPolicyGate(
   });
 
   try {
-    let structuredResult;
+    let structuredResult: { status: string };
     let displayCommand: string;
     if (gate.id === 'hotspots') {
       structuredResult = await runRepoCheck('hotspots', ['--fail-on-hard']);

@@ -67,10 +67,11 @@
     "viem": "^2.48.11"
   },
   "devDependencies": {
-    "@cfxdevkit/tsconfig": "workspace:*",
-    "@cfxdevkit/biome-config": "workspace:*",
     "@biomejs/biome": "^2.4.15",
+    "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/tsconfig": "workspace:*",
     "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^4.1.8",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
     "vite-plugin-dts": "^5.0.1",

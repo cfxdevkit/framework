@@ -41,8 +41,8 @@
       "import": "./dist/pool/index.js"
     },
     "./lp": {
-      "types": "./src/lp/index.ts",
-      "import": "./src/lp/index.js"
+      "types": "./dist/lp/index.d.ts",
+      "import": "./dist/lp/index.js"
     },
     "./package.json": "./package.json"
   },
