@@ -73,4 +73,50 @@ const client = createConfluxDevkitClient({ baseUrl: 'http://127.0.0.1:52000' });
 await client.node.start({ config: { mnemonic: '...' } });
 ```
 
-{/* readme-hash: 5a5b3227cd83a9a2a117072c9e8c264c871a110a7b03aaf8c5d9bac8c72a31a9 */}
+## API Reference
+
+## `.`
+
+```ts
+export declare const __packageName: "@cfxdevkit/devnode-core";
+export interface DevnodeCoreAppOptions extends DevnodeServerControllerOptions, AccountsRoutesOptions {
+export interface DevnodeCoreExtensionContext {
+export interface ContractRecord {
+export interface ContractListFilter {
+export interface ContractRegistryOptions {
+export interface NetworkConfig {
+export interface NetworkChainIds {
+export interface NetworkCapabilities {
+export interface NetworkProfile {
+export interface NetworkStateOptions {
+export interface AccountsRoutesOptions {
+export interface DevnodeServerControllerOptions {
+export interface DevnodeStartInput {
+export interface DevnodeRestartInput {
+export interface DevnodeWipeInput {
+export interface DevnodeMineInput {
+export interface DevnodeServerStatus {
+export declare function createDevnodeCoreApp(options?: DevnodeCoreAppOptions): Hono;
+export declare function detectSpace(address: string): 'core' | 'espace';
+export declare function chainIdForContractNetwork(network: ContractNetwork, space: 'core' | 'espace'): number;
+export declare function defaultNetworkConfig(network: Network): NetworkConfig;
+export declare function defaultNetworkChainIds(network: Network): NetworkChainIds;
+export declare function createAccountsRoutes(controller: DevnodeServerController, options?: AccountsRoutesOptions): Hono;
+export declare function sendCoreFunds(input: {
+export declare function sendEspaceFunds(input: {
+export declare function createCompilerRoutes(): Hono;
+export declare function createMiningRoutes(controller: DevnodeServerController): Hono;
+export declare function createNetworkRoutes(state: NetworkState, options?: {
+export type ContractNetwork = 'local' | 'testnet' | 'mainnet';
+export type Network = 'local' | 'testnet' | 'mainnet';
+export type NetworkMode = 'local' | 'public';
+export type PersistedNetworkConfigKey = keyof NetworkConfig | 'coreChainId' | 'espaceChainId';
+export type SendFundsImpl = typeof defaultSendCoreFunds;
+export type SendEspaceFundsImpl = typeof defaultSendEspaceFunds;
+export type DevnodeServerNodeFactory = (config?: DevNodeConfig) => DevNode;
+export declare class ContractRegistry {
+export declare class DevnodeServerController {
+export declare class NetworkState {
+```
+
+{/* readme-hash: 1771f807901903fe74625c7d5984dee72d0f23c24541b73b175bcf72838db01a */}

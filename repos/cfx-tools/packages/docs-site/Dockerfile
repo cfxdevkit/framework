@@ -8,13 +8,16 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 
 COPY . .
 
-RUN pnpm install --frozen-lockfile --filter @cfxdevkit/docs-site...
+RUN pnpm install --frozen-lockfile
 
-# Copy node_modules to package directory for next build
-RUN mkdir -p /app/repos/cfx-tools/packages/docs-site && cp -r /app/node_modules /app/repos/cfx-tools/packages/docs-site/
+# Build workspace-utils dependency for docs-pipeline
+RUN pnpm --filter @cfxdevkit/workspace-utils run build
 
 # Run docs-pipeline content prep explicitly before building the docs renderer.
 RUN pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all
+
+# Fix validation error in repos-cfx-ui.mdx: escape < as &lt; in <0.01%
+RUN sed -i 's|"<0.01%>"|"&lt;0.01%>"|g' /app/repos/cfx-tools/packages/docs-site/content/wiki/repos-cfx-ui.mdx
 
 # Run next build from the package directory so Next.js/Turbopack can locate
 # the 'next' package via local node_modules (avoids workspace root confusion)

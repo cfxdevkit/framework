@@ -166,4 +166,34 @@ The file is automatically gitignored by the setup wizard.
 
 **`cdk sign`** reads signer config automatically when `CFX_KEYSTORE_PATH` is not set.
 
-{/* readme-hash: baf5360f34c6d4ce98e56946fad906fbeb85032e5f0c2eaac4ebe2cbe1bd3715 */}
+## API Reference
+
+## `.`
+
+```ts
+export { FileKeystoreSignerInput }
+export { LedgerSignerInput }
+export { MemorySignerInput }
+export { OneKeySignerInput }
+export { SignerSession }
+export { SignerSessionInput }
+export { SignerSessionKind }
+export { FileKeystoreSignerEntry }
+export { LedgerSignerEntry }
+export { MemorySignerEntry }
+export { OneKeySignerEntry }
+export { SignerConfig }
+export { SignerEntry }
+export { SignerKind }
+export { defaultSignerConfig }
+export { ensureSignerJsonGitignored }
+export { readSignerConfig }
+export { resolveSignerEntry }
+export { signerConfigPath }
+export { writeSignerConfig }
+export declare function createSignerSession(input: SignerSessionInput): Promise<SignerSession>;
+export declare function createSignerSessionFromConfig(name?: string | null, cwd?: string): Promise<SignerSession>;
+export declare const EPHEMERAL_WARNING = "\u26A0 ephemeral memory signer \u2014 key exists only for this session. Use `cdk signer setup` to configure a persistent signer.";
+```
+
+{/* readme-hash: 72dcc0c7913323de593480c1ed38c4f5a8fc83cd2fe84b7a949ec0d9712b65fa */}
