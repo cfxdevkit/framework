@@ -1,7 +1,7 @@
 {
   "provider": "lemonade",
   "baseUrl": "http://host.containers.internal:13305/",
-  "defaultModel": "Qwen3-Coder-Next-GGUF",
+  "defaultModel": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
   "githubModel": null,
   "requestTimeoutMs": 600000,
   "actions": {
@@ -12,14 +12,14 @@
     "structure-upkeep": "Qwen3-Coder-Next-GGUF",
     "docs-upkeep": "Qwen3-Coder-Next-GGUF",
     "review": "Qwen3.5-122B-A10B-MTP-GGUF",
-    "commit": "Qwen3-Coder-Next-GGUF",
+    "commit": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
     "test-audit": "Qwen3.5-122B-A10B-MTP-GGUF",
     "repo-health": "Qwen3.5-122B-A10B-MTP-GGUF",
     "changeset": "Qwen3.5-122B-A10B-MTP-GGUF",
     "release-readiness": "Qwen3.5-122B-A10B-MTP-GGUF",
     "ci-cd": "Qwen3.5-122B-A10B-MTP-GGUF",
     "docs-pipeline": "Qwen3.5-122B-A10B-MTP-GGUF",
-    "wiki-generate": "Qwen3.5-122B-A10B-MTP-GGUF"
+    "wiki-generate": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0"
   },
   "providerProfiles": {
     "github-cloud": {
@@ -36,7 +36,7 @@
     "wiki-generate": {
       "phases": {},
       "profile": "local-fast",
-      "model": "Qwen3.5-122B-A10B-MTP-GGUF"
+      "model": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0"
     },
     "review": {
       "phases": {},
@@ -103,6 +103,23 @@
       ],
       "contextWindow": 262144,
       "labels": ["custom"]
+    },
+    {
+      "id": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+      "tier": 2,
+      "role": "Primary local model for wiki generation, documentation, and most local tasks — Q8_0 quantization balances quality and VRAM",
+      "assignedActions": [
+        "wiki-generate",
+        "commit",
+        "docs-api",
+        "readme-upkeep",
+        "package-pages",
+        "structure-upkeep",
+        "docs-upkeep"
+      ],
+      "contextWindow": 262144,
+      "sizeGb": 36.2,
+      "labels": ["coding", "tool-calling", "hot", "mtp"]
     },
     {
       "id": "Qwen3-Coder-30B-A3B-Instruct-GGUF",
