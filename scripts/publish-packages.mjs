@@ -71,6 +71,12 @@ function packageIsRegistered(packageName) {
   return result.status === 0;
 }
 
+// OIDC is only available in CI (GitHub Actions). --provenance requires an
+// OIDC identity token; it fails with a traditional npm token from `npm login`.
+const hasOidc =
+  process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN !== undefined ||
+  process.env.ACTIONS_ID_TOKEN_REQUEST_URL !== undefined;
+
 for (const packageDir of collectPackageDirs()) {
   const packageJson = readJson(resolve(packageDir, 'package.json'));
   const packageName = packageJson.name;
@@ -100,16 +106,19 @@ for (const packageDir of collectPackageDirs()) {
     }
     if (dryRun) publishArgs.push('--dry-run');
 
-    // npm does not allow provenance for new packages — provenance can only be
-    // attached at package creation time (npm website / owner add). For packages
-    // that already exist on the registry we add --provenance so the OIDC token
-    // is used and a provenance statement is emitted. New packages are published
-    // without provenance so the first publish can succeed.
-    if (!dryRun && packageIsRegistered(packageName)) {
-      console.log(`  → with provenance (package already registered)`);
+    if (hasOidc && packageIsRegistered(packageName)) {
+      // CI with OIDC — use provenance for existing packages.
+      console.log(`  → with provenance (package already registered, OIDC available)`);
       publishArgs.push('--provenance');
+    } else if (packageIsRegistered(packageName)) {
+      // Local run with traditional token — provenance requires OIDC.
+      // Existing packages are published without provenance; add it later
+      // by running this script in CI (or via https://npmjs.com/settings/<user>/provenance).
+      console.log(`  → no provenance (OIDC not available — use CI for provenance)`);
     } else if (!dryRun) {
+      // New package — npm blocks provenance for first publishes.
       console.log(`  → no provenance (new package — set up via npm website)`);
+      console.log(`    To add provenance later: visit https://npmjs.com/settings/<user>/provenance`);
     }
 
     run('npm', publishArgs);
