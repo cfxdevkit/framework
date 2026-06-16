@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/create",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "private": false,
   "description": "Project scaffolder (npm create @cfxdevkit).",
   "type": "module",

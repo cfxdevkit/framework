@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/arch-rules",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": true,
   "description": "Typed access to the monorepo architecture rules.",
   "type": "module",

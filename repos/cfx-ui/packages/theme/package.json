@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/theme",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "private": false,
   "description": "Design tokens and CSS layer.",
   "type": "module",

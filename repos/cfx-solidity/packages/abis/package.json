@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/abis",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "private": false,
   "description": "Standard EVM ABI shapes (ERC-20/721/1155, Multicall3) re-exported from viem under framework-stable aliases. Zero cfxdevkit dependencies.",
   "type": "module",
