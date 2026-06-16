@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/testing",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "private": false,
   "description": "Shared test fixtures and matchers.",
   "type": "module",

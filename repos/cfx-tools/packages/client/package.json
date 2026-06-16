@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/client",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "private": false,
   "description": "Typed HTTP client for the Conflux Devkit devnode-server control plane.",
   "type": "module",

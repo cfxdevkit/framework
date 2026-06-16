@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/devnode",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "private": false,
   "description": "Local Conflux dev node lifecycle.",
   "type": "module",
