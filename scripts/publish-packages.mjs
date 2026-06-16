@@ -64,8 +64,9 @@ function versionExists(packageName, version) {
   });
   if (result.status !== 0) return false;
   try {
+    // npm view --json returns a JSON string (e.g. '"@scope/pkg"'), not an object
     const data = JSON.parse(result.stdout);
-    return data.name === packageName;
+    return data === packageName;
   } catch {
     return false;
   }
@@ -80,7 +81,7 @@ function packageIsRegistered(packageName) {
   if (result.status !== 0) return false;
   try {
     const data = JSON.parse(result.stdout);
-    return data.name === packageName;
+    return data === packageName;
   } catch {
     return false;
   }
