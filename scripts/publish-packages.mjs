@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,6 +11,8 @@ const ignoredPackages = existsSync(changesetConfigPath)
   ? new Set(JSON.parse(readFileSync(changesetConfigPath, 'utf8')).ignore ?? [])
   : new Set();
 
+let failed = 0;
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: rootDir,
@@ -19,6 +21,9 @@ function run(command, args, options = {}) {
   });
 
   if (result.status !== 0) {
+    const output = result.stderr || result.stdout || '';
+    console.error(`  ERROR: ${command} ${args.join(' ')}`);
+    if (output) console.error(output.slice(-2000));
     throw new Error(`${command} ${args.join(' ')} failed`);
   }
 
@@ -51,31 +56,87 @@ function collectPackageDirs() {
   return packageDirs.filter((d) => d !== rootDir).sort();
 }
 
-function packageExists(packageName, version) {
-  const result = spawnSync('npm', ['view', `${packageName}@${version}`, 'version'], {
+function versionExists(packageName, version) {
+  const result = spawnSync('npm', ['view', `${packageName}@${version}`, 'name', '--json'], {
     cwd: rootDir,
     encoding: 'utf8',
     stdio: 'pipe',
   });
-
-  return result.status === 0;
+  if (result.status !== 0) return false;
+  try {
+    const data = JSON.parse(result.stdout);
+    return data.name === packageName;
+  } catch {
+    return false;
+  }
 }
 
 function packageIsRegistered(packageName) {
-  const result = spawnSync('npm', ['view', packageName, 'name'], {
+  const result = spawnSync('npm', ['view', packageName, 'name', '--json'], {
     cwd: rootDir,
     encoding: 'utf8',
     stdio: 'pipe',
   });
-
-  return result.status === 0;
+  if (result.status !== 0) return false;
+  try {
+    const data = JSON.parse(result.stdout);
+    return data.name === packageName;
+  } catch {
+    return false;
+  }
 }
 
-// OIDC is only available in CI (GitHub Actions). --provenance requires an
-// OIDC identity token; it fails with a traditional npm token from `npm login`.
+function buildAuthArgs() {
+  /**
+   * Build npm auth arguments. Priority:
+   *  1. NPM_TOKEN env var (CI or explicit local PAT)
+   *  2. No auth args — rely on .npmrc (user logged in via `npm login`)
+   *
+   * The --auth-token flag is deprecated in npm 10+. When NPM_TOKEN is set,
+   * we write a temporary .npmrc to guarantee authentication works for
+   * first-time package creation (which --auth-token often fails for).
+   */
+  const token = process.env.NPM_TOKEN;
+  if (token) {
+    // Write a temporary .npmrc with the PAT — this is the only reliable
+    // way to authenticate first-time package creation across npm versions.
+    const tmpNpmrc = resolve(rootDir, '.npmrc.publish');
+    writeFileSync(tmpNpmrc, `//registry.npmjs.org/:_authToken=${token}\n`, 'utf8');
+    return ['--userconfig', tmpNpmrc];
+  }
+  return [];
+}
+
+function cleanupAuthFiles() {
+  const tmpNpmrc = resolve(rootDir, '.npmrc.publish');
+  if (existsSync(tmpNpmrc)) {
+    rmSync(tmpNpmrc, { force: true });
+  }
+}
+
+process.on('exit', cleanupAuthFiles);
+process.on('SIGINT', () => { cleanupAuthFiles(); process.exit(1); });
+process.on('SIGTERM', () => { cleanupAuthFiles(); process.exit(1); });
+
+// OIDC is only available in CI (GitHub Actions).
 const hasOidc =
   process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN !== undefined ||
   process.env.ACTIONS_ID_TOKEN_REQUEST_URL !== undefined;
+
+const authArgs = buildAuthArgs();
+
+if (authArgs.length > 0) {
+  console.log('Using PAT authentication from NPM_TOKEN');
+} else if (hasOidc) {
+  console.log('Using OIDC authentication (CI)');
+} else {
+  console.log('Using .npmrc authentication (local `npm login`)');
+}
+
+console.log(`\nPackages to check: ${collectPackageDirs().filter((d) => {
+  const pj = readJson(resolve(d, 'package.json'));
+  return pj.name && !pj.private && !ignoredPackages.has(pj.name);
+}).length}\n`);
 
 for (const packageDir of collectPackageDirs()) {
   const packageJson = readJson(resolve(packageDir, 'package.json'));
@@ -83,16 +144,24 @@ for (const packageDir of collectPackageDirs()) {
   const version = packageJson.version;
 
   if (!packageName || packageJson.private || ignoredPackages.has(packageName)) {
-    console.log(`Skipping ${packageName ?? packageDir}`);
     continue;
   }
 
-  if (!dryRun && packageExists(packageName, version)) {
-    console.log(`Skipping ${packageName}@${version}; already published`);
+  if (dryRun) {
+    console.log(`[DRY RUN] Would publish ${packageName}@${version}`);
     continue;
   }
 
-  console.log(`Packing ${packageName}@${version}`);
+  // Check if this exact version already exists on npm
+  if (versionExists(packageName, version)) {
+    console.log(`⏭️  Skipping ${packageName}@${version}; already published`);
+    continue;
+  }
+
+  const isRegistered = packageIsRegistered(packageName);
+  const isNewPackage = !isRegistered;
+
+  console.log(`📦 Packing ${packageName}@${version}`);
   const packOutput = run('pnpm', ['pack', '-C', packageDir, '--pack-destination', rootDir], {
     capture: true,
   });
@@ -101,28 +170,43 @@ for (const packageDir of collectPackageDirs()) {
 
   try {
     const publishArgs = ['publish', tarballPath, '--access', 'public'];
-    if (process.env.NPM_TOKEN) {
-      publishArgs.push('--auth-token', process.env.NPM_TOKEN);
-    }
-    if (dryRun) publishArgs.push('--dry-run');
 
-    if (hasOidc && packageIsRegistered(packageName)) {
-      // CI with OIDC — use provenance for existing packages.
-      console.log(`  → with provenance (package already registered, OIDC available)`);
-      publishArgs.push('--provenance');
-    } else if (packageIsRegistered(packageName)) {
-      // Local run with traditional token — provenance requires OIDC.
-      // Existing packages are published without provenance; add it later
-      // by running this script in CI (or via https://npmjs.com/settings/<user>/provenance).
-      console.log(`  → no provenance (OIDC not available — use CI for provenance)`);
-    } else if (!dryRun) {
-      // New package — npm blocks provenance for first publishes.
-      console.log(`  → no provenance (new package — set up via npm website)`);
-      console.log(`    To add provenance later: visit https://npmjs.com/settings/<user>/provenance`);
+    // Add auth args (from PAT or .npmrc)
+    publishArgs.push(...authArgs);
+
+    if (isNewPackage) {
+      // npm blocks --provenance for first-time package creation.
+      // New packages are always published WITHOUT provenance.
+      console.log(`  → first-time publish (no provenance available)`);
+      if (!hasOidc && authArgs.length === 0) {
+        console.log(`  ⚠️  No auth configured. Make sure you ran \`npm login\`.`);
+      }
+    } else {
+      // Existing package — use provenance if OIDC is available
+      if (hasOidc) {
+        console.log(`  → with provenance (OIDC + existing package)`);
+        publishArgs.push('--provenance');
+      } else {
+        console.log(`  → no provenance (existing package, local run)`);
+        console.log(`     (provenance will be added when run in CI)`);
+      }
     }
 
     run('npm', publishArgs);
+    console.log(`  ✅ Published ${packageName}@${version}`);
+  } catch (err) {
+    console.error(`  ❌ Failed to publish ${packageName}@${version}: ${err.message}`);
+    failed++;
   } finally {
     rmSync(tarballPath, { force: true });
   }
+}
+
+cleanupAuthFiles();
+
+if (failed > 0) {
+  console.error(`\n❌ ${failed} package(s) failed to publish.`);
+  process.exit(1);
+} else {
+  console.log(`\n✅ All packages published successfully.`);
 }

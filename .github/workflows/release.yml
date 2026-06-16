@@ -52,6 +52,8 @@ jobs:
 
       - name: Publish
         if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run) }}
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm install -g npm@11
           node scripts/publish-packages.mjs
