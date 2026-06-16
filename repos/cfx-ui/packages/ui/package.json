@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/ui",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "private": false,
   "description": "Tailwind-first reusable Conflux UI primitives built on @cfxdevkit/ui-core.",
   "type": "module",

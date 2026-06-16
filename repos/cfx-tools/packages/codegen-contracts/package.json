@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/codegen-contracts",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "private": true,
   "description": "Extracts ABI + bytecode from Hardhat artifacts and renders TypeScript modules consumed by @cfxdevkit/contracts.",
   "type": "module",

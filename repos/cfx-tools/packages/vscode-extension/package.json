@@ -3,7 +3,7 @@
   "publisher": "cfxdevkit",
   "displayName": "Conflux DevKit",
   "description": "VS Code integration for Conflux node lifecycle, keystore wallet management, and contract deployment.",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": true,
   "type": "module",
   "main": "./dist/extension.js",
