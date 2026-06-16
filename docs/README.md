@@ -15,6 +15,7 @@ Implemented today:
 docs/
 ├── architecture/       Cross-cutting design notes and package-shape guidance
 ├── adr/                Architectural Decision Records
+├── guides/             How-tos: changeset, deploying, integrating wallet, …
 ├── README.md
 ├── STRUCTURE.md
 ├── keystore-docker.md  Operational guide
@@ -55,3 +56,8 @@ docs/
   LLM automation, Lemonade Server inference, datasets, evals, and fine-tuning artifacts.
 - [llm-automation-agents.md](llm-automation-agents.md) — Implemented deterministic
   repository upkeep agents for corpus, docs, review, eval, and Lemonade checks.
+
+## How-to guides
+
+- [guides/changeset.md](guides/changeset.md) — Changesets: versioning, publishing,
+  LLM-based generation, and the full release workflow.
