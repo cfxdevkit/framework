@@ -156,14 +156,29 @@
 ```
 Task 1 (releases) ──┐
 Task 2 (guides) ────┼── Task 4 (wiki post-processing) ──┐
-Task 3 (api ref) ───┤                                    ├── Task 9 (full sync)
-Task 5 (_meta.js) ──┤                                    │
-Task 6 (Docker) ────┤                                    │
-Task 7 (quickstart) ─┘                                    ├── Task 10 (docs update)
-Task 8 (CI coverage) ────────────────────────────────────┘
+Task 3 (api ref) ───┤                                    ├── Task 5 (_meta.js) ──┐
+Task 5 (_meta.js) ──┘                                    │                        ├── Task 9 (full sync)
+Task 6 (Docker) ─────────────────────────────────────────┤                        │
+Task 7 (quickstart) ─────────────────────────────────────┤                        │
+Task 8 (CI coverage) ────────────────────────────────────┤                        │
+                                                           └────────────────────────┼── Task 10 (docs update)
+                                                                                        │
+Task 9 validates everything. Task 10 documents the changes.
 ```
 
-Tasks 1-7 can run in parallel (different files). Tasks 5-8 depend on 1-4. Task 9 validates everything. Task 10 documents the changes.
+### Status (as of 2026-06-16)
+| Task | Status | Notes |
+|------|--------|-------|
+| 1. sync:releases | ✅ DONE | Parses .changeset/*.md, groups by version |
+| 2. sync:guides | ✅ DONE | Syncs docs/guides/*.md to content/guides/ |
+| 3. sync:api-reference | ✅ DONE | Aggregates all 27 package exports |
+| 4. wiki post-processing | ✅ DONE | Removes boilerplate, condenses content |
+| 5. _meta.js navigation | ✅ DONE | Added releases, guides, api entries |
+| 6. Docker verification | ⏳ TODO | scripts/verify-content.mjs |
+| 7. Quickstart expansion | ⏳ TODO | Add "Next packages to try" section |
+| 8. CI coverage pre-step | ⏳ TODO | build-docs.yml coverage collection |
+| 9. Full sync validation | ⏳ TODO | Run sync all + next build |
+| 10. Documentation update | ⏳ TODO | Update docs-refresh-sequence.md |
 
 ## Deferred (Not in Scope)
 
