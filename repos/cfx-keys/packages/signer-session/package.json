@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/signer-session",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "private": false,
   "description": "Headless signer session factory — create a ready Signer pair (eSpace + Core) from any backend without browser UI.",
   "type": "module",
