@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/arch-check",
-  "version": "0.0.0",
+  "version": "2.0.1",
   "private": true,
   "description": "Deterministic monorepo architecture and repository health checks.",
   "type": "module",

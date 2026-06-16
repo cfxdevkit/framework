@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/react",
-  "version": "4.0.0",
+  "version": "2.0.1",
   "private": false,
   "description": "React hooks over @cfxdevkit/cdk.",
   "type": "module",

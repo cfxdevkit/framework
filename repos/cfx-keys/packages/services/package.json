@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/services",
-  "version": "3.0.1",
+  "version": "2.0.1",
   "private": false,
   "description": "Pluggable backends: keystore, crypto, dex, tokens.",
   "type": "module",
