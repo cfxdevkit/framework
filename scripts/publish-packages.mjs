@@ -48,7 +48,7 @@ function collectPackageDirs() {
   }
 
   // Explicitly exclude the root workspace package (the monorepo itself)
-  return packageDirs.filter(d => d !== rootDir).sort();
+  return packageDirs.filter((d) => d !== rootDir).sort();
 }
 
 function packageExists(packageName, version) {
