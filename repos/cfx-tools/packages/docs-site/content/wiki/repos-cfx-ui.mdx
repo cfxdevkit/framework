@@ -360,28 +360,6 @@ function AddLiquidity({ pairAddress }) {
 }
 ```
 
-## Integration with Codebase
-
-### Dependencies
-- `@cfxdevkit/abis`: Contract ABIs for Swappi V2 and ERC-20
-- `@cfxdevkit/cdk`: Conflux Development Kit (client, types, utilities)
-- `@cfxdevkit/react`: React hooks for blockchain interactions (account, balance, contract, tx)
-- `@cfxdevkit/ui-core`: Shared utilities (token normalization, address resolution)
-- `@cfxdevkit/theme`: Design tokens and CSS variables
-
-### Consumers
-This package is intended for use in:
-- dApp frontend applications built with React
-- Conflux eSpace-focused DeFi interfaces
-- Internal tooling and dashboard components
-- Showcase applications demonstrating Conflux capabilities
-
-### Extension Points
-1. **DEX Adapters**: Implement `DexAdapter` interface for other protocols
-2. **Token Registries**: Pass custom token lists to widgets via props
-3. **Primitives**: Compose basic components for custom DeFi interfaces
-4. **Hooks**: Combine data hooks for complex views (e.g., portfolio + price)
-
 ## Important Notes
 
 ### Browser Support

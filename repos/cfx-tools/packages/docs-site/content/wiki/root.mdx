@@ -59,18 +59,3 @@ Base TypeScript configuration:
   - `@cfxdevkit/devnode` → `./repos/cfx-core/packages/devnode/src/index.ts`
   - `@cfxdevkit/testing` → `./repos/cfx-core/packages/testing/src/index.ts`
 
-## Integration with Codebase
-
-The Root module enables consistent development across all packages by:
-1. **Tooling Standardization**: Biome/Knip configurations ensure uniform code quality checks
-2. **Task Automation**: Package.json scripts provide standardized commands for building, testing, and documentation
-3. **Dependency Management**: PNPM workspaces and hoisting rules prevent version conflicts
-4. **Type Safety**: Shared tsconfig ensures consistent compiler behavior and path resolution
-5. **Architecture Enforcement**: Knip rules and arch-check tasks maintain dependency boundaries
-
-Packages inherit these configurations automatically through:
-- PNPM workspace resolution (via `pnpm-workspace.yaml`)
-- Extended configurations (biome.json, tsconfig.base.json)
-- Script execution context (Moonrepo runs tasks from workspace root)
-
-The module contains no executable code—its influence is purely configurational, affecting how tools interact with the actual application code in subpackages. No internal functions, classes, or execution flows exist within the Root module itself.

@@ -112,6 +112,114 @@ export function simplifyMermaidDiagram(diagram: string): string {
   ].join('\n');
 }
 
+/**
+ * Post-process wiki content for readability.
+ *
+ * Rules:
+ *  - Keep the H1 heading
+ *  - Condense the first 200 words into a single overview paragraph
+ *  - Remove "Integration with Codebase" sections entirely
+ *  - Remove sentences containing "The module contains no executable code"
+ *  - Keep "Configuration Files" and "Package Layout" sections
+ *  - Maximum ~15 content lines (excluding frontmatter, mermaid, code blocks)
+ */
+export function condenseWikiContent(content: string): string {
+  let lines = content.split('\n');
+
+  // Step 1: Remove "Integration with Codebase" sections (including subsections)
+  const result: string[] = [];
+  let skipIntegration = false;
+  let integrationHeadingLevel = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Check if this is a heading that starts the Integration section
+    if (/^##+\s+/.test(line)) {
+      const headingText = line.replace(/^#+\s+/, '').trim().toLowerCase();
+      if (headingText === 'integration with codebase') {
+        skipIntegration = true;
+        const match = line.match(/^(#+)/);
+        integrationHeadingLevel = match ? match[1].length : 2;
+        continue;
+      }
+      // If we're skipping and hit a heading at same or lower level, stop skipping
+      if (skipIntegration) {
+        const currentLevel = line.match(/^(#+)/);
+        const currentLevelNum = currentLevel ? currentLevel[1].length : 2;
+        if (currentLevelNum <= integrationHeadingLevel) {
+          skipIntegration = false;
+        }
+      }
+    }
+
+    if (!skipIntegration) {
+      // Step 2: Remove sentences with boilerplate disclaimers
+      if (/The module contains no executable code/i.test(line)) {
+        continue;
+      }
+      result.push(line);
+    }
+  }
+
+  lines = result;
+
+  // Step 3: Extract and condense the first content paragraph
+  // Find the first non-heading, non-empty, non-codeblock content
+  let firstParaStart = -1;
+  let firstParaEnd = -1;
+  let inCodeBlock = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    if (inCodeBlock) continue;
+    if (line.startsWith('#')) continue;
+    if (line === '') continue;
+    if (line.startsWith('- ') || line.startsWith('|')) continue; // list/table items
+
+    firstParaStart = i;
+    // Find end of paragraph
+    for (let j = i + 1; j < lines.length; j++) {
+      const nextLine = lines[j].trim();
+      if (nextLine === '' || nextLine.startsWith('#') || nextLine.startsWith('```')) {
+        firstParaEnd = j;
+        break;
+      }
+      if (j === lines.length - 1) firstParaEnd = j + 1;
+    }
+    break;
+  }
+
+  if (firstParaStart >= 0 && firstParaEnd > firstParaStart) {
+    // Extract first paragraph text (max 200 words)
+    const paraLines = lines.slice(firstParaStart, firstParaEnd).join(' ');
+    const words = paraLines.split(/\s+/);
+    if (words.length > 200) {
+      const condensed = words.slice(0, 200).join(' ') + '...';
+      // Replace the paragraph with condensed version
+      lines = [
+        ...lines.slice(0, firstParaStart),
+        condensed,
+        ...lines.slice(firstParaEnd),
+      ];
+    }
+  }
+
+  // Step 4: Remove trailing "---" dividers that separate boilerplate
+  while (lines.length > 0 && lines[lines.length - 1].trim() === '---') {
+    lines.pop();
+  }
+  while (lines.length > 0 && lines[0].trim() === '---') {
+    lines.shift();
+  }
+
+  return lines.join('\n');
+}
+
 function toMdxSafeContent(content: string): string {
   return content
     .replace(/<!--[\s\S]*?-->/g, '')
@@ -161,7 +269,11 @@ export async function syncWiki(): Promise<number> {
     const sourcePath = path.join(wikiSourceDir, file);
     const slug = file.replace(/\.md$/, '');
     const destPath = path.join(wikiContentDir, `${slug}.mdx`);
-    const content = toMdxSafeContent(await fs.readFile(sourcePath, 'utf8'));
+    let content = toMdxSafeContent(await fs.readFile(sourcePath, 'utf8'));
+
+    // Apply wiki quality post-processing
+    content = condenseWikiContent(content);
+
     const titleMatch = content.match(/^#\s+(.+)$/m);
     const title = titleMatch?.[1]?.trim() || slug;
     // Mermaid is registered globally in mdx-components.tsx, no import needed
