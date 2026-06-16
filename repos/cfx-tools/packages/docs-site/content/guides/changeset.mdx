@@ -1,0 +1,394 @@
+---
+title: "Changesets — Versioning & Publishing Guide"
+description: "[Changesets]() is a tool that manages se"
+---
+
+# Changesets — Versioning & Publishing Guide
+
+> **TL;DR:** Changesets track which publishable packages need version bumps.
+> Create one per PR, review it, bump versions, then push and CI publishes.
+
+## What are Changesets?
+
+[Changesets](https://github.com/changesets/changesets) is a tool that manages
+semver version bumps, changelogs, and releases for monorepos. Every time you
+make a change to a **publishable** package (one that appears in the `ignore`
+list of `.changeset/config.json`), you create a changeset entry that describes
+the change.
+
+During a release run, changesets are processed to:
+1. **Bump package versions** — `patch` for bugfixes, `minor` for new features,
+   `major` for breaking changes.
+2. **Generate changelogs** — per-package `CHANGELOG.md` files (or a combined
+   `CHANGES.md`).
+3. **Update inter-package dependencies** — if `@cfxdevkit/cdk` bumps from
+   `2.0.7` to `2.0.8` and `@cfxdevkit/cli` depends on it, cli's `package.json`
+   is updated to the new version.
+
+### Packages NOT managed by changesets
+
+The following packages are listed in `.changeset/config.json` `ignore` — they
+are dev tooling or private root packages and never get published:
+
+| Package | Reason |
+|---------|--------|
+| `@cfxdevkit/tsconfig` | Shared TypeScript config |
+| `@cfxdevkit/biome-config` | Shared Biome config |
+| `@cfxdevkit/moon-config` | Shared moon config |
+| `@cfxdevkit/mcp-server` | MCP server tool |
+| `@cfxdevkit/create` | Project scaffolding tool |
+| `@cfxdevkit/game-engine` | Domain package (see note below) |
+| `@cfxdevkit/automation` | Domain package (see note below) |
+| `@cfxdevkit/framework` | Private root workspace package |
+
+### Publishable packages
+
+All other packages under `repos/cfx-*/packages/` are publishable. The current
+set includes (non-exhaustive):
+
+`@cfxdevkit/cdk`, `@cfxdevkit/protocol`, `@cfxdevkit/executor`,
+`@cfxdevkit/devnode`, `@cfxdevkit/testing`, `@cfxdevkit/services`,
+`@cfxdevkit/signer-session`, `@cfxdevkit/wallet`, `@cfxdevkit/abis`,
+`@cfxdevkit/contracts`, `@cfxdevkit/cli`, `@cfxdevkit/client`,
+`@cfxdevkit/compiler`, `@cfxdevkit/devnode-core`, `@cfxdevkit/devnode-server`,
+`@cfxdevkit/keystore-server`, `@cfxdevkit/defi-react`, `@cfxdevkit/react`,
+`@cfxdevkit/theme`, `@cfxdevkit/ui`, `@cfxdevkit/ui-core`,
+`@cfxdevkit/wallet-connect`
+
+---
+
+## Quick Start — The Standard Flow
+
+### 1. Make your code changes
+
+Edit any file inside a publishable package:
+
+```bash
+# Example: fix a bug in the cdk client
+edit repos/cfx-core/packages/cdk/src/client/core.ts
+```
+
+### 2. Stage the changes
+
+```bash
+git add repos/cfx-core/packages/cdk/src/client/core.ts
+```
+
+### 3. Create a changeset entry
+
+There are three ways, from easiest to most manual:
+
+#### Option A — LLM-generated (recommended)
+
+```bash
+pnpm run llm:changeset:generate
+```
+
+The LLM agent analyzes your staged/unstaged diffs and generates a
+`.changeset/<slug>.md` file with appropriate bump level and release notes.
+
+You'll see output like:
+
+```
+✅ Created changeset: .changeset/fix-deploy-command.md
+
+Summary: Fix the deploy command to handle empty workspace configs.
+
+Affected packages:
+  • @cfxdevkit/cdk: patch — Fix the deploy command to handle empty workspace configs.
+
+Next steps:
+  1. Review the changeset file
+  2. Commit it: git add .changeset/
+  3. Run `npx changeset version` to bump versions
+```
+
+#### Option B — Interactive
+
+```bash
+npx changeset
+```
+
+You'll be prompted:
+- **Select packages** to include (use arrow keys, Space to toggle)
+- **Select bump type** — `patch` (bugfix), `minor` (new feature), `major` (breaking)
+- **Write a description** — end-user facing, one sentence
+
+#### Option C — Manual
+
+Create a `.changeset/your-change.md` file:
+
+```markdown
+---
+"@cfxdevkit/cdk": patch
+"@cfxdevkit/cli": minor
+---
+
+Fix the deploy command to handle empty workspace configs.
+Add support for custom transport timeouts.
+```
+
+### 4. Review the changeset
+
+```bash
+npx changeset status
+```
+
+This shows:
+- Which packages will be released and their new versions
+- The changelog entries that will be generated
+- Dependency changes between packages
+
+### 5. Commit the changeset
+
+```bash
+git add .changeset/your-change.md
+git commit -m "fix(cdk): fix deploy command for empty configs"
+```
+
+### 6. Apply version bumps (done during release)
+
+```bash
+npx changeset version
+```
+
+This:
+- Updates all `package.json` versions
+- Updates `workspace:*` dependencies between packages
+- Merges `.changeset/*.md` into `CHANGELOG.md` per package
+- Removes the `.changeset/*.md` files
+
+```bash
+git add -A
+git commit -m "release: bump versions and update changelogs"
+git push origin main
+```
+
+### 7. Trigger CI publish
+
+```bash
+gh workflow run release.yml --ref main -f dry_run=false
+```
+
+CI will:
+- Build everything
+- Publish each package to npm
+- Attach OIDC provenance (trusted publishing via GitHub Actions)
+
+---
+
+## Workspace Commands
+
+All commands run from the repository root:
+
+| Command | What it does |
+|---------|-------------|
+| `pnpm run changeset` | Alias for `npx changeset` — interactive creation |
+| `pnpm run changeset:status` | Preview upcoming release |
+| `pnpm run changeset:version` | Apply version bumps + generate changelogs |
+| `pnpm run changeset:check` | **Gate** — fails if publishable changes lack changesets |
+| `pnpm run llm:changeset` | LLM review of current changes for changeset readiness |
+| `pnpm run llm:changeset:generate` | LLM generates `.changeset/*.md` files from staged diffs |
+
+These also work via `npx`:
+
+| Command | What it does |
+|---------|-------------|
+| `npx changeset` | Interactive creation |
+| `npx changeset status` | Preview |
+| `npx changeset version` | Bump |
+
+---
+
+## Changeset Check Gate
+
+The `pnpm run changeset:check` command runs before other steps to ensure no
+publishable package change slips through without a changeset.
+
+```bash
+# Run it to verify your staged changes are covered
+pnpm run changeset:check
+```
+
+If changesets are missing, it exits with code 1 and lists the affected packages:
+
+```
+❌ Missing Changeset entries for the following package(s):
+   • @cfxdevkit/cdk  (repos/cfx-core/packages/cdk)
+
+To create a Changeset entry, run:
+   npx changeset
+
+Or generate one via the LLM agent:
+   pnpm run llm:changeset:generate
+```
+
+---
+
+## Bump Level Guide
+
+| Level | When to use | Example |
+|-------|-------------|---------|
+| `patch` | Bugfixes, internal refactorings, documentation, config changes that don't affect the public API | Fix crash on null input |
+| `minor` | New public API, new functionality that's backward-compatible | Add `createClient()` support for custom transports |
+| `major` | Breaking changes — removed APIs, changed signatures, incompatible behavior | Remove `signerFromPrivateKey()` in favor of `signerFrom()` |
+
+When in doubt, choose `patch`. It's better to release two patch bumps than one
+incorrect minor.
+
+---
+
+## Multi-Package Changesets
+
+If your PR touches multiple publishable packages, create a single changeset that
+covers all of them:
+
+```markdown
+---
+"@cfxdevkit/cdk": patch
+"@cfxdevkit/cli": patch
+"@cfxdevkit/executor": minor
+---
+
+Fix the deploy command to handle empty workspace configs.
+Add executor support for multi-chain deployments.
+```
+
+The LLM-generated mode (`llm:changeset:generate`) handles this automatically
+when your diff spans multiple packages.
+
+---
+
+## How to Ignore a Package for a PR
+
+If you made a change to a publishable package that doesn't need a version bump
+(e.g., test-only change, internal refactor with no public API impact), use the
+`--empty` flag:
+
+```bash
+npx changeset --empty
+```
+
+This creates a changeset with no package entries — it signals "I reviewed this
+PR and no bump is needed" without requiring you to list packages.
+
+---
+
+## Troubleshooting
+
+### "No publishable package changes detected"
+
+You haven't staged any files inside a `repos/cfx-*/packages/` directory.
+Run `git add` first.
+
+### "No changes detected; nothing to generate"
+
+The LLM generate command looks at both staged and unstaged diffs. Make sure
+your changes are tracked by git:
+
+```bash
+git status  # See your changes
+git add .   # Stage them
+pnpm run llm:changeset:generate
+```
+
+### "Changeset validation failed — @cfxdevkit/xxx is not found"
+
+A package in the `ignore` list of `.changeset/config.json` doesn't exist as a
+publishable package. Check that the package name is correct.
+
+### "Some packages have been changed but no changesets were found"
+
+`npx changeset status` found code changes in publishable packages but no
+`.changeset/*.md` files exist. Create one (see section 3 above) before bumping.
+
+### Changeset files accumulate and clutter the repo
+
+This is normal during development. When you run `npx changeset version`, all
+`.changeset/*.md` files are consumed into the changelog and deleted. A clean
+repo means zero `.changeset/*.md` files — every change has been versioned.
+
+---
+
+## CI Integration
+
+The release workflow (`.github/workflows/release.yml`) uses `scripts/publish-packages.mjs` which:
+
+1. **Packs** each publishable package with `npm pack`
+2. **Checks** whether each package already exists on npm
+3. **Publishes** with `--provenance` if the package is new or has an existing OIDC-trusted scope
+4. **Skips** packages that are already at the target version
+
+The `--provenance` flag attaches [npm provenance](https://docs.npmjs.com/generating-provenance-statements)
+to each published package via OIDC (OpenID Connect) — proving the package was built
+from the GitHub repository, not from a compromised registry or build server.
+
+### Provenance configuration
+
+Once the `@cfxdevkit` scope is configured on npmjs.com for OIDC trusted publishing,
+every CI publish automatically attaches provenance. No tokens are stored.
+
+---
+
+## Architecture Notes
+
+### Changeset generation pipeline
+
+```
+Developer changes code
+       │
+       ▼
+  git add  (stage files)
+       │
+       ▼
+  pnpm run llm:changeset:generate
+       │
+       ├─► Reads staged/unstaged git diff
+       ├─► Groups files by publishable package dir
+       ├─► Sends diffs to LLM for bump-level + release note generation
+       └─► Writes .changeset/<slug>.md
+       │
+       ▼
+  Developer reviews changeset file
+       │
+       ▼
+  git commit .changeset/*.md
+       │
+       ▼
+  CI (on merge to main)
+       │
+       ├─► npx changeset status    (preview)
+       ├─► npx changeset version   (bump)
+       └─► scripts/publish-packages.mjs  (publish)
+```
+
+### Files involved
+
+| File | Purpose |
+|------|---------|
+| `.changeset/config.json` | Changeset CLI configuration |
+| `.changeset/*.md` | Individual changeset entries (consumed during `version`) |
+| `scripts/changeset-check.mjs` | Pre-check gate — validates changesets exist |
+| `scripts/publish-packages.mjs` | CI publish script with provenance support |
+| `.github/workflows/release.yml` | GitHub Actions workflow |
+| `repos/cfx-tools/infra/llm-agents/workers/commit/changeset.ts` | LLM changeset generation logic |
+| `repos/cfx-tools/infra/llm-agents/workers/commands.ts` | CLI entry for `--generate` flag |
+| `package.json` (root) | Workspace script aliases |
+
+### `updateInternalDependencies: "patch"`
+
+The config sets `updateInternalDependencies` to `patch`, meaning if `@cfxdevkit/cdk`
+is bumped from `2.0.7` → `2.0.8`, any other package that depends on it via
+`"workspace:*"` or `"workspace:^"` will also see its cdk dependency updated to
+`2.0.8` — without requiring a separate changeset for that package (unless its
+own code changed).
+
+---
+
+## History
+
+- **2026-06-16** — Added moon integration, LLM-based generation (`--generate`
+  flag), and changeset check gate. Fixed `@cfxdevkit/framework` ignore list.
+- **2026-06-15** — Initial changeset integration. All 22 packages published
+  successfully with OIDC provenance.
+- **Before** — No changesets; versions were bumped manually before each release.

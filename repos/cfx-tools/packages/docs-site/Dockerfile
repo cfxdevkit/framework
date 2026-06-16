@@ -16,6 +16,9 @@ RUN pnpm --filter @cfxdevkit/workspace-utils run build
 # Run docs-pipeline content prep explicitly before building the docs renderer.
 RUN pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all
 
+# Verify content is complete before building (catches sync failures early).
+RUN node scripts/verify-content.mjs
+
 # Run next build from the package directory so Next.js/Turbopack can locate
 # the 'next' package via local node_modules (avoids workspace root confusion)
 WORKDIR /app/repos/cfx-tools/packages/docs-site

@@ -10,7 +10,7 @@ export const docsCommands: readonly DocsCliCommandDefinition[] = [
   {
     name: 'sync',
     description: 'Sync generated docs content',
-    usage: 'sync [all|packages|wiki|architecture|coverage]',
+    usage: 'sync [all|packages|wiki|architecture|coverage|releases|guides|api]',
   },
   {
     name: 'validate',
@@ -34,6 +34,9 @@ export function resolveDocsInvocation(
       'wiki',
       'architecture',
       'coverage',
+      'releases',
+      'guides',
+      'api',
     ]);
     const command: DocsCommandName =
       target === 'all'
@@ -44,7 +47,13 @@ export function resolveDocsInvocation(
             ? 'sync:wiki'
             : target === 'architecture'
               ? 'sync:architecture'
-              : 'sync:coverage';
+              : target === 'coverage'
+                ? 'sync:coverage'
+                : target === 'releases'
+                  ? 'sync:releases'
+                  : target === 'guides'
+                    ? 'sync:guides'
+                    : 'sync:api-reference';
     return { command, extraArgs: [] };
   }
 

@@ -46,6 +46,10 @@ jobs:
       - name: Build workspace-utils
         run: pnpm --filter @cfxdevkit/workspace-utils run build
 
+      - name: Generate coverage data
+        run: pnpm --filter "@cfxdevkit/*" test:coverage -- --concurrency 4
+        continue-on-error: true
+
       - name: Sync wiki content
         run: pnpm --filter @cfxdevkit/docs-pipeline run docs -- sync all
 

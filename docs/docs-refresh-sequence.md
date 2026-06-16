@@ -1,6 +1,6 @@
 # Documentation Refresh — Canonical Sequence
 
-> Last updated: 2026-05-25
+> Last updated: 2026-06-16
 
 ## Current state (before refresh)
 
@@ -11,6 +11,7 @@
 | **L3** `README.md` | Install + usage prose per package | Most packages **ok** (hash-stamped) |
 | **L4** Package MDX | docs-site `content/packages/<slug>.mdx` stubs | 27 pages (need re-enrich) |
 | **L5** Wiki | docs-site `content/wiki/*.mdx` from gitnexus | Generated with **Qwen3-Coder-30B** (stale, needs 122B) |
+
 
 ---
 
@@ -64,6 +65,7 @@ cdk docs validate wiki      # Mermaid fence validation in wiki pages
 cdk repo commit
 ```
 
+
 ---
 
 ## Quick-reference
@@ -78,6 +80,30 @@ cdk repo commit
 | Sync wiki MDX without regenerating | `cdk docs wiki sync` |
 | Validate wiki mermaid | `cdk docs wiki validate` |
 | Check what's stale | `pnpm run check:docs` |
+| **Sync releases page** | `pnpm sync:releases` |
+| **Sync guides section** | `pnpm sync:guides` |
+| **Sync API reference** | `pnpm sync:api` |
+| **Sync all content** | `pnpm sync:all` |
+
+
+---
+
+## New sync commands (docs-pipeline)
+
+The `@cfxdevkit/docs-pipeline` package provides these additional sync commands:
+
+| Command | What it generates | Source |
+|---------|------------------|--------|
+| `sync:releases` | `content/releases.mdx` | `.changeset/*.md` entries |
+| `sync:guides` | `content/guides/*.mdx` + `content/guides/index.mdx` | `docs/guides/*.md` |
+| `sync:api-reference` | `content/api.mdx` | All 27 package `exports` maps |
+| `sync:wiki` | `content/wiki/*.mdx` | `.gitnexus/wiki/*.md` |
+| `sync:packages` | `content/packages/*.mdx` | Package `README.md` + `exports` |
+| `sync:architecture` | `content/architecture.mdx` | Repo layout (tier model) |
+| `sync:coverage` | `content/coverage.mdx` | Vitest `coverage-summary.json` |
+| `sync:all` | All of the above | Sequential execution |
+
+All commands are idempotent — safe to re-run at any time. The `sync:all` command is what the Docker build runs automatically.
 
 ---
 

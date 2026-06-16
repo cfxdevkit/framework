@@ -48,7 +48,8 @@ union (`client.family === 'espace' | 'core'`).
 
 ## What lives where
 
-- **`createClient({ chain, transport })`** returns the right client for the chain's `family`.
+- **`createClient({ chain, transport })`** returns the right client for the chain's `family`
+  (`EspaceClient` ∪ `CoreSpaceClient` discriminated union).
   - eSpace: `getBlockNumber`, `getBlock`, `getBalance`, `getTransactionReceipt`, `estimateGas`
   - Core Space: `getEpochNumber`, `getStatus`, `getBalance`, `getTransactionReceipt`,
     `getTransaction`, `getLogs`, `getSponsorInfo`, `getAdmin`
@@ -640,4 +641,4 @@ export { generateMnemonic }
 export { validateMnemonic }
 ```
 
-{/* readme-hash: ebc239b209db7793795d40252dd9ae0a066e41198a11e158d51a1cc41cc8dc44 */}
+{/* readme-hash: 49d0208dda46cb4dc0e01af0a6f82e2edbd947c0c056ba750d8a356d584eaf2a */}
