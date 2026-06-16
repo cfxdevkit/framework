@@ -28,7 +28,10 @@ const root = join(__dirname, '..');
 
 const args = process.argv.slice(2);
 const scopeArg = args.includes('--scope')
-  ? args[args.indexOf('--scope') + 1]?.split(',').map((s) => s.trim()).filter(Boolean)
+  ? args[args.indexOf('--scope') + 1]
+      ?.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
   : [];
 const useDiff = args.includes('--diff');
 
@@ -79,7 +82,9 @@ function getChangedFiles() {
     // Uncommitted changes (staged + unstaged)
     const staged = safeExec('git diff --name-only --cached') || '';
     const unstaged = safeExec('git diff --name-only') || '';
-    return [...new Set([...staged.trim().split('\n'), ...unstaged.trim().split('\n')])].filter(Boolean);
+    return [...new Set([...staged.trim().split('\n'), ...unstaged.trim().split('\n')])].filter(
+      Boolean,
+    );
   }
   // Staged changes only
   const output = safeExec('git diff --name-only --cached') || '';

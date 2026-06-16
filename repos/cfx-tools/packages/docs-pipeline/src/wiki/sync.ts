@@ -133,20 +133,24 @@ export function condenseWikiContent(content: string): string {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+    if (!line) continue;
 
     // Check if this is a heading that starts the Integration section
     if (/^##+\s+/.test(line)) {
-      const headingText = line.replace(/^#+\s+/, '').trim().toLowerCase();
+      const headingText = line
+        .replace(/^#+\s+/, '')
+        .trim()
+        .toLowerCase();
       if (headingText === 'integration with codebase') {
         skipIntegration = true;
         const match = line.match(/^(#+)/);
-        integrationHeadingLevel = match ? match[1].length : 2;
+        integrationHeadingLevel = match?.[1]?.length ?? 2;
         continue;
       }
       // If we're skipping and hit a heading at same or lower level, stop skipping
       if (skipIntegration) {
         const currentLevel = line.match(/^(#+)/);
-        const currentLevelNum = currentLevel ? currentLevel[1].length : 2;
+        const currentLevelNum = currentLevel?.[1]?.length ?? 2;
         if (currentLevelNum <= integrationHeadingLevel) {
           skipIntegration = false;
         }
@@ -171,9 +175,11 @@ export function condenseWikiContent(content: string): string {
   let inCodeBlock = false;
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (line.startsWith('```')) {
-      inCodeBlock = !inCodeBlock;
+    const line = lines[i]?.trim();
+    if (line === undefined || line.startsWith('```')) {
+      if (line !== undefined && line.startsWith('```')) {
+        inCodeBlock = !inCodeBlock;
+      }
       continue;
     }
     if (inCodeBlock) continue;
@@ -184,8 +190,8 @@ export function condenseWikiContent(content: string): string {
     firstParaStart = i;
     // Find end of paragraph
     for (let j = i + 1; j < lines.length; j++) {
-      const nextLine = lines[j].trim();
-      if (nextLine === '' || nextLine.startsWith('#') || nextLine.startsWith('```')) {
+      const nextLine = lines[j]?.trim();
+      if (nextLine === '' || nextLine?.startsWith('#') || nextLine?.startsWith('```')) {
         firstParaEnd = j;
         break;
       }
@@ -201,20 +207,26 @@ export function condenseWikiContent(content: string): string {
     if (words.length > 200) {
       const condensed = words.slice(0, 200).join(' ') + '...';
       // Replace the paragraph with condensed version
-      lines = [
-        ...lines.slice(0, firstParaStart),
-        condensed,
-        ...lines.slice(firstParaEnd),
-      ];
+      lines = [...lines.slice(0, firstParaStart), condensed, ...lines.slice(firstParaEnd)];
     }
   }
 
   // Step 4: Remove trailing "---" dividers that separate boilerplate
-  while (lines.length > 0 && lines[lines.length - 1].trim() === '---') {
-    lines.pop();
+  while (lines.length > 0) {
+    const last = lines[lines.length - 1];
+    if (last?.trim() === '---') {
+      lines.pop();
+    } else {
+      break;
+    }
   }
-  while (lines.length > 0 && lines[0].trim() === '---') {
-    lines.shift();
+  while (lines.length > 0) {
+    const first = lines[0];
+    if (first?.trim() === '---') {
+      lines.shift();
+    } else {
+      break;
+    }
   }
 
   return lines.join('\n');

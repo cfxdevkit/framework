@@ -23,9 +23,14 @@ type Tier = {
 /**
  * Determine the tier for a package based on its repository location.
  */
-function getTier(repoDir: string, relPath: string): number {
+function getTier(repoDir: string, _relPath: string): number {
   // Tier 0: core framework packages
-  if (repoDir === 'repos/cfx-core' || repoDir === 'repos/cfx-keys' || repoDir === 'repos/cfx-ui' || repoDir === 'repos/cfx-solidity') {
+  if (
+    repoDir === 'repos/cfx-core' ||
+    repoDir === 'repos/cfx-keys' ||
+    repoDir === 'repos/cfx-ui' ||
+    repoDir === 'repos/cfx-solidity'
+  ) {
     return 0;
   }
   // Tier 1: developer platform
@@ -44,10 +49,14 @@ function getTier(repoDir: string, relPath: string): number {
  */
 function getTierLabel(tier: number): string {
   switch (tier) {
-    case 0: return 'Tier 0 — Framework';
-    case 1: return 'Tier 1 — Developer Platform';
-    case 2: return 'Tier 2 — Domain Logic';
-    default: return 'Tier ?';
+    case 0:
+      return 'Tier 0 — Framework';
+    case 1:
+      return 'Tier 1 — Developer Platform';
+    case 2:
+      return 'Tier 2 — Domain Logic';
+    default:
+      return 'Tier ?';
   }
 }
 
@@ -117,7 +126,11 @@ function renderApiReference(tiers: Tier[]): string {
 
   const packageSections = tiers.flatMap((tier) =>
     tier.packages.map((pkg) =>
-      renderPackageSection(pkg.name, 'See [package page](/packages/${toSlug(pkg.name)})', pkg.exports),
+      renderPackageSection(
+        pkg.name,
+        'See [package page](/packages/${toSlug(pkg.name)})',
+        pkg.exports,
+      ),
     ),
   );
 
@@ -160,7 +173,7 @@ export async function syncApiReference(): Promise<number> {
   const tierMap = new Map<number, Tier>();
 
   for (const pkg of packages) {
-    const tier = getTier(pkg.rel.split('/')[0], pkg.rel);
+    const tier = getTier(pkg.rel?.split('/')[0] ?? '', pkg.rel ?? '');
     if (!tierMap.has(tier)) {
       tierMap.set(tier, { name: getTierLabel(tier), tier, packages: [] });
     }

@@ -117,8 +117,14 @@ function cleanupAuthFiles() {
 }
 
 process.on('exit', cleanupAuthFiles);
-process.on('SIGINT', () => { cleanupAuthFiles(); process.exit(1); });
-process.on('SIGTERM', () => { cleanupAuthFiles(); process.exit(1); });
+process.on('SIGINT', () => {
+  cleanupAuthFiles();
+  process.exit(1);
+});
+process.on('SIGTERM', () => {
+  cleanupAuthFiles();
+  process.exit(1);
+});
 
 if (showProvenanceLinks) {
   // Print provenance configuration URLs for all publishable packages
@@ -129,7 +135,9 @@ if (showProvenanceLinks) {
     const pkgName = packageJson.name;
     console.log(`  https://www.npmjs.com/package/${pkgName}/access`);
   }
-  console.log('\nPaste each URL into your browser, click "Configure provenance", and follow the setup flow.');
+  console.log(
+    '\nPaste each URL into your browser, click "Configure provenance", and follow the setup flow.',
+  );
   process.exit(0);
 }
 
@@ -148,10 +156,14 @@ if (authArgs.length > 0) {
   console.log('Using .npmrc authentication (local `npm login`)');
 }
 
-console.log(`\nPackages to check: ${collectPackageDirs().filter((d) => {
-  const pj = readJson(resolve(d, 'package.json'));
-  return pj.name && !pj.private && !ignoredPackages.has(pj.name);
-}).length}\n`);
+console.log(
+  `\nPackages to check: ${
+    collectPackageDirs().filter((d) => {
+      const pj = readJson(resolve(d, 'package.json'));
+      return pj.name && !pj.private && !ignoredPackages.has(pj.name);
+    }).length
+  }\n`,
+);
 
 for (const packageDir of collectPackageDirs()) {
   const packageJson = readJson(resolve(packageDir, 'package.json'));

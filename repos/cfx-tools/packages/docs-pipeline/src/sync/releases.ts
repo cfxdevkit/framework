@@ -19,6 +19,11 @@ function parseChangesetFile(filePath: string): Promise<ChangesetEntry[]> {
   return fs.readFile(filePath, 'utf8').then((content) => parseChangesetContent(content));
 }
 
+// Helper to safely extract a capture group as string
+function safeString(match: RegExpMatchArray | null, index: number): string | undefined {
+  return match?.[index];
+}
+
 function parseChangesetContent(content: string): ChangesetEntry[] {
   const result: ChangesetEntry[] = [];
 
@@ -26,25 +31,26 @@ function parseChangesetContent(content: string): ChangesetEntry[] {
   const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
   if (!fmMatch) return result; // No frontmatter, not a changeset
 
-  const fm = fmMatch[1];
-  const body = fmMatch[2];
+  const fm = fmMatch[1] as string;
+  const body = fmMatch[2] as string;
 
   // Detect if this is a "version" block (from npx changeset version) or a "package" block
   const versionMatch = fm.match(/version:\s*(\d+\.\d+\.\d+)/);
-  if (versionMatch) {
+  if (versionMatch != null) {
     // Version block: entries are listed as "- @pkg: description"
-    const entries = body.split(/\n(?=-\s)/).filter((line) => line.trim());
-    for (const line of entries) {
+    const lines = body.split(/\n(?=-\s)/).filter((line) => line.trim());
+    for (const line of lines) {
       const pkgMatch = line.match(/-\s+(@[^\s]+)\s*:?\s*(.*)/);
       if (pkgMatch) {
-        const pkg = pkgMatch[1];
-        let desc = pkgMatch[2]?.trim() ?? '';
+        const pkg = pkgMatch[1]!;
+        const rawDesc = pkgMatch[2]?.trim() ?? '';
+        let desc = rawDesc;
         if (!desc) {
           // Check continuation lines
-          const lines = body.split('\n');
-          const idx = lines.indexOf(line);
-          if (idx + 1 < lines.length) {
-            desc = lines
+          const allLines = body.split('\n');
+          const idx = allLines.indexOf(line);
+          if (idx + 1 < allLines.length) {
+            desc = allLines
               .slice(idx + 1)
               .filter((l) => l.startsWith('  ') || l.startsWith('\t'))
               .map((l) => l.trim())
@@ -53,7 +59,12 @@ function parseChangesetContent(content: string): ChangesetEntry[] {
           }
         }
         if (desc) {
-          result.push({ version: versionMatch[1], package: pkg, description: desc });
+          const entry: ChangesetEntry = {
+            version: safeString(versionMatch, 1) as unknown as string,
+            package: pkg,
+            description: desc,
+          };
+          result.push(entry);
         }
       }
     }
@@ -68,7 +79,7 @@ function parseChangesetContent(content: string): ChangesetEntry[] {
   // Description text here.
   // Extract package names: matches @scope/name patterns (with optional surrounding quotes)
   const pkgNames = fm.match(/@cfxdevkit\/[a-z0-9-]+/g);
-  if (pkgNames && pkgNames.length > 0) {
+  if (pkgNames != null && pkgNames.length > 0) {
     // Body text is the changelog description
     const desc = body.trim();
     if (desc) {
@@ -102,12 +113,12 @@ function renderChangelog(entries: ChangesetEntry[]): string {
   const sortedVersions = [...byVersion.keys()].sort((a, b) => {
     if (a === 'latest') return -1;
     if (b === 'latest') return 1;
-    const [aMajor, aMinor, aPatch] = a.split('.').map(Number);
-    const [bMajor, bMinor, bPatch] = b.split('.').map(Number);
+    const [aMajor, aMinor, aPatch] = a.split('.').map((n) => (n != null ? Number(n) : 0));
+    const [bMajor, bMinor, bPatch] = b.split('.').map((n) => (n != null ? Number(n) : 0));
     return (
-      bMajor - aMajor ||
-      bMinor - aMinor ||
-      bPatch - aPatch
+      (bMajor ?? 0) - (aMajor ?? 0) ||
+      (bMinor ?? 0) - (aMinor ?? 0) ||
+      (bPatch ?? 0) - (aPatch ?? 0)
     );
   });
 

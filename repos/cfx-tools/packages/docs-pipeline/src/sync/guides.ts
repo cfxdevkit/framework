@@ -33,8 +33,7 @@ function extractMetadata(content: string): { title: string; description: string 
     .map((p) => p.trim())
     .filter((p) => p && !p.startsWith('#') && !p.startsWith('>'));
 
-  let description =
-    paragraphs[0]?.slice(0, 80).replace(/\*\*/g, '').trim() ?? '';
+  let description = paragraphs[0]?.slice(0, 80).replace(/\*\*/g, '').trim() ?? '';
   // Strip URLs to keep descriptions clean
   description = description.replace(/https?:\/\/[^\s)]+/g, '');
   // Take only up to the first sentence-ending punctuation
@@ -53,11 +52,13 @@ function extractMetadata(content: string): { title: string; description: string 
  * Preserves all original content but ensures MDX compatibility.
  */
 function toMdxSafe(content: string): string {
-  return content
-    // Remove HTML comments that might conflict with MDX
-    .replace(/<!--[\s\S]*?-->/g, '')
-    // Convert @link patterns to backticks
-    .replace(/\{@link\s+([^}]+)\}/g, '`$1`');
+  return (
+    content
+      // Remove HTML comments that might conflict with MDX
+      .replace(/<!--[\s\S]*?-->/g, '')
+      // Convert @link patterns to backticks
+      .replace(/\{@link\s+([^}]+)\}/g, '`$1`')
+  );
 }
 
 /**
@@ -72,15 +73,11 @@ function buildFrontmatter(title: string, description: string): string {
  */
 function buildIndexPage(entries: GuideEntry[]): string {
   const items = entries
-    .map(
-      (entry) => {
-        // Truncate description for the list (max 60 chars, strip URLs)
-        const shortDesc = entry.description
-          .replace(/https?:\/\/[^\s)]+/g, '...')
-          .slice(0, 60);
-        return `- [${entry.title}](/guides/${entry.slug.replace(/^\/guides\//, '')}) — ${shortDesc}`;
-      },
-    )
+    .map((entry) => {
+      // Truncate description for the list (max 60 chars, strip URLs)
+      const shortDesc = entry.description.replace(/https?:\/\/[^\s)]+/g, '...').slice(0, 60);
+      return `- [${entry.title}](/guides/${entry.slug.replace(/^\/guides\//, '')}) — ${shortDesc}`;
+    })
     .join('\n');
 
   return `---\ntitle: "Guides"\ndescription: "How-to guides for the cfxdevkit monorepo"\n---\n\nimport { Callout } from 'nextra/components'\n\n# Guides\n\nPractical how-to guides for working with the @cfxdevkit monorepo, publishing packages, and integrating with the framework.\n\n<Callout type="info">\n  New guides should be created in \`docs/guides/\` and synced to the site with \`pnpm sync:guides\`.\n</Callout>\n\n## Available Guides\n\n${items}\n`;
