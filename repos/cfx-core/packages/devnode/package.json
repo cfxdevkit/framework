@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/devnode",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "private": false,
   "description": "Local Conflux dev node lifecycle.",
   "type": "module",
@@ -52,5 +52,9 @@
     "@cfxdevkit/cdk": "workspace:^",
     "@xcfx/node": "^0.8.0",
     "cive": "^0.8.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
   }
 }

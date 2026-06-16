@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/testing",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "private": false,
   "description": "Shared test fixtures and matchers.",
   "type": "module",
@@ -44,5 +44,9 @@
   "dependencies": {
     "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/devnode": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
   }
 }

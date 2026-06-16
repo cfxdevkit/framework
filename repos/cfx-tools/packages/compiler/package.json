@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/compiler",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "private": false,
   "description": "Solidity compilation pipeline.",
   "type": "module",
@@ -66,5 +66,9 @@
     "solc": "^0.8.26",
     "viem": "^2.48.11"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
+  }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/react",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "private": false,
   "description": "React hooks over @cfxdevkit/cdk.",
   "type": "module",
@@ -79,5 +79,9 @@
   "dependencies": {
     "@cfxdevkit/cdk": "workspace:^"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
+  }
 }

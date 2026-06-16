@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/wallet",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "private": false,
   "description": "Session keys, signers, batched writes, capability policies.",
   "type": "module",
@@ -86,5 +86,9 @@
     "@noble/hashes": "^2.2.0",
     "viem": "^2.21.0"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
+  }
 }

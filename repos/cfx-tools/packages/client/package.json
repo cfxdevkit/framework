@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/client",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "private": false,
   "description": "Typed HTTP client for the Conflux Devkit devnode-server control plane.",
   "type": "module",
@@ -38,5 +38,9 @@
     "vite-plugin-dts": "^5.0.1",
     "vitest": "^4.1.7"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
+  }
 }

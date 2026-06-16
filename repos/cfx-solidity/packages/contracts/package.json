@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/contracts",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "private": false,
   "description": "Standard contract bindings (ERC-20/721/1155, multicall3) and a thin read/write/deploy surface for @cfxdevkit/cdk.",
   "type": "module",
@@ -73,5 +73,9 @@
     "@cfxdevkit/cdk": "workspace:^",
     "viem": "^2.48.11"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
+  }
 }

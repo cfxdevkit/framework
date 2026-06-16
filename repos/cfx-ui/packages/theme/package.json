@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/theme",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "private": false,
   "description": "Design tokens and CSS layer.",
   "type": "module",
@@ -55,5 +55,9 @@
   },
   "sideEffects": [
     "**/*.css"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
+  }
 }

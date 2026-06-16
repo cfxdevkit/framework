@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/keystore-server",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "private": false,
   "description": "Standalone Hono keystore router extracted from devnode-server.",
   "type": "module",
@@ -41,5 +41,9 @@
     "vite-plugin-dts": "^5.0.1",
     "vitest": "^4.1.7"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
+  }
 }

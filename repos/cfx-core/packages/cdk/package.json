@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/cdk",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "private": false,
   "description": "Conflux RPC client, contract I/O, addresses, units, errors.",
   "type": "module",
@@ -76,5 +76,9 @@
     "vite": "^8.0.14",
     "vite-plugin-dts": "^5.0.1",
     "vitest": "^4.1.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/abis",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "private": false,
   "description": "Standard EVM ABI shapes (ERC-20/721/1155, Multicall3) re-exported from viem under framework-stable aliases. Zero cfxdevkit dependencies.",
   "type": "module",
@@ -44,5 +44,9 @@
   "dependencies": {
     "viem": "^2.48.11"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
+  }
 }

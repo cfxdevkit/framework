@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/ui",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "private": false,
   "description": "Tailwind-first reusable Conflux UI primitives built on @cfxdevkit/ui-core.",
   "type": "module",
@@ -68,5 +68,9 @@
     "react": "^19.2.5",
     "wagmi": "^3.6.9"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cfxdevkit/framework"
+  }
 }
