@@ -78,8 +78,9 @@ USER node
 RUN curl -fsSL https://moonrepo.dev/install/moon.sh | bash
 
 # Install openspec CLI globally so it is available on PATH after container rebuild
+# NOTE: npm's "openspec@latest" is a dummy placeholder (v0.0.0). The real CLI is @fission-ai/openspec.
 USER root
-RUN npm install -g openspec@latest
+RUN npm install -g @fission-ai/openspec@latest
 USER node
 
 ENV PATH=/home/node/.moon:${PATH}
