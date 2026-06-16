@@ -61,6 +61,16 @@ function packageExists(packageName, version) {
   return result.status === 0;
 }
 
+function packageIsRegistered(packageName) {
+  const result = spawnSync('npm', ['view', packageName, 'name'], {
+    cwd: rootDir,
+    encoding: 'utf8',
+    stdio: 'pipe',
+  });
+
+  return result.status === 0;
+}
+
 for (const packageDir of collectPackageDirs()) {
   const packageJson = readJson(resolve(packageDir, 'package.json'));
   const packageName = packageJson.name;
@@ -89,6 +99,19 @@ for (const packageDir of collectPackageDirs()) {
       publishArgs.push('--auth-token', process.env.NPM_TOKEN);
     }
     if (dryRun) publishArgs.push('--dry-run');
+
+    // npm does not allow provenance for new packages — provenance can only be
+    // attached at package creation time (npm website / owner add). For packages
+    // that already exist on the registry we add --provenance so the OIDC token
+    // is used and a provenance statement is emitted. New packages are published
+    // without provenance so the first publish can succeed.
+    if (!dryRun && packageIsRegistered(packageName)) {
+      console.log(`  → with provenance (package already registered)`);
+      publishArgs.push('--provenance');
+    } else if (!dryRun) {
+      console.log(`  → no provenance (new package — set up via npm website)`);
+    }
+
     run('npm', publishArgs);
   } finally {
     rmSync(tarballPath, { force: true });

@@ -53,5 +53,4 @@ jobs:
       - name: Publish
         if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run) }}
         run: |
-          npm config set provenance=true
           node scripts/publish-packages.mjs
