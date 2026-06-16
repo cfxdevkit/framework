@@ -25,7 +25,8 @@ npm install @cfxdevkit/cdk
 
 ## What lives where
 
-- **`createClient({ chain, transport })`** returns the right client for the chain's `family`.
+- **`createClient({ chain, transport })`** returns the right client for the chain's `family`
+  (`EspaceClient` ∪ `CoreSpaceClient` discriminated union).
   - eSpace: `getBlockNumber`, `getBlock`, `getBalance`, `getTransactionReceipt`, `estimateGas`
   - Core Space: `getEpochNumber`, `getStatus`, `getBalance`, `getTransactionReceipt`,
     `getTransaction`, `getLogs`, `getSponsorInfo`, `getAdmin`

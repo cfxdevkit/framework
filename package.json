@@ -10,6 +10,10 @@
   },
   "scripts": {
     "build": "moon run :build --concurrency 3",
+    "changeset": "npx changeset",
+    "changeset:status": "npx changeset status",
+    "changeset:version": "npx changeset version",
+    "changeset:check": "node scripts/changeset-check.mjs",
     "cdk:refresh": ".devcontainer/scripts/install-cdk.sh",
     "test": "moon run :test --concurrency 1",
     "test:cover": "pnpm -r --if-present test:coverage",
@@ -76,6 +80,7 @@
     "llm:action": "pnpm run cdk -- agent exploratory action",
     "llm:ask": "pnpm run cdk -- agent print --",
     "llm:changeset": "pnpm run cdk -- agent exploratory changeset",
+    "llm:changeset:generate": "pnpm run cdk -- agent exploratory changeset --generate",
     "llm:ci-cd": "pnpm run cdk -- agent exploratory ci-cd",
     "llm:config": "pnpm run cdk -- agent config",
     "llm:commit": "pnpm run repo:commit",

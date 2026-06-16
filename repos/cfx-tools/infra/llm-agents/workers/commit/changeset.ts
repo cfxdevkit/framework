@@ -150,7 +150,7 @@ function fallbackChangesetSuggestion(changedPackages, forcedBump) {
   };
 }
 
-async function collectPublishablePackages() {
+export async function collectPublishablePackages() {
   const ignored = await readChangesetIgnoredPackages();
   const reposDir = join(root, 'repos');
   const packages = [];
