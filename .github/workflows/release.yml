@@ -39,7 +39,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Validate
-        run: pnpm run check && pnpm run build && pnpm run security:check
+        run: pnpm exec moon run :check --concurrency 1 && pnpm run security:check
 
       - name: Publish dry run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
