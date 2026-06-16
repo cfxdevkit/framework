@@ -53,6 +53,5 @@ jobs:
       - name: Publish
         if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run) }}
         run: |
-          # npm 11+ required for OIDC provenance support (pnpm 10 ships with npm 9)
           npm install -g npm@11
           node scripts/publish-packages.mjs

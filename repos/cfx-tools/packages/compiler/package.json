@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/compiler",
-  "version": "2.0.3",
+  "version": "2.0.5",
   "private": false,
   "description": "Solidity compilation pipeline.",
   "type": "module",

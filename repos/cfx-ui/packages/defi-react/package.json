@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/defi-react",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "private": false,
   "description": "Opinionated DeFi widgets (swap, portfolio, picker).",
   "type": "module",
