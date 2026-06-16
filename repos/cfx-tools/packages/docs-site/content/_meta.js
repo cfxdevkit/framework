@@ -4,6 +4,18 @@ export default {
     title: 'Quick Start',
     type: 'page',
   },
+  releases: {
+    title: 'Releases',
+    type: 'page',
+  },
+  guides: {
+    title: 'Guides',
+    type: 'page',
+  },
+  api: {
+    title: 'API Reference',
+    type: 'page',
+  },
   packages: {
     title: 'Packages',
     type: 'page',
