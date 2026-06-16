@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dryRun = process.argv.includes('--dry-run');
+const showProvenanceLinks = process.argv.includes('--provenance-links');
 const changesetConfigPath = resolve(rootDir, '.changeset/config.json');
 const ignoredPackages = existsSync(changesetConfigPath)
   ? new Set(JSON.parse(readFileSync(changesetConfigPath, 'utf8')).ignore ?? [])
@@ -118,6 +119,19 @@ function cleanupAuthFiles() {
 process.on('exit', cleanupAuthFiles);
 process.on('SIGINT', () => { cleanupAuthFiles(); process.exit(1); });
 process.on('SIGTERM', () => { cleanupAuthFiles(); process.exit(1); });
+
+if (showProvenanceLinks) {
+  // Print provenance configuration URLs for all publishable packages
+  console.log('Provenance configuration URLs:\n');
+  for (const packageDir of collectPackageDirs()) {
+    const packageJson = readJson(resolve(packageDir, 'package.json'));
+    if (!packageJson.name || packageJson.private || ignoredPackages.has(packageJson.name)) continue;
+    const pkgName = packageJson.name;
+    console.log(`  https://www.npmjs.com/package/${pkgName}/access`);
+  }
+  console.log('\nPaste each URL into your browser, click "Configure provenance", and follow the setup flow.');
+  process.exit(0);
+}
 
 // OIDC is only available in CI (GitHub Actions).
 const hasOidc =
