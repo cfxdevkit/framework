@@ -46,7 +46,7 @@
     "@cfxdevkit/keystore-server": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
     "@cfxdevkit/wallet": "workspace:^",
-    "@hono/node-server": "^1.19.14",
+    "@hono/node-server": "^2.0.5",
     "hono": "^4.12.18",
     "viem": "^2.21.0"
   },
