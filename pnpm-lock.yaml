@@ -49,7 +49,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   projects/cas/apps/backend:
     dependencies:
@@ -113,7 +113,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   projects/cas/apps/frontend:
     dependencies:
@@ -229,7 +229,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   projects/cas/packages/shared:
     dependencies:
@@ -263,7 +263,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   projects/examples/apps/showcase-local:
     dependencies:
@@ -440,7 +440,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-config/packages/biome-config: {}
 
@@ -489,7 +489,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@22.19.21))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-core/packages/devnode:
     dependencies:
@@ -526,7 +526,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-core/packages/executor:
     devDependencies:
@@ -553,7 +553,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-core/packages/protocol:
     dependencies:
@@ -587,7 +587,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-core/packages/testing:
     dependencies:
@@ -621,7 +621,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-domain/packages/automation:
     dependencies:
@@ -679,7 +679,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-domain/packages/game-engine:
     devDependencies:
@@ -706,7 +706,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-keys/packages/services:
     dependencies:
@@ -755,7 +755,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-keys/packages/signer-session:
     dependencies:
@@ -792,7 +792,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
     optionalDependencies:
       '@noble/hashes':
         specifier: ^1.1.3
@@ -842,7 +842,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-meta/packages/arch-rules:
     devDependencies:
@@ -869,7 +869,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-solidity/packages/abis:
     dependencies:
@@ -900,7 +900,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-solidity/packages/contracts:
     dependencies:
@@ -937,7 +937,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/infra/llm-agents:
     dependencies:
@@ -977,7 +977,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/infra/pi-agent:
     dependencies:
@@ -1023,7 +1023,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/infra/tooling-cli:
     dependencies:
@@ -1084,7 +1084,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/arch-check:
     dependencies:
@@ -1121,7 +1121,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/cdk-repo-check:
     dependencies:
@@ -1155,7 +1155,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/cli:
     dependencies:
@@ -1189,7 +1189,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@22.19.21))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/client:
     devDependencies:
@@ -1216,7 +1216,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/codegen-contracts:
     devDependencies:
@@ -1243,7 +1243,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@22.19.21))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/compiler:
     dependencies:
@@ -1286,7 +1286,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/devnode-core:
     dependencies:
@@ -1332,7 +1332,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/devnode-server:
     dependencies:
@@ -1393,7 +1393,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/docs-pipeline:
     dependencies:
@@ -1439,7 +1439,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/docs-site:
     dependencies:
@@ -1510,7 +1510,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/mcp-server:
     dependencies:
@@ -1559,7 +1559,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/scaffold-cli:
     devDependencies:
@@ -1586,7 +1586,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-tools/packages/vscode-extension:
     dependencies:
@@ -1711,7 +1711,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@22.19.21))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-ui/packages/react:
     dependencies:
@@ -1750,8 +1750,8 @@ importers:
         specifier: ^19.2.14
         version: 19.2.17
       happy-dom:
-        specifier: ^20.9.0
-        version: 20.10.3
+        specifier: ^20.10.5
+        version: 20.10.5
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -1763,7 +1763,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@22.19.21))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-ui/packages/theme:
     dependencies:
@@ -1797,7 +1797,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@25.9.3))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.6
-        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-ui/packages/ui:
     dependencies:
@@ -1837,7 +1837,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@22.19.21))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-ui/packages/ui-core:
     dependencies:
@@ -1874,7 +1874,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@22.19.21))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   repos/cfx-ui/packages/wallet-connect:
     dependencies:
@@ -1926,7 +1926,7 @@ importers:
         version: 5.0.2(@microsoft/api-extractor@7.58.9(@types/node@22.19.21))(esbuild@0.28.1)(rolldown@1.0.3)(rollup@4.62.0)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.7
-        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
 packages:
 
@@ -5698,8 +5698,8 @@ packages:
   hachure-fill@0.5.2:
     resolution: {integrity: sha512-3GKBOn+m2LX9iq+JC1064cSFprJY4jL1jCXTcpnfER5HYE2l/4EfWSGzkPa/ZDBmYI0ZOEj5VHV/eKnPGkHuOg==}
 
-  happy-dom@20.10.3:
-    resolution: {integrity: sha512-Hjdiy8RziuCcn5z04QI/rlsNuQoG8P0xxjgvsSMpi89cvIXIOcucQtiHS1yHSShxoBcSCeYqAskINmTiy/mlfw==}
+  happy-dom@20.10.5:
+    resolution: {integrity: sha512-0aA6BQoMnpcRE/c1E8ZyF2jXnET7MJskereWOXher4CJuYjrI5esN0Az/1NPMD4KeWUbampBGw2MGqabMPFIbg==}
     engines: {node: '>=20.0.0'}
 
   has-flag@4.0.0:
@@ -10836,7 +10836,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 25.9.3
+      '@types/node': 22.19.21
 
   '@typescript/vfs@1.6.4(typescript@6.0.3)':
     dependencies:
@@ -10864,7 +10864,7 @@ snapshots:
       obug: 2.1.3
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+      vitest: 4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
 
   '@vitest/expect@4.1.8':
     dependencies:
@@ -11218,7 +11218,7 @@ snapshots:
 
   buffer-image-size@0.6.4:
     dependencies:
-      '@types/node': 25.9.3
+      '@types/node': 22.19.21
 
   buffer@5.7.1:
     dependencies:
@@ -12256,9 +12256,9 @@ snapshots:
 
   hachure-fill@0.5.2: {}
 
-  happy-dom@20.10.3:
+  happy-dom@20.10.5:
     dependencies:
-      '@types/node': 25.9.3
+      '@types/node': 22.19.21
       '@types/whatwg-mimetype': 3.0.2
       '@types/ws': 8.18.1
       buffer-image-size: 0.6.4
@@ -15160,7 +15160,7 @@ snapshots:
       tsx: 4.22.4
       yaml: 2.9.0
 
-  vitest@4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)):
+  vitest@4.1.8(@types/node@22.19.21)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.8
       '@vitest/mocker': 4.1.8(vite@8.0.16(@types/node@22.19.21)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
@@ -15185,11 +15185,11 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.21
       '@vitest/coverage-v8': 4.1.8(vitest@4.1.8)
-      happy-dom: 20.10.3
+      happy-dom: 20.10.5
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)):
+  vitest@4.1.8(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.8
       '@vitest/mocker': 4.1.8(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
@@ -15214,7 +15214,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.9.3
       '@vitest/coverage-v8': 4.1.8(vitest@4.1.8)
-      happy-dom: 20.10.3
+      happy-dom: 20.10.5
     transitivePeerDependencies:
       - msw
 
