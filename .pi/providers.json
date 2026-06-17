@@ -1,6 +1,6 @@
 {
   "provider": "lemonade",
-  "baseUrl": "http://host.containers.internal:13305/",
+  "baseUrl": "http://localhost:28787/",
   "defaultModel": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
   "githubModel": null,
   "requestTimeoutMs": 600000,
@@ -29,7 +29,7 @@
     },
     "local-fast": {
       "provider": "lemonade",
-      "baseUrl": "http://localhost:13305/"
+      "baseUrl": "http://localhost:28787/"
     }
   },
   "actionPolicies": {

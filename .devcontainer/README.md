@@ -74,14 +74,26 @@ those settings even though pnpm handles them correctly.
 | `3000` | App server |
 | `7748` | Legacy DevKit backend compatibility port |
 | `8787` | Worker/backend dev server |
+| `28787` | Headroom compression proxy (between devcontainer and LLM) |
 
-## Lemonade Server
+## Lemonade Server + Headroom Compression Proxy
 
 Lemonade Server should keep running on the host workstation. On Linux, the
 devcontainer requests host networking so `http://localhost:13305/` resolves to
 the same Lemonade service inside and outside the container. It also keeps
 `host.docker.internal` as a host-gateway alias for Docker backends; Podman hosts
 usually provide `host.containers.internal` automatically.
+
+All LLM traffic from the devcontainer flows through **Headroom**, a local context
+compression proxy that sits between the devcontainer and Lemonade. Headroom
+compresses tool outputs, logs, RAG chunks, and conversation history before they
+reach the LLM — typically 60–95% fewer tokens with the same answers. The proxy
+auto-starts on container start (port `28787`).
+
+Architecture:
+```
+Devcontainer code → Headroom proxy (localhost:28787) → Compress → Lemonade (host.containers.internal:13305)
+```
 
 After rebuilding or reopening the container, verify connectivity:
 

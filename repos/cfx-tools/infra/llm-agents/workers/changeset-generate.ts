@@ -1,12 +1,13 @@
+import { generateChangesetPlan, writeChangesetFile } from './commit/changeset.ts';
+import type { complete } from './completion/index.ts';
 import {
   type ExecutionContextRuntimePayload,
   logExecutionContext,
   resolveExecutionContext,
   toExecutionContextRuntimePayload,
 } from './shared/execution-context.ts';
-import { root, type RepoActionName, repoActions } from './shared/index.ts';
-import { generateChangesetPlan, writeChangesetFile } from './commit/changeset.ts';
-import { type complete } from './completion/index.ts';
+import type { RepoActionName } from './shared/index.ts';
+import { repoActions, root } from './shared/index.ts';
 
 export interface RepoActionExecutionResult {
   readonly action: RepoActionName;
@@ -56,7 +57,8 @@ async function scanChangedFiles(): Promise<ChangesetResult[]> {
   for (const f of allFiles) {
     const pkg = f.match(/^(repos\/cfx-[a-z]+\/packages\/[a-z0-9-]+)/);
     const key = pkg ? pkg[1] : f.startsWith('repos/') ? f.split('/').slice(0, 4).join('/') : f;
-    (groups[key] ??= []).push(f);
+    if (groups[key] == null) groups[key] = [];
+    groups[key].push(f);
   }
   return Object.entries(groups).map(([, files]) => ({ files, kind: 'dir' as const }));
 }

@@ -4,65 +4,51 @@ title: "projects"
 
 # projects
 
-# projects
+# Projects Module
 
-The **projects** module groups two complementary sub‑modules that together form a full‑stack development environment for Conflux eSpace:
+The `projects` module encapsulates the full development stack for Conflux automation, comprising the core non-custodial automation application and a local development showcase environment. It enables the creation of on-chain strategies, management of local runtime environments, and secure key derivation workflows.
 
-* **[projects — cas](projects-cas.md)** – the backend service (CAS) that runs on Node.js/Express and supplies authentication, strategy job management, admin controls, pool aggregation, health monitoring, and real‑time SSE updates.
-* **[projects — examples](projects-examples.md)** – a Next.js showcase application (showcase‑local) that provides a UI for interacting with the CAS backend, managing keystores, controlling a local devnode, compiling/deploying contracts, and exercising delegated capabilities.
+## Sub-modules
 
-## How the sub‑modules fit together
+- **[cas](cas.md)**: Non-custodial automation system for Conflux eSpace. Implements on-chain strategy execution (DCA, TWAP, limit orders) via a Next.js frontend, Express backend with SQLite persistence, and a keeper worker bridging to smart contracts via the Automation Manager.
+- **[examples](examples.md)**: Local showcase dashboard (`showcase-local`) for interacting with a local Conflux runtime. Provides a unified interface for keystore management, account derivation, local node control, contract compilation/deployment, and session key verification across Core and eSpace.
 
-The CAS backend exposes a set of REST and SSE endpoints that the showcase‑local frontend consumes:
+## Architecture and Integration
 
-| Backend component (CAS) | Frontend usage (showcase‑local) |
-|--------------------------|---------------------------------|
-| **Auth router** (`src/routes/auth.ts`) – SIWE login/logout | `login` action in `src/app/auth-context.tsx` → redirects to SiwePage |
-| **Jobs router** (`src/routes/jobs.ts`) – create, list, cancel limit‑order/DCA/TWAP/swap jobs | `createJobsRouter` → `parseCreateJobInput` → job forms in UI; SSE listener `startPoller` → `publishJobUpdate` updates job cards |
-| **Pools router** (`src/routes/pools.ts`) – fetch & cache pool data from CoinGecko | UI pools page calls `fetchPoolsFromGecko`; cache invalidated via `resetPoolsCache` |
-| **Session router** (`src/routes/session.ts`) – admin middleware `requireAdmin` → `requireSession` | Admin‑only UI actions guard via `isAdminAddress` check |
-| **SSE events** (`src/sse/events.ts`) – push job/status updates | Frontend opens EventSource to receive real‑time updates for job status and pool changes |
-| **Database helpers** (`src/db/sqlite.ts`) – `get`, `set`, `getSlippageBps` | Used by backend routes; tested via `client.test.ts` shared with frontend utilities |
-| **Config resolution** (`backend/src/config.ts`) – `resolveCasBackendConfig` → `espaceChainId` | Frontend reads chainId via `readTargetEspaceChain` in `src/lib/ethereum.ts` to match backend network |
+The sub-modules form a cohesive lifecycle for developing and operating automation strategies on Conflux.
 
-Cross‑module workflows illustrated below show the typical request/response flows and shared utilities.
-
-### Mermaid diagram: CAS ↔ Showcase‑local interaction
-
-<Mermaid chart={`sequenceDiagram
-    participant UI as Showcase‑local (Next.js)
-    participant API as CAS Backend (Express)
-    participant DB as SQLite
-    participant SSE as SSE Events
-    participant Ext as External APIs (CoinGecko, Conflux Node)
-
-    UI->>API: POST /auth/login (SIWE)
-    API-->>UI: JWT / session cookie
-    UI->>API: GET /pools (with auth)
-    API->>Ext: fetch pool data
-    Ext-->>API: pool JSON
-    API->>DB: cache pools (set)
-    API-->>UI: pooled data
-    UI->>API: POST /jobs (create job)
-    API->>DB: insert job record
-    API-->>UI: job id
-    loop SSE updates
-        API->>SSE: publishJobUpdate(jobId, status)
-        SSE-->>UI: push job status
+<Mermaid chart={`graph TD
+    subgraph "Development Environment"
+        EX["Examples / Showcase"]
+        EX -->|Manage| RT["Local Runtime / devnode-server"]
+        EX -->|Derive| KY["Keystores & Accounts"]
+        EX -->|Deploy| CT[Smart Contracts]
     end
-    UI->>API: GET /jobs (list)
-    API->>DB: select jobs
-    API-->>UI: job list
+
+    subgraph "CAS Automation Stack"
+        CAS_FE[cas Frontend]
+        CAS_BE[cas Backend]
+        CAS_K[Automation Keeper]
+        CAS_DB["(SQLite)"]
+    end
+
+    RT -->|Provides Blockchain RPC| CAS_BE
+    RT -->|Provides Blockchain RPC| EX
+    KY -->|Secure Signing| CAS_FE
+    CT -->|Automation Manager| CAS_K
+    CAS_BE -->|Orchestrate| CAS_K
+    CAS_K -->|Execute| RT
 `} />
 
-*Solid lines* denote HTTP request/response; *dashed line* denotes the Server‑Sent Events channel.
+### Key Integration Points
 
-## Key cross‑module workflows
+- **Runtime Foundation**: `examples` provisions the local blockchain environment (`devnode-server`) and deploys necessary contracts, including the Automation Manager. `cas` connects to this runtime to monitor state and dispatch jobs via the keeper worker.
+- **Keystore and Security**: `examples` exposes comprehensive keystore management (memory, OneKey) and session key workflows. These utilities support the non-custodial design of `cas`, allowing developers and users to securely derive and manage the accounts required for on-chain strategy execution.
+- **Cross-Chain Normalization**: Both modules operate across Conflux Core and eSpace. `examples` provides shared primitives for chain ID normalization and wallet state synchronization, ensuring consistent cross-chain behavior for strategies defined in `cas`.
+- **Thin-Client vs. Persistent State**: `examples` follows a thin-client architecture where Next.js API routes proxy requests to the runtime. In contrast, `cas` maintains persistent state in SQLite and uses an SSE-based event system to notify the frontend of on-chain updates, highlighting its role as the stateful execution layer.
 
-1. **User authentication & session management** – SIWE login handled by CAS auth router; the resulting session token is stored in the showcase‑local auth context and sent with every subsequent API request.
-2. **Job lifecycle** – UI collects job parameters → validates via `parseCreateJobInput` → POST to `/jobs` → CAS persists job in SQLite → SSE stream pushes status updates → UI refreshes job cards in real time.
-3. **Pool data synchronization** – Background poller in CAS (`fetchPoolsFromGecko`) updates SQLite cache; UI pools page reads the cached data via `/pools` endpoint; cache can be manually reset (`resetPoolsCache`) from admin UI.
-4. **Administrative actions** – Admin‑only routes guard with `requireAdmin` → `requireSession`; showcase‑local admin panel calls these endpoints after verifying `isAdminAddress`.
-5. **Configuration sharing** – Both sides derive the target eSpace chain ID from the same source (`espaceChainId` in CAS config, `readTargetEspaceChain` in frontend utilities), ensuring they operate on the same network.
+## Common Workflows
 
-For detailed specifications of each sub‑module, see their respective pages linked above. The grouping exists to provide a cohesive, locally runnable stack where the backend supplies core DeFi automation logic and the frontend offers an interactive development and demonstration environment.
+- **Local Strategy Development**: Developers use `examples` to compile contracts, deploy the Automation Manager, and derive test accounts. They then configure the `cas` backend against this local runtime to test strategy logic and keeper orchestration without mainnet risk.
+- **Environment Provisioning**: `examples` automates the setup of local nodes and account configurations, reducing the friction of initializing the environment required for `cas` deployment.
+- **Monitoring and Control**: `examples` provides dashboard panels for real-time node status and account balances, complementing the `cas` frontend which focuses on job creation, slippage configuration, and execution tracking.

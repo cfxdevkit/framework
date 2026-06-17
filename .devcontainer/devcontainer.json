@@ -23,17 +23,22 @@
     "source=${localWorkspaceFolder}/.devcontainer/.docker.sock,target=/var/run/docker.sock,type=bind,consistency=cached",
     "source=cfxdevkit-pnpm-store,target=/home/node/.local/share/pnpm/store,type=volume",
     "source=cfxdevkit-moon-cache,target=/home/node/.cache/moon,type=volume",
-    "source=cfxdevkit-gitnexus,target=/home/node/.local/share/gitnexus,type=volume"
+    "source=cfxdevkit-gitnexus,target=/home/node/.local/share/gitnexus,type=volume",
+    "source=cfxdevkit-headroom-cache,target=/home/node/.cache/headroom,type=volume"
   ],
   "containerEnv": {
     "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
     "PNPM_HOME": "/home/node/.local/share/pnpm",
     "PNPM_STORE_PATH": "/home/node/.local/share/pnpm/store",
     "CFXDEVKIT_INSTALL_PI_GITNEXUS": "0",
-    "LEMONADE_URL": "http://host.containers.internal:13305/",
-    "LEMONADE_BASE_URL": "http://host.containers.internal:13305/"
+    "LEMONADE_URL": "http://localhost:28787/",
+    "LEMONADE_BASE_URL": "http://localhost:28787/",
+    "OPENAI_BASE_URL": "http://localhost:28787/v1",
+    "ANTHROPIC_BASE_URL": "http://localhost:28787",
+    "HEADROOM_UPSTREAM": "http://host.containers.internal:13305/",
+    "HEADROOM_PROXY_PORT": "28787"
   },
-  "forwardPorts": [8545, 8546, 12536, 12537, 3000, 4173, 5173, 7748, 8787],
+  "forwardPorts": [8545, 8546, 12536, 12537, 3000, 4173, 5173, 7748, 8787, 28787],
   "otherPortsAttributes": {
     "onAutoForward": "ignore"
   },
@@ -64,6 +69,10 @@
     },
     "8787": {
       "label": "Worker/backend dev server"
+    },
+    "28787": {
+      "label": "Headroom compression proxy",
+      "onAutoForward": "notify"
     }
   },
   "initializeCommand": ".devcontainer/scripts/detect-docker-socket.sh",

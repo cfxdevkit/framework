@@ -6,5 +6,6 @@
   "remote.otherPortsAttributes": { "onAutoForward": "ignore" },
   "dev.containers.autoForwardPorts": false,
   "dev.containers.autoForwardPortsFallback": 0,
-  "cfxdevkit.keystorePath": ".cfxdevkit/keystore.json"
+  "cfxdevkit.keystorePath": ".cfxdevkit/keystore.json",
+  "terminal.integrated.gpuAcceleration": "off"
 }

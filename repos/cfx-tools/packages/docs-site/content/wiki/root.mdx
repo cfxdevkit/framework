@@ -4,58 +4,79 @@ title: "Root"
 
 # Root
 
-# Root Module
+# `@cfxdevkit/framework` — Root Module
 
-The Root module contains monorepo-wide configuration files that establish the development environment, tooling setup, and workspace structure for the Conflux DevKit repository. It does not contain application logic but provides shared configuration for all packages.
+## Purpose
+The root module serves as the central configuration and orchestration layer for the Conflux DevKit monorepo. It contains no runtime business logic; instead, it defines workspace boundaries, dependency resolution, development tooling, and automation scripts for building, linting, testing, and analyzing the ecosystem. All package development flows are routed through this root context via `pnpm` and Moonbit.
 
-## Configuration Files
+## Workspace Architecture
+Package distribution is defined in `pnpm-workspace.yaml` and organized into logical groups:
+- **Framework Packages:** `repos/*/packages/*` (e.g., `cfx-core`, `cfx-keys`, `cfx-ui`, `cfx-tools`, `cfx-llm`, `cfx-domain`)
+- **Applications & Examples:** `projects/*/apps/*` and `projects/*/packages/*`
+- **Infrastructure & Tooling:** `repos/cfx-tools/devtools/*`, `repos/cfx-tools/infra/*`, `repos/cfx-tools/templates/*`
 
-### biome.json
-Configures the Biome formatter and linter:
-- Extends shared configuration from `./repos/cfx-config/packages/biome-config/biome.json`
-- Enables Tailwind CSS directive parsing in the CSS parser
+The root `package.json` declares `@cfxdevkit/framework` as a `private` monorepo package, enforcing `pnpm@10.33.2` and `node@>=24.15.0`.
 
-### knip.config.ts
-Defines unused dependency and dead code detection rules:
-- Specifies global dependencies that Knip cannot detect statically (used via Biome/TSConfig extends, PostCSS/Tailwind, Vite, Drizzle CLI, dynamic imports)
-- Configures per-workspace rules:
-  - Core packages (`repos/cfx-core/*`): Entry points at `src/index.ts` and `src/bin/**/*.ts`
-  - UI packages (`repos/cfx-ui/*`): Includes TSX files and bin scripts
-  - Example applications: Defines entry points for frontend apps (`src/main.ts`, `src/main.tsx`, `app/page.tsx`)
-  - Ignores build artifacts, config files, and tooling directories
-- Disables duplicate detection rules
+## Configuration & Tooling
 
-### package.json
-Root package manifest defining monorepo scripts and dependencies:
-- **Scripts**: 
-  - Build/test/lint: Uses Moonrepo for concurrent execution (`moon run :<task> --concurrency N`)
-  - Architecture checks: Runs `arch-check` tasks for hotspots, secrets, CI config, etc.
-  - Documentation: Tooling commands for API docs, READMEs, structure generation
-  - Development: DevNode setup, showcase apps, local CA trust, Caddy server
-  - LLM integration: Agent commands for exploratory/deterministic tasks
-- **Dependencies**: 
-  - Dev tools: Biome, Changesets, Moonrepo, Gitnexus, Knip, TypeScript, Vite, Vitest
-  - PNPM overrides: Specific versions for transports, HTTP clients, React types, ESBuild, etc.
-- **Engines**: Requires Node ≥24.15.0 and PNPM ≥10.0.0
+### TypeScript Path Resolution
+`tsconfig.base.json` extends a shared configuration and maps package names to their source entry points using `compilerOptions.paths`. This enables cross-package imports without relative paths or module bundler overrides:
+```ts
+paths: {
+  "@cfxdevkit/core": ["./repos/cfx-core/packages/core/src/index.ts"],
+  "@cfxdevkit/protocol": ["./repos/cfx-core/packages/protocol/src/index.ts"],
+  "@cfxdevkit/executor": ["./repos/cfx-core/packages/executor/src/index.ts"],
+  // ... devnode, testing
+}
+```
 
-### pnpm-workspace.yaml
-Defines the monorepo workspace structure:
-- Includes packages from:
-  - Configuration: `repos/cfx-config/packages/*`
-  - Meta: `repos/cfx-meta/packages/*`
-  - All repos: `repos/*/packages/*`
-  - CFX Tools: Devtools, infra, templates subdirectories
-  - Projects: Apps and packages under `projects/*/`
-  - Contracts: `projects/*/contracts`
-- Excludes tooling and build directories implicitly via package.json ignore rules
+### Linting & Formatting
+`biome.json` extends `@cfxdevkit/biome-config` and enables Tailwind CSS directive parsing for frontend packages. Formatting and linting are delegated to the root scripts (`biome format --write .`), which propagate to workspaces via `moon run :lint` and `:format`.
 
-### tsconfig.base.json
-Base TypeScript configuration:
-- Extends shared config from `./repos/cfx-config/packages/tsconfig/base.json`
-- Establishes path aliases for core packages:
-  - `@cfxdevkit/core` → `./repos/cfx-core/packages/core/src/index.ts`
-  - `@cfxdevkit/protocol` → `./repos/cfx-core/packages/protocol/src/index.ts`
-  - `@cfxdevkit/executor` → `./repos/cfx-core/packages/executor/src/index.ts`
-  - `@cfxdevkit/devnode` → `./repos/cfx-core/packages/devnode/src/index.ts`
-  - `@cfxdevkit/testing` → `./repos/cfx-core/packages/testing/src/index.ts`
+### Static Analysis (Knip)
+`knip.config.ts` configures unused-dependency and dead-code detection across all workspaces. Key patterns:
+- **Workspace-Specific Entries:** Each workspace group defines `entry` and `project` patterns (e.g., `src/index.ts!`, `src/bin/**/*.ts!`, `workers/**/*.ts!`)
+- **Dynamic Import Handling:** Packages like `@cfxdevkit/keys` ignore Ledger SDKs (`@ledgerhq/hw-app-eth`, `@ledgerhq/hw-transport-node-hid`) since they are loaded via dynamic string splitting
+- **Framework-Internal Ignorances:** Excludes tooling CLI packages (`@biomejs/biome`, `@moonrepo/cli`, `knip`, `vite`), config extenders, and Next.js built-ins (`server-only`)
+- **Exclusions:** Ignores generated directories (`dist/`, `build/`, `coverage/`, `artifacts/`), config files, and internal Moon/Cfx directories
 
+## Build & Development Automation
+All core workflows are exposed as `package.json` scripts and orchestrated via Moon (`moon run :<task>`). Concurrency and task routing are handled centrally.
+
+| Category | Key Scripts |
+|----------|-------------|
+| **Core Workflows** | `build` (concurrency 3), `test` (concurrency 1), `lint`, `typecheck`, `check`, `clean`, `format` |
+| **Architectural Checks** | `check:hotspots`, `check:kebab-groups`, `check:unit-configs`, `check:secrets`, `check:ci`, `check:docs`, `arch:check` |
+| **Documentation & Generation** | `gen:api`, `gen:readme`, `gen:structure`, `gen:unit-configs`, `docs:enrich:*`, `docs:sync:*`, `docs:validate-*` |
+| **LLM Agent Integration** | `llm:*` (exploratory & deterministic tasks: changeset generation, CI/CD review, health checks, model validation, documentation upkeep) |
+| **Infrastructure & Dev Servers** | `devnode` (build & start), `caddy:start/reload/stop` (local reverse proxy), `setup:trust-local-ca` |
+
+### Script Execution Pattern
+```bash
+pnpm build          # moon run :build --concurrency 3
+pnpm lint           # moon run :lint --concurrency 4
+pnpm check:unused   # knip
+pnpm llm:changeset  # pnpm run cdk -- agent exploratory changeset
+```
+
+## Published Packages
+The monorepo publishes several runtime packages. The primary client library is `@cfxdevkit/cdk`, which provides:
+- **RPC & Client:** `createClient()`, `EspaceClient`, `CoreSpaceClient`, transport abstractions (`http`, `ws`, `fallback`)
+- **Address & Chain Utilities:** Hex/Base32 conversion, `defineChain()`, `getChain()`, `listChains()`
+- **Wallet & Signing:** BIP-39 mnemonic generation/validation, HD key derivation (`deriveAccount`, `deriveDualAccount`), `signerFromPrivateKey()`, `Signer` interface
+- **Token Formatting:** `formatCFX()`, `parseCFX()`, `formatDrip()`/`parseDrip()`, `formatGDrip()`/`parseGDrip()`
+- **Error Hierarchy:** `CfxError`, `RpcError`, `ContractError`, `WalletError`, `KeystoreError` with `isCfxError()` type guard
+
+## Architecture Overview
+The root module acts as a declarative orchestrator. It binds configuration, tooling, and scripts to workspace packages without introducing runtime coupling.
+
+<Mermaid chart={`graph TD
+    Root["@cfxdevkit/framework<br/>(Root Module)"] --> TSConf["tsconfig.base.json<br/>Path Aliases"]
+    Root --> Knip["knip.config.ts<br/>Static Analysis"]
+    Root --> Biome["biome.json<br/>Lint/Format"]
+    Root --> Moon["moon run Scripts<br/>Build/Test/Check"]
+    Moon --> Repos["repos/*/packages/*<br/>Core Framework"]
+    Moon --> Projects["projects/*/apps/*<br/>Applications"]
+    Knip --> Workspaces["Workspace Scoping<br/>& Ignore Rules"]
+    TSConf --> CorePkgs["@cfxdevkit/core<br/>@cfxdevkit/protocol<br/>@cfxdevkit/executor"]
+`} />

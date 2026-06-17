@@ -81,6 +81,19 @@ RUN curl -fsSL https://moonrepo.dev/install/moon.sh | bash
 # NOTE: npm's "openspec@latest" is a dummy placeholder (v0.0.0). The real CLI is @fission-ai/openspec.
 USER root
 RUN npm install -g @fission-ai/openspec@latest
+
+# Headroom — context compression proxy between devcontainer and local LLM
+# Compresses tool outputs, logs, RAG chunks before they reach the LLM (60-95% token savings)
+# CPU-only torch (~250MB) — no GPU in devcontainer; inference runs on Lemonade Server
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends python3-venv && rm -rf /var/lib/apt/lists/*
+RUN python3 -m venv /opt/headroom
+# CPU torch — small wheel, no GPU needed (headroom compresses tokens, doesn't run models)
+# Pre-install typing_extensions to work around a known PyPI normalization bug in torch==2.9.1 cpu wheel
+RUN /opt/headroom/bin/pip install --no-cache-dir "typing_extensions"
+RUN /opt/headroom/bin/pip install --no-cache-dir "torch==2.9.1" --index-url https://download.pytorch.org/whl/cpu
+RUN /opt/headroom/bin/pip install --no-cache-dir "headroom-ai[proxy,mcp,ml]"
+ENV PATH=/opt/headroom/bin:${PATH}
 USER node
 
 ENV PATH=/home/node/.moon:${PATH}

@@ -29,3 +29,8 @@ cd "${containerWorkspaceFolder:-/workspaces/root}"
 .devcontainer/scripts/check-lemonade.sh || true
 .devcontainer/scripts/install-vscode-extension.sh
 .devcontainer/scripts/install-cdk.sh
+
+# Start Headroom compression proxy (if installed)
+if command -v headroom &>/dev/null; then
+  .devcontainer/scripts/start-headroom.sh || echo "⚠ Headroom proxy failed to start (may need container rebuild)"
+fi
