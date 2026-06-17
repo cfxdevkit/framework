@@ -70,7 +70,7 @@
     "@biomejs/biome": "^2.4.15",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
-    "@types/node": "^22.10.0",
+    "@types/node": "^25.9.3",
     "@vitest/coverage-v8": "^4.1.8",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
