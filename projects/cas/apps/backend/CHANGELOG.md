@@ -1,5 +1,14 @@
 # @cfxdevkit/cas-backend
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies [05dedb6]
+  - @cfxdevkit/cdk@2.0.11
+  - @cfxdevkit/cas-shared@0.0.2
+  - @cfxdevkit/automation@2.0.8
+
 ## 0.0.2
 
 ### Patch Changes

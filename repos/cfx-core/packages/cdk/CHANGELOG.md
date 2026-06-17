@@ -1,5 +1,11 @@
 # @cfxdevkit/cdk
 
+## 2.0.11
+
+### Patch Changes
+
+- 05dedb6: Clarified that createClient returns a discriminated union of EspaceClient and CoreSpaceClient.
+
 ## 2.0.1
 
 ### Patch Changes

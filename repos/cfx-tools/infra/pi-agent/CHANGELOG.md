@@ -1,5 +1,11 @@
 # @cfxdevkit/pi-agent
 
+## 0.0.2
+
+### Patch Changes
+
+- @cfxdevkit/cli@2.0.10
+
 ## 0.0.1
 
 ### Patch Changes

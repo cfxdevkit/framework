@@ -1,5 +1,12 @@
 # @cfxdevkit/cli
 
+## 2.0.10
+
+### Patch Changes
+
+- Updated dependencies [05dedb6]
+  - @cfxdevkit/cdk@2.0.11
+
 ## 2.0.1
 
 ### Patch Changes
