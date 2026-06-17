@@ -1,6 +1,6 @@
 {
-  "provider": "lemonade",
-  "baseUrl": "http://localhost:28787/",
+  "provider": "openai-compat",
+  "baseUrl": "http://localhost:28787/v1/",
   "defaultModel": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
   "githubModel": null,
   "requestTimeoutMs": 600000,
@@ -28,8 +28,8 @@
       "defaultModel": "claude-sonnet-4.6"
     },
     "local-fast": {
-      "provider": "lemonade",
-      "baseUrl": "http://localhost:28787/"
+      "provider": "openai-compat",
+      "baseUrl": "http://localhost:28787/v1/"
     }
   },
   "actionPolicies": {

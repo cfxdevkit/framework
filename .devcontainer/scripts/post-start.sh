@@ -32,5 +32,7 @@ cd "${containerWorkspaceFolder:-/workspaces/root}"
 
 # Start Headroom compression proxy (if installed)
 if command -v headroom &>/dev/null; then
-  .devcontainer/scripts/start-headroom.sh || echo "⚠ Headroom proxy failed to start (may need container rebuild)"
+  .devcontainer/scripts/start-headroom.sh
+else
+  echo "ℹ Headroom proxy not installed (skip by installing headroom-ai[proxy,mcp,ml,code])"
 fi

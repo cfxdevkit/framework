@@ -70,7 +70,9 @@ register_repo() {
   fi
 
   if [[ "$repo_dir" == "$workspace" ]]; then
-    gitnexus analyze --name "$(derive_repo_alias "$repo_dir")" >/dev/null || true
+    # Use --force on first run after rebuild to ensure the index reflects current code.
+    # The index data in the volume may be stale relative to the workspace files.
+    gitnexus analyze --force --name "$(derive_repo_alias "$repo_dir")" >/dev/null || true
     return
   fi
 

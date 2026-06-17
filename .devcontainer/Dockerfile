@@ -92,7 +92,7 @@ RUN python3 -m venv /opt/headroom
 # Pre-install typing_extensions to work around a known PyPI normalization bug in torch==2.9.1 cpu wheel
 RUN /opt/headroom/bin/pip install --no-cache-dir "typing_extensions"
 RUN /opt/headroom/bin/pip install --no-cache-dir "torch==2.9.1" --index-url https://download.pytorch.org/whl/cpu
-RUN /opt/headroom/bin/pip install --no-cache-dir "headroom-ai[proxy,mcp,ml]"
+RUN /opt/headroom/bin/pip install --no-cache-dir "headroom-ai[proxy,mcp,ml,code]"
 ENV PATH=/opt/headroom/bin:${PATH}
 USER node
 

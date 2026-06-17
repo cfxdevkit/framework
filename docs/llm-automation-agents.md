@@ -64,9 +64,9 @@ Commit only small schemas, manifests, or report excerpts intentionally.
 ## Local LLM CLI
 
 `@cfxdevkit/llm-tools` in `repos/cfx-tools/infra/llm-tools` provides the current worker layer that
-`cdk agent` and `cdk llm` delegate to during the migration. The checked-in config currently points at a LiteLLM proxy URL,
-which can front the same local server that was previously addressed directly. Without an explicit config,
-the resolver checks LiteLLM first, then direct Lemonade-compatible fallbacks.
+`cdk agent` and `cdk llm` delegate to during the migration. Inside the devcontainer, the checked-in config points at the
+local Headroom proxy on `http://localhost:28787/v1/`, which fronts the host Lemonade server while keeping Headroom in the path.
+Without an explicit config, the resolver checks LiteLLM first, then direct Lemonade-compatible fallbacks.
 
 It auto-discovers a local provider at
 `http://localhost:13305/`, `http://127.0.0.1:13305/`,
@@ -86,8 +86,8 @@ Useful commands:
 ```sh
 pnpm run agent:status
 pnpm run cdk -- agent deterministic models
-pnpm run cdk -- agent config set provider lemonade
-pnpm run cdk -- agent config set base-url http://host.containers.internal:13305/
+pnpm run cdk -- agent config set provider openai-compat
+pnpm run cdk -- agent config set base-url http://localhost:28787/v1/
 pnpm run cdk -- agent exploratory actions
 pnpm run cdk -- llm config set default-model Qwen3-Coder-Next-GGUF
 pnpm run cdk -- llm config set action review Qwen3-Coder-Next-GGUF

@@ -90,9 +90,13 @@ compresses tool outputs, logs, RAG chunks, and conversation history before they
 reach the LLM — typically 60–95% fewer tokens with the same answers. The proxy
 auto-starts on container start (port `28787`).
 
+Use the proxy's OpenAI-compatible `/v1` surface from inside the devcontainer.
+Pointing clients at the proxy root can cause Lemonade-native `/api/v1` discovery
+to leak through, which bypasses Headroom's request telemetry and processing.
+
 Architecture:
 ```
-Devcontainer code → Headroom proxy (localhost:28787) → Compress → Lemonade (host.containers.internal:13305)
+Devcontainer code → Headroom proxy (localhost:28787/v1) → Compress → Lemonade (host.containers.internal:13305)
 ```
 
 After rebuilding or reopening the container, verify connectivity:

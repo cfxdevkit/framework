@@ -21,16 +21,18 @@ All models listed below fit simultaneously in unified memory, so there is no mod
 
 ---
 
-## Lemonade Endpoint
+## LLM Endpoints
 
 | Property | Value |
 |----------|-------|
-| URL | `http://host.containers.internal:13305/` |
-| Protocol | OpenAI-compatible `/v1/chat/completions` |
-| Discovery | `GET /api/v1/models` |
+| Headroom proxy URL | `http://localhost:28787/v1/` |
+| Upstream Lemonade URL | `http://host.containers.internal:13305/` |
+| Proxy protocol | OpenAI-compatible `/v1/chat/completions` |
+| Proxy discovery | `GET /v1/models` |
+| Upstream discovery | `GET /api/v1/models` |
 | Container network | `pasta:--map-gw` — host reachable at `169.254.1.2` |
 
-Environment variable: `LEMONADE_URL` (also `LEMONADE_BASE_URL` for legacy compat)  
+Environment variables: `OPENAI_BASE_URL=http://localhost:28787/v1`, `LEMONADE_URL=http://localhost:28787/v1/` (legacy compat)  
 Config key: `providers.json → baseUrl`
 
 ---
