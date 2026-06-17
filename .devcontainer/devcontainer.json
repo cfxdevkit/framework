@@ -36,7 +36,8 @@
     "OPENAI_BASE_URL": "http://localhost:28787/v1",
     "ANTHROPIC_BASE_URL": "http://localhost:28787",
     "HEADROOM_UPSTREAM": "http://host.containers.internal:13305/",
-    "HEADROOM_PROXY_PORT": "28787"
+    "HEADROOM_PROXY_PORT": "28787",
+    "HEADROOM_CODE_AWARE_ENABLED": "false"
   },
   "forwardPorts": [8545, 8546, 12536, 12537, 3000, 4173, 5173, 7748, 8787, 28787],
   "otherPortsAttributes": {
