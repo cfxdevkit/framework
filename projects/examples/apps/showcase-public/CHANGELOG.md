@@ -1,5 +1,12 @@
 # @cfxdevkit/example-showcase-public
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies [05dedb6]
+  - @cfxdevkit/cdk@2.0.11
+
 ## 0.0.2
 
 ### Patch Changes
