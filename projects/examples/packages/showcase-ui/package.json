@@ -26,7 +26,7 @@
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
     "@types/react": "^19.2.15",
-    "react": "19.2.6",
+    "react": "19.2.7",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
   }
