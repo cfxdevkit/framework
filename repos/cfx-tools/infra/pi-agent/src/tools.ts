@@ -163,6 +163,7 @@ const repoCommitWorkflowTool = defineTool({
       prompt: params.prompt,
       quick: params.quick,
       model: params.model,
+      tuiMode: ctx.hasUI,
     });
 
     if (ctx.hasUI) {

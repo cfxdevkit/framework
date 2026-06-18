@@ -36,7 +36,13 @@ export function createWorkflowTerminalUi(options: {
   interactive?: boolean;
 }): WorkflowTerminalUi {
   const output = options.stdout ?? process.stdout;
-  const interactive = options.interactive ?? Boolean(output.isTTY && process.stderr.isTTY);
+  // When running inside the pi coding agent TUI, disable interactive cursor
+  // manipulation (moveCursor/clearScreenDown) — the TUI does not handle ANSI
+  // cursor codes and they break rendering.  Sequential line output is used
+  // instead, giving each step its own line with the final summary at the end.
+  const piTui = Boolean(process.env.PI_CODING_AGENT);
+  const interactive =
+    options.interactive ?? (piTui ? false : Boolean(output.isTTY && process.stderr.isTTY));
   const header = formatHeader(options.commandLabel, options.executionContext, options.workingSet);
   const state: {
     stepLine: string;
