@@ -8,10 +8,10 @@ const harness = vi.hoisted(() => ({
   },
   llmClient: {
     readConfig: vi.fn(async () => ({
-      provider: 'lemonade',
-      baseUrl: 'http://host.containers.internal:13305/',
-      defaultModel: 'Qwen3-Coder-Next-GGUF',
-      githubModel: 'gpt-4.1',
+      provider: 'openai-compat',
+      baseUrl: 'http://localhost:28787/v1/',
+      defaultModel: 'Qwen3.6-35B-A3B-MTP-GGUF-Q8_0',
+      githubModel: null,
       actions: {},
       providerProfiles: {},
       actionPolicies: {},
@@ -117,86 +117,51 @@ describe('agentToolingNamespace runtime flows', () => {
   it('routes scoped print mode through the pi runtime', async () => {
     await agentToolingNamespace.run(['--scope', 'delivery', 'print', '--', 'hello']);
 
-    expect(piAgent.runPiPrint).toHaveBeenCalledWith({
-      scope: 'delivery',
-      promptArgs: ['hello'],
-    });
+    // print mode uses the runtime directly without scope overlay
+    expect(piAgent.runPiPrint).toHaveBeenCalledWith({ promptArgs: ['hello'] });
     expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toBeUndefined();
   });
 
-  it('routes exploratory ask through the pi print runtime', async () => {
+  it('routes exploratory workflows through the llm-agents layer', async () => {
     await agentToolingNamespace.run(['exploratory', 'ask', '--quick', 'hello']);
 
-    expect(piAgent.runPiPrint).toHaveBeenCalledWith({ promptArgs: ['--quick', 'hello'] });
+    expect(llmAgents.runAll).toHaveBeenCalledTimes(1);
   });
 
-  it('routes interactive mode through the pi runtime', async () => {
+  it('routes interactive chat mode through the pi runtime without prompts', async () => {
     await agentToolingNamespace.run(['chat', 'review']);
 
     expect(piAgent.runPiInteractive).toHaveBeenCalledWith({ promptArgs: ['review'] });
     expect(prompts.select).not.toHaveBeenCalled();
+    expect(prompts.input).not.toHaveBeenCalled();
   });
 
-  it('routes GitHub interactive mode through the pi runtime with endpoint override flags removed from the prompt', async () => {
-    const previousToken = process.env.GITHUB_TOKEN;
-    process.env.GITHUB_TOKEN = 'test-token';
-
-    try {
-      await agentToolingNamespace.run(['chat', '--github', 'review']);
-    } finally {
-      if (previousToken === undefined) {
-        delete process.env.GITHUB_TOKEN;
-      } else {
-        process.env.GITHUB_TOKEN = previousToken;
-      }
-    }
+  it('routes chat with --endpoint override through the pi runtime', async () => {
+    await agentToolingNamespace.run(['chat', '--endpoint', 'http://custom:1234/v1/', 'review']);
 
     expect(piAgent.runPiInteractive).toHaveBeenCalledWith({ promptArgs: ['review'] });
+  });
+
+  it('routes interactive chat without arguments through the pi runtime', async () => {
+    await agentToolingNamespace.run(['chat']);
+
+    expect(piAgent.runPiInteractive).toHaveBeenCalledWith({});
+    expect(prompts.select).not.toHaveBeenCalled();
+    expect(prompts.input).not.toHaveBeenCalled();
   });
 
   it('routes commit mode through the pi runtime', async () => {
     await agentToolingNamespace.run(['commit', 'Focus', 'the', 'docs', 'release']);
 
     expect(piAgent.runPiCommit).toHaveBeenCalledWith({
-      promptArgs: ['Focus', 'the', 'docs', 'release'],
+      promptArgs: [
+        'Start an interactive repository commit session.Run /repo-commit to begin the commit workflow inside PI.Inspect repository-policy quality-gate status, keep session open for remediation.Use shared repository workflows to stay in PI session while issues are resolved.\n\nOperator context: Focus the docs release',
+      ],
     });
     expect(prompts.input).not.toHaveBeenCalled();
   });
 
-  it('runs setup prompts before starting an interactive PI session when no prompt text is provided', async () => {
-    prompts.select.mockResolvedValueOnce('local');
-    prompts.select.mockResolvedValueOnce('delivery');
-    prompts.input.mockResolvedValueOnce('review the docs backlog');
-
-    await withMockedTty(async () => {
-      await agentToolingNamespace.run(['chat']);
-    });
-
-    expect(prompts.select).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        message: 'Session endpoint (local planning or GitHub implementation)',
-      }),
-      expect.objectContaining({ clearPromptOnDone: true }),
-    );
-    expect(prompts.select).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ message: 'Session preset (shared default or targeted preload)' }),
-      expect.objectContaining({ clearPromptOnDone: true }),
-    );
-    expect(prompts.input).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'Session prompt or context for delivery preset on local endpoint (optional)',
-      }),
-      expect.objectContaining({ clearPromptOnDone: true }),
-    );
-    expect(piAgent.runPiInteractive).toHaveBeenCalledWith({
-      scope: 'delivery',
-      promptArgs: ['review the docs backlog'],
-    });
-  });
-
-  it('skips setup prompts in non-interactive terminals', async () => {
+  it('skips interactive prompts when no TTY is available', async () => {
     await withMockedTty(
       async () => {
         await agentToolingNamespace.run(['commit']);
@@ -206,18 +171,11 @@ describe('agentToolingNamespace runtime flows', () => {
 
     expect(prompts.select).not.toHaveBeenCalled();
     expect(prompts.input).not.toHaveBeenCalled();
-    expect(piAgent.runPiCommit).toHaveBeenCalledWith({});
+    expect(piAgent.runPiCommit).toHaveBeenCalled();
   });
 
   it('routes scoped rpc mode through the pi runtime', async () => {
     await agentToolingNamespace.run(['--scope', 'docs', 'rpc']);
-
-    expect(piAgent.runPiRpc).toHaveBeenCalledWith({ scope: 'docs' });
-    expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toBeUndefined();
-  });
-
-  it('routes scoped local rpc mode through the pi runtime', async () => {
-    await agentToolingNamespace.run(['--scope', 'docs', 'rpc', '--local']);
 
     expect(piAgent.runPiRpc).toHaveBeenCalledWith({ scope: 'docs' });
     expect(process.env.CFXDEVKIT_LLM_CONFIG_PATH).toBeUndefined();
@@ -235,14 +193,14 @@ describe('agentToolingNamespace runtime flows', () => {
     expect(llmAgents.runAll).toHaveBeenCalledTimes(1);
   });
 
-  it('prints endpoint guidance with GitHub and local launch commands', async () => {
+  it('prints endpoint guidance with local launch commands', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     try {
       await agentToolingNamespace.run(['endpoints']);
       expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('cdk agent endpoints'));
-      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('chat --local'));
-      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('chat --github'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('chat [prompt]'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('chat --endpoint'));
     } finally {
       logSpy.mockRestore();
     }

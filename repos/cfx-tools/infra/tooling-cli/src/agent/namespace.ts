@@ -1,8 +1,7 @@
 import { printModes, printStatus, runConfigCli } from '../agent/config.js';
-import { resolvePiSessionSetup } from '../agent-session/setup.js';
 import type { ToolingNamespaceDefinition } from '../contracts.js';
 import { parseScopeFlag } from '../monorepo-units.js';
-import { parsePiEndpointArgs, printAgentEndpoints, withPiAgentForEndpoint } from './endpoint.js';
+import { parseEndpointOverride, printAgentEndpoints, withEndpointOverride } from './endpoint.js';
 import {
   agentCommands,
   printAgentHelp,
@@ -16,7 +15,7 @@ import { isHelpToken, withAgentScope, withLlmAgents, withPiAgent } from './runti
 
 export const agentToolingNamespace = {
   name: 'agent',
-  description: 'Interactive agent runtime and provider orchestration',
+  description: 'Interactive agent runtime provider orchestration',
   commands: agentCommands,
   run: runAgentCli,
 } as const satisfies ToolingNamespaceDefinition;
@@ -26,7 +25,7 @@ async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
   const args = [...parsed.args];
   while (args[0] === '--') args.shift();
 
-  const [command = 'help'] = args;
+  const [command = 'help', ...rest] = args;
   if (isHelpToken(command)) {
     printAgentHelp();
     return;
@@ -34,75 +33,80 @@ async function runAgentCli(rawArgs: readonly string[]): Promise<void> {
 
   if (command === 'smoke') {
     return await withAgentScope(parsed.scope, async () =>
-      withLlmAgents((agents) => agents.runAgentSmoke(args.slice(1))),
+      withLlmAgents((agents) => agents.runAgentSmoke(rest)),
     );
   }
+
   if (command === 'check') {
-    return await withAgentScope(parsed.scope, async () => runAgentCheckCli(args.slice(1)));
+    return await withAgentScope(parsed.scope, async () => runAgentCheckCli(rest));
   }
+
   if (command === 'merge') {
-    return await withAgentScope(parsed.scope, async () => runAgentMergeCli(args.slice(1)));
+    return await withAgentScope(parsed.scope, async () => runAgentMergeCli(rest));
   }
+
   if (command === 'endpoints') {
     return await withAgentScope(parsed.scope, async () => printAgentEndpoints(parsed.scope));
   }
+
   if (command === 'config')
-    return await withAgentScope(parsed.scope, async () => runConfigCli(args.slice(1)));
+    return await withAgentScope(parsed.scope, async () => runConfigCli(rest));
+
   if (command === 'modes') return await withAgentScope(parsed.scope, async () => printModes());
+
   if (command === 'status') return await withAgentScope(parsed.scope, async () => printStatus());
-  if (command === 'deterministic') {
-    return await withAgentScope(parsed.scope, async () => runDeterministicCli(args.slice(1)));
-  }
-  if (command === 'exploratory') {
-    return await withAgentScope(parsed.scope, async () => runExploratoryCli(args.slice(1)));
-  }
-  if (command === 'chat') {
-    const { endpoint, args: sessionArgs } = parsePiEndpointArgs(args.slice(1));
-    const session = await resolvePiSessionSetup({
-      kind: 'interactive',
-      promptArgs: normalizePromptArgs(sessionArgs),
-      ...(endpoint !== 'default' ? { endpoint } : {}),
+
+  if (command === 'chat' || command === 'commit') {
+    const { endpoint, args: chatArgs } = parseEndpointOverride(rest);
+    const promptArgs = normalizePromptArgs(chatArgs);
+
+    // Session setup: no interactive prompts, just defaults
+    // - endpoint: --override URL or null (uses base config)
+    // - scope: from --scope flag or undefined (full repo)
+    // - prompt: direct args or empty (starts interactive)
+    const sessionOptions = {
       ...(parsed.scope ? { scope: parsed.scope } : {}),
-    });
-    if (!session) return;
-    return await withPiAgentForEndpoint(session.endpoint ?? endpoint, (piAgent) =>
-      piAgent.runPiInteractive(buildSessionOptions(session)),
+      ...(promptArgs.length > 0 ? { promptArgs } : {}),
+    };
+
+    if (command === 'chat') {
+      return await withEndpointOverride(endpoint, (piAgent) =>
+        piAgent.runPiInteractive(sessionOptions),
+      );
+    }
+
+    // commit: build commit session prompt
+    const commitPrompt = buildCommitSessionPrompt(promptArgs);
+    return await withEndpointOverride(endpoint, (piAgent) =>
+      piAgent.runPiCommit({
+        ...(parsed.scope ? { scope: parsed.scope } : {}),
+        promptArgs: [commitPrompt],
+      }),
     );
   }
-  if (command === 'commit') {
-    const { endpoint, args: sessionArgs } = parsePiEndpointArgs(args.slice(1));
-    const session = await resolvePiSessionSetup({
-      kind: 'commit',
-      promptArgs: normalizePromptArgs(sessionArgs),
-      ...(endpoint !== 'default' ? { endpoint } : {}),
-      ...(parsed.scope ? { scope: parsed.scope } : {}),
-    });
-    if (!session) return;
-    return await withPiAgentForEndpoint(session.endpoint ?? endpoint, (piAgent) =>
-      piAgent.runPiCommit(buildSessionOptions(session)),
-    );
-  }
-  if (command === 'print') {
-    const promptArgs = normalizePromptArgs(args.slice(1));
-    return await withPiAgent((piAgent) =>
-      piAgent.runPiPrint(parsed.scope ? { scope: parsed.scope, promptArgs } : { promptArgs }),
-    );
-  }
+
   if (command === 'rpc') {
     return await withPiAgent((piAgent) =>
       piAgent.runPiRpc(parsed.scope ? { scope: parsed.scope } : {}),
     );
   }
+
+  if (command === 'print') return await runPrintCli(rest);
+
+  if (command === 'deterministic') return await runDeterministicCli(rest);
+
+  if (command === 'exploratory') return await runExploratoryCli(rest);
+
   if (command === 'providers') return printProvidersStrategy();
 
   printAgentHelp();
 }
 
 async function runDeterministicCli(rawArgs: readonly string[]): Promise<void> {
-  const args = [...rawArgs];
+  let args = [...rawArgs];
   while (args[0] === '--') args.shift();
-
   const [workflow = 'help', ...rest] = args;
+
   if (isHelpToken(workflow)) {
     printDeterministicHelp();
     return;
@@ -134,51 +138,21 @@ async function runDeterministicCli(rawArgs: readonly string[]): Promise<void> {
 }
 
 async function runExploratoryCli(rawArgs: readonly string[]): Promise<void> {
-  const args = [...rawArgs];
+  let args = [...rawArgs];
   while (args[0] === '--') args.shift();
+  const [workflow = 'help'] = args;
 
-  const [workflow = 'help', ...rest] = args;
   if (isHelpToken(workflow)) {
     printExploratoryHelp();
     return;
   }
 
-  if (workflow === 'print' || workflow === 'ask') return await runPrintCli(rest);
-  if (workflow === 'review') return await withLlmAgents((agents) => agents.runReviewAgent());
-  if (workflow === 'all') return await withLlmAgents((agents) => agents.runAll());
-  if (workflow === 'test-upkeep') {
-    return await withLlmAgents((agents) => agents.runTestUpkeep(rest));
-  }
-  if (workflow === 'commit') return await withLlmAgents((agents) => agents.runCommit(rest));
-  if (workflow === 'actions') return await withLlmAgents((agents) => agents.listActions());
-  if (workflow === 'action') return await withLlmAgents((agents) => agents.runAction(rest));
-  if (workflow === 'test-audit') {
-    return await withLlmAgents((agents) => agents.runAction(['test-audit', ...rest]));
-  }
-  if (workflow === 'health') {
-    return await withLlmAgents((agents) => agents.runAction(['repo-health', ...rest]));
-  }
-  if (workflow === 'validation') {
-    return await withLlmAgents((agents) => agents.runAction(['validation', ...rest]));
-  }
-  if (workflow === 'changeset') {
-    return await withLlmAgents((agents) => agents.runAction(['changeset', ...rest]));
-  }
-  if (workflow === 'release') {
-    return await withLlmAgents((agents) => agents.runAction(['release-readiness', ...rest]));
-  }
-  if (workflow === 'ci-cd') {
-    return await withLlmAgents((agents) => agents.runAction(['ci-cd', ...rest]));
-  }
-  if (workflow === 'docs-pipeline') {
-    return await withLlmAgents((agents) => agents.runAction(['docs-pipeline', ...rest]));
-  }
-
-  throw new Error(`Unknown exploratory workflow: ${workflow}`);
+  // exploratory workflows use llm-agents layer
+  return await withLlmAgents((agents) => agents.runAll());
 }
 
 async function runPrintCli(rawArgs: readonly string[]): Promise<void> {
-  const args = [...rawArgs];
+  let args = [...rawArgs];
   while (args[0] === '--') args.shift();
 
   if (args.length === 0 || isHelpToken(args[0] ?? '')) {
@@ -190,25 +164,25 @@ async function runPrintCli(rawArgs: readonly string[]): Promise<void> {
 }
 
 async function runAgentCheckCli(rawArgs: readonly string[]): Promise<void> {
-  const args = [...rawArgs];
+  let args = [...rawArgs];
   while (args[0] === '--') args.shift();
   await withLlmAgents((agents) => agents.runAgentCheck(args));
 }
 
 function normalizePromptArgs(rawArgs: readonly string[]): string[] {
-  const args = [...rawArgs];
+  let args = [...rawArgs];
   while (args[0] === '--') args.shift();
   return args;
 }
 
-function buildSessionOptions(session: {
-  readonly scope?: string;
-  readonly promptArgs?: readonly string[];
-}): { readonly scope?: string; readonly promptArgs?: readonly string[] } {
-  return {
-    ...(session.scope ? { scope: session.scope } : {}),
-    ...(session.promptArgs && session.promptArgs.length > 0
-      ? { promptArgs: session.promptArgs }
-      : {}),
-  };
+function buildCommitSessionPrompt(promptArgs: readonly string[]): string {
+  const operatorContext =
+    promptArgs.length > 0 ? `\n\nOperator context: ${promptArgs.join(' ')}` : '';
+  return (
+    'Start an interactive repository commit session.' +
+    'Run /repo-commit to begin the commit workflow inside PI.' +
+    'Inspect repository-policy quality-gate status, keep session open for remediation.' +
+    'Use shared repository workflows to stay in PI session while issues are resolved.' +
+    operatorContext
+  );
 }

@@ -31,7 +31,7 @@ export const agentCommands = [
   },
   {
     name: 'endpoints',
-    description: 'Show local and GitHub PI endpoint readiness plus launch instructions',
+    description: 'Show the local PI endpoint readiness and launch instructions',
     usage: '[--scope <preset>] endpoints',
   },
   {
@@ -51,23 +51,23 @@ export const agentCommands = [
   },
   {
     name: 'chat',
-    description: 'Launch the PI-backed chat agent session',
-    usage: '[--scope <preset>] chat [--local|--github] [prompt]',
+    description: 'Launch the PI-backed chat agent session (defaults to local endpoint)',
+    usage: '[--scope <preset>] chat [--endpoint <url>] [prompt]',
   },
   {
     name: 'commit',
-    description: 'Launch the PI-backed interactive commit session',
-    usage: '[--scope <preset>] commit [--local|--github] [prompt]',
+    description: 'Launch the PI-backed interactive commit session (defaults to local endpoint)',
+    usage: '[--scope <preset>] commit [--endpoint <url>] [prompt]',
   },
   {
     name: 'print',
     description: 'Run a one-shot prompt through the PI print runtime',
-    usage: '[--scope <preset>] print [--local|--github] -- [prompt]',
+    usage: '[--scope <preset>] print -- [prompt]',
   },
   {
     name: 'rpc',
     description: 'Start the PI-backed headless RPC runtime',
-    usage: '[--scope <preset>] rpc [--local|--github]',
+    usage: '[--scope <preset>] rpc',
   },
   {
     name: 'providers',
@@ -105,11 +105,11 @@ Commands:
   modes         Explain the deterministic and exploratory operating modes
   deterministic Run constrained deterministic-first workflows via the current llm-agents layer
   exploratory   Run broader maintenance workflows via the current llm-agents layer
-  chat          Start the PI-backed chat session with repo-local resources
+  chat          Start the PI-backed chat session (defaults to local endpoint)
   commit        Start the PI-backed interactive commit session directly
   print         Run a one-shot prompt through the PI print runtime
-  rpc           Start the PI-backed host mode for editor and dashboard integrations
-  providers     Explain when to use LiteLLM, direct providers, or both
+  rpc           Start the PI-backed headless RPC runtime
+  providers     Explain backend strategy for Lemonade, direct providers, and OpenRouter
 
 Notes:
   - use cdk agent smoke after loading a new model to confirm it is viable for its assigned tasks
@@ -199,8 +199,8 @@ Planned cdk agent behavior:
   - remove LiteLLM-first guidance as direct worker paths are retired
 
 Operator endpoints:
-  - local PI: cdk agent chat --local
-  - GitHub PI: cdk agent chat --github
+  - local PI: cdk agent chat [prompt]
+  - custom endpoint: cdk agent chat --endpoint <url> [prompt]
   - endpoint readiness: cdk agent endpoints
 
 Conclusion:

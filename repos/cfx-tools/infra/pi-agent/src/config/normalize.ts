@@ -4,8 +4,8 @@ const defaultRequestTimeoutMs = 600000;
 
 export function defaultPiConfig(): PiLlmConfig {
   return {
-    provider: 'lemonade',
-    baseUrl: 'http://host.containers.internal:13305/',
+    provider: 'openai-compat',
+    baseUrl: 'http://localhost:28787/v1/',
     defaultModel: 'Qwen3-Coder-Next-GGUF',
     githubModel: null,
     requestTimeoutMs: defaultRequestTimeoutMs,
