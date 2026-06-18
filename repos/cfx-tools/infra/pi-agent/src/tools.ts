@@ -159,12 +159,44 @@ const repoCommitWorkflowTool = defineTool({
     model: Type.Optional(Type.String({ description: 'Optional model override.' })),
   }),
   async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-    const result = await executePiCommitSession({
+    // First pass: run commit workflow (deferred approval to avoid breaking TUI)
+    let result = await executePiCommitSession({
       prompt: params.prompt,
       quick: params.quick,
       model: params.model,
       tuiMode: ctx.hasUI,
     });
+
+    // Handle approval in TUI if approval is required
+    if (
+      result?.status === 'approval-required' &&
+      ctx.hasUI &&
+      result.commitPreview &&
+      !result.approval.approved &&
+      !result.approval.declined
+    ) {
+      const preview = result.commitPreview;
+      // Use TUI native confirm dialog for approval
+      const confirmed = await ctx.ui.confirm('Approve commit?', preview.subject);
+
+      if (!confirmed) {
+        // User declined: abort the commit
+        result = {
+          ...result,
+          status: 'aborted',
+          approval: { required: true, approved: false, declined: true },
+        };
+      } else {
+        // User approved: re-run with --yes flag to skip approval
+        result = await executePiCommitSession({
+          prompt: params.prompt,
+          quick: params.quick,
+          model: params.model,
+          tuiMode: true,
+          yes: true,
+        });
+      }
+    }
 
     if (ctx.hasUI) {
       const uiState = createPiCommitWorkflowUiState(result);
