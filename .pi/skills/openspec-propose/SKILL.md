@@ -33,11 +33,15 @@ When ready to implement, run /opsx-apply
 
    **IMPORTANT**: Do NOT proceed without understanding what the user wants to build.
 
-2. **Create the change directory**
+2. **Create the change directory and branch**
    ```bash
    openspec new change "<name>"
    ```
    This creates a scaffolded change at `openspec/changes/<name>/` with `.openspec.yaml`.
+
+   **Branch requirement**: Every OpenSpec change MUST be implemented on its own branch.
+   The branch is tracked via the change metadata. Never implement a change on the
+   default branch.
 
 3. **Get the artifact build order**
    ```bash
@@ -79,7 +83,7 @@ When ready to implement, run /opsx-apply
       - Use **AskUserQuestion tool** to clarify
       - Then continue with creation
 
-5. **Show final status**
+5. **Show final status and branch info**
    ```bash
    openspec status --change "<name>"
    ```
@@ -89,6 +93,7 @@ When ready to implement, run /opsx-apply
 After completing all artifacts, summarize:
 - Change name and location
 - List of artifacts created with brief descriptions
+- **Branch**: the change is on its own branch (never default branch)
 - What's ready: "All artifacts created! Ready for implementation."
 - Prompt: "Run `/opsx-apply` or ask me to implement to start working on the tasks."
 
@@ -107,4 +112,5 @@ After completing all artifacts, summarize:
 - Always read dependency artifacts before creating a new one
 - If context is critically unclear, ask the user - but prefer making reasonable decisions to keep momentum
 - If a change with that name already exists, ask if user wants to continue it or create a new one
-- Verify each artifact file exists after writing before proceeding to next
+- **Every change gets its own branch** - never implement on default branch
+- **Changes are merged when archived** - the branch lifecycle ends at archive

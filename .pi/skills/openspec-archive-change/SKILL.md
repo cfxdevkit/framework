@@ -11,6 +11,10 @@ metadata:
 
 Archive a completed change in the experimental workflow.
 
+**Branch Rule**: Before archiving, the change's branch must be merged into the
+target branch (`main` or `dev` per repository policy). The branch lifecycle
+ends at archive.
+
 **Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
 **Steps**
@@ -69,7 +73,26 @@ Archive a completed change in the experimental workflow.
 
    **If no tasks file exists:** Proceed without task-related warning.
 
-5. **Assess delta spec sync state**
+5. **Merge the change branch**
+
+   **Before archiving, the change branch MUST be merged.**
+
+   ```bash
+   # Squash-merge the change branch into the target branch
+   git checkout <target-branch>
+   git merge --squash <change-branch>
+   git commit -m "chore: archive <change-name>"
+   ```
+
+   The target branch is determined by repository policy (`main` for releases,
+   `dev` for ongoing development). Check `openspec/changes/<name>/.openspec.yaml`
+   or default to the repository's default branch.
+
+   > Rationale: Every OpenSpec change gets its own branch and is merged when
+   > archived. This ensures all work is integrated before the change is
+   > considered complete.
+
+6. **Assess delta spec sync state**
 
    Check for delta specs at `openspec/changes/<name>/specs/`. If none exist, proceed without sync prompt.
 
@@ -84,7 +107,7 @@ Archive a completed change in the experimental workflow.
 
    If user chooses sync, use Task tool (subagent_type: "general-purpose", prompt: "Use Skill tool to invoke openspec-sync-specs for change '<name>'. Delta spec analysis: <include the analyzed delta spec summary>"). Proceed to archive regardless of choice.
 
-6. **Perform the archive**
+7. **Perform the archive**
 
    Create the archive directory if it doesn't exist:
    ```bash
@@ -101,12 +124,21 @@ Archive a completed change in the experimental workflow.
    mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
    ```
 
-7. **Display summary**
+8. **Delete the change branch**
+
+   ```bash
+   git branch -D <change-branch>
+   ```
+
+   The branch lifecycle ends here.
+
+9. **Display summary**
 
    Show archive completion summary including:
    - Change name
    - Schema that was used
    - Archive location
+   - Whether the branch was merged and deleted
    - Whether specs were synced (if applicable)
    - Note about any warnings (incomplete artifacts/tasks)
 
@@ -117,11 +149,12 @@ Archive a completed change in the experimental workflow.
 
 **Change:** <change-name>
 **Schema:** <schema-name>
+**Branch:** <change-branch> → merged into <target-branch> → deleted
 **Precommit:** ✓ passed
 **Archived to:** openspec/changes/archive/YYYY-MM-DD-<name>/
 **Specs:** ✓ Synced to main specs (or "No delta specs" or "Sync skipped")
 
-All artifacts complete. All tasks complete.
+All artifacts complete. All tasks complete. Branch merged and deleted.
 ```
 
 **Output When Precommit Blocked**
@@ -131,13 +164,16 @@ All artifacts complete. All tasks complete.
 
 **Change:** <change-name>
 **Precommit:** ✗ blocked (<gate names>)
+**Branch:** <change-branch> (not merged — fix gates first)
 
 Fix the failing gates before archiving. Run `cdk repo precommit` to recheck.
 ```
 
 **Guardrails**
 - **ALWAYS run `cdk repo precommit` before archiving — do not skip this gate**
+- **ALWAYS merge the branch before archiving** — never archive without merging
 - If precommit is blocked, stop and surface the failures; do not archive
+- **Always delete the branch after archiving** — the branch lifecycle ends at archive
 - Always prompt for change selection if not provided
 - Use artifact graph (openspec status --json) for completion checking
 - Don't block archive on warnings - just inform and confirm
@@ -145,3 +181,11 @@ Fix the failing gates before archiving. Run `cdk repo precommit` to recheck.
 - Show clear summary of what happened
 - If sync is requested, use openspec-sync-specs approach (agent-driven)
 - If delta specs exist, always run the sync assessment and show the combined summary before prompting
+
+**Branch Lifecycle Summary**
+
+```
+openspec new change "x"  →  branch created
+/opsx-apply              →  work on branch, commits via /repo-commit
+/opsx-archive            →  branch merged → branch deleted → change archived
+```
