@@ -9,6 +9,16 @@ import {
 import { executePiCommitWorkflow, type PiCommitWorkflowResult } from '../llm-agents-runtime.js';
 import { withCapturedConsole } from '../tools/utils.js';
 
+// Flag to ensure PI_CODING_AGENT is set once so the commit workflow's
+// createWorkflowTerminalUi detects the TUI and skips interactive cursor
+// manipulation (moveCursor/clearScreenDown).  The commit workflow creates
+// its own stdout/stderr redirection internally for approval prompts,
+// so setting it in this file would be a no-op.  We set it here once at
+// module load time so all downstream calls see it.
+if (!process.env.PI_CODING_AGENT) {
+  process.env.PI_CODING_AGENT = 'true';
+}
+
 export async function executePiCommitSession(options: {
   prompt?: string;
   quick?: boolean;
@@ -23,63 +33,17 @@ export async function executePiCommitSession(options: {
 
   const commitPolicy = await resolveCommitRuntimePolicy(options.model);
   const { result } = await withScopedCommitPolicy(commitPolicy.profileOverride, async () => {
-    // When running in TUI mode, skip terminal UI by using a no-op stdout.
-    // The llm-agents commit workflow writes to stdout/stderr and calls
-    // ui.pause()/confirmPrompt() for approval — both break the TUI.
-    // We use a null stream to suppress all terminal UI output.
-    const isTTY = typeof process.stdout.isTTY === 'boolean' ? process.stdout.isTTY : false;
-    const isTTYStderr = typeof process.stderr.isTTY === 'boolean' ? process.stderr.isTTY : false;
-
-    if (options.tuiMode && isTTY && isTTYStderr) {
-      // TUI mode: suppress terminal UI by setting stdout to a no-op stream.
-      // The commit workflow will still run all logic and return the result,
-      // but won't write to stdout/stderr or pause the terminal.
-      const originalStdout = process.stdout;
-      const originalStderr = process.stderr;
-
-      // Create a no-op write stream for stdout
-      const noopWriteStream = {
-        isTTY: false,
-        write: () => true,
-        destroy: () => {},
-        end: () => {},
-        on: () => noopWriteStream,
-        once: () => noopWriteStream,
-      } as unknown as typeof process.stdout;
-
-      // Create a no-op write stream for stderr
-      const noopWriteStreamStderr = {
-        isTTY: false,
-        write: () => true,
-        destroy: () => {},
-        end: () => {},
-        on: () => noopWriteStreamStderr,
-        once: () => noopWriteStreamStderr,
-      } as unknown as typeof process.stderr;
-
-      // Temporarily redirect stdout and stderr
-      process.stdout = noopWriteStream;
-      process.stderr = noopWriteStreamStderr;
-
-      try {
-        return await withCapturedConsole(
-          async () =>
-            await executePiCommitWorkflow(args, {
-              modelPolicies: commitPolicy.modelPolicies,
-              // Skip terminal UI approval — we'll use TUI-native approval instead
-              approvalMode: 'defer',
-            }),
-        );
-      } finally {
-        // Restore original stdout and stderr
-        process.stdout = originalStdout;
-        process.stderr = originalStderr;
-      }
-    }
-
+    // In TUI mode the commit workflow's createWorkflowTerminalUi detects
+    // PI_CODING_AGENT (set once at module load) and falls back to
+    // sequential line output, so it never tries ANSI cursor manipulation.
+    // We always use defer approval mode so the caller tool handles
+    // approval via TUI-native confirm dialogs instead of terminal prompts.
     return await withCapturedConsole(
       async () =>
-        await executePiCommitWorkflow(args, { modelPolicies: commitPolicy.modelPolicies }),
+        await executePiCommitWorkflow(args, {
+          modelPolicies: commitPolicy.modelPolicies,
+          approvalMode: 'defer',
+        }),
     );
   });
   return result;
