@@ -218,10 +218,11 @@ export async function executePiCommitWorkflow(
       readonly messageGenerationModel?: string | null;
       readonly failureAnalysisModel?: string | null;
     };
+    approvalMode?: 'defer' | 'prompt' | 'auto-approve';
   },
 ): Promise<PiCommitWorkflowResult | null> {
   return await (await loadLlmAgentsModule()).runCommitWorkflow(args, {
-    approvalMode: 'defer',
+    approvalMode: options?.approvalMode ?? 'defer',
     ...(options?.modelPolicies ? { modelPolicies: options.modelPolicies } : {}),
   });
 }
