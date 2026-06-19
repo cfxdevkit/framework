@@ -62,8 +62,8 @@
   - [ ] 1.11.9 `agent:*` scripts → `moon run agent:*`
   - [ ] 1.11.10 `docs:*` scripts → `moon run docs:*`
   - [ ] 1.11.11 Add `devnode:*`, `sign:*`, `scaffold:*`, `contracts:*`, `mcp:*` scripts
-- [ ] 1.12 Verify Phase 1: `moon run repo:build` works (calls `cdk repo build`)
-- [ ] 1.13 Verify Phase 1: `moon run agent:chat --help` works (calls `cdk agent chat --help`)
+- [x] 1.12 Verify Phase 1: `moon run repo:build` works (calls `cdk repo build`)
+- [x] 1.13 Verify Phase 1: `moon run agent:chat --help` works (calls `cdk agent chat --help`)
 
 ## Phase 2: Slim `cdk` to framework scope
 

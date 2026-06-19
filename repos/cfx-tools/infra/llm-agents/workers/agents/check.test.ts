@@ -180,7 +180,7 @@ describe('renderAgentCheckConsoleSummary', () => {
     });
 
     expect(rendered).toContain('Branch: opsx/repo-check-handoff (created)');
-    expect(rendered).toContain('openspec/changes/fix-repo-check-noise/proposal.md');
+    expect(rendered).toContain('OpenSpec artifacts: fix-repo-check-noise');
     expect(rendered).toContain('artifacts/llm/reports/agent-check.md');
     expect(rendered).not.toContain('{"status"');
   });

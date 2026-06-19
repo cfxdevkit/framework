@@ -253,21 +253,12 @@ export function renderAgentCheckConsoleSummary(report: {
   if (report.dryRun) {
     lines.push('- OpenSpec artifacts: dry run, no files written');
   } else if (report.artifacts.length > 0) {
-    lines.push('- OpenSpec artifacts:');
-    for (const artifact of report.artifacts) {
-      lines.push(`  - ${artifact.name}: ${artifact.proposalPath}`);
-      lines.push(`    design: ${artifact.designPath}`);
-      for (const specPath of artifact.specPaths) lines.push(`    spec: ${specPath}`);
-      lines.push(`    tasks: ${artifact.tasksPath}`);
-    }
+    lines.push(`- OpenSpec artifacts: ${report.artifacts.map((a) => a.name).join(', ')}`);
   } else {
     lines.push('- OpenSpec artifacts: none');
   }
   lines.push(
     '- Reports: artifacts/llm/reports/agent-check.md, artifacts/llm/reports/agent-check.json',
-  );
-  lines.push(
-    '- Next: cdk agent interactive --local for local review, cdk agent interactive --github for cloud implementation',
   );
   return lines.join('\n');
 }
