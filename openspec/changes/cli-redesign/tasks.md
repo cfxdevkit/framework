@@ -67,39 +67,39 @@
 
 ## Phase 2: Slim `cdk` to framework scope
 
-- [ ] 2.1 Remove `repoToolingNamespace` from `tooling-cli/src/registry.ts`
-  - [ ] 2.1.1 Delete `tooling-cli/src/repo/namespace.ts`
-  - [ ] 2.1.2 Delete `tooling-cli/src/repo/*.ts` files
-  - [ ] 2.1.3 Remove import and registration of `repoToolingNamespace`
-  - [ ] 2.1.4 Remove `repo` from `toolingNamespaces` array
-- [ ] 2.2 Remove `agentToolingNamespace` from `tooling-cli/src/registry.ts`
-  - [ ] 2.2.1 Delete `tooling-cli/src/agent/namespace.ts`
-  - [ ] 2.2.2 Delete `tooling-cli/src/agent/*.ts` files
-  - [ ] 2.2.3 Remove import and registration of `agentToolingNamespace`
-  - [ ] 2.2.4 Remove `agent` from `toolingNamespaces` array
-- [ ] 2.3 Remove `devnodeToolingNamespace` from `tooling-cli/src/registry.ts`
-  - [ ] 2.3.1 Delete `tooling-cli/src/devnode-namespace.ts`
-  - [ ] 2.3.2 Remove import and registration of `devnodeToolingNamespace`
-  - [ ] 2.3.3 Remove `devnode` from `toolingNamespaces` array
-- [ ] 2.4 Remove `signToolingNamespace` from `tooling-cli/src/registry.ts`
-  - [ ] 2.4.1 Delete `tooling-cli/src/sign-namespace.ts`
-  - [ ] 2.4.2 Remove import and registration of `signToolingNamespace`
-  - [ ] 2.4.3 Remove `sign` from `toolingNamespaces` array
-- [ ] 2.5 Remove `signerToolingNamespace` from `tooling-cli/src/registry.ts`
-  - [ ] 2.5.1 Delete `tooling-cli/src/signer-namespace.ts`
-  - [ ] 2.5.2 Remove import and registration of `signerToolingNamespace`
-  - [ ] 2.5.3 Remove `signer` from `toolingNamespaces` array
-- [ ] 2.6 Flatten remaining `cdk` commands to top-level
-  - [ ] 2.6.1 `cdk devnode start/stop/status` → `cdk devnode [start|stop|status]`
-  - [ ] 2.6.2 `cdk devnode:serve` → `cdk devnode:serve` (keep as is)
-  - [ ] 2.6.3 `cdk sign message` → `cdk sign message` (keep as is)
-  - [ ] 2.6.4 `cdk sign typed-data` → `cdk sign typed-data` (keep as is)
-  - [ ] 2.6.5 `cdk signer setup/status/list/use` → `cdk signer setup/status/list/use`
-- [ ] 2.7 Update `formatToolingHelp()` in `tooling-cli/src/run.ts` to reflect slim scope
-- [ ] 2.8 Run `cdk --help` and verify only framework commands appear
-- [ ] 2.9 Run `pnpm --filter @cfxdevkit/tooling-cli build` to confirm build passes
-- [ ] 2.10 Run `pnpm --filter @cfxdevkit/tooling-cli typecheck` to confirm no errors
-- [ ] 2.11 Verify `cdk repo build` returns "Unknown command" error
+- [x] 2.1 Remove `repoToolingNamespace` from `tooling-cli/src/registry.ts`
+  - [x] 2.1.1 Delete `tooling-cli/src/repo/namespace.ts`
+  - [x] 2.1.2 Delete `tooling-cli/src/repo/*.ts` files
+  - [x] 2.1.3 Remove import and registration of `repoToolingNamespace`
+  - [x] 2.1.4 Remove `repo` from `toolingNamespaces` array
+- [x] 2.2 Remove `agentToolingNamespace` from `tooling-cli/src/registry.ts`
+  - [x] 2.2.1 Delete `tooling-cli/src/agent/namespace.ts`
+  - [x] 2.2.2 Delete `tooling-cli/src/agent/*.ts` files
+  - [x] 2.2.3 Remove import and registration of `agentToolingNamespace`
+  - [x] 2.2.4 Remove `agent` from `toolingNamespaces` array
+- [x] 2.3 Remove `devnodeToolingNamespace` from `tooling-cli/src/registry.ts`
+  - [x] 2.3.1 Delete `tooling-cli/src/devnode-namespace.ts`
+  - [x] 2.3.2 Remove import and registration of `devnodeToolingNamespace`
+  - [x] 2.3.3 Remove `devnode` from `toolingNamespaces` array
+- [x] 2.4 Remove `signToolingNamespace` from `tooling-cli/src/registry.ts`
+  - [x] 2.4.1 Delete `tooling-cli/src/sign-namespace.ts`
+  - [x] 2.4.2 Remove import and registration of `signToolingNamespace`
+  - [x] 2.4.3 Remove `sign` from `toolingNamespaces` array
+- [x] 2.5 Remove `signerToolingNamespace` from `tooling-cli/src/registry.ts`
+  - [x] 2.5.1 Delete `tooling-cli/src/signer-namespace.ts`
+  - [x] 2.5.2 Remove import and registration of `signerToolingNamespace`
+  - [x] 2.5.3 Remove `signer` from `toolingNamespaces` array
+- [x] 2.6 Flatten remaining `cdk` commands to top-level
+  - [x] 2.6.1 `cdk devnode start/stop/status` → `cdk devnode [start|stop|status]`
+  - [x] 2.6.2 `cdk devnode:serve` → `cdk devnode:serve` (keep as is)
+  - [x] 2.6.3 `cdk sign message` → `cdk sign message` (keep as is)
+  - [x] 2.6.4 `cdk sign typed-data` → `cdk sign typed-data` (keep as is)
+  - [x] 2.6.5 `cdk signer setup/status/list/use` → `cdk signer setup/status/list/use`
+- [x] 2.7 Update `formatToolingHelp()` in `tooling-cli/src/run.ts` to reflect slim scope
+- [x] 2.8 Run `cdk --help` and verify only framework commands appear
+- [x] 2.9 Run `pnpm --filter @cfxdevkit/tooling-cli build` to confirm build passes
+- [x] 2.10 Run `pnpm --filter @cfxdevkit/tooling-cli typecheck` to confirm no errors
+- [x] 2.11 Verify `cdk repo build` returns "Unknown command" error
 
 ## Phase 3: Remove backwards wiring
 

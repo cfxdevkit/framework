@@ -26,260 +26,260 @@ tasks:
       mergeOutputs: 'replace'
       cache: true
 
-  # ── repo operations (compatibility wrappers) ──────────────────────
+  # ── repo operations (call underlying packages directly) ───────────
   repo-build:
-    script: 'cdk repo build --json'
+    script: 'pnpm run build --json'
     options:
       mergeArgs: 'replace'
   repo-run:
-    script: 'cdk repo run'
+    script: 'moon run --help'
     options:
       mergeArgs: 'replace'
   repo-gate:
-    script: 'cdk repo gate'
+    script: 'pnpm run repo-check --list'
     options:
       mergeArgs: 'replace'
   repo-check:
-    script: 'cdk repo check'
+    script: 'pnpm run repo-check'
     options:
       mergeArgs: 'replace'
   repo-generate:
-    script: 'cdk repo generate'
+    script: 'pnpm run gen:api'
     options:
       mergeArgs: 'replace'
   repo-merge:
-    script: 'cdk repo merge'
+    script: 'pnpm run cdk -- repo merge'
     options:
       mergeArgs: 'replace'
   repo-review:
-    script: 'cdk repo review'
+    script: 'pnpm run agent:chat'
     options:
       mergeArgs: 'replace'
   repo-precommit:
-    script: 'cdk repo precommit'
+    script: 'pnpm run cdk -- repo precommit'
     options:
       mergeArgs: 'replace'
   repo-commit:
-    script: 'cdk repo commit'
+    script: 'pnpm run cdk -- repo commit'
     options:
       mergeArgs: 'replace'
   repo-units:
-    script: 'cdk repo units'
+    script: 'pnpm run repo-check --units'
     options:
       mergeArgs: 'replace'
 
-  # ── agent/LLM operations (compatibility wrappers) ─────────────────
+  # ── agent/LLM operations (call underlying packages directly) ──────
   agent-smoke:
-    script: 'cdk agent smoke'
+    script: 'pnpm --filter @cfxdevkit/llm-agents agent-smoke'
     options:
       mergeArgs: 'replace'
   agent-config:
-    script: 'cdk agent config'
+    script: 'pnpm --filter @cfxdevkit/llm-agents agent-config'
     options:
       mergeArgs: 'replace'
   agent-status:
-    script: 'cdk agent status'
+    script: 'pnpm --filter @cfxdevkit/llm-agents agent-status'
     options:
       mergeArgs: 'replace'
   agent-check:
-    script: 'cdk agent check'
+    script: 'pnpm --filter @cfxdevkit/llm-agents agent-check'
     options:
       mergeArgs: 'replace'
   agent-merge:
-    script: 'cdk agent merge'
+    script: 'pnpm --filter @cfxdevkit/llm-agents agent-merge'
     options:
       mergeArgs: 'replace'
   agent-endpoints:
-    script: 'cdk agent endpoints'
+    script: 'pnpm --filter @cfxdevkit/llm-agents agent-endpoints'
     options:
       mergeArgs: 'replace'
   agent-modes:
-    script: 'cdk agent modes'
+    script: 'pnpm --filter @cfxdevkit/llm-agents agent-modes'
     options:
       mergeArgs: 'replace'
   agent-deterministic:
-    script: 'cdk agent deterministic'
+    script: 'pnpm --filter @cfxdevkit/llm-agents agent-deterministic'
     options:
       mergeArgs: 'replace'
   agent-exploratory:
-    script: 'cdk agent exploratory'
+    script: 'pnpm --filter @cfxdevkit/llm-agents agent-exploratory'
     options:
       mergeArgs: 'replace'
   agent-chat:
-    script: 'cdk agent chat'
+    script: 'pnpm run agent'
     options:
       mergeArgs: 'replace'
   agent-commit:
-    script: 'cdk agent commit'
+    script: 'pnpm run agent-commit'
     options:
       mergeArgs: 'replace'
   agent-print:
-    script: 'cdk agent print'
+    script: 'pnpm run agent-print'
     options:
       mergeArgs: 'replace'
   agent-rpc:
-    script: 'cdk agent rpc'
+    script: 'pnpm run agent-rpc'
     options:
       mergeArgs: 'replace'
 
   # ── deterministic sub-workflows ───────────────────────────────────
   agent-deterministic-models:
-    script: 'cdk agent deterministic models'
+    script: 'pnpm --filter @cfxdevkit/llm-agents deterministic models'
     options:
       mergeArgs: 'replace'
   agent-deterministic-validate-models:
-    script: 'cdk agent deterministic validate-models'
+    script: 'pnpm --filter @cfxdevkit/llm-agents deterministic validate-models'
     options:
       mergeArgs: 'replace'
   agent-deterministic-precommit:
-    script: 'cdk agent deterministic precommit'
+    script: 'pnpm --filter @cfxdevkit/llm-agents deterministic precommit'
     options:
       mergeArgs: 'replace'
   agent-deterministic-docs-api:
-    script: 'cdk agent deterministic docs-api'
+    script: 'pnpm --filter @cfxdevkit/llm-agents deterministic docs-api'
     options:
       mergeArgs: 'replace'
   agent-deterministic-docs-api-probe:
-    script: 'cdk agent deterministic docs-api-probe'
+    script: 'pnpm --filter @cfxdevkit/llm-agents deterministic docs-api-probe'
     options:
       mergeArgs: 'replace'
   agent-deterministic-readme-upkeep:
-    script: 'cdk agent deterministic readme-upkeep'
+    script: 'pnpm --filter @cfxdevkit/llm-agents deterministic readme-upkeep'
     options:
       mergeArgs: 'replace'
   agent-deterministic-package-pages:
-    script: 'cdk agent deterministic package-pages'
+    script: 'pnpm --filter @cfxdevkit/llm-agents deterministic package-pages'
     options:
       mergeArgs: 'replace'
   agent-deterministic-structure-upkeep:
-    script: 'cdk agent deterministic structure-upkeep'
+    script: 'pnpm --filter @cfxdevkit/llm-agents deterministic structure-upkeep'
     options:
       mergeArgs: 'replace'
   agent-deterministic-docs-upkeep:
-    script: 'cdk agent deterministic docs-upkeep'
+    script: 'pnpm --filter @cfxdevkit/llm-agents deterministic docs-upkeep'
     options:
       mergeArgs: 'replace'
 
   # ── exploratory sub-workflows ─────────────────────────────────────
   agent-exploratory-all:
-    script: 'cdk agent exploratory all'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory all'
     options:
       mergeArgs: 'replace'
   agent-exploratory-actions:
-    script: 'cdk agent exploratory actions'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory actions'
     options:
       mergeArgs: 'replace'
   agent-exploratory-action:
-    script: 'cdk agent exploratory action'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory action'
     options:
       mergeArgs: 'replace'
   agent-exploratory-changeset:
-    script: 'cdk agent exploratory changeset'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory changeset'
     options:
       mergeArgs: 'replace'
   agent-exploratory-ci-cd:
-    script: 'cdk agent exploratory ci-cd'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory ci-cd'
     options:
       mergeArgs: 'replace'
   agent-exploratory-docs-pipeline:
-    script: 'cdk agent exploratory docs-pipeline'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory docs-pipeline'
     options:
       mergeArgs: 'replace'
   agent-exploratory-docs-upkeep:
-    script: 'cdk agent exploratory docs-upkeep'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory docs-upkeep'
     options:
       mergeArgs: 'replace'
   agent-exploratory-health:
-    script: 'cdk agent exploratory health'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory health'
     options:
       mergeArgs: 'replace'
   agent-exploratory-release:
-    script: 'cdk agent exploratory release'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory release'
     options:
       mergeArgs: 'replace'
   agent-exploratory-test-audit:
-    script: 'cdk agent exploratory test-audit'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory test-audit'
     options:
       mergeArgs: 'replace'
   agent-exploratory-test-upkeep:
-    script: 'cdk agent exploratory test-upkeep'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory test-upkeep'
     options:
       mergeArgs: 'replace'
   agent-exploratory-validation:
-    script: 'cdk agent exploratory validation'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory validation'
     options:
       mergeArgs: 'replace'
 
-  # ── docs operations (compatibility wrappers) ──────────────────────
+  # ── docs operations ───────────────────────────────────────────────
   docs-sync:
-    script: 'cdk docs sync'
+    script: 'pnpm --filter @cfxdevkit/docs-pipeline cfx-docs-pipeline sync'
     options:
       mergeArgs: 'replace'
   docs-validate:
-    script: 'cdk docs validate'
+    script: 'pnpm --filter @cfxdevkit/docs-pipeline cfx-docs-pipeline validate'
     options:
       mergeArgs: 'replace'
   docs-enrich:
-    script: 'cdk docs enrich'
+    script: 'pnpm --filter @cfxdevkit/docs-pipeline cfx-docs-pipeline enrich'
     options:
       mergeArgs: 'replace'
   docs-wiki:
-    script: 'cdk docs wiki'
+    script: 'pnpm --filter @cfxdevkit/docs-pipeline cfx-docs-pipeline wiki'
     options:
       mergeArgs: 'replace'
   docs-probe:
-    script: 'cdk docs probe'
+    script: 'pnpm --filter @cfxdevkit/docs-pipeline cfx-docs-pipeline probe'
     options:
       mergeArgs: 'replace'
   docs-review:
-    script: 'cdk docs review'
+    script: 'pnpm --filter @cfxdevkit/docs-pipeline cfx-docs-pipeline review'
     options:
       mergeArgs: 'replace'
 
-  # ── devnode operations (compatibility wrappers) ───────────────────
+  # ── devnode operations ────────────────────────────────────────────
   devnode-start:
-    script: 'cdk devnode start'
+    script: 'pnpm --filter @cfxdevkit/devnode cfxdevkit-devnode start'
     options:
       mergeArgs: 'replace'
   devnode-stop:
-    script: 'cdk devnode stop'
+    script: 'pnpm --filter @cfxdevkit/devnode cfxdevkit-devnode stop'
     options:
       mergeArgs: 'replace'
   devnode-status:
-    script: 'cdk devnode status'
+    script: 'pnpm --filter @cfxdevkit/devnode cfxdevkit-devnode status'
     options:
       mergeArgs: 'replace'
   devnode-serve:
-    script: 'cdk devnode-serve'
+    script: 'pnpm --filter @cfxdevkit/devnode-server cfxdevkit-devnode-server serve'
     options:
       mergeArgs: 'replace'
 
-  # ── signing operations (compatibility wrappers) ───────────────────
+  # ── signing operations ────────────────────────────────────────────
   sign-message:
-    script: 'cdk sign message'
+    script: 'pnpm --filter @cfxdevkit/signer-session cfxdevkit-signer message'
     options:
       mergeArgs: 'replace'
   sign-typed-data:
-    script: 'cdk sign typed-data'
+    script: 'pnpm --filter @cfxdevkit/signer-session cfxdevkit-signer typed-data'
     options:
       mergeArgs: 'replace'
   signer-setup:
-    script: 'cdk signer setup'
+    script: 'pnpm --filter @cfxdevkit/signer-session cfxdevkit-signer setup'
     options:
       mergeArgs: 'replace'
   signer-status:
-    script: 'cdk signer status'
+    script: 'pnpm --filter @cfxdevkit/signer-session cfxdevkit-signer status'
     options:
       mergeArgs: 'replace'
   signer-list:
-    script: 'cdk signer list'
+    script: 'pnpm --filter @cfxdevkit/signer-session cfxdevkit-signer list'
     options:
       mergeArgs: 'replace'
   signer-set:
-    script: 'cdk signer set'
+    script: 'pnpm --filter @cfxdevkit/signer-session cfxdevkit-signer set'
     options:
       mergeArgs: 'replace'
   signer-use:
-    script: 'cdk signer use'
+    script: 'pnpm --filter @cfxdevkit/signer-session cfxdevkit-signer use'
     options:
       mergeArgs: 'replace'
