@@ -77,6 +77,7 @@ describe('executePiCommitSession', () => {
     await executePiCommitSession({ prompt: 'Prepare the commit' });
 
     expect(llmAgentsRuntime.executePiCommitWorkflow).toHaveBeenCalledWith(['Prepare the commit'], {
+      approvalMode: 'defer',
       modelPolicies: {
         messageGenerationModel: 'message-model',
         failureAnalysisModel: 'failure-model',
@@ -88,6 +89,7 @@ describe('executePiCommitSession', () => {
     await executePiCommitSession({ model: 'explicit-model' });
 
     expect(llmAgentsRuntime.executePiCommitWorkflow).toHaveBeenCalledWith([], {
+      approvalMode: 'defer',
       modelPolicies: {
         messageGenerationModel: 'explicit-model',
         failureAnalysisModel: 'explicit-model',
