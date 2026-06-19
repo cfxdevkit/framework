@@ -3,5 +3,16 @@ $schema: 'https://moonrepo.dev/schemas/project.json'
 layer: 'library'
 language: 'typescript'
 
-dependsOn:
-  - 'workspace-utils'
+tasks:
+  docs-sync:
+    script: 'pnpm exec cfx-docs-pipeline sync'
+    options:
+      mergeArgs: 'replace'
+  docs-validate:
+    script: 'pnpm exec cfx-docs-pipeline validate'
+    options:
+      mergeArgs: 'replace'
+  docs-enrich:
+    script: 'pnpm exec cfx-docs-pipeline enrich'
+    options:
+      mergeArgs: 'replace'

@@ -103,8 +103,8 @@ Commands:
   merge         Validate local branches and PR merge state, then optionally merge selected branches
   endpoints     Show the local Lemonade endpoint and GitHub PI endpoint launch status
   modes         Explain the deterministic and exploratory operating modes
-  deterministic Run constrained deterministic-first workflows via the current llm-agents layer
-  exploratory   Run broader maintenance workflows via the current llm-agents layer
+  deterministic Run constrained deterministic-first workflows via the agent harness
+  exploratory   Run broader maintenance workflows via the agent harness
   chat          Start the PI-backed chat session (defaults to local endpoint)
   commit        Start the PI-backed interactive commit session directly
   print         Run a one-shot prompt through the PI print runtime

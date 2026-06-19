@@ -2,3 +2,9 @@ $schema: 'https://moonrepo.dev/schemas/project.json'
 
 layer: 'tool'
 language: 'typescript'
+
+tasks:
+  contracts-extract:
+    script: 'pnpm exec cfxdevkit-extract-contracts'
+    options:
+      mergeArgs: 'replace'

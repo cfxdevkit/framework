@@ -2,3 +2,21 @@ $schema: 'https://moonrepo.dev/schemas/project.json'
 
 layer: 'library'
 language: 'typescript'
+
+tasks:
+  devnode-start:
+    script: 'pnpm exec cfxdevkit-devnode start'
+    options:
+      mergeArgs: 'replace'
+  devnode-stop:
+    script: 'pnpm exec cfxdevkit-devnode stop'
+    options:
+      mergeArgs: 'replace'
+  devnode-status:
+    script: 'pnpm exec cfxdevkit-devnode status'
+    options:
+      mergeArgs: 'replace'
+  devnode-serve:
+    script: 'pnpm exec cfxdevkit-devnode-server serve'
+    options:
+      mergeArgs: 'replace'

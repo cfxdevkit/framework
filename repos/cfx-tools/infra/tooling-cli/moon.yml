@@ -25,3 +25,261 @@ tasks:
       mergeArgs: 'replace'
       mergeOutputs: 'replace'
       cache: true
+
+  # ── repo operations (compatibility wrappers) ──────────────────────
+  repo-build:
+    script: 'cdk repo build --json'
+    options:
+      mergeArgs: 'replace'
+  repo-run:
+    script: 'cdk repo run'
+    options:
+      mergeArgs: 'replace'
+  repo-gate:
+    script: 'cdk repo gate'
+    options:
+      mergeArgs: 'replace'
+  repo-check:
+    script: 'cdk repo check'
+    options:
+      mergeArgs: 'replace'
+  repo-generate:
+    script: 'cdk repo generate'
+    options:
+      mergeArgs: 'replace'
+  repo-merge:
+    script: 'cdk repo merge'
+    options:
+      mergeArgs: 'replace'
+  repo-review:
+    script: 'cdk repo review'
+    options:
+      mergeArgs: 'replace'
+  repo-precommit:
+    script: 'cdk repo precommit'
+    options:
+      mergeArgs: 'replace'
+  repo-commit:
+    script: 'cdk repo commit'
+    options:
+      mergeArgs: 'replace'
+  repo-units:
+    script: 'cdk repo units'
+    options:
+      mergeArgs: 'replace'
+
+  # ── agent/LLM operations (compatibility wrappers) ─────────────────
+  agent-smoke:
+    script: 'cdk agent smoke'
+    options:
+      mergeArgs: 'replace'
+  agent-config:
+    script: 'cdk agent config'
+    options:
+      mergeArgs: 'replace'
+  agent-status:
+    script: 'cdk agent status'
+    options:
+      mergeArgs: 'replace'
+  agent-check:
+    script: 'cdk agent check'
+    options:
+      mergeArgs: 'replace'
+  agent-merge:
+    script: 'cdk agent merge'
+    options:
+      mergeArgs: 'replace'
+  agent-endpoints:
+    script: 'cdk agent endpoints'
+    options:
+      mergeArgs: 'replace'
+  agent-modes:
+    script: 'cdk agent modes'
+    options:
+      mergeArgs: 'replace'
+  agent-deterministic:
+    script: 'cdk agent deterministic'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory:
+    script: 'cdk agent exploratory'
+    options:
+      mergeArgs: 'replace'
+  agent-chat:
+    script: 'cdk agent chat'
+    options:
+      mergeArgs: 'replace'
+  agent-commit:
+    script: 'cdk agent commit'
+    options:
+      mergeArgs: 'replace'
+  agent-print:
+    script: 'cdk agent print'
+    options:
+      mergeArgs: 'replace'
+  agent-rpc:
+    script: 'cdk agent rpc'
+    options:
+      mergeArgs: 'replace'
+
+  # ── deterministic sub-workflows ───────────────────────────────────
+  agent-deterministic-models:
+    script: 'cdk agent deterministic models'
+    options:
+      mergeArgs: 'replace'
+  agent-deterministic-validate-models:
+    script: 'cdk agent deterministic validate-models'
+    options:
+      mergeArgs: 'replace'
+  agent-deterministic-precommit:
+    script: 'cdk agent deterministic precommit'
+    options:
+      mergeArgs: 'replace'
+  agent-deterministic-docs-api:
+    script: 'cdk agent deterministic docs-api'
+    options:
+      mergeArgs: 'replace'
+  agent-deterministic-docs-api-probe:
+    script: 'cdk agent deterministic docs-api-probe'
+    options:
+      mergeArgs: 'replace'
+  agent-deterministic-readme-upkeep:
+    script: 'cdk agent deterministic readme-upkeep'
+    options:
+      mergeArgs: 'replace'
+  agent-deterministic-package-pages:
+    script: 'cdk agent deterministic package-pages'
+    options:
+      mergeArgs: 'replace'
+  agent-deterministic-structure-upkeep:
+    script: 'cdk agent deterministic structure-upkeep'
+    options:
+      mergeArgs: 'replace'
+  agent-deterministic-docs-upkeep:
+    script: 'cdk agent deterministic docs-upkeep'
+    options:
+      mergeArgs: 'replace'
+
+  # ── exploratory sub-workflows ─────────────────────────────────────
+  agent-exploratory-all:
+    script: 'cdk agent exploratory all'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory-actions:
+    script: 'cdk agent exploratory actions'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory-action:
+    script: 'cdk agent exploratory action'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory-changeset:
+    script: 'cdk agent exploratory changeset'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory-ci-cd:
+    script: 'cdk agent exploratory ci-cd'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory-docs-pipeline:
+    script: 'cdk agent exploratory docs-pipeline'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory-docs-upkeep:
+    script: 'cdk agent exploratory docs-upkeep'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory-health:
+    script: 'cdk agent exploratory health'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory-release:
+    script: 'cdk agent exploratory release'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory-test-audit:
+    script: 'cdk agent exploratory test-audit'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory-test-upkeep:
+    script: 'cdk agent exploratory test-upkeep'
+    options:
+      mergeArgs: 'replace'
+  agent-exploratory-validation:
+    script: 'cdk agent exploratory validation'
+    options:
+      mergeArgs: 'replace'
+
+  # ── docs operations (compatibility wrappers) ──────────────────────
+  docs-sync:
+    script: 'cdk docs sync'
+    options:
+      mergeArgs: 'replace'
+  docs-validate:
+    script: 'cdk docs validate'
+    options:
+      mergeArgs: 'replace'
+  docs-enrich:
+    script: 'cdk docs enrich'
+    options:
+      mergeArgs: 'replace'
+  docs-wiki:
+    script: 'cdk docs wiki'
+    options:
+      mergeArgs: 'replace'
+  docs-probe:
+    script: 'cdk docs probe'
+    options:
+      mergeArgs: 'replace'
+  docs-review:
+    script: 'cdk docs review'
+    options:
+      mergeArgs: 'replace'
+
+  # ── devnode operations (compatibility wrappers) ───────────────────
+  devnode-start:
+    script: 'cdk devnode start'
+    options:
+      mergeArgs: 'replace'
+  devnode-stop:
+    script: 'cdk devnode stop'
+    options:
+      mergeArgs: 'replace'
+  devnode-status:
+    script: 'cdk devnode status'
+    options:
+      mergeArgs: 'replace'
+  devnode-serve:
+    script: 'cdk devnode-serve'
+    options:
+      mergeArgs: 'replace'
+
+  # ── signing operations (compatibility wrappers) ───────────────────
+  sign-message:
+    script: 'cdk sign message'
+    options:
+      mergeArgs: 'replace'
+  sign-typed-data:
+    script: 'cdk sign typed-data'
+    options:
+      mergeArgs: 'replace'
+  signer-setup:
+    script: 'cdk signer setup'
+    options:
+      mergeArgs: 'replace'
+  signer-status:
+    script: 'cdk signer status'
+    options:
+      mergeArgs: 'replace'
+  signer-list:
+    script: 'cdk signer list'
+    options:
+      mergeArgs: 'replace'
+  signer-set:
+    script: 'cdk signer set'
+    options:
+      mergeArgs: 'replace'
+  signer-use:
+    script: 'cdk signer use'
+    options:
+      mergeArgs: 'replace'

@@ -12,7 +12,6 @@ export {
   findToolingCommand,
   findToolingNamespace,
   formatToolingHelp,
-  llmToolingNamespace,
   repoToolingNamespace,
   toolingNamespaces,
 } from './registry.js';

@@ -1,21 +1,14 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
-layer: 'library'
+layer: 'tool'
 language: 'typescript'
 
 tasks:
-  build:
-    deps:
-      - 'client:build'
-      - 'compiler:build'
-      - 'cdk:build'
-      - 'scaffold-cli:build'
-      - 'signer-session:build'
-
-  typecheck:
-    deps:
-      - 'client:build'
-      - 'compiler:build'
-      - 'cdk:build'
-      - 'scaffold-cli:build'
-      - 'signer-session:build'
+  mcp-start:
+    script: 'pnpm exec cfxdevkit-mcp'
+    options:
+      mergeArgs: 'replace'
+  mcp-stop:
+    script: 'pkill -f cfxdevkit-mcp || true'
+    options:
+      mergeArgs: 'replace'
