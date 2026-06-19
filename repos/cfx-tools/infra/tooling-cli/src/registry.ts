@@ -1,24 +1,12 @@
-import { agentToolingNamespace } from './agent/namespace.js';
 import type {
   ToolingCatalog,
   ToolingCommandDefinition,
   ToolingNamespaceDefinition,
 } from './contracts.js';
-import { devnodeToolingNamespace } from './devnode-namespace.js';
 import { rootDocsToolingNamespace } from './docs/namespace.js';
-import { repoToolingNamespace } from './repo/namespace.js';
-import { signToolingNamespace } from './sign-namespace.js';
-import { signerToolingNamespace } from './signer-namespace.js';
-
-export { agentToolingNamespace, repoToolingNamespace };
 
 export const toolingNamespaces = [
-  repoToolingNamespace,
-  agentToolingNamespace,
   rootDocsToolingNamespace,
-  devnodeToolingNamespace,
-  signToolingNamespace,
-  signerToolingNamespace,
 ] as const satisfies readonly ToolingNamespaceDefinition[];
 
 export function findToolingNamespace(

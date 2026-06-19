@@ -1,61 +1,16 @@
 import { docsToolingNamespace } from '@cfxdevkit/docs-pipeline';
-import { agentToolingNamespace } from '../agent/namespace.js';
 import type { ToolingCommandDefinition, ToolingNamespaceDefinition } from '../contracts.js';
 
-const docsEnrichmentTargetMap = {
-  api: 'docs-api',
-  readme: 'readme-upkeep',
-  packages: 'package-pages',
-  structure: 'structure-upkeep',
-} as const;
-
-const docsProbeTargetMap = {
-  api: 'docs-api-probe',
-} as const;
-
-const docsEnrichmentAllSequence = [
-  'docs-api',
-  'readme-upkeep',
-  'structure-upkeep',
-  'package-pages',
-] as const;
-
-/** Route a doc enrichment command through the agent deterministic workflow.
- *  Replaces the previous spawn-through-llm-tools path. */
-async function runDeterministicEnrichment(command: string, args: readonly string[]): Promise<void> {
-  await agentToolingNamespace.run(['deterministic', command, ...args]);
-}
-
-/** Route a doc pipeline review through the agent exploratory workflow. */
-async function runExploratoryReview(args: readonly string[]): Promise<void> {
-  await agentToolingNamespace.run(['exploratory', 'docs-pipeline', ...args]);
-}
-
-const docsEnrichmentCommands: readonly ToolingCommandDefinition[] = [
+const docsCommands: readonly ToolingCommandDefinition[] = [
   {
     name: 'generate',
     description: 'Run deterministic doc generation (skeleton only, no LLM)',
     usage: 'generate [all|api|readme|structure|packages]',
   },
   {
-    name: 'enrich',
-    description: 'Run docs enrichment workflows backed by the local LLM',
-    usage: 'enrich [all|api|readme|packages|structure] [args]',
-  },
-  {
-    name: 'probe',
-    description: 'Run a small model/data-path probe before a full docs enrichment workflow',
-    usage: 'probe api [args]',
-  },
-  {
-    name: 'wiki',
-    description: 'GitNexus wiki: generate (LLM), sync MDX, or validate mermaid',
-    usage: 'wiki [generate|sync|validate] [args]',
-  },
-  {
-    name: 'review',
-    description: 'Review docs build, wiki sync, image, and deploy flow via the local LLM',
-    usage: 'review [args]',
+    name: 'validate',
+    description: 'Validate docs build, wiki sync, image, and deploy flow',
+    usage: 'validate [content|packages|wiki|all] [args]',
   },
 ];
 
@@ -68,34 +23,20 @@ ${docsToolingNamespace.commands.map((command) => `  ${command.usage ?? command.n
 Generation (deterministic, idempotent):
   generate [all|api|readme|structure|packages]
 
-Enrichment patterns:
-  enrich [all|api|readme|packages|structure] [args]
-  probe api [args]
-  wiki [generate|sync|validate] [args]
-  review [args]
-
-Common enrich args pass through to the worker flows: --model <id>, --quick, --force, --no-thinking
+Validation:
+  validate [content|packages|wiki|all] [args]
 
 Examples:
-  cdk docs sync all
+  cdk docs generate all
+  cdk docs generate api
+  cdk docs validate wiki
   cdk docs validate content
-  cdk docs enrich all --quick
-  cdk docs enrich all --no-thinking --quick
-  cdk docs enrich all --force --quick
-  cdk docs enrich api --package @cfxdevkit/executor --precheck
-  cdk docs enrich api
-  cdk docs probe api --package @cfxdevkit/executor --quick
-  cdk docs enrich packages
-  cdk docs wiki generate
-  cdk docs wiki sync
-  cdk docs wiki validate
-  cdk docs review
 `;
 
 export const rootDocsToolingNamespace: ToolingNamespaceDefinition = {
   name: 'docs',
-  description: 'Docs workflows: deterministic pipeline plus LLM enrichment patterns',
-  commands: [...docsToolingNamespace.commands, ...docsEnrichmentCommands],
+  description: 'Docs workflows: deterministic generation and validation',
+  commands: [...docsToolingNamespace.commands, ...docsCommands],
   async run(rawArgs) {
     const args = [...rawArgs];
     while (args[0] === '--') args.shift();
@@ -167,96 +108,7 @@ export const rootDocsToolingNamespace: ToolingNamespaceDefinition = {
       return;
     }
 
-    if (command === 'enrich') {
-      const [target, ...forwardedArgs] = rest;
-      if (!target || isHelpToken(target)) {
-        console.log(helpText);
-        return;
-      }
-
-      if (forwardedArgs.some(isHelpToken)) {
-        console.log(helpText);
-        return;
-      }
-
-      if (target === 'all') {
-        await docsToolingNamespace.run(['sync', 'all']);
-        for (const mapped of docsEnrichmentAllSequence) {
-          await runDeterministicEnrichment(mapped, forwardedArgs);
-        }
-        return;
-      }
-
-      const mapped = docsEnrichmentTargetMap[target as keyof typeof docsEnrichmentTargetMap];
-      if (!mapped) {
-        console.error(`Unknown docs enrichment target: ${target}`);
-        console.log(helpText);
-        process.exitCode = 1;
-        return;
-      }
-
-      await runDeterministicEnrichment(mapped, forwardedArgs);
-      return;
-    }
-
-    if (command === 'probe') {
-      const [target, ...forwardedArgs] = rest;
-      if (!target || isHelpToken(target)) {
-        console.log(helpText);
-        return;
-      }
-
-      if (forwardedArgs.some(isHelpToken)) {
-        console.log(helpText);
-        return;
-      }
-
-      const mapped = docsProbeTargetMap[target as keyof typeof docsProbeTargetMap];
-      if (!mapped) {
-        console.error(`Unknown docs probe target: ${target}`);
-        console.log(helpText);
-        process.exitCode = 1;
-        return;
-      }
-
-      await runDeterministicEnrichment(mapped, forwardedArgs);
-      return;
-    }
-
-    if (command === 'wiki') {
-      const [subcommand = 'help', ...forwardedArgs] = rest;
-      if (isHelpToken(subcommand)) {
-        console.log(helpText);
-        return;
-      }
-
-      if (subcommand === 'generate') {
-        await runDeterministicEnrichment('wiki-generate', forwardedArgs);
-        return;
-      }
-      if (subcommand === 'sync') {
-        await docsToolingNamespace.run(['sync', 'wiki']);
-        return;
-      }
-      if (subcommand === 'validate') {
-        await docsToolingNamespace.run(['validate', 'wiki', ...forwardedArgs]);
-        return;
-      }
-      console.error(`Unknown wiki subcommand: ${subcommand}. Use: generate, sync, validate`);
-      process.exitCode = 1;
-      return;
-    }
-
-    if (command === 'review') {
-      if (rest.some(isHelpToken)) {
-        console.log(helpText);
-        return;
-      }
-
-      await runExploratoryReview(rest);
-      return;
-    }
-
+    // For validate and other commands from docsToolingNamespace, delegate directly
     await docsToolingNamespace.run([command, ...rest]);
   },
 };
