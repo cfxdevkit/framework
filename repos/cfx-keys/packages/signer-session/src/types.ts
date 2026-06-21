@@ -64,6 +64,8 @@ export interface OneKeySignerInput {
   sdk: any;
   connectId: string;
   deviceId: string;
+  /** When false, skip Core signer initialisation (useful for reachability checks). */
+  includeCore?: boolean;
   /** eSpace BIP-44 path. Default `m/44'/60'/0'/0/0`. */
   espacePath?: string;
   /** Core Space BIP-44 path. Default `m/44'/503'/0'/0/0`. */

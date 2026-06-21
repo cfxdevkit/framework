@@ -28,7 +28,7 @@ tasks:
 
   # ── repo operations (call underlying packages directly) ───────────
   repo-build:
-    script: 'pnpm run build --json'
+    script: 'moon run :build --concurrency 3'
     options:
       mergeArgs: 'replace'
   repo-run:
@@ -48,19 +48,19 @@ tasks:
     options:
       mergeArgs: 'replace'
   repo-merge:
-    script: 'pnpm run cdk -- repo merge'
+    script: 'pnpm --filter @cfxdevkit/llm-agents agent-merge'
     options:
       mergeArgs: 'replace'
   repo-review:
-    script: 'pnpm run agent:chat'
+    script: 'pnpm run agent'
     options:
       mergeArgs: 'replace'
   repo-precommit:
-    script: 'pnpm run cdk -- repo precommit'
+    script: 'pnpm --filter @cfxdevkit/llm-agents deterministic precommit'
     options:
       mergeArgs: 'replace'
   repo-commit:
-    script: 'pnpm run cdk -- repo commit'
+    script: 'pnpm --filter @cfxdevkit/llm-agents agent-commit'
     options:
       mergeArgs: 'replace'
   repo-units:

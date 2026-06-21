@@ -36,6 +36,18 @@ if command -v openspec >/dev/null 2>&1 \
   openspec init --tools pi || true
 fi
 
+# Configure pi-web-access if API keys are provided
+mkdir -p "$HOME/.pi"
+if [[ ! -f "$HOME/.pi/web-search.json" ]]; then
+  cat > "$HOME/.pi/web-search.json" <<'EOF'
+{
+  "exaApiKey": "${EXA_API_KEY:-}",
+  "perplexityApiKey": "${PERPLEXITY_API_KEY:-}",
+  "geminiApiKey": "${GEMINI_API_KEY:-}"
+}
+EOF
+fi
+
 if command -v pi >/dev/null 2>&1 \
   && [[ "${CFXDEVKIT_INSTALL_PI_GITNEXUS:-0}" == "1" ]]; then
   pi install npm:pi-gitnexus || true

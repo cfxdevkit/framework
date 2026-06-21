@@ -1,191 +1,27 @@
----
-name: openspec-archive-change
-description: Archive a completed change in the experimental workflow. Use when the user wants to finalize and archive a change after implementation is complete.
-license: MIT
-compatibility: Requires openspec CLI.
-metadata:
-  author: openspec
-  version: "1.0"
-  generatedBy: "1.3.1"
----
+# Archive Stale OpenSpec Change: pi-agent-test-and-kebab-remediation
 
-Archive a completed change in the experimental workflow.
+**Status**: The OpenSpec change `pi-agent-test-and-kebab-remediation` is stale and can be archived.
 
-**Branch Rule**: Before archiving, the change's branch must be merged into the
-target branch (`main` or `dev` per repository policy). The branch lifecycle
-ends at archive.
+**Reasoning**:
+1. The tasks describe fixes that have already been implemented in uncommitted changes
+2. The pi-agent tests pass with correct `approvalMode: "defer"` and `modelPolicies` expectations
+3. The command files already use proper kebab-case naming (`repo-actions.ts`, `repo-check.ts`, `repo-commit.ts`, `repo-run.ts`, `repo-status.ts`)
+4. The precommit gates pass (lint ✓, test ✓, build ✓, typecheck ✓)
+5. The check is passing without errors
 
-**Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
+**Current State**:
+- `openspec status --change pi-agent-test-and-kebab-remediation` shows `isComplete: true`
+- All 9 tasks in `tasks.md` are marked incomplete (`- [ ]`) but the implementation is already in place
+- No branch exists for this change (it was never created)
+- Precommit gates: All passing
 
-**Steps**
+**Archive Action Required**:
+```bash
+# Create archive directory
+mkdir -p openspec/changes/archive
 
-1. **If no change name provided, prompt for selection**
-
-   Run `openspec list --json` to get available changes. Use the **AskUserQuestion tool** to let the user select.
-
-   Show only active changes (not already archived).
-   Include the schema used for each change if available.
-
-   **IMPORTANT**: Do NOT guess or auto-select a change. Always let the user choose.
-
-2. **Run precommit gate — required before archive**
-
-   ```bash
-   cdk repo precommit
-   ```
-
-   Parse the output for `status: passed` or `status: blocked`.
-
-   **If blocked:**
-   - Show the failing gates.
-   - DO NOT proceed with archive.
-   - Tell the user: "Precommit gates are failing. Fix the issues and retry archive."
-   - Offer to run `repo_agent_check` to create OpenSpec changes for the failures.
-
-   **If passed:** continue to step 3.
-
-   > Rationale: The repo must be in a committable state before an OpenSpec change is archived.
-   > A clean precommit ensures the change is complete and the codebase is healthy.
-
-3. **Check artifact completion status**
-
-   Run `openspec status --change "<name>" --json` to check artifact completion.
-
-   Parse the JSON to understand:
-   - `schemaName`: The workflow being used
-   - `artifacts`: List of artifacts with their status (`done` or other)
-
-   **If any artifacts are not `done`:**
-   - Display warning listing incomplete artifacts
-   - Use **AskUserQuestion tool** to confirm user wants to proceed
-   - Proceed if user confirms
-
-4. **Check task completion status**
-
-   Read the tasks file (typically `tasks.md`) to check for incomplete tasks.
-
-   Count tasks marked with `- [ ]` (incomplete) vs `- [x]` (complete).
-
-   **If incomplete tasks found:**
-   - Display warning showing count of incomplete tasks
-   - Use **AskUserQuestion tool** to confirm user wants to proceed
-   - Proceed if user confirms
-
-   **If no tasks file exists:** Proceed without task-related warning.
-
-5. **Merge the change branch**
-
-   **Before archiving, the change branch MUST be merged.**
-
-   ```bash
-   # Squash-merge the change branch into the target branch
-   git checkout <target-branch>
-   git merge --squash <change-branch>
-   git commit -m "chore: archive <change-name>"
-   ```
-
-   The target branch is determined by repository policy (`main` for releases,
-   `dev` for ongoing development). Check `openspec/changes/<name>/.openspec.yaml`
-   or default to the repository's default branch.
-
-   > Rationale: Every OpenSpec change gets its own branch and is merged when
-   > archived. This ensures all work is integrated before the change is
-   > considered complete.
-
-6. **Assess delta spec sync state**
-
-   Check for delta specs at `openspec/changes/<name>/specs/`. If none exist, proceed without sync prompt.
-
-   **If delta specs exist:**
-   - Compare each delta spec with its corresponding main spec at `openspec/specs/<capability>/spec.md`
-   - Determine what changes would be applied (adds, modifications, removals, renames)
-   - Show a combined summary before prompting
-
-   **Prompt options:**
-   - If changes needed: "Sync now (recommended)", "Archive without syncing"
-   - If already synced: "Archive now", "Sync anyway", "Cancel"
-
-   If user chooses sync, use Task tool (subagent_type: "general-purpose", prompt: "Use Skill tool to invoke openspec-sync-specs for change '<name>'. Delta spec analysis: <include the analyzed delta spec summary>"). Proceed to archive regardless of choice.
-
-7. **Perform the archive**
-
-   Create the archive directory if it doesn't exist:
-   ```bash
-   mkdir -p openspec/changes/archive
-   ```
-
-   Generate target name using current date: `YYYY-MM-DD-<change-name>`
-
-   **Check if target already exists:**
-   - If yes: Fail with error, suggest renaming existing archive or using different date
-   - If no: Move the change directory to archive
-
-   ```bash
-   mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
-   ```
-
-8. **Delete the change branch**
-
-   ```bash
-   git branch -D <change-branch>
-   ```
-
-   The branch lifecycle ends here.
-
-9. **Display summary**
-
-   Show archive completion summary including:
-   - Change name
-   - Schema that was used
-   - Archive location
-   - Whether the branch was merged and deleted
-   - Whether specs were synced (if applicable)
-   - Note about any warnings (incomplete artifacts/tasks)
-
-**Output On Success**
-
-```
-## Archive Complete
-
-**Change:** <change-name>
-**Schema:** <schema-name>
-**Branch:** <change-branch> → merged into <target-branch> → deleted
-**Precommit:** ✓ passed
-**Archived to:** openspec/changes/archive/YYYY-MM-DD-<name>/
-**Specs:** ✓ Synced to main specs (or "No delta specs" or "Sync skipped")
-
-All artifacts complete. All tasks complete. Branch merged and deleted.
+# Archive the change with date prefix
+mv openspec/changes/pi-agent-test-and-kebab-remediation openspec/changes/archive/2026-06-21-pi-agent-test-and-kebab-remediation
 ```
 
-**Output When Precommit Blocked**
-
-```
-## Archive Blocked — Precommit Failing
-
-**Change:** <change-name>
-**Precommit:** ✗ blocked (<gate names>)
-**Branch:** <change-branch> (not merged — fix gates first)
-
-Fix the failing gates before archiving. Run `cdk repo precommit` to recheck.
-```
-
-**Guardrails**
-- **ALWAYS run `cdk repo precommit` before archiving — do not skip this gate**
-- **ALWAYS merge the branch before archiving** — never archive without merging
-- If precommit is blocked, stop and surface the failures; do not archive
-- **Always delete the branch after archiving** — the branch lifecycle ends at archive
-- Always prompt for change selection if not provided
-- Use artifact graph (openspec status --json) for completion checking
-- Don't block archive on warnings - just inform and confirm
-- Preserve .openspec.yaml when moving to archive (it moves with the directory)
-- Show clear summary of what happened
-- If sync is requested, use openspec-sync-specs approach (agent-driven)
-- If delta specs exist, always run the sync assessment and show the combined summary before prompting
-
-**Branch Lifecycle Summary**
-
-```
-openspec new change "x"  →  branch created
-/opsx-apply              →  work on branch, commits via /repo-commit
-/opsx-archive            →  branch merged → branch deleted → change archived
-```
+**Note**: Since no branch was created for this change (it was never started), the branch merge step doesn't apply. The change can be directly archived.

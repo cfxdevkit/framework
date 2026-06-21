@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-06-20T12:51:18.286Z",
+  "mode": "llm-agents",
+  "fineTuning": false,
+  "executionContext": {
+    "unit": null,
+    "llm": {
+      "used": false,
+      "status": "not-used",
+      "configPath": "../../../../.pi/providers.json"
+    }
+  },
+  "results": [
+    {
+      "agent": "review",
+      "status": "ok",
+      "changedFiles": 9,
+      "findings": 2,
+      "executionContext": {
+        "unit": null,
+        "llm": {
+          "used": false,
+          "status": "not-used",
+          "configPath": "../../../../.pi/providers.json"
+        }
+      }
+    }
+  ]
+}

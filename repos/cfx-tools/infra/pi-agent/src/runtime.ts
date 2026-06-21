@@ -77,6 +77,10 @@ interface PiCliRunOptions {
   readonly terminalPhases?: PiTerminalPhaseHooks;
 }
 
+interface SpawnPnpmOptions {
+  readonly mode: 'interactive' | 'print' | 'rpc';
+}
+
 async function runPiCli(options: PiCliRunOptions): Promise<void> {
   const repoRoot = findRepoRoot(process.cwd());
   const piBinaryPath = resolvePiBinaryPath();
@@ -102,11 +106,19 @@ async function runPiCli(options: PiCliRunOptions): Promise<void> {
     options.terminalPhases,
     async () =>
       await spawnPnpm(piBinaryPath, args, repoRoot, {
-        ...process.env,
-        PATH: prependPathEntries(process.env.PATH, [resolvePiAgentBinDir(), dirname(piBinaryPath)]),
-        CFXDEVKIT_LLM_CONFIG_PATH: options.providerBridge.configPath,
-        ...(options.providerBridge.scope ? { [piScopeEnvVar]: options.providerBridge.scope } : {}),
-        ...options.providerBridge.pi.env,
+        mode: options.mode,
+        env: {
+          ...process.env,
+          PATH: prependPathEntries(process.env.PATH, [
+            resolvePiAgentBinDir(),
+            dirname(piBinaryPath),
+          ]),
+          CFXDEVKIT_LLM_CONFIG_PATH: options.providerBridge.configPath,
+          ...(options.providerBridge.scope
+            ? { [piScopeEnvVar]: options.providerBridge.scope }
+            : {}),
+          ...options.providerBridge.pi.env,
+        },
       }),
   );
 
@@ -121,14 +133,33 @@ async function spawnPnpm(
   command: string,
   args: readonly string[],
   cwd: string,
-  env: NodeJS.ProcessEnv,
+  options: SpawnPnpmOptions & { readonly env: NodeJS.ProcessEnv },
 ): Promise<number> {
   return await new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd,
-      env,
-      stdio: 'inherit',
-    });
+    // Use 'script' to create a pseudo-TTY when spawning the PI binary in interactive mode.
+    // This ensures PI detects a TTY and launches the interactive TUI even
+    // when the parent process is not connected to a TTY (e.g., in containers).
+    // For print and RPC modes, use direct spawn without TTY overhead.
+    let child: ReturnType<typeof spawn>;
+
+    if (options.mode === 'interactive') {
+      child = spawn(
+        'script',
+        ['-qc', [command, ...args].map((a) => JSON.stringify(a)).join(' '), '/dev/null'],
+        {
+          cwd,
+          env: options.env,
+          stdio: 'inherit',
+        },
+      );
+    } else {
+      child = spawn(command, args, {
+        cwd,
+        env: options.env,
+        stdio: 'inherit',
+      });
+    }
+
     child.on('error', reject);
     child.on('exit', (code, signal) => {
       if (signal) {

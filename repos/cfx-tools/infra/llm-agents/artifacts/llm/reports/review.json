@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-06-20T12:51:18.285Z",
+  "status": "ok",
+  "executionContext": {
+    "unit": null,
+    "llm": {
+      "used": false,
+      "status": "not-used",
+      "configPath": "../../../../.pi/providers.json"
+    }
+  },
+  "changedFiles": [
+    "artifacts/llm/reports/review.json",
+    "artifacts/llm/reports/review.md",
+    "package.json",
+    "pnpm-lock.yaml",
+    "repos/cfx-tools/infra/llm-agents/package.json",
+    "repos/cfx-tools/infra/pi-agent/src/runtime.ts",
+    "repos/cfx-tools/infra/tooling-cli/moon.yml",
+    "repos/cfx-tools/infra/tooling-cli/package.json",
+    "src/bin.ts"
+  ],
+  "findings": [
+    {
+      "severity": "warning",
+      "file": "artifacts/llm/reports/review.json",
+      "issue": "Generated or artifact path changed",
+      "recommendation": "Confirm this file should be committed rather than regenerated locally."
+    },
+    {
+      "severity": "warning",
+      "file": "artifacts/llm/reports/review.md",
+      "issue": "Generated or artifact path changed",
+      "recommendation": "Confirm this file should be committed rather than regenerated locally."
+    }
+  ],
+  "codeHotspots": {
+    "status": "error",
+    "hardViolations": 0,
+    "softWarnings": 0,
+    "report": "artifacts/llm/reports/code-hotspots.md"
+  },
+  "suggestedValidation": [
+    "pnpm run lint",
+    "pnpm run typecheck",
+    "pnpm exec moon run :test --concurrency 4",
+    "pnpm run check:docs",
+    "pnpm exec changeset status",
+    "pnpm run llm:changeset",
+    "pnpm run llm:release",
+    "pnpm run repo:review"
+  ]
+}

@@ -3,9 +3,17 @@ import type {
   ToolingCommandDefinition,
   ToolingNamespaceDefinition,
 } from './contracts.js';
+import { addressToolingNamespace } from './core/address-namespace.js';
+import { chainToolingNamespace } from './core/chain-namespace.js';
+import { keystoreToolingNamespace } from './core/keystore-namespace.js';
+import { unitsToolingNamespace } from './core/units-namespace.js';
 import { rootDocsToolingNamespace } from './docs/namespace.js';
 
 export const toolingNamespaces = [
+  chainToolingNamespace,
+  addressToolingNamespace,
+  unitsToolingNamespace,
+  keystoreToolingNamespace,
   rootDocsToolingNamespace,
 ] as const satisfies readonly ToolingNamespaceDefinition[];
 

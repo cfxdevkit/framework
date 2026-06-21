@@ -26,6 +26,10 @@
     "prepublishOnly": "pnpm clean",
     "build": "vite build",
     "tooling": "tsx src/bin.ts",
+    "agent": "pnpm --filter @cfxdevkit/llm-agents agent-chat",
+    "agent-commit": "pnpm --filter @cfxdevkit/llm-agents agent-commit",
+    "agent-print": "pnpm --filter @cfxdevkit/llm-agents agent-print",
+    "agent-rpc": "pnpm --filter @cfxdevkit/llm-agents agent-rpc",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -33,6 +37,7 @@
     "clean": "rm -rf dist .vitest coverage"
   },
   "dependencies": {
+    "@cfxdevkit/cdk": "workspace:*",
     "@cfxdevkit/cdk-repo-check": "workspace:*",
     "@cfxdevkit/docs-pipeline": "workspace:*",
     "@cfxdevkit/pi-agent": "workspace:*",
@@ -40,6 +45,7 @@
     "@inquirer/prompts": "^8.4.3",
     "clipanion": "^4.0.0-rc.4",
     "@cfxdevkit/devnode-server": "workspace:^",
+    "@cfxdevkit/services": "workspace:^",
     "@cfxdevkit/signer-session": "workspace:^"
   },
   "peerDependencies": {

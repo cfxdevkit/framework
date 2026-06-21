@@ -121,15 +121,11 @@ describe('pi runtime delegation', () => {
       await runPiCommit({ promptArgs: ['Focus', 'on', 'docs', 'changes'] });
 
       expect(spawnMock).toHaveBeenCalledWith(
-        expect.stringContaining('/repos/cfx-tools/infra/pi-agent/node_modules/.bin/pi'),
+        'script',
         expect.arrayContaining([
-          '-e',
-          '/workspaces/root/.pi/extensions/repo-agent.ts',
-          '--provider',
-          'openai',
-          '--model',
-          'demo-model',
-          expect.stringContaining('Start an interactive repository commit session.'),
+          '-qc',
+          expect.stringContaining('/repos/cfx-tools/infra/pi-agent/node_modules/.bin/pi'),
+          '/dev/null',
         ]),
         expect.objectContaining({
           cwd: '/workspaces/root',

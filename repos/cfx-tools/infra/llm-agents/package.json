@@ -7,6 +7,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "llm-agents": "./dist/bin.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -26,11 +29,30 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src workers",
-    "clean": "rm -rf dist .vitest coverage"
+    "clean": "rm -rf dist .vitest coverage",
+    "llm-agents": "tsx src/bin.ts",
+    "agent-smoke": "tsx src/bin.ts smoke",
+    "agent-config": "tsx src/bin.ts config",
+    "agent-status": "tsx src/bin.ts status",
+    "agent-check": "tsx src/bin.ts check",
+    "agent-merge": "tsx src/bin.ts merge",
+    "agent-endpoints": "tsx src/bin.ts endpoints",
+    "agent-modes": "tsx src/bin.ts modes",
+    "agent-deterministic": "tsx src/bin.ts deterministic",
+    "agent-exploratory": "tsx src/bin.ts exploratory",
+    "agent-chat": "tsx src/bin.ts chat",
+    "agent-commit": "tsx src/bin.ts commit",
+    "agent-print": "tsx src/bin.ts print",
+    "agent-rpc": "tsx src/bin.ts rpc",
+    "agent-reviews": "tsx src/bin.ts exploratory all",
+    "agent-validation": "tsx src/bin.ts exploratory validation",
+    "deterministic": "tsx src/bin.ts deterministic",
+    "exploratory": "tsx src/bin.ts exploratory"
   },
   "dependencies": {
     "@cfxdevkit/cdk-repo-check": "workspace:*",
     "@cfxdevkit/docs-pipeline": "workspace:*",
+    "@cfxdevkit/pi-agent": "workspace:*",
     "tsx": "^4.20.6"
   },
   "devDependencies": {

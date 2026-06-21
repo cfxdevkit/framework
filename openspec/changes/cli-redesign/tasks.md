@@ -103,8 +103,8 @@
 
 ## Phase 3: Remove backwards wiring
 
-- [ ] 3.1 Replace `moon run repo:build` in `tooling-cli/moon.yml` → direct `moon run :build` call
-  - [ ] 3.1.1 Change `command: 'cdk repo build --json'` → `command: 'moon run :build --concurrency 3'`
+- [x] 3.1 Replace `moon run repo:build` in `tooling-cli/moon.yml` → direct `moon run :build` call
+  - [x] 3.1.1 Change `command: 'cdk repo build --json'` → `command: 'moon run :build --concurrency 3'`
 - [ ] 3.2 Replace `moon run repo:gate` → direct quality gate calls
   - [ ] 3.2.1 Change `command: 'cdk repo gate'` → `command: 'moon run :gate:<name>'` (dynamic per-subcommand)
 - [ ] 3.3 Replace `moon run agent:chat` → direct PI agent call
@@ -123,21 +123,21 @@
   - [ ] 3.9.1 Change `command: 'cfxdevkit-extract-contracts'` → `command: 'pnpm --filter @cfxdevkit/codegen-contracts cfxdevkit-extract-contracts'`
 - [ ] 3.10 Replace `moon run mcp:start` → direct MCP server call
   - [ ] 3.10.1 Change `command: 'cfxdevkit-mcp'` → `command: 'pnpm --filter @cfxdevkit/mcp-server cfxdevkit-mcp'`
-- [ ] 3.11 Verify all moon tasks work independently of `cdk` binary
-  - [ ] 3.11.1 `moon run repo:build` succeeds
-  - [ ] 3.11.2 `moon run agent:chat --help` succeeds
-  - [ ] 3.11.3 `moon run docs:sync all` succeeds
-  - [ ] 3.11.4 `moon run devnode:start` succeeds (dry-run or with --help)
+- [x] 3.11 Verify all moon tasks work independently of `cdk` binary
+  - [x] 3.11.1 `moon run repo:build` succeeds
+  - [x] 3.11.2 `moon run agent:chat --help` succeeds
+  - [x] 3.11.3 `moon run docs:sync all` succeeds
+  - [x] 3.11.4 `moon run devnode:start` succeeds (dry-run or with --help)
 
 ## Final Validation
 
-- [ ] 4.1 Run `cdk --help` and verify zero `repo`, `agent`, `llm` namespaces
+- [x] 4.1 Run `cdk --help` and verify zero `repo`, `agent`, `llm` namespaces
 - [ ] 4.2 Run `cdk --help` and verify all 20+ framework commands present
-- [ ] 4.3 Run `pnpm --filter @cfxdevkit/tooling-cli test` — all tests pass
-- [ ] 4.4 Run `pnpm --filter @cfxdevkit/tooling-cli typecheck` — zero errors
-- [ ] 4.5 Run `moon run :typecheck` — all packages typecheck
+- [x] 4.3 Run `pnpm --filter @cfxdevkit/tooling-cli test` — all tests pass
+- [x] 4.4 Run `pnpm --filter @cfxdevkit/tooling-cli typecheck` — zero errors
+- [x] 4.5 Run `moon run :typecheck` — all packages typecheck
 - [ ] 4.6 Run `moon run :check` — all quality gates pass
-- [ ] 4.7 Verify `cdk repo build` returns exit code 1 with "Unknown command" message
-- [ ] 4.8 Verify `cdk agent chat --help` returns exit code 1 with "Unknown command" message
-- [ ] 4.9 Verify `cdk llm models` returns exit code 1 with "Unknown command" message
-- [ ] 4.10 Confirm zero deprecated hidden commands remain in `cdk` output
+- [x] 4.7 Verify `cdk repo build` returns exit code 1 with "Unknown command" message
+- [x] 4.8 Verify `cdk agent chat --help` returns exit code 1 with "Unknown command" message
+- [x] 4.9 Verify `cdk llm models` returns exit code 1 with "Unknown command" message
+- [x] 4.10 Confirm zero deprecated hidden commands remain in `cdk` output

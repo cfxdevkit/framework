@@ -15,6 +15,7 @@ import {
   throwIfAborted,
   toHex,
   toMessageHex,
+  withOneKeyInitRetry,
 } from './helpers.js';
 import type { OneKeyCoreTxParams, OneKeySdkLike } from './index.js';
 
@@ -53,11 +54,13 @@ export async function signerFromOneKeyCore(input: SignerFromOneKeyCoreInput): Pr
     expectedAddress,
   } = input;
 
-  const addrRes = await sdk.confluxGetAddress(connectId, deviceId, {
-    path,
-    showOnOneKey: showOnDevice,
-    chainId: networkId,
-  });
+  const addrRes = await withOneKeyInitRetry(() =>
+    sdk.confluxGetAddress(connectId, deviceId, {
+      path,
+      showOnOneKey: showOnDevice,
+      chainId: networkId,
+    }),
+  );
   if (!addrRes.success) throw oneKeyError('wallet/hardware/onekey/device-error', addrRes.payload);
 
   const rawAddress = addrRes.payload.address;

@@ -8,6 +8,7 @@
   "containerUser": "node",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "runArgs": [
+    "--privileged",
     "--network",
     "pasta:--map-gw",
     "-p",
@@ -21,6 +22,7 @@
   },
   "mounts": [
     "source=${localWorkspaceFolder}/.devcontainer/.docker.sock,target=/var/run/docker.sock,type=bind,consistency=cached",
+    "source=/dev/bus/usb,target=/dev/bus/usb,type=bind",
     "source=cfxdevkit-pnpm-store,target=/home/node/.local/share/pnpm/store,type=volume",
     "source=cfxdevkit-moon-cache,target=/home/node/.cache/moon,type=volume",
     "source=cfxdevkit-gitnexus,target=/home/node/.local/share/gitnexus,type=volume",
@@ -37,7 +39,10 @@
     "ANTHROPIC_BASE_URL": "http://localhost:28787",
     "HEADROOM_UPSTREAM": "http://host.containers.internal:13305/",
     "HEADROOM_PROXY_PORT": "28787",
-    "HEADROOM_CODE_AWARE_ENABLED": "false"
+    "HEADROOM_CODE_AWARE_ENABLED": "false",
+    "EXA_API_KEY": "${localEnv:EXA_API_KEY}",
+    "PERPLEXITY_API_KEY": "${localEnv:PERPLEXITY_API_KEY}",
+    "GEMINI_API_KEY": "${localEnv:GEMINI_API_KEY}"
   },
   "forwardPorts": [8545, 8546, 12536, 12537, 3000, 4173, 5173, 7748, 8787, 28787],
   "otherPortsAttributes": {

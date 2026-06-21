@@ -1,71 +1,37 @@
-# Spec: cli-consolidation
+## ADDED Requirements
 
-The repository achieves CLI consolidation: single entrypoint (`moon run`), removed deprecated commands, unified LLM operations.
+### Requirement: Consolidate Repository Operations Under Moon Tasks
+Repository-wide automation MUST be exposed through Moon tasks instead of `cdk repo` namespace commands.
 
-## Requirements
+#### Scenario: Developer runs repository build via Moon
+- **Given** project task configuration is loaded
+- **When** the developer runs `moon run tooling-cli:repo-build`
+- **Then** repository build orchestration runs via Moon tasks
+- **And** no `cdk repo` namespace is required
 
-### REQ-1: moon.yml tasks added across packages
-Moon task definitions must be added to the appropriate package moon.yml files:
+### Requirement: Consolidate LLM and Agent Workflows Under Moon Tasks
+LLM and PI agent workflows MUST be invokable through Moon tasks and package scripts that delegate to `@cfxdevkit/llm-agents` and `@cfxdevkit/pi-agent` entry points.
 
-- [ ] `tooling-cli/moon.yml` — repo tasks, agent tasks, docs tasks
-- [ ] `devnode/moon.yml` — devnode:start, devnode:stop, devnode:status, devnode:serve
-- [ ] `signer-session/moon.yml` — sign:message, sign:typed-data, signer:*
-- [ ] `scaffold-cli/moon.yml` — scaffold:new, scaffold:list
-- [ ] `codegen-contracts/moon.yml` — contracts:extract
-- [ ] `mcp-server/moon.yml` — mcp:start, mcp:stop
-- [ ] `arch-check/moon.yml` — arch-check task
-- [ ] `docs-pipeline/moon.yml` — docs:sync, docs:validate (if not existing)
+#### Scenario: Developer launches interactive agent workflow via Moon
+- **Given** task configuration references package-level agent scripts
+- **When** the developer runs `moon run tooling-cli:agent-chat`
+- **Then** PI-backed interactive chat starts through the package runtime
+- **And** no `cdk agent` or `cdk llm` namespace is required
 
-### REQ-2: Root package.json scripts updated
-Root `package.json` scripts must be simplified to single entrypoint pattern:
+### Requirement: Remove Deprecated Hidden llm Commands
+The redesigned command surface MUST not retain deprecated hidden `cdk llm` command aliases.
 
-- [ ] `build` → `moon run :build --concurrency 3`
-- [ ] `test` → `moon run :test --concurrency 1`
-- [ ] `lint` → `moon run :lint --concurrency 4`
-- [ ] `typecheck` → `moon run :typecheck --concurrency 4`
-- [ ] `check` → `moon run :check`
-- [ ] `clean` → `moon run :clean`
-- [ ] `cdk` → `cdk` (direct binary, no pnpm filter)
-- [ ] `repo:*` scripts → `moon run repo:*`
-- [ ] `agent:*` scripts → `moon run agent:*`
-- [ ] `docs:*` scripts → `moon run docs:*`
-- [ ] `devnode:*` scripts → `moon run devnode:*`
-- [ ] `sign:*` scripts → `moon run sign:*`
-- [ ] `scaffold:*` scripts → `moon run scaffold:*`
-- [ ] `contracts:*` scripts → `moon run contracts:*`
-- [ ] `mcp:*` scripts → `moon run mcp:*`
+#### Scenario: Help output excludes deprecated namespaces
+- **Given** the redesigned CLI build is installed
+- **When** the user runs `cdk --help`
+- **Then** the output does not list `llm`, `repo`, or `agent` namespaces
+- **And** only supported framework command groups are shown
 
-### REQ-3: Deprecated commands removed
-- [ ] Zero `hidden: true` deprecated commands in `cdk llm` (file deleted)
-- [ ] Zero `cdk llm` references in `registry.ts`
-- [ ] Zero `cdk repo` references in `registry.ts`
-- [ ] Zero `cdk agent` references in `registry.ts`
+### Requirement: Keep Root Scripts Aligned With Moon First Entry
+Root-level npm scripts for repository operations MUST call Moon tasks instead of legacy namespace forwarding.
 
-### REQ-4: Backwards wiring removed
-Moon tasks that previously called `cdk repo build` call `moon run :build` directly:
-
-- [ ] `moon run repo:build` calls `moon run :build` (not `cdk repo build`)
-- [ ] `moon run repo:gate` calls `moon run :gate:*` (not `cdk repo gate`)
-- [ ] `moon run agent:chat` calls PI agent directly (not `cdk agent chat`)
-- [ ] `moon run docs:enrich` calls docs-pipeline directly (not `cdk docs enrich`)
-
-## Scenarios
-
-### Scenario 1: Single entrypoint for repo operations
-**Given** a developer wants to check the repository
-**When** they run `moon run :check`
-**Then** all quality gates execute (lint, test, typecheck, build, repo-check)
-**And** the operation uses moon's built-in task graph, parallelism, and caching
-
-### Scenario 2: Single entrypoint for LLM operations
-**Given** a developer wants to start an interactive PI session
-**When** they run `moon run agent:chat "refactor the executor package"`
-**Then** the PI agent session starts with the given prompt
-**And** no `cdk agent` or `cdk llm` command is needed
-
-### Scenario 3: Zero deprecated hidden commands
-**Given** a user runs `cdk --help`
-**When** the help text is displayed
-**Then** no `llm` namespace appears in the output
-**And** no `repo` namespace appears in the output
-**And** no `agent` namespace appears in the output
+#### Scenario: Root script delegates to namespaced moon target
+- **Given** root package scripts are configured for the redesign
+- **When** a user runs `pnpm run repo:check`
+- **Then** the script delegates to a Moon task target
+- **And** the operation executes without invoking `cdk repo check`

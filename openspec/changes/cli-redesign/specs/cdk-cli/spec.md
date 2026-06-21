@@ -1,83 +1,46 @@
-# Spec: cdk-cli
+## ADDED Requirements
 
-The `cdk` binary (from `@cfxdevkit/tooling-cli`) is narrowed to framework-level commands only. All repo-wide operations, LLM operations, and agent sessions move to `moon run`.
+### Requirement: Remove Repository Namespace From cdk
+The `cdk` CLI MUST NOT expose a `repo` namespace.
 
-## Requirements
+#### Scenario: User invokes removed repo namespace
+- **Given** the CLI is built from the redesigned command registry
+- **When** the user runs `cdk repo build`
+- **Then** the CLI reports `Unknown command` for `repo`
+- **And** exits with a non-zero status code
 
-### REQ-1: cdk removes repo namespace
-The `cdk repo` namespace and all 12 subcommands must be removed from the `cdk` CLI.
+### Requirement: Remove Agent Namespace From cdk
+The `cdk` CLI MUST NOT expose an `agent` namespace.
 
-- [ ] `cdk repo build` → removed
-- [ ] `cdk repo run` → removed
-- [ ] `cdk repo gate` → removed
-- [ ] `cdk repo check` → removed
-- [ ] `cdk repo generate` → removed
-- [ ] `cdk repo merge` → removed
-- [ ] `cdk repo arch-check` → removed
-- [ ] `cdk repo units` → removed
-- [ ] `cdk repo review` → removed
-- [ ] `cdk repo precommit` → removed
-- [ ] `cdk repo commit` → removed
-- [ ] `cdk repo run` → removed
+#### Scenario: User invokes removed agent namespace
+- **Given** the CLI is built from the redesigned command registry
+- **When** the user runs `cdk agent chat --help`
+- **Then** the CLI reports `Unknown command` for `agent`
+- **And** exits with a non-zero status code
 
-### REQ-2: cdk removes agent namespace
-The `cdk agent` namespace and all 13 subcommands must be removed from the `cdk` CLI.
+### Requirement: Remove llm Namespace From cdk
+The `cdk` CLI MUST NOT expose an `llm` namespace.
 
-- [ ] `cdk agent smoke`, `check`, `merge`, `endpoints`, `config`, `modes`, `status` → removed
-- [ ] `cdk agent chat`, `commit`, `rpc`, `print` → removed
-- [ ] `cdk agent deterministic:*`, `exploratory:*` → removed
+#### Scenario: User invokes removed llm namespace
+- **Given** the CLI is built from the redesigned command registry
+- **When** the user runs `cdk llm models`
+- **Then** the CLI reports `Unknown command` for `llm`
+- **And** exits with a non-zero status code
 
-### REQ-3: cdk removes llm namespace entirely
-The `cdk llm` namespace must be completely removed from `registry.ts`.
+### Requirement: Preserve Framework Command Surface In cdk
+The `cdk` CLI MUST continue to expose framework-scoped commands for build/test/lint/typecheck/check, framework docs generation/validation, contracts operations, devnode operations, signer/sign operations, mcp startup, and account utility commands.
 
-- [ ] All 20+ `cdk llm:*` commands removed
-- [ ] `llmToolingNamespace` import removed from `registry.ts`
-- [ ] `cdk llm` entry removed from `toolingNamespaces` array
+#### Scenario: User invokes supported framework command
+- **Given** the CLI is built from the redesigned command registry
+- **When** the user runs a supported command such as `cdk build @cfxdevkit/tooling-cli`
+- **Then** the command executes normally
+- **And** exits with status code `0` on success
 
-### REQ-4: cdk keeps framework-scoped commands
-The following commands must remain in the `cdk` binary:
+### Requirement: Keep Existing Package And Binary Identity
+The package identity for this CLI MUST remain `@cfxdevkit/tooling-cli` and the executable name MUST remain `cdk`.
 
-- [ ] `cdk build [pkg]` — build framework packages
-- [ ] `cdk test [pkg]` — test framework packages
-- [ ] `cdk lint [pkg]` — lint framework packages
-- [ ] `cdk typecheck [pkg]` — typecheck framework packages
-- [ ] `cdk check [pkg]` — quality check framework packages
-- [ ] `cdk generate [target]` — framework code generation
-- [ ] `cdk contracts extract <dir>` — Hardhat artifact extraction
-- [ ] `cdk contracts compile [project]` — contract compilation
-- [ ] `cdk extract <dir>` — alias for contracts extract
-- [ ] `cdk devnode [start|stop|status]` — local dev node
-- [ ] `cdk devnode:serve [port] [host]` — control plane
-- [ ] `cdk sign message <text> [flags]` — headless signing
-- [ ] `cdk sign typed-data <file> [flags]` — typed data signing
-- [ ] `cdk signer setup` — signer wizard
-- [ ] `cdk signer status [--json]` — show signer
-- [ ] `cdk signer list [--json]` — list signers
-- [ ] `cdk signer use <name>` — switch signer
-- [ ] `cdk mcp start [port]` — MCP server
-- [ ] `cdk derive [flags]` — account derivation
-- [ ] `cdk generate-mnemonic [--strength]` — mnemonic generation
-- [ ] `cdk status [--chain]` — chain status
-- [ ] `cdk docs generate [target]` — deterministic docs
-- [ ] `cdk docs validate [target]` — docs validation
-
-### REQ-5: cdk package name unchanged
-The package `@cfxdevkit/tooling-cli` keeps its current name. Binary remains `cdk`.
-
-- [ ] `package.json` name stays `@cfxdevkit/tooling-cli`
-- [ ] Binary `cdk` remains unchanged
-- [ ] `cdk-tooling` alias remains unchanged
-
-## Scenarios
-
-### Scenario 1: User runs removed command
-**Given** a user runs `cdk repo build`
-**When** the command is executed
-**Then** the CLI prints `Unknown command: repo. Run 'cdk --help' for usage.`
-**And** exits with code 1
-
-### Scenario 2: User runs kept command
-**Given** a user runs `cdk build @cfxdevkit/executor`
-**When** the command is executed
-**Then** the CLI builds the specified framework package
-**And** exits with code 0
+#### Scenario: Package metadata and executable remain stable
+- **Given** the package manifests and build outputs are generated
+- **When** maintainers inspect package metadata and executable entry points
+- **Then** the package name remains `@cfxdevkit/tooling-cli`
+- **And** the executable remains available as `cdk`

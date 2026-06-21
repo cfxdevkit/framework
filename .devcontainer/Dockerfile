@@ -28,6 +28,8 @@ RUN apt-get update \
     python3 \
     ripgrep \
     unzip \
+    ffmpeg \
+    yt-dlp \
   && ln -sf /usr/bin/fdfind /usr/local/bin/fd \
   && rm -rf /var/lib/apt/lists/*
 
@@ -97,6 +99,9 @@ ENV PATH=/opt/headroom/bin:${PATH}
 USER node
 
 ENV PATH=/home/node/.moon:${PATH}
+
+# Install pi-web-access globally for web search, URL fetching, PDF/YouTube extraction
+RUN pi install npm:pi-web-access 2>&1 || true
 
 RUN pnpm config set store-dir /home/node/.local/share/pnpm/store
 

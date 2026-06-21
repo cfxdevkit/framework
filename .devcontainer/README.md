@@ -138,6 +138,7 @@ and depends on GitNexus licensing/policy being acceptable for the environment.
 ## Notes
 
 - On rootless Podman, the devcontainer publishes the local Caddy proxy on host port `8443` instead of `443`, because `pasta` cannot bind privileged host ports without extra host-level configuration. Use URLs like `https://showcase.dev.cfxdevkit.org:8443`.
+- On rootless Podman (including `--userns=keep-id`), `--device-cgroup-rule` is not supported. USB passthrough is configured with `--device=/dev/bus/usb` plus a bind mount for `/dev/bus/usb`.
 - The devcontainer mounts the host Docker socket. Do not use it with an
   untrusted workspace.
 - The older `devkit-workspace` backend and DEX processes are intentionally not

@@ -6,7 +6,7 @@ export function defaultPiConfig(): PiLlmConfig {
   return {
     provider: 'openai-compat',
     baseUrl: 'http://localhost:28787/v1/',
-    defaultModel: 'Qwen3-Coder-Next-GGUF',
+    defaultModel: 'Qwen3.6-35B-A3B-MTP-GGUF-Q8_0',
     githubModel: null,
     requestTimeoutMs: defaultRequestTimeoutMs,
     actions: {},
