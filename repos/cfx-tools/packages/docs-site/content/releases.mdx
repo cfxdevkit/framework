@@ -19,3 +19,7 @@ Changelog for all `@cfxdevkit` packages. Each package has provenance attached vi
 
 - **[cdk](https://www.npmjs.com/package/@cfxdevkit/cdk)** Update dev dependencies and resolve merge conflict in package.json
 - **[cdk](https://www.npmjs.com/package/@cfxdevkit/cdk)** Clarified that createClient returns a discriminated union of EspaceClient and CoreSpaceClient.
+- **[signer-session](https://www.npmjs.com/package/@cfxdevkit/signer-session)** Add optional `includeCore` parameter to skip Core signer initialization and improve device connection reliability by serializing address probes.
+Add retry logic for OneKey device operations to handle transient 'device interrupted' and 'device not acquired' errors.
+- **[wallet](https://www.npmjs.com/package/@cfxdevkit/wallet)** Add optional `includeCore` parameter to skip Core signer initialization and improve device connection reliability by serializing address probes.
+Add retry logic for OneKey device operations to handle transient 'device interrupted' and 'device not acquired' errors.

@@ -115,7 +115,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
     "@changesets/cli": "^2.31.0",
-    "@moonrepo/cli": "^2.2.5",
+    "@moonrepo/cli": "^2.3.4",
     "gitnexus": "^1.6.3",
     "knip": "^6.17.1",
     "typescript": "^6.0.3",

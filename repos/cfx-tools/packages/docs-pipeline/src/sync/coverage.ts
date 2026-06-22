@@ -139,7 +139,7 @@ Run coverage locally with:
 pnpm --filter @cfxdevkit/cdk test:coverage
 
 # All packages
-pnpm exec moon run :test -- --coverage
+moon exec --force --quiet --no-actions --upstream none --downstream none :test -- --coverage
 \`\`\`
 
 <Callout type="info">

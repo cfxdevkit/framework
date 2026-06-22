@@ -36,6 +36,19 @@ if command -v openspec >/dev/null 2>&1 \
   openspec init --tools pi || true
 fi
 
+# Install and link pi-web-access (web search, fetch, librarian skill)
+if command -v pi >/dev/null 2>&1; then
+  pi install npm:pi-web-access 2>&1 || true
+  # Ensure the librarian skill is symlinked into project .pi/skills/
+  SKILL_SRC="$HOME/.pi/agent/npm/node_modules/pi-web-access/skills/librarian"
+  SKILL_DST=".pi/skills/librarian"
+  if [[ -d "$SKILL_SRC" ]]; then
+    rm -f "$SKILL_DST"
+    ln -sf "$SKILL_SRC" "$SKILL_DST"
+    echo "✓ pi-web-access linked: $SKILL_DST -> $SKILL_SRC"
+  fi
+fi
+
 # Configure pi-web-access if API keys are provided
 mkdir -p "$HOME/.pi"
 if [[ ! -f "$HOME/.pi/web-search.json" ]]; then

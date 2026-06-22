@@ -22,12 +22,18 @@ function isNoiseLine(line: string): boolean {
   return (
     line.startsWith('> ') ||
     /^Done in \d/.test(line) ||
-    /^Tasks:\s+\d+\s+completed/.test(line) ||
-    /^Time:\s/.test(line) ||
+    // Moon progress bars and task prefixes (shouldn't appear with --quiet, safety net)
+    /^▮/.test(line) ||
+    /^\S+:\S+\s+\|/.test(line) ||
+    // Moon version notices (shouldn't appear with --quiet, safety net)
     /^There's a new version of moon available\b/i.test(line) ||
     /^Learn more: https:\/\/moonrepo\.dev\//i.test(line) ||
     /^Install with: https:\/\/moonrepo\.dev\/docs\/install/i.test(line) ||
+    // Cached/no-op summaries (shouldn't appear with --quiet, safety net)
     /^\S+:\S+\s+\((cached|no op),/i.test(line) ||
+    // Moon summary footer (shouldn't appear with --quiet, safety net)
+    /^Tasks:\s+\d+\s+completed/.test(line) ||
+    /^Time:\s/.test(line) ||
     /^Reports?: artifacts\//i.test(line)
   );
 }

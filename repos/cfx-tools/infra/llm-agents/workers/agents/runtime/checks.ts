@@ -120,7 +120,7 @@ export function suggestValidationCommands(changed) {
   if (changed.some((file) => /\.(ts|tsx|js|mjs)$/.test(file))) {
     commands.add('pnpm run lint');
     commands.add('pnpm run typecheck');
-    commands.add('pnpm exec moon run :test --concurrency 4');
+    commands.add('moon exec --force --quiet --no-actions --upstream none --downstream none :test');
   }
   if (
     changed.some((file) => file.endsWith('.md') || file.endsWith('.yml') || file.endsWith('.yaml'))

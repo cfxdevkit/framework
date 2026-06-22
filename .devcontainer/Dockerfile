@@ -100,8 +100,8 @@ USER node
 
 ENV PATH=/home/node/.moon:${PATH}
 
-# Install pi-web-access globally for web search, URL fetching, PDF/YouTube extraction
-RUN pi install npm:pi-web-access 2>&1 || true
+# pi-web-access is installed by post-create.sh so it persists across rebuilds
+# See post-create.sh for the install + symlink logic
 
 RUN pnpm config set store-dir /home/node/.local/share/pnpm/store
 

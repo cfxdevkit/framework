@@ -1,27 +1,43 @@
-# Archive Stale OpenSpec Change: pi-agent-test-and-kebab-remediation
+---
+name: openspec-archive-change
+description: Archive completed change in experimental workflow. Use when user wants finalize archive change implementation complete.
+license: MIT
+compatibility: Requires openspec CLI.
+metadata:
+  author: openspec
+  version: "1.0"
+  generatedBy: "1.3.1"
+---
 
-**Status**: The OpenSpec change `pi-agent-test-and-kebab-remediation` is stale and can be archived.
+Archive completed change in experimental workflow.
 
-**Reasoning**:
-1. The tasks describe fixes that have already been implemented in uncommitted changes
-2. The pi-agent tests pass with correct `approvalMode: "defer"` and `modelPolicies` expectations
-3. The command files already use proper kebab-case naming (`repo-actions.ts`, `repo-check.ts`, `repo-commit.ts`, `repo-run.ts`, `repo-status.ts`)
-4. The precommit gates pass (lint ✓, test ✓, build ✓, typecheck ✓)
-5. The check is passing without errors
+**Input**: Optionally specify change name. If omitted, check if be inferred conversation context. If vague or ambiguous you MUST prompt available changes.
 
-**Current State**:
-- `openspec status --change pi-agent-test-and-kebab-remediation` shows `isComplete: true`
-- All 9 tasks in `tasks.md` are marked incomplete (`- [ ]`) but the implementation is already in place
-- No branch exists for this change (it was never created)
-- Precommit gates: All passing
+**Steps**
 
-**Archive Action Required**:
-```bash
-# Create archive directory
-mkdir -p openspec/changes/archive
+1. **If no change name provided, prompt selection**
+   Run `openspec list --json` get available changes. Use **AskUserQuestion tool** let user select.
 
-# Archive the change with date prefix
-mv openspec/changes/pi-agent-test-and-kebab-remediation openspec/changes/archive/2026-06-21-pi-agent-test-and-kebab-remediation
-```
+2. **Validate change status**
+   Run `openspec status --change <name>` to verify isComplete is true or all tasks are done.
 
-**Note**: Since no branch was created for this change (it was never started), the branch merge step doesn't apply. The change can be directly archived.
+3. **Create archive directory**
+   ```bash
+   mkdir -p openspec/changes/archive
+   ```
+
+4. **Move change to archive with date prefix**
+   ```bash
+   mv openspec/changes/<name> openspec/changes/archive/$(date +%Y-%m-%d)-<name>
+   ```
+
+5. **Remove branch if it exists**
+   ```bash
+   git branch -D <name> 2>/dev/null || echo "No branch to delete"
+   ```
+
+6. **Update any references to the change**
+   Search for references in documentation or configuration files.
+
+7. **Confirm archival**
+   Verify the change no longer appears in `openspec list` and exists in `openspec/changes/archive/`.
