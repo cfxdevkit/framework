@@ -19,22 +19,26 @@ function stripAnsi(line: string): string {
 }
 
 function isNoiseLine(line: string): boolean {
+  // Strip ANSI escape codes before checking — raw command output may have
+  // ANSI sequences prepended, so noise patterns (like `▮` or `>`) would not
+  // match against the raw string.  Check the normalized line instead.
+  const normalized = stripAnsi(line);
   return (
-    line.startsWith('> ') ||
-    /^Done in \d/.test(line) ||
+    normalized.startsWith('> ') ||
+    /^Done in \d/.test(normalized) ||
     // Moon progress bars and task prefixes (shouldn't appear with --quiet, safety net)
-    /^▮/.test(line) ||
-    /^\S+:\S+\s+\|/.test(line) ||
+    /^▮/.test(normalized) ||
+    /^\S+:\S+\s+\|/.test(normalized) ||
     // Moon version notices (shouldn't appear with --quiet, safety net)
-    /^There's a new version of moon available\b/i.test(line) ||
-    /^Learn more: https:\/\/moonrepo\.dev\//i.test(line) ||
-    /^Install with: https:\/\/moonrepo\.dev\/docs\/install/i.test(line) ||
+    /^There's a new version of moon available\b/i.test(normalized) ||
+    /^Learn more: https:\/\/moonrepo\.dev\//i.test(normalized) ||
+    /^Install with: https:\/\/moonrepo\.dev\/docs\/install/i.test(normalized) ||
     // Cached/no-op summaries (shouldn't appear with --quiet, safety net)
-    /^\S+:\S+\s+\((cached|no op),/i.test(line) ||
+    /^\S+:\S+\s+\((cached|no op),/i.test(normalized) ||
     // Moon summary footer (shouldn't appear with --quiet, safety net)
-    /^Tasks:\s+\d+\s+completed/.test(line) ||
-    /^Time:\s/.test(line) ||
-    /^Reports?: artifacts\//i.test(line)
+    /^Tasks:\s+\d+\s+completed/.test(normalized) ||
+    /^Time:\s/.test(normalized) ||
+    /^Reports?: artifacts\//i.test(normalized)
   );
 }
 

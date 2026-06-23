@@ -224,7 +224,10 @@ function formatGateLine(gate: GateView): string {
   const label = truncate(gate.label, 22).padEnd(22);
   const elapsed =
     gate.elapsedMs !== undefined ? `${(gate.elapsedMs / 1000).toFixed(1)}s`.padStart(6) : '   ...';
-  return `  ${status}${label}${elapsed}  ${truncate(gate.summary, 76)}`;
+  // Strip ANSI codes from summary to prevent TUI rendering issues when raw
+  // command output (with escape sequences) leaks into the signal lines.
+  const summary = stripAnsi(gate.summary);
+  return `  ${status}${label}${elapsed}  ${truncate(summary, 76)}`;
 }
 
 function pickGateSummary(result: GateResult): string {

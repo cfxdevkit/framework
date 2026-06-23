@@ -7,6 +7,20 @@ import {
   resolveEffectiveActionPolicy,
 } from '../config.js';
 import { executePiCommitWorkflow, type PiCommitWorkflowResult } from '../llm-agents-runtime.js';
+
+// TUI-native confirmation callback set by the PI tool. When the workflow's
+// confirmPrompt() is called, it checks this closure first and uses the TUI's
+// confirm dialog instead of readline — enabling single-pass approval.
+let _tuiConfirmCb: ((question: string) => Promise<boolean>) | null = null;
+export function setTuiConfirm(cb: ((question: string) => Promise<boolean>) | null): void {
+  _tuiConfirmCb = cb;
+}
+
+// The workflow reads this at approval time.
+function _getTuiConfirmCb(): ((question: string) => Promise<boolean>) | null {
+  return _tuiConfirmCb;
+}
+
 import { withCapturedConsole } from '../tools/utils.js';
 
 // Flag to ensure PI_CODING_AGENT is set once so the commit workflow's
@@ -25,6 +39,11 @@ export async function executePiCommitSession(options: {
   model?: string;
   tuiMode?: boolean;
   yes?: boolean;
+  stdout?: NodeJS.WriteStream;
+  stderr?: NodeJS.WriteStream;
+  // When true, the workflow runs inline with TUI-native approval (single-pass).
+  // When false (CLI), the workflow uses terminal prompts or defer mode.
+  singlePassApproval?: boolean;
 }): Promise<PiCommitWorkflowResult | null> {
   const args: string[] = [];
   if (options.quick) args.push('--quick');
@@ -32,17 +51,41 @@ export async function executePiCommitSession(options: {
   if (options.prompt) args.push(options.prompt);
 
   const commitPolicy = await resolveCommitRuntimePolicy(options.model);
+
+  // In single-pass TUI mode, run inline with prompt-based approval that
+  // integrates with the TUI's confirm dialog. No two-pass dance needed.
+  if (options.singlePassApproval && options.tuiMode) {
+    const cb = _getTuiConfirmCb();
+    const { result } = await withScopedCommitPolicy(commitPolicy.profileOverride, async () => {
+      return await withCapturedConsole(
+        async () =>
+          await executePiCommitWorkflow(args, {
+            modelPolicies: commitPolicy.modelPolicies,
+            approvalMode: 'prompt',
+            ...(options.stdout ? { stdout: options.stdout } : {}),
+            ...(options.stderr ? { stderr: options.stderr } : {}),
+            tuiConfirm: cb,
+          }),
+      );
+    });
+    return result;
+  }
+
+  const cb = _getTuiConfirmCb();
   const { result } = await withScopedCommitPolicy(commitPolicy.profileOverride, async () => {
     // In TUI mode the commit workflow's createWorkflowTerminalUi detects
     // PI_CODING_AGENT (set once at module load) and falls back to
     // sequential line output, so it never tries ANSI cursor manipulation.
-    // We always use defer approval mode so the caller tool handles
-    // approval via TUI-native confirm dialogs instead of terminal prompts.
+    // Use defer approval mode so the caller tool handles approval via
+    // TUI-native confirm dialogs instead of terminal prompts.
     return await withCapturedConsole(
       async () =>
         await executePiCommitWorkflow(args, {
           modelPolicies: commitPolicy.modelPolicies,
           approvalMode: 'defer',
+          ...(options.stdout ? { stdout: options.stdout } : {}),
+          ...(options.stderr ? { stderr: options.stderr } : {}),
+          tuiConfirm: cb,
         }),
     );
   });

@@ -11,6 +11,7 @@ export function parseCommitFlags(args) {
   let changesetBump = null;
   let withTests = true;
   let withBuild = true;
+  let skipPolicyGates = false;
   let agent = 'direct';
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
@@ -22,6 +23,7 @@ export function parseCommitFlags(args) {
     else if (arg === '--force' || arg === '-f') force = true;
     else if (arg === '--skip-checks') skipChecks = true;
     else if (arg === '--skip-post-checks') skipPostChecks = true;
+    else if (arg === '--skip-policy-gates') skipPolicyGates = true;
     else if (arg === '--skip-changeset') skipChangeset = true;
     else if (arg === '--no-changeset') changesetBump = 'none';
     else if (arg === '--changeset-bump') changesetBump = args[++index];
@@ -46,6 +48,7 @@ export function parseCommitFlags(args) {
     force,
     skipChecks,
     skipPostChecks,
+    skipPolicyGates,
     skipChangeset,
     changesetBump,
     withTests,

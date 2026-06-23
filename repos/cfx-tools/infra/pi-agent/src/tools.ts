@@ -6,7 +6,7 @@ import {
   getPiActionDefinitions,
   type PiRepoActionExecutionResult,
 } from './llm-agents-runtime.js';
-import { executePiCommitSession } from './tools/commit.js';
+import { executePiCommitSession, setTuiConfirm } from './tools/commit.js';
 import { withCapturedConsole } from './tools/utils.js';
 import {
   clearPiOperatorWidgets,
@@ -16,7 +16,7 @@ import {
   renderPiActionCatalogLines,
 } from './ui.js';
 
-export { executePiCommitSession } from './tools/commit.js';
+export { executePiCommitSession, setTuiConfirm } from './tools/commit.js';
 
 const repoAgentCheckTool = defineTool({
   name: 'repo_agent_check',
@@ -159,64 +159,46 @@ const repoCommitWorkflowTool = defineTool({
     model: Type.Optional(Type.String({ description: 'Optional model override.' })),
   }),
   async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-    // First pass: run commit workflow (deferred approval to avoid breaking TUI)
-    let result = await executePiCommitSession({
-      prompt: params.prompt,
-      quick: params.quick,
-      model: params.model,
-      tuiMode: ctx.hasUI,
-    });
-
-    // Handle approval in TUI if approval is required
-    if (
-      result?.status === 'approval-required' &&
-      ctx.hasUI &&
-      result.commitPreview &&
-      !result.approval.approved &&
-      !result.approval.declined
-    ) {
-      const preview = result.commitPreview;
-      // Use TUI native confirm dialog for approval
-      const confirmed = await ctx.ui.confirm('Approve commit?', preview.subject);
-
-      if (!confirmed) {
-        // User declined: abort the commit
-        result = {
-          ...result,
-          status: 'aborted',
-          approval: { required: true, approved: false, declined: true },
-        };
-      } else {
-        // User approved: re-run with --yes flag to skip approval
-        result = await executePiCommitSession({
-          prompt: params.prompt,
-          quick: params.quick,
-          model: params.model,
-          tuiMode: true,
-          yes: true,
-        });
-      }
-    }
-
+    // Single-pass: run commit workflow with TUI-native approval.
+    // Set the TUI confirm callback so the workflow's confirmPrompt uses
+    // ctx.ui.confirm() instead of readline. No two-pass dance needed.
     if (ctx.hasUI) {
-      const uiState = createPiCommitWorkflowUiState(result);
-      ctx.ui.setStatus('repo-commit-tool', uiState.statusText);
-      clearPiOperatorWidgets(ctx);
+      setTuiConfirm(async (question) => {
+        return await ctx.ui.confirm('Approve commit?', question);
+      });
     }
+    try {
+      let result = await executePiCommitSession({
+        prompt: params.prompt,
+        quick: params.quick,
+        model: params.model,
+        tuiMode: ctx.hasUI,
+        singlePassApproval: ctx.hasUI,
+      });
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: result
-            ? `Commit workflow status: ${result.status} (${result.phase})`
-            : 'Commit workflow status: clean',
+      if (ctx.hasUI) {
+        const uiState = createPiCommitWorkflowUiState(result);
+        ctx.ui.setStatus('repo-commit-tool', uiState.statusText);
+        clearPiOperatorWidgets(ctx);
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: result
+              ? `Commit workflow status: ${result.status} (${result.phase})`
+              : 'Commit workflow status: clean',
+          },
+        ],
+        details: {
+          result,
         },
-      ],
-      details: {
-        result,
-      },
-    };
+      };
+    } finally {
+      // Reset the callback after the run so it doesn't leak to other calls.
+      setTuiConfirm(null);
+    }
   },
 });
 

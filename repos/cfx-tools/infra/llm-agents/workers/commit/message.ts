@@ -7,6 +7,14 @@ import { unique } from '../shared/logging.ts';
 import { changedFilesList } from './scope.ts';
 import { validateCommitJson } from './validate.ts';
 
+// Optional TUI-native confirmation callback. When set (by the PI tool in
+// single-pass TUI mode), confirmPrompt uses it instead of readline, avoiding
+// the need for a two-pass approval flow.
+let _tuiConfirm: ((question: string) => Promise<boolean>) | null = null;
+export function setTuiConfirm(cb: ((question: string) => Promise<boolean>) | null): void {
+  _tuiConfirm = cb;
+}
+
 export async function generateCommitMessage(preflightCtx, changesetPlan, flags) {
   const changesetSummary = renderChangesetGuidance(changesetPlan).join('\n');
 
@@ -169,6 +177,13 @@ function renderChangesetGuidance(changesetPlan) {
 }
 
 export async function confirmPrompt(question) {
+  // When a TUI-native confirm callback is set (by the PI tool in
+  // single-pass TUI mode), use it instead of readline. This avoids
+  // the two-pass approval dance — the TUI shows its own confirm
+  // dialog and the result flows back here directly.
+  if (_tuiConfirm) {
+    return _tuiConfirm(question);
+  }
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   return new Promise((resolve) => {
     rl.question(`\n  ${question}`, (answer) => {

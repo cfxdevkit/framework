@@ -185,6 +185,7 @@ interface LlmAgentsModule {
         messageGenerationModel?: string | null;
         failureAnalysisModel?: string | null;
       };
+      tuiConfirm?: ((question: string) => Promise<boolean>) | null;
     },
   ) => Promise<PiCommitWorkflowResult | null>;
 }
@@ -219,11 +220,17 @@ export async function executePiCommitWorkflow(
       readonly failureAnalysisModel?: string | null;
     };
     approvalMode?: 'defer' | 'prompt' | 'auto-approve';
+    stdout?: NodeJS.WriteStream;
+    stderr?: NodeJS.WriteStream;
+    tuiConfirm?: ((question: string) => Promise<boolean>) | null;
   },
 ): Promise<PiCommitWorkflowResult | null> {
   return await (await loadLlmAgentsModule()).runCommitWorkflow(args, {
     approvalMode: options?.approvalMode ?? 'defer',
     ...(options?.modelPolicies ? { modelPolicies: options.modelPolicies } : {}),
+    ...(options?.stdout ? { stdout: options.stdout } : {}),
+    ...(options?.stderr ? { stderr: options.stderr } : {}),
+    ...(options?.tuiConfirm ? { tuiConfirm: options.tuiConfirm } : {}),
   });
 }
 

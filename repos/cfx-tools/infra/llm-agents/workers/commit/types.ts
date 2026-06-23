@@ -60,6 +60,11 @@ export interface CommitWorkflowOptions {
     readonly messageGenerationModel?: string | null;
     readonly failureAnalysisModel?: string | null;
   };
+  readonly stdout?: NodeJS.WriteStream;
+  readonly stderr?: NodeJS.WriteStream;
+  // TUI-native confirmation callback. When set, confirmPrompt() uses this
+  // instead of readline, enabling single-pass approval in TUI mode.
+  readonly tuiConfirm?: ((question: string) => Promise<boolean>) | null;
 }
 
 export type ExecutionContextLike = Awaited<ReturnType<typeof resolveExecutionContext>>;

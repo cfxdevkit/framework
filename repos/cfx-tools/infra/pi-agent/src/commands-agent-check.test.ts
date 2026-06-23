@@ -23,6 +23,7 @@ vi.mock('./providers.js', () => ({
 vi.mock('./tools.js', () => ({
   executePiRepoAction: vi.fn(),
   executePiCommitSession: vi.fn(),
+  setTuiConfirm: vi.fn(),
 }));
 
 import { registerPiRepoCommands } from './commands.js';

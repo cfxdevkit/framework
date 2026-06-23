@@ -76,25 +76,31 @@ describe('executePiCommitSession', () => {
   it('derives commit and failure-analysis models from action policies', async () => {
     await executePiCommitSession({ prompt: 'Prepare the commit' });
 
-    expect(llmAgentsRuntime.executePiCommitWorkflow).toHaveBeenCalledWith(['Prepare the commit'], {
-      approvalMode: 'defer',
-      modelPolicies: {
-        messageGenerationModel: 'message-model',
-        failureAnalysisModel: 'failure-model',
-      },
-    });
+    expect(llmAgentsRuntime.executePiCommitWorkflow).toHaveBeenCalledWith(
+      ['Prepare the commit'],
+      expect.objectContaining({
+        approvalMode: 'defer',
+        modelPolicies: {
+          messageGenerationModel: 'message-model',
+          failureAnalysisModel: 'failure-model',
+        },
+      }),
+    );
   });
 
   it('lets an explicit model override both policy-selected models', async () => {
     await executePiCommitSession({ model: 'explicit-model' });
 
-    expect(llmAgentsRuntime.executePiCommitWorkflow).toHaveBeenCalledWith([], {
-      approvalMode: 'defer',
-      modelPolicies: {
-        messageGenerationModel: 'explicit-model',
-        failureAnalysisModel: 'explicit-model',
-      },
-    });
+    expect(llmAgentsRuntime.executePiCommitWorkflow).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        approvalMode: 'defer',
+        modelPolicies: {
+          messageGenerationModel: 'explicit-model',
+          failureAnalysisModel: 'explicit-model',
+        },
+      }),
+    );
   });
 
   it('applies the commit profile as a temporary scoped config overlay', async () => {

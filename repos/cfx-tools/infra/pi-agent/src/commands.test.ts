@@ -11,6 +11,7 @@ const runtimeMocks = vi.hoisted(() => ({
 const toolMocks = vi.hoisted(() => ({
   executePiRepoAction: vi.fn(),
   executePiCommitSession: vi.fn(),
+  setTuiConfirm: vi.fn(),
 }));
 
 vi.mock('./providers.js', () => ({
@@ -24,6 +25,7 @@ vi.mock('./llm-agents-runtime.js', () => ({
 vi.mock('./tools.js', () => ({
   executePiRepoAction: toolMocks.executePiRepoAction,
   executePiCommitSession: toolMocks.executePiCommitSession,
+  setTuiConfirm: toolMocks.setTuiConfirm,
 }));
 
 import { registerPiRepoCommands } from './commands.js';
