@@ -19,7 +19,7 @@ vi.mock('./extension.js', () => ({
   piScopeEnvVar: 'CFXDEVKIT_PI_SCOPE',
 }));
 
-import { runPiCommit, runPiInteractive, runPiPrint, runPiRpc } from './runtime.js';
+import { runPiInteractive, runPiPrint, runPiRpc } from './runtime.js';
 
 const spawnMock = vi.mocked(spawn);
 
@@ -104,38 +104,6 @@ describe('pi runtime delegation', () => {
 
     await expect(runPiRpc()).rejects.toThrow('PI rpc mode exited with code 1');
   });
-
-  it.skipIf(process.env.CI)(
-    'boots interactive commit mode with a seeded commit-session prompt',
-    async () => {
-      providerBridgeFactory.mockResolvedValueOnce({
-        configPath: '/workspaces/root/.pi/providers.json',
-        scope: undefined,
-        pi: {
-          provider: 'openai',
-          model: 'demo-model',
-          env: {},
-        },
-      });
-
-      await runPiCommit({ promptArgs: ['Focus', 'on', 'docs', 'changes'] });
-
-      expect(spawnMock).toHaveBeenCalledWith(
-        'script',
-        expect.arrayContaining([
-          '-qc',
-          expect.stringContaining('/repos/cfx-tools/infra/pi-agent/node_modules/.bin/pi'),
-          '/dev/null',
-        ]),
-        expect.objectContaining({
-          cwd: '/workspaces/root',
-          env: expect.objectContaining({
-            CFXDEVKIT_LLM_CONFIG_PATH: '/workspaces/root/.pi/providers.json',
-          }),
-        }),
-      );
-    },
-  );
 
   it('awaits terminal setup before starting the PI interactive session', async () => {
     const order: string[] = [];

@@ -168,7 +168,7 @@ const repoCommitWorkflowTool = defineTool({
       });
     }
     try {
-      let result = await executePiCommitSession({
+      const result = await executePiCommitSession({
         prompt: params.prompt,
         quick: params.quick,
         model: params.model,

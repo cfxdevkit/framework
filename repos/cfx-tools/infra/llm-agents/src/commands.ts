@@ -4,7 +4,12 @@
  * Extracted from bin.ts to keep the main entry point under the file size limit.
  */
 
-import { runPiCommit, runPiInteractive, runPiPrint, runPiRpc } from '@cfxdevkit/pi-agent';
+import {
+  executePiCommitSession,
+  runPiInteractive,
+  runPiPrint,
+  runPiRpc,
+} from '@cfxdevkit/pi-agent';
 import { runAll } from '../workers/agents/all.js';
 import { runAgentCheck } from '../workers/agents/check.js';
 import { runReviewAgent } from '../workers/agents/review.js';
@@ -217,25 +222,32 @@ export async function handleCommit(args: string[]): Promise<void> {
   const { endpoint, args: commitArgs } = parseEndpointOverride(args);
   const { args: sessionArgs } = parseScopeFlag(commitArgs);
 
-  let scope: Parameters<typeof runPiCommit>[0]['scope'];
   let promptArgs: string[] = [];
+  let quick = false;
+  let model: string | undefined;
 
-  if (sessionArgs.length > 0) {
-    const scopeIndex = sessionArgs.indexOf('--scope');
-    if (scopeIndex >= 0 && scopeIndex + 1 < sessionArgs.length) {
-      scope = sessionArgs[scopeIndex + 1] as Parameters<typeof runPiCommit>[0]['scope'];
-      sessionArgs.splice(scopeIndex, 2);
+  for (let i = 0; i < sessionArgs.length; i++) {
+    if (sessionArgs[i] === '--quick') {
+      quick = true;
+    } else if (sessionArgs[i] === '--model' && i + 1 < sessionArgs.length) {
+      model = sessionArgs[i + 1];
+      i++;
+    } else {
+      promptArgs.push(sessionArgs[i]);
     }
-  }
-  if (sessionArgs.length > 0) {
-    promptArgs = sessionArgs;
   }
 
   if (endpoint) {
     process.env.PI_AGENT_ENDPOINT = endpoint;
   }
 
-  await runPiCommit({ scope, promptArgs });
+  await executePiCommitSession({
+    ...(promptArgs.length > 0 ? { prompt: promptArgs.join(' ') } : {}),
+    quick,
+    model,
+    tuiMode: true,
+    singlePassApproval: true,
+  });
 }
 
 export async function handlePrint(args: string[]): Promise<void> {

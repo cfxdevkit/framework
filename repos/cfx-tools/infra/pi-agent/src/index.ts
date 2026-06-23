@@ -23,12 +23,10 @@ export {
 } from './extension.js';
 export { createPiProviderBridge, type PiProviderBridge } from './providers.js';
 export {
-  type PiAgentCommitOptions,
   type PiAgentPrintOptions,
   type PiAgentRpcOptions,
   type PiAgentSessionOptions,
   type PiTerminalPhaseHooks,
-  runPiCommit,
   runPiInteractive,
   runPiPrint,
   runPiRpc,
@@ -50,7 +48,7 @@ export {
   executeCdkGenerate,
   executeCdkStatus,
 } from './tools/cdk.js';
-export { executePiRepoAction, registerPiRepoTools } from './tools.js';
+export { executePiCommitSession, executePiRepoAction, registerPiRepoTools } from './tools.js';
 export {
   applyPiOperatorUiState,
   clearPiWorkflowProgress,

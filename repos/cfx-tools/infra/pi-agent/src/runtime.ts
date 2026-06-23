@@ -24,8 +24,6 @@ export interface PiAgentPrintOptions extends PiAgentSessionOptions {
 
 export interface PiAgentRpcOptions extends PiAgentSessionOptions {}
 
-export interface PiAgentCommitOptions extends PiAgentSessionOptions {}
-
 export async function runPiInteractive(options: PiAgentSessionOptions = {}): Promise<void> {
   const extension = createPiAgentExtension(options.scope);
   const providerBridge = await createPiProviderBridge(options.scope);
@@ -59,13 +57,6 @@ export async function runPiRpc(options: PiAgentRpcOptions = {}): Promise<void> {
     extension,
     providerBridge,
     terminalPhases: options.terminalPhases,
-  });
-}
-
-export async function runPiCommit(options: PiAgentCommitOptions = {}): Promise<void> {
-  await runPiInteractive({
-    scope: options.scope,
-    promptArgs: [buildCommitSessionPrompt(options.promptArgs ?? [])],
   });
 }
 
@@ -200,19 +191,6 @@ function prependPathEntries(currentPath: string | undefined, entries: readonly s
   const pathEntries = currentPath ? currentPath.split(':') : [];
   const nextEntries = [...entries.filter(Boolean), ...pathEntries];
   return [...new Set(nextEntries)].join(':');
-}
-
-function buildCommitSessionPrompt(promptArgs: readonly string[]): string {
-  const operatorContext =
-    promptArgs.length > 0 ? `\n\nOperator context: ${promptArgs.join(' ')}` : '';
-  return (
-    [
-      'Start an interactive repository commit session.',
-      'Run /repo-commit to begin or rerun the commit workflow inside PI.',
-      'Inspect repository-policy and quality-gate status, keep the session open for remediation, and stop before final commit approval.',
-      'Use the shared repository workflows and remain in the PI session while issues are resolved.',
-    ].join(' ') + operatorContext
-  );
 }
 
 function findRepoRoot(startDir: string): string {
