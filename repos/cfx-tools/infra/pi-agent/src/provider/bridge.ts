@@ -75,6 +75,13 @@ function resolvePiCliInvocation(
   };
 }
 
+// Default context window: 256k (Qwen3.6-35B native window).
+// Models that need different windows can be overridden via the catalog
+// in ~/.pi/providers.json (the catalog is read by this file's config loader
+// when available, falling back to 256k for local openai-compat endpoints).
+const DEFAULT_CONTEXT_WINDOW = 262144;
+const DEFAULT_MAX_TOKENS = Math.floor(DEFAULT_CONTEXT_WINDOW * 0.9);
+
 function createPiProviderModels(
   models: readonly PiLlmModel[],
   defaultModel: string | null,
@@ -95,8 +102,8 @@ function createPiProviderModels(
         cacheRead: 0,
         cacheWrite: 0,
       },
-      contextWindow: 128000,
-      maxTokens: 8192,
+      contextWindow: DEFAULT_CONTEXT_WINDOW,
+      maxTokens: DEFAULT_MAX_TOKENS,
     };
   });
 }

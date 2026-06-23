@@ -1,0 +1,12 @@
+{
+  "providers": {
+    "openai-compat": {
+      "modelOverrides": {
+        "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0": {
+          "contextWindow": 262144,
+          "maxTokens": 235929
+        }
+      }
+    }
+  }
+}
