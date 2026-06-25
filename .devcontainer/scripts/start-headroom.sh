@@ -23,6 +23,7 @@ HEADROOM_PROXY_PORT="${HEADROOM_PROXY_PORT:-28787}"
 HEADROOM_UPSTREAM="${HEADROOM_UPSTREAM:-http://host.containers.internal:13305/}"
 HEADROOM_PID_FILE="${HOME}/.cache/headroom/proxy.pid"
 HEADROOM_LOG_DIR="${HOME}/.cache/headroom/logs"
+HEADROOM_STDOUT_LOG="$HEADROOM_LOG_DIR/headroom.stdout.log"
 HEADROOM_CACHE_DIR="${HEADROOM_UPSTREAM%/}"
 
 mkdir -p "$(dirname "$HEADROOM_PID_FILE")" "$HEADROOM_LOG_DIR"
@@ -48,11 +49,12 @@ run_proxy() {
   echo "  Cache dir:   $HEADROOM_CACHE_DIR"
   echo ""
 
-  headroom proxy \
+  nohup headroom proxy \
     --port "$HEADROOM_PROXY_PORT" \
     --openai-api-url "$HEADROOM_UPSTREAM" \
     --anthropic-api-url "$HEADROOM_UPSTREAM" \
-    --log-file "$HEADROOM_LOG_DIR/headroom.jsonl" &
+    --log-file "$HEADROOM_LOG_DIR/headroom.jsonl" \
+    >"$HEADROOM_STDOUT_LOG" 2>&1 < /dev/null &
 
   local pid=$!
   echo "$pid" > "$HEADROOM_PID_FILE"
@@ -81,12 +83,18 @@ stop_proxy() {
     pid=$(cat "$HEADROOM_PID_FILE")
     if kill -0 "$pid" 2>/dev/null; then
       kill "$pid" 2>/dev/null || true
-      wait "$pid" 2>/dev/null || true
+      for _ in {1..10}; do
+        if kill -0 "$pid" 2>/dev/null; then
+          sleep 0.2
+          continue
+        fi
+        break
+      done
       echo "  Headroom proxy stopped (PID $pid)"
     else
       echo "  Cleaning up stale PID file (PID $pid no longer running)"
-      rm -f "$HEADROOM_PID_FILE"
     fi
+    rm -f "$HEADROOM_PID_FILE"
   fi
 }
 

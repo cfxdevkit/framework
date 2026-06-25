@@ -37,7 +37,7 @@ projects:
   - 'repos/cfx-tools/packages/docs-pipeline'
   - 'repos/cfx-tools/packages/workspace-utils'
   - 'repos/cfx-tools/infra/llm-agents'
-  - 'repos/cfx-tools/infra/pi-agent'
+  - 'repos/cfx-tools/infra/pi-customization'
   - 'repos/cfx-tools/infra/tooling-cli'
   - 'repos/cfx-tools/packages/scaffold-cli'
   - 'repos/cfx-tools/packages/cli'

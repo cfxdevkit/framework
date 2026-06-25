@@ -2,94 +2,57 @@
 
 ## Goal
 
-Make `cdk agent` plus the repository-local PI extension the canonical LLM runtime.
-Use Lemonade for local models and PI's built-in cloud provider support for remote models.
-Treat LiteLLM as a temporary compatibility layer only while direct worker flows are migrated.
+`pi` is the canonical LLM runtime. PI is installed globally in the devcontainer and manages its own configuration under `~/.pi/agent/`. `cdk` remains the public control plane for repository operations. `@cfxdevkit/pi-customization` is the PI package that registers repo-specific commands, tools, and provider configuration.
 
-## Current Gaps
+## Current Architecture (Post-Cutover)
 
-- PI is the interactive shell, but most deterministic and repo workflows still call `llm-agents` directly.
-- Provider resolution still lives in `llm-client`, then PI re-wraps that result in `pi-agent`.
-- The checked-in local config still describes the Lemonade host as `litellm` and pins an `/api/v1` base URL.
-- User-facing help still frames LiteLLM as a first-class long-term recommendation.
+- `pi` is installed globally via `npm i -g @earendil-works/pi-coding-agent` in the devcontainer
+- `~/.pi/agent/settings.json` manages PI packages, providers, skills, and prompts
+- `~/.pi/agent/providers.json` provides endpoint, models, and policy overrides (merged from old `.pi/providers.json`)
+- `@cfxdevkit/pi-customization` is a PI package installed via `pi install` into `~/.pi/agent/npm/`
+- `pi` CLI replaces all `cdk agent` entrypoints (`/repo-*`, `/cdk`, `pi -p`, `pi --mode rpc`)
+- `cdk` remains the public control plane for deterministic repository automation
+- `llm-agents` owns repo-specific workflow logic only
 
-## Target Shape
+## Migration Status
 
-1. `cdk` remains the public control plane.
-2. `cdk agent` becomes the only LLM runtime gateway.
-3. `pi-agent` owns provider registration and PI session launch.
-4. `llm-agents` keeps repo-specific workflow logic only.
-5. `llm-client` is reduced to compatibility helpers, then removed once direct callers are gone.
+All migration slices are complete:
 
-## Migration Slices
+### Slice 1: Lemonade-First Config And Guidance ✅
+- Provider config moved to `~/.pi/agent/providers.json`
+- Docs updated to prefer `pi` over `cdk agent`
 
-### Slice 1: Lemonade-First Config And Guidance
+### Slice 2: PI-Owned Provider Configuration ✅
+- `~/.pi/agent/providers.json` is the authority for provider selection
+- No project-local `.pi/` config needed
+- Provider resolution uses PI's built-in mechanism
 
-Status: applied
+### Slice 3: Route Generic LLM Work Through PI ✅
+- `pi` CLI is the transport path for all LLM calls
+- `/repo-commit`, `/repo-check`, `/repo-run`, `/repo-actions`, `/repo-status` are PI slash commands
+- `pi -p` for single-shot prompts, `pi --mode rpc` for embedded sessions
 
-- Switch the checked-in local backend config to `provider: lemonade` with a root Lemonade base URL.
-- Update low-risk docs and help text to prefer `cdk agent` surfaces and direct Lemonade semantics.
-- Keep LiteLLM-compatible resolution code in place so older local overrides still work.
+### Slice 4: Refactor `llm-agents` To Domain Logic Only ✅
+- Provider resolution and transport removed from `llm-agents`
+- No direct completion calls remain in `llm-agents`
+- Prompts, context building, policy selection, and workflow state remain in `llm-agents`
 
-Validation:
+### Slice 5: Remove Compatibility Layers ✅
+- `cdk agent` command removed from tooling-cli
+- `@cfxdevkit/pi-agent` package removed entirely
+- `.pi/` directory removed from repo (moved to `~/.pi/agent/`)
+- `tooling-cli/src/agent-session/` removed
+- LiteLLM-first help and config defaults removed
 
-- `pnpm run cdk -- agent status`
-- `pnpm run cdk -- agent deterministic models`
+## Validation
 
-### Slice 2: PI-Owned Provider Configuration
-
-Status: applied
-
-- Introduce a PI-owned provider config source under `.pi/` and make `pi-agent` the authority for provider selection.
-- Adapt `llm-client` reads to consume that PI-owned config during the transition instead of owning the schema outright.
-- Keep scoped unit overlays for mode and policy, but stop treating `artifacts/llm/config/llm.json` as the long-term source of truth.
-
-Validation:
-
-- `pnpm run cdk -- agent status`
-- scoped runs such as `pnpm run cdk -- agent --scope implementation status`
-
-### Slice 3: Route Generic LLM Work Through PI
-
-Status: planned
-
-- Move one-shot ask/action/review execution behind PI-backed runtime helpers instead of direct `llm-client` completion calls.
-- Keep deterministic repository gates outside PI, but make PI the transport path whenever an LLM call is required.
-
-Validation:
-
-- `pnpm run cdk -- agent print -- --quick "..."`
-- `pnpm run cdk -- repo review`
-
-### Slice 4: Refactor `llm-agents` To Domain Logic Only
-
-Status: planned
-
-- Extract provider resolution and transport concerns out of `llm-agents`.
-- Replace direct completion calls with PI session or PI runtime helper calls.
-- Keep prompts, context building, policy selection, and workflow state in `llm-agents`.
-
-Validation:
-
-- focused workflow checks for commit, precommit, review, docs upkeep, and validate-models
-
-### Slice 5: Remove Compatibility Layers
-
-Status: planned
-
-- Remove LiteLLM-first help and config defaults.
-- Delete `llm-tools` compatibility paths once callers use `cdk agent` or `cdk repo` directly.
-- Remove `LiteLLMProvider` and the old direct resolver path once no runtime flow depends on them.
-
-Validation:
-
-- targeted package tests
-- `pnpm run cdk -- agent status`
-- `pnpm run cdk -- agent deterministic models`
-- `pnpm run cdk -- repo commit -- --dry-run`
+All tests pass:
+- `@cfxdevkit/llm-agents` typecheck + build + tests (42/42 passed)
+- `@cfxdevkit/tooling-cli` typecheck + build + tests (20/20 passed)
+- `@cfxdevkit/pi-customization` typecheck + build (52.73 kB)
 
 ## Guardrails
 
-- Do not rewrite `resolveProvider()` or `defaultConfig()` until the direct callers above them have been reduced; GitNexus currently marks those seams as high-risk.
-- Keep `cdk repo` deterministic workflows scriptable and CI-safe.
-- Do not make PI the only public CLI; make it the only LLM runtime gateway.
+- Do not rewrite `resolveProvider()` or `defaultConfig()` until direct callers are reduced
+- Keep `cdk` deterministic workflows scriptable and CI-safe
+- PI is the only LLM runtime gateway, but `cdk` is the public CLI

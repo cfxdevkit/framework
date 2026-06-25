@@ -5,9 +5,9 @@ description: Code intelligence for the framework project. Use for impact analysi
 
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **framework** (9599 symbols, 20712 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **framework** (9,465 symbols, 20,342 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
-> Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
+> Index stale? Run `gitnexus analyze` from the project root.
 
 ## Always Do
 
@@ -102,11 +102,15 @@ This project is indexed by GitNexus as **framework** (9599 symbols, 20712 relati
 
 ## CLI
 
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+| Task | Command / Skill |
+|------|-----------------|
+| Understand architecture / "How does X work?" | `skill:gitnexus-exploring` |
+| Blast radius / "What breaks if I change X?" | `skill:gitnexus-impact-analysis` |
+| Trace bugs / "Why is X failing?" | `skill:gitnexus-debugging` |
+| Rename / extract / split / refactor | `skill:gitnexus-refactoring` |
+| Review PR / assess merge risk | `skill:gitnexus-pr-review` |
+| Index / rebuild knowledge graph | `gitnexus analyze` |
+| Index status | `gitnexus status` |
+| List indexed repos | `gitnexus list` |
+| Clean index | `gitnexus clean` |
+| Generate wiki | `gitnexus wiki` |

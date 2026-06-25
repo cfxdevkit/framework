@@ -15,7 +15,6 @@ tasks:
     deps:
       - 'cdk-repo-check:build'
       - 'llm-agents:build'
-      - 'pi-agent:build'
       - 'docs-pipeline:build'
     inputs:
       - '@group(sources)'
@@ -26,7 +25,7 @@ tasks:
       mergeOutputs: 'replace'
       cache: true
 
-  # ── repo operations (call underlying packages directly) ───────────
+  # ── repo operations ───────────────────────────────────────────────
   repo-build:
     script: 'moon run :build --concurrency 3'
     options:
@@ -52,23 +51,15 @@ tasks:
     options:
       mergeArgs: 'replace'
   repo-review:
-    script: 'pnpm run agent'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory validation'
     options:
       mergeArgs: 'replace'
   repo-precommit:
     script: 'pnpm --filter @cfxdevkit/llm-agents deterministic precommit'
     options:
       mergeArgs: 'replace'
-  repo-commit:
-    script: 'pnpm --filter @cfxdevkit/llm-agents agent-commit'
-    options:
-      mergeArgs: 'replace'
-  repo-units:
-    script: 'pnpm run repo-check --units'
-    options:
-      mergeArgs: 'replace'
 
-  # ── agent/LLM operations (call underlying packages directly) ──────
+  # ── agent/LLM operations (standalone workflows only) ──────────────
   agent-smoke:
     script: 'pnpm --filter @cfxdevkit/llm-agents agent-smoke'
     options:
@@ -98,27 +89,11 @@ tasks:
     options:
       mergeArgs: 'replace'
   agent-deterministic:
-    script: 'pnpm --filter @cfxdevkit/llm-agents agent-deterministic'
+    script: 'pnpm --filter @cfxdevkit/llm-agents deterministic'
     options:
       mergeArgs: 'replace'
   agent-exploratory:
-    script: 'pnpm --filter @cfxdevkit/llm-agents agent-exploratory'
-    options:
-      mergeArgs: 'replace'
-  agent-chat:
-    script: 'pnpm run agent'
-    options:
-      mergeArgs: 'replace'
-  agent-commit:
-    script: 'pnpm run agent-commit'
-    options:
-      mergeArgs: 'replace'
-  agent-print:
-    script: 'pnpm run agent-print'
-    options:
-      mergeArgs: 'replace'
-  agent-rpc:
-    script: 'pnpm run agent-rpc'
+    script: 'pnpm --filter @cfxdevkit/llm-agents exploratory'
     options:
       mergeArgs: 'replace'
 

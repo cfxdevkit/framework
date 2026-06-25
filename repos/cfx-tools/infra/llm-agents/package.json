@@ -38,12 +38,6 @@
     "agent-merge": "tsx src/bin.ts merge",
     "agent-endpoints": "tsx src/bin.ts endpoints",
     "agent-modes": "tsx src/bin.ts modes",
-    "agent-deterministic": "tsx src/bin.ts deterministic",
-    "agent-exploratory": "tsx src/bin.ts exploratory",
-    "agent-chat": "tsx src/bin.ts chat",
-    "agent-commit": "tsx src/bin.ts commit",
-    "agent-print": "tsx src/bin.ts print",
-    "agent-rpc": "tsx src/bin.ts rpc",
     "agent-reviews": "tsx src/bin.ts exploratory all",
     "agent-validation": "tsx src/bin.ts exploratory validation",
     "deterministic": "tsx src/bin.ts deterministic",
@@ -52,7 +46,6 @@
   "dependencies": {
     "@cfxdevkit/cdk-repo-check": "workspace:*",
     "@cfxdevkit/docs-pipeline": "workspace:*",
-    "@cfxdevkit/pi-agent": "workspace:*",
     "tsx": "^4.20.6"
   },
   "devDependencies": {

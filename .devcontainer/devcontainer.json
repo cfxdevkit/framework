@@ -32,7 +32,6 @@
     "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
     "PNPM_HOME": "/home/node/.local/share/pnpm",
     "PNPM_STORE_PATH": "/home/node/.local/share/pnpm/store",
-    "CFXDEVKIT_INSTALL_PI_GITNEXUS": "0",
     "LEMONADE_URL": "http://localhost:28787/v1/",
     "LEMONADE_BASE_URL": "http://localhost:28787/v1/",
     "OPENAI_BASE_URL": "http://localhost:28787/v1",
@@ -82,7 +81,7 @@
     }
   },
   "initializeCommand": ".devcontainer/scripts/detect-docker-socket.sh",
-  "postCreateCommand": "bash .devcontainer/scripts/setup-local.sh",
+  "postCreateCommand": "bash .devcontainer/scripts/post-create.sh",
   "postStartCommand": ".devcontainer/scripts/post-start.sh",
   "customizations": {
     "vscode": {

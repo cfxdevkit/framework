@@ -72,7 +72,13 @@ RUN corepack enable \
   && corepack prepare pnpm@10.33.2 --activate \
   && npm cache clean --force \
   && mkdir -p /home/node/.local/share/pnpm/store /home/node/.cache/moon /home/node/.cfxdevkit \
-  && chown -R node:node /home/node/.local /home/node/.cache /home/node/.cfxdevkit
+  && mkdir -p /home/node/.npm-global/bin /home/node/.npm-global/lib/node_modules \
+  && chown -R node:node /home/node/.local /home/node/.cache /home/node/.cfxdevkit /home/node/.npm-global
+
+# PI (Coding Agent) — installed as root so it writes to ~/.npm-global (user-writable prefix).
+# Avoids the EACCES that happens when npm i -g targets root-owned /usr/local/... paths.
+RUN npm i -g --ignore-scripts @earendil-works/pi-coding-agent@0.80.2 --prefix /home/node/.npm-global \
+  && chown -R node:node /home/node/.npm-global
 
 USER node
 
@@ -98,10 +104,10 @@ RUN /opt/headroom/bin/pip install --no-cache-dir "headroom-ai[proxy,mcp,ml,code]
 ENV PATH=/opt/headroom/bin:${PATH}
 USER node
 
-ENV PATH=/home/node/.moon:${PATH}
+ENV PATH=/home/node/.npm-global/bin:/home/node/.moon:${PATH}
 
-# pi-web-access is installed by post-create.sh so it persists across rebuilds
-# See post-create.sh for the install + symlink logic
+# pi-web-access is installed by post-start.sh (and post-create.sh for first boot)
+# See post-start.sh for the install + symlink logic
 
 RUN pnpm config set store-dir /home/node/.local/share/pnpm/store
 

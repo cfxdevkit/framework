@@ -1,15 +1,10 @@
 /**
  * Command handlers for @cfxdevkit/llm-agents CLI.
  *
- * Extracted from bin.ts to keep the main entry point under the file size limit.
+ * All PI agent runtime integration moved to @cfxdevkit/pi-customization.
+ * This file handles only the standalone workflow commands.
  */
 
-import {
-  executePiCommitSession,
-  runPiInteractive,
-  runPiPrint,
-  runPiRpc,
-} from '@cfxdevkit/pi-agent';
 import { runAll } from '../workers/agents/all.js';
 import { runAgentCheck } from '../workers/agents/check.js';
 import { runReviewAgent } from '../workers/agents/review.js';
@@ -27,7 +22,7 @@ import {
 import { listRepoActions } from '../workers/shared/repo-actions.js';
 import { runTestUpkeep } from '../workers/tests/index.js';
 import { printDeterministicHelp, printExploratoryHelp, printPrintMode } from './help.js';
-import { isHelpToken, parseEndpointOverride, parseScopeFlag } from './helpers.js';
+import { isHelpToken, parseScopeFlag } from './helpers.js';
 
 export async function handleEndpoints(_args: string[]): Promise<void> {
   const config = await readConfig();
@@ -193,96 +188,28 @@ export async function handleExploratory(args: string[]): Promise<void> {
   }
 }
 
-export async function handleChat(args: string[]): Promise<void> {
-  const { endpoint, args: chatArgs } = parseEndpointOverride(args);
-  const { args: sessionArgs } = parseScopeFlag(chatArgs);
-
-  let scope: Parameters<typeof runPiInteractive>[0]['scope'];
-  let promptArgs: string[] = [];
-
-  if (sessionArgs.length > 0) {
-    const scopeIndex = sessionArgs.indexOf('--scope');
-    if (scopeIndex >= 0 && scopeIndex + 1 < sessionArgs.length) {
-      scope = sessionArgs[scopeIndex + 1] as Parameters<typeof runPiInteractive>[0]['scope'];
-      sessionArgs.splice(scopeIndex, 2);
-    }
-  }
-  if (sessionArgs.length > 0) {
-    promptArgs = sessionArgs;
-  }
-
-  if (endpoint) {
-    process.env.PI_AGENT_ENDPOINT = endpoint;
-  }
-
-  await runPiInteractive({ scope, promptArgs });
+export async function handleChat(_args: string[]): Promise<void> {
+  console.error('Chat mode has been removed. Use PI interactive mode instead.');
+  printPrintMode();
+  process.exitCode = 1;
 }
 
-export async function handleCommit(args: string[]): Promise<void> {
-  const { endpoint, args: commitArgs } = parseEndpointOverride(args);
-  const { args: sessionArgs } = parseScopeFlag(commitArgs);
-
-  let promptArgs: string[] = [];
-  let quick = false;
-  let model: string | undefined;
-
-  for (let i = 0; i < sessionArgs.length; i++) {
-    if (sessionArgs[i] === '--quick') {
-      quick = true;
-    } else if (sessionArgs[i] === '--model' && i + 1 < sessionArgs.length) {
-      model = sessionArgs[i + 1];
-      i++;
-    } else {
-      promptArgs.push(sessionArgs[i]);
-    }
-  }
-
-  if (endpoint) {
-    process.env.PI_AGENT_ENDPOINT = endpoint;
-  }
-
-  await executePiCommitSession({
-    ...(promptArgs.length > 0 ? { prompt: promptArgs.join(' ') } : {}),
-    quick,
-    model,
-    tuiMode: true,
-    singlePassApproval: true,
-  });
+export async function handleCommit(_args: string[]): Promise<void> {
+  console.error('Commit mode has been removed. Use PI commit workflow instead.');
+  console.log(`Usage: /repo-commit [--quick] [--model <id>] [prompt]`);
+  console.log(`Or use PI interactive: pi`);
+  console.log(`Then: /repo-commit`);
+  process.exitCode = 1;
 }
 
-export async function handlePrint(args: string[]): Promise<void> {
-  const dashIndex = args.indexOf('--');
-  if (dashIndex < 0 || dashIndex === args.length - 1) {
-    printPrintMode();
-    return;
-  }
-  const endpointArgs = args.slice(0, dashIndex);
-  const { endpoint } = parseEndpointOverride(endpointArgs);
-  const promptText = args.slice(dashIndex + 1).join(' ');
-
-  if (endpoint) {
-    process.env.PI_AGENT_ENDPOINT = endpoint;
-  }
-
-  await runPiPrint({ promptArgs: [promptText] });
+export async function handlePrint(_args: string[]): Promise<void> {
+  console.error('Print mode has been removed. Use PI print mode instead.');
+  printPrintMode();
+  process.exitCode = 1;
 }
 
-export async function handleRpc(args: string[]): Promise<void> {
-  const { endpoint, args: rpcArgs } = parseEndpointOverride(args);
-  const { args: sessionArgs } = parseScopeFlag(rpcArgs);
-
-  let scope: Parameters<typeof runPiRpc>[0]['scope'];
-
-  if (sessionArgs.length > 0) {
-    const scopeIndex = sessionArgs.indexOf('--scope');
-    if (scopeIndex >= 0 && scopeIndex + 1 < sessionArgs.length) {
-      scope = sessionArgs[scopeIndex + 1] as Parameters<typeof runPiRpc>[0]['scope'];
-    }
-  }
-
-  if (endpoint) {
-    process.env.PI_AGENT_ENDPOINT = endpoint;
-  }
-
-  await runPiRpc({ scope });
+export async function handleRpc(_args: string[]): Promise<void> {
+  console.error('RPC mode has been removed. Use PI RPC mode instead.');
+  console.log(`Usage: pi --mode rpc`);
+  process.exitCode = 1;
 }
