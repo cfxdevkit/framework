@@ -1,14 +1,14 @@
-import { commitPreflightBlock } from '../completion/index.ts';
+import { commitPreflightBlock } from '../completion/index.js';
 import {
   resolveExecutionContext,
   toExecutionContextRuntimePayload,
-} from '../shared/execution-context.ts';
-import { unique } from '../shared/logging.ts';
-import { generateChangesetPlan, writeChangesetFile } from './changeset.ts';
-import { analyzeGateFailures } from './failure-analysis.ts';
-import { parseCommitFlags } from './flags.ts';
-import { runQualityGates, runRepositoryPolicyGates } from './gates.ts';
-import { summarizeWorkingSet } from './hud.ts';
+} from '../shared/execution-context.js';
+import { unique } from '../shared/logging.js';
+import { generateChangesetPlan, writeChangesetFile } from './changeset.js';
+import { analyzeGateFailures } from './failure-analysis.js';
+import { parseCommitFlags } from './flags.js';
+import { runQualityGates, runRepositoryPolicyGates } from './gates.js';
+import { summarizeWorkingSet } from './hud.js';
 import {
   assertNoUnexpectedChanges,
   confirmPrompt,
@@ -18,16 +18,16 @@ import {
   resolveFilesToStage,
   setTuiConfirm,
   writeCommitReport,
-} from './message.ts';
-import { detectChangedScopes } from './scope.ts';
+} from './message.js';
+import { detectChangedScopes } from './scope.js';
 import {
   createWorkflowTerminalUi,
   summarizeCommitPreview,
   summarizeFailureAnalysis,
   summarizeGateFailures,
 } from './terminal/ui';
-import type { CommitWorkflowOptions, CommitWorkflowResult } from './types.ts';
-import * as R from './commit-results.ts';
+import type { CommitWorkflowOptions, CommitWorkflowResult } from './types.js';
+import * as R from './commit-results.js';
 
 export async function runCommitWorkflow(
   args,

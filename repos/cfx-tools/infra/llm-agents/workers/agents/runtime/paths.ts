@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { extname, relative } from 'node:path';
-import { root } from './constants.ts';
+import { root } from './constants.js';
 
 export function isSecuritySensitive(file) {
   return /keystore|wallet|secret|security|release|workflow|mcp-server|vscode-extension|audit/i.test(

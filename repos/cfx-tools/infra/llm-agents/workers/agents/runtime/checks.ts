@@ -1,7 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { execFileAsync, generatedDirs, root } from './constants.ts';
-import { isSecuritySensitive, toRel } from './paths.ts';
+import { execFileAsync, generatedDirs, root } from './constants.js';
+import { isSecuritySensitive, toRel } from './paths.js';
 
 export async function checkMoonRegistration() {
   const findings = [];
@@ -42,7 +42,7 @@ export async function checkPackageExports() {
     if (!rel.startsWith('repos/') && !rel.startsWith('projects/examples/packages/')) continue;
     const pkg = JSON.parse(await readFile(packageJson, 'utf8'));
     if (!pkg.exports || typeof pkg.exports !== 'object') continue;
-    const vitePath = join(root, rel, 'vite.config.ts');
+    const vitePath = join(root, rel, 'vite.config.js');
     let vite = '';
     try {
       vite = await readFile(vitePath, 'utf8');

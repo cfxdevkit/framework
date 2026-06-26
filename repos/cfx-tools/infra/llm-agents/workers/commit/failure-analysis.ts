@@ -1,10 +1,10 @@
-import { completeStructuredAgent } from '../completion/index.ts';
+import { completeStructuredAgent } from '../completion/index.js';
 import {
   type ExecutionContextSummary,
   renderExecutionContextLines,
-} from '../shared/execution-context.ts';
-import { createLlmProgressReporter } from '../shared/logging.ts';
-import type { GateReport } from './gates.ts';
+} from '../shared/execution-context.js';
+import { createLlmProgressReporter } from '../shared/logging.js';
+import type { GateReport } from './gates.js';
 
 export type GateFailureAnalysis = {
   attempted: boolean;

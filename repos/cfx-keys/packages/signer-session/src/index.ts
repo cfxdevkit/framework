@@ -35,7 +35,7 @@
 import { createFileKeystoreSignerSession } from './backends/file-keystore.js';
 import { createLedgerSignerSession } from './backends/ledger.js';
 import { createMemorySignerSession } from './backends/memory.js';
-import { createOneKeySignerSession } from './backends/onekey.js';
+import { createOneKeySignerSession } from './backends/onekey-backend.js';
 import { readSignerConfig, resolveSignerEntry, type SignerEntry } from './config.js';
 import { createOneKeySignerSessionFromConfig } from './onekey-session.js';
 import type { SignerSession, SignerSessionInput } from './types.js';

@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { execFileAsync, root } from './constants.ts';
+import { execFileAsync, root } from './constants.js';
 
 export async function codeHotspotReport() {
   try {
@@ -8,7 +8,7 @@ export async function codeHotspotReport() {
       [
         'exec',
         'tsx',
-        join(root, 'repos/cfx-tools/packages/arch-check/src/bin/check-hotspots.ts'),
+        join(root, 'repos/cfx-tools/packages/arch-check/src/bin/check-hotspots.js'),
         '--json',
       ],
       {

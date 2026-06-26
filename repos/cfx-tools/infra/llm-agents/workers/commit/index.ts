@@ -1,14 +1,14 @@
-import { runCommitWorkflow } from './commit.ts';
-import { parseCommitFlags } from './flags.ts';
-import { runPrecommitWorkflow } from './precommit.ts';
-import type { CommitWorkflowResult, PrecommitWorkflowResult } from './types.ts';
+import { runCommitWorkflow } from './commit.js';
+import { parseCommitFlags } from './flags.js';
+import { runPrecommitWorkflow } from './precommit.js';
+import type { CommitWorkflowResult, PrecommitWorkflowResult } from './types.js';
 
-export { changedFilesList, detectChangedScopes, resolveScope } from './scope.ts';
+export { changedFilesList, detectChangedScopes, resolveScope } from './scope.js';
 export type {
   CommitWorkflowOptions,
   CommitWorkflowResult,
   PrecommitWorkflowResult,
-} from './types.ts';
+} from './types.js';
 export { parseCommitFlags, runCommitWorkflow, runPrecommitWorkflow };
 
 export async function runPrecommit(args): Promise<PrecommitWorkflowResult> {

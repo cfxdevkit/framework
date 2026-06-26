@@ -1,5 +1,5 @@
-import { resolveExecutionContext } from '../shared/execution-context.ts';
-import { execFileAsync, root } from '../shared/index.ts';
+import { resolveExecutionContext } from '../shared/execution-context.js';
+import { execFileAsync, root } from '../shared/index.js';
 import {
   materializeOpenSpecChanges,
   readValidationArtifact,
@@ -9,7 +9,7 @@ import { buildAgentCheckPlan, collectActionableValidationSteps } from './check/p
 import { renderAgentCheckConsoleSummary, renderAgentCheckReport } from './check/render';
 import type { AgentCheckFlags, AgentCheckFollowUp, AgentCheckPlan } from './check/types';
 import { repoCheckCommand, validationArtifactPath } from './check/types';
-import { writeJsonReport, writeMarkdownReport } from './runtime/index.ts';
+import { writeJsonReport, writeMarkdownReport } from './runtime/index.js';
 
 export {
   normalizeAgentCheckPlan,

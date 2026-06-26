@@ -3,18 +3,10 @@ import type {
   ToolingCommandDefinition,
   ToolingNamespaceDefinition,
 } from './contracts.js';
-import { addressToolingNamespace } from './core/address-namespace.js';
-import { chainToolingNamespace } from './core/chain-namespace.js';
-import { keystoreToolingNamespace } from './core/keystore-namespace.js';
-import { unitsToolingNamespace } from './core/units-namespace.js';
-import { rootDocsToolingNamespace } from './docs/namespace.js';
+import { repoToolingNamespace } from './repo/namespace.js';
 
 export const toolingNamespaces = [
-  chainToolingNamespace,
-  addressToolingNamespace,
-  unitsToolingNamespace,
-  keystoreToolingNamespace,
-  rootDocsToolingNamespace,
+  repoToolingNamespace,
 ] as const satisfies readonly ToolingNamespaceDefinition[];
 
 export function findToolingNamespace(
@@ -70,10 +62,9 @@ export function formatToolingHelp(
     .join('\n\n');
 
   return `Usage:
-  cdk <namespace> <command> [args]
-  pnpm cdk -- <namespace> <command> [args]
+  repo <command> [args]
 
-Namespaces:
+Commands:
 ${namespaceBlock}
 
 Global commands:

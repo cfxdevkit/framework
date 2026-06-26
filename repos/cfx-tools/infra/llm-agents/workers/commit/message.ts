@@ -1,11 +1,11 @@
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { completeCommitAgent, git, readContextFile } from '../completion/index.ts';
-import { artifactsRoot, execFileAsync, repoActions, root } from '../shared/index.ts';
-import { unique } from '../shared/logging.ts';
-import { changedFilesList } from './scope.ts';
-import { validateCommitJson } from './validate.ts';
+import { completeCommitAgent, git, readContextFile } from '../completion/index.js';
+import { artifactsRoot, execFileAsync, repoActions, root } from '../shared/index.js';
+import { unique } from '../shared/logging.js';
+import { changedFilesList } from './scope.js';
+import { validateCommitJson } from './validate.js';
 
 // Optional TUI-native confirmation callback. When set (by the PI tool in
 // single-pass TUI mode), confirmPrompt uses it instead of readline, avoiding

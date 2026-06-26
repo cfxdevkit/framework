@@ -7,10 +7,10 @@
  *  3. LLM enrich each README (fill placeholders, add usage)
  */
 import { type DocsPackagePageRecord, discoverDocsPagePackages } from '@cfxdevkit/docs-pipeline';
-import { commandBlock } from '../completion/index.ts';
-import { logInfo, logStep } from '../shared/logging.ts';
-import { parseDocFlags } from './flags.ts';
-import { enrichReadmeMd } from './readme-enrichment.ts';
+import { commandBlock } from '../completion/index.js';
+import { logInfo, logStep } from '../shared/logging.js';
+import { parseDocFlags } from './flags.js';
+import { enrichReadmeMd } from './readme-enrichment.js';
 
 export type PkgEntry = Pick<DocsPackagePageRecord, 'rel' | 'name' | 'skeletonHash'>;
 

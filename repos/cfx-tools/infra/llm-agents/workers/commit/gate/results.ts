@@ -1,5 +1,5 @@
-import type { GateResult } from '../gates.ts';
-import { buildDeterministicHints, extractSignalLines } from './output.ts';
+import type { GateResult } from '../gates.js';
+import { buildDeterministicHints, extractSignalLines } from './output.js';
 
 export function extractGateSummary(output: string): string {
   const moonMatch = output.match(/Tasks:\s+\d+\s+completed[^\n]*/);

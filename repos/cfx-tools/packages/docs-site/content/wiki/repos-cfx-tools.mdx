@@ -47,7 +47,7 @@ The module is built around a `workers/` architecture where distinct agents handl
 
 Located in `workers/agents/check.ts`, this agent automates the remediation of repository validation failures. It follows a "Plan and Handoff" pattern:
 
-1.  **Validation:** Runs `pnpm cdk repo check` and reads the validation artifact (`artifacts/llm/repo-check/checks/validation.json`).
+1.  **Validation:** Runs `pnpm repo check` and reads the validation artifact (`artifacts/llm/repo-check/checks/validation.json`).
 2.  **Analysis:** Collects actionable steps (warnings/errors) and summarizes them for the LLM.
 3.  **Planning:** Uses `buildAgentCheckPlan` to generate a structured OpenSpec change set. The LLM is instructed to group related failures into contained remediation changes.
 4.  **Materialization:** Calls `materializeOpenSpecChanges` to generate proposal, design, spec, and task files based on the plan and live OpenSpec instructions.

@@ -1,7 +1,7 @@
-import type { ExecutionContextSummary } from '../shared/execution-context.ts';
-import { logInfo } from '../shared/logging.ts';
-import type { GateFailureAnalysis } from './failure-analysis.ts';
-import type { GateReport } from './gates.ts';
+import type { ExecutionContextSummary } from '../shared/execution-context.js';
+import { logInfo } from '../shared/logging.js';
+import type { GateFailureAnalysis } from './failure-analysis.js';
+import type { GateReport } from './gates.js';
 
 type ScopeSummary = {
   readonly label: string;

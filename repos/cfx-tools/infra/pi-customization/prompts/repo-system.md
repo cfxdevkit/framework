@@ -7,7 +7,8 @@ Conflux-focused framework with platform, domain, and project layers.
 
 ## 1. Repository Control Plane
 
-- **`cdk`** is the deterministic control plane for all repository operations.
+- **`repo`** is the control plane for repository management operations.
+- **`cfx`** is the control plane for blockchain operations.
 - Use repo-local prompts, skills, tooling, and artifacts when available.
 - Respect monorepo unit scoping when the active session declares a `--scope`.
 - Never bypass the control plane — every structural change flows through it.
@@ -19,27 +20,29 @@ Conflux-focused framework with platform, domain, and project layers.
 After any substantive edit, run the following validation sequence **in order**:
 
 ```
-cdk repo check          # full validation (gitnexus → format → lint → typecheck →
-                        #          tests → build → hotspots → kebab-groups → repo check)
+repo check          # full validation (gitnexus → format → lint → typecheck →
+                    #          tests → build → hotspots → kebab-groups → repo check)
 ```
 
-- Default to `cdk repo check` for repo-level validation.
-- Use `cdk repo check --step <id>` only for bounded reruns while fixing the current slice.
-- Use `cdk repo check --quick` for fast-passes when context is limited.
+- Default to `repo check` for repo-level validation.
+- Use `repo check hotspots` for hotspots only.
+- Use `repo check --quick` for fast-passes when context is limited.
 
-### When `cdk repo check` surfaces error-status steps
+### When `repo check` surfaces error-status steps
 
-1. Call **`repo_agent_check`** to auto-create OpenSpec changes for the failures.
-2. Apply them with **`/opsx-apply`** (or `/opsx-apply <change-name>`).
-3. **Never manually patch** issues that the check pipeline has already planned as a change.
-4. Confirm `repo_agent_check` passes cleanly before closing any task involving code changes.
+1. Report findings to the user.
+2. **In non-explore mode**: Ask if they want to auto-remediate with `repo_agent_check`.
+   - `repo_agent_check` will create OpenSpec changes (plan → user confirm → apply).
+   - The user may choose to fix minor issues manually instead.
+3. **In explore mode**: DO NOT auto-remediate. Just report findings.
+4. **Never auto-apply changes without user consent.**
 
 ### Precommit Gate
 
 Before archiving any OpenSpec change, run the full precommit:
 
 ```
-cdk repo precommit
+repo precommit
 ```
 
 This runs format → lint → typecheck → **tests** → build → repo-check.
@@ -86,7 +89,7 @@ Implements tasks from the change in order:
 
 1. Reads all context files (proposal, specs, design, tasks).
 2. Implements each pending task, marking it complete.
-3. Runs `cdk repo precommit` after all tasks.
+3. Runs `repo precommit` after all tasks.
 4. If precommit passes → suggests archive.
 5. If precommit fails → surfaces failing gates, offers `repo_agent_check` for
    structural follow-ups, does NOT archive until clean.
@@ -99,7 +102,7 @@ Implements tasks from the change in order:
 
 Finalizes the change:
 
-1. Runs `cdk repo precommit` — **required** before archive.
+1. Runs `repo precommit` — **required** before archive.
 2. Checks artifact and task completion.
 3. Syncs delta specs to main specs (if any).
 4. Moves the change to `openspec/changes/archive/YYYY-MM-DD-<name>/`.
@@ -139,7 +142,7 @@ When the change is ready to archive (`/opsx-archive`):
 4. The branch is deleted.
 
 **Guardrails:**
-- Never archive a change without first confirming `cdk repo precommit` passes.
+- Never archive a change without first confirming `repo precommit` passes.
 - Never merge a change that hasn't been archived first.
 - Never skip the branch — every change is isolated on its own branch.
 
@@ -176,7 +179,7 @@ The agent operates in two complementary modes:
 
 - System interaction and validation (checks, docs, structure).
 - No code generation — only analysis, reporting, and tooling.
-- Used for: `cdk repo check`, `cdk agent deterministic`, `repo_agent_check`.
+- Used for: `repo check`, `llm-agents deterministic`, `repo_agent_check`.
 
 ### Exploratory Mode
 
@@ -186,7 +189,7 @@ The agent operates in two complementary modes:
 
 Mode selection:
 ```
-cdk agent config set mode <deterministic|exploratory>
+llm-agents deterministic config set mode <deterministic|exploratory>
 ```
 
 ---
@@ -195,11 +198,12 @@ cdk agent config set mode <deterministic|exploratory>
 
 | Command | Purpose |
 |---------|---------|
-| `cdk agent chat [prompt]` | Start interactive PI session (defaults to local endpoint) |
+| `llm-agents deterministic` | Run deterministic repo workflow |
 | `cdk agent chat --endpoint <url> [prompt]` | Use custom OpenAI-compatible backend |
-| `cdk repo check` | Full validation sequence |
-| `cdk repo check --quick` | Fast validation pass |
-| `cdk repo precommit` | Full precommit (format → lint → typecheck → tests → build → repo-check) |
+| `repo check` | Full validation sequence |
+| `repo check hotspots` | Hotspots only |
+| `repo check --quick` | Fast validation pass |
+| `repo precommit` | Full precommit (format → lint → typecheck → tests → build → repo-check) |
 | `repo_agent_check` | Auto-create OpenSpec changes for validation failures |
 | `/repo-commit [prompt]` | TUI-native commit with approval dialog |
 | `/repo-check [--dry-run] [--create-branch] [--quick]` | Run repo validation pipeline |

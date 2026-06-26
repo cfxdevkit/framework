@@ -1,5 +1,5 @@
-import { isRecord, isStringRecord } from './guards.ts';
-import type { LlmConfig, LlmModelCatalogEntry, LlmProviderType, LlmTokenBudget } from './types.ts';
+import { isRecord, isStringRecord } from './guards.js';
+import type { LlmConfig, LlmModelCatalogEntry, LlmProviderType, LlmTokenBudget } from './types.js';
 
 export const DEFAULT_REQUEST_TIMEOUT_MS = 600000;
 

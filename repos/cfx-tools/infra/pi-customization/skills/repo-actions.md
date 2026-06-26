@@ -10,5 +10,5 @@ The PI runtime should surface repo workflows through the shared `llm-agents` act
 - Prefer the typed action metadata exported by `llm-agents`.
 - Preserve deterministic versus exploratory workflow intent in the UI.
 - Reuse structured execution context, gate reports, and failure analysis payloads when present.
-- Treat `cdk repo check` as the default ordered validation sequence: `gitnexus analyze` -> `format` -> `lint` -> `typecheck` -> `tests` -> `build` -> `hotspots` -> `kebab-groups` -> `repo check`.
+- Treat `repo check` as the default ordered validation sequence: `gitnexus analyze` -> `format` -> `lint` -> `typecheck` -> `tests` -> `build` -> `hotspots` -> `kebab-groups` -> `repo check`.
 - When a gate fails, rerun the smallest affected step first, then return to the full ordered sequence before closing the task.

@@ -77,7 +77,7 @@ Implement tasks from an OpenSpec change.
 
    Once all tasks are marked done, run a final repo check:
    ```bash
-   repo_agent_check  (or: cdk repo check)
+   repo_agent_check  (or: repo check)
    ```
 
    - **If check passes**: congratulate, suggest archive with `/opsx-archive`

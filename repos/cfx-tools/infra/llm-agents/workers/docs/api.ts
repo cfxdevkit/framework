@@ -7,10 +7,10 @@
  *  3. Call LLM enrichment per package
  */
 import { discoverApiTargets, refreshApiSkeletons } from '@cfxdevkit/docs-pipeline';
-import { logInfo, logStep } from '../shared/logging.ts';
+import { logInfo, logStep } from '../shared/logging.js';
 import { enrichApiMd } from './api/enrichment';
 import { precheckDocsApi } from './api/probe';
-import { parseDocFlags } from './flags.ts';
+import { parseDocFlags } from './flags.js';
 
 export async function runDocsApi(args: string[]): Promise<void> {
   if (args[0] === '--') args.shift();

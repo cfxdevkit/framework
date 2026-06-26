@@ -53,6 +53,6 @@ describe('commit worker wiring', () => {
     const source = await readFile(fileURLToPath(new URL('./commit.ts', import.meta.url)), 'utf8');
 
     expect(source).toContain('confirmPrompt(');
-    expect(source).toMatch(/import\s*\{[\s\S]*confirmPrompt[\s\S]*\}\s*from '\.\/message\.ts'/);
+    expect(source).toMatch(/import\s*\{[\s\S]*confirmPrompt[\s\S]*\}\s*from '\.\/message\.js'/);
   });
 });

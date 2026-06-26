@@ -1,9 +1,9 @@
-import { completeStructuredAgent, parseJsonObject } from '../completion/index.ts';
+import { completeStructuredAgent, parseJsonObject } from '../completion/index.js';
 import {
   addDeterministicTestUpkeepCoverage,
   buildFilesContext,
   fallbackTestUpkeepArtifact,
-} from './baseline.ts';
+} from './baseline.js';
 
 export async function generateTestUpkeepArtifact(pkg, baseContext, flags, childContext = '') {
   const inv = pkg.inventory;
@@ -120,7 +120,7 @@ export function normalizeTestSuggestion(s) {
   if (!s || typeof s.testFile !== 'string' || !Array.isArray(s.contentLines)) return null;
   const testFile = s.testFile.trim().replace(/^\.?\//, '');
   if (!testFile.startsWith('src/') || testFile.includes('..')) return null;
-  if (!testFile.endsWith('.test.ts') && !testFile.endsWith('.spec.ts')) return null;
+  if (!testFile.endsWith('.test.js') && !testFile.endsWith('.spec.js')) return null;
   const content = s.contentLines
     .filter((l) => typeof l === 'string')
     .join('\n')

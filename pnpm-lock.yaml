@@ -1167,6 +1167,12 @@ importers:
       '@cfxdevkit/codegen-contracts':
         specifier: workspace:*
         version: link:../codegen-contracts
+      '@cfxdevkit/services':
+        specifier: workspace:*
+        version: link:../../../cfx-keys/packages/services
+      '@cfxdevkit/signer-session':
+        specifier: workspace:*
+        version: link:../../../cfx-keys/packages/signer-session
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.4.15

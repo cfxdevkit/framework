@@ -33,7 +33,7 @@ export {
   type RepoActionName,
   type RepoActionUiMetadata,
   repoActions,
-} from './repo-actions.ts';
+} from './repo-actions.js';
 
 export const QUALITY_GATE_SPECS = [
   {

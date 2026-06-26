@@ -1,8 +1,12 @@
 import { parseArgs } from './args.js';
+import { addressFromFlags } from './commands/address.js';
+import { chainFromFlags } from './commands/chain.js';
 import { contractsExtractFromFlags } from './commands/contracts.js';
 import { deriveFromFlags } from './commands/derive.js';
 import { generateFromFlags } from './commands/generate.js';
+import { keystoreFromFlags } from './commands/keystore.js';
 import { statusFromFlags } from './commands/status.js';
+import { unitsFromFlags } from './commands/units.js';
 
 const HELP = `cfx — Conflux developer CLI
 
@@ -30,6 +34,25 @@ Commands:
   contracts extract                 Extract ABI + bytecode from Hardhat artifacts
     [--artifacts <dir>]             Source directory (default: artifacts)
     [--out <dir>]                   Output directory (default: src/generated/contracts)
+
+  chain list [--family <core|espace>] [--network <mainnet|testnet|devnet|local>] [--json]
+  chain show <id|name> [--json]
+  chain resolve <alias|id|name> [--json]
+
+  address validate <address> [--json]
+  address convert --to <hex|base32> <address> [--network-id <id>] [--json]
+  address normalize <address> [--json]
+
+  keystore status [--name <signer>] [--cwd <dir>] [--json]
+  keystore list [--cwd <dir>] [--json]
+  keystore use <name> [--cwd <dir>] [--json]
+  keystore set <name> --kind <memory|file-keystore|onekey|ledger> [flags] [--default] [--cwd <dir>] [--json]
+  keystore read [--name <signer>] [--keystore <path>] [--passphrase-env <env>] [--service <name>] [--account <name>] [--account-index <n>] [--cwd <dir>] [--json]
+  keystore ping [--name <signer>] [--message <text>] [--cwd <dir>] [--json]
+  keystore mnemonic <generate|validate|derive|add> [flags]
+
+  units parse --unit <cfx|drip|gdrip> <value> [--json]
+  units format --unit <cfx|drip|gdrip> <value> [--json]
 
 Global flags:
   --json                            Emit machine-readable JSON
@@ -74,6 +97,14 @@ export async function run(argv: readonly string[], opts: RunOptions = {}): Promi
         stderr.write(`cfx contracts: unknown subcommand "${subcommand}"\n\n${HELP}`);
         return 2;
       }
+      case 'chain':
+        return await chainFromFlags(parsed.flags, stdout);
+      case 'address':
+        return await addressFromFlags(parsed.flags, stdout);
+      case 'keystore':
+        return await keystoreFromFlags(parsed.flags, stdout);
+      case 'units':
+        return await unitsFromFlags(parsed.flags, stdout);
       default:
         stderr.write(`cfx: unknown command "${parsed.command}"\n\n${HELP}`);
         return 2;

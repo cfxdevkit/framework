@@ -1,7 +1,7 @@
 import { join, relative } from 'node:path';
-import { root } from '../shared/index.ts';
-import type { MonorepoUnit } from './types.ts';
-import { monorepoUnitSpecs } from './types.ts';
+import { root } from '../shared/index.js';
+import type { MonorepoUnit } from './types.js';
+import { monorepoUnitSpecs } from './types.js';
 
 export function findMonorepoUnitByConfigPath(
   configFilePath: string,

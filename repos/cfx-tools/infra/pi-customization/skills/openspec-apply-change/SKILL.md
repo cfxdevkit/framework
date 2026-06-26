@@ -75,7 +75,7 @@ with TUI-native approval.
    - Show which task is being worked on
    - Make the code changes required
    - Keep changes minimal and focused
-   - **Run `cdk repo precommit` after completing each major group of tasks** (not after every single task — batch by logical grouping)
+   - **Run `repo precommit` after completing each major group of tasks** (not after every single task — batch by logical grouping)
      - This catches issues early and keeps the working tree healthy
      - If precommit fails: fix the failures before continuing, or run `repo_agent_check` for structural issues
    - Mark task complete in the tasks file: `- [ ]` → `- [x]`
@@ -93,15 +93,15 @@ with TUI-native approval.
 
    Once all tasks are marked done, run the full precommit gate:
    ```bash
-   cdk repo precommit
+   repo precommit
    ```
    This runs the complete sequence: format → lint → typecheck → **tests** → build → repo-check.
-   Do NOT use `cdk repo check` or `repo_agent_check` alone — those skip tests.
+   Do NOT use `repo check` or `repo_agent_check` alone — those skip tests.
 
    - **If precommit passes**: congratulate, suggest archive with `/opsx-archive`
    - **If precommit fails**: surface the failing gate(s). Fix the failures before suggesting
      archive. Offer to call `repo_agent_check` to auto-create follow-up OpenSpec changes for
-     structural failures. Do NOT archive until `cdk repo precommit` returns `status: passed`.
+     structural failures. Do NOT archive until `repo precommit` returns `status: passed`.
 
 8. **On completion or pause, show status**
 
@@ -137,14 +137,14 @@ Working on task 4/7: <task description>
 **Schema:** <schema-name>
 **Progress:** 7/7 tasks complete ✓
 **Branch:** <branch-name> (ready to merge)
-**Validation:** ✓ `cdk repo precommit` passed
+**Validation:** ✓ `repo precommit` passed
 
 ### Completed This Session
 - [x] Task 1
 - [x] Task 2
 ...
 
-All tasks complete and `cdk repo precommit` clean! Ready to archive with `/opsx-archive`.
+All tasks complete and `repo precommit` clean! Ready to archive with `/opsx-archive`.
 ```
 
 **Output On Pause (Issue Encountered)**
@@ -176,7 +176,7 @@ What would you like to do?
 - If task is ambiguous, pause and ask before implementing
 - If implementation reveals issues, pause and suggest artifact updates
 - Keep code changes minimal and scoped to each task
-- Run `cdk repo precommit` after each logical group of tasks (not every single task)
+- Run `repo precommit` after each logical group of tasks (not every single task)
 - Update task checkbox immediately after completing each task
 - Pause on errors, blockers, or unclear requirements - don't guess
 - Use contextFiles from CLI output, don't assume specific file names

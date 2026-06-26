@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { readContextFile } from '../completion/index.ts';
-import { execFileAsync, root } from '../shared/index.ts';
+import { readContextFile } from '../completion/index.js';
+import { execFileAsync, root } from '../shared/index.js';
 
 /** Normalize a scope filter path — was previously in docs/discover.ts. */
 function normalizeScopeFilter(scope: string): string {
@@ -52,7 +52,7 @@ export async function discoverTestUpkeepPackages(flags) {
   const vitestConfigs = [];
   await walkForFiles(
     root,
-    (name) => name === 'vitest.config.ts' || name === 'vitest.config.js',
+    (name) => name === 'vitest.config.js' || name === 'vitest.config.js',
     vitestConfigs,
     ['node_modules', 'dist', 'coverage', 'artifacts', '.git', '.moon'],
   );
@@ -96,17 +96,17 @@ export async function walkForFiles(dir, predicate, found, ignore = []) {
 export async function collectPackageTestInventory(pkg) {
   const srcDir = join(root, pkg.dir, 'src');
   const allTs = [];
-  await walkForFiles(srcDir, (name) => name.endsWith('.ts') || name.endsWith('.tsx'), allTs, [
+  await walkForFiles(srcDir, (name) => name.endsWith('.js') || name.endsWith('.tsx'), allTs, [
     'node_modules',
     'dist',
     'coverage',
   ]);
   const relativeToSrc = (abs) => abs.replace(`${srcDir}/`, 'src/');
   const testFiles = new Set(
-    allTs.filter((f) => f.endsWith('.test.ts') || f.endsWith('.spec.ts')).map(relativeToSrc),
+    allTs.filter((f) => f.endsWith('.test.js') || f.endsWith('.spec.js')).map(relativeToSrc),
   );
   const sourceFiles = allTs
-    .filter((f) => !f.endsWith('.test.ts') && !f.endsWith('.spec.ts') && !f.endsWith('.d.ts'))
+    .filter((f) => !f.endsWith('.test.js') && !f.endsWith('.spec.js') && !f.endsWith('.d.js'))
     .map(relativeToSrc);
   const untestedFiles = sourceFiles.filter((f) => {
     const base = f.replace(/\.tsx?$/, '');

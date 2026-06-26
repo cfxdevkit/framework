@@ -5,8 +5,8 @@
  *  3. LLM enrich each content/packages/<slug>.mdx
  */
 import { discoverPackagePageTargets, syncPackagePageSkeletons } from '@cfxdevkit/docs-pipeline';
-import { logInfo, logStep } from '../shared/logging.ts';
-import { parseDocFlags } from './flags.ts';
+import { logInfo, logStep } from '../shared/logging.js';
+import { parseDocFlags } from './flags.js';
 import { enrichPackagePage } from './package-page/enrichment';
 
 export async function runDocsPackagePages(args: string[]): Promise<void> {

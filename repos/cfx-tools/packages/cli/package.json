@@ -8,7 +8,8 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "cfx": "./dist/bin.js"
+    "cfx": "./dist/bin.js",
+    "cdk": "./dist/cdk.js"
   },
   "exports": {
     ".": {
@@ -32,7 +33,9 @@
   },
   "dependencies": {
     "@cfxdevkit/codegen-contracts": "workspace:*",
-    "@cfxdevkit/cdk": "workspace:*"
+    "@cfxdevkit/cdk": "workspace:*",
+    "@cfxdevkit/services": "workspace:*",
+    "@cfxdevkit/signer-session": "workspace:*"
   },
   "devDependencies": {
     "@cfxdevkit/tsconfig": "workspace:*",

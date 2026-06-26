@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { root } from '../shared/index.ts';
-import { unique } from '../shared/logging.ts';
-import { formatTestUpkeepArtifact } from './generate.ts';
+import { root } from '../shared/index.js';
+import { unique } from '../shared/logging.js';
+import { formatTestUpkeepArtifact } from './generate.js';
 
 export async function addDeterministicTestUpkeepCoverage(pkg, result, flags) {
   const baseline = await generateBaselineTestSuggestions(pkg, result.suggestions, flags);
@@ -34,7 +34,7 @@ export async function generateBaselineTestSuggestions(pkg, existingSuggestions, 
   const candidates = pkg.inventory?.untestedFiles ?? [];
   const maxCandidates = flags.quick ? 4 : 10;
   for (const sourceFile of candidates.slice(0, maxCandidates)) {
-    const testFile = sourceFile.replace(/\.tsx?$/, '.test.ts');
+    const testFile = sourceFile.replace(/\.tsx?$/, '.test.js');
     if (existingTestFiles.has(testFile)) continue;
     let content = '';
     try {

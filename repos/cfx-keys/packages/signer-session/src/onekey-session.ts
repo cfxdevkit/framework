@@ -5,7 +5,7 @@
  * Diagnostics utilities are in onekey-diagnostics.ts.
  */
 
-import { createOneKeySignerSession } from './backends/onekey.js';
+import { createOneKeySignerSession } from './backends/onekey-backend.js';
 import { collectOneKeyHostDiagnostics, toUnknownErrorMessage } from './onekey-diagnostics.js';
 import type { SignerSession } from './types.js';
 

@@ -8,8 +8,8 @@ import {
   readConfig,
   resolveProvider,
   resolveProviderModel,
-} from '../completion/index.ts';
-import { logInfo } from './logging.ts';
+} from '../completion/index.js';
+import { logInfo } from './logging.js';
 
 export type ExecutionContextSummary = {
   unit: {

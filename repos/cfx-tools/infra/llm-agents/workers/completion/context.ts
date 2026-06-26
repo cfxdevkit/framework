@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { artifactsRoot, root } from '../shared/index.ts';
-import { commandBlock, git } from './runner.ts';
+import { artifactsRoot, root } from '../shared/index.js';
+import { commandBlock, git } from './runner.js';
 
 const baseContextFiles = [
   'README.md',
@@ -77,7 +77,7 @@ export async function commitPreflightBlock(): Promise<string> {
     commandBlock(
       'code hotspot scan',
       'pnpm',
-      ['exec', 'tsx', join(root, 'repos/cfx-tools/packages/arch-check/src/bin/check-hotspots.ts')],
+      ['exec', 'tsx', join(root, 'repos/cfx-tools/packages/arch-check/src/bin/check-hotspots.js')],
       { maxChars: 12000 },
     ),
     commandBlock(
@@ -86,7 +86,7 @@ export async function commitPreflightBlock(): Promise<string> {
       [
         'exec',
         'tsx',
-        join(root, 'repos/cfx-tools/packages/arch-check/src/bin/check-kebab-groups.ts'),
+        join(root, 'repos/cfx-tools/packages/arch-check/src/bin/check-kebab-groups.js'),
       ],
       { maxChars: 12000 },
     ),

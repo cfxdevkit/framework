@@ -37,58 +37,46 @@ const exploratoryActions: ReadonlyArray<{ action: string; alias?: string }> = [
 export function getLlmScriptRequirements(): readonly ScriptRequirement[] {
   const entries: ScriptRequirement[] = [
     {
-      name: 'llm',
-      expected: 'pnpm run agent',
-      severity: 'warning',
-      description: 'llm namespace compatibility shim',
-    },
-    {
       name: 'llm:config',
-      expected: 'pnpm run cdk -- agent config',
+      expected: 'moon run tooling-cli:repo-status',
       severity: 'warning',
-      description: 'llm config alias',
+      description: 'llm config alias (now via repo:status)',
     },
     {
       name: 'llm:commit',
-      expected: 'pnpm run repo:commit',
+      expected: 'moon run tooling-cli:repo-precommit',
       severity: 'warning',
-      description: 'llm commit alias',
+      description: 'llm commit alias (now via repo:precommit)',
     },
     {
       name: 'llm:review',
-      expected: 'pnpm run repo:review',
+      expected: 'moon run tooling-cli:repo-review',
       severity: 'warning',
-      description: 'llm review alias',
+      description: 'llm review alias (now via repo:review)',
     },
     {
       name: 'llm:wiki',
-      expected: 'pnpm run docs:wiki',
+      expected: 'moon run tooling-cli:docs-wiki',
       severity: 'warning',
       description: 'deprecated wiki alias routed through docs namespace',
-    },
-    {
-      name: 'llm:model',
-      expected: 'pnpm run cdk -- agent config set default-model',
-      severity: 'warning',
-      description: 'interactive default-model alias',
     },
   ];
 
   for (const action of deterministicActions) {
     entries.push({
       name: `llm:${action}`,
-      expected: `pnpm run cdk -- agent deterministic ${action}`,
+      expected: `moon run tooling-cli:repo-actions --mode deterministic ${action}`,
       severity: 'warning',
-      description: `${action} agent alias`,
+      description: `${action} agent alias (now via repo actions)`,
     });
   }
 
   for (const { action, alias } of exploratoryActions) {
     entries.push({
       name: `llm:${alias ?? action}`,
-      expected: `pnpm run cdk -- agent exploratory ${action}`,
+      expected: `moon run tooling-cli:repo-actions --mode exploratory ${action}`,
       severity: 'warning',
-      description: `${action} agent alias`,
+      description: `${action} agent alias (now via repo actions)`,
     });
   }
 

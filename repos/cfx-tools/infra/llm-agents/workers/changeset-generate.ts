@@ -1,17 +1,17 @@
-import { generateChangesetPlan, writeChangesetFile } from './commit/changeset.ts';
-import type { complete } from './completion/index.ts';
+import { generateChangesetPlan, writeChangesetFile } from './commit/changeset.js';
+import type { complete } from './completion/index.js';
 import {
   type ExecutionContextRuntimePayload,
   logExecutionContext,
   resolveExecutionContext,
   toExecutionContextRuntimePayload,
-} from './shared/execution-context.ts';
-import type { RepoActionName } from './shared/index.ts';
-import { repoActions, root } from './shared/index.ts';
+} from './shared/execution-context.js';
+import type { RepoActionName } from './shared/index.js';
+import { repoActions, root } from './shared/index.js';
 
 export interface RepoActionExecutionResult {
   readonly action: RepoActionName;
-  readonly definition: import('./shared/index.ts').RepoActionDefinition;
+  readonly definition: import('./shared/index.js').RepoActionDefinition;
   readonly executionContext: ExecutionContextRuntimePayload;
   readonly response: Awaited<ReturnType<typeof complete>>;
 }

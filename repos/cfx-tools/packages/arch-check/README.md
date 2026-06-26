@@ -1,6 +1,6 @@
 # @cfxdevkit/arch-check
 
-Deterministic monorepo architecture and repository health checks. Runs as part of the `cdk repo precommit` and `cdk repo commit` quality flow and can be invoked individually via `moon` or `pnpm`.
+Deterministic monorepo architecture and repository health checks. Runs as part of the `repo precommit` and `repo precommit` quality flow and can be invoked individually via `moon` or `pnpm`.
 
 ---
 
@@ -137,7 +137,7 @@ pnpm run generate:structure  # deterministic STRUCTURE.md scaffolds
 
 ### Via repo precommit / commit
 
-`arch-check` runs deterministically as part of the workspace `cdk repo precommit` / `cdk repo commit` quality-gate sequence. The gate wiring lives in `repos/cfx-tools/infra/llm-agents/workers/commit/gates.ts`.
+`arch-check` runs deterministically as part of the workspace `repo precommit` / `repo precommit` quality-gate sequence. The gate wiring lives in `repos/cfx-tools/infra/llm-agents/workers/commit/gates.ts`.
 
 ---
 

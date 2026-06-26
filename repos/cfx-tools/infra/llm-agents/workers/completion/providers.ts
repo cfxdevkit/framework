@@ -1,5 +1,5 @@
-import { defaultBaseUrls } from '../shared/index.ts';
-import { readConfig } from './config.ts';
+import { defaultBaseUrls } from '../shared/index.js';
+import { readConfig } from './config.js';
 import {
   GitHubModelsProvider,
   LemonadeProvider,
@@ -7,7 +7,7 @@ import {
   OpenAICompatProvider,
 } from './provider/classes';
 import { getProviderDefaultModel, resolveProviderModel } from './provider/meta';
-import type { LlmConfig, LlmProvider, LlmProviderType } from './types.ts';
+import type { LlmConfig, LlmProvider, LlmProviderType } from './types.js';
 
 export async function resolveProvider(
   config?: LlmConfig,

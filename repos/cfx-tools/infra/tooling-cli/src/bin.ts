@@ -1,3 +1,3 @@
 import { runCli } from './run.js';
 
-await runCli(process.argv.slice(2));
+await runCli(['repo', ...process.argv.slice(2)]);

@@ -6,16 +6,16 @@ import {
   configPathEnvVar,
   legacyCompatConfigPath,
   legacyConfigPath,
-} from '../shared/index.ts';
+} from '../shared/index.js';
 import {
   DEFAULT_REQUEST_TIMEOUT_MS,
   defaultConfig,
   mergeConfigLayers,
   normalizeConfig,
-} from './config-normalize.ts';
-import { isErrnoException } from './guards.ts';
-import type { LlmConfig } from './types.ts';
-import { findMonorepoUnitByConfigPath } from './units.ts';
+} from './config-normalize.js';
+import { isErrnoException } from './guards.js';
+import type { LlmConfig } from './types.js';
+import { findMonorepoUnitByConfigPath } from './units.js';
 
 export async function readConfig(configFile = resolveConfiguredConfigPath()): Promise<LlmConfig> {
   const { config: baseConfig, path: basePath } = await loadBaseConfig();

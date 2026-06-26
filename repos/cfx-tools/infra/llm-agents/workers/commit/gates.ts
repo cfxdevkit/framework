@@ -5,7 +5,7 @@ import {
   runRepoCheck,
   runRepoCommand,
 } from '@cfxdevkit/cdk-repo-check';
-import { QUALITY_GATE_SPECS } from '../shared/index.ts';
+import { QUALITY_GATE_SPECS } from '../shared/index.js';
 import { collectOutput } from './gate/output';
 import { createGateResult } from './gate/results';
 

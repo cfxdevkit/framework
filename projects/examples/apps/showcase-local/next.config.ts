@@ -1,11 +1,8 @@
-import { createRequire } from 'node:module';
 import path from 'node:path';
 import type { NextConfig } from 'next';
 
-const req = createRequire(import.meta.url);
-
 const webpackSingletons: Record<string, string> = {
-  viem: path.dirname(req.resolve('viem/package.json')),
+  viem: path.join(process.cwd(), 'node_modules', 'viem'),
 };
 
 const turbopackSingletons: Record<string, string> = {

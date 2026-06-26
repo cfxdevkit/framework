@@ -1,5 +1,5 @@
 import { relative } from 'node:path';
-import { executeChangesetGenerate, type RepoActionExecutionResult } from './changeset-generate.ts';
+import { executeChangesetGenerate, type RepoActionExecutionResult } from './changeset-generate.js';
 import {
   buildActionContext,
   complete,
@@ -10,13 +10,13 @@ import {
   resolveProvider,
   writeConfig,
   writeLlmReport,
-} from './completion/index.ts';
-import { applyConfigKey } from './config-helpers.ts';
+} from './completion/index.js';
+import { applyConfigKey } from './config-helpers.js';
 import {
   logExecutionContext,
   resolveExecutionContext,
   toExecutionContextRuntimePayload,
-} from './shared/execution-context.ts';
+} from './shared/execution-context.js';
 import {
   configPath,
   configPathEnvVar,
@@ -24,10 +24,10 @@ import {
   type RepoActionDefinition,
   type RepoActionName,
   repoActions,
-} from './shared/index.ts';
+} from './shared/index.js';
 
-export type { RepoActionExecutionResult } from './changeset-generate.ts';
-export { validateModels } from './validate-models.ts';
+export type { RepoActionExecutionResult } from './changeset-generate.js';
+export { validateModels } from './validate-models.js';
 
 // ─── Model list ────────────────────────────────────────────────────────────────
 

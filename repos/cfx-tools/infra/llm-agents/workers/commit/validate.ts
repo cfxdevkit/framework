@@ -1,4 +1,4 @@
-import { parseJsonObject } from '../completion/index.ts';
+import { parseJsonObject } from '../completion/index.js';
 
 export function validateChangelogJson(content, scopeLabel) {
   const parsed = parseJsonObject(content);

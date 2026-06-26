@@ -1,8 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { completeStructuredAgent } from '../../completion/index.ts';
-import { execFileAsync, root } from '../../shared/index.ts';
-import { summarizeValidationForPrompt } from './plan.ts';
+import { completeStructuredAgent } from '../../completion/index.js';
+import { execFileAsync, root } from '../../shared/index.js';
+import { summarizeValidationForPrompt } from './plan.js';
 import type {
   AgentCheckArtifact,
   AgentCheckArtifactDraft,
@@ -12,8 +12,8 @@ import type {
   OpenSpecInstruction,
   OpenSpecInstructionArtifactId,
   OpenSpecInstructionSet,
-} from './types.ts';
-import { joinLines, stripMarkdownFences } from './types.ts';
+} from './types.js';
+import { joinLines, stripMarkdownFences } from './types.js';
 
 export async function runRepoCheckCommand(): Promise<{
   exitCode: number;

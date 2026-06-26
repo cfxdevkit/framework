@@ -1,16 +1,16 @@
-import { parseJsonObject } from '../../completion/index.ts';
+import { parseJsonObject } from '../../completion/index.js';
 import type {
   AgentCheckArtifact,
   AgentCheckFollowUp,
   AgentCheckPlan,
   AgentCheckValidationStep,
-} from './types.ts';
+} from './types.js';
 import {
   normalizeAgentCheckChange,
   normalizeKebab,
   normalizeLine,
   normalizeStringArray,
-} from './types.ts';
+} from './types.js';
 
 export function normalizeAgentCheckPlan(content: string): AgentCheckPlan {
   const parsed = parseAgentCheckJson(content);

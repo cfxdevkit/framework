@@ -1,4 +1,4 @@
-import type { CommitWorkflowResult } from './types.ts';
+import type { CommitWorkflowResult } from './types.js';
 
 interface Ctx {
   executionContext: CommitWorkflowResult['executionContext'];

@@ -1,8 +1,8 @@
-import { readConfig, resolveRequestTimeoutMs } from './config.ts';
+import { readConfig, resolveRequestTimeoutMs } from './config.js';
 import { getProviderBaseUrl, resolveProviderModel } from './provider/meta';
-import { resolveProvider } from './providers.ts';
-import { resolveActionConfig } from './resolve-action.ts';
-import type { ChatMessage, CompleteAgentRequest, CompletionReport } from './types.ts';
+import { resolveProvider } from './providers.js';
+import { resolveActionConfig } from './resolve-action.js';
+import type { ChatMessage, CompleteAgentRequest, CompletionReport } from './types.js';
 
 export async function complete({ action, modelOverride, userPrompt, context, quick = false }) {
   const config = await readConfig();

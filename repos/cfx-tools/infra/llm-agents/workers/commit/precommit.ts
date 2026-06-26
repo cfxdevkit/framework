@@ -1,13 +1,13 @@
 import {
   resolveExecutionContext,
   toExecutionContextRuntimePayload,
-} from '../shared/execution-context.ts';
-import { parseCommitFlags } from './flags.ts';
-import { runQualityGates, runRepositoryPolicyGates } from './gates.ts';
-import { summarizeWorkingSet } from './hud.ts';
-import { detectChangedScopes } from './scope.ts';
+} from '../shared/execution-context.js';
+import { parseCommitFlags } from './flags.js';
+import { runQualityGates, runRepositoryPolicyGates } from './gates.js';
+import { summarizeWorkingSet } from './hud.js';
+import { detectChangedScopes } from './scope.js';
 import { createWorkflowTerminalUi, summarizeGateFailures } from './terminal/ui';
-import type { PrecommitWorkflowResult } from './types.ts';
+import type { PrecommitWorkflowResult } from './types.js';
 
 export async function runPrecommitWorkflow(args): Promise<PrecommitWorkflowResult> {
   if (args[0] === '--') args.shift();

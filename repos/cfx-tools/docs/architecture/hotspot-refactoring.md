@@ -29,7 +29,7 @@ All four files are now within the hard hotspot thresholds (< 300 lines, score we
 
 | File | Lines | Notes |
 |------|-------|-------|
-| `tooling-cli/src/repo-namespace.ts` | 269 | CLI command router for `cdk repo` |
+| `tooling-cli/src/repo-namespace.ts` | 269 | CLI command router for `repo` |
 | `tooling-cli/src/agent-namespace.ts` | 213 | CLI command router for `cdk agent` |
 | `tooling-cli/src/repo-namespace.test.ts` | 147 | Focused tests for repo-namespace |
 | `llm-agents/workers/agents/check.ts` | 198 | Orchestrator; delegates to submodules |
@@ -59,7 +59,7 @@ one namespace (`repo`, `agent`) and delegates to domain-specific modules:
 
 ```
 tooling-cli/src/
-├── repo-namespace.ts       # cdk repo — routes check/generate/merge/review/commit commands
+├── repo-namespace.ts       # repo — routes check/generate/merge/review/commit commands
 │   ├── delegates to: repo-merge.ts (merge logic)
 │   ├── delegates to: monorepo-units.ts (unit listing)
 │   └── delegates to: agent-runtime.ts (agent session scope)

@@ -1,4 +1,4 @@
-export { complete, completeCommitAgent, completeStructuredAgent } from './complete.ts';
+export { complete, completeCommitAgent, completeStructuredAgent } from './complete.js';
 export {
   configPath,
   configPathEnvVar,
@@ -9,7 +9,7 @@ export {
   readConfig,
   resolveRequestTimeoutMs,
   writeConfig,
-} from './config.ts';
+} from './config.js';
 export {
   artifactsRoot,
   buildActionContext,
@@ -17,15 +17,15 @@ export {
   commitPreflightBlock,
   readContextFile,
   writeLlmReport,
-} from './context.ts';
-export { parseJsonObject } from './json.ts';
+} from './context.js';
+export { parseJsonObject } from './json.js';
 export {
   getProviderBaseUrl,
   getProviderDefaultModel,
   resolveProviderModel,
 } from './provider/meta';
-export { resolveProvider } from './providers.ts';
-export { commandBlock, git, renderCommandBlock } from './runner.ts';
+export { resolveProvider } from './providers.js';
+export { commandBlock, git, renderCommandBlock } from './runner.js';
 export type {
   ChatMessage,
   CompletionAttempt,
@@ -43,4 +43,4 @@ export type {
   LlmProviderStrategy,
   LlmProviderType,
   MonorepoUnit,
-} from './types.ts';
+} from './types.js';

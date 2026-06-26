@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { artifactsRoot } from './constants.ts';
+import { artifactsRoot } from './constants.js';
 
 export async function writeJsonl(path, records) {
   await writeArtifact(

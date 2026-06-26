@@ -1,13 +1,13 @@
 import { clearScreenDown, moveCursor } from 'node:readline';
-import type { ExecutionContextSummary } from '../../shared/execution-context.ts';
-import type { GateReport, GateResult, GateRunHooks } from '../gates.ts';
-import type { WorkingSetSummary } from '../hud.ts';
+import type { ExecutionContextSummary } from '../../shared/execution-context.js';
+import type { GateReport, GateResult, GateRunHooks } from '../gates.js';
+import type { WorkingSetSummary } from '../hud.js';
 
 export {
   summarizeCommitPreview,
   summarizeFailureAnalysis,
   summarizeGateFailures,
-} from '../terminal-ui-summary.ts';
+} from '../terminal-ui-summary.js';
 
 type GateView = {
   readonly id: string;

@@ -35,11 +35,11 @@ tasks:
     options:
       mergeArgs: 'replace'
   repo-gate:
-    script: 'pnpm run repo-check --list'
+    script: "pnpm --filter @cfxdevkit/tooling-cli tooling repo check validation"
     options:
       mergeArgs: 'replace'
   repo-check:
-    script: 'pnpm run repo-check'
+    script: "pnpm --filter @cfxdevkit/tooling-cli tooling repo check"
     options:
       mergeArgs: 'replace'
   repo-generate:

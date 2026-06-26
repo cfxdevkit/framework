@@ -1,7 +1,7 @@
 import { statSync } from 'node:fs';
 import { join } from 'node:path';
-import { git } from '../completion/index.ts';
-import { root } from '../shared/index.ts';
+import { git } from '../completion/index.js';
+import { root } from '../shared/index.js';
 
 export async function detectChangedScopes() {
   const [modified, staged, untracked] = await Promise.all([
