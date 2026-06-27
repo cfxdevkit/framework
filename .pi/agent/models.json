@@ -5,6 +5,10 @@
         "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0": {
           "contextWindow": 262144,
           "maxTokens": 235929
+        },
+        "Qwen3.6-27B-MTP-GGUF-Q4_K_M": {
+          "contextWindow": 262144,
+          "maxTokens": 235929
         }
       }
     }

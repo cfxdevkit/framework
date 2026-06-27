@@ -24,7 +24,13 @@ const DEFAULT_MAX_TOKENS = Math.floor(DEFAULT_CONTEXT_WINDOW * 0.9);
  * baseUrl, API key, and models.
  */
 export function registerPiProviderBridge(pi: ExtensionAPI, bridge: PiProviderBridge): void {
-  pi.registerProvider('openai', {
+  // Only register a provider for local openai-compat servers.
+  // PI already handles auth and model discovery for cloud providers
+  // (Anthropic, OpenAI, Google, GitHub Models, etc.) internally,
+  // so we skip registration for those.
+  if (bridge.providerType !== 'openai-compat') return;
+
+  pi.registerProvider('openai-compat', {
     name: 'CFX DevKit OpenAI-Compatible',
     baseUrl: bridge.providerBaseUrl ?? undefined,
     apiKey: OPENAI_API_KEY_ENV,
@@ -88,7 +94,7 @@ function resolvePiCliInvocation(
   }
 
   return {
-    provider: 'openai',
+    provider: 'openai-compat',
     model: resolvePiModel(defaultModel, models),
     env,
   };

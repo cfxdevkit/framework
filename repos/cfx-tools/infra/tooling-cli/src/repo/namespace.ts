@@ -1,6 +1,7 @@
 import type { RepoCheckTarget } from '@cfxdevkit/cdk-repo-check';
 import { defaultRenderer, runRepoCheck } from '@cfxdevkit/cdk-repo-check';
 import type { ToolingCommandDefinition, ToolingNamespaceDefinition } from '../contracts.js';
+import { docsCommand, runDocsHandler } from './docs-commands.js';
 
 // ─── check command ────────────────────────────────────────────────────────────
 
@@ -8,22 +9,56 @@ async function runCheckHandler(args: readonly string[]): Promise<void> {
   const hasHelp = args.some((a) => a === '--help' || a === '-h' || a === 'help');
   if (hasHelp) {
     process.stdout.write(
-      'Usage: repo check [target] [--fail-on-hard] [--quick]\n' +
+      'Usage: repo check [target] [options]\n' +
         '\n' +
-        'Targets: validation (default), hotspots, kebab-groups, unit-configs\n' +
+        'Targets:\n' +
+        '  validation    Run full validation pipeline (default)\n' +
+        '  hotspots      File line-count hotspot scan\n' +
+        '  kebab-groups  Kebab-case sibling group check\n' +
+        '  unit-configs  Unit configuration drift check\n' +
+        '\n' +
+        'Validation steps (use --step with validation target):\n' +
+        '  gitnexus-analyze  GitNexus index analysis\n' +
+        '  format            Biome format write\n' +
+        '  lint              Biome lint check\n' +
+        '  typecheck         TypeScript type check\n' +
+        '  test              Run test suite\n' +
+        '  build             Build all packages\n' +
+        '  hotspots          File line-count hotspot scan\n' +
+        '  kebab-groups      Kebab-case sibling group check\n' +
+        '  check             Repo check (moon :check)\n' +
         '\n' +
         'Options:\n' +
-        '  --fail-on-hard  Exit with code 1 on hard errors\n' +
-        '  --quick         Run only fast checks\n',
+        '  --step <id>       Run only this validation step (repeatable)\n' +
+        '  --fail-on-hard    Exit with code 1 on hard errors\n' +
+        '  --quick           Run only fast checks\n' +
+        '  --json            Emit JSON output\n' +
+        '\n' +
+        'Examples:\n' +
+        '  repo check                            Run full validation\n' +
+        '  repo check hotspots                   Run hotspot scan only\n' +
+        '  repo check validation --step lint     Run lint step only\n' +
+        '  repo check validation --step hotspots --step kebab-groups  Run 2 steps\n',
     );
     return;
   }
 
   const [target = 'validation', ...rest] = args;
+  const validTargets = ['validation', 'hotspots', 'kebab-groups', 'unit-configs'];
+
+  if (!validTargets.includes(target)) {
+    process.stderr.write(`Unknown target: ${target}\n`);
+    process.stderr.write(`Valid targets: ${validTargets.join(', ')}\n`);
+    process.exitCode = 1;
+    return;
+  }
+
   // Filter out --quick (handled locally, not by cdk-repo-check)
   const filteredArgs = rest.filter((a) => a !== '--quick');
   const result = await runRepoCheck(target as RepoCheckTarget, filteredArgs);
-  const text = defaultRenderer.renderText(result);
+
+  // Render with failure details
+  const text = renderCheckResult(result);
   process.stdout.write(`${text}\n`);
 
   if (result.status === 'error') {
@@ -31,10 +66,65 @@ async function runCheckHandler(args: readonly string[]): Promise<void> {
   }
 }
 
+function renderCheckResult(result: Awaited<ReturnType<typeof runRepoCheck>>): string {
+  const base = defaultRenderer.renderText(
+    result as Parameters<typeof defaultRenderer.renderText>[0],
+  );
+
+  // For validation results, append failure details
+  if (
+    (result as { command?: { action: string; target: string } }).command?.target === 'validation'
+  ) {
+    const validationResult = result as {
+      report?: {
+        steps?: Array<{
+          id: string;
+          label: string;
+          status: string;
+          details?: {
+            stdoutTail?: string[];
+            stderrTail?: string[];
+            hardViolations?: Array<{ path: string; lines: number }>;
+            softWarnings?: Array<{ path: string; lines: number }>;
+            groups?: Array<{ directory: string; prefix: string; files: string[] }>;
+          };
+          durationMs?: number;
+        }>;
+      };
+    };
+    const failedSteps = validationResult.report?.steps?.filter((s) => s.status === 'error');
+    if (failedSteps && failedSteps.length > 0) {
+      const lines = [base, ''];
+      for (const step of failedSteps) {
+        const d = step.details;
+        lines.push(`  ✗ ${step.label}:`);
+        if (d?.hardViolations && d.hardViolations.length > 0) {
+          for (const v of d.hardViolations) {
+            lines.push(`    ! ${v.path} (${v.lines} lines)`);
+          }
+        }
+        if (d?.stdoutTail && d.stdoutTail.length > 0) {
+          for (const line of d.stdoutTail.slice(0, 6)) {
+            lines.push(`    ${line}`);
+          }
+        }
+        if (d?.stderrTail && d.stderrTail.length > 0) {
+          for (const line of d.stderrTail.slice(0, 6)) {
+            lines.push(`    ${line}`);
+          }
+        }
+      }
+      return lines.join('\n');
+    }
+  }
+
+  return base;
+}
+
 const checkCommand: ToolingCommandDefinition = {
   name: 'check',
   description: 'Run repository validation',
-  usage: '[target] [--fail-on-hard] [...]',
+  usage: '[target] [--step <id>] [--fail-on-hard] [--quick] [--json]',
 };
 
 // ─── precommit command ────────────────────────────────────────────────────────
@@ -108,91 +198,6 @@ async function runReviewHandler(args: readonly string[]): Promise<void> {
 const reviewCommand: ToolingCommandDefinition = {
   name: 'review',
   description: 'Run repository review agent',
-};
-
-// ─── docs commands ────────────────────────────────────────────────────────────
-
-async function runDocsGenerateHandler(args: readonly string[]): Promise<void> {
-  const { runDocsApi, runDocsPackagePages, runDocsReadme, runStructureUpkeep } = await import(
-    '@cfxdevkit/llm-agents'
-  );
-
-  const [target = 'all'] = args;
-
-  if (target === 'api') {
-    await runDocsApi([]);
-  } else if (target === 'readme') {
-    await runDocsReadme([]);
-  } else if (target === 'structure') {
-    await runStructureUpkeep([]);
-  } else if (target === 'packages') {
-    await runDocsPackagePages([]);
-  } else {
-    // Run all in order
-    await runDocsApi([]);
-    await runDocsReadme([]);
-    await runStructureUpkeep([]);
-    await runDocsPackagePages([]);
-  }
-}
-
-const docsGenerateCommand: ToolingCommandDefinition = {
-  name: 'generate',
-  description: 'Run deterministic doc generation (skeleton only, no LLM)',
-  usage: '[all|api|readme|structure|packages]',
-};
-
-async function runDocsValidateHandler(args: readonly string[]): Promise<void> {
-  const { runRepoCommand, defaultRenderer } = await import('@cfxdevkit/cdk-repo-check');
-  const result = await runRepoCommand('check-docs', args);
-  const text = defaultRenderer.renderText(result);
-  process.stdout.write(`${text}\n`);
-  if (result.status === 'error') {
-    process.exitCode = 1;
-  }
-}
-
-const docsValidateCommand: ToolingCommandDefinition = {
-  name: 'validate',
-  description: 'Validate docs build, wiki sync, image, and deploy flow',
-  usage: '[content|packages|wiki|all] [args]',
-};
-
-async function runDocsHandler(args: readonly string[]): Promise<void> {
-  const [sub = 'help', ...rest] = args;
-
-  if (sub === 'help' || sub === '--help' || sub === '-h') {
-    process.stdout.write('Usage: repo docs <command> [args]\n\n');
-    process.stdout.write('Commands:\n');
-    process.stdout.write(
-      `  ${docsGenerateCommand.name.padEnd(20)} ${docsGenerateCommand.description}\n`,
-    );
-    if (docsGenerateCommand.usage) {
-      process.stdout.write(`  Usage: ${docsGenerateCommand.usage}\n`);
-    }
-    process.stdout.write(
-      `  ${docsValidateCommand.name.padEnd(20)} ${docsValidateCommand.description}\n`,
-    );
-    if (docsValidateCommand.usage) {
-      process.stdout.write(`  Usage: ${docsValidateCommand.usage}\n`);
-    }
-    return;
-  }
-
-  if (sub === 'generate') {
-    await runDocsGenerateHandler(rest);
-  } else if (sub === 'validate') {
-    await runDocsValidateHandler(rest);
-  } else {
-    process.stderr.write(`Unknown docs command: ${sub}\n`);
-    process.exitCode = 1;
-  }
-}
-
-const docsCommand: ToolingCommandDefinition = {
-  name: 'docs',
-  description: 'Documentation operations',
-  usage: '<generate|validate> [args]',
 };
 
 // ─── merge command ────────────────────────────────────────────────────────────
