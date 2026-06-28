@@ -13,6 +13,7 @@ describe('parseAgentCheckFlags', () => {
       dryRun: true,
       createBranch: false,
       draftPr: false,
+      createChanges: true,
     });
   });
 
@@ -22,6 +23,7 @@ describe('parseAgentCheckFlags', () => {
       dryRun: true,
       createBranch: false,
       draftPr: false,
+      createChanges: true,
     });
   });
 
@@ -31,6 +33,24 @@ describe('parseAgentCheckFlags', () => {
       dryRun: false,
       createBranch: true,
       draftPr: true,
+      createChanges: true,
+    });
+  });
+
+  it('defaults createChanges to true but --no-create disables it', () => {
+    expect(parseAgentCheckFlags([])).toEqual({
+      quick: false,
+      dryRun: false,
+      createBranch: false,
+      draftPr: false,
+      createChanges: true,
+    });
+    expect(parseAgentCheckFlags(['--no-create'])).toEqual({
+      quick: false,
+      dryRun: false,
+      createBranch: false,
+      draftPr: false,
+      createChanges: false,
     });
   });
 });

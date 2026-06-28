@@ -1,7 +1,7 @@
+import type { RepoStructuredResult, RepoValidationStepResult } from '@cfxdevkit/cdk-repo-check';
 import {
   defaultRenderer,
   type RepoCommandTarget,
-  type RepoStructuredResult,
   runRepoCheck,
   runRepoCommand,
 } from '@cfxdevkit/cdk-repo-check';
@@ -63,7 +63,7 @@ const REPOSITORY_POLICY_SPECS: readonly RepositoryPolicySpec[] = [
   { id: 'check', label: 'Repo check', timeoutMs: 300000, required: true },
 ];
 
-export async function runRepositoryPolicyGates(hooks?: GateRunHooks) {
+export async function runRepositoryPolicyGates(hooks?: GateRunHooks): Promise<GateReport> {
   const results: GateResult[] = [];
 
   hooks?.onGroupStart?.({
@@ -93,7 +93,7 @@ export async function runRepositoryPolicyGates(hooks?: GateRunHooks) {
   return report;
 }
 
-export async function runQualityGates(flags, hooks?: GateRunHooks) {
+export async function runQualityGates(flags, hooks?: GateRunHooks): Promise<GateReport> {
   if (flags.skipChecks) {
     const report = {
       kind: 'quality' as const,
@@ -241,6 +241,102 @@ async function runQualityGate(
     });
     hooks?.onGateFinish?.(result);
     return result;
+  }
+}
+
+// ─── Unified validation check (delegates to cdk-repo-check) ──────────────────
+
+/**
+ * Run the full validation sequence via `cdk-repo-check validation` and map
+ * its step results into gate-compatible results.  This replaces the old
+ * pattern of running format → lint → typecheck → test → build individually
+ * which duplicated logic and caused TUI cursor issues.
+ *
+ * Steps: gitnexus-analyze → format → lint → typecheck → test → build
+ *         → hotspots → kebab-groups → check
+ */
+export async function runValidationCheck(
+  flags: { skipChecks?: boolean; withTests?: boolean; withBuild?: boolean } = {},
+  hooks?: GateRunHooks,
+): Promise<GateReport & { kind: 'quality' }> {
+  if (flags.skipChecks) {
+    const report = {
+      kind: 'quality' as const,
+      label: 'Incremental validation gates',
+      passed: true,
+      skipped: true,
+      results: [],
+    };
+    hooks?.onGroupFinish?.(report);
+    return report;
+  }
+
+  try {
+    const raw = await runRepoCheck('validation', []);
+    // The validation check always returns a result with .report.steps.
+    // Cast to access the steps array for gate mapping.
+    const steps: RepoValidationStepResult[] = (
+      (raw as Record<string, unknown>).report as Record<string, unknown> | undefined
+    )?.steps as RepoValidationStepResult[] | undefined;
+    if (!steps) {
+      throw new Error('Validation check returned unexpected result structure');
+    }
+
+    const results: GateResult[] = steps
+      .filter((step) => {
+        // Skip steps disabled by flags
+        if (step.id === 'test' && flags.withTests === false) return false;
+        if (step.id === 'build' && flags.withBuild === false) return false;
+        return true;
+      })
+      .map((step) => {
+        const status: GateStatus =
+          step.status === 'ok' ? 'ok' : step.status === 'warning' ? 'warning' : 'error';
+        return createGateResult({
+          kind: 'quality',
+          id: step.id,
+          label: step.label,
+          command: step.command,
+          required: step.required,
+          status,
+          elapsedMs: step.durationMs,
+          output: step.summary || '',
+          summary: step.summary || `exit ${step.exitCode}`,
+        });
+      });
+
+    const report: GateReport = {
+      kind: 'quality' as const,
+      label: 'Incremental validation gates',
+      passed: results.every((r) => r.status !== 'error' || !r.required),
+      skipped: false,
+      results,
+    };
+
+    hooks?.onGroupFinish?.(report);
+    return report as GateReport & { kind: 'quality' };
+  } catch (error) {
+    const report: GateReport & { kind: 'quality' } = {
+      kind: 'quality' as const,
+      label: 'Incremental validation gates',
+      passed: false,
+      skipped: false,
+      results: [
+        createGateResult({
+          kind: 'quality',
+          id: 'validation',
+          label: 'Validation sequence',
+          command: 'pnpm run repo-check:validation',
+          required: true,
+          status: 'error',
+          elapsedMs: 0,
+          output: collectOutput(error),
+          summary: '',
+        }),
+      ],
+    };
+    hooks?.onGroupFinish?.(report);
+    return report;
   }
 }
 

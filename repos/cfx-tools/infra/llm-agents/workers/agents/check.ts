@@ -1,3 +1,5 @@
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { resolveExecutionContext } from '../shared/execution-context.js';
 import { execFileAsync, root } from '../shared/index.js';
 import {
@@ -10,6 +12,75 @@ import { renderAgentCheckConsoleSummary, renderAgentCheckReport } from './check/
 import type { AgentCheckFlags, AgentCheckFollowUp, AgentCheckPlan } from './check/types';
 import { repoCheckCommand, validationArtifactPath } from './check/types';
 import { writeJsonReport, writeMarkdownReport } from './runtime/index.js';
+
+const openspecChangesRoot = join(root, 'openspec', 'changes');
+
+/** List all existing OpenSpec change names with their issue keywords (from proposal.md). */
+async function listExistingOpenSpecChanges(): Promise<
+  Array<{ name: string; issueKeywords: Set<string> }>
+> {
+  const existing: Array<{ name: string; issueKeywords: Set<string> }> = [];
+  try {
+    const entries = await readdir(openspecChangesRoot);
+    for (const entry of entries) {
+      if (entry.startsWith('.')) continue;
+      const changeDir = join(openspecChangesRoot, entry);
+      const stat = await readdir(join(changeDir, 'specs')).catch(() => null);
+      if (!stat) continue; // skip non-OpenSpec dirs
+      const proposalPath = join(changeDir, 'proposal.md');
+      const proposal = await readFile(proposalPath, 'utf8').catch(() => '');
+      const keywords = new Set<string>();
+      // Extract kebab-case identifiers from proposal content
+      const idMatches = proposal.match(/[a-z][a-z0-9]*(-[a-z0-9]+)*/g);
+      if (idMatches) {
+        for (const id of idMatches) {
+          const words = id.split('-');
+          for (const word of words) {
+            if (word.length >= 4) keywords.add(word.toLowerCase());
+          }
+        }
+      }
+      // Extract file prefixes from keystore/onekey references
+      const prefixMatches = proposal.matchAll(/keystore|onekey|rename|kebab|case/gi);
+      for (const m of prefixMatches) {
+        keywords.add(m[0].toLowerCase());
+      }
+      existing.push({ name: entry, issueKeywords: keywords });
+    }
+  } catch {
+    // openspec/changes may not exist yet
+  }
+  return existing;
+}
+
+/** Filter out changes whose issues are already covered by existing OpenSpec changes. */
+async function filterDeduplicatedChanges(
+  proposed: Array<{ name: string; title: string; rationale: string; issues: string[] }>,
+  existing: Array<{ name: string; issueKeywords: Set<string> }>,
+): Promise<Array<{ name: string; title: string; rationale: string; issues: string[] }>> {
+  const kept: typeof proposed = [];
+  for (const change of proposed) {
+    const changeKeywords = new Set(
+      change.issues
+        .flatMap((issue) => issue.toLowerCase().split(/\s+/))
+        .filter((w) => w.length >= 3),
+    );
+    let covered = false;
+    for (const existingChange of existing) {
+      if (existingChange.name === change.name) continue;
+      const overlap = [...changeKeywords].filter((k) => existingChange.issueKeywords.has(k));
+      // If 2+ keywords overlap significantly, this change is already covered
+      if (overlap.length >= 2) {
+        covered = true;
+        break;
+      }
+    }
+    if (!covered) {
+      kept.push(change);
+    }
+  }
+  return kept;
+}
 
 export {
   normalizeAgentCheckPlan,
@@ -27,16 +98,34 @@ export async function runAgentCheck(rawArgs: readonly string[], opts: { silent?:
   const plan = actionableSteps.length
     ? await buildAgentCheckPlan({ repoCheck, validation, actionableSteps, flags })
     : null;
+
+  // When createChanges=false, only report findings — never auto-create artifacts
+  const isAdvisory = !flags.createChanges;
+
+  const existingChanges = isAdvisory ? [] : await listExistingOpenSpecChanges();
+  const deduplicatedChanges = isAdvisory
+    ? []
+    : plan
+      ? await filterDeduplicatedChanges(plan.changes, existingChanges)
+      : [];
+
   const artifacts =
-    !plan || flags.dryRun ? [] : await materializeOpenSpecChanges(plan.changes, validation, flags);
+    isAdvisory || !plan || flags.dryRun || deduplicatedChanges.length === 0
+      ? []
+      : await materializeOpenSpecChanges(deduplicatedChanges, validation, flags);
+
   const followUp =
-    !plan || flags.dryRun
+    isAdvisory || !plan || flags.dryRun || deduplicatedChanges.length === 0
       ? defaultAgentCheckFollowUp(
           flags,
           plan?.branch.name ?? null,
-          flags.dryRun
-            ? 'Skipped follow-up because this was a dry run.'
-            : 'No actionable findings.',
+          isAdvisory
+            ? 'Advisory mode — review findings below. Run again with createChanges=true to auto-generate OpenSpec change artifacts.'
+            : flags.dryRun
+              ? 'Skipped follow-up because this was a dry run.'
+              : deduplicatedChanges.length === 0 && plan
+                ? 'All proposed changes are already covered by existing OpenSpec changes — no new change needed.'
+                : 'No actionable findings.',
         )
       : await maybeCreateBranchAndDraftPr(plan.branch, flags);
 
@@ -83,6 +172,7 @@ export function parseAgentCheckFlags(rawArgs: readonly string[]): AgentCheckFlag
   let dryRun = false;
   let createBranch = false;
   let draftPr = false;
+  let createChanges = true; // default: auto-create changes (backward compatible)
   for (const arg of args) {
     if (arg === '--quick') quick = true;
     if (arg === '--dry-run' || arg === '--no-write') dryRun = true;
@@ -91,8 +181,9 @@ export function parseAgentCheckFlags(rawArgs: readonly string[]): AgentCheckFlag
       draftPr = true;
       createBranch = true;
     }
+    if (arg === '--no-create') createChanges = false;
   }
-  return { quick, dryRun, createBranch, draftPr };
+  return { quick, dryRun, createBranch, draftPr, createChanges };
 }
 
 function defaultAgentCheckFollowUp(

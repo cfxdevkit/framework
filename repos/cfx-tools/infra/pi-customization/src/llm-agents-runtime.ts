@@ -243,12 +243,14 @@ export async function executePiAction(args: string[]): Promise<PiRepoActionExecu
 export async function executePiAgentCheck(options: {
   dryRun?: boolean;
   createBranch?: boolean;
+  createChanges?: boolean;
   quick?: boolean;
 }): Promise<PiAgentCheckResult> {
   const args: string[] = [];
   if (options.quick) args.push('--quick');
   if (options.dryRun) args.push('--dry-run');
   if (options.createBranch) args.push('--create-branch');
+  if (!options.createChanges) args.push('--no-create');
   return await (await ensureModule()).runAgentCheck(args, { silent: true });
 }
 

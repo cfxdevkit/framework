@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   analyzeGateFailures: vi.fn(),
   generateChangesetPlan: vi.fn(),
   writeChangesetFile: vi.fn(),
+  runValidationCheck: vi.fn(),
   runQualityGates: vi.fn(),
   runRepositoryPolicyGates: vi.fn(),
   logFailureAnalysis: vi.fn(),
@@ -64,6 +65,7 @@ vi.mock('./changeset.ts', () => ({
 }));
 
 vi.mock('./gates.ts', () => ({
+  runValidationCheck: mocks.runValidationCheck,
   runQualityGates: mocks.runQualityGates,
   runRepositoryPolicyGates: mocks.runRepositoryPolicyGates,
 }));
@@ -110,17 +112,25 @@ describe('commit workflow services', () => {
     applyWorkflowMockDefaults(mocks);
   });
 
-  it('returns a recoverable blocked result for precommit repository-policy failures', async () => {
-    mocks.runRepositoryPolicyGates.mockResolvedValueOnce({
-      kind: 'repository-policy',
-      label: 'Repository policy follow-up gates',
+  it('returns a recoverable blocked result for precommit validation failures', async () => {
+    mocks.runValidationCheck.mockResolvedValueOnce({
+      kind: 'quality' as const,
+      label: 'Incremental validation gates',
       passed: false,
       skipped: false,
       results: [
         {
+          kind: 'quality',
+          id: 'hotspots',
           label: 'Code hotspots',
+          command: 'pnpm run hotspots',
+          required: true,
           status: 'error',
+          elapsedMs: 100,
           summary: 'oversized file',
+          output: '',
+          signalLines: [],
+          hints: [],
         },
       ],
     });
@@ -129,30 +139,38 @@ describe('commit workflow services', () => {
 
     expect(result).toMatchObject({
       status: 'blocked',
-      phase: 'repository-policy-gates',
-      blockedBy: 'repository-policy',
+      phase: 'quality-gates',
+      blockedBy: 'quality-gates',
       failureAnalysis: null,
     });
-    expect(mocks.runQualityGates).toHaveBeenCalledTimes(1);
+    expect(mocks.runValidationCheck).toHaveBeenCalledTimes(1);
   });
 
   it('supports rerunning a non-exiting precommit workflow after fixing a failing gate', async () => {
-    mocks.runQualityGates
+    mocks.runValidationCheck
       .mockResolvedValueOnce({
-        kind: 'quality',
+        kind: 'quality' as const,
         label: 'Incremental validation gates',
         passed: false,
         skipped: false,
         results: [
           {
+            kind: 'quality',
+            id: 'typecheck',
             label: 'Typecheck',
+            command: 'pnpm run typecheck',
+            required: true,
             status: 'error',
+            elapsedMs: 100,
             summary: 'type error',
+            output: '',
+            signalLines: [],
+            hints: [],
           },
         ],
       })
       .mockResolvedValueOnce({
-        kind: 'quality',
+        kind: 'quality' as const,
         label: 'Incremental validation gates',
         passed: true,
         skipped: false,
@@ -174,6 +192,13 @@ describe('commit workflow services', () => {
   });
 
   it('returns approval-required for commit workflows before prompting by default', async () => {
+    mocks.runValidationCheck.mockResolvedValueOnce({
+      kind: 'quality' as const,
+      label: 'Incremental validation gates',
+      passed: true,
+      skipped: false,
+      results: [],
+    });
     const result = await runCommitWorkflow([]);
 
     expect(result).toMatchObject({
@@ -194,8 +219,8 @@ describe('commit workflow services', () => {
   });
 
   it('uses split policy models for commit generation and failure analysis when provided', async () => {
-    mocks.runQualityGates.mockResolvedValueOnce({
-      kind: 'quality',
+    mocks.runValidationCheck.mockResolvedValueOnce({
+      kind: 'quality' as const,
       label: 'Quality gates',
       passed: false,
       skipped: false,
@@ -222,6 +247,13 @@ describe('commit workflow services', () => {
   });
 
   it('passes the policy-selected commit model into message generation', async () => {
+    mocks.runValidationCheck.mockResolvedValueOnce({
+      kind: 'quality' as const,
+      label: 'Incremental validation gates',
+      passed: true,
+      skipped: false,
+      results: [],
+    });
     await runCommitWorkflow([], {
       modelPolicies: {
         messageGenerationModel: 'commit-model',
@@ -236,28 +268,21 @@ describe('commit workflow services', () => {
   });
 
   it('keeps deterministic wrappers setting exit codes on blocked commit and precommit workflows', async () => {
-    mocks.runRepositoryPolicyGates
+    mocks.runValidationCheck
       .mockResolvedValueOnce({
-        kind: 'repository-policy',
-        label: 'Repository policy follow-up gates',
+        kind: 'quality' as const,
+        label: 'Incremental validation gates',
         passed: false,
         skipped: false,
         results: [],
       })
       .mockResolvedValueOnce({
-        kind: 'repository-policy',
-        label: 'Repository policy follow-up gates',
-        passed: true,
+        kind: 'quality' as const,
+        label: 'Incremental validation gates',
+        passed: false,
         skipped: false,
         results: [],
       });
-    mocks.runQualityGates.mockResolvedValueOnce({
-      kind: 'quality',
-      label: 'Incremental validation gates',
-      passed: false,
-      skipped: false,
-      results: [],
-    });
 
     const precommitResult = await runPrecommit([]);
     expect(process.exitCode).toBe(1);
@@ -272,6 +297,13 @@ describe('commit workflow services', () => {
 
   it('marks aborted deterministic commit runs as non-zero without hard exiting', async () => {
     mocks.confirmPrompt.mockResolvedValueOnce(false);
+    mocks.runValidationCheck.mockResolvedValueOnce({
+      kind: 'quality' as const,
+      label: 'Incremental validation gates',
+      passed: true,
+      skipped: false,
+      results: [],
+    });
 
     const result = await runCommit([]);
 

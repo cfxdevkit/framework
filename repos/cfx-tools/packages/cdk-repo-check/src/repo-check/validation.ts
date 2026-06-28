@@ -144,7 +144,7 @@ async function runValidationStep(stepId: RepoValidationStepId): Promise<RepoStru
     case 'build':
       return await runStructuredRepoCommand('build', []);
     case 'hotspots':
-      return await runStructuredHotspotsCheck(['--fail-on-hard']);
+      return await runStructuredHotspotsCheck(['--fail-on-hard', '--hard-limit', '1000']);
     case 'kebab-groups':
       return await runStructuredKebabGroupsCheck([]);
     case 'check':

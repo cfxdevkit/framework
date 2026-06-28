@@ -1,4 +1,5 @@
-import { clearScreenDown, moveCursor } from 'node:readline';
+// ANSI cursor codes are deliberately not used — they break the TUI.
+// Sequential line output is used instead (see `interactive = false` below).
 import type { ExecutionContextSummary } from '../../shared/execution-context.js';
 import type { GateReport, GateResult, GateRunHooks } from '../gates.js';
 import type { WorkingSetSummary } from '../hud.js';
@@ -36,13 +37,11 @@ export function createWorkflowTerminalUi(options: {
   interactive?: boolean;
 }): WorkflowTerminalUi {
   const output = options.stdout ?? process.stdout;
-  // When running inside the pi coding agent TUI, disable interactive cursor
-  // manipulation (moveCursor/clearScreenDown) — the TUI does not handle ANSI
-  // cursor codes and they break rendering.  Sequential line output is used
-  // instead, giving each step its own line with the final summary at the end.
-  const piTui = Boolean(process.env.PI_CODING_AGENT);
-  const interactive =
-    options.interactive ?? (piTui ? false : Boolean(output.isTTY && process.stderr.isTTY));
+  // Always use sequential line output — the TUI does not handle ANSI cursor
+  // codes (moveCursor/clearScreenDown) and they break rendering.  Sequential
+  // output gives each step its own line with the final summary at the end,
+  // and works correctly in both TUI and terminal contexts.
+  const interactive = false;
   const header = formatHeader(options.commandLabel, options.executionContext, options.workingSet);
   const state: {
     stepLine: string;
@@ -76,9 +75,8 @@ export function createWorkflowTerminalUi(options: {
   };
 
   const clearBlock = (): void => {
-    if (!interactive || state.renderedRowCount === 0) return;
-    moveCursor(output, 0, -state.renderedRowCount);
-    clearScreenDown(output);
+    // No-op when interactive is disabled (TUI-safe sequential output).
+    // ANSI cursor codes (moveCursor/clearScreenDown) break the TUI rendering.
     state.renderedRowCount = 0;
   };
 

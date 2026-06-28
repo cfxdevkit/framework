@@ -35,11 +35,15 @@ tasks:
     options:
       mergeArgs: 'replace'
   repo-gate:
-    script: "pnpm --filter @cfxdevkit/tooling-cli tooling repo check validation"
+    script: "pnpm --filter @cfxdevkit/tooling-cli tooling check validation"
     options:
       mergeArgs: 'replace'
   repo-check:
-    script: "pnpm --filter @cfxdevkit/tooling-cli tooling repo check"
+    script: "pnpm --filter @cfxdevkit/tooling-cli tooling check"
+    options:
+      mergeArgs: 'replace'
+  repo-commit:
+    script: "pnpm --filter @cfxdevkit/tooling-cli tooling check validation"
     options:
       mergeArgs: 'replace'
   repo-generate:

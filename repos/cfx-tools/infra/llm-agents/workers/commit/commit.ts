@@ -5,9 +5,10 @@ import {
 } from '../shared/execution-context.js';
 import { unique } from '../shared/logging.js';
 import { generateChangesetPlan, writeChangesetFile } from './changeset.js';
+import * as R from './commit-results.js';
 import { analyzeGateFailures } from './failure-analysis.js';
 import { parseCommitFlags } from './flags.js';
-import { runQualityGates, runRepositoryPolicyGates } from './gates.js';
+import { runRepositoryPolicyGates, runValidationCheck } from './gates.js';
 import { summarizeWorkingSet } from './hud.js';
 import {
   assertNoUnexpectedChanges,
@@ -27,7 +28,6 @@ import {
   summarizeGateFailures,
 } from './terminal/ui';
 import type { CommitWorkflowOptions, CommitWorkflowResult } from './types.js';
-import * as R from './commit-results.js';
 
 export async function runCommitWorkflow(
   args,
@@ -59,11 +59,13 @@ export async function runCommitWorkflow(
       ...(options.stderr ? { stderr: options.stderr } : {}),
     });
     ui.start();
-    ui.startStep(1, 8, 'Incremental validation sequence');
+    ui.startStep(1, 8, 'Validation sequence');
     ui.note(
-      'order: gitnexus analyze -> format -> lint -> typecheck -> tests -> hotspots -> kebab-groups -> repo check',
+      'order: gitnexus analyze -> format -> lint -> typecheck -> tests -> build -> hotspots -> kebab-groups -> check',
     );
-    const qualityReport = await runQualityGates(flags, ui.gateHooks);
+    // Unified validation delegates to `cdk-repo-check validation` (single process).
+    // Quality + policy gates are merged into one call.
+    const qualityReport = await runValidationCheck(flags, ui.gateHooks);
     let failureAnalysis = null;
     if (!qualityReport.passed) {
       failureAnalysis = await analyzeGateFailures({
@@ -81,7 +83,7 @@ export async function runCommitWorkflow(
         return R.buildQualityBlocked({
           executionContext: toExecutionContextRuntimePayload(executionContext),
           scopes,
-          qualityGates: qualityReport,
+          qualityGates: qualityReport as CommitWorkflowResult['qualityGates'],
           repositoryPolicies: {
             kind: 'repository-policy',
             label: 'Repository policy follow-up gates',
@@ -96,9 +98,9 @@ export async function runCommitWorkflow(
       }
       ui.note('--force enabled: continuing past failing validation gates');
     }
-    const skipPolicyGates = flags.skipPolicyGates || flags.quick;
-    let policyReport;
-    if (skipPolicyGates) {
+    const skippedPolicyGates = flags.skipPolicyGates || flags.quick;
+    let policyReport: Awaited<ReturnType<typeof runRepositoryPolicyGates>>;
+    if (skippedPolicyGates) {
       ui.note('policy gates skipped (--quick or --skip-policy-gates)');
       policyReport = {
         kind: 'repository-policy' as const,
@@ -108,8 +110,19 @@ export async function runCommitWorkflow(
         results: [],
       };
     } else {
-      ui.startStep(2, 8, 'Repository policy gates');
-      policyReport = await runRepositoryPolicyGates(ui.gateHooks);
+      // Validation already includes hotspots, kebab-groups, and check as steps.
+      // Report them as policy gates for compatibility.
+      ui.startStep(2, 7, 'Policy gates (included in validation)');
+      const policyResults = qualityReport.results.filter((r) =>
+        ['hotspots', 'kebab-groups', 'check'].includes(r.id),
+      );
+      policyReport = {
+        kind: 'repository-policy' as const,
+        label: 'Repository policy follow-up gates',
+        passed: qualityReport.passed,
+        skipped: false,
+        results: policyResults,
+      };
       if (!policyReport.passed) {
         failureAnalysis = await analyzeGateFailures({
           command: 'commit',
@@ -127,7 +140,7 @@ export async function runCommitWorkflow(
         return R.buildPolicyBlocked({
           executionContext: toExecutionContextRuntimePayload(executionContext),
           scopes,
-          qualityGates: qualityReport,
+          qualityGates: qualityReport as CommitWorkflowResult['qualityGates'],
           repositoryPolicies: policyReport,
           failureAnalysis,
           subject: '',
@@ -137,13 +150,13 @@ export async function runCommitWorkflow(
       if (!policyReport.passed && flags.force)
         ui.note('--force enabled: continuing past failing repository-policy follow-up gates');
     }
-    const totalSteps = skipPolicyGates ? 7 : 8;
-    const scopeStep = skipPolicyGates ? 3 : 4;
-    const releaseStep = skipPolicyGates ? 4 : 5;
-    const messageStep = skipPolicyGates ? 5 : 6;
-    const approvalStep = skipPolicyGates ? 6 : 7;
-    const postChecksStep = skipPolicyGates ? 7 : 8;
-    const commitStep = skipPolicyGates ? 7 : 8;
+    const totalSteps = 7;
+    const scopeStep = 3;
+    const releaseStep = 4;
+    const messageStep = 5;
+    const approvalStep = 6;
+    const postChecksStep = 7;
+    const commitStep = 7;
     if (scopes.length === 0) {
       ui.startStep(scopeStep, totalSteps, 'Detecting changed scopes');
       ui.finish('clean', ['working tree clean: nothing to commit']);
@@ -173,7 +186,7 @@ export async function runCommitWorkflow(
     const c = {
       executionContext: toExecutionContextRuntimePayload(executionContext),
       scopes,
-      qualityGates: qualityReport,
+      qualityGates: qualityReport as CommitWorkflowResult['qualityGates'],
       repositoryPolicies: policyReport,
       failureAnalysis,
       changesetPlan,
@@ -228,7 +241,10 @@ export async function runCommitWorkflow(
     }
     const skipPostChecks = flags.skipPostChecks || flags.quick;
     if (!skipPostChecks) {
-      const postCheckReport = await runQualityGates({ ...flags, withBuild: false }, ui.gateHooks);
+      const postCheckReport = await runValidationCheck(
+        { ...flags, withBuild: false },
+        ui.gateHooks,
+      );
       if (!postCheckReport.passed) {
         failureAnalysis = await analyzeGateFailures({
           command: 'commit',

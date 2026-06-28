@@ -78,6 +78,7 @@ RUN corepack enable \
 # PI (Coding Agent) — installed as root so it writes to ~/.npm-global (user-writable prefix).
 # Avoids the EACCES that happens when npm i -g targets root-owned /usr/local/... paths.
 RUN npm i -g --ignore-scripts @earendil-works/pi-coding-agent@0.80.2 --prefix /home/node/.npm-global \
+  && npm i -g gitnexus --prefix /home/node/.npm-global \
   && chown -R node:node /home/node/.npm-global
 
 USER node

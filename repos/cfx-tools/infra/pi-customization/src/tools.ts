@@ -22,9 +22,9 @@ const repoAgentCheckTool = defineTool({
   name: 'repo_agent_check',
   label: 'run agent check',
   description:
-    'Run the full repo validation → OpenSpec change planning pipeline. Validates the repository and auto-creates OpenSpec changes for any error-status validation steps found.',
+    'Run repo validation and present findings. By default only reports validation results — does not create OpenSpec changes. Pass createChanges=true to auto-create artifacts for actionable findings.',
   promptSnippet:
-    'Use this when validation errors are found to create OpenSpec changes for remediation. Returns status, actionable steps, and names of any created changes.',
+    'Run repo validation to check code quality, naming conventions, and policy compliance. Returns validation status, findings, and remediation guidance. Does not auto-create changes — use createChanges=true to generate OpenSpec artifacts.',
   parameters: Type.Object({
     dryRun: Type.Optional(
       Type.Boolean({ description: 'Plan without writing OpenSpec artifacts.' }),
@@ -32,12 +32,19 @@ const repoAgentCheckTool = defineTool({
     createBranch: Type.Optional(
       Type.Boolean({ description: 'Create a git branch for the planned changes.' }),
     ),
+    createChanges: Type.Optional(
+      Type.Boolean({
+        description:
+          'Auto-create OpenSpec change artifacts for actionable findings. Defaults to false — only reports findings without creating changes.',
+      }),
+    ),
     quick: Type.Optional(Type.Boolean({ description: 'Reduce LLM context for a faster pass.' })),
   }),
   async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
     const result = await executePiAgentCheck({
       dryRun: params.dryRun,
       createBranch: params.createBranch,
+      createChanges: params.createChanges,
       quick: params.quick,
     });
 
@@ -48,12 +55,15 @@ const repoAgentCheckTool = defineTool({
     }
 
     const changeNames = result.artifacts.map((a) => a.name);
+    const isAdvisory = !params.createChanges;
     const summary =
       result.status === 'ok'
         ? 'Validation passed — no changes needed.'
-        : `Validation ${result.status}: ${changeNames.length} OpenSpec change(s) created: ${
-            changeNames.join(', ') || '(none)'
-          }`;
+        : isAdvisory
+          ? `Validation ${result.status}: ${result.validation.actionableSteps.length} finding(s) — review below. Set createChanges=true to auto-generate OpenSpec change artifacts.`
+          : `Validation ${result.status}: ${changeNames.length} OpenSpec change(s) created: ${
+              changeNames.join(', ') || '(none)'
+            }`;
     return {
       content: [{ type: 'text', text: summary }],
       details: {
