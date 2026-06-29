@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
-import { runReflection } from './store.js';
 import type { MemoryStore } from './store-core.js';
+import { runReflection } from './store-index.js';
 
 export function registerMemoryCommands(pi: ExtensionAPI, getStore: () => MemoryStore | null): void {
   // Register /memory command

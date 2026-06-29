@@ -72,6 +72,8 @@ export interface CommitWorkflowOptions {
   // Abort signal for cancellation support. When aborted, the workflow will
   // stop at the next major step and return null.
   readonly signal?: AbortSignal;
+  // Commit message preview to display in the confirmation prompt.
+  readonly commitMessage?: { readonly subject: string; readonly body: string };
 }
 
 export type ExecutionContextLike = Awaited<ReturnType<typeof resolveExecutionContext>>;

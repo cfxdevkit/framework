@@ -50,7 +50,7 @@ export async function saveJSONL(
 ): Promise<void> {
   await mkdir(storePath, { recursive: true });
   const filePath = join(storePath, filename);
-  const content = records.map((record) => JSON.stringify(record)).join('\n') + '\n';
+  const content = `${records.map((record) => JSON.stringify(record)).join('\n')}\n`;
   await writeFile(filePath, content, 'utf-8');
 }
 
@@ -83,5 +83,5 @@ export async function readInbox(storePath: string): Promise<MemoryRecord[]> {
 export async function appendInbox(storePath: string, record: MemoryRecord): Promise<void> {
   const filePath = join(storePath, INBOX_FILE);
   await mkdir(storePath, { recursive: true });
-  await appendFile(filePath, JSON.stringify(record) + '\n', 'utf-8');
+  await appendFile(filePath, `${JSON.stringify(record)}\n`, 'utf-8');
 }

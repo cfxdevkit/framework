@@ -95,48 +95,87 @@ const repoCommitWorkflowTool = defineTool({
       }
     }
 
-    const responseLines: string[] = [];
+    const sections: string[][] = [];
+    const addLine = (line: string) => {
+      if (sections.length === 0) {
+        sections.push([line]);
+      } else {
+        const last = sections[sections.length - 1];
+        if (last.length === 0 || (last.length === 1 && last[0] === '')) {
+          sections.push([line]);
+        } else {
+          last.push(line);
+        }
+      }
+    };
+    const addSection = (title: string, lines: string[]) => {
+      if (lines.length > 0) {
+        addLine('');
+        addLine(title);
+        addLine(lines.join('\n'));
+      }
+    };
+
     if (result) {
-      responseLines.push(`Commit workflow: ${result.status} (${result.phase})`);
+      addLine(`Commit workflow: ${result.status} (${result.phase})`);
       if (result.repositoryPolicies) {
         const repoResults = result.repositoryPolicies.results || [];
         if (repoResults.length > 0) {
-          responseLines.push(
-            `Repository policies: ${repoResults.map((r: { label: string; status: string }) => `${r.label}: ${r.status}`).join(', ')}`,
+          addSection(
+            'Repository policies',
+            repoResults.map((r: { label: string; status: string }) => `${r.label}: ${r.status}`),
           );
         }
       }
       if (result.qualityGates) {
         const qualityResults = result.qualityGates.results || [];
         if (qualityResults.length > 0) {
-          responseLines.push(
-            `Quality gates: ${qualityResults.map((r: { label: string; status: string }) => `${r.label}: ${r.status}`).join(', ')}`,
+          addSection(
+            'Quality gates',
+            qualityResults.map((r: { label: string; status: string }) => `${r.label}: ${r.status}`),
           );
         }
       }
       if (result.commitPreview) {
-        responseLines.push(`Commit: ${result.commitPreview.subject}`);
-        if (result.commitPreview.body) responseLines.push(result.commitPreview.body);
+        addSection('Commit', [
+          result.commitPreview.subject,
+          ...(result.commitPreview.body ? result.commitPreview.body.split('\n') : []),
+        ]);
       }
       if (result.approval) {
-        responseLines.push(
-          `Approval: required=${result.approval.required}, approved=${result.approval.approved}`,
+        addSection('Approval', [
+          `required=${result.approval.required}, approved=${result.approval.approved}`,
+        ]);
+      }
+      if (result.failureAnalysis) {
+        addSection('Failure analysis', [result.failureAnalysis.status]);
+      }
+      if (result.sha) {
+        addSection('Commit', [`SHA: ${result.sha}`]);
+      }
+      if (result.aborted) {
+        addLine('Workflow was aborted by user.');
+      }
+      if (result.generatedFiles?.length) {
+        addSection(
+          'Generated files',
+          result.generatedFiles.map((f: string) => `- ${f}`),
         );
       }
-      if (result.failureAnalysis)
-        responseLines.push(`Failure analysis: ${result.failureAnalysis.status}`);
-      if (result.sha) responseLines.push(`Commit SHA: ${result.sha}`);
-      if (result.aborted) responseLines.push('Workflow was aborted by user.');
+      if (result.blockedBy) {
+        addLine(`Blocked by: ${result.blockedBy}`);
+      }
       if (capturedLogs && capturedLogs.length > 0) {
-        responseLines.push('--- Workflow logs ---');
-        responseLines.push(capturedLogs.join('\n'));
+        addSection('Workflow logs', capturedLogs);
       }
     } else {
-      responseLines.push('Commit workflow: clean (no changes to commit)');
+      addLine('Commit workflow: clean (no changes to commit)');
     }
 
+    const text = sections.flat().filter(Boolean).join('\n');
+
     return {
-      content: [{ type: 'text', text: responseLines.join('\n\n') }],
+      content: [{ type: 'text', text }],
       details: { result },
     };
   },

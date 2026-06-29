@@ -1,6 +1,6 @@
 import type { CommitWorkflowResult } from './types.js';
 
-interface Ctx {
+export interface Ctx {
   executionContext: CommitWorkflowResult['executionContext'];
   scopes: CommitWorkflowResult['scopes'];
   qualityGates: CommitWorkflowResult['qualityGates'];

@@ -4,7 +4,7 @@ import { chainFromFlags } from './commands/chain.js';
 import { contractsExtractFromFlags } from './commands/contracts.js';
 import { deriveFromFlags } from './commands/derive.js';
 import { generateFromFlags } from './commands/generate.js';
-import { keystoreFromFlags } from './commands/keystore.js';
+import { keystoreFromFlags } from './commands/keystore-index.js';
 import { statusFromFlags } from './commands/status.js';
 import { unitsFromFlags } from './commands/units.js';
 

@@ -18,7 +18,7 @@ type GateView = {
   readonly elapsedMs?: number;
 };
 
-type WorkflowTerminalUi = {
+export type WorkflowTerminalUi = {
   readonly gateHooks: GateRunHooks;
   start: () => void;
   startStep: (step: number, total: number, label: string) => void;

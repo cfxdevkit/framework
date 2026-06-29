@@ -7,30 +7,26 @@ import { unique } from '../shared/logging.js';
 import { generateChangesetPlan } from './changeset.js';
 import * as R from './commit-results.js';
 import { analyzeGateFailures } from './failure-analysis.js';
+import type { GateFailureAnalysis } from './failure-analysis.js';
 import { parseCommitFlags } from './flags.js';
 import { runValidationCheck } from './gates/index.js';
+import type { GateReport } from './gates/types.js';
 import { summarizeWorkingSet } from './hud.js';
-import {
-  confirmPrompt,
-  generateCommitMessage,
-  printProposedCommit,
-  writeCommitReport,
-} from './message.js';
+import { generateCommitMessage, writeCommitReport } from './message.js';
 import { detectChangedScopes } from './scope.js';
 import {
   createWorkflowTerminalUi,
-  summarizeCommitPreview,
   summarizeFailureAnalysis,
   summarizeGateFailures,
 } from './terminal/ui.js';
 import { runPostChecksAndCommit } from './post-checks.js';
+import { handleApproval } from './approval.js';
 import type { CommitWorkflowOptions, CommitWorkflowResult } from './types.js';
 
 export async function runCommitWorkflow(
   args,
   options: CommitWorkflowOptions = {},
 ): Promise<CommitWorkflowResult | null> {
-  const tuiConfirm = options.tuiConfirm ?? null;
   const signal = options.signal;
   const onAbort = options.onAbort;
   const onProgress = options.onProgress;
@@ -39,7 +35,6 @@ export async function runCommitWorkflow(
   try {
     if (args[0] === '--') args.shift();
     const flags = parseCommitFlags(args);
-    const approvalMode = options.approvalMode ?? 'defer';
     const messageGenerationModel = flags.model ?? options.modelPolicies?.messageGenerationModel;
     const failureAnalysisModel =
       flags.model ?? options.modelPolicies?.failureAnalysisModel ?? messageGenerationModel;
@@ -63,7 +58,7 @@ export async function runCommitWorkflow(
     const scopes = await detectChangedScopes();
 
     // Validate
-    if (ui) ui.startStep(1, 8, 'Validation sequence');
+    if (ui) ui.startStep(1, 7, 'Validation sequence');
     onProgress?.('validation-start', 'Running validation');
     const qualityReport = await runValidationCheck(
       flags,
@@ -75,21 +70,22 @@ export async function runCommitWorkflow(
           `${gateLabel}: ${event} ${status}`,
         ),
     );
-    let failureAnalysis: any = null;
+    let failureAnalysis: GateFailureAnalysis | null = null;
     if (!qualityReport.passed) {
-      failureAnalysis = await analyzeGateFailures({
+      const fa = await analyzeGateFailures({
         command: 'commit',
         executionContext,
         reports: [qualityReport],
         modelOverride: failureAnalysisModel,
       });
+      failureAnalysis = fa;
       if (!flags.force) {
         onAbort?.();
         onProgress?.('validation-complete', 'failed');
         if (ui)
           ui.finish('blocked', [
             ...summarizeGateFailures(qualityReport),
-            ...summarizeFailureAnalysis(failureAnalysis),
+            ...summarizeFailureAnalysis(fa),
             'commit blocked: failing validation gates prevented commit',
           ]);
         return R.buildQualityBlocked({
@@ -103,7 +99,7 @@ export async function runCommitWorkflow(
             skipped: true,
             results: [],
           },
-          failureAnalysis,
+          failureAnalysis: fa,
           subject: '',
           body: '',
         });
@@ -116,9 +112,9 @@ export async function runCommitWorkflow(
       return null;
     }
 
-    // Policy
+    // Policy gates
     const skippedPolicyGates = flags.skipPolicyGates || flags.quick;
-    let policyReport: any;
+    let policyReport: GateReport;
     if (skippedPolicyGates) {
       if (ui) ui.note('policy gates skipped (--quick or --skip-policy-gates)');
       onProgress?.('policy-gates-skipped', 'Skipped');
@@ -130,7 +126,7 @@ export async function runCommitWorkflow(
         results: [],
       };
     } else {
-      if (ui) ui.startStep(2, 7, 'Policy gates (included in validation)');
+      if (ui) ui.startStep(2, 7, 'Policy gates');
       onProgress?.('policy-gates', 'Running policy gates');
       const policyResults = qualityReport.results.filter((r) =>
         ['hotspots', 'kebab-groups', 'check'].includes(r.id),
@@ -231,46 +227,8 @@ export async function runCommitWorkflow(
     }
 
     // Approval
-    if (ui) ui.startStep(6, 7, 'Approval');
-    onProgress?.('approval', 'Requesting approval');
-    if (flags.dryRun) {
-      onAbort?.();
-      if (ui)
-        ui.finish('dry-run', [
-          ...summarizeCommitPreview(subject, body),
-          'dry-run: skipping changeset writes, post-checks, staging, and commit',
-          'report: .pi/artifacts/llm/reports/llm-commit.md',
-        ]);
-      return R.buildDryRun(c);
-    }
-    if (!flags.yes && approvalMode === 'defer') {
-      onAbort?.();
-      if (ui)
-        ui.finish('approval-required', [
-          ...summarizeCommitPreview(subject, body),
-          'approval required before changeset writes, post-checks, staging, and commit',
-          'report: .pi/artifacts/llm/reports/llm-commit.md',
-        ]);
-      return R.buildApprovalRequired(c);
-    }
-    if (!flags.yes && approvalMode === 'prompt') {
-      if (ui) ui.pause();
-      printProposedCommit(subject, body);
-      const confirmed = await confirmPrompt(
-        'Write changeset if needed and commit? [Y/n] ',
-        tuiConfirm,
-      );
-      if (!confirmed) {
-        onAbort?.();
-        if (ui)
-          ui.finish('aborted', [
-            ...summarizeCommitPreview(subject, body),
-            'commit aborted before changeset writes and final commit',
-            'report: .pi/artifacts/llm/reports/llm-commit.md',
-          ]);
-        return R.buildAborted(c);
-      }
-    }
+    const approvalResult = await handleApproval({ flags, options, ctx: c });
+    if (approvalResult) return approvalResult;
     if (signal?.aborted) {
       onAbort?.();
       return null;

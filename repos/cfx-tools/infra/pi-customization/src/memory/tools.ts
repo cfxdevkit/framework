@@ -1,7 +1,7 @@
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
-import type { MemoryStore } from './store.js';
-import { setModelRegistry } from './store.js';
+import type { MemoryStore } from './store-index.js';
+import { setModelRegistry } from './store-index.js';
 import type { MemoryKind } from './types.js';
 
 export function registerMemoryTools(pi: ExtensionAPI, getStore: () => MemoryStore | null): void {

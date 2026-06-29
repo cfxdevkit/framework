@@ -1,12 +1,12 @@
 import { complete } from '@earendil-works/pi-ai/base';
 import type { ExtensionAPI, ModelRegistry } from '@earendil-works/pi-coding-agent';
 import { registerMemoryCommands } from './commands.js';
-import { getModelRegistry, MemoryStore } from './store.js';
+import { getModelRegistry, MemoryStore } from './store-index.js';
 import { registerMemoryTools } from './tools.js';
 import { DEFAULT_CONFIG } from './types.js';
 
 export { registerMemoryCommands } from './commands.js';
-export { getModelRegistry, MemoryStore } from './store.js';
+export { getModelRegistry, MemoryStore } from './store-index.js';
 export { registerMemoryTools } from './tools.js';
 
 // Helper to parse LLM JSON responses
