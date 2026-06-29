@@ -8,7 +8,7 @@ import { generateChangesetPlan, writeChangesetFile } from './changeset.js';
 import * as R from './commit-results.js';
 import { analyzeGateFailures } from './failure-analysis.js';
 import { parseCommitFlags } from './flags.js';
-import { runRepositoryPolicyGates, runValidationCheck } from './gates.js';
+import { runRepositoryPolicyGates, runValidationCheck } from './gates/index.js';
 import { summarizeWorkingSet } from './hud.js';
 import {
   assertNoUnexpectedChanges,

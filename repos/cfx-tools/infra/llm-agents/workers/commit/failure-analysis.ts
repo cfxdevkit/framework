@@ -4,7 +4,7 @@ import {
   renderExecutionContextLines,
 } from '../shared/execution-context.js';
 import { createLlmProgressReporter } from '../shared/logging.js';
-import type { GateReport } from './gates.js';
+import type { GateReport } from './gates/index.js';
 
 export type GateFailureAnalysis = {
   attempted: boolean;

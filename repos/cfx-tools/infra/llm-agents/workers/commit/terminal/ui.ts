@@ -1,7 +1,7 @@
 // ANSI cursor codes are deliberately not used — they break the TUI.
 // Sequential line output is used instead (see `interactive = false` below).
 import type { ExecutionContextSummary } from '../../shared/execution-context.js';
-import type { GateReport, GateResult, GateRunHooks } from '../gates.js';
+import type { GateReport, GateResult, GateRunHooks } from '../gates/index.js';
 import type { WorkingSetSummary } from '../hud.js';
 
 export {

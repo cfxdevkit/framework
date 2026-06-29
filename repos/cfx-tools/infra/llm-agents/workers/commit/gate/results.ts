@@ -1,4 +1,4 @@
-import type { GateResult } from '../gates.js';
+import type { GateResult } from '../gates/index.js';
 import { buildDeterministicHints, extractSignalLines } from './output.js';
 
 export function extractGateSummary(output: string): string {

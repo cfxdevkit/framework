@@ -3,7 +3,7 @@ import {
   toExecutionContextRuntimePayload,
 } from '../shared/execution-context.js';
 import { parseCommitFlags } from './flags.js';
-import { runValidationCheck } from './gates.js';
+import { runValidationCheck } from './gates/index.js';
 import { summarizeWorkingSet } from './hud.js';
 import { detectChangedScopes } from './scope.js';
 import { createWorkflowTerminalUi, summarizeGateFailures } from './terminal/ui';

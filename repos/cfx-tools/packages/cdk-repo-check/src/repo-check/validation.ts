@@ -144,7 +144,7 @@ async function runValidationStep(stepId: RepoValidationStepId): Promise<RepoStru
     case 'build':
       return await runStructuredRepoCommand('build', []);
     case 'hotspots':
-      return await runStructuredHotspotsCheck(['--fail-on-hard', '--hard-limit', '1000']);
+      return await runStructuredHotspotsCheck(['--fail-on-hard']);
     case 'kebab-groups':
       return await runStructuredKebabGroupsCheck([]);
     case 'check':
@@ -185,9 +185,9 @@ function renderValidationCommand(stepId: RepoValidationStepId): string {
     case 'build':
       return 'pnpm run build';
     case 'hotspots':
-      return 'pnpm run cdk -- repo check hotspots -- --fail-on-hard';
+      return 'pnpm --filter @cfxdevkit/tooling-cli tooling check hotspots -- --fail-on-hard';
     case 'kebab-groups':
-      return 'pnpm run cdk -- repo check kebab-groups';
+      return 'pnpm --filter @cfxdevkit/tooling-cli tooling check kebab-groups';
     case 'check':
       return 'pnpm run check';
   }

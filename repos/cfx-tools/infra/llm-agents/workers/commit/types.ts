@@ -4,7 +4,7 @@ import type {
 } from '../shared/execution-context.js';
 import type { generateChangesetPlan } from './changeset.js';
 import type { GateFailureAnalysis } from './failure-analysis.js';
-import type { GateReport, runQualityGates, runRepositoryPolicyGates } from './gates.js';
+import type { GateReport, runQualityGates, runRepositoryPolicyGates } from './gates/index.js';
 import type { detectChangedScopes } from './scope.js';
 
 export interface PrecommitWorkflowResult {

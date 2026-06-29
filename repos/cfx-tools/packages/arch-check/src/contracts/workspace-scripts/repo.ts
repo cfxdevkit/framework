@@ -21,7 +21,7 @@ export const rootRepoScriptRequirements: readonly ScriptRequirement[] = [
   },
   {
     name: 'repo:check',
-    expected: 'pnpm run cdk -- repo check',
+    expected: 'pnpm run repo:check',
     severity: 'warning',
     description: 'repo validation alias',
   },
