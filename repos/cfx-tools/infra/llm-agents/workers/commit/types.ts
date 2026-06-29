@@ -62,9 +62,16 @@ export interface CommitWorkflowOptions {
   };
   readonly stdout?: NodeJS.WriteStream;
   readonly stderr?: NodeJS.WriteStream;
-  // TUI-native confirmation callback. When set, confirmPrompt() uses this
+  // Per-call TUI confirm callback. When set, confirmPrompt() uses this
   // instead of readline, enabling single-pass approval in TUI mode.
   readonly tuiConfirm?: ((question: string) => Promise<boolean>) | null;
+  // Progress callback invoked at major workflow steps.
+  readonly onProgress?: (phase: string, detail?: string) => void;
+  // Abort callback invoked when the workflow is aborted.
+  readonly onAbort?: () => void;
+  // Abort signal for cancellation support. When aborted, the workflow will
+  // stop at the next major step and return null.
+  readonly signal?: AbortSignal;
 }
 
 export type ExecutionContextLike = Awaited<ReturnType<typeof resolveExecutionContext>>;

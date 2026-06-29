@@ -21,7 +21,7 @@ export {
   executeCdkGenerate,
   executeCdkStatus,
 } from './tools/cdk.js';
-export { executePiCommitSession, setTuiConfirm } from './tools/commit.js';
+export { executePiCommitSession } from './tools/commit.js';
 export {
   clearPiWorkflowProgress,
   createPiGateUiState,

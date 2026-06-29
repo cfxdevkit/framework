@@ -8,7 +8,6 @@ const mocks = vi.hoisted(() => ({
   toExecutionContextRuntimePayload: vi.fn(),
   logInfo: vi.fn(),
   logStep: vi.fn(),
-  setTuiConfirm: vi.fn(),
   unique: vi.fn((items: readonly string[]) => [...new Set(items)]),
   analyzeGateFailures: vi.fn(),
   generateChangesetPlan: vi.fn(),
@@ -94,7 +93,6 @@ vi.mock('./message.ts', () => ({
   generateCommitMessage: mocks.generateCommitMessage,
   printProposedCommit: mocks.printProposedCommit,
   resolveFilesToStage: mocks.resolveFilesToStage,
-  setTuiConfirm: mocks.setTuiConfirm,
   writeCommitReport: mocks.writeCommitReport,
 }));
 

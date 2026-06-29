@@ -9,7 +9,7 @@ import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import type { PiCommitWorkflowResult } from '../llm-agents-runtime.js';
 import { executePiAgentCheck, getPiActionDefinitions } from '../llm-agents-runtime.js';
 import { createPiProviderBridge } from '../provider/bridge.js';
-import { executePiCommitSession, executePiRepoAction, setTuiConfirm } from '../tools.js';
+import { executePiCommitSession, executePiRepoAction } from '../tools.js';
 import {
   clearPiWorkflowProgress,
   createPiAgentCheckUiState,
@@ -105,19 +105,23 @@ export function registerRepoCommitCommand(pi: ExtensionAPI): void {
       const parsed = parseRepoRunArgs(args);
 
       setPiWorkflowProgress(ctx, 'Running interactive commit workflow');
-      try {
-        setTuiConfirm(async (question) => {
-          return await ctx.ui.confirm('Approve commit?', question, {
-            timeout: 300000,
-          });
-        });
 
+      // Set up TUI confirm callback (scoped to this command call only).
+      const tuiConfirm = async (question: string) => {
+        return await ctx.ui.confirm('Approve commit?', question, {
+          timeout: 300000,
+        });
+      };
+
+      try {
         const result = await executePiCommitSession({
           ...(parsed.prompt ? { prompt: parsed.prompt } : {}),
           ...(parsed.quick ? { quick: true } : {}),
           ...(parsed.model ? { model: parsed.model } : {}),
           tuiMode: true,
           singlePassApproval: true,
+          tuiConfirm,
+          ...(ctx.hasUI ? { ctx: { hasUI: true, ui: ctx.ui } } : {}),
         });
 
         if (!result) {
@@ -135,7 +139,7 @@ export function registerRepoCommitCommand(pi: ExtensionAPI): void {
           ctx.ui.notify(error instanceof Error ? error.message : String(error), 'error');
         }
       } finally {
-        setTuiConfirm(null);
+        // No-op: tuiConfirm is scoped to this call, no global cleanup needed.
         clearPiWorkflowProgress(ctx);
       }
     },

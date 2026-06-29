@@ -6,17 +6,16 @@ import {
   getPiActionDefinitions,
   type PiRepoActionExecutionResult,
 } from './llm-agents-runtime.js';
-import { executePiCommitSession, setTuiConfirm } from './tools/commit.js';
+import { repoCommitWorkflowTool } from './tools/commit-tool.js';
 import { withCapturedConsole } from './tools/utils.js';
 import {
   clearPiOperatorWidgets,
   createPiAgentCheckUiState,
-  createPiCommitWorkflowUiState,
   createPiRepoActionUiState,
   renderPiActionCatalogLines,
 } from './ui.js';
 
-export { executePiCommitSession, setTuiConfirm } from './tools/commit.js';
+export { executePiCommitSession } from './tools/commit.js';
 
 const repoAgentCheckTool = defineTool({
   name: 'repo_agent_check',
@@ -149,62 +148,6 @@ const repoRunActionTool = defineTool({
         executionContext: result.executionContext,
       },
     };
-  },
-});
-
-const repoCommitWorkflowTool = defineTool({
-  name: 'repo_commit_workflow',
-  label: 'run repo commit workflow',
-  description:
-    'Execute the non-exiting repository commit workflow and surface status, gates, remediation guidance, and approval state.',
-  promptSnippet:
-    'Use this to start or rerun the interactive repository commit workflow without leaving the PI session.',
-  parameters: Type.Object({
-    prompt: Type.Optional(
-      Type.String({ description: 'Optional operator instruction for commit message generation.' }),
-    ),
-    quick: Type.Optional(
-      Type.Boolean({ description: 'Reduce context gathering for a faster exploratory pass.' }),
-    ),
-    model: Type.Optional(Type.String({ description: 'Optional model override.' })),
-  }),
-  async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-    if (ctx.hasUI) {
-      setTuiConfirm(async (question) => {
-        return await ctx.ui.confirm('Approve commit?', question);
-      });
-    }
-    try {
-      const result = await executePiCommitSession({
-        prompt: params.prompt,
-        quick: params.quick,
-        model: params.model,
-        tuiMode: ctx.hasUI,
-        singlePassApproval: ctx.hasUI,
-      });
-
-      if (ctx.hasUI) {
-        const uiState = createPiCommitWorkflowUiState(result);
-        ctx.ui.setStatus('repo-commit-tool', uiState.statusText);
-        clearPiOperatorWidgets(ctx);
-      }
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: result
-              ? `Commit workflow status: ${result.status} (${result.phase})`
-              : 'Commit workflow status: clean',
-          },
-        ],
-        details: {
-          result,
-        },
-      };
-    } finally {
-      setTuiConfirm(null);
-    }
   },
 });
 

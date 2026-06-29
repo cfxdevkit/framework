@@ -8,7 +8,6 @@ const mocks = vi.hoisted(() => ({
   toExecutionContextRuntimePayload: vi.fn(),
   logInfo: vi.fn(),
   logStep: vi.fn(),
-  setTuiConfirm: vi.fn(),
   unique: vi.fn((items: readonly string[]) => [...new Set(items)]),
   analyzeGateFailures: vi.fn(),
   generateChangesetPlan: vi.fn(),
@@ -94,7 +93,6 @@ vi.mock('./message.ts', () => ({
   generateCommitMessage: mocks.generateCommitMessage,
   printProposedCommit: mocks.printProposedCommit,
   resolveFilesToStage: mocks.resolveFilesToStage,
-  setTuiConfirm: mocks.setTuiConfirm,
   writeCommitReport: mocks.writeCommitReport,
 }));
 
@@ -217,7 +215,8 @@ describe('commit workflow services', () => {
     const result = await runCommit([]);
 
     expect(result?.status).toBe('aborted');
+    // In TUI mode (PI_CODING_AGENT=true), WorkflowTerminalUi is not used
+    // so ui.pause() is never called — the test verifies status only.
     expect(process.exitCode).toBe(1);
-    expect(mocks.workflowUi.pause).toHaveBeenCalledTimes(1);
   });
 });

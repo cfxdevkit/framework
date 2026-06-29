@@ -166,6 +166,8 @@ export interface PiCommitWorkflowResult {
   readonly generatedFiles?: readonly string[];
   readonly dryRun?: boolean;
   readonly sha?: string;
+  // Whether the workflow was aborted before completion (e.g. user cancelled via Esc).
+  readonly aborted?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -191,6 +193,9 @@ interface LlmAgentsModule {
         failureAnalysisModel?: string | null;
       };
       tuiConfirm?: ((question: string) => Promise<boolean>) | null;
+      onProgress?: (phase: string, detail?: string) => void;
+      onAbort?: () => void;
+      signal?: AbortSignal;
     },
   ) => Promise<PiCommitWorkflowResult | null>;
 }
@@ -263,11 +268,17 @@ export async function executePiCommitWorkflow(
     };
     approvalMode?: 'defer' | 'prompt' | 'auto-approve';
     tuiConfirm?: ((question: string) => Promise<boolean>) | null;
+    onProgress?: (phase: string, detail?: string) => void;
+    onAbort?: () => void;
+    signal?: AbortSignal;
   },
 ): Promise<PiCommitWorkflowResult | null> {
   return await (await ensureModule()).runCommitWorkflow(args, {
     approvalMode: options?.approvalMode ?? 'defer',
     ...(options?.modelPolicies ? { modelPolicies: options.modelPolicies } : {}),
     ...(options?.tuiConfirm ? { tuiConfirm: options.tuiConfirm } : {}),
+    ...(options?.onProgress ? { onProgress: options.onProgress } : {}),
+    ...(options?.onAbort ? { onAbort: options.onAbort } : {}),
+    ...(options?.signal ? { signal: options.signal } : {}),
   });
 }

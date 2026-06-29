@@ -1,6 +1,3 @@
-// ANSI cursor codes are deliberately not used — they break the TUI.
-// Sequential line output is used instead (see `interactive = false` below).
-import type { ExecutionContextSummary } from '../../shared/execution-context.js';
 import type { GateReport, GateResult, GateRunHooks } from '../gates/index.js';
 import type { WorkingSetSummary } from '../hud.js';
 
@@ -9,6 +6,8 @@ export {
   summarizeFailureAnalysis,
   summarizeGateFailures,
 } from '../terminal-ui-summary.js';
+
+import type { ExecutionContextSummary } from '../../shared/execution-context.js';
 
 type GateView = {
   readonly id: string;
@@ -35,6 +34,7 @@ export function createWorkflowTerminalUi(options: {
   llmFailureAnalysis: boolean;
   stdout?: NodeJS.WriteStream;
   interactive?: boolean;
+  onProgress?: (phase: string, detail?: string) => void;
 }): WorkflowTerminalUi {
   const output = options.stdout ?? process.stdout;
   // Always use sequential line output — the TUI does not handle ANSI cursor
@@ -121,10 +121,12 @@ export function createWorkflowTerminalUi(options: {
         summary: gate.required ? 'queued' : 'queued optional',
       }));
       state.noteLine = `${group.label}: running ${group.gates.length} check(s)`;
+      options.onProgress?.('gate-group-start', `${group.label}: ${group.gates.length} gate(s)`);
       if (interactive) renderBlock();
     },
     onGateStart(gate) {
       updateGate(gate.label, { status: 'running', summary: 'running...' });
+      options.onProgress?.('gate-running', `${gate.label}`);
       if (interactive) renderBlock();
     },
     onGateFinish(result) {
@@ -134,6 +136,12 @@ export function createWorkflowTerminalUi(options: {
         summary: pickGateSummary(result),
         elapsedMs: result.elapsedMs,
       });
+      const statusIcon =
+        result.status === 'ok' ? 'ok' : result.status === 'warning' ? 'warn' : 'fail';
+      options.onProgress?.(
+        'gate-finish',
+        `${result.label}: ${statusIcon} ${pickGateSummary(result)}`,
+      );
       if (interactive) {
         state.noteLine = summarizeReportCounts(state.gates);
         renderBlock();
@@ -154,6 +162,7 @@ export function createWorkflowTerminalUi(options: {
     },
     onGroupFinish(report) {
       state.noteLine = summarizeFinishedReport(report);
+      options.onProgress?.('gate-group-complete', summarizeFinishedReport(report));
       if (interactive) renderBlock();
     },
   };

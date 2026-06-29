@@ -24,6 +24,7 @@ export {
   runPrecommit,
   runPrecommitWorkflow,
 } from '../workers/commit/index.js';
+export { createPiProgressReporter } from '../workers/commit/terminal/progress.js';
 export type { ActionConfig } from '../workers/completion/resolve-action.js';
 export { resolveActionConfig } from '../workers/completion/resolve-action.js';
 export {
@@ -45,9 +46,3 @@ export {
   repoActions,
 } from '../workers/shared/repo-actions.js';
 export { runTestUpkeep } from '../workers/tests/index.js';
-
-// TUI confirm callback setter — allows the PI tool to inject a TUI-native
-// confirm dialog into the commit workflow's confirmPrompt(), avoiding the
-// two-pass approval dance.
-
-export { setTuiConfirm } from '../workers/commit/message.js';

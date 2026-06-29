@@ -1,25 +1,13 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createPiProgressReporter } from '@cfxdevkit/llm-agents';
 import {
   type PiEffectiveActionPolicy,
   readPiConfig,
   resolveEffectiveActionPolicy,
 } from '../config.js';
 import { executePiCommitWorkflow, type PiCommitWorkflowResult } from '../llm-agents-runtime.js';
-
-// TUI-native confirmation callback set by the PI tool. When the workflow's
-// confirmPrompt() is called, it checks this closure first and uses the TUI's
-// confirm dialog instead of readline — enabling single-pass approval.
-let _tuiConfirmCb: ((question: string) => Promise<boolean>) | null = null;
-export function setTuiConfirm(cb: ((question: string) => Promise<boolean>) | null): void {
-  _tuiConfirmCb = cb;
-}
-
-function _getTuiConfirmCb(): ((question: string) => Promise<boolean>) | null {
-  return _tuiConfirmCb;
-}
-
 import { withCapturedConsole } from '../tools/utils.js';
 
 // Flag to ensure PI_CODING_AGENT is set once so the commit workflow's
@@ -38,6 +26,19 @@ export async function executePiCommitSession(options: {
   stdout?: NodeJS.WriteStream;
   stderr?: NodeJS.WriteStream;
   singlePassApproval?: boolean;
+  tuiConfirm?: ((question: string) => Promise<boolean>) | null;
+  onProgress?: (phase: string, detail?: string) => void;
+  onAbort?: () => void;
+  signal?: AbortSignal;
+  /** ExtensionContext for TUI mode — used to wire createPiProgressReporter */
+  ctx?: {
+    hasUI: boolean;
+    ui?: {
+      setWorkingVisible: (v: boolean) => void;
+      setWorkingMessage: (m?: string) => void;
+      setStatus: (k: string, v?: string) => void;
+    };
+  };
 }): Promise<PiCommitWorkflowResult | null> {
   const args: string[] = [];
   if (options.quick) args.push('--quick');
@@ -46,8 +47,20 @@ export async function executePiCommitSession(options: {
 
   const commitPolicy = await resolveCommitRuntimePolicy(options.model);
 
+  // Wire createPiProgressReporter when tuiMode is true and ctx is provided
+  const reporter =
+    options.tuiMode && options.ctx && !options.onProgress
+      ? createPiProgressReporter({
+          ctx: options.ctx,
+          onProgress: options.onProgress,
+          onAbort: options.onAbort,
+        })
+      : null;
+
+  const finalOnProgress = options.onProgress ?? reporter?.onProgress;
+  const finalOnAbort = options.onAbort ?? reporter?.onAbort;
+
   if (options.singlePassApproval && options.tuiMode) {
-    const cb = _getTuiConfirmCb();
     const { result } = await withScopedCommitPolicy(commitPolicy.profileOverride, async () => {
       return await withCapturedConsole(
         async () =>
@@ -56,14 +69,16 @@ export async function executePiCommitSession(options: {
             approvalMode: 'prompt',
             ...(options.stdout ? { stdout: options.stdout } : {}),
             ...(options.stderr ? { stderr: options.stderr } : {}),
-            tuiConfirm: cb,
+            ...(options.tuiConfirm ? { tuiConfirm: options.tuiConfirm } : {}),
+            ...(finalOnProgress ? { onProgress: finalOnProgress } : {}),
+            ...(finalOnAbort ? { onAbort: finalOnAbort } : {}),
+            ...(options.signal ? { signal: options.signal } : {}),
           }),
       );
     });
     return result;
   }
 
-  const cb = _getTuiConfirmCb();
   const { result } = await withScopedCommitPolicy(commitPolicy.profileOverride, async () => {
     return await withCapturedConsole(
       async () =>
@@ -72,7 +87,10 @@ export async function executePiCommitSession(options: {
           approvalMode: 'defer',
           ...(options.stdout ? { stdout: options.stdout } : {}),
           ...(options.stderr ? { stderr: options.stderr } : {}),
-          tuiConfirm: cb,
+          ...(options.tuiConfirm ? { tuiConfirm: options.tuiConfirm } : {}),
+          ...(finalOnProgress ? { onProgress: finalOnProgress } : {}),
+          ...(finalOnAbort ? { onAbort: finalOnAbort } : {}),
+          ...(options.signal ? { signal: options.signal } : {}),
         }),
     );
   });

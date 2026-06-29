@@ -20,6 +20,13 @@ export async function runValidationCheck(
     withBuild?: boolean;
   } = {},
   hooks?: GateRunHooks,
+  onProgress?: (stepId: string, status: 'running' | 'passed' | 'failed' | 'skipped') => void,
+  gateOnProgress?: (
+    gateId: string,
+    gateLabel: string,
+    event: 'start' | 'finish',
+    status: 'running' | 'ok' | 'warning' | 'error',
+  ) => void,
 ): Promise<GateReport & { kind: 'quality' }> {
   if (flags.skipChecks) {
     const report: GateReport & { kind: 'quality' } = {
@@ -31,6 +38,7 @@ export async function runValidationCheck(
     };
 
     hooks?.onGroupFinish?.(report);
+    gateOnProgress?.('validation', 'All gates', 'finish', 'ok');
     return report;
   }
 
@@ -44,18 +52,21 @@ export async function runValidationCheck(
       throw new Error('Validation check returned unexpected result structure');
     }
 
-    const results: GateReport['results'] = steps
-      .filter((step) => {
-        // Skip steps disabled by flags
-        if (step.id === 'test' && flags.withTests === false) return false;
-        if (step.id === 'build' && flags.withBuild === false) return false;
-        return true;
-      })
-      .map((step) => {
-        const status: GateReport['results'][number]['status'] =
-          step.status === 'ok' ? 'ok' : step.status === 'warning' ? 'warning' : 'error';
+    const results: GateReport['results'] = [];
+    for (const step of steps) {
+      // Skip steps disabled by flags
+      if (step.id === 'test' && flags.withTests === false) continue;
+      if (step.id === 'build' && flags.withBuild === false) continue;
 
-        return createGateResult({
+      // Signal step started
+      onProgress?.(step.id, 'running');
+      gateOnProgress?.(step.id, step.label, 'start', 'running');
+
+      const status: GateReport['results'][number]['status'] =
+        step.status === 'ok' ? 'ok' : step.status === 'warning' ? 'warning' : 'error';
+
+      results.push(
+        createGateResult({
           kind: 'quality',
           id: step.id,
           label: step.label,
@@ -65,8 +76,16 @@ export async function runValidationCheck(
           elapsedMs: step.durationMs,
           output: step.summary || '',
           summary: step.summary || `exit ${step.exitCode}`,
-        });
-      });
+        }),
+      );
+
+      // Signal step completed
+      onProgress?.(
+        step.id,
+        status === 'ok' ? 'passed' : status === 'warning' ? 'passed' : 'failed',
+      );
+      gateOnProgress?.(step.id, step.label, 'finish', status);
+    }
 
     const report: GateReport & { kind: 'quality' } = {
       kind: 'quality',
@@ -100,6 +119,7 @@ export async function runValidationCheck(
     };
 
     hooks?.onGroupFinish?.(report);
+    gateOnProgress?.('validation', 'Validation sequence', 'finish', 'error');
     return report;
   }
 }

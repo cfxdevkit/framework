@@ -1,19 +1,11 @@
 import { access, mkdir, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { completeCommitAgent, git, readContextFile } from '../completion/index.js';
-import { artifactsRoot, execFileAsync, repoActions, root } from '../shared/index.js';
+import { execFileAsync, repoActions, root } from '../shared/index.js';
 import { unique } from '../shared/logging.js';
 import { changedFilesList } from './scope.js';
 import { validateCommitJson } from './validate.js';
-
-// Optional TUI-native confirmation callback. When set (by the PI tool in
-// single-pass TUI mode), confirmPrompt uses it instead of readline, avoiding
-// the need for a two-pass approval flow.
-let _tuiConfirm: ((question: string) => Promise<boolean>) | null = null;
-export function setTuiConfirm(cb: ((question: string) => Promise<boolean>) | null): void {
-  _tuiConfirm = cb;
-}
 
 export async function generateCommitMessage(preflightCtx, changesetPlan, flags) {
   const changesetSummary = renderChangesetGuidance(changesetPlan).join('\n');
@@ -116,8 +108,11 @@ export function printProposedCommit(subject, body) {
 }
 
 export async function writeCommitReport(response, changesetPlan) {
-  const reportPath = join(artifactsRoot, 'reports', 'llm-commit.md');
-  await mkdir(dirname(reportPath), { recursive: true });
+  // Write to .pi/artifacts/ to avoid polluting workspace validation.
+  // .pi/ is gitignored and not scanned by precheck validation.
+  const piArtifactsDir = join(root, '.pi', 'artifacts', 'llm', 'reports');
+  await mkdir(piArtifactsDir, { recursive: true });
+  const reportPath = join(piArtifactsDir, 'llm-commit.md');
   await writeFile(
     reportPath,
     [
@@ -176,13 +171,16 @@ function renderChangesetGuidance(changesetPlan) {
   return lines;
 }
 
-export async function confirmPrompt(question) {
-  // When a TUI-native confirm callback is set (by the PI tool in
+export async function confirmPrompt(
+  question,
+  tuiConfirm?: ((question: string) => Promise<boolean>) | null,
+) {
+  // When a TUI-native confirm callback is provided (by the PI tool in
   // single-pass TUI mode), use it instead of readline. This avoids
   // the two-pass approval dance — the TUI shows its own confirm
   // dialog and the result flows back here directly.
-  if (_tuiConfirm) {
-    return _tuiConfirm(question);
+  if (tuiConfirm) {
+    return tuiConfirm(question);
   }
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   return new Promise((resolve) => {
@@ -222,10 +220,14 @@ export async function resolveFilesToStage(initialFiles, generatedFiles, modelFil
   return (unique(requested) as string[]).filter((file) => dirty.has(file));
 }
 
-export async function assertNoUnexpectedChanges(expectedFiles) {
+export async function assertNoUnexpectedChanges(expectedFiles: string[]) {
   const expected = new Set(expectedFiles);
   const dirty = await changedFilesList();
-  const unexpected = dirty.filter((file) => !expected.has(file));
+  const unexpected = dirty.filter((file) => {
+    // Exclude files in .pi/ directory — they are internal artifacts, not user changes.
+    if (file.startsWith('.pi/')) return false;
+    return !expected.has(file);
+  });
   if (unexpected.length > 0) {
     throw new Error(
       [
