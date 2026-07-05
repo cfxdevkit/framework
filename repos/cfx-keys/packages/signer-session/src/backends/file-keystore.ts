@@ -1,5 +1,8 @@
-import { hexToBase32 } from '@cfxdevkit/cdk/address';
-import { deriveAccount, signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
+import {
+  signerFromMnemonic,
+  signerFromPrivateKey,
+} from '@cfxdevkit/cdk/wallet';
+import { resolveNetworkIds } from '@cfxdevkit/cdk/chains';
 import { readFileKeystoreMnemonic } from '@cfxdevkit/services/keystore-file';
 import type { FileKeystoreSignerInput, SignerSession } from '../types.js';
 
@@ -30,8 +33,9 @@ export async function createFileKeystoreSignerSession(
   const service = input.service ?? process.env.CFX_KEYSTORE_SERVICE ?? 'cfxdevkit';
   const account = input.account ?? process.env.CFX_KEYSTORE_ACCOUNT ?? 'default';
   const accountIndex = input.accountIndex ?? 0;
-  const espaceChainId = input.espaceChainId ?? 1030;
-  const coreNetworkId = input.coreNetworkId ?? 1029;
+
+  // Resolve network IDs from the configured network tier
+  const networkIds = resolveNetworkIds(input.network ?? 'mainnet');
 
   const mnemonic = await readFileKeystoreMnemonic({
     path,
@@ -42,15 +46,15 @@ export async function createFileKeystoreSignerSession(
   const eip44EspacePath = `m/44'/60'/0'/0/${accountIndex}`;
   const eip44CorePath = `m/44'/503'/0'/0/${accountIndex}`;
 
-  const espaceAccount = deriveAccount({ mnemonic, path: eip44EspacePath });
-  const coreAccount = deriveAccount({ mnemonic, path: eip44CorePath });
-
-  const eSpace = signerFromPrivateKey(espaceAccount.privateKey as `0x${string}`, espaceChainId);
-  const coreAddress = hexToBase32(coreAccount.account.address, coreNetworkId);
-  const core = {
-    ...signerFromPrivateKey(coreAccount.privateKey as `0x${string}`, coreNetworkId),
-    account: { ...coreAccount.account, coreAddress },
-  };
+  const eSpace = signerFromMnemonic(mnemonic, {
+    path: eip44EspacePath,
+    passphrase,
+  });
+  const core = signerFromMnemonic(mnemonic, {
+    path: eip44CorePath,
+    coreNetworkId: networkIds.core,
+    passphrase,
+  });
 
   return {
     kind: 'file-keystore',

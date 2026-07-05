@@ -16,9 +16,13 @@ import type {
   TransactionRequest as ViemTxRequest,
   TypedDataDefinition as ViemTypedDataDefinition,
 } from 'viem';
+import type { PrivateKeyAccount } from 'cive/accounts';
 
 /** Hex-encoded 0x-prefixed EVM address (20 bytes, EIP-55 checksum recommended). */
 export type Address = ViemAddress;
+
+/** Base32 Conflux Core-Space address (e.g., `cfx:aaetdym2agthrz1a2kxaxu6egakxcjcds6mnue6npa`). */
+export type CfxAddress = PrivateKeyAccount['address'];
 
 /** Hex-encoded 32-byte transaction or block hash. */
 export type Hash = ViemHash;

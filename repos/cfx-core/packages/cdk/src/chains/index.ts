@@ -13,6 +13,19 @@ export type ChainFamily = 'core' | 'espace';
 /** Network tier. */
 export type Network = 'mainnet' | 'testnet' | 'devnet' | 'local';
 
+/**
+ * Network IDs for both chain families at a given tier.
+ *
+ * Used internally by wallet derivation to resolve the correct
+ * networkId for cive (Core Space) when deriving accounts.
+ */
+export interface NetworkIds {
+  /** eSpace network/chain ID. */
+  espace: ChainId;
+  /** Core Space network ID (used by cive for address encoding). */
+  core: ChainId;
+}
+
 /** A single chain's static configuration. */
 export interface ChainConfig {
   /** EIP-155 chain id. */
@@ -170,4 +183,63 @@ export function defineChain(input: ChainConfig): ChainConfig {
     });
   }
   return input;
+}
+
+// ── Network ID resolution ────────────────────────────────────────────────────
+
+/**
+ * Resolve network IDs for both chain families at a given tier.
+ *
+ * Returns `{ espace: <id>, core: <id> }` for the specified network.
+ *
+ * @param network - Network tier. Omitted to return all chains.
+ * @example
+ *   resolveNetworkIds('testnet')  → { espace: 71, core: 1 }
+ *   resolveNetworkIds('mainnet') → { espace: 1030, core: 1029 }
+ */
+export function resolveNetworkIds(network?: Network): NetworkIds {
+  if (!network) {
+    throw new CfxError({
+      code: 'core/chains/unknown',
+      message: 'Network tier is required. Pass "mainnet", "testnet", or "local".',
+      meta: { network },
+    });
+  }
+  const espace = listChains({ family: 'espace', network }).at(0);
+  const core = listChains({ family: 'core', network }).at(0);
+  if (!espace) {
+    throw new CfxError({
+      code: 'core/chains/unknown',
+      message: `No eSpace chain found for network "${network}"`,
+      meta: { network },
+    });
+  }
+  if (!core) {
+    throw new CfxError({
+      code: 'core/chains/unknown',
+      message: `No Core Space chain found for network "${network}"`,
+      meta: { network },
+    });
+  }
+  return {
+    espace: espace.id,
+    core: core.id,
+  };
+}
+
+/** Resolve a single network's chain config by name or ID. */
+export function resolveNetwork(
+  network: string | ChainId,
+): { espace: ChainConfig; core: ChainConfig; network: Network } {
+  const config = typeof network === 'number' ? getChain(network) : getChain(network);
+  const espace = listChains({ family: 'espace', network: config.network }).at(0)!;
+  const core = listChains({ family: 'core', network: config.network }).at(0)!;
+  if (!espace || !core) {
+    throw new CfxError({
+      code: 'core/chains/unknown',
+      message: `Could not resolve both eSpace and Core Space for network "${config.network}"`,
+      meta: { network: config.network },
+    });
+  }
+  return { espace, core, network: config.network };
 }
