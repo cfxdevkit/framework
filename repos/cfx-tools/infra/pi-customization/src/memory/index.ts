@@ -1,4 +1,4 @@
-import { complete } from '@earendil-works/pi-ai/base';
+import { complete } from '@earendil-works/pi-ai/compat';
 import type { ExtensionAPI, ModelRegistry } from '@earendil-works/pi-coding-agent';
 import { registerMemoryCommands } from './commands.js';
 import { getModelRegistry, MemoryStore } from './store-index.js';

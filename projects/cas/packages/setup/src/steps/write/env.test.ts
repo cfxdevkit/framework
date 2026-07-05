@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { WizardState } from '../wizard';
-import { EMPTY_STATE } from '../wizard';
-import { generateBackendEnv, generateFrontendEnv } from '../write-env.js';
+import type { WizardState } from '../../wizard';
+import { EMPTY_STATE } from '../../wizard';
+import { generateBackendEnv, generateFrontendEnv } from './env.js';
 
 const TESTNET_STATE: WizardState = {
   ...EMPTY_STATE,

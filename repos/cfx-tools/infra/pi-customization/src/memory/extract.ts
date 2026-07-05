@@ -1,4 +1,4 @@
-import { complete } from '@earendil-works/pi-ai/base';
+import { complete } from '@earendil-works/pi-ai/compat';
 import type { ModelRegistry } from '@earendil-works/pi-coding-agent';
 import type { MemoryRecord } from './types.js';
 

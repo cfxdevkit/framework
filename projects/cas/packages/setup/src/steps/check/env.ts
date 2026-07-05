@@ -1,5 +1,5 @@
 import { input } from '@inquirer/prompts';
-import type { WizardState } from '../../write/wizard';
+import type { WizardState } from '../../wizard';
 
 function parseMajorVersion(version: string): number {
   const match = /^v?(\d+)/.exec(version);

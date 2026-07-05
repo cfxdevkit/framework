@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { EMPTY_STATE } from '../../write/wizard';
+import { EMPTY_STATE } from '../../wizard';
 
 // We test checkEnv and checkRpc in isolation by mocking process.version and fetch.
 

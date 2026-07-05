@@ -26,11 +26,11 @@ describe('runWizard orchestrator', () => {
     const mockWriteEnv = makePhase('writeEnv', {});
     const mockLaunch = makePhase('launch', {});
 
-    vi.doMock('./steps/check-env.js', () => ({ checkEnv: mockCheckEnv }));
+    vi.doMock('./steps/check/env.js', () => ({ checkEnv: mockCheckEnv }));
     vi.doMock('./steps/select-network.js', () => ({ selectNetwork: mockSelectNetwork }));
     vi.doMock('./steps/contract-mode.js', () => ({ contractMode: mockContractMode }));
     vi.doMock('./steps/configure-keeper.js', () => ({ configureKeeper: mockConfigureKeeper }));
-    vi.doMock('./steps/write-env.js', () => ({ writeEnv: mockWriteEnv }));
+    vi.doMock('./steps/write/env.js', () => ({ writeEnv: mockWriteEnv }));
     vi.doMock('./steps/launch.js', () => ({ launch: mockLaunch }));
 
     const { runWizard: runWizardMocked } = await import('./wizard.js');
@@ -50,7 +50,7 @@ describe('runWizard orchestrator', () => {
   it('propagates state from one phase to the next', async () => {
     const receivedStates: WizardState[] = [];
 
-    vi.doMock('./steps/check-env.js', () => ({
+    vi.doMock('./steps/check/env.js', () => ({
       checkEnv: async (s: WizardState) => ({ ...s, rpcUrl: 'https://evmtestnet.confluxrpc.com' }),
     }));
     vi.doMock('./steps/select-network.js', () => ({
@@ -63,7 +63,7 @@ describe('runWizard orchestrator', () => {
     vi.doMock('./steps/configure-keeper.js', () => ({
       configureKeeper: async (s: WizardState) => s,
     }));
-    vi.doMock('./steps/write-env.js', () => ({ writeEnv: async (s: WizardState) => s }));
+    vi.doMock('./steps/write/env.js', () => ({ writeEnv: async (s: WizardState) => s }));
     vi.doMock('./steps/launch.js', () => ({ launch: async (s: WizardState) => s }));
 
     const { runWizard: runWizardMocked } = await import('./wizard.js');
