@@ -1,0 +1,25 @@
+{
+  "name": "@cfxdevkit/example-cdk-starter",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Minimal Conflux DevKit example — CDK client, wallet, chains, addresses, units, errors.",
+  "type": "module",
+  "scripts": {
+    "demo": "tsx src/demo.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src test",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cfxdevkit/cdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@cfxdevkit/tsconfig": "workspace:*",
+    "@types/node": "^26.1.1",
+    "@typescript/typescript6": "^6.0.2",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
