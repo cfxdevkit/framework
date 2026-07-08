@@ -1,5 +1,18 @@
 # @cfxdevkit/ui-core
 
+## 2.0.9
+
+### Patch Changes
+
+- 0e194b8: chore(deps): bump all dependencies to latest versions
+
+  - typescript 6 → 7, @typescript/typescript6 added (TS 7 fallback)
+  - @types/node, vite, vitest, biome, knip, moonrepo, gitnexus
+  - viem, wagmi, @tanstack/react-query
+  - next, hono, mermaid, tsx, typebox
+  - @noble/ciphers, @noble/hashes (major bump 1→2)
+  - - more: postcss, tailwindcss, lucide-react, commander, ledger, happy-dom
+
 ## 2.0.1
 
 ### Patch Changes

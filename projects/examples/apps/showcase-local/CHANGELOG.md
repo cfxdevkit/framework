@@ -4,6 +4,18 @@
 
 ### Patch Changes
 
+- Updated dependencies [0e194b8]
+  - @cfxdevkit/cdk@2.0.11
+  - @cfxdevkit/react@2.0.8
+  - @cfxdevkit/theme@2.1.8
+  - @cfxdevkit/devnode-server@2.0.8
+  - @cfxdevkit/wallet@2.1.9
+  - @cfxdevkit/example-showcase-ui@0.0.2
+
+## 0.0.4
+
+### Patch Changes
+
 - Updated dependencies [05dedb6]
   - @cfxdevkit/cdk@2.0.11
 

@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/pi-agent",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "description": "PI-backed runtime entrypoints for cdk agent.",
   "type": "module",

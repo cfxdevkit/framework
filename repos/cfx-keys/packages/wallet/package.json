@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/wallet",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "private": false,
   "description": "Session keys, signers, batched writes, capability policies.",
   "type": "module",

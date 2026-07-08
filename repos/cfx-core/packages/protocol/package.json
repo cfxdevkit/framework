@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/protocol",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "private": false,
   "description": "Conflux protocol helpers, precompile ABIs, and reusable DevKit contract ABI/bytecode metadata.",
   "type": "module",
