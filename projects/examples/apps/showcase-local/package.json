@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/example-showcase-local",
-  "version": "0.0.4",
+  "version": "0.0.3",
   "private": true,
   "description": "Conflux framework local showcase — Next.js app for devnode, keystore, compiler, deploy, and session-key demos.",
   "scripts": {
@@ -12,26 +12,30 @@
     "clean": "rm -rf .next"
   },
   "dependencies": {
-    "@cfxdevkit/cdk": "workspace:*",
     "@cfxdevkit/client": "workspace:*",
+    "@cfxdevkit/cdk": "workspace:*",
     "@cfxdevkit/devnode-server": "workspace:*",
+    "@cfxdevkit/theme": "workspace:*",
     "@cfxdevkit/example-showcase-ui": "workspace:*",
     "@cfxdevkit/react": "workspace:*",
-    "@cfxdevkit/theme": "workspace:*",
     "@cfxdevkit/wallet": "workspace:*",
-    "next": "^16.2.10",
+    "next": "^16.0.0",
+<<<<<<< HEAD
     "react": "19.2.7",
+    "react-dom": "19.2.6",
+=======
+    "react": "19.2.6",
     "react-dom": "19.2.7",
-    "viem": "^2.54.6"
+>>>>>>> origin/dependabot/npm_and_yarn/react-dom-19.2.7
+    "viem": "^2.21.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.3",
+    "@biomejs/biome": "^2.4.15",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
-    "@types/node": "^26.1.1",
+    "@types/node": "^25.9.3",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
-    "@typescript/typescript6": "^6.0.2",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3"
   }
 }

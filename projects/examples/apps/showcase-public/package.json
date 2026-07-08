@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/example-showcase-public",
-  "version": "0.0.3",
+  "version": "0.0.2",
   "private": true,
   "description": "Conflux framework public showcase — deployable Next.js app targeting testnet.",
   "scripts": {
@@ -22,27 +22,31 @@
     "@cfxdevkit/ui-core": "workspace:^",
     "@cfxdevkit/wallet": "workspace:*",
     "@cfxdevkit/wallet-connect": "workspace:*",
-    "@ledgerhq/hw-app-eth": "^7.8.8",
-    "@ledgerhq/hw-transport-webhid": "^6.36.0",
+    "@ledgerhq/hw-app-eth": "^7.8.1",
+    "@ledgerhq/hw-transport-webhid": "^6.35.1",
     "@onekeyfe/hd-common-connect-sdk": "^1.1.28",
-    "@tanstack/react-query": "^5.101.2",
-    "next": "^16.2.10",
+    "@tanstack/react-query": "^5.100.13",
+    "next": "^16.0.0",
+<<<<<<< HEAD
     "react": "19.2.7",
+    "react-dom": "19.2.6",
+=======
+    "react": "19.2.6",
     "react-dom": "19.2.7",
-    "viem": "^2.54.6",
-    "wagmi": "^3.7.0"
+>>>>>>> origin/dependabot/npm_and_yarn/react-dom-19.2.7
+    "viem": "^2.21.0",
+    "wagmi": "^3.6.16"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.3",
+    "@biomejs/biome": "^2.4.15",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
-    "@tailwindcss/postcss": "^4.3.2",
-    "@types/node": "^26.1.1",
+    "@tailwindcss/postcss": "^4.3.0",
+    "@types/node": "^25.9.3",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
-    "@typescript/typescript6": "^6.0.2",
     "postcss": "^8.5.12",
-    "tailwindcss": "^4.3.2",
-    "typescript": "^7.0.2"
+    "tailwindcss": "^4.3.0",
+    "typescript": "^6.0.3"
   }
 }
