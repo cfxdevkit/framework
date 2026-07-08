@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/keystore-server",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "private": false,
   "description": "Standalone Hono keystore router extracted from devnode-server.",
   "type": "module",

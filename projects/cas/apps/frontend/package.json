@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/cas-frontend",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "description": "CAS local-dev frontend.",
   "type": "module",

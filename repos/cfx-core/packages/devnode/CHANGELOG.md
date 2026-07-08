@@ -1,5 +1,25 @@
 # @cfxdevkit/devnode
 
+## 2.1.9
+
+### Patch Changes
+
+- 165d8b0: chore(deps): bump all dependencies to latest versions
+
+  - typescript 6.0.3 → 7.0.2, @typescript/typescript6 added (TS 7 fallback)
+  - @types/node 25 → 26
+  - vite 8.0.16 → 8.1.3, vitest 4.1.9 → 4.1.10
+  - @biomejs/biome 2.5.0 → 2.5.3
+  - viem 2.52.2 → 2.54.6, wagmi 3.6.16 → 3.7.0
+  - next 16.2.9 → 16.2.10, hono 4.12.25 → 4.12.28
+  - @noble/ciphers 1.3.0 → 2.2.0, @noble/hashes 1.8.0 → 2.2.0
+  - - more: postcss, tailwindcss, typebox, mermaid, tsx, lucide-react, commander, ledger, happy-dom
+
+- Updated dependencies [165d8b0]
+- Updated dependencies [ba6947c]
+- Updated dependencies [05dedb6]
+  - @cfxdevkit/cdk@2.0.11
+
 ## 2.1.0
 
 ### Minor Changes

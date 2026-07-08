@@ -1,5 +1,13 @@
 # @cfxdevkit/example-showcase-ui
 
+## 0.0.2
+
+### Patch Changes
+
+- Updated dependencies [165d8b0]
+  - @cfxdevkit/wallet-connect@2.0.8
+  - @cfxdevkit/ui@2.1.8
+
 ## 0.0.1
 
 ### Patch Changes

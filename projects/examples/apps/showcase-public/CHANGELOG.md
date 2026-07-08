@@ -1,5 +1,23 @@
 # @cfxdevkit/example-showcase-public
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies [165d8b0]
+- Updated dependencies [ba6947c]
+- Updated dependencies [05dedb6]
+- Updated dependencies [13ce3f8]
+  - @cfxdevkit/cdk@2.0.11
+  - @cfxdevkit/protocol@2.0.10
+  - @cfxdevkit/wallet-connect@2.0.8
+  - @cfxdevkit/react@2.0.8
+  - @cfxdevkit/theme@2.1.8
+  - @cfxdevkit/ui-core@2.0.9
+  - @cfxdevkit/defi-react@2.0.8
+  - @cfxdevkit/wallet@2.1.9
+  - @cfxdevkit/example-showcase-ui@0.0.2
+
 ## 0.0.2
 
 ### Patch Changes

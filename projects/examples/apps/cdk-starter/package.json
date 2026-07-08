@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/example-cdk-starter",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "description": "Minimal Conflux DevKit example — CDK client, wallet, chains, addresses, units, errors.",
   "type": "module",
