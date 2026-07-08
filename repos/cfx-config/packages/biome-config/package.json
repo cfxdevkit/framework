@@ -5,5 +5,8 @@
   "description": "Shared Biome configuration for the monorepo.",
   "files": [
     "biome.json"
-  ]
+  ],
+  "devDependencies": {
+    "@typescript/typescript6": "^6.0.2"
+  }
 }

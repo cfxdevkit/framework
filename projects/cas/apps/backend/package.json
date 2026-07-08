@@ -23,19 +23,20 @@
     "@cfxdevkit/wallet-connect": "workspace:*",
     "cors": "^2.8.5",
     "express": "^5.2.1",
-    "viem": "^2.21.0"
+    "viem": "^2.54.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
+    "@biomejs/biome": "^2.5.3",
     "@cfxdevkit/biome-config": "workspace:*",
     "@cfxdevkit/tsconfig": "workspace:*",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.1.1",
     "@types/supertest": "^7.2.0",
+    "@typescript/typescript6": "^6.0.2",
     "supertest": "^7.1.4",
-    "tsx": "^4.20.6",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }

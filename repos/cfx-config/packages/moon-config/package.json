@@ -5,5 +5,8 @@
   "description": "Reusable moon task templates.",
   "files": [
     "templates"
-  ]
+  ],
+  "devDependencies": {
+    "@typescript/typescript6": "^6.0.2"
+  }
 }
