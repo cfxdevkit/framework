@@ -4,6 +4,14 @@
 
 ### Patch Changes
 
+- chore(deps): bump all dependencies to latest versions
+- Updated dependencies
+  - @cfxdevkit/cdk@2.0.11
+
+## 2.0.12
+
+### Patch Changes
+
 - 0e194b8: chore(deps): bump all dependencies to latest versions
 
   - typescript 6 → 7, @typescript/typescript6 added (TS 7 fallback)

@@ -307,22 +307,23 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/client": "workspace:^",
     "@cfxdevkit/compiler": "workspace:^",
     "@cfxdevkit/contracts": "workspace:^",
-    "@cfxdevkit/cdk": "workspace:^",
     "@cfxdevkit/services": "workspace:^",
-    "@cfxdevkit/wallet": "workspace:^",
-    "@cfxdevkit/signer-session": "workspace:^"
+    "@cfxdevkit/signer-session": "workspace:^",
+    "@cfxdevkit/wallet": "workspace:^"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
+    "@biomejs/biome": "^2.5.3",
     "@cfxdevkit/biome-config": "workspace:*",
+    "@cfxdevkit/devnode-server": "workspace:^",
     "@cfxdevkit/tsconfig": "workspace:*",
-    "@types/node": "^25.9.3",
-    "@types/vscode": "^1.85.0",
-    "typescript": "^6.0.3",
-    "@cfxdevkit/devnode-server": "workspace:^"
+    "@types/node": "^26.1.1",
+    "@types/vscode": "^1.125.0",
+    "@typescript/typescript6": "^6.0.2",
+    "typescript": "^7.0.2"
   },
   "sideEffects": false
 }

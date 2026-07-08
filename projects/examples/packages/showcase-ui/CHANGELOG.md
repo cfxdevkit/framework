@@ -4,6 +4,14 @@
 
 ### Patch Changes
 
+- Updated dependencies
+  - @cfxdevkit/wallet-connect@2.0.8
+  - @cfxdevkit/ui@2.1.8
+
+## 0.0.2
+
+### Patch Changes
+
 - Updated dependencies [0e194b8]
   - @cfxdevkit/wallet-connect@2.0.8
   - @cfxdevkit/ui@2.1.8
