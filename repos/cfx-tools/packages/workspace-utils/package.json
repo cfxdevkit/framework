@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/workspace-utils",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "private": true,
   "description": "Canonical workspace-root resolution utility for cfxdevkit packages",
   "type": "module",

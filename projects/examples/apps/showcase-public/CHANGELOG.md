@@ -1,5 +1,51 @@
 # @cfxdevkit/example-showcase-public
 
+## 0.0.4
+
+### Patch Changes
+
+- chore(release): version packages after merging dev, release-versions, and cli-redesign
+
+  Merged branches:
+
+  - dev (actions/checkout PR #55 and dev work)
+  - release-versions (dependency updates and version bumps)
+  - cli-redesign (CLI redesign feature branch, 32 commits)
+
+- Updated dependencies
+  - @cfxdevkit/cdk@2.0.12
+  - @cfxdevkit/protocol@2.0.11
+  - @cfxdevkit/wallet-connect@2.0.9
+  - @cfxdevkit/react@2.0.9
+  - @cfxdevkit/theme@2.1.9
+  - @cfxdevkit/ui-core@2.0.10
+  - @cfxdevkit/defi-react@2.0.9
+  - @cfxdevkit/wallet@2.1.10
+  - @cfxdevkit/example-showcase-ui@0.0.3
+
+## 0.0.4
+
+### Patch Changes
+
+- chore(release): version packages after merging dev, release-versions, and cli-redesign
+
+  Merged branches:
+
+  - dev (actions/checkout PR #55 and dev work)
+  - release-versions (dependency updates and version bumps)
+  - cli-redesign (CLI redesign feature branch, 32 commits)
+
+- Updated dependencies
+  - @cfxdevkit/cdk@2.0.12
+  - @cfxdevkit/protocol@2.0.11
+  - @cfxdevkit/wallet-connect@2.0.9
+  - @cfxdevkit/react@2.0.9
+  - @cfxdevkit/theme@2.1.9
+  - @cfxdevkit/ui-core@2.0.10
+  - @cfxdevkit/defi-react@2.0.9
+  - @cfxdevkit/wallet@2.1.10
+  - @cfxdevkit/example-showcase-ui@0.0.3
+
 ## 0.0.3
 
 ### Patch Changes

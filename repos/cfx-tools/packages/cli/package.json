@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/cli",
-  "version": "2.0.10",
+  "version": "2.0.11",
   "private": false,
   "description": "Conflux developer CLI: network status + HD key derivation.",
   "type": "module",

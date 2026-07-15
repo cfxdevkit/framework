@@ -1,5 +1,21 @@
 # @cfxdevkit/pi-customization
 
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @cfxdevkit/cli@2.0.11
+  - @cfxdevkit/llm-agents@2.0.1
+
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @cfxdevkit/cli@2.0.11
+  - @cfxdevkit/llm-agents@2.0.1
+
 ## 1.0.1
 
 ### Patch Changes

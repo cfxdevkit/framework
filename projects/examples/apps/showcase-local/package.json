@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/example-showcase-local",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": true,
   "description": "Conflux framework local showcase — Next.js app for devnode, keystore, compiler, deploy, and session-key demos.",
   "scripts": {

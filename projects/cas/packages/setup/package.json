@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/cas-setup",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "type": "module",
   "description": "Interactive CLI wizard for setting up a CAS instance.",

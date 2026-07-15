@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/executor",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "private": false,
   "description": "Generic background job runner with queues and scheduler.",
   "type": "module",

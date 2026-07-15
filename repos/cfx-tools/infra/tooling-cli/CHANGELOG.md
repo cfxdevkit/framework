@@ -1,5 +1,25 @@
 # @cfxdevkit/tooling-cli
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @cfxdevkit/workspace-utils@2.0.8
+  - @cfxdevkit/docs-pipeline@2.0.8
+  - @cfxdevkit/llm-agents@2.0.1
+  - @cfxdevkit/cdk-repo-check@2.0.9
+
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @cfxdevkit/workspace-utils@2.0.8
+  - @cfxdevkit/docs-pipeline@2.0.8
+  - @cfxdevkit/llm-agents@2.0.1
+  - @cfxdevkit/cdk-repo-check@2.0.9
+
 ## 0.0.3
 
 ### Patch Changes
