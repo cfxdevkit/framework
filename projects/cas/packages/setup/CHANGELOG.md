@@ -4,24 +4,6 @@
 
 ### Patch Changes
 
-- Updated dependencies
-  - @cfxdevkit/cdk@2.0.11
-  - @cfxdevkit/contracts@2.0.12
-  - @cfxdevkit/protocol@2.0.10
-
-## 0.0.3
-
-### Patch Changes
-
-- Updated dependencies [0e194b8]
-  - @cfxdevkit/cdk@2.0.11
-  - @cfxdevkit/contracts@2.0.12
-  - @cfxdevkit/protocol@2.0.10
-
-## 0.0.3
-
-### Patch Changes
-
 - Updated dependencies [05dedb6]
   - @cfxdevkit/cdk@2.0.11
 
