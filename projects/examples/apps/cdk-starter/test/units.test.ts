@@ -33,9 +33,7 @@ describe('units', () => {
   });
 
   it('formatToken includes symbol', () => {
-    expect(formatToken(100_000_000_000_000_000n, { decimals: 18, symbol: 'CFX' })).toBe(
-      '0.1 CFX',
-    );
+    expect(formatToken(100_000_000_000_000_000n, { decimals: 18, symbol: 'CFX' })).toBe('0.1 CFX');
     expect(formatToken(2_500_000n, { decimals: 6, symbol: 'USDC' })).toBe('2.5 USDC');
   });
 

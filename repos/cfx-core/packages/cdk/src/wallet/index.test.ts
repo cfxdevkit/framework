@@ -19,8 +19,10 @@ import {
 const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
 
 // Hardcoded keys for low-level tests.
-const TEST_ESPACE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as `0x${string}`;
-const TEST_CORE_KEY = '0x59c6995e998f97a5a004df98d9c7049a0c6bb8f1510a6dea3627a35db8f356b0' as `0x${string}`;
+const TEST_ESPACE_KEY =
+  '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as `0x${string}`;
+const TEST_CORE_KEY =
+  '0x59c6995e998f97a5a004df98d9c7049a0c6bb8f1510a6dea3627a35db8f356b0' as `0x${string}`;
 
 describe('generateMnemonic / validateMnemonic', () => {
   it('generates a valid 12-word mnemonic by default', () => {
@@ -41,21 +43,24 @@ describe('generateMnemonic / validateMnemonic', () => {
 });
 
 describe('accountFromPrivateKey', () => {
-  it('derives hex address for eSpace path (60\')', () => {
+  it("derives hex address for eSpace path (60')", () => {
     const account = accountFromPrivateKey(TEST_ESPACE_KEY, { path: DEFAULT_ESPACE_PATH });
     expect(account.address.toLowerCase()).toBe('0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266');
     expect(account.address).toMatch(/^0x[0-9a-fA-F]{40}$/);
   });
 
-  it('derives base32 address for Core path (503\') with coreNetworkId', () => {
-    const account = accountFromPrivateKey(TEST_CORE_KEY, { path: DEFAULT_CORE_PATH, coreNetworkId: 1 });
+  it("derives base32 address for Core path (503') with coreNetworkId", () => {
+    const account = accountFromPrivateKey(TEST_CORE_KEY, {
+      path: DEFAULT_CORE_PATH,
+      coreNetworkId: 1,
+    });
     expect(account.address).toMatch(/^cfxtest:/);
   });
 
   it('throws if core path but no coreNetworkId', () => {
-    expect(() =>
-      accountFromPrivateKey(TEST_CORE_KEY, { path: DEFAULT_CORE_PATH }),
-    ).toThrow(WalletError);
+    expect(() => accountFromPrivateKey(TEST_CORE_KEY, { path: DEFAULT_CORE_PATH })).toThrow(
+      WalletError,
+    );
   });
 
   it('throws if family mismatch with path', () => {
@@ -86,9 +91,9 @@ describe('deriveAccount', () => {
   });
 
   it('throws if core path but no coreNetworkId', () => {
-    expect(() =>
-      deriveAccount({ mnemonic: TEST_MNEMONIC, path: DEFAULT_CORE_PATH }),
-    ).toThrow(WalletError);
+    expect(() => deriveAccount({ mnemonic: TEST_MNEMONIC, path: DEFAULT_CORE_PATH })).toThrow(
+      WalletError,
+    );
   });
 
   it('same inputs produce same account', () => {
@@ -110,8 +115,7 @@ describe('deriveAccount', () => {
   });
 
   it('rejects invalid mnemonic', () => {
-    expect(() => deriveAccount({ mnemonic: 'not a valid mnemonic phrase' }))
-      .toThrow(WalletError);
+    expect(() => deriveAccount({ mnemonic: 'not a valid mnemonic phrase' })).toThrow(WalletError);
   });
 });
 
@@ -142,9 +146,7 @@ describe('deriveAccounts', () => {
   });
 
   it('rejects non-positive count', () => {
-    expect(() =>
-      deriveAccounts({ mnemonic: TEST_MNEMONIC, count: 0 }),
-    ).toThrow(WalletError);
+    expect(() => deriveAccounts({ mnemonic: TEST_MNEMONIC, count: 0 })).toThrow(WalletError);
   });
 });
 
@@ -160,8 +162,7 @@ describe('signerFromPrivateKey', () => {
   });
 
   it('throws if core family but no coreNetworkId', () => {
-    expect(() => signerFromPrivateKey(TEST_CORE_KEY, { family: 'core' }))
-      .toThrow(WalletError);
+    expect(() => signerFromPrivateKey(TEST_CORE_KEY, { family: 'core' })).toThrow(WalletError);
   });
 
   it('signs message', async () => {
@@ -204,8 +205,7 @@ describe('signerFromPrivateKey', () => {
   });
 
   it('rejects malformed private key', () => {
-    expect(() => signerFromPrivateKey('0xnope' as `0x${string}`))
-      .toThrow(WalletError);
+    expect(() => signerFromPrivateKey('0xnope' as `0x${string}`)).toThrow(WalletError);
   });
 });
 
@@ -225,9 +225,9 @@ describe('signerFromMnemonic', () => {
   });
 
   it('throws if core path but no coreNetworkId', () => {
-    expect(() =>
-      signerFromMnemonic({ mnemonic: TEST_MNEMONIC, path: DEFAULT_CORE_PATH }),
-    ).toThrow(WalletError);
+    expect(() => signerFromMnemonic({ mnemonic: TEST_MNEMONIC, path: DEFAULT_CORE_PATH })).toThrow(
+      WalletError,
+    );
   });
 
   it('signs message', async () => {
@@ -281,7 +281,7 @@ describe('deriveDualAccount', () => {
     expect(dual.evm.address).not.toBe(dual.core.address);
   });
 
-  it('mining accountType uses 1\' segment', () => {
+  it("mining accountType uses 1' segment", () => {
     const dual = deriveDualAccount({
       mnemonic: TEST_MNEMONIC,
       index: 0,
@@ -293,9 +293,7 @@ describe('deriveDualAccount', () => {
   });
 
   it('throws if no coreNetworkId', () => {
-    expect(() =>
-      deriveDualAccount({ mnemonic: TEST_MNEMONIC }),
-    ).toThrow(WalletError);
+    expect(() => deriveDualAccount({ mnemonic: TEST_MNEMONIC })).toThrow(WalletError);
   });
 
   it('throws if negative index', () => {
@@ -391,7 +389,6 @@ describe('signerFromDualMnemonic', () => {
   });
 
   it('throws if no coreNetworkId', () => {
-    expect(() => signerFromDualMnemonic({ mnemonic: TEST_MNEMONIC }))
-      .toThrow(WalletError);
+    expect(() => signerFromDualMnemonic({ mnemonic: TEST_MNEMONIC })).toThrow(WalletError);
   });
 });

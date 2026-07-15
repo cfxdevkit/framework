@@ -228,9 +228,11 @@ export function resolveNetworkIds(network?: Network): NetworkIds {
 }
 
 /** Resolve a single network's chain config by name or ID. */
-export function resolveNetwork(
-  network: string | ChainId,
-): { espace: ChainConfig; core: ChainConfig; network: Network } {
+export function resolveNetwork(network: string | ChainId): {
+  espace: ChainConfig;
+  core: ChainConfig;
+  network: Network;
+} {
   const config = typeof network === 'number' ? getChain(network) : getChain(network);
   const espace = listChains({ family: 'espace', network: config.network }).at(0)!;
   const core = listChains({ family: 'core', network: config.network }).at(0)!;

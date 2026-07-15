@@ -1,4 +1,10 @@
-import { RpcError, ContractError, WalletError, KeystoreError, isCfxError } from '@cfxdevkit/cdk/errors';
+import {
+  RpcError,
+  ContractError,
+  WalletError,
+  KeystoreError,
+  isCfxError,
+} from '@cfxdevkit/cdk/errors';
 
 export async function demoErrors(): Promise<void> {
   console.log('\n  Both spaces share the same error hierarchy.');
@@ -43,5 +49,7 @@ export async function demoErrors(): Promise<void> {
   console.log('\n  ── Cause chaining ───────────────────────────────────────');
   const cause = new TypeError('ECONNREFUSED');
   const wrapped = new RpcError({ code: 'rpc/network', message: 'connection failed', cause });
-  console.log(`    wrapped.cause → ${(wrapped.cause as Error).constructor.name}: ${(wrapped.cause as Error).message}`);
+  console.log(
+    `    wrapped.cause → ${(wrapped.cause as Error).constructor.name}: ${(wrapped.cause as Error).message}`,
+  );
 }

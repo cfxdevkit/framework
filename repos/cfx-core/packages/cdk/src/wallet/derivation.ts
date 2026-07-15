@@ -67,11 +67,7 @@ export function accountFromPrivateKey(
   const { path, family, coreNetworkId } = input ?? {};
 
   // Resolve family from path if not explicitly given
-  const derivedFamily = path
-    ? path.startsWith(CORE_PATH_PREFIX)
-      ? 'core'
-      : 'espace'
-    : undefined;
+  const derivedFamily = path ? (path.startsWith(CORE_PATH_PREFIX) ? 'core' : 'espace') : undefined;
 
   // Check consistency if both are given
   if (path && family) {
@@ -137,8 +133,9 @@ export function deriveAccount(input: DeriveAccountInput): DerivedAccount {
   if (!validateMnemonic(mnemonic))
     throw new WalletError({ code: 'core/wallet/derivation', message: 'Invalid BIP-39 mnemonic' });
 
-  const child = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic.trim(), passphrase ?? ''))
-    .derive(path);
+  const child = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic.trim(), passphrase ?? '')).derive(
+    path,
+  );
   if (!child.privateKey) {
     throw new WalletError({
       code: 'core/wallet/derivation',
@@ -153,7 +150,7 @@ export function deriveAccount(input: DeriveAccountInput): DerivedAccount {
     throw new WalletError({
       code: 'core/wallet/derivation',
       message:
-        'coreNetworkId is required for Core Space paths (m/44\'/503\'/...). ' +
+        "coreNetworkId is required for Core Space paths (m/44'/503'/...). " +
         'Pass coreNetworkId or use resolveNetworkIds("testnet") for testnet IDs.',
       meta: { path },
     });
@@ -266,9 +263,14 @@ export function deriveDualAccounts(
 // ── Internal helpers ────────────────────────────────────────────────────────
 
 /** Derive a raw keypair from mnemonic + path. */
-export function deriveKeyPair(mnemonic: string, path: string, passphrase?: string): { privateKey: Hex } {
-  const child = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic.trim(), passphrase ?? ''))
-    .derive(path);
+export function deriveKeyPair(
+  mnemonic: string,
+  path: string,
+  passphrase?: string,
+): { privateKey: Hex } {
+  const child = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic.trim(), passphrase ?? '')).derive(
+    path,
+  );
   if (!child.privateKey) {
     throw new WalletError({
       code: 'core/wallet/derivation',

@@ -11,8 +11,8 @@ import { espaceTestnet, coreSpaceTestnet } from '@cfxdevkit/cdk/chains';
 
 export async function demoWallet(): Promise<void> {
   console.log('\n  ══════════════════════════════════════════════════════════');
-  console.log('  eSpace (EVM):  HD path m/44\'/60\'/0\'/0/{index}');
-  console.log('  Core Space:    HD path m/44\'/503\'/0\'/0/{index}');
+  console.log("  eSpace (EVM):  HD path m/44'/60'/0'/0/{index}");
+  console.log("  Core Space:    HD path m/44'/503'/0'/0/{index}");
   console.log('  → Same mnemonic, different paths → independent keypairs');
   console.log('  ══════════════════════════════════════════════════════════');
 
@@ -24,14 +24,14 @@ export async function demoWallet(): Promise<void> {
 
   // ── 2. Single-space derivation ────────────────────────────────────────
   console.log('\n  ── 2. deriveAccount (single space, any path) ────────────');
-  console.log('    Path: m/44\'/60\'/0\'/0/0  (eSpace, EIP-44 standard)');
+  console.log("    Path: m/44'/60'/0'/0/0  (eSpace, EIP-44 standard)");
   const evmAccount = deriveAccount({ mnemonic, path: "m/44'/60'/0'/0/0" });
   console.log(`    account.address:    ${evmAccount.account.address}  ← hex (viem)`);
   console.log('    account.signMessage() → EIP-191 signing (viem)');
   console.log('    account.signTransaction() → EIP-1559 signing (viem)');
 
   // ── 3. Core Space derivation via deriveAccount ────────────────────────
-  console.log('\n    Path: m/44\'/503\'/0\'/0/0  (Core Space, Conflux-native)');
+  console.log("\n    Path: m/44'/503'/0'/0/0  (Core Space, Conflux-native)");
   const coreAccount = deriveAccount({
     mnemonic,
     path: "m/44'/503'/0'/0/0",
@@ -42,7 +42,9 @@ export async function demoWallet(): Promise<void> {
   console.log('    account.signTransaction() → CIP-1559 signing (cive)');
 
   console.log('\n    Both return { account } — full signing-capable object.');
-  console.log(`    Different addresses: ${evmAccount.account.address !== coreAccount.account.address}`);
+  console.log(
+    `    Different addresses: ${evmAccount.account.address !== coreAccount.account.address}`,
+  );
 
   // ── 4. Dual-space derivation ──────────────────────────────────────────
   console.log('\n  ── 3. deriveDualAccount (both spaces at once) ───────────');

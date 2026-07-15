@@ -4,16 +4,10 @@ import {
   signTransaction as viemSignTransaction,
   signTypedData as viemSignTypedData,
 } from 'viem/accounts';
-import {
-  privateKeyToAccount as civePrivateKeyToAccount,
-} from 'cive/accounts';
+import { privateKeyToAccount as civePrivateKeyToAccount } from 'cive/accounts';
 import { WalletError } from '../errors/index.js';
 import type { Address, ChainId, CfxAddress, Hex, TypedData, Wei } from '../types/index.js';
-import {
-  deriveKeyPair,
-  accountFromPrivateKey,
-  DEFAULT_ESPACE_PATH,
-} from './derivation.js';
+import { deriveKeyPair, accountFromPrivateKey, DEFAULT_ESPACE_PATH } from './derivation.js';
 import { signCoreTransaction } from './signing.js';
 
 export type {
@@ -103,10 +97,7 @@ export interface SignerFromPrivateKeyInput {
   coreNetworkId?: number;
 }
 
-export function signerFromPrivateKey(
-  privateKey: Hex,
-  input?: SignerFromPrivateKeyInput,
-): Signer {
+export function signerFromPrivateKey(privateKey: Hex, input?: SignerFromPrivateKeyInput): Signer {
   if (!/^0x[0-9a-fA-F]{64}$/.test(privateKey)) {
     throw new WalletError({
       code: 'core/wallet/derivation',
@@ -194,9 +185,7 @@ export interface SignerFromMnemonicInput {
  * const coreSigner = signerFromMnemonic({ mnemonic, path: "m/44'/503'/0'/0/0", coreNetworkId: 1 });
  * ```
  */
-export function signerFromMnemonic(
-  input: { mnemonic: string } & SignerFromMnemonicInput,
-): Signer {
+export function signerFromMnemonic(input: { mnemonic: string } & SignerFromMnemonicInput): Signer {
   const { mnemonic, path = DEFAULT_ESPACE_PATH, coreNetworkId, passphrase } = input;
 
   const isCore = path.startsWith("m/44'/503'");
@@ -206,7 +195,7 @@ export function signerFromMnemonic(
     throw new WalletError({
       code: 'core/wallet/derivation',
       message:
-        'coreNetworkId is required for Core Space paths (m/44\'/503\'/...). ' +
+        "coreNetworkId is required for Core Space paths (m/44'/503'/...). " +
         'Pass coreNetworkId or use resolveNetworkIds("testnet") for testnet IDs.',
       meta: { path },
     });

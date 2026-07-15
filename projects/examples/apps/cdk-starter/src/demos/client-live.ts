@@ -20,7 +20,9 @@ export async function demoClientLive(): Promise<void> {
   const eGas = await espace.getGasPrice();
   console.log(`    gas price: ${formatCFX(eGas)} CFX  (${formatGDrip(eGas)} Gdrip)`);
 
-  const eNonce = await espace.getTransactionCount('0x08f1d158019e76d6e0c26609c384301331204377' as never);
+  const eNonce = await espace.getTransactionCount(
+    '0x08f1d158019e76d6e0c26609c384301331204377' as never,
+  );
   console.log(`    nonce of  0x08f1...04377: ${eNonce}`);
 
   // ── Core Space testnet ─────────────────────────────────────────────

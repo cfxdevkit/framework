@@ -3,10 +3,14 @@ import { WalletError } from '../errors/index.js';
 import { signerFromPrivateKey } from './index.js';
 
 // Hardcoded Core key for signing tests.
-const TEST_CORE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as `0x${string}`;
+const TEST_CORE_KEY =
+  '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as `0x${string}`;
 
 /** Minimal valid fields shared by all Core Space tx types. */
-const REQUIRED: Pick<import('./index.js').SignableTx, 'chainId' | 'nonce' | 'gas' | 'storageLimit' | 'epochHeight'> = {
+const REQUIRED: Pick<
+  import('./index.js').SignableTx,
+  'chainId' | 'nonce' | 'gas' | 'storageLimit' | 'epochHeight'
+> = {
   chainId: 1,
   nonce: 0,
   gas: 21_000n,
@@ -20,30 +24,30 @@ describe('signCoreTransaction / missing required fields', () => {
 
   it('throws WalletError when epochHeight is missing', async () => {
     const { epochHeight: _eh, ...tx } = REQUIRED;
-    await expect(
-      signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n }),
-    ).rejects.toThrow(WalletError);
+    await expect(signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n })).rejects.toThrow(
+      WalletError,
+    );
   });
 
   it('throws WalletError when nonce is missing', async () => {
     const { nonce: _n, ...tx } = REQUIRED;
-    await expect(
-      signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n }),
-    ).rejects.toThrow(WalletError);
+    await expect(signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n })).rejects.toThrow(
+      WalletError,
+    );
   });
 
   it('throws WalletError when gas is missing', async () => {
     const { gas: _g, ...tx } = REQUIRED;
-    await expect(
-      signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n }),
-    ).rejects.toThrow(WalletError);
+    await expect(signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n })).rejects.toThrow(
+      WalletError,
+    );
   });
 
   it('throws WalletError when storageLimit is missing', async () => {
     const { storageLimit: _sl, ...tx } = REQUIRED;
-    await expect(
-      signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n }),
-    ).rejects.toThrow(WalletError);
+    await expect(signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n })).rejects.toThrow(
+      WalletError,
+    );
   });
 });
 

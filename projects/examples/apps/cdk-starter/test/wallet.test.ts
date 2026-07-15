@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { signerFromPrivateKey, signerFromMnemonic, generateMnemonic, validateMnemonic, signerFromDualMnemonic, deriveAccount, deriveDualAccount } from '@cfxdevkit/cdk/wallet';
+import {
+  signerFromPrivateKey,
+  signerFromMnemonic,
+  generateMnemonic,
+  validateMnemonic,
+  signerFromDualMnemonic,
+  deriveAccount,
+  deriveDualAccount,
+} from '@cfxdevkit/cdk/wallet';
 
 describe('wallet', () => {
   const TEST_PK = '0x4c0883a69102937d6231471b5dbb6208fe73e4e3e5b557c5c72d7b7282945d00';
@@ -19,7 +27,7 @@ describe('wallet', () => {
 
   it('signerFromPrivateKey rejects invalid key', () => {
     expect(() => signerFromPrivateKey('0xinvalid' as never)).toThrow();
-    expect(() => signerFromPrivateKey('0x' + 'ab'.repeat(31) as never)).toThrow();
+    expect(() => signerFromPrivateKey(('0x' + 'ab'.repeat(31)) as never)).toThrow();
   });
 
   it('signMessage returns a valid signature', async () => {

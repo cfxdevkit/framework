@@ -7,7 +7,7 @@ export async function demoAddress(): Promise<void> {
   console.log('  Core Space addresses: base32 (cfx:...)');
   console.log('  hexToBase32 is a TEXT ENCODING — not a space conversion.');
   console.log('  It encodes the same 20 bytes into base32 format.');
-  console.log('  Real Core Space addresses come from HD path m/44\'/503\'/...');
+  console.log("  Real Core Space addresses come from HD path m/44'/503'/...");
 
   console.log('\n  Source 20-byte hex:');
   console.log(`    ${HEX}`);

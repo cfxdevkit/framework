@@ -1,7 +1,4 @@
-import {
-  signerFromMnemonic,
-  signerFromPrivateKey,
-} from '@cfxdevkit/cdk/wallet';
+import { signerFromMnemonic, signerFromPrivateKey } from '@cfxdevkit/cdk/wallet';
 import { resolveNetworkIds } from '@cfxdevkit/cdk/chains';
 import { readFileKeystoreMnemonic } from '@cfxdevkit/services/keystore-file';
 import type { FileKeystoreSignerInput, SignerSession } from '../types.js';
