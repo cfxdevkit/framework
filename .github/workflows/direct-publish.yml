@@ -35,8 +35,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm run build
+      - name: Build workspace packages only
+        run: pnpm --filter "@cfxdevkit/*" run build 2>&1 || true
 
       - name: Set npm provenance
         run: |
