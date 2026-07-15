@@ -6,7 +6,7 @@ compatibility: Requires openspec CLI.
 metadata:
   author: openspec
   version: "1.0"
-  generatedBy: "1.3.1"
+  generatedBy: "1.4.1"
 ---
 
 Implement tasks from an OpenSpec change.
@@ -30,6 +30,7 @@ Implement tasks from an OpenSpec change.
    ```
    Parse the JSON to understand:
    - `schemaName`: The workflow being used (e.g., "spec-driven")
+   - `planningHome`, `changeRoot`, and `actionContext`: planning scope and edit constraints
    - Which artifact contains the tasks (typically "tasks" for spec-driven, check status for others)
 
 3. **Get apply instructions**
@@ -48,6 +49,8 @@ Implement tasks from an OpenSpec change.
    - If `state: "blocked"` (missing artifacts): show message, suggest using openspec-continue-change
    - If `state: "all_done"`: congratulate, suggest archive
    - Otherwise: proceed to implementation
+
+   **Workspace guard:** If status JSON reports `actionContext.mode: "workspace-planning"` and `allowedEditRoots` is empty, explain that full workspace apply is not supported in this slice. Treat linked repos and folders as read-only context, ask the user to select an affected area through an explicit implementation workflow, and STOP before editing files.
 
 4. **Read context files**
 
@@ -79,27 +82,12 @@ Implement tasks from an OpenSpec change.
    - Error or blocker encountered → report and wait for guidance
    - User interrupts
 
-7. **Validate after all tasks complete**
-
-   Once all tasks are marked done, run the full precommit gate:
-   ```bash
-   cdk repo precommit
-   ```
-   This runs the complete sequence: format → lint → typecheck → **tests** → build → repo-check.
-   Do NOT use `cdk repo check` or `repo_agent_check` alone — those skip tests.
-
-   - **If precommit passes**: congratulate, suggest archive with `/opsx-archive`
-   - **If precommit fails**: surface the failing gate(s). Fix the failures before suggesting
-     archive. Offer to call `repo_agent_check` to auto-create follow-up OpenSpec changes for
-     structural failures. Do NOT archive until `cdk repo precommit` returns `status: passed`.
-
-8. **On completion or pause, show status**
+7. **On completion or pause, show status**
 
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - Validation result (pass / fail + step names)
-   - If all done and clean: suggest archive
+   - If all done: suggest archive
    - If paused: explain why and wait for guidance
 
 **Output During Implementation**
@@ -124,14 +112,13 @@ Working on task 4/7: <task description>
 **Change:** <change-name>
 **Schema:** <schema-name>
 **Progress:** 7/7 tasks complete ✓
-**Validation:** ✓ `cdk repo precommit` passed (or ✗ gate names failing)
 
 ### Completed This Session
 - [x] Task 1
 - [x] Task 2
 ...
 
-All tasks complete and `cdk repo precommit` clean! Ready to archive with `/opsx-archive`.
+All tasks complete! Ready to archive this change.
 ```
 
 **Output On Pause (Issue Encountered)**

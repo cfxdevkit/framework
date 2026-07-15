@@ -4,320 +4,179 @@ title: "repos — cfx-solidity"
 
 # repos — cfx-solidity
 
-# repos/cfx-solidity
+# `cfx-solidity` Module Documentation
 
-Solidity pipeline for Conflux development — standard ABIs, contract bindings, and compiler tooling. Independent carve-out from cfx-core, designed for framework-stable consumption.
+The `cfx-solidity` module provides a unified Solidity pipeline for the Conflux framework, separating standard ABI definitions from contract execution machinery. It delivers framework-stable ABI shapes, typed read/write/deploy surfaces, and cross-space bridge helpers that operate across both Conflux Core Space and eSpace.
 
-## Overview
+## Package Architecture
 
-This monorepo contains two primary packages:
+The module is structured as a pnpm workspace containing two primary packages:
 
-1. [`@cfxdevkit/abis`](#package-abis): Standard EVM ABI shapes (ERC-20/721/1155/4626, Multicall3) and Swappi V2 interfaces.
-2. [`@cfxdevkit/contracts`](#package-contracts): Typed helpers for reading, writing, deploying, and bridging contracts on Conflux eSpace and Core Space.
+| Package | Scope | Dependencies | Purpose |
+|---------|-------|--------------|---------|
+| `@cfxdevkit/abis` | Leaf | `viem` only | Standard EVM & Conflux DEX ABI constants. Zero framework dependencies. |
+| `@cfxdevkit/contracts` | Execution Surface | `@cfxdevkit/abis`, `@cfxdevkit/cdk`, `viem` | Typed contract reads, writes, deployments, bridge helpers, and error handling. |
 
-Both packages are published separately but developed in tandem. The `abis` package has zero dependencies on the cfxdevkit framework, making it safe to depend on from any layer (including `@cfxdevkit/cdk`). The `contracts` layer builds atop `abis` and `@cfxdevkit/cdk` to provide a convenient surface for contract interactions.
+Both packages use Vite with `vite-plugin-dts` for library bundling and Vitest for testing. Sub-paths are exported separately to enable precise tree-shaking.
 
-## Package: @cfxdevkit/abis
+<Mermaid chart={`graph TD
+    CDK["@cfxdevkit/cdk"] --> CONTRACTS["@cfxdevkit/contracts"]
+    ABIS["@cfxdevkit/abis"] --> CONTRACTS
+    CONTRACTS --> READ["@cfxdevkit/contracts/read"]
+    CONTRACTS --> WRITE["@cfxdevkit/contracts/write"]
+    CONTRACTS --> DEPLOY["@cfxdevkit/contracts/deploy"]
+    CONTRACTS --> BRIDGE["@cfxdevkit/contracts/bridge"]
+    CONTRACTS --> ERC20["@cfxdevkit/contracts/erc20"]
+    CONTRACTS --> ERRORS["@cfxdevkit/contracts/errors"]
+`} />
 
-Standard EVM ABI shapes re-exported from viem under framework-stable aliases. Includes core token standards, common extensions, and Conflux-specific Swappi V2 bindings.
+## Core Subsystems
 
-### Key Features
+### ABI Definitions (`@cfxdevkit/abis`)
+Exports canonical EVM interface shapes as `as const` arrays, re-exported from `viem` under framework-stable aliases. Provides both uppercase constants and camelCase variants:
+- `ERC20_ABI`, `ERC20_EXTENDED_ABI`, `ERC2612_ABI`
+- `ERC721_ABI`, `ERC721_ENUMERABLE_ABI`, `ERC2981_ABI`, `ERC721_EXTENDED_ABI`
+- `ERC1155_ABI`
+- `ERC4626_ABI`
+- `MULTICALL3_ABI`, `MULTICALL3_ADDRESS`
+- Swappi V2 interfaces: `SWAPPI_FACTORY_ABI`, `SWAPPI_PAIR_ABI`, `SWAPPI_ROUTER_ABI` + chain-specific addresses (`SWAPPI_FACTORY_ADDRESS`, `SWAPPI_ROUTER_ADDRESS`, `WCFX_ADDRESS`)
 
-- **Canonical Sources**: ABIs are imported directly from `viem` (which tracks official EIPs) to ensure alignment with upstream standards.
-- **Framework-Stable Aliases**: Both uppercase constants (e.g., `ERC20_ABI`) and camelCase aliases (e.g., `erc20Abi`) are exported for consistency.
-- **Extended Interfaces**: Includes OpenZeppelin 5.x extensions commonly used in DevKit templates (e.g., `ERC20_EXTENDED_ABI` with `mint`, `burn`, `pausable`, and role management).
-- **Swappi V2 Support**: Full Uniswap V2-compatible ABIs for Swappi on Conflux eSpace, including factory, pair, and router interfaces, plus deployed addresses for mainnet (1030) and testnet (71).
-- **Zero cfxdevkit Dependencies**: Safe to use from `@cfxdevkit/cdk` or any other layer without pulling in contract execution machinery.
+### Contract Reads (`@cfxdevkit/contracts/read`)
+The `readContract<TAbi, TName>()` function encodes view/pure calls via `encodeFunctionData`, dispatches to the chain-appropriate RPC, and decodes results using `decodeFunctionResult`.
+- **eSpace**: Routes to `eth_call` with `blockTag` support. Validates `0x`-prefixed addresses.
+- **Core Space**: Routes to `cfx_call` with `epochTag` support. Validates base32 addresses (`cfx:…` / `cfxtest:…`).
+- Decoding failures wrap in `ContractsError` with code `contracts/decode-failure`.
 
-### File Structure
+### Contract Writes (`@cfxdevkit/contracts/write`)
+Handles state-modifying transactions through `sendWrite<TAbi, TName>()` and `prepareWrite()`.
+- **eSpace**: Uses `eth_getTransactionCount`, `estimateGas`, and `getBlock` for base fee calculation. Builds EIP-1559 transactions (`maxFeePerGas`, `maxPriorityFeePerGas`).
+- **Core Space**: Uses `cfx_getNextNonce`, `cfx_estimateGasAndCollateral`, `cfx_gasPrice`, and `cfx_epochNumber`. Builds CIP-2930/CIP-1559 transactions with explicit `gas`, `storageLimit`, `gasPrice`, and `epochHeight`.
+- Signs via `Signer.signTransaction()` and broadcasts via `eth_sendRawTransaction` or `cfx_sendRawTransaction`.
+- Optional receipt polling via `waitForReceipt()` with configurable `pollIntervalMs` and `receiptTimeoutMs`. Reverted transactions throw `ContractsError` with code `contracts/reverted`.
 
-```
-src/
-├─ erc20.ts          # ERC-20, ERC-2612 (permit), and extended variants
-├─ erc721.ts         # ERC-721, enumerable, royalty (ERC-2981), and extended variants
-├─ erc1155.ts        # Full ERC-1155 interface
-├─ erc4626.ts        # ERC-4626 tokenized vault
-├─ erc165.ts         # Minimal ERC-165 interface detection
-├─ multicall3.ts     # Multicall3 ABI and canonical address
-└─ swappi/           # Swappi V2 (Uniswap V2 fork) for Conflux eSpace
-   ├─ factory.ts     # IUniswapV2Factory
-   ├─ pair.ts        # IUniswapV2Pair
-   └─ router.ts      # IUniswapV2Router02
-```
+### Contract Deployment (`@cfxdevkit/contracts/deploy`)
+The `deployContract<TAbi>()` entry point routes to chain-specific deployers:
+- `deployEspaceContract()`: Encodes bytecode with `encodeDeployData`, estimates gas, signs, and broadcasts. Extracts `contractAddress` from successful receipts.
+- `deployCoreContract()`: Requires `signer.account.coreAddress`. Encodes bytecode, estimates gas/collateral, signs with Core-specific fields (`coreType`, `storageLimit`, `epochHeight`), and extracts `contractCreated` from receipts.
+- Both implementations return `DeployContractResult` containing `hash`, `request`, `rawTransaction`, and optionally `address`/`receipt`.
 
-### Usage
+### Cross-Space Bridge (`@cfxdevkit/contracts/bridge`)
+Abstracts interactions with the CrossSpaceCall contract (`0x0888000000000000000000000000000000000006`). All bridge functions require a Core Space client and validate target addresses.
+- `mappedEspaceAddress(coreHexAddress)`: Derives a deterministic eSpace address via `keccak256(coreHex)[12:32]`.
+- `transferToEspace(opts)`: Encodes `transferEVM(bytes20)` with value. Converts target to base32 via `crossSpaceCallAddress()` and broadcasts.
+- `callEspace(opts)`: Encodes `callEVM(bytes20, bytes)` with optional value.
+- `withdrawFromMapped(opts)`: Encodes `withdrawFromMapped(uint256)`.
+- `getMappedBalance(input)` / `getMappedNonce(input)`: Reads via `staticCallEVM`/`readContract` pattern, padding the Core hex address to 20 bytes.
+- Utility helpers: `uint256Hex()`, `hexToUint256()` for manual ABI encoding.
 
-```ts
-import { ERC20_ABI, erc20Abi } from '@cfxdevkit/abis';
-// Both point to the same viem-sourced ABI
-console.log(ERC20_ABI === erc20Abi); // true
+### ERC20 Helpers & Errors (`@cfxdevkit/contracts/erc20` & `errors`)
+- **ERC20**: `erc20` namespace provides thin wrappers over `readContract`/`sendWrite` (`balanceOf`, `symbol`, `decimals`, `totalSupply`, `allowance`, `transfer`, `approve`). Pre-binds `ERC20_ABI` and function names.
+- **Errors**: `ContractsError` extends `CfxError` with stable string codes:
+  - `contracts/unsupported-family`
+  - `contracts/decode-failure`
+  - `contracts/receipt-timeout`
+  - `contracts/reverted`
+  - `contracts/invalid-argument`
 
-import { SWAPPI_FACTORY_ABI, SWAPPI_FACTORY_ADDRESS } from '@cfxdevkit/abis';
-// Use with viem to create a contract instance
-import { createPublicClient, http } from 'viem';
-const client = createPublicClient({
-  chain: mainnet, // or your Conflux eSpace chain
-  transport: http(),
-});
-const factory = client.getContract({
-  address: SWAPPI_FACTORY_ADDRESS[1030], // mainnet
-  abi: SWAPPI_FACTORY_ABI,
-});
-```
+## Execution Flow & Routing
 
-### Testing
+All execution surfaces (`read`, `write`, `deploy`) use `client.family` as a runtime discriminator. The routing pattern ensures chain-specific RPC calls, gas models, and address formats are handled transparently:
 
-Run `pnpm test` in the `packages/abis` directory to validate:
-- ABI shapes are arrays
-- CamelCase aliases point to uppercase constants
-- Required functions are present in each ABI
-- Multicall3 address matches the canonical deployment
+<Mermaid chart={`flowchart TD
+    A[Input: Client + ABI + Function] --> B{client.family}
+    B -->|espace| C[eSpace Handler]
+    B -->|core| D[Core Handler]
+    C --> E["eth_call / eth_sendRawTransaction / eth_estimateGas"]
+    D --> F["cfx_call / cfx_sendRawTransaction / cfx_estimateGasAndCollateral"]
+    E --> G["Decode Result / Wait Receipt / Return"]
+    F --> G
+`} />
 
-## Package: @cfxdevkit/contracts
+**Address Validation:**
+- eSpace expects `0x`-prefixed 20-byte hex. Invalid formats throw `contracts/invalid-argument`.
+- Core Space expects base32 strings. Hex addresses throw on Core routing.
+- Bridge module explicitly converts between Core hex and eSpace hex via `mappedEspaceAddress()`, then resolves the CrossSpaceCall contract to a base32 address via `hexToBase32()`.
 
-Standard contract bindings and a thin read/write/deploy surface for `@cfxdevkit/cdk`. Provides typed helpers for interacting with ERC-20/721/1155 contracts, multicall3, bridging, and deployment on both Conflux eSpace and Core Space.
+## Testing & Mock Infrastructure
 
-### Key Features
+The contracts package includes comprehensive mock utilities in `src/test/mocks.ts` for offline testing:
+- `makeMockClient(opts)`: Creates an in-memory `Client` with configurable `family`, `rpc` method stubs, `gas` estimates, and `receipt` returns. Records all RPC calls via `__calls` array.
+- `makeMockSigner(opts)`: Creates a `Signer` that captures signed transactions into a `history` array and returns configurable `rawTx` payloads.
+- `getRecordedCalls(client)`: Retrieves the exact RPC methods and parameters invoked during tests.
+- Tests verify ABI shapes, function selector encoding, address validation, receipt parsing, and Core/eSpace branching logic without requiring live nodes.
 
-- **Chain-Agnostic Helpers**: Functions automatically select the correct RPC method (`eth_call`/`eth_sendRawTransaction` for eSpace, `cfx_call`/`cfx_sendRawTransaction` for Core) based on `client.family`.
-- **Typed Surface**: Leverages TypeScript and viem for ABI-safe encoding/decoding.
-- **Modular Design**: Split into focused sub-packages:
-  - `abis`: Back-compat re-exports of `@cfxdevkit/abis`
-  - `read`: Typed contract reads (`readContract`)
-  - `write`: Typed contract writes (`sendWrite`, `prepareWrite`)
-  - `deploy`: Contract deployment (`deployContract`)
-  - `erc20`: Nested ERC-20 specific helpers
-  - `bridge`: Cross-space transfers between Conflux Core and eSpace
-  - `errors`: Stable error codes for programmatic handling
-- **No Framework Lock-in**: While built for `@cfxdevkit/cdk`, only depends on its client/signer interfaces (not implementation).
+## Build & Workspace Validation
 
-### File Structure
+### Build Configuration
+- **Vite**: Configured in `vite.config.ts` with library mode. Exports separate ES modules per sub-path (`index`, `abis/index`, `read/index`, `write/index`, `deploy/index`, `erc20/index`, `bridge/index`, `errors/index`).
+- **TypeScript**: Extends `@cfxdevkit/tsconfig/lib.json`. Emits declaration files only (`emitDeclarationOnly: true`). Excludes test files and `node_modules`.
+- **Vitest**: Configured in `vitest.config.ts` with V8 coverage thresholds (80% lines/functions/statements, 65% branches). Excludes test files and type-only definitions from coverage.
 
-```
-src/
-├─ abis/             # Back-compat re-exports of @cfxdevkit/abis
-├─ read/             # readContract (eSpace/Core Space aware)
-├─ write/            # sendWrite, prepareWrite, receipt handling
-├─ deploy/           # deployContract (Core/eSpace specific logic)
-├─ erc20/            # Typed ERC-20 helpers (balanceOf, transfer, etc.)
-├─ bridge/           # Core <-> eSpace transfers via CrossSpaceCall
-├─ errors/           # ContractsError with stable codes
-└─ index.ts          # Barrel export (discouraged for tree-shaking)
-```
+### Workspace Scripts
+- `scripts/check-deps.mjs`: Scans `packages/*/package.json`, validates `workspace:*` runtime dependencies match declared packages, and warns about external tooling devDeps. Exits with code 1 on mismatches.
+- `scripts/validate-workspace.mjs`: Parses `pnpm-workspace.template.yaml` glob patterns and verifies they match the actual `packages/` directory structure. Ensures workspace consistency before releases.
 
-### Key Functions
+## Key Types & Interfaces
 
-#### readContract
-Typed contract read that works on both chains:
-```ts
-import { readContract } from '@cfxdevkit/contracts/read';
-import { ERC20_ABI } from '@cfxdevkit/abis';
+```typescript
+// deploy/types.ts
+interface DeployContractInput<TAbi extends Abi> {
+  client: Client;
+  signer: Signer;
+  abi: TAbi;
+  bytecode: Hex;
+  args?: ContractConstructorArgs<TAbi>;
+  value?: bigint;
+  gas?: bigint;
+  maxFeePerGas?: bigint;
+  maxPriorityFeePerGas?: bigint;
+  gasPrice?: bigint;
+  storageLimit?: bigint;
+  epochHeight?: bigint;
+  coreType?: 'legacy' | 'cip2930' | 'cip1559';
+  waitForReceipt?: boolean;
+  pollIntervalMs?: number;
+  receiptTimeoutMs?: number;
+  signOptions?: SignOptions;
+}
 
-const balance = await readContract({
-  client, // from @cfxdevkit/cdk
-  address: '0x...', // eSpace or 'cfx:...' for Core
-  abi: ERC20_ABI,
-  functionName: 'balanceOf',
-  args: ['0x...'],
-});
-```
+interface SendWriteInput<TAbi extends Abi, TName extends ContractFunctionName<TAbi, 'nonpayable' | 'payable'>> {
+  client: Client;
+  signer: Signer;
+  address: string;
+  abi: TAbi;
+  functionName: TName;
+  args?: ContractFunctionArgs<TAbi, 'nonpayable' | 'payable', TName>;
+  value?: bigint;
+  nonce?: number;
+  gas?: bigint;
+  maxFeePerGas?: bigint;
+  maxPriorityFeePerGas?: bigint;
+  gasPrice?: bigint;
+  storageLimit?: bigint;
+  epochHeight?: bigint;
+  coreType?: 'legacy' | 'cip2930' | 'cip1559';
+  waitForReceipt?: boolean;
+  pollIntervalMs?: number;
+  receiptTimeoutMs?: number;
+  signOptions?: SignOptions;
+}
 
-#### sendWrite
-Typed contract write with automatic gas/fee estimation:
-```ts
-import { sendWrite } from '@cfxdevkit/contracts/write';
-import { ERC20_ABI } from '@cfxdevkit/abis';
-
-const { hash } = await sendWrite({
-  client,
-  signer, // from @cfxdevkit/cdk
-  address: '0x...',
-  abi: ERC20_ABI,
-  functionName: 'transfer',
-  args: ['0x...', 1n * 10n ** 18n],
-  waitForReceipt: true, // optional
-});
-```
-
-#### deployContract
-Deploys a contract bytecode with ABI, handling Core/eSpace differences:
-```ts
-import { deployContract } from '@cfxdevkit/contracts/deploy';
-import { ERC20_ABI } from '@cfxdevkit/abis';
-
-const { hash, address } = await deployContract({
-  client,
-  signer,
-  abi: ERC20_ABI,
-  bytecode: '0x...', // compiled contract bytecode
-  args: [initialSupply], // constructor args
-  waitForReceipt: true,
-});
-```
-
-#### erc20
-Nested helpers for common ERC-20 operations:
-```ts
-import { erc20 } from '@cfxdevkit/contracts/erc20';
-
-const name = await erc20.name({ client, address: tokenAddress });
-const balance = await erc20.balanceOf(
-  { client, address: tokenAddress },
-  userAddress
-);
-const { hash } = await erc20.transfer(
-  { client, address: tokenAddress, signer },
-  recipient,
-  amount
-);
-```
-
-#### bridge
-Cross-space transfers between Conflux Core and eSpace:
-```ts
-import { transferToEspace, getMappedBalance } from '@cfxdevkit/contracts/bridge';
-
-// Core to eSpace
-await transferToEspace({
-  client, // Core Space client
-  signer, // dual-address signer
-  to: eSpaceAddress, // 0x... address
-  value: amount,
-});
-
-// Query mapped balance on Core
-const balance = await getMappedBalance({
-  client,
-  coreHexAddress: coreAddress, // 0x... Core address
-});
-```
-
-### Error Handling
-
-All errors are `ContractsError` instances with a stable `code` field:
-```ts
-import { ContractsError } from '@cfxdevkit/contracts/errors';
-
-try {
-  await sendWrite(...);
-} catch (err) {
-  if (err instanceof ContractsError) {
-    switch (err.code) {
-      case 'contracts/reverted':
-        // handle revert
-        break;
-      case 'contracts/receipt-timeout':
-        // handle timeout
-        break;
-      // ...
-    }
-  }
+// bridge/internals.ts
+interface BridgeBaseOptions {
+  client: Client;
+  signer: Signer;
+  waitForReceipt?: boolean;
+  gas?: bigint;
+  storageLimit?: bigint;
+  gasPrice?: bigint;
+  epochHeight?: bigint;
 }
 ```
 
-### Testing
-
-Run `pnpm test` in `packages/contracts` to validate:
-- Chain-specific RPC calls (eSpace vs Core)
-- Proper address validation (0x hex for eSpace, base32 for Core)
-- Encoding/decoding correctness
-- Error wrapping and propagation
-- Deployment flows (mocked signers/clients)
-
-## Usage Example: Full ERC-20 Flow
-
-```ts
-import { createPublicClient, http } from 'viem';
-import { privateKeyToAccount } from '@cfxdevkit/cdk';
-import { erc20 } from '@cfxdevkit/contracts/erc20';
-
-// Setup clients (example for Conflux eSpace testnet)
-const espaceClient = createPublicClient({
-  chain: {
-    id: 71,
-    name: 'Conflux eSpace Testnet',
-    nativeToken: { symbol: 'CFX', decimals: 18 },
-    rpc: { http: ['http://espace-testnet.rpc'] },
-  },
-  transport: http(),
-});
-const coreClient = /* ... similar for Core Space ... */;
-
-// Setup signer (dual-address for Cross Space calls)
-const account = privateKeyToAccount('0x...'); // must have coreAddress set for bridge
-
-// Read token metadata
-const [name, symbol, decimals] = await Promise.all([
-  erc20.name({ client: espaceClient, address: tokenAddress }),
-  erc20.symbol({ client: espaceClient, address: tokenAddress }),
-  erc20.decimals({ client: espaceClient, address: tokenAddress }),
-]);
-
-// Check balance
-const balance = await erc20.balanceOf(
-  { client: espaceClient, address: tokenAddress },
-  account.address
-);
-
-// Transfer tokens
-const { hash } = await erc20.transfer(
-  { client: espaceClient, address: tokenAddress, signer: account },
-  recipient,
-  amount
-);
-```
-
-## Development
-
-### Prerequisites
-- Node.js >=22
-- pnpm >=10
-
-### Commands
-```bash
-# Install dependencies
-pnpm install
-
-# Build all packages
-pnpm run -r build
-
-# Run tests
-pnpm run -r test
-
-# Typecheck
-pnpm run -r typecheck
-
-# Lint
-pnpm run -r lint
-```
-
-### Dependency Validation
-The module includes scripts to verify workspace consistency:
-- `scripts/check-deps.mjs`: Ensures all `workspace:*` dependencies are declared within the repo
-- `scripts/validate-workspace.mjs`: Confirms `pnpm-workspace.template.yaml` matches actual package structure
-
-## Architecture Notes
-
-### Chain Abstraction
-The contracts layer abstracts over Conflux's two execution environments:
-- **eSpace**: Ethereum-compatible VM (uses `eth_*` RPC)
-- **Core Space**: Native Conflux VM (uses `cfx_*` RPC)
-
-Helpers like `readContract` and `sendWrite` inspect `client.family` to dispatch the correct RPC methods, while address validation ensures eSpace uses `0x` hex and Core Space uses base32 (`cfx:...`/`cfxtest:...`).
-
-### Why Separate ABIs Package?
-The `@cfxdevkit/abis` package exists to:
-1. Provide a stable, zero-dependency source of ABI shapes
-2. Allow `@cfxdevkit/cdk` and other low-level layers to depend on ABIs without pulling in contract execution logic
-3. Enable independent versioning of ABI definitions from contract helpers
-
-### Swappi V2 Specifics
-Swappi V2 is a Uniswap V2 fork deployed on Conflux eSpace. The ABIs follow the canonical interfaces, but addresses are chain-specific:
-- Mainnet (1030): Factory, Router, and WCFX addresses as defined in `swappi.ts`
-- Testnet (71): Separate set of testnet addresses
-Always verify addresses against [official Swappi documentation](https://docs.swappi.io/developers/deployed-contracts) before production use.
-
-## See Also
-- [`@cfxdevkit/cdk`](../cfx-core/packages/cdk): Core client/signer abstractions used by this module
-- [viem](https://viem.sh): Underlying Ethereum tooling used for ABI encoding/decoding
-- [Conflux Documentation](https://developer.confluxnetwork.org): Chain-specific RPC details
+## Integration Notes for Contributors
+- Prefer direct sub-path imports (`import { readContract } from '@cfxdevkit/contracts/read'`) over the barrel export to maintain tree-shaking efficiency.
+- ABI constants in `@cfxdevkit/abis` are framework-stable and safe to depend on from any stack layer, including `@cfxdevkit/cdk`.
+- Bridge functions strictly require a Core Space client. Passing an eSpace client will throw `contracts/unsupported-family` during `assertCoreClient()`.
+- When extending `@cfxdevkit/abis` with new interfaces, add them to the relevant source file (`erc20.ts`, `erc721.ts`, etc.), export both uppercase and camelCase variants, and update `src/index.ts` barrel re-exports.
+- Coverage thresholds in `vitest.config.ts` are enforced during CI. Ensure new logic includes unit tests that exercise both eSpace and Core Space branches.

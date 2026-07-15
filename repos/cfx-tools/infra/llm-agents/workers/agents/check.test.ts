@@ -13,6 +13,7 @@ describe('parseAgentCheckFlags', () => {
       dryRun: true,
       createBranch: false,
       draftPr: false,
+      createChanges: true,
     });
   });
 
@@ -22,6 +23,7 @@ describe('parseAgentCheckFlags', () => {
       dryRun: true,
       createBranch: false,
       draftPr: false,
+      createChanges: true,
     });
   });
 
@@ -31,6 +33,24 @@ describe('parseAgentCheckFlags', () => {
       dryRun: false,
       createBranch: true,
       draftPr: true,
+      createChanges: true,
+    });
+  });
+
+  it('defaults createChanges to true but --no-create disables it', () => {
+    expect(parseAgentCheckFlags([])).toEqual({
+      quick: false,
+      dryRun: false,
+      createBranch: false,
+      draftPr: false,
+      createChanges: true,
+    });
+    expect(parseAgentCheckFlags(['--no-create'])).toEqual({
+      quick: false,
+      dryRun: false,
+      createBranch: false,
+      draftPr: false,
+      createChanges: false,
     });
   });
 });
@@ -180,7 +200,7 @@ describe('renderAgentCheckConsoleSummary', () => {
     });
 
     expect(rendered).toContain('Branch: opsx/repo-check-handoff (created)');
-    expect(rendered).toContain('openspec/changes/fix-repo-check-noise/proposal.md');
+    expect(rendered).toContain('OpenSpec artifacts: fix-repo-check-noise');
     expect(rendered).toContain('artifacts/llm/reports/agent-check.md');
     expect(rendered).not.toContain('{"status"');
   });

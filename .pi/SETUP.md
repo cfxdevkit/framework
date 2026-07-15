@@ -21,16 +21,18 @@ All models listed below fit simultaneously in unified memory, so there is no mod
 
 ---
 
-## Lemonade Endpoint
+## LLM Endpoints
 
 | Property | Value |
 |----------|-------|
-| URL | `http://host.containers.internal:13305/` |
-| Protocol | OpenAI-compatible `/v1/chat/completions` |
-| Discovery | `GET /api/v1/models` |
+| Headroom proxy URL | `http://localhost:28787/v1/` |
+| Upstream Lemonade URL | `http://host.containers.internal:13305/` |
+| Proxy protocol | OpenAI-compatible `/v1/chat/completions` |
+| Proxy discovery | `GET /v1/models` |
+| Upstream discovery | `GET /api/v1/models` |
 | Container network | `pasta:--map-gw` — host reachable at `169.254.1.2` |
 
-Environment variable: `LEMONADE_URL` (also `LEMONADE_BASE_URL` for legacy compat)  
+Environment variables: `OPENAI_BASE_URL=http://localhost:28787/v1`, `LEMONADE_URL=http://localhost:28787/v1/` (legacy compat)  
 Config key: `providers.json → baseUrl`
 
 ---
@@ -311,3 +313,55 @@ cdk sign message "Hello Conflux"   # test
 | `CFX_SIGNER_NAME` | Override the active signer |
 | `CFX_PASSPHRASE` | File keystore passphrase |
 | `CFX_KEYSTORE_PATH` | Override keystore path |
+
+---
+
+## Extension Architecture
+
+### Package Registry
+
+Extensions and skills are managed through local npm packages:
+
+```
+@cfxdevkit/pi-extensions   → repos/cfx-tools/infra/pi-extensions/
+npm:@davecodes/pi-dcp       → Dynamic Context Pruning (token savings)
+```
+
+Install after cold start: `pi install npm:@davecodes/pi-dcp`
+
+### Session State Management
+
+The `session-state` extension (in `@cfxdevkit/pi-extensions`) provides:
+
+- **Dirty repo guard**: Prompts before session switch/fork with uncommitted changes
+- **Auto-stash checkpoint**: Stashes changes at turn boundaries, restores on shutdown
+- **State persistence**: Session state survives restarts via entry storage
+
+### Dynamic Context Pruning (DCP)
+
+`npm:@davecodes/pi-dcp` automatically prunes context before LLM requests:
+
+- **Deduplication**: Replaces duplicate tool results with markers
+- **Error purge**: Strips failed tool call arguments after N turns
+- **Compression**: LLM-callable `compress` tool summarizes closed work streams
+
+Project overrides in `.pi/dcp.json`. Lifetime stats at `~/.pi-dcp/stats.json`.
+
+### Skills
+
+Skills at `.pi/skills/` and `@cfxdevkit/pi-extensions/skills/`:
+
+- **gitnexus**: Impact analysis, codebase exploration, context lookup
+- **framework-check**: Changeset validation, quality gates, policy verification
+- **librarian**: Open-source library research with GitHub permalinks
+- **openspec-***: OpenSpec workflow skills (propose, apply, explore, archive)
+
+### Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| Extensions not loading | Run `/reload` in Pi |
+| DCP not available | Verify `npm:@davecodes/pi-dcp` in `.pi/settings.json` packages |
+| Compress tool missing | Run `pi -p "list your tools" 2>&1 \| grep compress` |
+| Session state not persisting | Check `~/.pi-dcp/` permissions, verify DCP config |
+| GitNexus skills not found | Verify `.pi/skills/gitnexus/SKILL.md` exists |

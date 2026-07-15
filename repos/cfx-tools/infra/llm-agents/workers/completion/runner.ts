@@ -1,4 +1,4 @@
-import { execFileAsync, root } from '../shared/index.ts';
+import { execFileAsync, root } from '../shared/index.js';
 
 export async function commandBlock(
   title,

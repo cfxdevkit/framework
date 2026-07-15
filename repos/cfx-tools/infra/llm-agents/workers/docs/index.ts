@@ -1,6 +1,6 @@
 export { runDocsApiProbe } from './api/probe';
-export { runDocsApi } from './api.ts';
-export { runDocsPackagePages } from './packages.ts';
-export { runDocsReadme } from './readme.ts';
-export { runStructureUpkeep } from './structure.ts';
-export { runWikiGenerate } from './wiki.ts';
+export { runDocsApi } from './api.js';
+export { runDocsPackagePages } from './packages.js';
+export { runDocsReadme } from './readme.js';
+export { runStructureUpkeep } from './structure.js';
+export { runWikiGenerate } from './wiki.js';

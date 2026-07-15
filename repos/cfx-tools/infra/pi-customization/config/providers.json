@@ -1,0 +1,147 @@
+{
+  "provider": "openai-compat",
+  "baseUrl": "http://localhost:28787/v1/",
+  "defaultModel": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+  "githubModel": null,
+  "requestTimeoutMs": 600000,
+  "actions": {
+    "validation": "Gemma-4-26B-A4B-it-GGUF",
+    "docs-api": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "readme-upkeep": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "package-pages": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "structure-upkeep": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "docs-upkeep": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "review": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "commit": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "test-audit": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "repo-health": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "changeset": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "release-readiness": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "ci-cd": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "docs-pipeline": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+    "wiki-generate": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0"
+  },
+  "providerProfiles": {
+    "github-cloud": {
+      "provider": "openai-compat",
+      "baseUrl": "https://api.githubcopilot.com",
+      "defaultModel": "claude-sonnet-4.6"
+    },
+    "local-fast": {
+      "provider": "openai-compat",
+      "baseUrl": "http://localhost:28787/v1/"
+    }
+  },
+  "actionPolicies": {
+    "wiki-generate": {
+      "phases": {},
+      "profile": "local-fast",
+      "model": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0"
+    },
+    "review": {
+      "phases": {},
+      "profile": "local-fast"
+    }
+  },
+  "harness": {
+    "version": 1,
+    "defaultMode": "deterministic",
+    "providerStrategy": "auto",
+    "deterministic": {
+      "preserveDeterministicArtifacts": true,
+      "preserveDeterministicSections": true
+    },
+    "exploratory": {
+      "allowCodeChanges": true,
+      "allowWideChanges": true
+    }
+  },
+  "tokenBudget": {
+    "contextFraction": 0.9,
+    "cap": null,
+    "quick": 8192,
+    "cloudFallback": 4096
+  },
+  "catalog": [
+    {
+      "id": "Gemma-4-26B-A4B-it-GGUF",
+      "tier": 1,
+      "role": "Lightweight always-hot model for low-latency background tasks (validation, suggestions)",
+      "assignedActions": ["validation"],
+      "contextWindow": 262144,
+      "sizeGb": 16.9,
+      "labels": ["hot", "tool-calling", "vision", "llamacpp"]
+    },
+    {
+      "id": "Qwen3-Coder-Next-GGUF",
+      "tier": 2,
+      "role": "Fallback coding model for very large context windows when Qwen3.6 is under VRAM pressure",
+      "assignedActions": [],
+      "contextWindow": 262144,
+      "sizeGb": 43.7,
+      "labels": ["coding", "tool-calling", "hot"]
+    },
+    {
+      "id": "Qwen3.5-122B-A10B-MTP-GGUF",
+      "tier": 3,
+      "role": "High-reasoning model for code review, commit analysis, release sign-off, and CI risk assessment — used as fallback for complex reasoning tasks",
+      "assignedActions": [],
+      "contextWindow": 262144,
+      "labels": ["custom"]
+    },
+    {
+      "id": "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0",
+      "tier": 1,
+      "role": "Primary local model — handles ALL operations. Q8_0 quantization balances quality and VRAM.",
+      "assignedActions": [
+        "validation",
+        "docs-api",
+        "readme-upkeep",
+        "package-pages",
+        "structure-upkeep",
+        "docs-upkeep",
+        "review",
+        "commit",
+        "test-audit",
+        "repo-health",
+        "changeset",
+        "release-readiness",
+        "ci-cd",
+        "docs-pipeline",
+        "wiki-generate"
+      ],
+      "contextWindow": 262144,
+      "sizeGb": 36.2,
+      "labels": ["coding", "tool-calling", "hot", "mtp"]
+    },
+    {
+      "id": "Qwen3-Coder-30B-A3B-Instruct-GGUF",
+      "tier": "unassigned",
+      "role": "Spare tier-2 capacity; lighter-weight coding model if VRAM pressure increases",
+      "contextWindow": 262144,
+      "sizeGb": 18.6,
+      "labels": ["coding", "tool-calling", "hot"]
+    },
+    {
+      "id": "Qwen2.5-Coder-1.5B-Instruct-GGUF",
+      "tier": "unassigned",
+      "role": "Tiny coder for very fast structured tasks or inline completions",
+      "contextWindow": 32768,
+      "labels": ["custom"]
+    },
+    {
+      "id": "gemma4-it-e4b-FLM",
+      "tier": "unassigned",
+      "role": "FLM backend; deferred until OS-level NPU changes enable parallel model use",
+      "contextWindow": 131072,
+      "sizeGb": 9.1,
+      "labels": ["audio", "vision", "reasoning", "tool-calling", "chat-transcription"]
+    }
+  ],
+  "modelOverrides": {
+    "Qwen3.6-35B-A3B-MTP-GGUF-Q8_0": {
+      "contextWindow": 262144,
+      "maxTokens": 235929
+    }
+  }
+}

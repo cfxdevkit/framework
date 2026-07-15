@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
-import { completeCommitAgent, git } from '../completion/index.ts';
-import { root } from '../shared/index.ts';
+import { completeCommitAgent, git } from '../completion/index.js';
+import { root } from '../shared/index.js';
 
 const VALID_BUMPS = new Set(['patch', 'minor', 'major']);
 

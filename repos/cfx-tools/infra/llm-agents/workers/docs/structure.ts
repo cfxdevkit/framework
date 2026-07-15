@@ -4,11 +4,11 @@
  *  2. Discover public packages (via @cfxdevkit/docs-pipeline)
  *  3. LLM enrich STRUCTURE.md for each package whose deterministic scaffold still needs prose
  */
-import { commandBlock } from '../completion/index.ts';
-import { logInfo, logStep } from '../shared/logging.ts';
-import { parseDocFlags } from './flags.ts';
-import { discoverPublicPackages } from './readme.ts';
-import { enrichStructureMd } from './structure-enrichment.ts';
+import { commandBlock } from '../completion/index.js';
+import { logInfo, logStep } from '../shared/logging.js';
+import { parseDocFlags } from './flags.js';
+import { discoverPublicPackages } from './readme.js';
+import { enrichStructureMd } from './structure-enrichment.js';
 
 export async function runStructureUpkeep(args: string[]): Promise<void> {
   const flags = parseDocFlags(args);

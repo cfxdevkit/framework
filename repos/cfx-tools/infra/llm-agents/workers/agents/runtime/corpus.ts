@@ -8,7 +8,7 @@ import {
   secretNamePattern,
   sourceExtensions,
   textExtensions,
-} from './constants.ts';
+} from './constants.js';
 import {
   isGeneratedPath,
   languageForPath,
@@ -16,7 +16,7 @@ import {
   sha256,
   tierForPath,
   toRel,
-} from './paths.ts';
+} from './paths.js';
 
 export async function collectCorpusFiles() {
   const files = [];

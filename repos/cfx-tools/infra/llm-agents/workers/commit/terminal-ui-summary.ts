@@ -1,5 +1,5 @@
-import type { GateFailureAnalysis } from './failure-analysis.ts';
-import type { GateReport, GateResult } from './gates.ts';
+import type { GateFailureAnalysis } from './failure-analysis.js';
+import type { GateReport, GateResult } from './gates/index.js';
 
 export function summarizeGateFailures(report: GateReport): string[] {
   return report.results

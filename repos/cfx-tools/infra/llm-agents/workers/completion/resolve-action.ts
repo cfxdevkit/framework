@@ -1,5 +1,5 @@
-import { resolveCloudCredentials } from './cloud-credentials.ts';
-import type { LlmConfig, LlmProviderType } from './types.ts';
+import { resolveCloudCredentials } from './cloud-credentials.js';
+import type { LlmConfig, LlmProviderType } from './types.js';
 
 const LEMONADE_DEFAULT_URL = 'http://host.containers.internal:13305/';
 

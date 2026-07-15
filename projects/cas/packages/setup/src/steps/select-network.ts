@@ -5,7 +5,7 @@ import {
 } from '@cfxdevkit/protocol';
 import { input, select } from '@inquirer/prompts';
 import type { Network, WizardState } from '../wizard.js';
-import { checkRpc } from './check-env.js';
+import { checkRpc } from './check/env.js';
 
 // Chain IDs
 const TESTNET_ID = 71 as const;

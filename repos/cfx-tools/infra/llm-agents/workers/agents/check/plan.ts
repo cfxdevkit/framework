@@ -1,12 +1,12 @@
-import { completeStructuredAgent } from '../../completion/index.ts';
-import { renderCommandBlock } from '../../completion/runner.ts';
-import { normalizeAgentCheckPlan } from './render.ts';
+import { completeStructuredAgent } from '../../completion/index.js';
+import { renderCommandBlock } from '../../completion/runner.js';
+import { normalizeAgentCheckPlan } from './render.js';
 import type {
   AgentCheckFlags,
   AgentCheckPlan,
   AgentCheckValidationReport,
   AgentCheckValidationStep,
-} from './types.ts';
+} from './types.js';
 
 export function collectActionableValidationSteps(
   validation: AgentCheckValidationReport,

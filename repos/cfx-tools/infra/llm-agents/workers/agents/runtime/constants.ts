@@ -50,13 +50,13 @@ export const textExtensions = new Set([
   '.md',
   '.sol',
   '.sh',
-  '.ts',
+  '.js',
   '.tsx',
   '.txt',
   '.yaml',
   '.yml',
 ]);
-export const sourceExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.sol']);
+export const sourceExtensions = new Set(['.js', '.tsx', '.js', '.jsx', '.mjs', '.sol']);
 export const docExtensions = new Set(['.md']);
 export const secretNamePattern =
   /(^|[./_-])(\.env|env\.local|secret|secrets|private[-_]?key|mnemonic|passphrase|keystore)([./_-]|$)/i;

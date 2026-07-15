@@ -1,12 +1,14 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
-layer: 'library'
+layer: 'tool'
 language: 'typescript'
 
 tasks:
-  smoketest:
-    command: node ../../scripts/smoketest-scaffold.mjs
-    deps:
-      - ~:build
+  scaffold-new:
+    script: 'pnpm exec scaffold-cli new'
     options:
-      runInCI: true
+      mergeArgs: 'replace'
+  scaffold-list:
+    script: 'pnpm exec scaffold-cli list-templates'
+    options:
+      mergeArgs: 'replace'

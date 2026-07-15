@@ -1,11 +1,11 @@
-import { isRecord } from '../guards.ts';
+import { isRecord } from '../guards.js';
 import {
   applyChatCompletionChunk,
   emitProgress,
   extractAssistantText,
-} from '../provider-stream-parse.ts';
-import type { ChatMessage, CompletionAttemptState, CompletionOptions } from '../types.ts';
-import { formatFetchError, joinEndpoint } from './meta.ts';
+} from '../provider-stream-parse.js';
+import type { ChatMessage, CompletionAttemptState, CompletionOptions } from '../types.js';
+import { formatFetchError, joinEndpoint } from './meta.js';
 
 /**
  * Compute max_tokens from opts.tokenBudget + model context window.

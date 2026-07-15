@@ -35,8 +35,9 @@
 import { createFileKeystoreSignerSession } from './backends/file-keystore.js';
 import { createLedgerSignerSession } from './backends/ledger.js';
 import { createMemorySignerSession } from './backends/memory.js';
-import { createOneKeySignerSession } from './backends/onekey.js';
+import { createOneKeySignerSession } from './backends/onekey-backend.js';
 import { readSignerConfig, resolveSignerEntry, type SignerEntry } from './config.js';
+import { createOneKeySignerSessionFromConfig } from './onekey-session.js';
 import type { SignerSession, SignerSessionInput } from './types.js';
 
 export type {
@@ -103,6 +104,7 @@ export const EPHEMERAL_WARNING =
 export async function createSignerSessionFromConfig(
   name?: string | null,
   cwd = process.cwd(),
+  options?: { oneKeyIncludeCore?: boolean },
 ): Promise<SignerSession> {
   const config = await readSignerConfig(cwd);
   const { name: resolvedName, entry } = resolveSignerEntry(config, name);
@@ -118,57 +120,8 @@ export async function createSignerSessionFromConfig(
     }
     case 'file-keystore':
       return createSignerSession({ ...entry, kind: 'file-keystore' });
-    case 'onekey': {
-      // Dynamically load hd-common-connect-sdk (Node.js USB transport).
-      // Scans for connected devices and uses the first one found.
-      let HardwareSDK: Parameters<typeof createSignerSession>[0] extends { sdk: infer S }
-        ? S
-        : never;
-      try {
-        const mod = await import('@onekeyfe/hd-common-connect-sdk');
-        HardwareSDK = (mod.default ?? mod) as typeof HardwareSDK;
-      } catch {
-        throw new Error(
-          'Cannot load @onekeyfe/hd-common-connect-sdk. Ensure it is installed: pnpm add @onekeyfe/hd-common-connect-sdk',
-        );
-      }
-
-      const sdk = HardwareSDK as unknown as {
-        init(opts: { debug: boolean }): Promise<void>;
-        searchDevices(): Promise<{ success: boolean; payload: { connectId: string }[] }>;
-        getFeatures(connectId: string): Promise<{
-          success: boolean;
-          payload: { deviceId: string; onekey_version?: string; label?: string };
-        }>;
-      } & Parameters<typeof createOneKeySignerSession>[0]['sdk'];
-
-      await sdk.init({ debug: false });
-
-      const devicesRes = await sdk.searchDevices();
-      if (!devicesRes.success || devicesRes.payload.length === 0) {
-        throw new Error(
-          'No OneKey device found. Ensure the device is connected, unlocked, and the container has USB access (--device /dev/bus/usb in devcontainer.json).',
-        );
-      }
-
-      const { connectId } = devicesRes.payload[0];
-      const featRes = await sdk.getFeatures(connectId);
-      if (!featRes.success) {
-        throw new Error('Could not read OneKey device features. Try reconnecting the device.');
-      }
-      const { deviceId } = featRes.payload;
-
-      return createSignerSession({
-        kind: 'onekey',
-        sdk,
-        connectId,
-        deviceId,
-        ...(entry.espacePath ? { espacePath: entry.espacePath } : {}),
-        ...(entry.corePath ? { corePath: entry.corePath } : {}),
-        ...(entry.espaceChainId ? { espaceChainId: entry.espaceChainId } : {}),
-        ...(entry.coreNetworkId ? { coreNetworkId: entry.coreNetworkId } : {}),
-      });
-    }
+    case 'onekey':
+      return createOneKeySignerSessionFromConfig(cwd, entry, options);
     case 'ledger':
       throw new Error(
         'Ledger signer requires an open HID transport. Use createSignerSession({ kind: "ledger", transport }) directly.',

@@ -1,0 +1,4 @@
+schema: spec-driven
+name: consolidate-commit-workflow
+created: 2026-06-22
+description: Consolidate all commit workflow entry points into a single non-exiting, TUI-compatible implementation that never spawns child processes or manipulates terminal cursors.

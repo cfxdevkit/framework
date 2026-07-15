@@ -1,6 +1,6 @@
 import { createInterface } from 'node:readline/promises';
-import { getProviderDefaultModel, resolveProvider } from './completion/index.ts';
-import { repoActions } from './shared/index.ts';
+import { getProviderDefaultModel, resolveProvider } from './completion/index.js';
+import { repoActions } from './shared/index.js';
 
 const providerTypes = ['lemonade', 'litellm', 'openai-compat', 'github-models'] as const;
 

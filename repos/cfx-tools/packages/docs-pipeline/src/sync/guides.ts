@@ -134,6 +134,17 @@ export async function syncGuides(): Promise<number> {
   await fs.writeFile(path.join(guidesContentDir, 'index.mdx'), indexMdx, 'utf8');
   console.log(`  generated content/guides/index.mdx (${entries.length} guides)`);
 
+  // Generate _meta.js for Nextra sub-page discovery
+  const metaEntries = entries
+    .map((entry) => {
+      const slug = entry.slug.replace(/^\/guides\//, '');
+      return `  '${slug}': '${entry.title}',`;
+    })
+    .join('\n');
+  const metaContent = `// biome-ignore lint: Nextra requires default export for meta files\nexport default {\n${metaEntries}\n};\n`;
+  await fs.writeFile(path.join(guidesContentDir, '_meta.js'), metaContent, 'utf8');
+  console.log(`  generated content/guides/_meta.js (${entries.length} entries)`);
+
   console.log(`\nDone — synced ${entries.length} guide pages.`);
   return entries.length;
 }

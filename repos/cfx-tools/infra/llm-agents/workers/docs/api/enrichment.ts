@@ -9,9 +9,9 @@
  */
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { completeStructuredAgent } from '../../completion/index.ts';
-import { root } from '../../shared/index.ts';
-import { createLlmProgressReporter, logInfo } from '../../shared/logging.ts';
+import { completeStructuredAgent } from '../../completion/index.js';
+import { root } from '../../shared/index.js';
+import { createLlmProgressReporter, logInfo } from '../../shared/logging.js';
 
 type EnrichmentResult = {
   enrichedLines: string[];

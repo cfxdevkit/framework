@@ -1,295 +1,267 @@
-import { parseAgentMergeFlags } from '../agent/merge.js';
-import { isHelpToken, withAgentScope, withLlmAgents } from '../agent/runtime.js';
-import type { ToolingNamespaceDefinition } from '../contracts.js';
-import { findMonorepoUnit, listMonorepoUnits, parseScopeFlag } from '../monorepo-units.js';
-import {
-  type RepoCommandTarget,
-  renderRepoResult,
-  runRepoCheck,
-  runRepoCommand,
-} from '../repo-check-runtime.js';
-import { renderRepoMergeResult } from '../repo-merge-render.js';
-import { runGateCommand } from './gate.js';
-import { runRepoGenerate } from './generate.js';
-import {
-  listCandidateBranches,
-  currentBranch as repoCurrentBranch,
-  runDeterministicMerge,
-} from './merge.js';
+import type { RepoCheckTarget } from '@cfxdevkit/cdk-repo-check';
+import { defaultRenderer, runRepoCheck } from '@cfxdevkit/cdk-repo-check';
+import type { ToolingCommandDefinition, ToolingNamespaceDefinition } from '../contracts.js';
+import { docsCommand, runDocsHandler } from './docs-commands.js';
 
-const repoCommands = [
-  { name: 'build', description: 'Run the Moon build across all packages', usage: 'build [--json]' },
-  {
-    name: 'run',
-    description: 'Run any repo command with structured output',
-    usage: 'run <target> [args] [--json]',
-  },
-  {
-    name: 'gate',
-    description:
-      'Re-run a single quality gate by name (lint | test | typecheck | build | format | gitnexus-analyze)',
-    usage: 'gate <name|--list> [--json]',
-  },
-  {
-    name: 'check',
-    description:
-      'Structural checks (arch rules, docs, secrets, hotspots). For quality gates use: gate',
-    usage:
-      'check <validation|hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [--json]',
-  },
-  {
-    name: 'merge',
-    description: 'Deterministic PR merge: list open PRs, check mergeability, auto-merge clean ones',
-    usage: 'merge [--base <branch>] [--dry-run] [--json] [branch...]',
-  },
-  {
-    name: 'generate',
-    description: 'Run deterministic repo reference document generators',
-    usage: 'generate <all|api|readme|structure|unit-configs> [--json]',
-  },
-  {
-    name: 'arch-check',
-    description: 'Run the full repository architecture and docs contract check',
-    usage: 'arch-check [--json]',
-  },
-  {
-    name: 'units',
-    description: 'List or inspect session presets and their agent-config overlays',
-    usage: 'units [list|show <preset>]',
-  },
-  {
-    name: 'review',
-    description: 'Review current repository changes through the active agent workflow',
-    usage: 'review',
-  },
-  {
-    name: 'precommit',
-    description: 'Run precommit quality gates before commit generation',
-    usage: 'precommit [args]',
-  },
-  {
-    name: 'commit',
-    description: 'Run the hardened repository commit workflow',
-    usage: 'commit [args]',
-  },
-] as const;
+// ─── check command ────────────────────────────────────────────────────────────
 
-export const repoToolingNamespace = {
-  name: 'repo',
-  description: 'Repository validation, generation, and maintenance workflows',
-  commands: repoCommands,
-  run: runRepoCli,
-} as const satisfies ToolingNamespaceDefinition;
-
-async function runRepoCli(rawArgs: readonly string[]): Promise<void> {
-  const parsed = parseScopeFlag(rawArgs);
-  const args = [...parsed.args];
-  while (args[0] === '--') args.shift();
-
-  const [command = 'help', ...rest] = args;
-  if (isHelpToken(command)) {
-    printRepoHelp();
+async function runCheckHandler(args: readonly string[]): Promise<void> {
+  const hasHelp = args.some((a) => a === '--help' || a === '-h' || a === 'help');
+  if (hasHelp) {
+    process.stdout.write(
+      'Usage: repo check [target] [options]\n' +
+        '\n' +
+        'Targets:\n' +
+        '  validation    Run full validation pipeline (default)\n' +
+        '  hotspots      File line-count hotspot scan\n' +
+        '  kebab-groups  Kebab-case sibling group check\n' +
+        '  unit-configs  Unit configuration drift check\n' +
+        '\n' +
+        'Validation steps (use --step with validation target):\n' +
+        '  gitnexus-analyze  GitNexus index analysis\n' +
+        '  format            Biome format write\n' +
+        '  lint              Biome lint check\n' +
+        '  typecheck         TypeScript type check\n' +
+        '  test              Run test suite\n' +
+        '  build             Build all packages\n' +
+        '  hotspots          File line-count hotspot scan\n' +
+        '  kebab-groups      Kebab-case sibling group check\n' +
+        '  check             Repo check (moon :check)\n' +
+        '\n' +
+        'Options:\n' +
+        '  --step <id>       Run only this validation step (repeatable)\n' +
+        '  --fail-on-hard    Exit with code 1 on hard errors\n' +
+        '  --quick           Run only fast checks\n' +
+        '  --json            Emit JSON output\n' +
+        '\n' +
+        'Examples:\n' +
+        '  repo check                            Run full validation\n' +
+        '  repo check hotspots                   Run hotspot scan only\n' +
+        '  repo check validation --step lint     Run lint step only\n' +
+        '  repo check validation --step hotspots --step kebab-groups  Run 2 steps\n',
+    );
     return;
   }
 
-  if (command === 'build') {
-    const jsonOutput = rest.includes('--json');
-    const buildArgs = rest.filter((a) => a !== '--json');
-    const result = await runRepoCommand('build', buildArgs);
-    console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
-    process.exitCode = result.exitCode;
+  const [target = 'validation', ...rest] = args;
+  const validTargets = ['validation', 'hotspots', 'kebab-groups', 'unit-configs'];
+
+  if (!validTargets.includes(target)) {
+    process.stderr.write(`Unknown target: ${target}\n`);
+    process.stderr.write(`Valid targets: ${validTargets.join(', ')}\n`);
+    process.exitCode = 1;
     return;
   }
 
-  if (command === 'run') {
-    while (rest[0] === '--') rest.shift();
-    const [target, ...runRest] = rest;
-    if (!target || isHelpToken(target)) {
-      printRepoHelp();
-      return;
+  // Filter out --quick (handled locally, not by cdk-repo-check)
+  const filteredArgs = rest.filter((a) => a !== '--quick');
+  const result = await runRepoCheck(target as RepoCheckTarget, filteredArgs);
+
+  // Render with failure details
+  const text = renderCheckResult(result);
+  process.stdout.write(`${text}\n`);
+
+  if (result.status === 'error') {
+    process.exitCode = 1;
+  }
+}
+
+function renderCheckResult(result: Awaited<ReturnType<typeof runRepoCheck>>): string {
+  const base = defaultRenderer.renderText(
+    result as Parameters<typeof defaultRenderer.renderText>[0],
+  );
+
+  // For validation results, append failure details
+  if (
+    (result as { command?: { action: string; target: string } }).command?.target === 'validation'
+  ) {
+    const validationResult = result as {
+      report?: {
+        steps?: Array<{
+          id: string;
+          label: string;
+          status: string;
+          details?: {
+            stdoutTail?: string[];
+            stderrTail?: string[];
+            hardViolations?: Array<{ path: string; lines: number }>;
+            softWarnings?: Array<{ path: string; lines: number }>;
+            groups?: Array<{ directory: string; prefix: string; files: string[] }>;
+          };
+          durationMs?: number;
+        }>;
+      };
+    };
+    const failedSteps = validationResult.report?.steps?.filter((s) => s.status === 'error');
+    if (failedSteps && failedSteps.length > 0) {
+      const lines = [base, ''];
+      for (const step of failedSteps) {
+        const d = step.details;
+        lines.push(`  ✗ ${step.label}:`);
+        if (d?.hardViolations && d.hardViolations.length > 0) {
+          for (const v of d.hardViolations) {
+            lines.push(`    ! ${v.path} (${v.lines} lines)`);
+          }
+        }
+        if (d?.stdoutTail && d.stdoutTail.length > 0) {
+          for (const line of d.stdoutTail.slice(0, 6)) {
+            lines.push(`    ${line}`);
+          }
+        }
+        if (d?.stderrTail && d.stderrTail.length > 0) {
+          for (const line of d.stderrTail.slice(0, 6)) {
+            lines.push(`    ${line}`);
+          }
+        }
+      }
+      return lines.join('\n');
     }
-    const jsonOutput = runRest.includes('--json');
-    const forwardedArgs = runRest.filter((a) => a !== '--json');
-    const result = await runRepoCommand(target as RepoCommandTarget, forwardedArgs);
-    console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
-    process.exitCode = result.exitCode;
+  }
+
+  return base;
+}
+
+const checkCommand: ToolingCommandDefinition = {
+  name: 'check',
+  description: 'Run repository validation',
+  usage: '[target] [--step <id>] [--fail-on-hard] [--quick] [--json]',
+};
+
+// ─── precommit command ────────────────────────────────────────────────────────
+
+async function runPrecommitHandler(args: readonly string[]): Promise<void> {
+  const { runPrecommitWorkflow } = await import('@cfxdevkit/llm-agents');
+  const result = await runPrecommitWorkflow(args);
+
+  if (result.status === 'blocked') {
+    process.exitCode = 1;
+  }
+}
+
+const precommitCommand: ToolingCommandDefinition = {
+  name: 'precommit',
+  description: 'Run precommit validation sequence',
+  usage: '[--force] [--skip-checks] [--with-tests] [--with-build]',
+};
+
+// ─── status command ───────────────────────────────────────────────────────────
+
+async function runStatusHandler(): Promise<void> {
+  const { listModels } = await import('@cfxdevkit/llm-agents');
+
+  // Show provider/model context (listModels logs provider + models to console)
+  await listModels();
+}
+
+const statusCommand: ToolingCommandDefinition = {
+  name: 'status',
+  description: 'Show repository context and available workflows',
+};
+
+// ─── actions command ──────────────────────────────────────────────────────────
+
+async function runActionsHandler(args: readonly string[]): Promise<void> {
+  const { listRepoActions } = await import('@cfxdevkit/llm-agents');
+
+  const actions = listRepoActions();
+  const modeArg = args.find((a) => a === '--mode' || a === '-m');
+  const mode = modeArg ? args[args.indexOf(modeArg) + 1] : undefined;
+
+  const filtered = mode ? actions.filter(([, a]) => a.mode === mode) : actions;
+
+  if (filtered.length === 0) {
+    process.stdout.write(`No actions${mode ? ` in mode: ${mode}` : ''} found.\n`);
     return;
   }
 
-  if (command === 'gate') {
-    await runGateCommand(rest);
+  process.stdout.write('Repository Actions\n');
+  process.stdout.write('==================\n\n');
+  for (const [name, action] of filtered) {
+    const modeLabel = `[${action.mode}]`;
+    process.stdout.write(`  ${name.padEnd(20)} ${modeLabel.padEnd(12)} ${action.title}\n`);
+  }
+}
+
+const actionsCommand: ToolingCommandDefinition = {
+  name: 'actions',
+  description: 'List available repo actions',
+  usage: '[--mode <deterministic|exploratory>]',
+};
+
+// ─── review command ───────────────────────────────────────────────────────────
+
+async function runReviewHandler(args: readonly string[]): Promise<void> {
+  const { runReviewAgent } = await import('@cfxdevkit/llm-agents');
+  await runReviewAgent({ silent: args.length === 0 });
+}
+
+const reviewCommand: ToolingCommandDefinition = {
+  name: 'review',
+  description: 'Run repository review agent',
+};
+
+// ─── merge command ────────────────────────────────────────────────────────────
+
+async function runMergeHandler(args: readonly string[]): Promise<void> {
+  const { runPrecommitWorkflow } = await import('@cfxdevkit/llm-agents');
+  await runPrecommitWorkflow(['--force', ...args]);
+}
+
+const mergeCommand: ToolingCommandDefinition = {
+  name: 'merge',
+  description: 'Merge validation (run precommit with --force)',
+  usage: '[--dry-run] [--base <branch>] [branch...]',
+};
+
+// ─── Namespace definition ─────────────────────────────────────────────────────
+
+const commands: readonly ToolingCommandDefinition[] = [
+  checkCommand,
+  precommitCommand,
+  statusCommand,
+  actionsCommand,
+  reviewCommand,
+  docsCommand,
+  mergeCommand,
+];
+
+async function runNamespace(args: readonly string[]): Promise<void> {
+  const [command = 'help', ...rest] = args;
+
+  if (command === 'help' || command === '--help' || command === '-h') {
+    const namespaceBlock = commands
+      .map((c) => `  ${c.name.padEnd(12)} ${c.description}`)
+      .join('\n');
+    process.stdout.write('Usage:\n  repo <command> [args]\n\n');
+    process.stdout.write('Commands:\n');
+    process.stdout.write(namespaceBlock);
+    process.stdout.write('\n');
     return;
   }
 
   if (command === 'check') {
-    while (rest[0] === '--') rest.shift();
-    const [target = 'help', ...forwardedArgs] = rest;
-    if (isHelpToken(target)) {
-      printRepoHelp();
-      return;
-    }
-    const jsonOutput = forwardedArgs.includes('--json');
-    const checkArgs = forwardedArgs.filter((a) => a !== '--json');
-
-    const repoCheckTargets = new Set(['validation', 'hotspots', 'kebab-groups', 'unit-configs']);
-    const checkCommandMap: Record<string, RepoCommandTarget> = {
-      docs: 'check-docs',
-      ci: 'check-ci',
-      secrets: 'check-secrets',
-      corpus: 'check-corpus',
-      eval: 'check-eval',
-    };
-
-    if (repoCheckTargets.has(target)) {
-      const result = await runRepoCheck(
-        target as 'validation' | 'hotspots' | 'kebab-groups' | 'unit-configs',
-        checkArgs,
-      );
-      console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
-      process.exitCode = result.exitCode;
-    } else if (checkCommandMap[target]) {
-      const result = await runRepoCommand(checkCommandMap[target] as RepoCommandTarget, checkArgs);
-      console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
-      process.exitCode = result.exitCode;
-    } else {
-      throw new Error(`Unknown repo check target: ${target}`);
-    }
-    return;
-  }
-
-  if (command === 'generate') {
-    await runRepoGenerate(rest, printRepoHelp);
-    return;
-  }
-
-  if (command === 'arch-check') {
-    const jsonOutput = rest.includes('--json');
-    const archArgs = rest.filter((a) => a !== '--json');
-    const result = await runRepoCommand('arch-check', archArgs);
-    console.log(await renderRepoResult(result, jsonOutput ? 'json' : 'text'));
-    process.exitCode = result.exitCode;
-    return;
-  }
-
-  if (command === 'units') {
-    const [subcommand = 'list', unitName] = rest;
-    if (subcommand === 'list') {
-      printMonorepoUnits();
-      return;
-    }
-    if (subcommand === 'show') {
-      if (!unitName) throw new Error('Usage: cdk repo units show <unit>');
-      printMonorepoUnit(unitName);
-      return;
-    }
-    throw new Error(`Unknown repo units subcommand: ${subcommand}`);
-  }
-
-  if (command === 'merge') {
-    await runRepoMerge(rest);
-    return;
-  }
-
-  if (command === 'review') {
-    await withAgentScope(parsed.scope, async () =>
-      withLlmAgents((agents) => agents.runReviewAgent()),
-    );
-    return;
-  }
-
-  if (command === 'precommit') {
-    await withAgentScope(parsed.scope, async () =>
-      withLlmAgents((agents) => agents.runPrecommit(rest)),
-    );
-    return;
-  }
-
-  if (command === 'commit') {
-    await withAgentScope(parsed.scope, async () =>
-      withLlmAgents((agents) => agents.runCommit(rest)),
-    );
-    return;
-  }
-
-  printRepoHelp();
-}
-
-function printRepoHelp(): void {
-  console.log(`cdk repo
-
-Usage:
-  cdk repo build [--json]
-  cdk repo run <target> [args] [--json]
-
-Quality gates:
-  cdk repo [--scope <preset>] precommit [args]   Run all quality gates (format→lint→typecheck→test→build→repo-check)
-  cdk repo gate <name> [--json]                  Re-run one gate (cdk repo gate --list for names)
-
-Structural checks (arch rules, docs, secrets, hotspots):
-  cdk repo check <validation|hotspots|kebab-groups|unit-configs|docs|ci|secrets|corpus|eval> [--json]
-  cdk repo arch-check [--json]
-
-Other:
-  cdk repo generate <all|api|readme|structure|unit-configs> [--json]
-  cdk repo merge [--base <branch>] [--dry-run] [--json] [branch...]
-  cdk repo units [list|show <preset>]
-  cdk repo [--scope <preset>] review
-  cdk repo [--scope <preset>] commit [args]
-
-Notes:
-  - use --scope <preset> when review, precommit, or commit should honor a preset-specific overlay
-  - use cdk agent for direct PI sessions and provider/runtime administration
-  - if precommit fails, call repo_agent_check for LLM-assisted remediation`);
-}
-
-async function runRepoMerge(rawArgs: readonly string[]): Promise<void> {
-  const args = [...rawArgs];
-  while (args[0] === '--') args.shift();
-  if (isHelpToken(args[0] ?? 'help')) {
-    printRepoHelp();
-    return;
-  }
-
-  const jsonOutput = args.includes('--json');
-  const flags = parseAgentMergeFlags(args.filter((a) => a !== '--json'));
-  const baseBranch = flags.base ?? (await repoCurrentBranch());
-  const branchNames =
-    flags.branches.length > 0 ? flags.branches : await listCandidateBranches(baseBranch, []);
-
-  const result = await runDeterministicMerge(flags, branchNames);
-  if (jsonOutput) {
-    console.log(JSON.stringify(result, null, 2));
+    await runCheckHandler(rest);
+  } else if (command === 'precommit') {
+    await runPrecommitHandler(rest);
+  } else if (command === 'status') {
+    await runStatusHandler();
+  } else if (command === 'actions') {
+    await runActionsHandler(rest);
+  } else if (command === 'review') {
+    await runReviewHandler(rest);
+  } else if (command === 'docs') {
+    await runDocsHandler(rest);
+  } else if (command === 'merge') {
+    await runMergeHandler(rest);
   } else {
-    console.log(renderRepoMergeResult(result));
+    process.stderr.write(`Unknown repo command: ${command}\n`);
+    process.exitCode = 1;
   }
-  process.exitCode = result.exitCode;
 }
 
-function printMonorepoUnits(): void {
-  const units = listMonorepoUnits();
-  const lines = units.map(
-    (unit) =>
-      `  - ${unit.name.padEnd(14)} ${unit.description} | mode ${unit.defaultMode} | aliases ${unit.aliases.join(', ')} | ${unit.relativeConfigPath}`,
-  );
-  console.log(`cdk repo units
-
-Registered session presets:
-${lines.join('\n')}`);
-}
-
-function printMonorepoUnit(name: string): void {
-  const unit = findMonorepoUnit(name);
-  if (!unit) throw new Error(`Unknown agent scope preset: ${name}`);
-  console.log(`cdk repo units show ${unit.name}
-
-Root:
-  - path: ${unit.relativeRootPath}
-  - description: ${unit.description}
-  - aliases: ${unit.aliases.join(', ')}
-
-Agent overlay:
-  - config: ${unit.relativeConfigPath}
-  - default mode: ${unit.defaultMode}
-  - focus: ${unit.focus}
-  - session effect: ${unit.sessionEffect}`);
-}
+export const repoToolingNamespace: ToolingNamespaceDefinition = {
+  name: 'repo',
+  description: 'Repository validation and maintenance workflows',
+  commands,
+  run: runNamespace,
+};

@@ -1,9 +1,7 @@
 {
-  "runtime": {
-    "entrypoint": "cdk agent",
-    "controlPlane": "cdk"
-  },
-  "providers": {
-    "source": ".pi/providers.json"
-  }
+  "runtime": { "entrypoint": "cdk agent", "controlPlane": "cdk" },
+  "providers": { "source": ".pi/providers.json" },
+  "defaults": { "endpoint": "http://localhost:28787/v1/", "scope": null, "mode": "deterministic" },
+  "packages": ["npm:@davecodes/pi-dcp", "npm:pi-gitnexus", "./repos/cfx-tools/infra/pi-extensions"],
+  "skills": [".pi/skills", "./repos/cfx-tools/infra/pi-extensions/skills"]
 }

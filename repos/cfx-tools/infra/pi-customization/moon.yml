@@ -1,0 +1,14 @@
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+layer: 'tool'
+language: 'typescript'
+
+dependsOn:
+  - 'llm-agents'
+  - 'cli'
+
+fileGroups:
+  sources:
+    - 'src/**/*'
+    - 'package.json'
+    - 'tsconfig*.json'

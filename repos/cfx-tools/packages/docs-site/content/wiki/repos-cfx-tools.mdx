@@ -4,227 +4,127 @@ title: "repos — cfx-tools"
 
 # repos — cfx-tools
 
-# @cfxdevkit/llm-agents Module
+# @cfxdevkit/llm-agents
 
-Typed LLM workflow agents for Conflux DevKit repository automation. This module provides a framework for running automated repository maintenance tasks using Large Language Models (LLMs), including code review, issue remediation planning, commit workflows, and model validation.
+## Overview
 
-## Key Features
+`@cfxdevkit/llm-agents` provides a suite of typed LLM workflow agents for automating Conflux DevKit repository operations. It orchestrates large language model interactions to handle code review, repository validation planning, commit message generation, changeset creation, and model viability testing.
 
-### Agent Workflows
-- **Review Agent** (`runReviewAgent`): Detects generated file changes, security-sensitive modifications, and code hotspots
-- **Check Agent** (`runAgentCheck`): Runs repository validation, plans OpenSpec remediation changes, generates specification artifacts
-- **Smoke Test** (`runAgentSmoke`): Validates LLM provider responsiveness and JSON output capabilities
-- **All Agent** (`runAll`): Executes the review agent and generates consolidated reports
-
-### Commit Workflow
-- **Commit Workflow** (`runCommitWorkflow`): Full automated commit process including:
-  - Preflight checks (GitNexus, changed scopes)
-  - Release intent analysis (changeset generation)
-  - LLM-generated commit messages
-  - Approval mechanisms (dry-run, prompt, auto-approve)
-  - Changeset file creation
-  - Post-generation validation
-  - Git commit execution
-
-### Generic Action System
-- **Action Runner** (`runAction`): Execute any registered repository action via LLM
-- **Configuration** (`configure`): Manage LLM provider settings and action-model mappings
-- **Discovery** (`listActions`, `listModels`): Enumerate available actions and discovered models
-
-### Shared Utilities
-- Execution context resolution (unit/LLM configuration)
-- Report generation (JSON/Markdown)
-- Corpus processing for LLM context
-- Path validation and documentation link checking
-- Code hotspot reporting
-- Model inventory extraction from provider responses
+The module acts as the bridge between the repository's CI/CD and validation tools (such as `cdk-repo-check` and `docs-pipeline`) and the LLM completion layer, executing complex multi-step workflows that produce OpenSpec artifacts, Git branches, and validated commits.
 
 ## Architecture
 
+The module is built around a `workers/` architecture where distinct agents handle specific domains. The public API is exposed via `src/index.ts`.
+
+### Module Topology
+
 <Mermaid chart={`graph TD
-    A[llm-agents Public API] --> B[Agent Workflows]
-    A --> C[Commit Workflow]
-    A --> D[Command Runner]
-    A --> E[Configuration]
-    B --> B1[Review Agent]
-    B --> B2[Check Agent]
-    B --> B3[Smoke Test]
-    C --> C1[Commit Workflow]
-    D --> D1[runAction]
-    D --> D2[listActions]
-    D --> D3[listModels]
-    E --> E1[configure]
+    Index["src/index.ts"] --> Workers["workers/"]
+    
+    Workers --> Agents["agents/"]
+    Workers --> Commit["commit/"]
+    Workers --> Commands[commands.ts]
+    
+    Agents --> All[all.ts]
+    Agents --> Check[check.ts]
+    Agents --> Review[review.ts]
+    Agents --> Smoke[smoke.ts]
+    
+    Commit --> Gates[gates.ts]
+    Commit --> Changeset[changeset.ts]
+    Commit --> Commit[commit.ts]
+    
+    Commands --> Config[Configuration]
+    Commands --> Completion[LLM Completion]
+    
+    Agents --> Runtime["agents/runtime/"]
+    Commit --> Completion
 `} />
 
-### Module Structure
-```
-workers/
-├── agents/           # Specialized LLM agents (review, check, smoke, all)
-├── commit/           # Git commit workflow implementation
-├── completion/       # LLM provider abstraction and configuration
-├── docs/             # Documentation validation utilities
-├── runtime/          # Shared utilities (corpus, reporting, path handling)
-├── shared/           # Execution context and repo-action definitions
-├── tests/            # Test upkeep pipeline
-├── validate-models/  # LLM validation probing
-└── commands.ts       # Generic action execution and configuration
-```
+## Core Agents
 
-## Usage
+### `runAgentCheck` (Repository Check & Planning)
 
-### CLI Commands
-All functionality is exposed via `pnpm run llm:<command>`:
+Located in `workers/agents/check.ts`, this agent automates the remediation of repository validation failures. It follows a "Plan and Handoff" pattern:
 
-| Command | Description |
-|---------|-------------|
-| `llm:all` | Run review agent and generate reports |
-| `llm:check` | Run repository check agent with optional branch/PR creation |
-| `llm:review` | Run code review agent |
-| `llm:smoke` | Test LLM provider responsiveness |
-| `llm:commit` | Execute full commit workflow |
-| `llm:precommit` | Execute precommit workflow |
-| `llm:run <action>` | Execute a specific repository action |
-| `llm:actions` | List all available repository actions |
-| `llm:models` | Discover and list available LLM models |
-| `llm:config` | View or modify LLM configuration |
+1.  **Validation:** Runs `pnpm repo check` and reads the validation artifact (`artifacts/llm/repo-check/checks/validation.json`).
+2.  **Analysis:** Collects actionable steps (warnings/errors) and summarizes them for the LLM.
+3.  **Planning:** Uses `buildAgentCheckPlan` to generate a structured OpenSpec change set. The LLM is instructed to group related failures into contained remediation changes.
+4.  **Materialization:** Calls `materializeOpenSpecChanges` to generate proposal, design, spec, and task files based on the plan and live OpenSpec instructions.
+5.  **Handoff:** Optionally creates a Git branch (e.g., `opsx/repo-check-handoff`) and a draft PR to hand off the plan to cloud-based implementation agents.
 
-### Programmatic Usage
-```typescript
-import {
-  runReviewAgent,
-  runAgentCheck,
-  runCommitWorkflow,
-  runAction
-} from '@cfxdevkit/llm-agents';
+**Key Types:**
+*   `AgentCheckFlags`: Controls `--quick`, `--dry-run`, `--create-branch`, and `--draft-pr`.
+*   `AgentCheckPlan`: Defines the summary, changes, branch details, and handoff instructions.
 
-// Run review agent
-await runReviewAgent({ silent: true });
+### `runCommitWorkflow` (Commit Orchestration)
 
-// Run check agent with flags
-await runAgentCheck(['--quick', '--dry-run']);
+Located in `workers/commit/commit.ts`, this function implements a gated commit pipeline:
 
-// Execute commit workflow
-await runCommitWorkflow(['--message', 'Fix typo']);
+1.  **Quality Gates:** Runs validation sequences (format, lint, typecheck, tests, hotspots).
+2.  **Failure Analysis:** If gates fail, `analyzeGateFailures` invokes the LLM to provide root cause analysis and minimal fixes. The commit is blocked unless `--force` is used.
+3.  **Scope Detection:** Identifies changed packages and files.
+4.  **Changeset Generation:** Determines if a changeset is needed. Uses `generateChangesetPlan` to request LLM-generated release notes and bump levels for publishable packages.
+5.  **Approval:** Presents the commit message and changeset details. Supports `--yes`, `--dry-run`, and interactive approval.
+6.  **Commit:** Stages files, runs post-generation checks (optional), and executes the commit.
 
-// Run generic action
-await runAction(['review', '--prompt', 'Focus on security']);
+**Key Types:**
+*   `CommitWorkflowResult`: Returns status (`blocked`, `committed`, `dry-run`), scopes, and changeset plan.
 
-// Configure LLM provider
-await configure(['set', 'provider', 'lemonade']);
-await configure(['set', 'default-model', 'qwen3-coder']);
-```
+### `runReviewAgent` (Code Review)
 
-## Configuration
+Located in `workers/agents/review.ts`, this agent scans uncommitted changes for high-risk patterns:
 
-LLM provider configuration is stored in `.pi/providers.json` (or path specified by `CFX_LLM_CONFIG_PATH` environment variable):
+*   **Generated Files:** Detects changes to files in `artifacts/`, `dist/`, etc.
+*   **Security Sensitivity:** Flags changes to keystore, wallet, or secret files.
+*   **Code Hotspots:** Integrates with `codeHotspotReport` to flag files exceeding line limits (hard/soft).
+*   **Validation Suggestions:** Recommends relevant CI commands based on changed file paths.
 
-```jsonc
-{
-  "provider": "lemonade",
-  "baseUrl": "http://host.containers.internal:13305/",
-  "defaultModel": "qwen3-coder",
-  "requestTimeoutMs": 120000,
-  "actions": {
-    "review": "gemma-4-26b",
-    "check": "qwen3-coder",
-    "commit": "qwen3-coder"
-  },
-  "tokenBudget": {
-    "contextFraction": 0.75,
-    "cap": 32768,
-    "quick": 512,
-    "cloudFallback": 4096
-  }
-}
-```
+### `runAgentSmoke` (Model Viability)
 
-Configuration can be modified via:
-```bash
-pnpm run llm:config -- set provider openai-compat
-pnpm run llm:config -- set base-url https://api.openai.com/v1
-pnpm run llm:config -- set default-model gpt-4o
-pnpm run llm:config -- set action commit gemma-4-26b
-```
+Located in `workers/agents/smoke.ts`, this agent tests the viability of configured LLM models:
 
-## Extending the Module
+*   **Probes:** Executes cold, hot, and task-based probes (with and without thinking mode).
+*   **Tiering:** Assigns models to tiers (Lightweight, Documentation, Reasoning) based on configured actions.
+*   **Metrics:** Reports latency, JSON shape validity, and reasoning observation.
+*   **Output:** Renders a tabular summary via `renderSmokeTable`.
 
-### Adding New Repository Actions
-1. Define the action in `workers/shared/repo-actions.ts`:
-   ```typescript
-   export const myNewAction: RepoActionDefinition = {
-     title: 'My New Action',
-     description: 'Description of what this action does',
-     defaultPrompt: 'Perform the new action on the repository',
-     // Optional: action-specific validation
-   };
-   ```
+## CLI & Configuration
 
-2. Implement the action logic in `workers/completion/index.ts` within the `complete` function's action switch statement, or create a new worker module and export it from `src/index.ts`.
+### Configuration (`configure`)
 
-3. Add any necessary types or utilities to support the action.
+The `configure` command in `workers/commands.ts` manages LLM provider settings stored in `.pi/providers.json`:
 
-### Adding Custom Validation Steps
-Validation steps for the check agent are defined in the validation artifact schema. To add new validation:
-1. Extend the validation check in `workers/cdk-repo-check` (dependency)
-2. The check agent will automatically process new warning/error steps
-3. Customize remediation planning in `workers/agents/check/plan.ts` if needed
+*   `set provider <type>`: Set provider type (`lemonade`, `litellm`, `openai-compat`, `github-models`).
+*   `set base-url <url>`: Configure the provider endpoint.
+*   `set default-model <id>`: Select the default model, optionally triggering an interactive selection.
+*   `set action <name> <model>`: Bind a specific repository action to a model.
 
-## Internal Module Details
+### Action Execution (`executeAction`)
 
-### Execution Context (`workers/shared/execution-context.ts`)
-Resolves whether to use unit-specific configuration or shared repo configuration, and prepares LLM provider settings based on action and model overrides.
+The `executeAction` function provides a generic runner for repository actions defined in `repoActions`:
 
-### Report Generation (`workers/runtime/reports.ts`)
-Handles writing JSON and Markdown reports to `artifacts/llm/reports/`, including:
-- Agent execution summaries
-- Validation findings
-- Commit workflow previews
-- LLM provider test results
+1.  **Parsing:** Extracts flags like `--model`, `--quick`, and `--generate`.
+2.  **Context:** Resolves execution context and LLM configuration.
+3.  **Completion:** Invokes the LLM via `complete` with the action's context and prompt.
+4.  **Special Handling:**
+    *   **Changeset:** The `--generate` flag for the `changeset` action bypasses the LLM review flow and directly generates `.changeset/*.md` files using `generateChangesetPlan`.
 
-### Corpus Processing (`workers/runtime/corpus.ts`)
-Collects and chunks files from the repository for LLM context, respecting:
-- Generated file exclusions
-- Size limits (512KB per file)
-- Text file filtering
-- Chunking by language-appropriate sizes
+## Shared Runtime
 
-### Path Utilities (`workers/runtime/paths.ts`)
-Provides helper functions for:
-- Detecting security-sensitive files
-- Identifying generated/distributed files
-- Determining package ownership from file paths
-- Language detection from file extensions
-- Path relativization and SHA256 hashing
+Common utilities are centralized in `workers/agents/runtime/`:
 
-### LLM Completion (`workers/completion/index.ts`)
-Abstracts LLM provider interactions with:
-- Provider resolution (lemonade, litellm, openai-compat, github-models)
-- Configuration management
-- Prompt construction and token budgeting
-- Thinking mode control
-- Response validation and retry logic
-- Progress reporting for long operations
+*   **Reports:** `writeJsonReport` and `writeMarkdownReport` handle output to `artifacts/llm/`.
+*   **Corpus:** `collectCorpusFiles` and `chunkFile` prepare documentation and source code for LLM context.
+*   **Paths:** Utilities like `isSecuritySensitive`, `isGeneratedPath`, and `tierForPath` categorize files.
+*   **Models:** `codeHotspotReport` executes the arch-check tool to analyze code size.
 
-## Dependencies
-- `@cfxdevkit/cdk-repo-check`: Repository validation (used by check agent)
-- `@cfxdevkit/docs-pipeline`: Documentation processing (referenced in agents)
-- `tsx`: TypeScript execution for scripts
-- Vitest: Testing framework
-- Biome: Code formatting and linting
+## Exports
 
-## Error Handling
-- All async functions properly propagate errors
-- Configuration errors provide actionable guidance
-- LLM provider errors include context about the failing action
-- Workflow failures include detailed failure analysis when LLMs are available
-- Validation errors include reproducible commands and hints
+The module exports the following key interfaces and functions from `src/index.ts`:
 
-## Contributing
-1. Ensure code passes Biome linting: `pnpm lint`
-2. Add tests for new functionality in corresponding `*.test.ts` files
-3. Update documentation for new public APIs
-4. Follow existing patterns for action definitions and workflow implementation
-5. Test changes with `pnpm test` before submitting PRs
-
-## License
-This module is part of the Conflux DevKit and is licensed under the same terms as the repository. See the root LICENSE file for details.
+*   **Agents:** `runAll`, `runAgentCheck`, `runReviewAgent`, `runAgentSmoke`.
+*   **Commit:** `runCommit`, `runCommitWorkflow`, `runPrecommit`, `parseCommitFlags`.
+*   **Docs:** `runDocsApi`, `runDocsReadme`, `runWikiGenerate`, etc.
+*   **Commands:** `configure`, `executeAction`, `listActions`, `listModels`, `validateModels`.
+*   **Types:** `RepoActionExecutionResult`, `RepoActionDefinition`, `CommitWorkflowResult`, `AgentCheckFlags`.

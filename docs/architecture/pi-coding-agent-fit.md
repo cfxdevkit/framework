@@ -1,21 +1,28 @@
-# Pi Coding Agent Fit Assessment
+# PI Coding Agent Fit Assessment
 
 ## Current Status
 
-The recommended integration path in this document is now partially implemented.
+PI is now integrated as the interactive agent runtime in the Conflux DevKit monorepo.
 
-Current shipped shape:
+**What is implemented:**
 
-- `cdk agent interactive|print|rpc` delegates into `@cfxdevkit/pi-agent`
-- `cdk agent commit` delegates into a PI-backed interactive commit workflow that keeps remediation and approval inside the session
-- `@cfxdevkit/pi-agent` launches `pi` from the repository root so project-local `.pi/` resources resolve correctly
-- `.pi/extensions/repo-agent.ts` registers the project-local PI extension from the `pi-agent` package source
-- scoped `cdk agent --scope <unit> ...` runs resolve the matching `artifacts/llm/config/units/<unit>.json` overlay and pass the scope into the PI subprocess
-- PI slash commands and tools now expose the shared repo action registry, a dedicated repo commit workflow command, and runtime workflow context in the operator UI
-- `@cfxdevkit/pi-agent` now resolves named provider profiles plus action and phase policies so PI commit sessions can select local or cloud backends intentionally
-- `@cfxdevkit/llm-tools` keeps compatibility entrypoints for PI-backed `interactive`, `print`, and `rpc` modes while the root control plane stays on `cdk`
+- PI (`@earendil-works/pi-coding-agent`) is installed globally via devcontainer `npm i -g`
+- All PI configuration lives in `~/.pi/agent/` (managed by `~/.pi/agent/settings.json`)
+- `@cfxdevkit/pi-customization` is a proper PI package installed via `pi install` into `~/.pi/agent/npm/`
+- PI extension registers repo commands (`/repo-*`), tools (`repo_agent_check`, `repo_run_action`, etc.), CDK commands (`/cdk`), and a custom OpenAI-compatible provider
+- `~/.pi/agent/providers.json` provides endpoint, models, and policy overrides
+- `cdk agent` and `cdk llm` have been removed from tooling-cli — they are deprecated in favor of `pi`
+- PI slash commands and tools expose the shared repo action registry, a dedicated repo commit workflow command, and runtime workflow context in the operator UI
+- The pi-customization extension resolves named provider profiles plus action and phase policies so PI commit sessions can select local or cloud backends intentionally
 
-What remains after this slice is representative smoke validation of live `repo commit`, `agent commit`, and policy-routed local-versus-cloud runs.
+**What was removed:**
+
+- `@cfxdevkit/pi-agent` TypeScript wrapper (replaced by `@cfxdevkit/pi-customization` PI package)
+- `.pi/` directory (moved to `~/.pi/agent/`)
+- `cdk agent interactive|print|rpc` commands (replaced by `pi` CLI)
+- `cdk agent commit` (replaced by `/repo-commit` PI command)
+- `tooling-cli/src/agent-session/` setup module
+- `pi-extensions` package (merged into pi-customization)
 
 ## Recommendation
 
@@ -25,14 +32,14 @@ but do not make it the single root CLI for all repository operations.
 The strongest fit is:
 
 - keep `cdk` as the canonical repository automation entrypoint
-- use `pi` under `cdk agent` or `cdk tui` for interactive and sessioned agent work
-- replace the current `llm-tools` worker-launch bridge with a project-local `pi` extension layer
-- keep `llm-agents`, `docs-pipeline`, `arch-check`, and most of `llm-client` as domain/runtime packages during the first migration
+- use `pi` for interactive and sessioned agent work
+- replace the current `llm-tools` worker-launch bridge with the `@cfxdevkit/pi-customization` PI extension layer
+- keep `llm-agents`, `docs-pipeline`, `arch-check`, and most of `llm-client` as domain/runtime packages
 
 In short: `pi` fits the agent shell, provider/session/runtime UX, and TUI problem very well.
 It does not fit the full deterministic repository control-plane as cleanly as the proposed `cdk` CLI.
 
-## What Pi Already Provides
+## What PI Already Provides
 
 External research shows that `@earendil-works/pi-coding-agent` already includes:
 
@@ -116,8 +123,6 @@ Examples:
 - `cdk docs enrich api`
 - `cdk repo check hotspots`
 - `cdk repo review`
-- `cdk llm validate-models`
-- `cdk agent`
 
 ### Agent layer
 
@@ -125,25 +130,21 @@ Use `pi` as the engine behind interactive agent workflows.
 
 Preferred shapes:
 
-- `cdk agent` launches `pi` in project-local mode with repo extensions loaded
-- `cdk agent commit` launches the interactive repo commit operator loop while `cdk repo commit` remains deterministic
-- `cdk agent rpc` exposes a hostable RPC session for future editor or dashboard integrations
-- `cdk agent print` or `cdk llm ask` uses the `pi` SDK for single-shot prompts where that is simpler than maintaining a custom runtime
+- `pi` launches the interactive agent shell with repo extensions loaded
+- `pi` supports `/repo-commit` for interactive commit operator loop
+- `pi --mode rpc` exposes a hostable RPC session for future editor or dashboard integrations
+- `pi -p` uses the `pi` SDK for single-shot prompts where that is simpler than maintaining a custom runtime
 
 ### Extension layer
 
-Create a project-local `pi` extension package that exposes repo-specific capabilities:
+The `@cfxdevkit/pi-customization` PI package exposes repo-specific capabilities:
 
-- docs upkeep commands
-- review and commit flows
-- model validation helpers
+- docs upkeep commands (via `/cdk` surface)
+- review and commit flows (via `/repo-*` commands)
+- model validation helpers (via `repo_agent_check` tool)
 - provider registration for local and proxy endpoints plus action-policy-aware commit routing
 - path protection and safety policies aligned with this monorepo
 - custom TUI widgets for current repo workflows
-
-This is now implemented through `repos/cfx-tools/infra/pi-agent` plus the repo-local entrypoint in `.pi/extensions/repo-agent.ts`.
-
-This extension layer is the natural replacement for most of `llm-tools`.
 
 ### Domain packages
 
@@ -173,7 +174,7 @@ This delivers interactive value quickly without destabilizing automation.
 
 ### Phase 3: connect `cdk` and `pi`
 
-- add `cdk agent` as the standard launch path
+- add `cdk agent` as the standard launch path (deprecated in favor of direct `pi` usage)
 - optionally use `pi` RPC mode for host integrations
 - optionally use the `pi` SDK for non-interactive agent tasks where that simplifies current custom code
 

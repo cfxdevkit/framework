@@ -1,7 +1,7 @@
 import { mkdir, stat, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { artifactsRoot, root } from '../shared/index.ts';
-import { logInfo } from '../shared/logging.ts';
+import { artifactsRoot, root } from '../shared/index.js';
+import { logInfo } from '../shared/logging.js';
 
 /** Slug for an artifact path — was previously in docs/write.ts. */
 function artifactSlug(label: string): string {
@@ -24,7 +24,7 @@ export async function writeTestUpkeepSuggestions(pkg, result, _flags) {
       /* does not exist — safe to write */
     }
     // Safety: verify the source module being tested actually exists
-    const sourceFile = suggestion.testFile.replace(/\.test\.tsx?$/, '.ts');
+    const sourceFile = suggestion.testFile.replace(/\.test\.tsx?$/, '.js');
     const sourcePath = join(root, pkg.dir, sourceFile);
     try {
       await stat(sourcePath);

@@ -1,0 +1,11 @@
+{
+  "compress": {
+    "minContextLimit": 30000,
+    "maxContextLimit": 70000,
+    "nudgeForce": "strong"
+  },
+  "strategies": {
+    "deduplication": { "enabled": true },
+    "purgeErrors": { "enabled": true, "turns": 2 }
+  }
+}

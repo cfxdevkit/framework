@@ -2,9 +2,9 @@
  * Stateless parsing helpers for the chat-completion stream.
  * Extracted here to keep provider-stream.ts under the line-count limit.
  */
-import { isRecord } from './guards.ts';
+import { isRecord } from './guards.js';
 import { extractTextNode } from './provider/meta';
-import type { CompletionOptions, CompletionProgressEvent } from './types.ts';
+import type { CompletionOptions, CompletionProgressEvent } from './types.js';
 
 export type ChunkTimings = {
   readonly promptTokens: number;

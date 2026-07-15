@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { discoverApiTargets } from '@cfxdevkit/docs-pipeline';
-import { completeStructuredAgent, parseJsonObject } from '../../completion/index.ts';
-import { root } from '../../shared/index.ts';
-import { logInfo, logStep } from '../../shared/logging.ts';
-import { type DocFlags as DocsApiFlags, parseDocFlags as parseDocsApiFlags } from '../flags.ts';
+import { completeStructuredAgent, parseJsonObject } from '../../completion/index.js';
+import { root } from '../../shared/index.js';
+import { logInfo, logStep } from '../../shared/logging.js';
+import { type DocFlags as DocsApiFlags, parseDocFlags as parseDocsApiFlags } from '../flags.js';
 
 type DocsApiProbeResult = {
   status: string;

@@ -1,13 +1,13 @@
-import { clearScreenDown, moveCursor } from 'node:readline';
-import type { ExecutionContextSummary } from '../../shared/execution-context.ts';
-import type { GateReport, GateResult, GateRunHooks } from '../gates.ts';
-import type { WorkingSetSummary } from '../hud.ts';
+import type { GateReport, GateResult, GateRunHooks } from '../gates/index.js';
+import type { WorkingSetSummary } from '../hud.js';
 
 export {
   summarizeCommitPreview,
   summarizeFailureAnalysis,
   summarizeGateFailures,
-} from '../terminal-ui-summary.ts';
+} from '../terminal-ui-summary.js';
+
+import type { ExecutionContextSummary } from '../../shared/execution-context.js';
 
 type GateView = {
   readonly id: string;
@@ -18,7 +18,7 @@ type GateView = {
   readonly elapsedMs?: number;
 };
 
-type WorkflowTerminalUi = {
+export type WorkflowTerminalUi = {
   readonly gateHooks: GateRunHooks;
   start: () => void;
   startStep: (step: number, total: number, label: string) => void;
@@ -34,9 +34,14 @@ export function createWorkflowTerminalUi(options: {
   llmFailureAnalysis: boolean;
   stdout?: NodeJS.WriteStream;
   interactive?: boolean;
+  onProgress?: (phase: string, detail?: string) => void;
 }): WorkflowTerminalUi {
   const output = options.stdout ?? process.stdout;
-  const interactive = options.interactive ?? Boolean(output.isTTY && process.stderr.isTTY);
+  // Always use sequential line output — the TUI does not handle ANSI cursor
+  // codes (moveCursor/clearScreenDown) and they break rendering.  Sequential
+  // output gives each step its own line with the final summary at the end,
+  // and works correctly in both TUI and terminal contexts.
+  const interactive = false;
   const header = formatHeader(options.commandLabel, options.executionContext, options.workingSet);
   const state: {
     stepLine: string;
@@ -70,9 +75,8 @@ export function createWorkflowTerminalUi(options: {
   };
 
   const clearBlock = (): void => {
-    if (!interactive || state.renderedRowCount === 0) return;
-    moveCursor(output, 0, -state.renderedRowCount);
-    clearScreenDown(output);
+    // No-op when interactive is disabled (TUI-safe sequential output).
+    // ANSI cursor codes (moveCursor/clearScreenDown) break the TUI rendering.
     state.renderedRowCount = 0;
   };
 
@@ -117,10 +121,12 @@ export function createWorkflowTerminalUi(options: {
         summary: gate.required ? 'queued' : 'queued optional',
       }));
       state.noteLine = `${group.label}: running ${group.gates.length} check(s)`;
+      options.onProgress?.('gate-group-start', `${group.label}: ${group.gates.length} gate(s)`);
       if (interactive) renderBlock();
     },
     onGateStart(gate) {
       updateGate(gate.label, { status: 'running', summary: 'running...' });
+      options.onProgress?.('gate-running', `${gate.label}`);
       if (interactive) renderBlock();
     },
     onGateFinish(result) {
@@ -130,6 +136,12 @@ export function createWorkflowTerminalUi(options: {
         summary: pickGateSummary(result),
         elapsedMs: result.elapsedMs,
       });
+      const statusIcon =
+        result.status === 'ok' ? 'ok' : result.status === 'warning' ? 'warn' : 'fail';
+      options.onProgress?.(
+        'gate-finish',
+        `${result.label}: ${statusIcon} ${pickGateSummary(result)}`,
+      );
       if (interactive) {
         state.noteLine = summarizeReportCounts(state.gates);
         renderBlock();
@@ -150,6 +162,7 @@ export function createWorkflowTerminalUi(options: {
     },
     onGroupFinish(report) {
       state.noteLine = summarizeFinishedReport(report);
+      options.onProgress?.('gate-group-complete', summarizeFinishedReport(report));
       if (interactive) renderBlock();
     },
   };
@@ -218,7 +231,10 @@ function formatGateLine(gate: GateView): string {
   const label = truncate(gate.label, 22).padEnd(22);
   const elapsed =
     gate.elapsedMs !== undefined ? `${(gate.elapsedMs / 1000).toFixed(1)}s`.padStart(6) : '   ...';
-  return `  ${status}${label}${elapsed}  ${truncate(gate.summary, 76)}`;
+  // Strip ANSI codes from summary to prevent TUI rendering issues when raw
+  // command output (with escape sequences) leaks into the signal lines.
+  const summary = stripAnsi(gate.summary);
+  return `  ${status}${label}${elapsed}  ${truncate(summary, 76)}`;
 }
 
 function pickGateSummary(result: GateResult): string {

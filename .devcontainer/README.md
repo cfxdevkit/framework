@@ -21,6 +21,7 @@ host baseline.
 - Docker CLI access through the host Docker socket for compose/image workflows
 - GitHub CLI for repository automation
 - GitNexus CLI from the workspace dependency, registered on container start
+- PI (Coding Agent) installed globally — `pi` binary available on PATH
 - Local Conflux node workflows through `@cfxdevkit/devnode`
 - VS Code extension development for `cfxdevkit.cfxdevkit-vscode-extension`
 - Workspace-local `.cfxdevkit/` state for keystores, deployments, and devnode data
@@ -33,15 +34,12 @@ Open the repository in a Dev Container. The `postCreateCommand` runs:
 pnpm install --frozen-lockfile
 pnpm --filter cfxdevkit-vscode-extension... build
 .devcontainer/scripts/install-vscode-extension.sh --build
-openspec init --tools pi   # only when openspec is present and .pi bootstrap is missing
 ```
 
 That builds the new extension package plus its framework dependencies, then
 symlinks it into the remote VS Code extension directories so the node,
 keystore, compiler, wallet, and contract deployment flows are available inside
-the editor. When the workspace already contains `openspec/` but has not been
-bootstrapped for PI yet, the post-create script also runs `openspec init --tools pi`
-once so the repo-local `.pi/` prompts, skills, and extension entrypoint exist.
+the editor.
 
 ## Common Commands
 
@@ -74,8 +72,9 @@ those settings even though pnpm handles them correctly.
 | `3000` | App server |
 | `7748` | Legacy DevKit backend compatibility port |
 | `8787` | Worker/backend dev server |
+| `28787` | Headroom compression proxy (between devcontainer and LLM) |
 
-## Lemonade Server
+## Lemonade Server + Headroom Compression Proxy
 
 Lemonade Server should keep running on the host workstation. On Linux, the
 devcontainer requests host networking so `http://localhost:13305/` resolves to
@@ -83,18 +82,19 @@ the same Lemonade service inside and outside the container. It also keeps
 `host.docker.internal` as a host-gateway alias for Docker backends; Podman hosts
 usually provide `host.containers.internal` automatically.
 
-After rebuilding or reopening the container, verify connectivity:
+All LLM traffic from the devcontainer flows through **Headroom**, a local context
+compression proxy that sits between the devcontainer and Lemonade. Headroom
+compresses tool outputs, logs, RAG chunks, and conversation history before they
+reach the LLM — typically 60–95% fewer tokens with the same answers. The proxy
+auto-starts on container start (port `28787`).
 
-```bash
-pnpm run llm:models
-pnpm run llm:ask -- --quick "Is Lemonade reachable from the devcontainer?"
+Use the proxy's OpenAI-compatible `/v1` surface from inside the devcontainer.
+Pointing clients at the proxy root can cause Lemonade-native `/api/v1` discovery
+to leak through, which bypasses Headroom's request telemetry and processing.
+
+Architecture:
 ```
-
-If your container backend cannot use host networking, start Lemonade so it binds
-outside host loopback or pin a reachable host URL locally:
-
-```bash
-pnpm run llm:config -- set base-url http://<host-ip>:13305/
+Devcontainer code → Headroom proxy (localhost:28787/v1) → Compress → Lemonade (host.containers.internal:13305)
 ```
 
 To check what the devcontainer can see, run:
@@ -107,21 +107,116 @@ If every endpoint fails but the host shell can reach Lemonade, the container is
 still running with isolated networking. Rebuild the devcontainer rather than only
 reloading VS Code, because `runArgs` only apply when the container is created.
 
-## PI Runtime Prerequisites
+## PI (Coding Agent)
 
-The base image now installs `fd` at build time through Debian's `fd-find` package
-and a compatibility symlink. That avoids PI's first-run fallback download path and
-keeps `cdk agent interactive|print|rpc` startup deterministic inside fresh containers.
+PI is the interactive agent runtime for the repository. It is installed
+**globally** in the devcontainer — the `pi` binary is available on PATH immediately
+after post-create completes.
 
-If you want PI to expose GitNexus as first-class tools through
-`pi-gitnexus`, set `CFXDEVKIT_INSTALL_PI_GITNEXUS=1` before the container's
-post-create run or rerun `.devcontainer/scripts/post-create.sh` with that
-environment variable. This stays opt-in because it installs external PI state
-and depends on GitNexus licensing/policy being acceptable for the environment.
+All PI configuration lives in `~/.pi/agent/` (not in the repository). This
+includes provider settings, skills, prompts, and installed packages.
+
+### Quick Start
+
+```bash
+# Start an interactive session
+pi
+
+# Once inside PI, run repository commands:
+#   /repo-check [--dry-run] [--create-branch] [--quick]
+#   /repo-commit [--quick] [--model <id>] [prompt]
+#   /repo-run <action> [--quick] [--model <id>] [prompt]
+#   /repo-actions [--deterministic|exploratory]
+#   /cdk status [--chain <id|name>] [--rpc <url>]
+#   /cdk derive --mnemonic "<phrase>" | --generate [--count N]
+#   /cdk generate [--strength 128|256]
+#   /cdk contracts extract [--artifacts <dir>] [--out <dir>]
+```
+
+### Single-Shot Prompts (Print Mode)
+
+```bash
+pi -p "Which validation commands should I run for a docs-only change?"
+```
+
+### Embedded/RPC Mode
+
+```bash
+pi --mode rpc
+```
+
+### Provider Configuration
+
+Provider config is managed by PI in `~/.pi/agent/providers.json`. The default
+provider points to the Headroom compression proxy at `http://localhost:28787/v1/`.
+
+PI auto-discovers providers at common local URLs if not configured:
+- `http://localhost:13305/`
+- `http://host.docker.internal:13305/`
+- `http://host.containers.internal:13305/`
+
+After rebuilding or reopening the container, verify connectivity:
+
+```bash
+# Inside PI:
+/repo-status
+```
+
+### Installing Additional PI Packages
+
+```bash
+# Install GitNexus PI tools (opt-in)
+
+# Install any npm PI package
+pi install npm:<package-name>
+```
+
+### Config Files (Global, Not in Repo)
+
+| File | Purpose |
+|------|---------|
+| `~/.pi/agent/settings.json` | PI packages, providers, skills (auto-managed) |
+| `~/.pi/agent/providers.json` | LLM endpoints, models, action overrides |
+| `~/.pi/agent/dcp.json` | Dynamic Context Pruning configuration |
+| `~/.pi/agent/skills/` | Versioned skills (copied from repo at post-create) |
+| `~/.pi/agent/prompts/` | Versioned prompts (copied from repo at post-create) |
+| `~/.pi/agent/npm/` | Installed PI packages (npm + local path refs) |
+| `~/.pi/web-search.json` | Web search API keys (Exa, Perplexity, Gemini) |
+
+### How It Works Under the Hood
+
+1. **PI is installed globally** via `npm i -g @earendil-works/pi-coding-agent`
+2. **The `pi-customization` package** is installed as a local PI package via `pi install`
+   - This registers repo commands (`/repo-*`), tools (`repo_agent_check`, etc.),
+     CDK commands (`/cdk`), and provider configuration
+3. **Provider config** (`~/.pi/agent/providers.json`) is merged from the repo-local
+   `.pi/providers.json` template and model overrides at post-create time
+4. **Skills and prompts** from `.pi/skills/` and `.pi/prompts/` in the repo are
+   copied to `~/.pi/agent/` at post-create time
+5. **Web search API keys** from the devcontainer environment variables are written
+   to `~/.pi/web-search.json`
+
+### Troubleshooting
+
+```bash
+# Check if PI is installed and on PATH
+command -v pi && pi --version
+
+# Check installed PI packages
+pi list
+
+# Re-run post-create to rebuild PI config
+.devcontainer/scripts/post-create.sh
+
+# Check if Headroom proxy is reachable (required for local LLM)
+curl -s http://localhost:28787/v1/models | head -5
+```
 
 ## Notes
 
 - On rootless Podman, the devcontainer publishes the local Caddy proxy on host port `8443` instead of `443`, because `pasta` cannot bind privileged host ports without extra host-level configuration. Use URLs like `https://showcase.dev.cfxdevkit.org:8443`.
+- On rootless Podman (including `--userns=keep-id`), `--device-cgroup-rule` is not supported. USB passthrough is configured with a bind mount for `/dev/bus/usb`.
+- Avoid `--device=/dev/bus/usb` with Podman for long-lived devcontainers; USB bus/device numbers can change across reconnects/reboots, and stale device nodes can block `podman start`.
 - The devcontainer mounts the host Docker socket. Do not use it with an
   untrusted workspace.
 - The older `devkit-workspace` backend and DEX processes are intentionally not

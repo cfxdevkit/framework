@@ -37,10 +37,13 @@ import {
   throwIfAborted,
   toHex,
   toMessageHex,
+  withOneKeyInitRetry,
 } from './helpers.js';
 
 /** Subset of the OneKey SDK we depend on. */
 export interface OneKeySdkLike {
+  cancel?(connectId?: string): void;
+
   // ── eSpace (EVM) ──────────────────────────────────────────────────────────
   evmGetAddress(
     connectId: string,
@@ -169,11 +172,13 @@ export async function signerFromOneKey(input: SignerFromOneKeyInput): Promise<Si
     showOnDevice = false,
   } = input;
 
-  const addrRes = await sdk.evmGetAddress(connectId, deviceId, {
-    path,
-    showOnOneKey: showOnDevice,
-    ...(chainId !== undefined ? { chainId } : {}),
-  });
+  const addrRes = await withOneKeyInitRetry(() =>
+    sdk.evmGetAddress(connectId, deviceId, {
+      path,
+      showOnOneKey: showOnDevice,
+      ...(chainId !== undefined ? { chainId } : {}),
+    }),
+  );
   if (!addrRes.success) {
     throw oneKeyError('wallet/hardware/onekey/device-error', addrRes.payload);
   }

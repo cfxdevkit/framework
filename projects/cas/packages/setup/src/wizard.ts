@@ -42,11 +42,11 @@ type Phase = (state: WizardState) => Promise<WizardState>;
 
 export async function runWizard(initialState: WizardState): Promise<void> {
   // Dynamic imports keep each phase tree-shaken and independently testable
-  const { checkEnv } = await import('./steps/check-env.js');
+  const { checkEnv } = await import('./steps/check/env.js');
   const { selectNetwork } = await import('./steps/select-network.js');
   const { contractMode } = await import('./steps/contract-mode.js');
   const { configureKeeper } = await import('./steps/configure-keeper.js');
-  const { writeEnv } = await import('./steps/write-env.js');
+  const { writeEnv } = await import('./steps/write/env.js');
   const { launch } = await import('./steps/launch.js');
 
   const phases: Phase[] = [

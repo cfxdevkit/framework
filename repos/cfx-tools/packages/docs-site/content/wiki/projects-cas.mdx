@@ -4,342 +4,146 @@ title: "projects — cas"
 
 # projects — cas
 
-# CAS Backend Module
+# `@cfxdevkit/cas` Module
 
-## Purpose
+## Overview
+The `cas` module implements a non-custodial automation system for Conflux eSpace, enabling users to create, monitor, and execute on-chain strategies (limit orders, DCA, TWAP, swaps). It consists of a Node.js/Express backend for state management and execution orchestration, and a Next.js frontend for wallet authentication, strategy creation, and system monitoring. The backend uses SQLite for local persistence during development, while the keeper worker bridges the application layer to smart contracts via the Automation Manager.
 
-The CAS (Conflux Automation System) backend is a Node.js/Express application that provides a local development environment for managing automated DeFi strategies on the Conflux eSpace. It handles user authentication via SIWE (Sign-In with Ethereum), job creation and management (limit orders, DCA, TWAP, swaps), administrative controls, pool data aggregation from external sources, system health monitoring, and real-time updates via Server-Sent Events (SSE). The backend uses SQLite for persistence and integrates with Conflux smart contracts through the CDK and viem libraries.
+## Architecture
 
-## Architecture Overview
+<Mermaid chart={`graph TD
+  FE[Frontend Next.js] -->|Proxy / SSE| BE[Express Backend]
+  BE -->|Auth & Jobs| DB["(SQLite Runtime)"]
+  BE -->|Keeper Worker| K[Automation Keeper]
+  K -->|Contract Calls| C["AutomationManager / Swappi"]
+  BE -->|Heartbeat| DB
+  DB -->|Settings / Safety| DB
+`} />
 
-The backend follows a modular structure centered around an Express application that registers specialized routers for different functional domains. Core components include:
+## Backend (`apps/backend`)
 
-- **HTTP Layer**: Express app with CORS and JSON middleware
-- **API Routers**: Health, Auth, Jobs, Admin, Pools, System, SSE
-- **Data Layer**: SQLite database with repositories for jobs, executions, nonces, and settings
-- **Business Logic**: Job validation, SIWE authentication, safety checks, pools data fetching
-- **Background Worker**: Optional keeper process for executing jobs
-- **Real-time Updates**: SSE hub for pushing job state changes to clients
+### Configuration & State
+- `resolveCasBackendConfig()` parses environment variables (`CAS_BACKEND_PORT`, `NETWORK`, `SIGNER_PRIVATE_KEY`, etc.) and applies sensible defaults. Network selection maps to correct chain IDs (71 for testnet, 1030 for mainnet) and resolves protocol contract addresses via `@cfxdevkit/protocol`.
+- `createCasBackendState()` initializes the application state, returning a `CasBackendState` object that couples `CasBackendConfig` with a `CasSqliteRuntime`.
+- The worker is conditionally initialized in `src/index.ts`. If `KEEPER_ENABLED` is true, `SIGNER_PRIVATE_KEY` must be provided; otherwise, the backend runs in read-only/proxy mode.
 
-Data flows through validation → repository operations → external service calls (when needed) → response formatting. The worker operates independently, reading from the same database to execute jobs based on price conditions and safety configurations.
+### Database Layer
+`src/db/sqlite.ts` wraps a raw SQLite connection into a structured runtime:
+- `CasSqliteRuntime`: Aggregates Drizzle repositories (`DrizzleJobRepository`, `DrizzleExecutionRepository`) with custom stores.
+- `SqliteNonceStore`: Manages SIWE nonces with TTL-based expiration. `issue()` generates and stores nonces; `consume()` validates address match, checks expiration, and marks used.
+- `SqliteSettingsStore`: Persists safety parameters (`paused`, `maxSwapUsd`, `slippageBps`, `maxRetries`). Reads fall back to defaults (`DEFAULT_SAFETY_SLIPPAGE_BPS = 0`, `DEFAULT_SAFETY_MAX_RETRIES = 3`).
+- `SqliteWorkerHeartbeatStore`: Tracks the last seen timestamp and PID of the keeper worker for liveness monitoring.
+- Schema initialization (`initializeCasSqliteSchema`) creates `auth_nonces`, `worker_heartbeat`, and relies on Drizzle for `jobs`/`executions`.
 
-## Key Components
+### Authentication & Authorization
+- `createAuthRouter()` handles the SIWE flow:
+  - `GET /auth/nonce`: Validates EVM address format, delegates to `state.db.nonces.issue()`.
+  - `POST /auth/verify`: Parses SIWE message, verifies signature via `verifySiweMessage()` against the expected chain ID, consumes the nonce, and issues a JWT session token via `signSessionToken()`.
+  - `GET /auth/me`: Validates the bearer token, returns session payload with resolved `isAdmin` status.
+- `src/routes/session.ts` provides middleware guards:
+  - `requireSession()`: Validates JWT, returns `401` if missing/invalid.
+  - `requireAdmin()`: Extends `requireSession()`, checks `session.claims.isAdmin` or fallbacks to `state.config.adminAddresses`. Returns `403` otherwise.
 
-### Application Initialization (`src/app.ts`)
-Creates the Express application and mounts all API routers:
-- `/health`: Basic service health
-- `/auth`: SIWE authentication endpoints
-- `/jobs`: User job management (CRUD operations)
-- `/admin`: Administrative controls (pause/resume, safety config)
-- `/pools`: Token and trading pair data
-- `/system`: Comprehensive system health status
-- `/sse`: Server-Sent Events for real-time job updates
+### Route Handlers
+| Route | Method | Guard | Purpose |
+|-------|--------|-------|---------|
+| `/jobs` | GET | `requireSession` | Lists jobs by owner, supports `?status=` & `?type=` filters |
+| `/jobs` | POST | `requireSession` | Creates job via `parseCreateJobInput()`, publishes SSE event |
+| `/jobs/:id` | GET/DELETE | `requireSession` | Fetches or deletes job (admins can delete owned by others) |
+| `/jobs/:id/cancel` | POST | `requireSession` | Transitions to `cancelled`, prevents double-cancel |
+| `/jobs/:id/executions` | GET | `requireSession` | Returns execution history for a job |
+| `/admin/*` | GET/POST/PATCH | `requireAdmin` | Global pause, safety config patching, admin job inspection |
+| `/pools` | GET | None | Returns cached token/pool list (GeckoTerminal mainnet, Swappi fallback testnet) |
+| `/system/status` | GET | None | Aggregates DB counts, RPC latency, contract bytecode checks, worker liveness |
+| `/sse/jobs` | GET | `readSession` | Opens Server-Sent Events stream for real-time job updates |
 
-### Configuration (`src/config.ts`)
-Manages environment-based configuration with the `CasBackendConfig` interface:
-- **Server**: Port, host, CORS origins
-- **Database**: SQLite path
-- **Security**: Auth secret, session/nonce TTLs
-- **Network**: Testnet/Mainnet selection, RPC URL
-- **Contracts**: AutomationManager, PriceAdapter, PermitHandler addresses
-- **Features**: Keeper (worker) settings, price source selection
-- **Admin**: List of authorized addresses
-- **Cache**: Pools cache TTL
+### Keeper Worker & Safety Engine
+- `createCasWorker()` initializes the `Keeper` from `@cfxdevkit/automation`.
+- `DatabaseSafetyGuard` extends `SafetyGuard` and overrides `check()` to dynamically reload safety config via `readSafetyConfig()` before each cycle. This ensures admin patches to `/admin/safety` take effect immediately without restart.
+- Price sourcing is configurable via `priceSource` env var (`swappi` or `gecko_terminal`). On testnet, `EspaceSwappiQuoteReader` proxies `getAmountsOut` calls via `eth_call`.
+- Heartbeat updates are persisted on each keeper tick via `state.db.heartbeat.update()`.
 
-Validation ensures values are within expected ranges (e.g., positive numbers, valid network values).
+## Frontend (`apps/frontend`)
 
-### Database Layer (`src/db/sqlite.ts`)
-Extends the automation package's SQLite runtime with CAS-specific tables:
-- **Core Tables**: 
-  - `auth_nonces`: Stores SIWE nonces with expiration and usage tracking
-  - `worker_heartbeat`: Records keeper worker's last seen time
-  - `settings`: Persists safety configuration (global pause, max swap USD, slippage bps, max retries)
-- **Repositories**:
-  - `jobs`/`executions`: From automation package (Drizzle-based)
-  - `nonces`: Manages SIWE nonce lifecycle (issue, consume, sweep expired)
-  - `settings`: Handles safety configuration (get/set methods for all parameters)
-  - `heartbeat`: Tracks worker PID and last heartbeat timestamp
+### Authentication Context
+`src/app/auth-context.tsx` provides `AuthProvider` and `useAuthContext()`:
+- Auto-login triggers on wallet connection if no local JWT exists.
+- Handles network mismatch checks before SIWE signing.
+- Catches specific wallet errors (`UserRejectedRequestError`) and API failures (`CasApiError`).
+- Validates session on mount via `client.me()`, clearing local state on mismatch.
+- Stores `cas.apiBase`, `cas.token`, and `cas.isAdmin` in `localStorage`.
 
-Schema initialization runs on database creation to ensure required tables exist.
+### Pool & Balance Management
+`src/app/pools-context.tsx` aggregates token metadata and on-chain balances:
+- `loadPools()` fetches from backend, builds a normalized list including native CFX and WCFX.
+- Balances are fetched per-account via `publicClient.readContract()` (ERC20 `balanceOf`) or `getBalance()` for native tokens.
+- Debounces redundant balance fetches using `balanceAccount.current` ref.
+- Exposes `refresh()` to invalidate pool cache and re-fetch balances.
 
-### Authentication System (`src/routes/auth.ts`)
-Implements SIWE (EIP-4361) for secure, passwordless authentication:
-- **Endpoints**:
-  - `GET /auth/nonce`: Issues a nonce for address (validates EVM address format)
-  - `POST /auth/verify`: Verifies SIWE message/signature, returns JWT
-  - `GET /auth/me`: Returns current session data
-- **Validation Steps**:
-  1. Address format validation (viem `isAddress`)
-  2. SIWE message parsing and verification (correct chainId: 71 testnet, 1030 mainnet)
-  3. Nonce consumption (prevents replay attacks)
-  4. Admin status determination (configurable admin addresses)
-- **Session Tokens**: HMAC-signed JWTs with configurable TTL, containing address and admin claims
+### System & Safety UI
+- `src/app/safety/page.tsx`: Admin-only dashboard. Displays `systemStatus()` and `adminStatus()`. Provides pause/resume controls and safety config display.
+- `src/app/status/page.tsx`: Public/Authenticated status board. Shows backend uptime, DB job counts, RPC latency, and contract health (bytecode presence).
 
-### Job Management System
-#### Validation (`src/routes/job-validators.ts`)
-Validates and normalizes job creation requests:
-- **Job Types**: `limit_order`, `dca`, `twap`, `swap` (enforced via `JOB_TYPES` set)
-- **Common Fields**: 
-  - Token addresses (EVM format validation)
-  - Numeric parameters (non-negative integers, positive where required)
-  - Optional fields (maxRetries, expiresAt, onChainJobId)
-- **Type-Specific Handling**:
-  - Limit order: `amountIn`, `minAmountOut`, `targetPrice`, `direction`
-  - DCA: `amountPerSwap`, `intervalSeconds`, `totalSwaps`
-  - TWAP: `amountIn`, `minAmountOut`, `trancheCount`, `trancheIntervalSeconds`
-  - Swap: `amountIn`, `minAmountOut`
+### API Proxy & Next.js Configuration
+- `src/app/api/[...path]/route.ts`: Next.js API route that proxies all requests to `NEXT_PUBLIC_CAS_API_URL`. Copies `authorization`, `content-type`, and `accept` headers. Redirects `/sse/*` paths via 307 to avoid Next.js body buffering limitations.
+- `next.config.ts`: Critical workspace resolution logic. Forces `wagmi`, `viem`, `@tanstack/react-query`, and `@cfxdevkit/ui` to resolve to single instances via Webpack aliases and Turbopack `resolveAlias`. Prevents duplicate React context trees (`WagmiProviderNotFoundError`).
 
-#### Job Router (`src/routes/jobs.ts`)
-Handles authenticated job operations:
-- **Creation**: `POST /jobs` → validates input → creates job record → publishes SSE update
-- **Listing**: `GET /jobs` → filters by owner/status/type → returns job DTOs
-- **Details**: `GET /jobs/:id` → ownership verification → returns job
-- **Cancellation**: `POST /jobs/:id/cancel` → owner verification → updates status
-- **Deletion**: `DELETE /jobs/:id` → owner/admin verification → removes job and executions
-- **Executions**: `GET /jobs/:id/executions` → returns execution history
-- **Updates**: `GET /jobs/updates` → returns jobs modified since timestamp (for polling)
+## Key Execution Flows
 
-Administrators can list all jobs via `/admin/jobs` with optional status filtering.
+### SIWE Authentication
+1. Client calls `client.nonce(address)` → `GET /auth/nonce`
+2. `SqliteNonceStore.issue()` stores nonce with TTL
+3. Frontend constructs SIWE message via `createSiweMessage()` → calls wallet `signMessageAsync()`
+4. `POST /auth/verify` → `parseSiweMessage()` + `verifySiweMessage()`
+5. Chain ID and address match validated. Nonce consumed.
+6. JWT issued via `signSessionToken()` with `isAdmin` claim
+7. Session persisted, `AuthProvider` updates state
 
-### Administrative Controls (`src/routes/admin.ts`)
-Provides system management capabilities (admin-only):
-- **Global Pause**: 
-  - `GET /admin/status`: Returns current pause state
-  - `POST /admin/pause`: Sets paused=true in settings
-  - `POST /admin/resume`: Sets paused=false in settings
-- **Safety Configuration**:
-  - `GET /admin/safety`: Returns `{maxSwapUsd, slippageBps, maxRetries, globalPause}`
-  - `PATCH /admin/safety`: Updates individual safety parameters with validation:
-    - `maxSwapUsd`: non-negative number or null
-    - `slippageBps`: integer between 0-10,000
-    - `maxRetries`: integer between 0-100
-- **Job Administration**: 
-  - `GET /admin/jobs`: Lists all jobs (optional status filter)
+### Job Creation & Execution
+1. `POST /jobs` → `parseCreateJobInput()` validates fields, maps to `NewJobInput`
+2. `state.db.jobs.create()` persists job, emits `job_update` via SSE
+3. Keeper polls `state.db.jobs.list({ status: 'pending' })`
+4. `DatabaseSafetyGuard.check()` reads current safety config
+5. `KeeperClientImpl` submits transaction to `AutomationManager`
+6. On-chain callback updates job status → `state.db.jobs.update()`
+7. SSE pushes update to connected frontend clients
 
-### Pools Data Service (`src/routes/pools.ts`)
-Provides token and trading pair information:
-- **Sources**:
-  - **Testnet**: Fallback to Swappi factory query for WCFX/USDT pair
-  - **Mainnet**: GeckoTerminal API (with pagination, retries, and caching)
-- **Caching**: 
-  - In-memory cache with TTL (configurable via `poolsCacheTtlMs`)
-  - Permanent storage of successfully fetched data to serve stale content on failure
-- **Endpoints**:
-  - `GET /pools`: Returns `{tokens, pairs, cachedAt}`
-  - `POST /pools/refresh`: Forces cache refresh
-- **Data Normalization**: 
-  - Converts GeckoTerminal resource identifiers to lowercase addresses
-  - Filters pairs to ensure both tokens exist in the token list
-  - Sorts tokens by symbol for consistent ordering
+### Global Pause & Safety Controls
+1. Admin `PATCH /admin/safety` → `parseSafetyPatch()` validates ranges (`slippageBps` 0–10000, `maxRetries` 0–100)
+2. `SqliteSettingsStore.set()` persists changes
+3. Keeper's `DatabaseSafetyGuard.check()` calls `readSafetyConfig()` before execution cycle
+4. If `globalPause === true`, `SafetyGuard.check()` halts execution immediately
+5. `GET /admin/status` reflects `state.db.settings.isPaused()`
 
-### System Health Monitoring (`src/routes/system.ts`)
-Aggregates health metrics from multiple subsystems:
-- **Backend**: Always reports OK (if server is running)
-- **Database**: 
-  - Job/execution counts
-  - Pending/active/failed job tallies
-  - Last execution timestamp
-- **RPC**: 
-  - Connectivity to Conflux node
-  - Current block number
-  - Request latency
-- **Contracts**: 
-  - Bytecode presence check for key contracts
-  - Address verification
-- **Worker**: 
-  - Status (unknown/active/idle) based on last heartbeat/execution
-  - Last seen timestamp
-- **Additional**: 
-  - Global pause state
-  - Service uptime (human-readable and seconds)
-- **Response**: Structured as `CasSystemStatusResponse` DTO
+### Real-time Job Updates (SSE)
+1. Client connects to `GET /sse/jobs`
+2. `handleJobsSse()` validates session, registers client in `SseHub`
+3. Initial snapshot fetched via `state.db.jobs.list()`
+4. Heartbeat interval writes `: ping\n\n` every 30s
+5. On job mutation, `publishJobUpdate()` iterates `hub.clients`, matches owner, calls `writeEvent()`
+6. Fallback poller checks `state.db.jobs.getUpdatedSince()` every 15s for missed updates
+7. Client disconnect triggers `hub.clients.delete()` and interval cleanup
 
-### Real-Time Updates (`src/sse/events.ts`)
-Implements Server-Sent Events for live job updates:
-- **Connection**: 
-  - Clients connect to `/sse/jobs` with JWT (via Authorization header or token query param)
-  - On connection: sends snapshot of user's current jobs
-- **Update Mechanism**: 
-  - Hub per backend state manages client connections
-  - Background polling (15s interval) checks for job updates since last poll
-  - Changes pushed to relevant clients (filtered by job owner)
-- **Message Format**: 
-  - `data: {type: "snapshot"|"job_update", payload}\n\n`
-  - Payload contains job DTOs (from `@cfxdevkit/cas-shared`)
-- **Reliability**: 
-  - Heartbeat ping every 30s to prevent timeout
-  - Client cleanup on connection close
-  - Error handling for failed job list queries
+## Configuration & Environment Variables
 
-### Keeper Worker (`src/worker.ts`)
-Optional background process for job execution (enabled via `KEEPER_ENABLED=true`):
-- **Prerequisites**: 
-  - Signer private key in config
-  - Keeper enabled flag
-- **Components**:
-  - **Price Source**: 
-    - GeckoTerminal (testnet/mainnet) or 
-    - Swappi (on-chain via router contract)
-  - **Safety Guard**: 
-    - Reads safety config from database on each check (allows live updates)
-    - Extends base safety guard with dynamic config reloading
-  - **Keeper Client**: 
-    - Submits transactions to AutomationManager contract
-    - Uses signer from private key
-    - Respects max gas price config
-  - **Repositories**: 
-    - Job and execution repositories from database layer
-  - **Heartbeat**: 
-    - Updates worker's last seen time and PID in database
-- **Operation**: 
-  - Runs at `keeperIntervalMs` (default 15s)
-  - Processes jobs with configurable concurrency
-  - Updates job status and creates execution records on success/failure
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `CAS_BACKEND_PORT` | `3011` | Server listen port |
+| `NETWORK` | `testnet` | `testnet` or `mainnet` |
+| `SIGNER_PRIVATE_KEY` | `undefined` | Keeper wallet private key (required if `KEEPER_ENABLED`) |
+| `KEEPER_ENABLED` | `false` | Enable on-chain execution worker |
+| `KEEPER_INTERVAL_MS` | `15000` | Keeper polling interval |
+| `CAS_AUTH_SECRET` | `cas-local-dev-secret` | JWT signing secret |
+| `CAS_SESSION_TTL_MS` | `86400000` | Session token expiry |
+| `CAS_NONCE_TTL_MS` | `300000` | SIWE nonce expiry |
+| `ADMIN_ADDRESSES` | `undefined` | Comma-separated admin wallet addresses |
+| `PRICE_SOURCE` | `swappi` | `swappi` or `gecko_terminal` |
+| `NEXT_PUBLIC_CAS_API_URL` | `http://127.0.0.1:3011` | Frontend backend proxy target |
 
-## Interaction with Other Modules
-
-### Internal Packages
-- `@cfxdevkit/cas-shared`: 
-  - Provides TypeScript DTOs for all API requests/responses (e.g., `CasJobDto`, `CasPoolsResponse`)
-  - Ensures type safety between backend and frontend
-- `@cfxdevkit/automation`: 
-  - Supplies core job execution logic, Drizzle repositories, and `Keeper` class
-  - Defines job/execution schemas used by SQLite layer
-- `@cfxdevkit/cdk`: 
-  - Lowest-level Conflux interaction (clients, chains, account signing)
-- `@cfxdevkit/protocol`: 
-  - Contract addresses and ABIs for Swappi, WCFX, etc.
-- `@cfxdevkit/wallet-connect`: 
-  - SIWE message creation and verification utilities
-
-### Frontend Integration
-The Next.js frontend (`apps/frontend`) consumes the backend through:
-- **Direct API Calls**: Via `CasApiClient` (wraps `fetch` with automatic JWT attachment)
-- **Context Management**:
-  - `auth-context.tsx`: Handles SIWE flow, token storage, and API client instantiation
-  - `pools-context.tsx`: Fetches and caches token data with balance information
-- **Proxying**: 
-  - `/app/api/[...path]/route.ts` forwards requests to backend to avoid CORS during development
-- **State Synchronization**: 
-  - Auth context validates token with `/auth/me` on load and token change
-  - Pools context refreshes data on mount and account changes
-
-## Data Flow Examples
-
-### Authentication Flow
-1. **Nonce Request**: 
-   - Client → `GET /auth/nonce?address=0x...` 
-   - Backend → generates nonce → stores in `auth_nonces` → returns `{nonce}`
-2. **Signature Verification**: 
-   - Client → signs SIWE message with private key → `POST /auth/verify` 
-   - Backend → verifies signature/chainId/nonce → consumes nonce → checks admin status → signs JWT → returns `{token, address, isAdmin}`
-3. **Session Use**: 
-   - Client → includes `Authorization: Bearer <token>` in subsequent requests
-   - Backend → verifies token via HMAC → extracts session data
-
-### Job Creation and Execution
-1. **Job Submission**: 
-   - Authenticated client → `POST /jobs` with job data 
-   - Backend → validates input → creates job record (status: `pending`) → publishes SSE snapshot update
-2. **Worker Processing**: 
-   - Keeper → queries pending jobs → evaluates price conditions via price source 
-   - On trigger → builds transaction via AutomationManager → signs and sends transaction
-3. **Result Handling**: 
-   - On success → updates job to `executed` → creates execution record → publishes SSE job update
-   - On failure/timeout → updates job to `failed`/`expired` → publishes update
-4. **Client Updates**: 
-   - SSE connection → receives job update → UI reflects new status/execution data
-
-### Administrative Pause
-1. **Pause Request**: 
-   - Admin client → `POST /admin/pause` (with valid JWT) 
-   - Backend → verifies admin → sets `paused=true` in `settings` table → returns new state
-2. **Worker Effect**: 
-   - Keeper → on next safety check → reads updated config → sees `globalPause=true` 
-   - → skips job execution until resumed
-3. **Resume**: 
-   - Similar process via `POST /admin/resume` → sets `paused=false`
-
-## Error Handling
-
-- **Client Errors (4xx)**:
-  - `400`: Invalid input (malformed address, invalid numeric values, missing fields)
-  - `401`: Missing/invalid authentication (token, SIWE signature, nonce)
-  - `403`: Insufficient permissions (non-admin accessing admin endpoints)
-  - `404`: Resource not found (job ID not found or access denied)
-- **Server Errors (5xx)**:
-  - `502`: External service failure (GeckoTerminal/API unreachable)
-  - `500`: Unexpected internal errors (logged but not exposed to client)
-- All validation errors return structured `{ error: "descriptive message" }` responses
-- Tests verify error cases for all endpoints (see `src/app.*.test.ts`)
-
-## Extensibility Points
-
-- **New Job Types**: 
-  1. Add to `JOB_TYPES` set in `job-validators.ts`
-  2. Extend `parseCreateJobInput` with type-specific validation
-  3. Implement execution logic in `@cfxdevkit/automation/conditions`
-  4. Update automation layer to handle new type in job processing
-- **Admin Features**: 
-  - Add new endpoints to `src/routes/admin.ts` following existing patterns
-  - Extend `SafetyConfig` interfaces in shared package if needed
-- **Data Sources**: 
-  - Modify `src/routes/pools.ts` to add alternative pools providers
-  - Adjust fallback logic in `pool-fallback.ts` for different networks
-- **Authentication**: 
-  - Replace SIWE with alternative method by updating `auth.ts` routes
-  - Maintain session verification interface in `session.ts`
-
-## Development and Deployment
-
-### Local Setup
-1. **Environment**: 
-   - Copy `.env.example` to `.env` (if provided) 
-   - Set required variables (see `config.ts` for defaults)
-   - Critical: `CAS_AUTH_SECRET` for session signing
-2. **Execution**:
-   - `npm run dev`: Hot-reloaded development (`tsx watch`)
-   - `npm run start`: Production build execution
-   - Defaults to port 3011 (configurable via `PORT` or `CAS_BACKEND_PORT`)
-3. **Database**: 
-   - SQLite file at path defined by `CAS_SQLITE_PATH` 
-   - Defaults to `../../../.data/cas-dev.sqlite` relative to dist
-   - Use `:memory:` for ephemeral testing (as in test helpers)
-
-### Testing
-- **Test Suite**: 
-  - Located in `src/app.*.test.ts`
-  - Uses Vitest and Supertest for endpoint testing
-  - Mocks external dependencies (GeckoTerminal, RPC calls) where needed
-- **Execution**: 
-  - `npm run test`: Runs all backend tests
-  - Isolates tests with in-memory SQLite databases
-  - Resets global mocks and pools cache between tests
-- **Coverage**: 
-  - Auth flows (SIWE, nonce handling, admin checks)
-  - Job CRUD operations and permissions
-  - Admin controls (pause/resume, safety config)
-  - Pools data (testnet fallback, mainnet GeckoTerminal)
-  - System health endpoint
-
-## Production Considerations
-
-For production deployment beyond local development:
-1. **Database**: 
-   - Consider migrating from SQLite to PostgreSQL for concurrency
-   - Update database layer in `db/sqlite.ts` (would require significant changes)
-2. **Security**: 
-   - Use strong, randomly generated `CAS_AUTH_SECRET`
-   - Restrict `CAS_CORS_ORIGINS` to specific domains
-   - Enable HTTPS termination at reverse proxy
-3. **Scaling**: 
-   - Worker instances should share database (SQLite not suitable for multi-instance)
-   - Consider separating worker from API server for resource isolation
-4. **Monitoring**: 
-   - Extend `/system/status` endpoint with custom metrics
-   - Integrate with logging infrastructure (current logs go to stdout)
-5. **Configuration**: 
-   - Use secure secret management for private keys and auth secret
-   - Adjust cache TTLs and polling intervals based on traffic patterns
-
-The CAS backend provides a secure, extensible foundation for automated DeFi strategy execution on Conflux eSpace, with clear separation of concerns between API handling, data persistence, business logic, and background processing. Its design prioritizes local development usability while maintaining patterns suitable for production evolution.
+## Integration Points
+- **`@cfxdevkit/cas-shared`**: DTOs, API client, type definitions (`CasJobDto`, `CasPoolsResponse`, `CasAdminStatusResponse`)
+- **`@cfxdevkit/automation`**: `Keeper`, `SafetyGuard`, `PriceChecker`, `KeeperClientImpl`, Drizzle repositories
+- **`@cfxdevkit/services/auth`**: `signSessionToken()`, `verifySessionToken()`, `readBearerToken()`
+- **`@cfxdevkit/wallet-connect/siwe`**: `createSiweMessage()`, `parseSiweMessage()`, `verifySiweMessage()`, `generateSiweNonce()`
+- **`@cfxdevkit/protocol`**: Contract addresses (`AUTOMATION_MANAGER_ADDRESSES`, `WCFX_ADDRESSES`, `swappiPriceAdapterAddress`)
+- **`@cfxdevkit/cdk`**: `createClient()`, `signerFromPrivateKey()`, `EspaceSwappiQuoteReader`, `ZERO_ADDRESS`, chain configs

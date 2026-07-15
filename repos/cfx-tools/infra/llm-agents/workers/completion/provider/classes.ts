@@ -1,13 +1,13 @@
-import { chatPaths, defaultBaseUrls, modelPaths } from '../../shared/index.ts';
+import { chatPaths, defaultBaseUrls, modelPaths } from '../../shared/index.js';
 import type {
   ChatMessage,
   CompletionAttemptState,
   CompletionOptions,
   LlmModel,
   LlmProvider,
-} from '../types.ts';
-import { chooseBestModel, joinEndpoint, modelIdentifier, parseModels } from './meta.ts';
-import { postChatCompletion } from './stream.ts';
+} from '../types.js';
+import { chooseBestModel, joinEndpoint, modelIdentifier, parseModels } from './meta.js';
+import { postChatCompletion } from './stream.js';
 
 const GITHUB_MODELS_ENDPOINT = 'https://models.inference.ai.azure.com';
 

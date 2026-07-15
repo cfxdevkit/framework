@@ -1,5 +1,5 @@
-import { confirmPrompt } from '../commit/message.ts';
-import { logInfo, logStep } from '../shared/logging.ts';
+import { confirmPrompt } from '../commit/message.js';
+import { logInfo, logStep } from '../shared/logging.js';
 import {
   buildTestUpkeepBaseContext,
   collectPackageTestInventory,
@@ -7,14 +7,14 @@ import {
   parseTestUpkeepFlags,
   runPackageTestsBlock,
   summarizePackageTestFailure,
-} from './discover.ts';
-import { generateTestUpkeepArtifact } from './generate.ts';
+} from './discover.js';
+import { generateTestUpkeepArtifact } from './generate.js';
 import {
   buildTestChildSummaryContext,
   writeTestUpkeepIndex,
   writeTestUpkeepScopeArtifact,
   writeTestUpkeepSuggestions,
-} from './write.ts';
+} from './write.js';
 
 export async function runTestUpkeep(args) {
   if (args[0] === '--') args.shift();

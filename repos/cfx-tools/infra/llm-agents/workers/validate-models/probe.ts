@@ -1,4 +1,4 @@
-import type { CompletionProgressEvent, LlmConfig, LlmProvider } from '../completion/index.ts';
+import type { CompletionProgressEvent, LlmConfig, LlmProvider } from '../completion/index.js';
 
 export type ValidationMetrics = {
   headersMs: number | null;

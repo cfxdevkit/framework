@@ -1,16 +1,17 @@
+import { generateChangesetPlan, writeChangesetFile } from './commit/changeset.js';
+import type { complete } from './completion/index.js';
 import {
   type ExecutionContextRuntimePayload,
   logExecutionContext,
   resolveExecutionContext,
   toExecutionContextRuntimePayload,
-} from './shared/execution-context.ts';
-import { root, type RepoActionName, repoActions } from './shared/index.ts';
-import { generateChangesetPlan, writeChangesetFile } from './commit/changeset.ts';
-import { type complete } from './completion/index.ts';
+} from './shared/execution-context.js';
+import type { RepoActionName } from './shared/index.js';
+import { repoActions, root } from './shared/index.js';
 
 export interface RepoActionExecutionResult {
   readonly action: RepoActionName;
-  readonly definition: import('./shared/index.ts').RepoActionDefinition;
+  readonly definition: import('./shared/index.js').RepoActionDefinition;
   readonly executionContext: ExecutionContextRuntimePayload;
   readonly response: Awaited<ReturnType<typeof complete>>;
 }
@@ -56,7 +57,8 @@ async function scanChangedFiles(): Promise<ChangesetResult[]> {
   for (const f of allFiles) {
     const pkg = f.match(/^(repos\/cfx-[a-z]+\/packages\/[a-z0-9-]+)/);
     const key = pkg ? pkg[1] : f.startsWith('repos/') ? f.split('/').slice(0, 4).join('/') : f;
-    (groups[key] ??= []).push(f);
+    if (groups[key] == null) groups[key] = [];
+    groups[key].push(f);
   }
   return Object.entries(groups).map(([, files]) => ({ files, kind: 'dir' as const }));
 }

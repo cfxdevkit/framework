@@ -1,4 +1,4 @@
-import { getProviderBaseUrl, readConfig, resolveProvider } from './completion/index.ts';
+import { getProviderBaseUrl, readConfig, resolveProvider } from './completion/index.js';
 import { runValidationProbe } from './validate-models/probe';
 import {
   displayModelId,

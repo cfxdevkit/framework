@@ -5,11 +5,11 @@
  */
 import { spawn } from 'node:child_process';
 import { syncWikiContent } from '@cfxdevkit/docs-pipeline';
-import { readConfig } from '../completion/config.ts';
-import { resolveActionConfig } from '../completion/resolve-action.ts';
-import { root } from '../shared/index.ts';
-import { logInfo, logStep } from '../shared/logging.ts';
-import { parseDocFlags } from './flags.ts';
+import { readConfig } from '../completion/config.js';
+import { resolveActionConfig } from '../completion/resolve-action.js';
+import { root } from '../shared/index.js';
+import { logInfo, logStep } from '../shared/logging.js';
+import { parseDocFlags } from './flags.js';
 
 export async function runWikiGenerate(args: string[]): Promise<void> {
   if (args[0] === '--') args.shift();

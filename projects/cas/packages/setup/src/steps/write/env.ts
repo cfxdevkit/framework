@@ -2,7 +2,7 @@ import { existsSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { confirm } from '@inquirer/prompts';
-import type { WizardState } from '../wizard';
+import type { WizardState } from '../../wizard';
 
 // Resolve from the CAS project root regardless of cwd.
 // Built file lives at  projects/cas/packages/setup/dist/<chunk>.js

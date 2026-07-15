@@ -1,11 +1,11 @@
 import type {
   resolveExecutionContext,
   toExecutionContextRuntimePayload,
-} from '../shared/execution-context.ts';
-import type { generateChangesetPlan } from './changeset.ts';
-import type { GateFailureAnalysis } from './failure-analysis.ts';
-import type { GateReport, runQualityGates, runRepositoryPolicyGates } from './gates.ts';
-import type { detectChangedScopes } from './scope.ts';
+} from '../shared/execution-context.js';
+import type { generateChangesetPlan } from './changeset.js';
+import type { GateFailureAnalysis } from './failure-analysis.js';
+import type { GateReport, runQualityGates, runRepositoryPolicyGates } from './gates/index.js';
+import type { detectChangedScopes } from './scope.js';
 
 export interface PrecommitWorkflowResult {
   readonly command: 'precommit';
@@ -60,6 +60,20 @@ export interface CommitWorkflowOptions {
     readonly messageGenerationModel?: string | null;
     readonly failureAnalysisModel?: string | null;
   };
+  readonly stdout?: NodeJS.WriteStream;
+  readonly stderr?: NodeJS.WriteStream;
+  // Per-call TUI confirm callback. When set, confirmPrompt() uses this
+  // instead of readline, enabling single-pass approval in TUI mode.
+  readonly tuiConfirm?: ((question: string) => Promise<boolean>) | null;
+  // Progress callback invoked at major workflow steps.
+  readonly onProgress?: (phase: string, detail?: string) => void;
+  // Abort callback invoked when the workflow is aborted.
+  readonly onAbort?: () => void;
+  // Abort signal for cancellation support. When aborted, the workflow will
+  // stop at the next major step and return null.
+  readonly signal?: AbortSignal;
+  // Commit message preview to display in the confirmation prompt.
+  readonly commitMessage?: { readonly subject: string; readonly body: string };
 }
 
 export type ExecutionContextLike = Awaited<ReturnType<typeof resolveExecutionContext>>;

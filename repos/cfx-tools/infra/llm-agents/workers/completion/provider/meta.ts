@@ -1,5 +1,5 @@
-import { isRecord } from '../guards.ts';
-import type { LlmModel, LlmProvider } from '../types.ts';
+import { isRecord } from '../guards.js';
+import type { LlmModel, LlmProvider } from '../types.js';
 
 export function getProviderBaseUrl(provider: LlmProvider): string {
   if ('baseUrl' in provider && typeof provider.baseUrl === 'string') {

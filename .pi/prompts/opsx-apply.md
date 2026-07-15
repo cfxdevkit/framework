@@ -24,6 +24,7 @@ Implement tasks from an OpenSpec change.
    ```
    Parse the JSON to understand:
    - `schemaName`: The workflow being used (e.g., "spec-driven")
+   - `planningHome`, `changeRoot`, and `actionContext`: planning scope and edit constraints
    - Which artifact contains the tasks (typically "tasks" for spec-driven, check status for others)
 
 3. **Get apply instructions**
@@ -42,6 +43,8 @@ Implement tasks from an OpenSpec change.
    - If `state: "blocked"` (missing artifacts): show message, suggest using `/opsx-continue`
    - If `state: "all_done"`: congratulate, suggest archive
    - Otherwise: proceed to implementation
+
+   **Workspace guard:** If status JSON reports `actionContext.mode: "workspace-planning"` and `allowedEditRoots` is empty, explain that full workspace apply is not supported in this slice. Treat linked repos and folders as read-only context, ask the user to select an affected area through an explicit implementation workflow, and STOP before editing files.
 
 4. **Read context files**
 
@@ -73,24 +76,12 @@ Implement tasks from an OpenSpec change.
    - Error or blocker encountered → report and wait for guidance
    - User interrupts
 
-7. **Validate after all tasks complete**
-
-   Once all tasks are marked done, run a final repo check:
-   ```bash
-   repo_agent_check  (or: cdk repo check)
-   ```
-
-   - **If check passes**: congratulate, suggest archive with `/opsx-archive`
-   - **If check fails**: surface the failing steps. Offer to call `repo_agent_check` to
-     create follow-up OpenSpec changes for remaining failures. Do NOT archive until clean.
-
-8. **On completion or pause, show status**
+7. **On completion or pause, show status**
 
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - Validation result (pass / fail + step names)
-   - If all done and clean: suggest archive
+   - If all done: suggest archive
    - If paused: explain why and wait for guidance
 
 **Output During Implementation**
@@ -115,14 +106,13 @@ Working on task 4/7: <task description>
 **Change:** <change-name>
 **Schema:** <schema-name>
 **Progress:** 7/7 tasks complete ✓
-**Validation:** ✓ repo check passed (or ✗ N steps failing)
 
 ### Completed This Session
 - [x] Task 1
 - [x] Task 2
 ...
 
-All tasks complete and repo check clean! You can archive this change with `/opsx-archive`.
+All tasks complete! You can archive this change with `/opsx-archive`.
 ```
 
 **Output On Pause (Issue Encountered)**

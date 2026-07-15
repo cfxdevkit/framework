@@ -185,9 +185,9 @@ function renderValidationCommand(stepId: RepoValidationStepId): string {
     case 'build':
       return 'pnpm run build';
     case 'hotspots':
-      return 'pnpm run cdk -- repo check hotspots -- --fail-on-hard';
+      return 'pnpm --filter @cfxdevkit/tooling-cli tooling check hotspots -- --fail-on-hard';
     case 'kebab-groups':
-      return 'pnpm run cdk -- repo check kebab-groups';
+      return 'pnpm --filter @cfxdevkit/tooling-cli tooling check kebab-groups';
     case 'check':
       return 'pnpm run check';
   }

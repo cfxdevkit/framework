@@ -6,6 +6,7 @@ export type AgentCheckFlags = {
   dryRun: boolean;
   createBranch: boolean;
   draftPr: boolean;
+  createChanges: boolean;
 };
 
 export type AgentCheckValidationStep = {

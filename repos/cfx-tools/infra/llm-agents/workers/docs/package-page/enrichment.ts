@@ -14,8 +14,8 @@ import {
   stripPackagePageHash,
   writePackagePageHash,
 } from '@cfxdevkit/docs-pipeline';
-import { completeStructuredAgent } from '../../completion/index.ts';
-import { createLlmProgressReporter, logInfo } from '../../shared/logging.ts';
+import { completeStructuredAgent } from '../../completion/index.js';
+import { createLlmProgressReporter, logInfo } from '../../shared/logging.js';
 
 type PackagePageFlags = {
   quick?: boolean;

@@ -4,49 +4,48 @@ title: "repos"
 
 # repos
 
-# repos
+# Repos Module Overview
 
-The **repos** module groups the Conflux Development Kit into logical layers that can be composed together to build, test, and maintain Conflux‑based applications.
+The `repos` module serves as the centralized codebase for the Conflux DevKit ecosystem, orchestrating foundational libraries, on-chain automation, cryptographic trust boundaries, and developer tooling. It enforces a strict vertical architecture where lower-tier primitives power higher-level domain logic and frontend surfaces, while cross-cutting tooling maintains workspace integrity and CI/CD automation.
 
-## Purpose  
+## Architectural Governance
+The entire ecosystem is structured and validated by `[cfx-meta](cfx-meta.md)`, which defines unidirectional dependency tiers and publishes `@cfxdevkit/arch-rules` for runtime constraint checking. This module ensures that core libraries, domain logic, and UI components operate strictly within their designated tiers. Validation scripts in `cfx-meta` verify `workspace:*` consistency, directory layouts, and cross-package dependency graphs during CI, preventing dependency leaks and enforcing semver policies across the monorepo.
 
-- **cfx‑core** – Tier 0a chain primitives: address codecs, unit conversion, chain configs, RPC clients for Core Space and eSpace, and wallet utilities.  
-- **cfx‑domain** – Tier 0b/0c vertical packages: automation strategies (`@cfxdevkit/automation`) for limit orders, DCA, TWAP, swaps, and a placeholder game‑engine kit.  
-- **cfx‑keys** – Tier 0b trust‑boundary services (`@cfxdevkit/services`) providing pluggable keystore providers, embedded wallet manager, and cryptographic primitives.  
-- **cfx‑meta** – Architecture governance (`arch‑rules.yaml`, `@cfxdevkit/arch‑rules`, validation scripts) that enforces monorepo constraints as a dev‑only dependency.  
-- **cfx‑solidity** – Solidity pipeline: standard ABIs (`@cfxdevkit/abis`) and typed contract helpers (`@cfxdevkit/contracts`) for eSpace and Core Space.  
-- **cfx‑tools** – LLM‑agent framework (`@cfxdevkit/llm‑agents`) for automated repository maintenance (review, check, smoke‑test workflows).  
-- **cfx‑ui** – Opinionated DeFi widgets (`@cfxdevkit/defi‑react`) built on CSS variables, hooks, and viem integration for token swaps, liquidity, portfolio tracking, and tx status.
+## Runtime Integration & Data Flow
+Runtime packages communicate through well-defined trust and client boundaries:
+- **Client & RPC Layer:** `@cfxdevkit/cdk` from `[cfx-core](cfx-core.md)` provides the unified `ConfluxDevkitClient`, address/chain utilities, and typed error handling. All downstream packages route chain interactions through this client.
+- **Cryptographic Trust Boundary:** `[cfx-keys](cfx-keys.md)` (`@cfxdevkit/services`) isolates private key material behind `KeystoreProvider`. Downstream consumers receive `Signer` objects for transaction preparation without ever accessing raw secrets or crossing into `CryptoError` territory.
+- **Contract Execution Surface:** `[cfx-solidity](cfx-solidity.md)` exposes `@cfxdevkit/abis` for type-safe EVM interfaces and `@cfxdevkit/contracts` for typed read/write operations and Core/eSpace bridge helpers. These interfaces are consumed directly by automation strategies and UI swap widgets.
+- **On-Chain Automation:** `[cfx-domain](cfx-domain.md)` (`@cfxdevkit/automation`) orchestrates long-lived worker processes that evaluate trading conditions via `PriceChecker` and `TWAPEvaluator`, manage job state through `executionRepository`, and submit transactions using the `Signer` abstraction. It enforces resilience via `retryQueue` and comprehensive audit logging.
+- **Frontend & Tooling:** `[cfx-ui](cfx-ui.md)` (`@cfxdevkit/defi-react`) consumes client state and keystore hooks to render DeFi primitives and swap interfaces. `[cfx-tools](cfx-tools.md)` (`@cfxdevkit/llm-agents`) bridges CI/CD pipelines with LLM completion, leveraging architecture rules from `cfx-meta` and contract/client definitions from `cfx-core` and `cfx-solidity` to generate OpenSpec artifacts, plan validations, and automate repository workflows.
 
-## How the sub‑modules fit together  
+## Cross-Module Workflow Diagram
+<Mermaid chart={`graph TD
+    meta["cfx-meta: Arch Rules & Validation"] -->|Enforces| core["cfx-core: @cfxdevkit/cdk"]
+    meta -->|Validates| keys["cfx-keys: @cfxdevkit/services"]
+    meta -->|Validates| domain["cfx-domain: @cfxdevkit/automation"]
+    
+    core -->|ConfluxDevkitClient, RPC| domain
+    core -->|Client Hooks| ui["cfx-ui: @cfxdevkit/defi-react"]
+    
+    keys -->|KeystoreProvider, Signer| domain
+    keys -->|Wallet Management| ui
+    keys -->|MCP/Tooling Integration| tools["cfx-tools: @cfxdevkit/llm-agents"]
+    
+    solidity["cfx-solidity: @cfxdevkit/contracts"] -->|Typed ABI, Bridge Helpers| domain
+    solidity -->|Swap/DEX Interfaces| ui
+    
+    domain -->|Job Execution, TX Submission| core
+    tools -->|CI/CD Orchestration| meta
+    tools -->|Codebase Analysis| core
+    tools -->|Contract Generation| solidity
+`} />
 
-1. **Wallet → RPC → Contracts**  
-   A dApp typically starts with a wallet created via `cfx‑keys` (Keystore Provider → Embedded Wallet Manager). The wallet signs transactions, which are sent through the `cfx‑core` RPC client (Core Space or eSpace). Contract interactions use the typed helpers from `cfx‑solidity` (`@cfxdevkit/contracts`) together with ABI definitions from `@cfxdevkit/abis`.
-
-2. **DeFi UI layer**  
-   The `cfx‑ui` Defi‑React components consume wallet connections (via viem adapters) and blockchain data hooks that call the `cfx‑core` RPC clients. They render swap, liquidity, and portfolio widgets that ultimately invoke contract methods from `cfx‑solidity`.
-
-3. **Automation jobs**  
-   `cfx‑domain`’s `@cfxdevkit/automation` package defines jobs (limit order, DCA, TWAP, swaps). At runtime, the job keeper reads wallet state from `cfx‑keys`, queries prices via oracles, and executes transactions through the `cfx‑core` RPC client, using contract bindings from `cfx‑solidity`.
-
-4. **Repository maintenance**  
-   `cfx‑tools` provides LLM‑driven agents that lint, test, and refactor code across all sub‑modules. Agents can trigger validation scripts in `cfx‑meta` to ensure architectural rules are not violated when changes touch `cfx‑core`, `cfx‑keys`, or `cfx‑solidity`.
-
-5. **Architecture enforcement**  
-   `cfx‑meta` supplies the single source of truth for dependency and layering rules. CI pipelines run its validation scripts, which inspect imports across `cfx‑core`, `cfx‑domain`, `cfx‑keys`, `cfx‑solidity`, `cfx‑tools`, and `cfx‑ui` to prevent illegal coupling (e.g., UI depending directly on keystore internals).
-
-## Representative cross‑module workflows  
-
-- **Swap execution** – UI (`cfx‑ui`) → wallet (`cfx‑keys`) → RPC (`cfx‑core`) → contract call (`cfx‑solidity`).  
-- **Limit‑order automation** – Automation job (`cfx‑domain`) → price oracle → wallet (`cfx‑keys`) → transaction (`cfx‑core`) → contract (`cfx‑solidity`).  
-- **Repo health check** – LLM agent (`cfx‑tools`) → runs tests → invokes `cfx‑meta` validation → reports architectural drift.  
-
-For detailed API and usage of each layer, see the respective sub‑module pages:
-
-- [cfx‑core](cfx-core.md)  
-- [cfx‑domain](cfx-domain.md)  
-- [cfx‑keys](cfx-keys.md)  
-- [cfx‑meta](cfx-meta.md)  
-- [cfx‑solidity](cfx-solidity.md)  
-- [cfx‑tools](cfx-tools.md)  
-- [cfx‑ui](cfx-ui.md)
+## Sub-Modules
+- `[cfx-meta](cfx-meta.md)` — Architecture rules, tier enforcement, and workspace validation
+- `[cfx-core](cfx-core.md)` — Foundational primitives, RPC client, and dev node tooling
+- `[cfx-keys](cfx-keys.md)` — Keystore abstraction, cryptographic boundary, and embedded wallet management
+- `[cfx-domain](cfx-domain.md)` — Resilient on-chain job execution and trading automation
+- `[cfx-solidity](cfx-solidity.md)` — Unified Solidity pipeline, ABI definitions, and typed contract interfaces
+- `[cfx-tools](cfx-tools.md)` — LLM-driven repository automation and CI/CD workflow agents
+- `[cfx-ui](cfx-ui.md)` — React primitives, DeFi widgets, and data-fetching hooks

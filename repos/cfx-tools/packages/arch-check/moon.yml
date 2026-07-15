@@ -179,7 +179,7 @@ tasks:
       runFromWorkspaceRoot: false
 
   arch-check:
-    command: 'pnpm exec tsx src/bin/arch-check.ts'
+    command: 'pnpm exec tsx src/bin/check-report.ts --write'
     inputs:
       - '/repos/**/*'
       - '/projects/**/*'

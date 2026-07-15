@@ -1,4 +1,4 @@
-import type { CompletionProgressEvent } from '../completion/index.ts';
+import type { CompletionProgressEvent } from '../completion/index.js';
 
 export function logStep(n, total, label) {
   console.log(`\n[${n}/${total}] ${label}`);

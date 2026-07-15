@@ -4,231 +4,130 @@ title: "repos — cfx-domain"
 
 # repos — cfx-domain
 
-# repos/cfx-domain
+# `cfx-domain` Module
 
 ## Overview
 
-The `cfx-domain` module contains Tier 2 vertical packages focused on specific use cases: automation strategies and game engine utilities. Currently, the `@cfxdevkit/automation` package implements a comprehensive system for executing on-chain jobs (limit orders, DCA, TWAP, swaps) with safety checks, retry mechanisms, and blockchain integration. The `@cfxdevkit/game-engine` package is a placeholder for future game state engine implementations.
+The `cfx-domain` module houses vertical implementation packages for the Conflux ecosystem, targeting game-engine logic and on-chain automation. The primary active package is `@cfxdevkit/automation`, which implements a resilient, strategy-driven job execution system for on-chain trading operations (limit orders, DCA, TWAP, and direct swaps). `@cfxdevkit/game-engine` is currently a structural stub awaiting future implementation.
 
-## Automation Package (@cfxdevkit/automation)
+The automation system manages the full lifecycle of execution jobs: creation, state tracking, condition evaluation, on-chain transaction submission, retry handling, and audit logging. It is designed to run as a long-lived worker process that polls for active jobs, enforces safety constraints, and interfaces directly with the `AutomationManager` smart contract and Swappi liquidity router.
 
-### Purpose
+## Package Structure
 
-Provides a framework for defining, scheduling, and executing automated blockchain jobs with:
-- Multiple job types (limit orders, DCA, TWAP, swaps)
-- Price condition checking via external oracles
-- Safety guards (global pause, slippage limits, size limits)
-- Persistent job storage with SQLite/Drizzle ORM
-- Retry queue with exponential backoff
-- Blockchain interaction through AutomationManager contract
-- Modular strategy evaluation system
+| Package | Description |
+|---------|-------------|
+| `@cfxdevkit/automation` | Core automation runtime. Contains job evaluators, price sources, safety guards, retry queues, persistence layers, and on-chain clients. |
+| `@cfxdevkit/game-engine` | Stub package for future game-state logic. Exports `__packageName` only. |
+| `scripts/` | Monorepo tooling: `validate-workspace.mjs` ensures directory alignment with `pnpm-workspace.template.yaml`, and `check-deps.mjs` validates cross-package workspace dependencies. |
 
-### Key Components
+## Architecture & Execution Flow
 
-#### Core Architecture
-```
-Keeper
-├── Job Repository (storage)
-├── Price Checker (oracle integration)
-├── Safety Guard (risk controls)
-├── Strategy Evaluators (job-type specific logic)
-├── Retry Queue (failed job handling)
-└── Keeper Client (blockchain execution)
-```
+The `Keeper` class is the central orchestrator. It runs on a configurable poll interval, merges active jobs from the repository with jobs due from the `RetryQueue`, and processes them concurrently using the `@cfxdevkit/executor` package. Each tick follows a deterministic pipeline:
 
-#### Conditions (`src/conditions/`)
-- `price.ts`: Implements `PriceChecker` for limit order and DCA condition evaluation
-  - `PRICE_SCALE`: 10¹⁸ for fixed-point price representation
-  - `PriceSource` interface for pluggable oracles (GeckoTerminal, Swappi)
-  - `estimateUsdValue`: Converts token amounts to USD for safety checks
-- `time.ts`: Time-based conditions
-  - `isDCADue`: Checks DCA job execution windows with configurable buffer
-  - `isExpired`: Validates job expiration timestamps
-
-#### Strategies (`src/strategies/`)
-Evaluators determining job execution eligibility:
-- `limitOrder.ts`: Checks price direction (gte/lte) against target
-- `dca.ts`: Verifies interval elapsed and swap completion status
-- `twap.ts`: Manages tranche execution and completion tracking
-- `swap.ts`: Validates safety conditions for immediate execution
-- `input.ts`: Human-readable strategy configuration types
-- `types.ts`: Shared strategy evaluation interfaces
-
-#### Keeper (`src/keeper/`)
-Main orchestration system:
-- `keeper.ts`: 
-  - Polls active jobs and retry queue at configurable intervals
-  - Uses executor library for concurrency control and batching
-  - Handles job lifecycle: evaluation → execution → recording → status updates
-  - Manages retries via `RetryQueue` and safety violations
-- `client.ts`: 
-  - `KeeperClientImpl`: Executes jobs via AutomationManager contract
-  - Handles transaction signing, gas estimation, and receipt parsing
-  - Implements on-chain job status reading
-- `abi.ts`: Contract interface definitions for AutomationManager
-- `helpers.ts`: Utility functions for job ID validation and status mapping
-
-#### Repository (`src/db/`)
-Data persistence layer:
-- `jobRepository.ts`: 
-  - CRUD operations for jobs with filtering and pagination
-  - Soft deletes via status updates
-  - Optimistic concurrency via `updatedAt` timestamps
-- `executionRepository.ts`: 
-  - Records job executions (txHash, timestamp, amountOut)
-  - Ordered retrieval by job ID
-- `schema.ts`: SQLite table definitions using Drizzle ORM
-- `serialization.ts`: 
-  - Converts between Job objects and database rows
-  - Handles bigint serialization as strings in JSON
-- `sqlite.ts`: 
-  - Database connection factory with WAL mode
-  - Schema initialization helper
-
-#### Price Sources (`src/priceSources/`)
-- `geckoTerminal.ts`: Fetches token prices from GeckoTerminal API
-- `swappi.ts`: Uses Swappi router's `getAmountsOut` for pricing
-- Both implement `PriceSource` interface for pluggable oracle integration
-
-#### Safety (`src/safety.ts`)
-Runtime risk management:
-- `SafetyGuard`: 
-  - Checks global pause, job status, retry limits
-  - Validates slippage, swap size, and interval constraints
-  - Tracks violations for monitoring and alerting
-- Configurable thresholds (max swap size, slippage, etc.)
-
-#### Retry Queue (`src/retryQueue.js`)
-Failed job management:
-- Exponential backoff with configurable jitter
-- Job deduplication by ID
-- Cloning to prevent external mutation
-- Delay calculation based on retry attempt count
-
-#### Swap Utilities (`src/swap/`)
-- `calldata.ts`: Encodes Swappi router swap parameters
-- `executor.ts`: 
-  - Quotes swaps via `getAmountsOut`
-  - Executes transactions with simulation and receipt parsing
-  - Decodes output amounts from Transfer events
-- `types.ts`: Shared swap interface definitions
-
-#### Types (`src/types.js`)
-Core TypeScript interfaces:
-- Job definitions (LimitOrderJob, DCAJob, etc.)
-- Hex address/hash types
-- Execution results and evaluation outcomes
-- Strategy evaluation contexts
-
-### How It Works
-
-#### Job Lifecycle
-1. **Creation**: Jobs inserted via `JobRepository.create()` with pending status
-2. **Activation**: Keeper marks jobs active when conditions may be met
-3. **Evaluation**: 
-   - Keeper fetches active jobs + retry queue
-   - Strategy evaluators check price/time conditions
-   - Safety guard validates risk parameters
-4. **Execution**: 
-   - Approved jobs sent to `KeeperClient` for blockchain execution
-   - Transaction hash and output amount recorded
-5. **Completion**: 
-   - Job status updated to executed/failed
-   - Executions logged in `executionRepository`
-   - Failed jobs enqueued in retry queue with backoff
-
-#### Keeper Execution Flow
 <Mermaid chart={`flowchart TD
-    A[Start Poll] --> B[Fetch Active Jobs]
-    B --> C[Fetch Retry Queue]
-    C --> D["Merge & Deduplicate Jobs"]
-    D --> E[Process Jobs Concurrently]
-    E --> F{Check Expiration?}
-    F -->|Yes| G[Mark Expired]
-    F -->|No| H[Check On-Chain Status]
-    H --> I{Status Active?}
-    I -->|No| J[Update Status]
-    I -->|Yes| K[Evaluate Conditions]
-    K --> L{Should Execute?}
-    L -->|Yes| M[Execute via KeeperClient]
-    M --> N[Record Execution]
-    N --> O["Update Job Status/Params"]
-    L -->|No| P[Skip Job]
-    G --> Q[Heartbeat Update]
-    J --> Q
-    P --> Q
-    O --> Q
-    Q --> R[End Poll]
+    A[Keeper.runAllTicks] --> B[list active jobs]
+    A --> C[retryQueue.drainDue]
+    B & C --> D[mergeJobs]
+    D --> E[processTick job]
+    E --> F[isExpired check]
+    E --> G[evaluate job]
+    G --> H[PriceChecker]
+    G --> I[SafetyGuard]
+    H & I --> J{shouldExecute?}
+    J -->|true| K[keeperClient.execute]
+    J -->|false| L["skip / update state"]
+    K --> M[recordExecution]
+    K --> N[handleExecutionError]
+    N --> O[retryQueue.enqueue]
+    M --> P[update job status]
+    L & P & O --> Q[heartbeat callback]
+    Q --> A
 `} />
 
-#### Safety and Retries
-- Safety violations prevent execution and increment violation counter
-- Execution failures:
-  - Increment retry count
-  - Enqueue in retry queue with delay: `baseDelayMs * 2^attempt`
-  - Max retries capped by config (`maxRetries` or safety config)
-- After max retries: job marked failed permanently
+Jobs transition through states (`pending` → `active` → `executed` | `failed` | `cancelled` | `expired`). The `Keeper` delegates strategy-specific logic to `StrategyEvaluator` implementations, which rely on `PriceChecker` for market data and `SafetyGuard` for risk enforcement.
 
-### Integration with Other Modules
+## Core Components
 
-#### Dependencies
-- `@cfxdevkit/executor`: 
-  - `createPoller`: For periodic job processing
-  - `withLock`: Prevents concurrent job processing
-  - `executeBatch`: Controls concurrency during tick processing
-- `@cfxdevkit/protocol`: 
-  - `waitForTransactionReceipt`: Used in keeper client for tx confirmation
-- `@cfxdevkit/cdk`: 
-  - `EspaceClient`: Blockchain interaction abstraction
-  - Transaction signing and gas estimation utilities
+### Job Evaluation & Strategy Pattern
+Strategy execution follows a uniform contract defined by `StrategyEvaluator<TJob>`. Each job type has a dedicated evaluator that:
+1. Checks execution eligibility (time windows, tranches/swaps completed, price thresholds).
+2. Fetches current pricing via `PriceChecker`.
+3. Validates constraints via `SafetyGuard`.
+4. Returns `EvalResult` with `shouldExecute`, optional `reason`, and `estimatedSwapUsd`.
 
-#### External Contracts
-- **AutomationManager**: On-chain contract for job execution
-  - Functions: `executeLimitOrder`, `executeDCATick`, `getJob`, etc.
-  - Events: `JobExecuted` for monitoring
-- **Swappi Router**: 
-  - `getAmountsOut`: Price quoting
-  - `swapExactTokensForTokens`: Token swaps
+| Evaluator | Job Type | Key Conditions |
+|-----------|----------|----------------|
+| `LimitOrderEvaluator` | `LimitOrderJob` | `direction === 'gte'` or `'lte'` vs `targetPrice` |
+| `DCAEvaluator` | `DCAJob` | `isDCADue()` checks `nextExecution` + buffer, `swapsCompleted < totalSwaps` |
+| `TWAPEvaluator` | `TWAPJob` | `tranchesCompleted < trancheCount`, `nextExecution` window |
+| `SwapEvaluator` | `SwapJob` | One-shot execution, safety checks only |
 
-### Usage Notes
+### Price Checking & Sources
+`PriceChecker` abstracts price retrieval and provides helpers like `estimateUsdValue`. It wraps any `PriceSource` implementation:
+- **`SwappiPriceSource`**: Queries a Swappi router via `getAmountsOut(unitAmount, [tokenIn, tokenOut])`. Returns normalized 18-decimal scaled prices.
+- **`GeckoTerminalPriceSource`**: Fetches USD prices from the GeckoTerminal API, computes the ratio, and scales to 18 decimals.
 
-#### Configuration
-- Keeper requires:
-  - Job repository (SQLite or memory)
-  - Price checker with oracle source
-  - Safety guard (defaults usually sufficient)
-  - Keeper client (wallet + contract addresses)
-- Optional:
-  - Execution repository (for audit trail)
-  - Retry queue (custom backoff parameters)
-  - Heartbeat callback (monitoring)
+All prices are represented as `bigint` scaled by `PRICE_SCALE = 10n ** 18n`.
 
-#### Extensibility
-- Add new job types by:
-  1. Extending `Job` type in `types.js`
-  2. Implementing `StrategyEvaluator` 
-  3. Adding case in `Keeper#evaluate()` and `Keeper#execute()`
-- Add new price sources by implementing `PriceSource` interface
-- Custom safety rules via `SafetyGuard.updateConfig()`
+### Safety Guard & Constraints
+`SafetyGuard` enforces risk limits before execution. It evaluates jobs against `SafetyConfig` (defaults: `maxSwapUsd: 10_000`, `maxSlippageBps: 500`, `maxRetries: 5`, `minExecutionIntervalSeconds: 30`). Violations include:
+- `global_pause`: Runtime pause override
+- `status`: Job not in `active` state
+- `max_retries`: Retry cap exceeded
+- `expiry`: Job past `expiresAt`
+- `slippage`: Job slippage exceeds configured limit
+- `swap_size`: Estimated USD value exceeds cap
+- `min_interval` / `dca_interval`: DCA timing violations
 
-#### Testing
-- In-memory repositories for fast unit tests
-- Mock price sources and blockchain clients
-- Test helpers (`testHelpers.js`) provide job factories
+The guard is mutable at runtime (`updateConfig`, `pauseAll`, `resumeAll`) and tracks violation history via `getViolations()`.
 
-## Game-Engine Package (@cfxdevkit/game-engine)
+### Retry Queue & Resilience
+`RetryQueue` handles transient execution failures. It:
+- Replaces existing entries for the same `jobId` to prevent duplicates.
+- Applies exponential backoff: `baseDelayMs * 2^attempt`, capped at `maxDelayMs`.
+- Applies configurable jitter (`0.0–0.5` range) to prevent thundering herd effects.
+- Returns cloned `Job` objects via `drainDue()` to prevent external mutation of queue state.
 
-### Purpose
-Placeholder for reusable on-chain game state engine implementations. Currently exports only the package name.
+When `Keeper.#handleExecutionError` detects a failure, it increments the retry counter, appends the error message, enqueues the job, and returns a `skipped` tick result.
 
-### Current State
-- Minimal implementation: `src/index.ts` defines `__packageName`
-- No game logic implemented yet
-- Intended for future development of:
-  - State machine components
-  - On-chain game logic utilities
-  - Player asset management systems
+### Persistence & Data Access
+The automation layer abstracts storage behind `JobRepository` and `ExecutionRepository` interfaces.
 
-## Conclusion
+**SQLite Implementation (`DrizzleJobRepository` / `DrizzleExecutionRepository`)**
+- Schema defined in `src/db/schema.ts` (`jobs`, `executions`, `worker_heartbeat`, `settings`).
+- `bigint` values are serialized to strings before DB insertion via `serializeParams()` and deserialized back via `rowToJob()` and `rowToRecord()`.
+- `DrizzleJobRepository` supports filtered listing (`JobListFilter`), atomic state transitions (`markActive`, `markExecuted`, `markFailed`, `incrementRetry`, `cancel`), and `getUpdatedSince()` for worker synchronization.
+- Owner validation is enforced on `cancel()` (case-insensitive comparison).
 
-The `cfx-domain` automation package provides a production-ready system for executing conditional blockchain jobs with robust safety mechanisms, flexible storage, and pluggable oracle integration. Its modular design allows extension for new job types and integration with various blockchain environments. The game-engine package serves as a foundation for future gaming-related utilities.
+**Memory Implementation (`MemoryJobRepository` / `MemoryExecutionRepository`)**
+- In-memory `Map` and array storage for testing.
+- Deep-clones job params on read to prevent test cross-contamination.
+
+### On-Chain Execution (`KeeperClient`)
+`KeeperClient` defines the contract for submitting jobs to the `AutomationManager`. `KeeperClientImpl` provides the concrete implementation:
+- **Pre-flight checks**: Verifies contract is not `paused()` and gas price is within `maxGasPriceGwei`.
+- **Transaction construction**: Builds `SignableTx` using `@cfxdevkit/cdk`'s `EspaceClient` and `Signer`. Calculates `maxFeePerGas` dynamically based on `baseFeePerGas`.
+- **Receipt polling**: Delegates to `@cfxdevkit/protocol`'s `waitForTransactionReceipt`.
+- **Result decoding**: Extracts `amountOut` from `Transfer` events targeting the job owner.
+
+`AutomationManagerClient` wraps the same contract but delegates actual execution logic to injected `AutomationManagerActions`, enabling mock or custom backend implementations.
+
+### Swap Execution (`SwapExecutor`)
+Used directly for `SwapJob` types or as a fallback when off-chain automation isn't required. Interacts with the Swappi router via `getAmountsOut` for quotes and `swapExactTokensForTokens` for execution. Calldata is encoded using `buildSwapCalldata()` and the Swappi router ABI. Decodes output amounts by scanning transaction logs for `Transfer` events matching the recipient address.
+
+## Integration & Dependencies
+
+The module integrates with the broader Conflux toolkit:
+- **`@cfxdevkit/cdk`**: Provides `EspaceClient`, `Signer`, and transaction types for on-chain interactions.
+- **`@cfxdevkit/executor`**: Supplies `createPoller`, `executeBatch`, and `withLock` for concurrent job processing.
+- **`@cfxdevkit/protocol`**: Provides `waitForTransactionReceipt` and transaction verification utilities.
+- **`drizzle-orm` / `better-sqlite3`**: Power the persistence layer. Optional peer dependencies for `mysql2`/`postgres` are reserved for future multi-DB support.
+
+External consumers (e.g., backend workers) typically instantiate `createSqliteDb()`, wire up `DrizzleJobRepository`/`DrizzleExecutionRepository`, configure `KeeperClientImpl`, and pass them to `Keeper`. The `Keeper` is then started via `.start()`, which initializes the internal `createPoller`.
+
+## Testing & Tooling
+
+- **Test Framework**: `vitest` (v4.x) with Node environment. Configured in `vitest.config.ts` with alias resolution for workspace packages.
+- **Test Helpers**: `src/testHelpers.ts` provides factory functions (`limitOrderJob()`, `dcaJob()`, `twapJob()`, `swapJob()`) that generate fully typed `Job` objects with default owners, tokens, and parameters.
+- **Coverage**: All core modules include `.test.ts` files covering evaluation logic, repository CRUD, retry backoff, safety violations, and client transaction encoding.
+- **Build**: `vite` + `vite-plugin-dts` for ES module bundling and TypeScript declaration generation. Outputs separate `dist/index.js` and `dist/db/index.js` entry points.

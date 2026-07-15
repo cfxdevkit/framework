@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { runAll } from './agents/all.ts';
-import { runReviewAgent } from './agents/review.ts';
+import { runAll } from './agents/all.js';
+import { runReviewAgent } from './agents/review.js';
 
 const commands = new Map([
   ['all', runAll],

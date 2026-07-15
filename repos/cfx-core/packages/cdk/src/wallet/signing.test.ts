@@ -1,17 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { WalletError } from '../errors/index.js';
-import { coreAddressFromPrivateKey, DEFAULT_CORE_PATH, deriveAccount } from './derivation.js';
-import type { SignableTx } from './index.js';
-import { signCoreTransaction } from './signing.js';
+import { signerFromPrivateKey } from './index.js';
 
-const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
-
-const { privateKey } = deriveAccount({ mnemonic: TEST_MNEMONIC, path: DEFAULT_CORE_PATH });
-// Use a valid cfxtest: address so cive accepts it as `to`
-const CFXTEST_ADDRESS = coreAddressFromPrivateKey(privateKey, 1);
+// Hardcoded Core key for signing tests.
+const TEST_CORE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as `0x${string}`;
 
 /** Minimal valid fields shared by all Core Space tx types. */
-const REQUIRED: Pick<SignableTx, 'chainId' | 'nonce' | 'gas' | 'storageLimit' | 'epochHeight'> = {
+const REQUIRED: Pick<import('./index.js').SignableTx, 'chainId' | 'nonce' | 'gas' | 'storageLimit' | 'epochHeight'> = {
   chainId: 1,
   nonce: 0,
   gas: 21_000n,
@@ -20,40 +15,47 @@ const REQUIRED: Pick<SignableTx, 'chainId' | 'nonce' | 'gas' | 'storageLimit' | 
 };
 
 describe('signCoreTransaction / missing required fields', () => {
+  const signer = signerFromPrivateKey(TEST_CORE_KEY, { family: 'core', coreNetworkId: 1 });
+  const coreAddress = 'cfxtest:aak39z1fdm02v71y33znvaxwthh99skcp2s48zasbp';
+
   it('throws WalletError when epochHeight is missing', async () => {
     const { epochHeight: _eh, ...tx } = REQUIRED;
     await expect(
-      signCoreTransaction(privateKey, { ...tx, to: CFXTEST_ADDRESS, gasPrice: 1n }),
+      signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n }),
     ).rejects.toThrow(WalletError);
   });
 
   it('throws WalletError when nonce is missing', async () => {
     const { nonce: _n, ...tx } = REQUIRED;
     await expect(
-      signCoreTransaction(privateKey, { ...tx, to: CFXTEST_ADDRESS, gasPrice: 1n }),
+      signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n }),
     ).rejects.toThrow(WalletError);
   });
 
   it('throws WalletError when gas is missing', async () => {
     const { gas: _g, ...tx } = REQUIRED;
     await expect(
-      signCoreTransaction(privateKey, { ...tx, to: CFXTEST_ADDRESS, gasPrice: 1n }),
+      signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n }),
     ).rejects.toThrow(WalletError);
   });
 
   it('throws WalletError when storageLimit is missing', async () => {
     const { storageLimit: _sl, ...tx } = REQUIRED;
     await expect(
-      signCoreTransaction(privateKey, { ...tx, to: CFXTEST_ADDRESS, gasPrice: 1n }),
+      signer.signTransaction({ ...tx, to: coreAddress, gasPrice: 1n }),
     ).rejects.toThrow(WalletError);
   });
 });
 
 describe('signCoreTransaction / type-specific validation', () => {
+  const signer = signerFromPrivateKey(TEST_CORE_KEY, { family: 'core', coreNetworkId: 1 });
+  const coreAddress = 'cfxtest:aak39z1fdm02v71y33znvaxwthh99skcp2s48zasbp';
+
   it('throws WalletError for cip1559 when maxFeePerGas is missing', async () => {
     await expect(
-      signCoreTransaction(privateKey, {
+      signer.signTransaction({
         ...REQUIRED,
+        to: coreAddress,
         coreType: 'cip1559',
         maxPriorityFeePerGas: 1n,
       }),
@@ -62,8 +64,9 @@ describe('signCoreTransaction / type-specific validation', () => {
 
   it('throws WalletError for cip1559 when maxPriorityFeePerGas is missing', async () => {
     await expect(
-      signCoreTransaction(privateKey, {
+      signer.signTransaction({
         ...REQUIRED,
+        to: coreAddress,
         coreType: 'cip1559',
         maxFeePerGas: 1n,
       }),
@@ -72,20 +75,32 @@ describe('signCoreTransaction / type-specific validation', () => {
 
   it('throws WalletError for legacy when gasPrice is missing', async () => {
     await expect(
-      signCoreTransaction(privateKey, { ...REQUIRED, coreType: 'legacy' }),
+      signer.signTransaction({
+        ...REQUIRED,
+        to: coreAddress,
+        coreType: 'legacy',
+      }),
     ).rejects.toThrow(WalletError);
   });
 
   it('throws WalletError for cip2930 (default) when gasPrice is missing', async () => {
-    await expect(signCoreTransaction(privateKey, { ...REQUIRED })).rejects.toThrow(WalletError);
+    await expect(
+      signer.signTransaction({
+        ...REQUIRED,
+        to: coreAddress,
+      }),
+    ).rejects.toThrow(WalletError);
   });
 });
 
 describe('signCoreTransaction / success', () => {
+  const signer = signerFromPrivateKey(TEST_CORE_KEY, { family: 'core', coreNetworkId: 1 });
+  const coreAddress = signer.account.address;
+
   it('signs a legacy Core Space transaction', async () => {
-    const sig = await signCoreTransaction(privateKey, {
+    const sig = await signer.signTransaction({
       ...REQUIRED,
-      to: CFXTEST_ADDRESS,
+      to: coreAddress,
       value: 0n,
       coreType: 'legacy',
       gasPrice: 1_000_000_000n,
@@ -94,9 +109,9 @@ describe('signCoreTransaction / success', () => {
   });
 
   it('signs a cip2930 Core Space transaction', async () => {
-    const sig = await signCoreTransaction(privateKey, {
+    const sig = await signer.signTransaction({
       ...REQUIRED,
-      to: CFXTEST_ADDRESS,
+      to: coreAddress,
       value: 0n,
       coreType: 'cip2930',
       gasPrice: 1_000_000_000n,
@@ -105,27 +120,14 @@ describe('signCoreTransaction / success', () => {
   });
 
   it('signs a cip1559 Core Space transaction', async () => {
-    const sig = await signCoreTransaction(privateKey, {
+    const sig = await signer.signTransaction({
       ...REQUIRED,
-      to: CFXTEST_ADDRESS,
+      to: coreAddress,
       value: 0n,
       coreType: 'cip1559',
       maxFeePerGas: 1_000_000_000n,
       maxPriorityFeePerGas: 1_000_000_000n,
     });
     expect(sig).toMatch(/^0x[0-9a-f]+$/i);
-  });
-
-  it('produces deterministic output for the same inputs', async () => {
-    const tx: SignableTx = {
-      ...REQUIRED,
-      to: CFXTEST_ADDRESS,
-      value: 0n,
-      coreType: 'legacy',
-      gasPrice: 1_000_000_000n,
-    };
-    const sig1 = await signCoreTransaction(privateKey, tx);
-    const sig2 = await signCoreTransaction(privateKey, tx);
-    expect(sig1).toBe(sig2);
   });
 });

@@ -51,9 +51,11 @@ export interface FileKeystoreSignerInput {
   account?: string;
   /** HD account index. Default 0. */
   accountIndex?: number;
-  /** eSpace chain ID. Default 1030. */
+  /** Network tier. Resolves both eSpace and Core Space IDs. */
+  network?: 'mainnet' | 'testnet' | 'local';
+  /** eSpace chain ID. Default 1030. Deprecated — use `network`. */
   espaceChainId?: number;
-  /** Core Space network ID. Default 1029. */
+  /** Core Space network ID. Default 1029. Deprecated — use `network`. */
   coreNetworkId?: number;
 }
 
@@ -64,6 +66,8 @@ export interface OneKeySignerInput {
   sdk: any;
   connectId: string;
   deviceId: string;
+  /** When false, skip Core signer initialisation (useful for reachability checks). */
+  includeCore?: boolean;
   /** eSpace BIP-44 path. Default `m/44'/60'/0'/0/0`. */
   espacePath?: string;
   /** Core Space BIP-44 path. Default `m/44'/503'/0'/0/0`. */

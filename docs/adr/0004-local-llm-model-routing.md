@@ -4,13 +4,13 @@
 - **Date:** 2026-05-23
 - **Supersedes:** none
 - **Related:** ADR-0001 (build stack), ADR-0003 (multi-repo split), `agent-model-policy-registry` spec, `agent-commit-runtime` spec
-- **Living reference:** `.pi/SETUP.md` — model catalog, token budgets, and reconfiguration guide
+- **Living reference:** `~/.pi/agent/providers.json` — model catalog, token budgets, and reconfiguration guide
 
 ---
 
 ## Context
 
-The `llm-agents` stack exposes two provider-level routing hooks in `.pi/providers.json`:
+The `llm-agents` stack exposes two provider-level routing hooks in `~/.pi/agent/providers.json`:
 
 ```jsonc
 {

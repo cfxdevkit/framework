@@ -26,7 +26,7 @@ npm install @cfxdevkit/llm-agents
 
 ## Provider Pattern
 
-Agents resolve providers through the package-local completion runtime, which reads the shared PI-owned config from `.pi/providers.json` and applies scoped overlays through `CFXDEVKIT_LLM_CONFIG_PATH` when present. CLI callers usually rely on `resolveProvider()` indirectly; tests can still pass mocked provider behavior through the lower-level workflow helpers.
+Agents resolve providers through the package-local completion runtime, which reads provider config from `~/.pi/agent/providers.json` (managed by PI) and applies scoped overlays through `CFXDEVKIT_LLM_CONFIG_PATH` when present. CLI callers usually rely on `resolveProvider()` indirectly; tests can still pass mocked provider behavior through the lower-level workflow helpers.
 
 ```ts
 import { runReviewAgent, runCommit } from '@cfxdevkit/llm-agents';

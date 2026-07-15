@@ -6,7 +6,7 @@ compatibility: Requires openspec CLI.
 metadata:
   author: openspec
   version: "1.0"
-  generatedBy: "1.3.1"
+  generatedBy: "1.4.1"
 ---
 
 Archive a completed change in the experimental workflow.
@@ -24,39 +24,23 @@ Archive a completed change in the experimental workflow.
 
    **IMPORTANT**: Do NOT guess or auto-select a change. Always let the user choose.
 
-2. **Run precommit gate — required before archive**
-
-   ```bash
-   cdk repo precommit
-   ```
-
-   Parse the output for `status: passed` or `status: blocked`.
-
-   **If blocked:**
-   - Show the failing gates.
-   - DO NOT proceed with archive.
-   - Tell the user: "Precommit gates are failing. Fix the issues and retry archive."
-   - Offer to run `repo_agent_check` to create OpenSpec changes for the failures.
-
-   **If passed:** continue to step 3.
-
-   > Rationale: The repo must be in a committable state before an OpenSpec change is archived.
-   > A clean precommit ensures the change is complete and the codebase is healthy.
-
-3. **Check artifact completion status**
+2. **Check artifact completion status**
 
    Run `openspec status --change "<name>" --json` to check artifact completion.
 
    Parse the JSON to understand:
    - `schemaName`: The workflow being used
+   - `planningHome`, `changeRoot`, `artifactPaths`, and `actionContext`: path and scope context
    - `artifacts`: List of artifacts with their status (`done` or other)
+
+   If status reports `actionContext.mode: "workspace-planning"`, explain that workspace archive is not supported in this slice and STOP. Do not move workspace changes into repo-local archives or edit linked repos.
 
    **If any artifacts are not `done`:**
    - Display warning listing incomplete artifacts
    - Use **AskUserQuestion tool** to confirm user wants to proceed
    - Proceed if user confirms
 
-4. **Check task completion status**
+3. **Check task completion status**
 
    Read the tasks file (typically `tasks.md`) to check for incomplete tasks.
 
@@ -69,9 +53,9 @@ Archive a completed change in the experimental workflow.
 
    **If no tasks file exists:** Proceed without task-related warning.
 
-5. **Assess delta spec sync state**
+4. **Assess delta spec sync state**
 
-   Check for delta specs at `openspec/changes/<name>/specs/`. If none exist, proceed without sync prompt.
+   Use `artifactPaths.specs.existingOutputPaths` from status JSON to check for delta specs. If none exist, proceed without sync prompt.
 
    **If delta specs exist:**
    - Compare each delta spec with its corresponding main spec at `openspec/specs/<capability>/spec.md`
@@ -84,24 +68,24 @@ Archive a completed change in the experimental workflow.
 
    If user chooses sync, use Task tool (subagent_type: "general-purpose", prompt: "Use Skill tool to invoke openspec-sync-specs for change '<name>'. Delta spec analysis: <include the analyzed delta spec summary>"). Proceed to archive regardless of choice.
 
-6. **Perform the archive**
+5. **Perform the archive**
 
-   Create the archive directory if it doesn't exist:
+   Create an `archive` directory under `planningHome.changesDir` if it doesn't exist:
    ```bash
-   mkdir -p openspec/changes/archive
+   mkdir -p "<planningHome.changesDir>/archive"
    ```
 
    Generate target name using current date: `YYYY-MM-DD-<change-name>`
 
    **Check if target already exists:**
    - If yes: Fail with error, suggest renaming existing archive or using different date
-   - If no: Move the change directory to archive
+   - If no: Move `changeRoot` to the archive directory
 
    ```bash
-   mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
+   mv "<changeRoot>" "<planningHome.changesDir>/archive/YYYY-MM-DD-<name>"
    ```
 
-7. **Display summary**
+6. **Display summary**
 
    Show archive completion summary including:
    - Change name
@@ -117,27 +101,13 @@ Archive a completed change in the experimental workflow.
 
 **Change:** <change-name>
 **Schema:** <schema-name>
-**Precommit:** ✓ passed
-**Archived to:** openspec/changes/archive/YYYY-MM-DD-<name>/
+**Archived to:** the archive path derived from `planningHome.changesDir`/YYYY-MM-DD-<name>/
 **Specs:** ✓ Synced to main specs (or "No delta specs" or "Sync skipped")
 
 All artifacts complete. All tasks complete.
 ```
 
-**Output When Precommit Blocked**
-
-```
-## Archive Blocked — Precommit Failing
-
-**Change:** <change-name>
-**Precommit:** ✗ blocked (<gate names>)
-
-Fix the failing gates before archiving. Run `cdk repo precommit` to recheck.
-```
-
 **Guardrails**
-- **ALWAYS run `cdk repo precommit` before archiving — do not skip this gate**
-- If precommit is blocked, stop and surface the failures; do not archive
 - Always prompt for change selection if not provided
 - Use artifact graph (openspec status --json) for completion checking
 - Don't block archive on warnings - just inform and confirm

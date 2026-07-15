@@ -21,7 +21,7 @@ export const rootRepoScriptRequirements: readonly ScriptRequirement[] = [
   },
   {
     name: 'repo:check',
-    expected: 'pnpm run cdk -- repo check',
+    expected: 'pnpm run repo:check',
     severity: 'warning',
     description: 'repo validation alias',
   },
@@ -33,7 +33,8 @@ export const rootRepoScriptRequirements: readonly ScriptRequirement[] = [
   },
   {
     name: 'check:unit-configs',
-    expected: 'moon run arch-check:check-unit-configs',
+    expected:
+      'moon exec --force --quiet --no-actions --upstream none --downstream none arch-check:check-unit-configs',
     severity: 'warning',
     description: 'repo unit-config validation alias',
   },

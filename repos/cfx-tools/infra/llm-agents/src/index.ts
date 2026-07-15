@@ -24,6 +24,7 @@ export {
   runPrecommit,
   runPrecommitWorkflow,
 } from '../workers/commit/index.js';
+export { createPiProgressReporter } from '../workers/commit/terminal/progress.js';
 export type { ActionConfig } from '../workers/completion/resolve-action.js';
 export { resolveActionConfig } from '../workers/completion/resolve-action.js';
 export {

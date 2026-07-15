@@ -14,6 +14,69 @@ export function oneKeyError(
   });
 }
 
+export async function withOneKeyInitRetry<T>(
+  operation: () => Promise<
+    | { success: true; payload: T }
+    | { success: false; payload: { error: string; code?: string | number } }
+  >,
+): Promise<
+  | { success: true; payload: T }
+  | { success: false; payload: { error: string; code?: string | number } }
+> {
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await operation();
+      if (!response.success && shouldRetryOneKeyInitError(response.payload)) {
+        if (attempt < maxAttempts) {
+          await delay(attempt * 300);
+          continue;
+        }
+      }
+      return response;
+    } catch (error) {
+      if (attempt < maxAttempts && shouldRetryOneKeyThrownError(error)) {
+        await delay(attempt * 300);
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  return operation();
+}
+
+function shouldRetryOneKeyInitError(payload: { error: string; code?: string | number }): boolean {
+  const code = Number(payload.code);
+  const message = (payload.error ?? '').toLowerCase();
+  return (
+    code === 105 ||
+    code === 107 ||
+    message.includes('device interrupted') ||
+    message.includes('device not acquired')
+  );
+}
+
+function shouldRetryOneKeyThrownError(error: unknown): boolean {
+  const message = extractErrorMessage(error).toLowerCase();
+  return message.includes('device interrupted') || message.includes('device not acquired');
+}
+
+function extractErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error !== null && typeof error === 'object') {
+    const obj = error as Record<string, unknown>;
+    if (typeof obj.message === 'string') return obj.message;
+    if (typeof obj.error === 'string') return obj.error;
+  }
+  if (typeof error === 'string') return error;
+  return '';
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function throwIfAborted(signal: AbortSignal | undefined): void {
   if (signal?.aborted) {
     throw new HardwareWalletError({ code: 'wallet/hardware/aborted', message: 'signing aborted' });

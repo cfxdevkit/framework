@@ -1,6 +1,6 @@
 import { stat } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
-import { inlineCodePattern, markdownLinkPattern, root } from './constants.ts';
+import { inlineCodePattern, markdownLinkPattern, root } from './constants.js';
 
 export async function findBrokenPathRefs(path, content) {
   const findings = [];

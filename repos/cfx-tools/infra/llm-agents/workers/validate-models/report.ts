@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { artifactsRoot, type LlmModel, type LlmProvider } from '../completion/index.ts';
-import type { JsonValidation, ValidationProbeResult } from './probe.ts';
+import { artifactsRoot, type LlmModel, type LlmProvider } from '../completion/index.js';
+import type { JsonValidation, ValidationProbeResult } from './probe.js';
 
 export type ValidateModelsFlags = {
   quick: boolean;
