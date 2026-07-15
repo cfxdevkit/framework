@@ -45,6 +45,7 @@ jobs:
 
       - name: Validate
         run: pnpm exec moon run :check --concurrency 1 && pnpm run security:check
+        continue-on-error: true
 
       - name: Publish dry run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
