@@ -45,7 +45,6 @@ projects:
   - 'projects/examples/packages/showcase-ui'
   - 'projects/examples/apps/showcase-public'
   - 'projects/examples/apps/showcase-local'
-  - 'projects/examples/apps/cdk-starter'
 
 vcs:
   client: 'git'
